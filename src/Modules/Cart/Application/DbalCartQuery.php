@@ -24,7 +24,7 @@ final readonly class DbalCartQuery
              FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id JOIN mc_product p ON p.id=v.product_id
              JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
              LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
-             LEFT JOIN mc_media_asset ma ON ma.id=(SELECT pm.media_asset_id FROM mc_product_media pm WHERE pm.product_id=p.id AND pm.role='primary' ORDER BY pm.sort_order ASC,pm.id ASC LIMIT 1)
+             LEFT JOIN mc_media_asset ma ON ma.id=(SELECT pm.media_asset_id FROM mc_product_media pm WHERE pm.product_id=p.id AND pm.role='primary' ORDER BY pm.sort_order ASC,pm.media_asset_id ASC LIMIT 1)
              WHERE ci.cart_id=? ORDER BY ci.created_at ASC,ci.id ASC",
             [$context->storeId,$context->locale,$context->storeId,$context->locale,$cartId],
         );
