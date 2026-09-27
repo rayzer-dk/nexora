@@ -47,7 +47,7 @@ final class FeedAdminController extends AbstractController
             $latest=$this->feeds->latest((string)($store['code']??'store'),$code,$context->locale);$meta=$latest['meta']??[];
             $rows[]=['code'=>$code,'label'=>$label,'count'=>$meta['count']??null,'skipped'=>$meta['skipped']??null,'warnings'=>$meta['warnings']??[],'generated_at'=>$meta['generated_at']??null,'bytes'=>$meta['bytes']??null,'url'=>rtrim($this->publicBaseUrl,'/').'/feeds/'.rawurlencode((string)($store['code']??'store')).'/'.$code.'?locale='.rawurlencode($context->locale)];
         }
-        $categories=$this->db->fetchAllAssociative('SELECT c.id,ct.name FROM mc_category c JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? WHERE c.store_id=? AND c.status=? ORDER BY ct.name',[$context->storeId,$context->locale,$context->storeId,'active']);
+        $categories=$this->db->fetchAllAssociative('SELECT c.id,ct.name FROM mc_category c JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? WHERE c.status=? ORDER BY ct.name',[$context->storeId,$context->locale,'active']);
         $mappings=$this->db->fetchAllAssociative('SELECT m.platform,m.category_id,m.external_category_id,m.external_category_name,ct.name category_name FROM mc_feed_category_mapping m JOIN mc_category_translation ct ON ct.category_id=m.category_id AND ct.store_id=m.store_id AND ct.locale=? WHERE m.store_id=? ORDER BY m.platform,ct.name',[$context->locale,$context->storeId]);
         return $this->render('@storefront/admin/commerce/feeds.html.twig',['rows'=>$rows,'store'=>$store,'locale'=>$context->locale,'categories'=>$categories,'mappings'=>$mappings]);
     }
