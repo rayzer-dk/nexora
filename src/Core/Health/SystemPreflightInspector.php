@@ -64,7 +64,7 @@ final class SystemPreflightInspector
             $version = (string) $connection->fetchOne('SELECT VERSION()');
             $isMaria = stripos($version, 'mariadb') !== false;
             $numeric = preg_replace('/[^0-9.].*$/', '', $version) ?: $version;
-            $minimum = $isMaria ? '11.4.0' : '8.4.0';
+            $minimum = $isMaria ? PlatformVersion::MIN_MARIADB : PlatformVersion::MIN_MYSQL;
             $ok = version_compare($numeric, $minimum, '>=');
             $results[] = new RequirementResult('db.version',$isMaria ? \Commerce\Core\I18n\CanonicalUiText::get('php.core.health.systempreflightinspector.versiia_mariadb') : \Commerce\Core\I18n\CanonicalUiText::get('php.core.health.systempreflightinspector.versiia_mysql'),$ok,RequirementLevel::Required,$version,'>=' . $minimum,
                 $ok ? null : \Commerce\Core\I18n\CanonicalUiText::get('php.core.health.systempreflightinspector.onovit_subd_do_pidtrymuvanoi_lts_versii'));
