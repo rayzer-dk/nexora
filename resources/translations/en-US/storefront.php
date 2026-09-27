@@ -518,4 +518,5 @@ return [
     "forum_no_followed_topics" => "You are not following any topics yet.",
     "forum_unread" => "New",
     "forum_member_profile" => "Member profile",
+    "forum_quote" => "Quote",
 ];
