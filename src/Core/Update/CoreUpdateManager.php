@@ -138,6 +138,7 @@ final class CoreUpdateManager
                 $release = $this->packages->extractRelease($bundlePath, $this->publicKey, $stage);
                 $this->releaseValidator->validate($release['release_dir'], $manifest->version);
                 $this->assertMigrationPlanCoversNewMigrations($release['release_dir']);
+                $this->assertAutoloadCoversRelease($release['release_dir']);
 
                 // Freeze all writes before the rollback point so successful orders cannot
                 // disappear from backup. Visitors receive a dependency-free maintenance
@@ -162,6 +163,7 @@ final class CoreUpdateManager
 
                 // Switch platform-owned paths only after the migration plan has succeeded.
                 // The maintenance bootstrap continues to shield visitors from the new code.
+                $this->purgeReleaseCache($manifest->version);
                 $this->switcher->apply($release['release_dir']);
 
                 // Now boot the newly switched release through the real HTTP entry point while
@@ -192,6 +194,7 @@ final class CoreUpdateManager
                 if (is_array($snapshot) && isset($snapshot['archive_path']) && is_file((string) $snapshot['archive_path'])) {
                     try {
                         $this->restorer->restore((string) $snapshot['archive_path']);
+                        $this->purgeReleaseCache($manifest->version);
                         $this->updateAttempt($attemptId, 'rolled_back', $message);
                     } catch (Throwable $rollbackError) {
                         $this->updateAttempt($attemptId, 'rollback_failed', $message . ' | rollback: ' . $this->safeMessage($rollbackError));
@@ -253,6 +256,47 @@ final class CoreUpdateManager
             if (!in_array($class, $planned, true)) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.982d982f8a32') . $filename . \Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.extra.538355ab3931'));
             }
+        }
+    }
+
+    private function assertAutoloadCoversRelease(string $releaseDir): void
+    {
+        $releaseDir = rtrim($releaseDir, '/\\');
+        if (is_dir($releaseDir . '/vendor')) {
+            return;
+        }
+
+        $classmapFile = $this->projectPath('vendor/composer/autoload_classmap.php');
+        $classmap = is_file($classmapFile) ? require $classmapFile : [];
+        if (!is_array($classmap) || $classmap === []) {
+            return;
+        }
+
+        $missing = [];
+        $srcDir = $releaseDir . '/src';
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($srcDir, \FilesystemIterator::SKIP_DOTS));
+        foreach ($iterator as $file) {
+            if (!$file->isFile() || strtolower($file->getExtension()) !== 'php') {
+                continue;
+            }
+            $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($srcDir) + 1));
+            $class = 'Commerce\\' . str_replace('/', '\\', substr($relative, 0, -4));
+            if (!isset($classmap[$class])) {
+                $missing[] = $class;
+            }
+        }
+
+        if ($missing !== []) {
+            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.update_requires_vendor', [
+                'classes' => implode(', ', array_slice($missing, 0, 5)) . (count($missing) > 5 ? ' …' : ''),
+            ]));
+        }
+    }
+
+    private function purgeReleaseCache(string $version): void
+    {
+        foreach (glob($this->projectPath('var/cache/*-' . $version), GLOB_ONLYDIR) ?: [] as $directory) {
+            $this->removeTree($directory);
         }
     }
 
