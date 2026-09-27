@@ -1884,4 +1884,12 @@ return [
     'admin.system.seo_redirects.page' => 'Сторінка',
     'admin.system.seo_redirects.deleted' => 'Старий SEO URL і редирект видалено.',
     'admin.system.seo_redirects.deleted_selected' => 'Вибрані старі SEO URL видалено.',
+    'admin.forum.index.private_message_reports' => 'Скарги на приватні повідомлення',
+    'admin.forum.index.private_message' => 'Приватне повідомлення',
+    'admin.forum.index.sender' => 'Відправник',
+    'admin.forum.index.reporter' => 'Автор скарги',
+    'admin.forum.index.reason' => 'Причина',
+    'admin.forum.index.no_private_message_reports' => 'Відкритих скарг на приватні повідомлення немає.',
+    'admin.forum.index.mark_resolved' => 'Позначити вирішеною',
+
 ];
