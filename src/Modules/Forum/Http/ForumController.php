@@ -49,11 +49,14 @@ final class ForumController extends AbstractController
             throw $this->createNotFoundException();
         }
         $page = max(1, $request->query->getInt('page', 1));
+        $user = $this->getUser();
+        $customerId = $user instanceof CustomerUser ? $user->id() : null;
         return $this->render('@storefront/forum/board.html.twig', [
             'page_title' => (string) $board['name'],
             'store_name' => $context->storeName,
             'board' => $board,
-            'topics' => $this->forum->topics((int) $board['id'], $page),
+            'topics' => $this->forum->topics((int) $board['id'], $page, 30, $customerId),
+            'unread_count' => $customerId !== null ? $this->community->unreadCount($context->storeId, $customerId) : 0,
             'page' => $page,
             'form_rendered_at' => time(),
             'seo_head' => [
@@ -125,16 +128,25 @@ final class ForumController extends AbstractController
         $this->community->recordView($context->storeId, $id);
         $user = $this->getUser();
         $customerId = $user instanceof CustomerUser ? $user->id() : null;
+        $pageSize = 30;
+        $pages = max(1, (int) ceil(((int) ($topic['post_count'] ?? 0)) / $pageSize));
+        $page = min($pages, max(1, $request->query->getInt('page', 1)));
+        $posts = $this->forum->posts($id, $page, $pageSize);
+        if ($customerId !== null) {
+            $this->community->markRead($context->storeId, $id, $customerId);
+        }
         return $this->render('@storefront/forum/topic.html.twig', [
             'page_title' => (string) $topic['title'],
             'store_name' => $context->storeName,
             'topic' => $topic,
-            'posts' => $this->forum->posts($id),
+            'posts' => $posts,
+            'page' => $page,
+            'pages' => $pages,
             'current_customer_id' => $customerId,
             'is_subscribed' => $customerId !== null ? $this->community->isSubscribed($context->storeId, $id, $customerId) : false,
             'form_rendered_at' => time(),
             'seo_head' => [
-                'canonical' => $request->getSchemeAndHttpHost() . '/forum/t/' . $id . '/' . $slug,
+                'canonical' => $request->getSchemeAndHttpHost() . '/forum/t/' . $id . '/' . $slug . ($page > 1 ? '?page=' . $page : ''),
                 'robots' => 'index,follow,max-image-preview:large',
             ],
         ]);
