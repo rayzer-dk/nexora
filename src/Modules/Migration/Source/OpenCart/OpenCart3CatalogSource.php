@@ -315,7 +315,7 @@ final class OpenCart3CatalogSource implements MigrationSourceInterface
     private function readOrders(int $after, int $limit): MigrationBatch
     {
         $rows = $this->queryRows(sprintf(
-            'SELECT order_id,customer_id,firstname,lastname,email,telephone,payment_method,payment_code,shipping_method,shipping_code,currency_code,currency_value,total,order_status_id,date_added,date_modified,payment_firstname,payment_lastname,payment_company,payment_address_1,payment_address_2,payment_city,payment_postcode,payment_country,payment_iso_code_2,shipping_firstname,shipping_lastname,shipping_company,shipping_address_1,shipping_address_2,shipping_city,shipping_postcode,shipping_country,shipping_iso_code_2 FROM %s`order` WHERE order_id > %d ORDER BY order_id ASC LIMIT %d',
+            'SELECT order_id,customer_id,firstname,lastname,email,telephone,payment_method,payment_code,shipping_method,shipping_code,currency_code,currency_value,total,order_status_id,date_added,date_modified,payment_firstname,payment_lastname,payment_company,payment_address_1,payment_address_2,payment_city,payment_postcode,payment_country,payment_iso_code_2,shipping_firstname,shipping_lastname,shipping_company,shipping_address_1,shipping_address_2,shipping_city,shipping_postcode,shipping_country,shipping_iso_code_2 FROM `%sorder` WHERE order_id > %d ORDER BY order_id ASC LIMIT %d',
             $this->prefix,
             $after,
             $limit,
