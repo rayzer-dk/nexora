@@ -537,4 +537,6 @@ return [
     "forum_block_member" => "Block member",
     "forum_report_reason_harassment" => "Harassment",
     "forum_report_reason_fraud" => "Fraud",
+    "verification_code_subject" => "Verification code",
+    "verification_code_text" => "Your verification code is %code%. It expires in 15 minutes.",
 ];
