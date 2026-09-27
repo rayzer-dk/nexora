@@ -24,7 +24,7 @@
     <div class="forum-post-list">
         {% for post in posts %}
             <article class="forum-post" id="post-{{ post.id }}">
-                <header><span class="forum-avatar" aria-hidden="true">{{ post.author_name|first|upper }}</span><div><strong>{{ post.author_name }}</strong><small>{{ post.published_at|default(post.created_at) }}{% if post.edited_at %} · {{ ui_text('forum_edited') }}{% endif %}</small></div></header>
+                <header><span class="forum-avatar" aria-hidden="true">{{ post.author_name|first|upper }}</span><div>{% if post.customer_id %}<a href="{{ path('storefront_forum_member',{id:post.customer_id}) }}"><strong>{{ post.author_name }}</strong></a>{% else %}<strong>{{ post.author_name }}</strong>{% endif %}<small>{{ post.published_at|default(post.created_at) }}{% if post.edited_at %} · {{ ui_text('forum_edited') }}{% endif %}</small></div></header>
                 <div class="forum-post__body">{{ post.body_text|nl2br }}</div>
                 <footer class="forum-post__actions">
                     <span>{{ post.like_count|default(0) }} {{ ui_text('forum_likes') }}</span>
