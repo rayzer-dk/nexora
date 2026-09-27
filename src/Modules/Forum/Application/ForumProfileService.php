@@ -25,9 +25,9 @@ final readonly class ForumProfileService
             return $row;
         }
 
-        $customer = $this->connection->fetchAssociative('SELECT public_id FROM mc_customer WHERE id=? AND status='active' LIMIT 1', [$customerId]);
+        $customer = $this->connection->fetchAssociative("SELECT public_id FROM mc_customer WHERE id=? AND status='active' LIMIT 1", [$customerId]);
         if (!is_array($customer) || !is_string($customer['public_id'])) {
-            throw new \DomainException('Customer account was not found.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.customer_missing'));
         }
 
         $nickname = 'member-' . substr(bin2hex($customer['public_id']), 0, 8);
@@ -70,10 +70,10 @@ final readonly class ForumProfileService
     ): void {
         $nickname = trim(preg_replace('/\s+/u', ' ', strip_tags($nickname)) ?? '');
         if ($nickname === '' || mb_strlen($nickname, 'UTF-8') < 3 || mb_strlen($nickname, 'UTF-8') > 64) {
-            throw new \DomainException('Forum nickname must contain 3–64 characters.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.nickname_length'));
         }
         if (preg_match('/^[\p{L}\p{N}._ -]+$/u', $nickname) !== 1) {
-            throw new \DomainException('Forum nickname contains unsupported characters.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.nickname_chars'));
         }
 
         $bio = mb_substr(trim(strip_tags($bio)), 0, 500, 'UTF-8');
@@ -88,7 +88,7 @@ final readonly class ForumProfileService
                 'updated_at' => $this->now(),
             ], ['store_id' => $storeId, 'customer_id' => $customerId]);
         } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException) {
-            throw new \DomainException('This forum nickname is already in use.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.nickname_taken'));
         }
     }
 
