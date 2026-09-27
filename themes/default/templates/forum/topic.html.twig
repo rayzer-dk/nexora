@@ -56,6 +56,13 @@
             </article>
         {% endfor %}
     </div>
+    {% if pages > 1 %}
+        <nav class="forum-pagination" aria-label="{{ ui_text('pagination') }}">
+            {% if page > 1 %}<a class="forum-secondary-button" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}?page={{ page - 1 }}">{{ ui_text('previous') }}</a>{% endif %}
+            <span>{{ ui_text('page_of')|replace({'%page%': page, '%pages%': pages}) }}</span>
+            {% if page < pages %}<a class="forum-secondary-button" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}?page={{ page + 1 }}">{{ ui_text('next') }}</a>{% endif %}
+        </nav>
+    {% endif %}
 </section>
 
 {% if app.user and not topic.is_locked %}
