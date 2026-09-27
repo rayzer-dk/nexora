@@ -64,4 +64,6 @@ jobs:
       - run: php bin/console lint:container
       - run: php bin/console lint:twig themes/default/templates
       - run: php bin/console doctrine:migrations:migrate --no-interaction
+      - run: php bin/google-commerce-integration-contract-check.php
+      - run: php bin/migration-opencart-runtime-check.php
       - run: vendor/bin/phpunit --configuration phpunit.xml.dist
