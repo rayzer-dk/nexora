@@ -62,7 +62,7 @@ const navigation = [
 ];
 
 const componentStatus = [
-  [t('vue.app.platforma'), '3.5.0'],
+  [t('vue.app.platforma'), '3.5.1'],
   ['PHP', '8.4–8.5'],
   ['Symfony', '8.1 stable'],
   ['Doctrine DBAL', '4.4'],
