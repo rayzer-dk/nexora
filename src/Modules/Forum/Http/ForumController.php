@@ -104,7 +104,7 @@ final class ForumController extends AbstractController
             return $this->redirectToRoute('customer_login');
         }
         try {
-            $this->accessPolicy->assertCanParticipate($user->id());
+            $this->accessPolicy->assertCanParticipate($context->storeId, $user->id());
             $this->forum->createTopic(
                 $context->storeId,
                 $slug,
@@ -192,7 +192,7 @@ final class ForumController extends AbstractController
             return $this->redirectToRoute('customer_login');
         }
         try {
-            $this->accessPolicy->assertCanParticipate($user->id());
+            $this->accessPolicy->assertCanParticipate($context->storeId, $user->id());
             $this->forum->createReply(
                 $context->storeId,
                 $id,
@@ -222,7 +222,7 @@ final class ForumController extends AbstractController
             'page_title' => (string) $member['nickname'],
             'store_name' => $context->storeName,
             'member' => $member,
-            'can_message' => $viewer instanceof CustomerUser && $viewer->id() !== $id && (int)($member['allow_private_messages'] ?? 0) === 1 && $this->accessPolicy->canParticipate($viewer->id()),
+            'can_message' => $viewer instanceof CustomerUser && $viewer->id() !== $id && (int)($member['allow_private_messages'] ?? 0) === 1 && $this->accessPolicy->canParticipate($context->storeId, $viewer->id()),
             'activity' => $this->community->memberRecentActivity($context->storeId, $id),
             'seo_head' => [
                 'canonical' => $request->getSchemeAndHttpHost() . '/forum/member/' . $id,
@@ -248,7 +248,7 @@ final class ForumController extends AbstractController
     public function profile(Request $request): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         if ($request->isMethod('POST')) {
             if (!$this->isCsrfTokenValid('forum_profile', (string) $request->request->get('_csrf_token'))) {
                 throw $this->createAccessDeniedException();
@@ -281,7 +281,7 @@ final class ForumController extends AbstractController
     public function messages(Request $request): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         return $this->render('@storefront/forum/messages.html.twig', [
             'page_title' => 'Private messages',
             'store_name' => $context->storeName,
@@ -294,7 +294,7 @@ final class ForumController extends AbstractController
     public function messageThread(Request $request, int $id): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         $data = $this->directMessages->thread($context->storeId, $id, $user->id());
         if ($data === null) {
             throw $this->createNotFoundException();
@@ -313,7 +313,7 @@ final class ForumController extends AbstractController
     public function startMessage(Request $request, int $id): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         if (!$this->isCsrfTokenValid('forum_message_start_' . $id, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -330,7 +330,7 @@ final class ForumController extends AbstractController
     public function replyMessage(Request $request, int $id): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         if (!$this->isCsrfTokenValid('forum_message_reply_' . $id, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -350,7 +350,7 @@ final class ForumController extends AbstractController
     public function blockMember(Request $request, int $threadId, int $memberId): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         if (!$this->isCsrfTokenValid('forum_block_' . $memberId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -363,7 +363,7 @@ final class ForumController extends AbstractController
     public function reportMessage(Request $request, int $threadId, int $messageId): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         if (!$this->isCsrfTokenValid('forum_dm_report_' . $messageId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -390,7 +390,7 @@ final class ForumController extends AbstractController
     public function subscription(Request $request, int $id, string $slug): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         if (!$this->isCsrfTokenValid('forum_subscription_' . $id, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -403,7 +403,7 @@ final class ForumController extends AbstractController
     public function like(Request $request, int $id, string $slug, int $postId): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         if (!$this->isCsrfTokenValid('forum_like_' . $postId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -415,7 +415,7 @@ final class ForumController extends AbstractController
     public function report(Request $request, int $id, string $slug, int $postId): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         if (!$this->isCsrfTokenValid('forum_report_' . $postId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -434,7 +434,7 @@ final class ForumController extends AbstractController
     public function editPost(Request $request, int $id, string $slug, int $postId): Response
     {
         $context = $this->contexts->resolve($request);
-        $user = $this->requireForumParticipant();
+        $user = $this->requireForumParticipant($context->storeId);
         if (!$this->isCsrfTokenValid('forum_edit_' . $postId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -447,11 +447,13 @@ final class ForumController extends AbstractController
         return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
     }
 
-    private function requireForumParticipant(): CustomerUser
+    private function requireForumParticipant(int $storeId): CustomerUser
     {
         $user = $this->requireCustomer();
-        if (!$this->accessPolicy->canParticipate($user->id())) {
-            throw $this->createAccessDeniedException('Verify your email before participating in the forum.');
+        try {
+            $this->accessPolicy->assertCanParticipate($storeId, $user->id());
+        } catch (\DomainException $e) {
+            throw $this->createAccessDeniedException($e->getMessage());
         }
         return $user;
     }
