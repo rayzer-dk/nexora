@@ -537,4 +537,6 @@ return [
     "forum_block_member" => "Zablokuj użytkownika",
     "forum_report_reason_harassment" => "Nękanie",
     "forum_report_reason_fraud" => "Oszustwo",
+    "verification_code_subject" => "Kod weryfikacyjny",
+    "verification_code_text" => "Twój kod weryfikacyjny to %code%. Wygasa po 15 minutach.",
 ];
