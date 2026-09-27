@@ -37,6 +37,9 @@ final readonly class CoreUpdateMigrationRunner
 
         $statements = 0;
         foreach ($plan['migrations'] as $migration) {
+            if ($this->isRecorded((string) $migration['version'])) {
+                continue;
+            }
             $started = microtime(true);
             foreach ($migration['statements'] as $sql) {
                 $this->connection->executeStatement($sql);
@@ -113,15 +116,18 @@ final readonly class CoreUpdateMigrationRunner
         }
     }
 
+    private const LEDGER_TABLE = 'mc_migration_versions';
+
+    private function isRecorded(string $version): bool
+    {
+        return (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ' . self::LEDGER_TABLE . ' WHERE version=?', [$version]) > 0;
+    }
+
     private function markDoctrineMigration(string $version, int $executionMs): void
     {
         try {
-            $exists = (int) $this->connection->fetchOne("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='doctrine_migration_versions'");
-            if ($exists !== 1) {
-                return;
-            }
             $this->connection->executeStatement(
-                'INSERT IGNORE INTO doctrine_migration_versions (version,executed_at,execution_time) VALUES (?,NOW(),?)',
+                'INSERT INTO ' . self::LEDGER_TABLE . ' (version,executed_at,execution_time) VALUES (?,UTC_TIMESTAMP(),?)',
                 [$version, max(0, $executionMs)],
             );
         } catch (\Throwable $e) {
