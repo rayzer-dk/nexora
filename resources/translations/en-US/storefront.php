@@ -516,4 +516,6 @@ return [
     "forum_following" => "Followed topics",
     "forum_following_intro" => "Topics you follow and receive notifications about.",
     "forum_no_followed_topics" => "You are not following any topics yet.",
+    "forum_unread" => "New",
+    "forum_member_profile" => "Member profile",
 ];
