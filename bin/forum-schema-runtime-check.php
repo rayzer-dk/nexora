@@ -122,4 +122,4 @@ if ($errors !== []) {
 }
 
 echo "Forum schema runtime check: PASSED\n";
-echo "tables=" . count($requiredTables) . " foreign_keys=" . count($requiredForeignKeys) . " schema=49\n";
+echo "tables=" . count($requiredTables) . " foreign_keys=" . count($requiredForeignKeys) . " schema=50\n";
