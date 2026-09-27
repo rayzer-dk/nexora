@@ -14,6 +14,6 @@ final class PlatformVersionTest extends TestCase
         self::assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', PlatformVersion::VERSION);
         self::assertSame('2.0', PlatformVersion::EXTENSION_API);
         self::assertGreaterThanOrEqual(45, PlatformVersion::DATABASE_SCHEMA);
-        self::assertSame('release-candidate', PlatformVersion::CHANNEL);
+        self::assertSame('production', PlatformVersion::CHANNEL);
     }
 }
