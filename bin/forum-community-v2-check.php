@@ -13,6 +13,7 @@ $must = [
         'mc_forum_reaction',
         'mc_forum_report',
         'mc_forum_post_revision',
+        'mc_forum_topic_read',
     ],
     'src/Modules/Forum/Http/ForumController.php' => [
         'CustomerUser',
@@ -29,6 +30,10 @@ $must = [
         'editOwnPost',
         'memberStats',
         'openReports',
+        'markRead',
+        'unreadCount',
+        'memberRecentActivity',
+        'followedTopics',
     ],
     'src/Modules/Forum/Application/ForumService.php' => [
         "'customer_id' => \$customerId",
@@ -51,6 +56,14 @@ $must = [
     ],
     'themes/default/templates/forum/search.html.twig' => [
         "storefront_forum_search",
+    ],
+    'src/Modules/Forum/Application/ForumNotificationService.php' => [
+        'notifyPublishedReply',
+        'NotificationOutbox',
+    ],
+    'src/Core/Module/SystemModuleCatalog.php' => [
+        "\$optional('forum'",
+        'ModuleRemovalPolicy::Removable',
     ],
 ];
 
@@ -83,6 +96,11 @@ foreach ([
     'forum-user-reports',
     'forum-post-edit-history',
     'forum-search',
+    'forum-member-profiles',
+    'forum-follow-notifications',
+    'forum-unread-tracking',
+    'forum-post-pagination',
+    'forum-removable-optional-module',
 ] as $capability) {
     if (!in_array($capability, (array) ($release['capabilities'] ?? []), true)) {
         $fail[] = 'missing capability ' . $capability;
