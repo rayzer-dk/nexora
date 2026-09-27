@@ -1,7 +1,7 @@
 {
   "platform": "Nexora Commerce",
   "version": "3.5.0",
-  "channel": "release-candidate",
+  "channel": "production",
   "region_profile": "EU-UA",
   "extension_api": "2.0",
   "php": {
