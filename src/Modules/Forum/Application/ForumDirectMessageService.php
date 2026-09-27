@@ -74,30 +74,30 @@ final readonly class ForumDirectMessageService
     {
         $this->accessPolicy->assertCanParticipate($senderId);
         if ($senderId === $recipientId) {
-            throw new \DomainException('You cannot send a private message to yourself.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.dm_self'));
         }
         $recipientProfile = $this->profiles->publicProfile($storeId, $recipientId);
         if (!is_array($recipientProfile) || (int) ($recipientProfile['allow_private_messages'] ?? 0) !== 1) {
-            throw new \DomainException('This member does not accept private messages.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.dm_disabled'));
         }
         if ($this->blocked($storeId, $senderId, $recipientId)) {
-            throw new \DomainException('Private messaging is not available between these members.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.dm_blocked'));
         }
 
         $body = trim(str_replace(["\r\n", "\r"], "\n", strip_tags($body)));
         if (mb_strlen($body, 'UTF-8') < 2 || mb_strlen($body, 'UTF-8') > 5000) {
-            throw new \DomainException('Private message must contain 2–5000 characters.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.dm_length'));
         }
         preg_match_all('#https?://#iu', $body, $matches);
         if (count($matches[0]) > 2) {
-            throw new \DomainException('Too many links in a private message.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.dm_links'));
         }
         $recentCount = (int) $this->connection->fetchOne(
             'SELECT COUNT(*) FROM mc_forum_dm_message WHERE sender_customer_id=? AND created_at>=?',
             [$senderId, (new DateTimeImmutable('now', new DateTimeZone('UTC')))->modify('-1 hour')->format('Y-m-d H:i:s.u')],
         );
         if ($recentCount >= 20) {
-            throw new \DomainException('Private message limit reached. Try again later.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.dm_rate'));
         }
 
         $duplicate = $this->connection->fetchOne(
@@ -105,7 +105,7 @@ final readonly class ForumDirectMessageService
             [$senderId, $body, (new DateTimeImmutable('now', new DateTimeZone('UTC')))->modify('-5 minutes')->format('Y-m-d H:i:s.u')],
         );
         if ($duplicate) {
-            throw new \DomainException('Duplicate private message blocked.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.dm_duplicate'));
         }
 
         [$low, $high] = $senderId < $recipientId ? [$senderId, $recipientId] : [$recipientId, $senderId];
@@ -168,7 +168,7 @@ final readonly class ForumDirectMessageService
             [$messageId, $storeId, $reporterId, $reporterId],
         );
         if (!is_array($message)) {
-            throw new \DomainException('Private message was not found.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.dm_missing'));
         }
         $allowed = ['spam','abuse','harassment','fraud','other'];
         if (!in_array($reason, $allowed, true)) {
