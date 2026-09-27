@@ -21,14 +21,21 @@ if (!is_file($vendorRuntime) || !is_file($vendorAutoload)) {
     exit(1);
 }
 
-if (!is_file($root . '/.env') && is_file($root . '/.env.local')) {
-    $_SERVER['APP_RUNTIME_OPTIONS'] = array_merge(
-        is_array($_SERVER['APP_RUNTIME_OPTIONS'] ?? null) ? $_SERVER['APP_RUNTIME_OPTIONS'] : [],
-        [
-            'dotenv_path' => '.env.local',
-            'dotenv_use_putenv' => true,
-        ],
-    );
+if (!is_file($root . '/.env')) {
+    $runtimeOptions = is_array($_SERVER['APP_RUNTIME_OPTIONS'] ?? null)
+        ? $_SERVER['APP_RUNTIME_OPTIONS']
+        : [];
+
+    if (is_file($root . '/.env.local')) {
+        $runtimeOptions['dotenv_path'] = '.env.local';
+        $runtimeOptions['dotenv_use_putenv'] = true;
+    } else {
+        // CI, containers and production may provide the environment entirely
+        // through real process variables. Do not require a repository .env file.
+        $runtimeOptions['dotenv_path'] = false;
+    }
+
+    $_SERVER['APP_RUNTIME_OPTIONS'] = $runtimeOptions;
 }
 
 require_once $vendorRuntime;
