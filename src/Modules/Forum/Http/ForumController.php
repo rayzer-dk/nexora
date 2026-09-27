@@ -7,6 +7,7 @@ namespace Commerce\Modules\Forum\Http;
 use Commerce\Modules\Forum\Application\ForumService;
 use Commerce\Modules\Forum\Application\ForumCommunityService;
 use Commerce\Modules\Forum\Application\ForumAccessPolicy;
+use Commerce\Modules\Forum\Application\ForumProfileService;
 use Commerce\Modules\Customer\Domain\CustomerUser;
 use Commerce\Modules\Security\Spam\PublicFormSpamGuard;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
@@ -23,6 +24,7 @@ final class ForumController extends AbstractController
         private readonly ForumService $forum,
         private readonly ForumCommunityService $community,
         private readonly ForumAccessPolicy $accessPolicy,
+        private readonly ForumProfileService $profiles,
         private readonly PublicFormSpamGuard $spamGuard,
     ) {
     }
@@ -105,7 +107,7 @@ final class ForumController extends AbstractController
                 $context->storeId,
                 $slug,
                 $user->id(),
-                $user->displayName(),
+                $this->profiles->nickname($context->storeId, $user->id()),
                 (string) $request->request->get('title', ''),
                 (string) $request->request->get('body', ''),
             );
@@ -134,7 +136,7 @@ final class ForumController extends AbstractController
         $pageSize = 30;
         $pages = max(1, (int) ceil(((int) ($topic['post_count'] ?? 0)) / $pageSize));
         $page = min($pages, max(1, $request->query->getInt('page', 1)));
-        $posts = $this->forum->posts($id, $page, $pageSize);
+        $posts = $this->forum->posts($context->storeId, $id, $page, $pageSize);
         if ($customerId !== null) {
             $this->community->markRead($context->storeId, $id, $customerId);
         }
