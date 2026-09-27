@@ -672,4 +672,5 @@ return [
     "forum_no_followed_topics" => "Ви ще не стежите за жодною темою.",
     "forum_unread" => "Нове",
     "forum_member_profile" => "Профіль учасника",
+    "forum_quote" => "Цитувати",
 ];
