@@ -1,0 +1,22 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="forum-shell shell">
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ ui_text('forum_rules_title') }}</span></nav>
+    <header class="forum-hero forum-hero--compact">
+        <div><span class="forum-kicker">{{ ui_text('community') }}</span><h1>{{ ui_text('forum_rules_title') }}</h1><p>{{ ui_text('forum_rules_intro') }}</p></div>
+    </header>
+    <article class="forum-rules">
+        <ol>
+            <li><strong>{{ ui_text('forum_rule_1_title') }}</strong><p>{{ ui_text('forum_rule_1_text') }}</p></li>
+            <li><strong>{{ ui_text('forum_rule_2_title') }}</strong><p>{{ ui_text('forum_rule_2_text') }}</p></li>
+            <li><strong>{{ ui_text('forum_rule_3_title') }}</strong><p>{{ ui_text('forum_rule_3_text') }}</p></li>
+            <li><strong>{{ ui_text('forum_rule_4_title') }}</strong><p>{{ ui_text('forum_rule_4_text') }}</p></li>
+            <li><strong>{{ ui_text('forum_rule_5_title') }}</strong><p>{{ ui_text('forum_rule_5_text') }}</p></li>
+            <li><strong>{{ ui_text('forum_rule_6_title') }}</strong><p>{{ ui_text('forum_rule_6_text') }}</p></li>
+            <li><strong>{{ ui_text('forum_rule_7_title') }}</strong><p>{{ ui_text('forum_rule_7_text') }}</p></li>
+            <li><strong>{{ ui_text('forum_rule_8_title') }}</strong><p>{{ ui_text('forum_rule_8_text') }}</p></li>
+        </ol>
+        <p>{{ ui_text('forum_rules_enforcement') }}</p>
+    </article>
+</section>
+{% endblock %}
