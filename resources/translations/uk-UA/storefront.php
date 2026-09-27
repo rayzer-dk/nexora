@@ -665,4 +665,9 @@ return [
     "forum_try_other" => "Спробуйте інше слово або фразу.",
     "forum_new_reply_subject" => "Нова відповідь у темі «%topic%»",
     "forum_new_reply_text" => "У темі «%topic%» опубліковано нову відповідь: %url%",
+    "forum_member_since" => "Учасник з %date%",
+    "forum_no_activity" => "Публічної активності ще немає.",
+    "forum_following" => "Відстежувані теми",
+    "forum_following_intro" => "Теми, за якими ви стежите та отримуєте сповіщення.",
+    "forum_no_followed_topics" => "Ви ще не стежите за жодною темою.",
 ];
