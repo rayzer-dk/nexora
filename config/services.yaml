@@ -9,6 +9,7 @@ parameters:
     commerce.sms.bearer_token: '%env(SMS_GATEWAY_BEARER_TOKEN)%'
     commerce.sms.sender: '%env(SMS_SENDER)%'
     commerce.turnstile.enabled: '%env(bool:TURNSTILE_ENABLED)%'
+    commerce.turnstile.site_key: '%env(TURNSTILE_SITE_KEY)%'
     commerce.turnstile.secret_key: '%env(TURNSTILE_SECRET_KEY)%'
     commerce.nova_post.api_base: '%env(NOVA_POST_API_BASE)%'
     commerce.nova_post.api_key: '%env(NOVA_POST_API_KEY)%'
@@ -320,6 +321,14 @@ services:
     Commerce\Modules\Customer\Application\CustomerAccountSecurityService:
         arguments:
             $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Customer\Application\CustomerVerificationCodeService:
+        arguments:
+            $appSecret: '%kernel.secret%'
+
+    Commerce\Modules\Customer\Http\CustomerAccountController:
+        arguments:
+            $turnstileSiteKey: '%commerce.turnstile.site_key%'
 
     Commerce\Modules\Content\System\InformationPageCatalog:
         arguments:
