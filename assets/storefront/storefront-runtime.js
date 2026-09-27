@@ -63,6 +63,21 @@ function initForumCompose() {
     window.setTimeout(() => { modal.hidden = true; }, 180);
   };
   openers.forEach((button) => button.addEventListener('click', open));
+  qa('[data-forum-quote]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const textarea = q('textarea[name="body"]', modal);
+      if (!textarea) return;
+      const author = String(button.dataset.forumQuoteAuthor || '').trim();
+      const body = String(button.dataset.forumQuoteBody || '').trim().replace(/\r\n?/g, '\n');
+      const quoted = body.split('\n').map((line) => `> ${line}`).join('\n');
+      const prefix = author ? `> ${author}\n` : '';
+      const insert = `${prefix}${quoted}\n\n`;
+      textarea.value = textarea.value.trim() ? `${textarea.value.trim()}\n\n${insert}` : insert;
+      open();
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    });
+  });
   closers.forEach((button) => button.addEventListener('click', close));
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !modal.hidden) close();
