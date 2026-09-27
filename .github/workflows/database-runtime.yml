@@ -66,4 +66,5 @@ jobs:
       - run: php bin/console doctrine:migrations:migrate --no-interaction
       - run: php bin/google-commerce-integration-contract-check.php
       - run: php bin/migration-opencart-runtime-check.php
+      - run: php bin/forum-schema-runtime-check.php
       - run: vendor/bin/phpunit --configuration phpunit.xml.dist
