@@ -7,6 +7,8 @@ namespace Commerce\Modules\Customer\Http;
 use Commerce\Core\Site\SiteCapabilitySettings;
 use Commerce\Modules\Customer\Application\CustomerRegistrationService;
 use Commerce\Modules\Customer\Application\CustomerAccountSecurityService;
+use Commerce\Modules\Customer\Application\CustomerVerificationCodeService;
+use Commerce\Modules\Security\Bot\TurnstileVerifier;
 use Commerce\Modules\Customer\Application\DbalCustomerAccountQuery;
 use Commerce\Modules\Customer\Application\CustomerProfileService;
 use Commerce\Modules\Customer\Application\CustomerWishlistService;
@@ -31,6 +33,9 @@ final class CustomerAccountController extends AbstractController
         private readonly SiteCapabilitySettings $capabilities,
         private readonly CustomerRegistrationService $registration,
         private readonly CustomerAccountSecurityService $accountSecurity,
+        private readonly CustomerVerificationCodeService $verificationCodes,
+        private readonly TurnstileVerifier $turnstile,
+        private readonly string $turnstileSiteKey,
         private readonly DbalCustomerAccountQuery $accounts,
         private readonly CustomerProfileService $profiles,
         private readonly CustomerWishlistService $wishlist,
@@ -75,6 +80,16 @@ final class CustomerAccountController extends AbstractController
             if (!$this->isCsrfTokenValid('customer_register', (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
             }
+            if (!$this->turnstile->verify((string) $request->request->get('cf-turnstile-response', ''), $request->getClientIp())) {
+                $this->addFlash('error', 'Anti-bot verification failed. Please try again.');
+                return $this->render('@storefront/account/register.html.twig', [
+                    'page_title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.http.customeraccountcontroller.stvoryty_oblikovyi_zapys'),
+                    'store_name' => $context->storeName,
+                    'turnstile_enabled' => $this->turnstile->enabled(),
+                    'turnstile_site_key' => $this->turnstileSiteKey,
+                    'seo_head' => ['robots' => 'noindex,nofollow'],
+                ]);
+            }
             try {
                 $created = $this->registration->register(
                     (string) $request->request->get('email', ''),
@@ -83,11 +98,13 @@ final class CustomerAccountController extends AbstractController
                     $context->locale,
                 );
                 try {
-                    $this->accountSecurity->queueVerificationForCustomer((int) $created['id'], $context->storeName);
+                    $this->verificationCodes->requestCode((int) $created['id'], 'email', $context->storeName);
                 } catch (\Throwable) {
-                    // Registration must stay successful even when the notification queue
-                    // or APP_PUBLIC_URL is temporarily unavailable. Verification can be
-                    // requested again from the account page after login.
+                    try {
+                        $this->accountSecurity->queueVerificationForCustomer((int) $created['id'], $context->storeName);
+                    } catch (\Throwable) {
+                        // Registration remains successful even if verification delivery is temporarily unavailable.
+                    }
                 }
                 $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.http.customeraccountcontroller.oblikovyi_zapys_stvoreno_teper_uviidit_yakshcho_emai'));
                 return $this->redirectToRoute('customer_login');
@@ -101,6 +118,8 @@ final class CustomerAccountController extends AbstractController
         return $this->render('@storefront/account/register.html.twig', [
             'page_title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.http.customeraccountcontroller.stvoryty_oblikovyi_zapys'),
             'store_name' => $context->storeName,
+            'turnstile_enabled' => $this->turnstile->enabled(),
+            'turnstile_site_key' => $this->turnstileSiteKey,
             'seo_head' => ['robots' => 'noindex,nofollow'],
         ]);
     }
