@@ -112,7 +112,7 @@
         "audit:xss": "php bin/xss-hardening-check.php",
         "audit:ux-modernization": "php bin/ux-modernization-check.php",
         "audit:i18n-critical": "php bin/i18n-critical-journey-check.php",
-        "audit:beta-readiness": "php bin/beta-readiness-check.php",
+        "audit:module-certification": "php bin/module-certification-check.php",
         "audit:i18n-runtime": "php bin/i18n-runtime-hardcode-audit.php",
         "audit:public-api": "php bin/public-api-contract-check.php",
         "audit:http-errors": "php bin/http-error-boundary-check.php"
