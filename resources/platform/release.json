@@ -1,6 +1,6 @@
 {
   "platform": "Nexora Commerce",
-  "version": "3.5.1",
+  "version": "3.5.2",
   "channel": "production",
   "region_profile": "EU-UA",
   "extension_api": "2.0",
@@ -26,7 +26,7 @@
     "tiptap": "3.31.3",
     "esbuild": "0.28.2"
   },
-  "database_schema": "49",
+  "database_schema": "50",
   "built_at": "2026-09-27",
   "capabilities": [
     "multistore",
@@ -345,10 +345,11 @@
     "universal-csv-xlsx-import-wizard",
     "extension-lifecycle-audit",
     "core-update-active-extension-preflight",
-    "extension-runtime-auto-isolation"
+    "extension-runtime-auto-isolation",
+    "post-migration-collation-guard"
   ],
   "database": {
-    "schema": "49",
+    "schema": "50",
     "preferred": [
       "mysql-8.4-lts",
       "mariadb-11.4-lts"
@@ -360,7 +361,7 @@
       "mariadb-10.11-lts"
     ]
   },
-  "schema_version": 49,
+  "schema_version": 50,
   "license": "MIT",
   "features": [
     "review-photo-uploads",
