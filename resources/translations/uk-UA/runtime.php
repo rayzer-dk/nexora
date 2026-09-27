@@ -1922,4 +1922,10 @@ return [
     'forum.runtime.topic_missing' => 'Тему форуму не знайдено.',
 
     'runtime.exception.update_requires_vendor' => 'Пакет оновлення додає нові PHP-класи (%classes%), але не містить vendor/ з оновленим автозавантажувачем Composer. Зберіть пакет разом із vendor/.',
+    "forum.runtime.banned" => "Доступ до дій на форумі тимчасово або безстроково обмежено модератором.",
+    "forum.runtime.ban_reason_required" => "Вкажіть причину блокування користувача на форумі.",
+    "forum.runtime.post_rate" => "Забагато повідомлень за короткий час. Спробуйте пізніше.",
+    "forum.runtime.topic_rate" => "Забагато нових тем за короткий час. Спробуйте пізніше.",
+    "forum.runtime.duplicate_post" => "Повторне однакове повідомлення заблоковано.",
+    "forum.runtime.too_many_links" => "У повідомленні забагато зовнішніх посилань.",
 ];
