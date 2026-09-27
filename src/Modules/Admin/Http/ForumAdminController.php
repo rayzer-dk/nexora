@@ -7,6 +7,7 @@ namespace Commerce\Modules\Admin\Http;
 use Commerce\Core\Platform\PlatformVersion;
 use Commerce\Modules\Forum\Application\ForumService;
 use Commerce\Modules\Forum\Application\ForumCommunityService;
+use Commerce\Modules\Forum\Application\ForumNotificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,6 +20,7 @@ final class ForumAdminController extends AbstractController
         private readonly AdminContextResolver $contexts,
         private readonly ForumService $forum,
         private readonly ForumCommunityService $community,
+        private readonly ForumNotificationService $notifications,
     ) {
     }
 
@@ -89,6 +91,13 @@ final class ForumAdminController extends AbstractController
         }
         try {
             $this->forum->moderatePost($context->storeId, $id, $action);
+            if ($action === 'approve') {
+                try {
+                    $this->notifications->notifyPublishedReply($context->storeId, $id);
+                } catch (Throwable) {
+                    // Notification delivery is asynchronous and must never roll back moderation.
+                }
+            }
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.forumadmincontroller.povidomlennia_obrobleno'));
         } catch (Throwable $e) {
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.forumadmincontroller.diiu_ne_vykonano') . $this->safeMessage($e));
