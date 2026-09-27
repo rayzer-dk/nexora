@@ -1,9 +1,9 @@
-# Nexora Commerce 3.5.0
+# Nexora Commerce 3.5.1
 
-3.5.0 uses a clean Extension API 2.0 with no legacy Settings Schema v1 compatibility and adds bonus extension packs, commercial extension metadata, stronger storefront presets and multilingual catalog import/export. Extension API 2.0 with dynamic Builder blocks, extension routes/pages, stable UI slots, extension permissions, scoped assets, an extension-owned migration ledger, and Ed25519-signed Trusted Module Packages. Unsigned PHP/JS still cannot activate and extensions never patch Core files.
+3.5.1 uses a clean Extension API 2.0 with no legacy Settings Schema v1 compatibility and adds bonus extension packs, commercial extension metadata, stronger storefront presets and multilingual catalog import/export. Extension API 2.0 with dynamic Builder blocks, extension routes/pages, stable UI slots, extension permissions, scoped assets, an extension-owned migration ledger, and Ed25519-signed Trusted Module Packages. Unsigned PHP/JS still cannot activate and extensions never patch Core files.
 
 
-Release status: `release-candidate`. The packaged application passes static/runtime-independent gates, but the label `production-certified` is reserved for a build that also passes `tools/certify-production.sh` against an isolated supported database and live HTTP environment.
+Release channel: `production`. Repository CI certifies source/package contracts and the supported database matrix. Live deployment certification (HTTP, load, accessibility and configured external APIs) remains environment-specific and is performed separately.
 
 
 3.3.9 adds transactional gift cards and store-scoped loyalty accounts with checkout redemption, paid-order accrual, idempotent rollback and customer/admin reward views.
