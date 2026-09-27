@@ -4,7 +4,10 @@
     <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ board.name }}</span></nav>
     <header class="forum-hero forum-hero--compact">
         <div><span class="forum-kicker">{{ ui_text('forum_section') }}</span><h1>{{ board.name }}</h1>{% if board.description %}<p>{{ board.description }}</p>{% endif %}</div>
-        <button class="forum-primary-button" type="button" data-forum-compose-open>{{ ui_text('create_topic') }}</button>
+        <div class="forum-hero__actions">
+            <form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" minlength="2" placeholder="Search forum" aria-label="Search forum"><button type="submit">Search</button></form>
+            {% if app.user %}<button class="forum-primary-button" type="button" data-forum-compose-open>{{ ui_text('create_topic') }}</button>{% else %}<a class="forum-primary-button" href="{{ path('customer_login') }}">Sign in to post</a>{% endif %}
+        </div>
     </header>
 
     {% for message in app.flashes('success') %}<div class="store-notice is-success" data-store-toast-source>{{ message }}</div>{% endfor %}
@@ -15,7 +18,7 @@
             <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}">
                 <span class="forum-topic-row__status">{{ topic.is_pinned ? ui_text('pinned') : ui_text('topic') }}</span>
                 <span class="forum-topic-row__body"><strong>{{ topic.title }}</strong><small>{{ topic.author_name }} · {{ topic.published_at|default(topic.created_at) }}</small></span>
-                <span class="forum-topic-row__count"><b>{{ topic.post_count }}</b><small>{{ ui_text('messages_count_label') }}</small></span>
+                <span class="forum-topic-row__count"><b>{{ topic.post_count }}</b><small>{{ ui_text('messages_count_label') }}</small><b>{{ topic.views_count|default(0) }}</b><small>views</small></span>
                 {% if topic.is_locked %}<span class="forum-lock" title="{{ ui_text('topic_closed') }}">{{ ui_text('closed') }}</span>{% endif %}
             </a>
         {% else %}
@@ -24,22 +27,23 @@
     </div>
 </section>
 
+{% if app.user %}
 <div class="forum-compose" data-forum-compose hidden aria-hidden="true">
     <div class="forum-compose__backdrop" data-forum-compose-close></div>
     <section class="forum-compose__dialog" role="dialog" aria-modal="true" aria-labelledby="forum-compose-title">
         <button class="forum-compose__close" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">×</button>
         <span class="forum-kicker">{{ ui_text('new_topic') }}</span>
         <h2 id="forum-compose-title">{{ ui_text('create_topic_in')|replace({'%board%': board.name}) }}</h2>
-        <p>{{ ui_text('topic_moderation_text') }}</p>
+        <p>Posting as <strong>{{ app.user.displayName }}</strong>. {{ ui_text('topic_moderation_text') }}</p>
         <form method="post" action="{{ path('storefront_forum_topic_create',{slug:board.slug}) }}" data-store-async-form>
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_topic_' ~ board.id) }}">
             <input type="hidden" name="rendered_at" value="{{ form_rendered_at }}">
             <label class="forum-honeypot" aria-hidden="true">{{ ui_text('company') }}<input name="company" tabindex="-1" autocomplete="off"></label>
-            <label><span>{{ ui_text('your_name') }}</span><input name="author_name" required maxlength="120" autocomplete="name"></label>
             <label><span>{{ ui_text('topic_title') }}</span><input name="title" required maxlength="240"></label>
             <label><span>{{ ui_text('message') }}</span><textarea name="body" required minlength="3" maxlength="20000" rows="8"></textarea></label>
             <div class="forum-compose__actions"><button class="forum-secondary-button" type="button" data-forum-compose-close>{{ ui_text('cancel') }}</button><button class="forum-primary-button" type="submit">{{ ui_text('send_for_moderation') }}</button></div>
         </form>
     </section>
 </div>
+{% endif %}
 {% endblock %}
