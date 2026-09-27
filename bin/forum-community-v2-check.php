@@ -46,7 +46,7 @@ $must = [
     ],
     'themes/default/templates/forum/board.html.twig' => [
         "path('customer_login')",
-        'app.user.displayName',
+        'forum_nickname',
     ],
     'themes/default/templates/forum/topic.html.twig' => [
         "storefront_forum_subscription",
@@ -116,6 +116,14 @@ foreach (['themes/default/templates/forum/board.html.twig', 'themes/default/temp
     $text = (string) @file_get_contents($root . '/' . $file);
     if (preg_match('/name=["\']author_name["\']/', $text) === 1) {
         $fail[] = $file . ' still permits free-form forum identity';
+    }
+}
+
+
+foreach (['themes/default/templates/forum/board.html.twig', 'themes/default/templates/forum/topic.html.twig'] as $file) {
+    $text = (string) @file_get_contents($root . '/' . $file);
+    if (str_contains($text, 'app.user.displayName')) {
+        $fail[] = $file . ' leaks commerce displayName into forum UI';
     }
 }
 
