@@ -7,6 +7,7 @@ namespace Commerce\Modules\Customer\Application;
 use Commerce\Modules\Notification\Application\NotificationOutbox;
 use Commerce\Modules\Notification\Domain\NotificationChannel;
 use Commerce\Modules\Notification\Domain\NotificationMessage;
+use Commerce\Core\I18n\StorefrontUiTranslator;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\DBAL\Connection;
@@ -16,7 +17,9 @@ final readonly class CustomerVerificationCodeService
     public function __construct(
         private Connection $db,
         private NotificationOutbox $outbox,
+        private StorefrontUiTranslator $translator,
         private string $appSecret,
+        private bool $smsEnabled,
     ) {
     }
 
@@ -27,11 +30,14 @@ final readonly class CustomerVerificationCodeService
         }
 
         $row = $this->db->fetchAssociative(
-            'SELECT id,email,phone_e164,email_verified_at,phone_verified_at,status FROM mc_customer WHERE id=? LIMIT 1',
+            'SELECT id,email,phone_e164,email_verified_at,phone_verified_at,locale,status FROM mc_customer WHERE id=? LIMIT 1',
             [$customerId],
         );
         if (!is_array($row) || (string) $row['status'] !== 'active') {
             return false;
+        }
+        if ($channel === 'sms' && !$this->smsEnabled) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('verification.runtime.sms_disabled'));
         }
         if ($channel === 'email' && $row['email_verified_at'] !== null) {
             return true;
@@ -72,11 +78,12 @@ final readonly class CustomerVerificationCodeService
             'created_at' => $now->format('Y-m-d H:i:s.u'),
         ]);
 
+        $locale = trim((string) ($row['locale'] ?? '')) ?: 'uk-UA';
         $message = new NotificationMessage(
             type: 'customer_verification_code',
-            subject: 'Verification code',
-            text: 'Your verification code is ' . $code . '. It expires in 15 minutes.',
-            context: ['store_name' => $storeName, 'verification_code' => $code, 'expires_minutes' => 15],
+            subject: $this->translator->translate('verification_code_subject', $locale),
+            text: $this->translator->translate('verification_code_text', $locale, ['code' => $code]),
+            context: ['store_name' => $storeName, 'verification_code' => $code, 'expires_minutes' => 15, 'locale' => $locale],
             emailTemplate: 'generic',
         );
         $this->outbox->enqueue(
