@@ -49,9 +49,10 @@ final readonly class ForumService
         $limit = max(1, min(100, $limit));
         $offset = (max(1, $page) - 1) * $limit;
         return $this->connection->fetchAllAssociative(
-            "SELECT t.id,t.title,t.slug,t.author_name,t.is_pinned,t.is_locked,t.created_at,t.published_at,t.last_post_at,
+            "SELECT t.id,t.customer_id,t.title,t.slug,COALESCE(NULLIF(c.display_name,''),t.author_name) AS author_name,t.is_pinned,t.is_locked,t.views_count,t.created_at,t.published_at,t.last_post_at,
                 (SELECT COUNT(*) FROM mc_forum_post p WHERE p.topic_id=t.id AND p.status='published') AS post_count
              FROM mc_forum_topic t
+             LEFT JOIN mc_customer c ON c.id=t.customer_id
              WHERE t.board_id=? AND t.status='published'
              ORDER BY t.is_pinned DESC,COALESCE(t.last_post_at,t.published_at,t.created_at) DESC,t.id DESC
              LIMIT {$limit} OFFSET {$offset}",
@@ -63,9 +64,10 @@ final readonly class ForumService
     public function topic(int $storeId, int $topicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT t.id,t.title,t.slug,t.author_name,t.is_pinned,t.is_locked,t.created_at,t.published_at,b.id AS board_id,b.slug AS board_slug,b.name AS board_name
+            "SELECT t.id,t.customer_id,t.title,t.slug,COALESCE(NULLIF(c.display_name,''),t.author_name) AS author_name,t.is_pinned,t.is_locked,t.views_count,t.created_at,t.published_at,b.id AS board_id,b.slug AS board_slug,b.name AS board_name
              FROM mc_forum_topic t
              JOIN mc_forum_board b ON b.id=t.board_id
+             LEFT JOIN mc_customer c ON c.id=t.customer_id
              WHERE t.id=? AND t.status='published' AND b.store_id=? AND b.status='active' LIMIT 1",
             [$topicId, $storeId],
         );
@@ -76,12 +78,12 @@ final readonly class ForumService
     public function posts(int $topicId): array
     {
         return $this->connection->fetchAllAssociative(
-            "SELECT id,author_name,body_text,created_at,published_at FROM mc_forum_post WHERE topic_id=? AND status='published' ORDER BY id ASC",
+            "SELECT p.id,p.customer_id,COALESCE(NULLIF(c.display_name,''),p.author_name) AS author_name,p.body_text,p.created_at,p.published_at,p.edited_at,p.edit_count,\n                (SELECT COUNT(*) FROM mc_forum_reaction r WHERE r.post_id=p.id AND r.reaction='like') AS like_count\n             FROM mc_forum_post p\n             LEFT JOIN mc_customer c ON c.id=p.customer_id\n             WHERE p.topic_id=? AND p.status='published' ORDER BY p.id ASC",
             [$topicId],
         );
     }
 
-    public function createTopic(int $storeId, string $boardSlug, string $author, string $title, string $body): int
+    public function createTopic(int $storeId, string $boardSlug, int $customerId, string $author, string $title, string $body): int
     {
         $author = $this->plain($author, 120, \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerregistrationservice.vkazhit_imia'));
         $title = $this->plain($title, 240, \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.application.forumservice.vkazhit_temu'));
@@ -97,10 +99,11 @@ final readonly class ForumService
         }
         $now = $this->now();
 
-        return $this->connection->transactional(function (Connection $db) use ($board, $author, $title, $body, $slug, $now): int {
+        return $this->connection->transactional(function (Connection $db) use ($storeId, $board, $customerId, $author, $title, $body, $slug, $now): int {
             $db->insert('mc_forum_topic', [
                 'public_id' => $this->publicIds->binary(),
                 'board_id' => (int) $board['id'],
+                'customer_id' => $customerId,
                 'title' => $title,
                 'slug' => mb_substr($slug, 0, 240, 'UTF-8'),
                 'author_name' => $author,
@@ -116,6 +119,7 @@ final readonly class ForumService
             $db->insert('mc_forum_post', [
                 'public_id' => $this->publicIds->binary(),
                 'topic_id' => $topicId,
+                'customer_id' => $customerId,
                 'author_name' => $author,
                 'body_text' => $body,
                 'status' => 'pending',
@@ -123,11 +127,17 @@ final readonly class ForumService
                 'updated_at' => $now,
                 'published_at' => null,
             ]);
+            $db->insert('mc_forum_subscription', [
+                'store_id' => $storeId,
+                'topic_id' => $topicId,
+                'customer_id' => $customerId,
+                'created_at' => $now,
+            ]);
             return $topicId;
         });
     }
 
-    public function createReply(int $storeId, int $topicId, string $author, string $body): int
+    public function createReply(int $storeId, int $topicId, int $customerId, string $author, string $body): int
     {
         $author = $this->plain($author, 120, \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerregistrationservice.vkazhit_imia'));
         $body = $this->body($body);
@@ -142,6 +152,7 @@ final readonly class ForumService
         $this->connection->insert('mc_forum_post', [
             'public_id' => $this->publicIds->binary(),
             'topic_id' => $topicId,
+            'customer_id' => $customerId,
             'author_name' => $author,
             'body_text' => $body,
             'status' => 'pending',
@@ -149,7 +160,12 @@ final readonly class ForumService
             'updated_at' => $now,
             'published_at' => null,
         ]);
-        return (int) $this->connection->lastInsertId();
+        $postId = (int) $this->connection->lastInsertId();
+        $this->connection->executeStatement(
+            'INSERT IGNORE INTO mc_forum_subscription(store_id,topic_id,customer_id,created_at) VALUES (?,?,?,?)',
+            [$storeId, $topicId, $customerId, $now],
+        );
+        return $postId;
     }
 
     /** @return array{boards:list<array<string,mixed>>,topics:list<array<string,mixed>>,posts:list<array<string,mixed>>} */
@@ -191,7 +207,7 @@ final readonly class ForumService
 
     public function moderateTopic(int $storeId, int $topicId, string $action): void
     {
-        $allowed = ['approve', 'reject', 'lock', 'unlock'];
+        $allowed = ['approve', 'reject', 'lock', 'unlock', 'pin', 'unpin'];
         if (!in_array($action, $allowed, true)) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.335df6a2c54b'));
         }
@@ -215,6 +231,10 @@ final readonly class ForumService
             if ($action === 'reject') {
                 $db->update('mc_forum_topic', ['status' => 'rejected', 'updated_at' => $now], ['id' => $topicId]);
                 $db->executeStatement("UPDATE mc_forum_post SET status='rejected',updated_at=? WHERE topic_id=? AND status='pending'", [$now, $topicId]);
+                return;
+            }
+            if ($action === 'pin' || $action === 'unpin') {
+                $db->update('mc_forum_topic', ['is_pinned' => $action === 'pin' ? 1 : 0, 'updated_at' => $now], ['id' => $topicId]);
                 return;
             }
             $db->update('mc_forum_topic', ['is_locked' => $action === 'lock' ? 1 : 0, 'updated_at' => $now], ['id' => $topicId]);
