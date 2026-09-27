@@ -62,6 +62,24 @@ $must = [
     'themes/default/templates/forum/search.html.twig' => [
         "storefront_forum_search",
     ],
+        'src/Modules/Forum/Application/ForumProfileService.php' => [
+        'show_email',
+        'show_phone',
+        'allow_private_messages',
+    ],
+    'src/Modules/Forum/Application/ForumDirectMessageService.php' => [
+        'send(',
+        'block(',
+        'report(',
+    ],
+    'src/Modules/Forum/Application/ForumAccessPolicy.php' => [
+        'email_verified_at IS NOT NULL OR phone_verified_at IS NOT NULL',
+    ],
+    'src/Modules/Customer/Application/CustomerVerificationCodeService.php' => [
+        'requestCode',
+        'verify(',
+        'hash_hmac',
+    ],
     'src/Modules/Forum/Application/ForumNotificationService.php' => [
         'notifyPublishedReply',
         'NotificationOutbox',
@@ -107,14 +125,22 @@ foreach ([
     'forum-post-pagination',
     'forum-quote-replies',
     'forum-removable-optional-module',
+    'forum-privacy-nickname',
+    'forum-contact-visibility-controls',
+    'forum-private-messaging',
+    'forum-member-blocking',
+    'forum-private-message-reports',
+    'forum-verified-participation',
+    'customer-email-sms-verification-codes',
+    'registration-turnstile',
 ] as $capability) {
     if (!in_array($capability, (array) ($release['capabilities'] ?? []), true)) {
         $fail[] = 'missing capability ' . $capability;
     }
 }
 
-if ((string) ($release['database_schema'] ?? '') !== '46') {
-    $fail[] = 'release schema is not 46';
+if ((string) ($release['database_schema'] ?? '') !== '47') {
+    $fail[] = 'release schema is not 47';
 }
 
 if ($fail !== []) {
