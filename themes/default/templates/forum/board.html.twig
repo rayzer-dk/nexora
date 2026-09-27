@@ -4,7 +4,7 @@
     <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ board.name }}</span></nav>
     <header class="forum-hero forum-hero--compact">
         <div><span class="forum-kicker">{{ ui_text('forum_section') }}</span><h1>{{ board.name }}</h1>{% if board.description %}<p>{{ board.description }}</p>{% endif %}</div>
-        <div class="forum-hero__actions">
+        <div class="forum-hero__actions"><a class="forum-secondary-button" href="{{ path('storefront_forum_rules') }}">{{ ui_text('forum_rules_link') }}</a>
             <form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" minlength="2" placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button type="submit">{{ ui_text('search') }}</button></form>
             {% if app.user %}<button class="forum-primary-button" type="button" data-forum-compose-open>{{ ui_text('create_topic') }}</button>{% else %}<a class="forum-primary-button" href="{{ path('customer_login') }}">{{ ui_text('forum_sign_in_post') }}</a>{% endif %}
         </div>
