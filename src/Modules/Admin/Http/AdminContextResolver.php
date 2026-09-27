@@ -71,6 +71,9 @@ final readonly class AdminContextResolver
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.10fff149cbbd'));
         }
 
+        $request->setLocale($locale);
+        \Commerce\Core\I18n\CanonicalUiText::useLocale($locale);
+
         if ($session !== null) {
             $session->set('admin_context.store_id', $storeId);
             $session->set('admin_context.market_id', $marketId);
