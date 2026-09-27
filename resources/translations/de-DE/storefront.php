@@ -537,4 +537,6 @@ return [
     "forum_block_member" => "Mitglied blockieren",
     "forum_report_reason_harassment" => "Belästigung",
     "forum_report_reason_fraud" => "Betrug",
+    "verification_code_subject" => "Bestätigungscode",
+    "verification_code_text" => "Ihr Bestätigungscode lautet %code%. Er ist 15 Minuten gültig.",
 ];
