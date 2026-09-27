@@ -19,6 +19,16 @@ final class SystemModuleCatalog
             maturity: $maturity,
         );
 
+        $optional = static fn (string $code, string $name, array $deps = [], bool $enabled = false, ModuleMaturity $maturity = ModuleMaturity::Stable): SystemModuleDefinition => new SystemModuleDefinition(
+            code: $code,
+            name: $name,
+            tier: ModuleTier::Optional,
+            removalPolicy: ModuleRemovalPolicy::Removable,
+            dependencies: $deps,
+            enabledByDefault: $enabled,
+            maturity: $maturity,
+        );
+
         $definitions = [
             $system('measurement', \Commerce\Core\I18n\CanonicalUiText::get('php.core.module.systemmodulecatalog.odynytsi_ta_vymiriuvannia')),
             $system('catalog', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.kataloh'), ['measurement']),
@@ -57,7 +67,7 @@ final class SystemModuleCatalog
             $system('redirects', \Commerce\Core\I18n\CanonicalUiText::get('php.core.module.systemmodulecatalog.redyrekty'), ['seo']),
             $system('cms', 'CMS'),
             $system('blog', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.content.http.blogcontroller.bloh'), ['cms']),
-            $system('forum', \Commerce\Core\I18n\CanonicalUiText::get('php.core.module.systemmodulecatalog.forum'), ['cms', 'customer'], true, ModuleMaturity::Stable),
+            $optional('forum', \Commerce\Core\I18n\CanonicalUiText::get('php.core.module.systemmodulecatalog.forum'), ['cms', 'customer'], false, ModuleMaturity::Stable),
             $system('navigation', \Commerce\Core\I18n\CanonicalUiText::get('php.core.module.systemmodulecatalog.navihatsiia'), ['cms', 'catalog'], true, ModuleMaturity::Stable),
             $system('page_builder', \Commerce\Core\I18n\CanonicalUiText::get('php.core.module.systemmodulecatalog.konstruktor_storinok'), ['cms', 'appearance'], true, ModuleMaturity::Stable),
             $system('recommendations', \Commerce\Core\I18n\CanonicalUiText::get('php.core.module.systemmodulecatalog.rekomendatsii'), ['catalog'], true, ModuleMaturity::Stable),
