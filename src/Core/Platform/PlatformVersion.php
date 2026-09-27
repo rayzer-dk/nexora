@@ -12,6 +12,8 @@ final class PlatformVersion
     public const DATABASE_SCHEMA = 47;
     public const MIN_PHP = '8.4.0';
     public const MAX_PHP_EXCLUSIVE = '8.6.0';
+    public const MIN_MYSQL = '8.4.0';
+    public const MIN_MARIADB = '10.11.0';
 
     private function __construct()
     {
