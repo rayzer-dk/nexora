@@ -1921,4 +1921,5 @@ return [
     'forum.runtime.edit_expired' => '30-хвилинний період редагування завершився.',
     'forum.runtime.topic_missing' => 'Тему форуму не знайдено.',
 
+    'runtime.exception.update_requires_vendor' => 'Пакет оновлення додає нові PHP-класи (%classes%), але не містить vendor/ з оновленим автозавантажувачем Composer. Зберіть пакет разом із vendor/.',
 ];
