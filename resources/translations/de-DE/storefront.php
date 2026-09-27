@@ -511,4 +511,9 @@ return [
     "forum_try_other" => "Versuchen Sie ein anderes Wort oder eine andere Phrase.",
     "forum_new_reply_subject" => "Neue Antwort in „%topic%“",
     "forum_new_reply_text" => "In „%topic%“ wurde eine neue Antwort veröffentlicht: %url%",
+    "forum_member_since" => "Mitglied seit %date%",
+    "forum_no_activity" => "Noch keine öffentliche Aktivität.",
+    "forum_following" => "Beobachtete Themen",
+    "forum_following_intro" => "Themen, denen Sie folgen und zu denen Sie Benachrichtigungen erhalten.",
+    "forum_no_followed_topics" => "Sie folgen noch keinen Themen.",
 ];
