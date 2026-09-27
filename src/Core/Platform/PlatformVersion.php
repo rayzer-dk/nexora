@@ -9,7 +9,7 @@ final class PlatformVersion
     public const VERSION = '3.5.0';
     public const CHANNEL = 'production';
     public const EXTENSION_API = '2.0';
-    public const DATABASE_SCHEMA = 45;
+    public const DATABASE_SCHEMA = 46;
     public const MIN_PHP = '8.4.0';
     public const MAX_PHP_EXCLUSIVE = '8.6.0';
 
