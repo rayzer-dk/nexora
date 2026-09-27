@@ -7,7 +7,7 @@ namespace Commerce\Core\Platform;
 final class PlatformVersion
 {
     public const VERSION = '3.5.0';
-    public const CHANNEL = 'release-candidate';
+    public const CHANNEL = 'production';
     public const EXTENSION_API = '2.0';
     public const DATABASE_SCHEMA = 45;
     public const MIN_PHP = '8.4.0';
