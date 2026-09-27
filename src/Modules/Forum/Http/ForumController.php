@@ -77,6 +77,7 @@ final class ForumController extends AbstractController
             'board' => $board,
             'topics' => $this->forum->topics((int) $board['id'], $page, 30, $customerId),
             'unread_count' => $customerId !== null ? $this->community->unreadCount($context->storeId, $customerId) : 0,
+            'forum_nickname' => $customerId !== null ? $this->profiles->nickname($context->storeId, $customerId) : null,
             'page' => $page,
             'form_rendered_at' => time(),
             'seo_head' => [
@@ -164,6 +165,7 @@ final class ForumController extends AbstractController
             'page' => $page,
             'pages' => $pages,
             'current_customer_id' => $customerId,
+            'forum_nickname' => $customerId !== null ? $this->profiles->nickname($context->storeId, $customerId) : null,
             'is_subscribed' => $customerId !== null ? $this->community->isSubscribed($context->storeId, $id, $customerId) : false,
             'form_rendered_at' => time(),
             'seo_head' => [
