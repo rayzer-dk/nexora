@@ -1,12 +1,15 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="forum-shell shell">
-    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ member.display_name }}</span></nav>
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ member.nickname }}</span></nav>
     <header class="forum-hero forum-hero--compact">
         <div>
-            <span class="forum-avatar" aria-hidden="true">{{ member.display_name|first|upper }}</span>
-            <h1>{{ member.display_name }}</h1>
+            <span class="forum-avatar" aria-hidden="true">{{ member.nickname|first|upper }}</span>
+            <h1>{{ member.nickname }}</h1>
             <p>{{ ui_text('forum_member_since')|replace({'%date%': member.created_at}) }}</p>
+            {% if member.bio %}<p>{{ member.bio }}</p>{% endif %}
+            {% if member.email %}<p>{{ ui_text('forum_public_email') }}: {{ member.email }}</p>{% endif %}
+            {% if member.phone_e164 %}<p>{{ ui_text('forum_public_phone') }}: {{ member.phone_e164 }}</p>{% endif %}
         </div>
         <div class="forum-member-stats">
             <span><b>{{ member.stats.topics }}</b><small>{{ ui_text('topics_count_label') }}</small></span>
@@ -14,6 +17,18 @@
             <span><b>{{ member.stats.likes }}</b><small>{{ ui_text('forum_likes') }}</small></span>
         </div>
     </header>
+
+    {% if can_message %}
+        <details class="forum-compose-inline">
+            <summary class="forum-primary-button">{{ ui_text('forum_private_message') }}</summary>
+            <form method="post" action="{{ path('storefront_forum_message_start',{id:member.customer_id}) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_message_start_' ~ member.customer_id) }}">
+                <textarea name="body" required minlength="2" maxlength="5000" rows="5" placeholder="{{ ui_text('forum_private_message_placeholder') }}"></textarea>
+                <button class="forum-primary-button" type="submit">{{ ui_text('forum_send_private_message') }}</button>
+            </form>
+        </details>
+    {% endif %}
+
     <div class="forum-topic-list">
         {% for item in activity %}
             <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:item.topic_id,slug:item.slug}) }}#post-{{ item.post_id }}">
