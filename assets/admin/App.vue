@@ -67,8 +67,8 @@ const componentStatus = [
   ['Symfony', '8.1 stable'],
   ['Doctrine DBAL', '4.4'],
   ['Extension API', '2.0'],
-  [t('vue.app.skhema_bd'), '45'],
-  ['TypeScript', '7.0.2 native'],
+  [t('vue.app.skhema_bd'), '49'],
+  ['TypeScript', '6.0.3'],
 ];
 
 const activity = [
@@ -76,7 +76,7 @@ const activity = [
   [t('vue.app.merchant_dani'), t('vue.app.taksonomiia_ta_avtomatychna_klasyfikatsiia_hotovi')],
   ['SEO URL', t('vue.app.chysti_canonical_ta_polityka_indeksatsii_filtriv')],
   [t('vue.app.systemni_moduli'), t('vue.app.zakhyshcheni_pakety_core')],
-  [t('vue.app.kompiliator'), 'TypeScript 7 native toolchain'],
+  [t('vue.app.kompiliator'), 'TypeScript 6 toolchain'],
 ];
 </script>
 
