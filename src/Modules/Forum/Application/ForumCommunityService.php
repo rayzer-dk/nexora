@@ -51,6 +51,37 @@ final readonly class ForumCommunityService
         );
     }
 
+    public function markRead(int $storeId, int $topicId, int $customerId): void
+    {
+        $this->assertTopicInStore($storeId, $topicId);
+        $lastPostId = $this->connection->fetchOne(
+            "SELECT MAX(p.id) FROM mc_forum_post p
+             JOIN mc_forum_topic t ON t.id=p.topic_id
+             JOIN mc_forum_board b ON b.id=t.board_id
+             WHERE p.topic_id=? AND p.status='published' AND t.status='published' AND b.store_id=?",
+            [$topicId, $storeId],
+        );
+        $this->connection->executeStatement(
+            "INSERT INTO mc_forum_topic_read(topic_id,customer_id,last_read_post_id,read_at)
+             VALUES (?,?,?,?)
+             ON DUPLICATE KEY UPDATE last_read_post_id=VALUES(last_read_post_id),read_at=VALUES(read_at)",
+            [$topicId, $customerId, $lastPostId !== false && $lastPostId !== null ? (int) $lastPostId : null, $this->now()],
+        );
+    }
+
+    public function unreadCount(int $storeId, int $customerId): int
+    {
+        return (int) $this->connection->fetchOne(
+            "SELECT COUNT(*)
+             FROM mc_forum_topic t
+             JOIN mc_forum_board b ON b.id=t.board_id
+             LEFT JOIN mc_forum_topic_read r ON r.topic_id=t.id AND r.customer_id=?
+             WHERE b.store_id=? AND b.status='active' AND t.status='published'
+               AND (r.id IS NULL OR r.read_at < COALESCE(t.last_post_at,t.published_at,t.created_at))",
+            [$customerId, $storeId],
+        );
+    }
+
     public function isSubscribed(int $storeId, int $topicId, int $customerId): bool
     {
         return (bool) $this->connection->fetchOne(
