@@ -21,10 +21,10 @@ $tracked = [];
 foreach (SystemModuleCatalog::all() as $code => $definition) {
     if (!isset($readiness[$code])) continue;
     $tracked[$code] = true;
+    $entry = $readiness[$code] ?? null;
+    if (!is_array($entry)) { $errors[] = 'Tracked stable module has no certification record: ' . $code; continue; }
     if ($definition->maturity !== ModuleMaturity::Stable) { $errors[] = 'Tracked module is not Stable: ' . $code; continue; }
     if (($entry['state'] ?? '') !== 'production_certified') { $errors[] = 'Tracked module is not production_certified: ' . $code; continue; }
-    $entry = $readiness[$code] ?? null;
-    if (!is_array($entry)) { $errors[] = 'Tracked stable module has no readiness record: ' . $code; continue; }
     if (!in_array((string)($entry['state'] ?? ''), $allowedStates, true)) $errors[] = 'Invalid readiness state for ' . $code;
     $runtime = trim((string)($entry['runtime'] ?? ''));
     if ($runtime === '') $errors[] = 'Missing runtime certification evidence for ' . $code;
