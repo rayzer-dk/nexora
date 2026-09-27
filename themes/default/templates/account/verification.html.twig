@@ -1,0 +1,57 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="shell account-auth">
+    <div class="account-card">
+        <div class="account-card__head">
+            <span class="eyebrow">{{ ui_text('account_security') }}</span>
+            <h1>Account verification</h1>
+            <p>Verify email or phone before posting on the forum.</p>
+        </div>
+
+        {% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
+        {% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}
+
+        <div class="account-verification-grid">
+            <section>
+                <h2>Email</h2>
+                <p>{{ customer.email }}</p>
+                <p>{{ customer.email_verified_at ? 'Verified' : 'Not verified' }}</p>
+                {% if not customer.email_verified_at %}
+                    <form method="post" action="{{ path('customer_verification_request') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('customer_verification_request') }}">
+                        <input type="hidden" name="channel" value="email">
+                        <button class="button button--secondary" type="submit">Send email code</button>
+                    </form>
+                {% endif %}
+            </section>
+
+            <section>
+                <h2>SMS</h2>
+                <p>{{ customer.phone_e164|default('No phone number') }}</p>
+                <p>{{ customer.phone_verified_at|default(null) ? 'Verified' : 'Not verified' }}</p>
+                {% if customer.phone_e164 and not customer.phone_verified_at|default(null) %}
+                    <form method="post" action="{{ path('customer_verification_request') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('customer_verification_request') }}">
+                        <input type="hidden" name="channel" value="sms">
+                        <button class="button button--secondary" type="submit">Send SMS code</button>
+                    </form>
+                {% endif %}
+            </section>
+        </div>
+
+        <form method="post" action="{{ path('customer_verification_confirm') }}" class="account-form">
+            <input type="hidden" name="_token" value="{{ csrf_token('customer_verification_confirm') }}">
+            <label>Channel
+                <select name="channel">
+                    <option value="email">Email</option>
+                    {% if customer.phone_e164 %}<option value="sms">SMS</option>{% endif %}
+                </select>
+            </label>
+            <label>6-digit code
+                <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required autocomplete="one-time-code">
+            </label>
+            <button class="button button--primary" type="submit">Verify</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
