@@ -26,7 +26,7 @@
     "tiptap": "3.31.3",
     "esbuild": "0.28.2"
   },
-  "database_schema": "45",
+  "database_schema": "46",
   "built_at": "2026-09-26",
   "capabilities": [
     "multistore",
@@ -121,6 +121,13 @@
     "extension-rollback",
     "site-profile-modes",
     "forum-engine-foundation",
+    "forum-community-v2",
+    "forum-unified-customer-identity",
+    "forum-topic-subscriptions",
+    "forum-post-reactions",
+    "forum-user-reports",
+    "forum-post-edit-history",
+    "forum-search",
     "store-identity-revisions",
     "responsive-media-derivatives",
     "live-search-suggestions",
@@ -318,7 +325,7 @@
     "extension-runtime-auto-isolation"
   ],
   "database": {
-    "schema": "45",
+    "schema": "46",
     "preferred": [
       "mysql-8.4-lts",
       "mariadb-11.4-lts"
@@ -330,7 +337,7 @@
       "mariadb-11.4-lts"
     ]
   },
-  "schema_version": 45,
+  "schema_version": 46,
   "license": "MIT",
   "features": [
     "review-photo-uploads",
