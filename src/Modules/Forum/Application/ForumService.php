@@ -168,7 +168,7 @@ final readonly class ForumService
         return $postId;
     }
 
-    /** @return array{boards:list<array<string,mixed>>,topics:list<array<string,mixed>>,posts:list<array<string,mixed>>} */
+    /** @return array{boards:list<array<string,mixed>>,topics:list<array<string,mixed>>,posts:list<array<string,mixed>>,published_topics:list<array<string,mixed>>} */
     public function moderationQueue(int $storeId): array
     {
         $boards = $this->connection->fetchAllAssociative(
@@ -183,7 +183,14 @@ final readonly class ForumService
             "SELECT p.id,p.topic_id,p.author_name,p.body_text,p.status,p.created_at,t.title AS topic_title FROM mc_forum_post p JOIN mc_forum_topic t ON t.id=p.topic_id JOIN mc_forum_board b ON b.id=t.board_id WHERE b.store_id=? AND p.status='pending' AND t.status='published' ORDER BY p.id ASC LIMIT 150",
             [$storeId],
         );
-        return ['boards' => $boards, 'topics' => $topics, 'posts' => $posts];
+        $publishedTopics = $this->connection->fetchAllAssociative(
+            "SELECT t.id,t.title,t.author_name,t.is_pinned,t.is_locked,t.views_count,t.last_post_at,b.name AS board_name
+             FROM mc_forum_topic t JOIN mc_forum_board b ON b.id=t.board_id
+             WHERE b.store_id=? AND t.status='published'
+             ORDER BY COALESCE(t.last_post_at,t.published_at,t.created_at) DESC,t.id DESC LIMIT 100",
+            [$storeId],
+        );
+        return ['boards' => $boards, 'topics' => $topics, 'posts' => $posts, 'published_topics' => $publishedTopics];
     }
 
     public function createBoard(int $storeId, string $name, string $slug, string $description, int $sortOrder): void
