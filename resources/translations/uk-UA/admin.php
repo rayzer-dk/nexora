@@ -1892,4 +1892,15 @@ return [
     'admin.forum.index.no_private_message_reports' => 'Відкритих скарг на приватні повідомлення немає.',
     'admin.forum.index.mark_resolved' => 'Позначити вирішеною',
 
+    "admin.forum.index.community_safety" => "Безпека спільноти",
+    "admin.forum.index.user_bans" => "Блокування користувачів форуму",
+    "admin.forum.index.customer_id" => "ID користувача",
+    "admin.forum.index.ban_days" => "Термін, днів",
+    "admin.forum.index.permanent" => "Безстроково",
+    "admin.forum.index.ban_reason" => "Причина блокування",
+    "admin.forum.index.apply_ban" => "Заблокувати на форумі",
+    "admin.forum.index.user" => "Користувач",
+    "admin.forum.index.expires" => "Діє до",
+    "admin.forum.index.revoke_ban" => "Зняти блокування",
+    "admin.forum.index.no_active_bans" => "Активних блокувань немає.",
 ];
