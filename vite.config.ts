@@ -2,7 +2,11 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-  plugins: [vue()],
+  // Absolute URLs such as /assets/branding/*.svg are runtime paths served from public/, not modules.
+  plugins: [vue({ template: { transformAssetUrls: { includeAbsolute: false } } })],
+  // public/ is the web root (index.php, setup.php, media). Copying it into public/build
+  // published stale front controllers and the installer under /build/.
+  publicDir: false,
   build: {
     outDir: 'public/build',
     emptyOutDir: true,
