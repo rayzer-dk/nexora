@@ -511,4 +511,9 @@ return [
     "forum_try_other" => "Try another word or phrase.",
     "forum_new_reply_subject" => "New reply in “%topic%”",
     "forum_new_reply_text" => "A new reply was published in “%topic%”: %url%",
+    "forum_member_since" => "Member since %date%",
+    "forum_no_activity" => "No public activity yet.",
+    "forum_following" => "Followed topics",
+    "forum_following_intro" => "Topics you follow and receive notifications about.",
+    "forum_no_followed_topics" => "You are not following any topics yet.",
 ];
