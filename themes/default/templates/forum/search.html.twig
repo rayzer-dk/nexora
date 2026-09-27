@@ -1,10 +1,10 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="forum-shell shell">
-    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>Search</span></nav>
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ ui_text('forum_search') }}</span></nav>
     <header class="forum-hero forum-hero--compact">
-        <div><span class="forum-kicker">Community</span><h1>Search forum</h1><p>Find discussions by topic title or message content.</p></div>
-        <form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" value="{{ query }}" minlength="2" required placeholder="Search forum" aria-label="Search forum"><button type="submit" class="forum-primary-button">Search</button></form>
+        <div><span class="forum-kicker">Community</span><h1>{{ ui_text('forum_search') }}</h1><p>{{ ui_text('forum_search_intro') }}</p></div>
+        <form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" value="{{ query }}" minlength="2" required placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button type="submit" class="forum-primary-button">{{ ui_text('search') }}</button></form>
     </header>
     {% if query %}
         <div class="forum-topic-list">
@@ -15,7 +15,7 @@
                     <span class="forum-topic-row__arrow" aria-hidden="true">→</span>
                 </a>
             {% else %}
-                <div class="forum-empty"><h2>No results</h2><p>Try another word or phrase.</p></div>
+                <div class="forum-empty"><h2>{{ ui_text('forum_no_results') }}</h2><p>{{ ui_text('forum_try_other') }}</p></div>
             {% endfor %}
         </div>
     {% endif %}
