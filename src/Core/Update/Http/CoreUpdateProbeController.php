@@ -33,6 +33,10 @@ final class CoreUpdateProbeController extends AbstractController
             throw $this->createNotFoundException();
         }
 
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+
         try {
             $database = (int) $this->db->fetchOne('SELECT 1') === 1;
             $health = $this->installation->verify();
