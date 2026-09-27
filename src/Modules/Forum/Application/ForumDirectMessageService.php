@@ -72,7 +72,7 @@ final readonly class ForumDirectMessageService
 
     public function send(int $storeId, int $senderId, int $recipientId, string $body): int
     {
-        $this->accessPolicy->assertCanParticipate($senderId);
+        $this->accessPolicy->assertCanParticipate($storeId, $senderId);
         if ($senderId === $recipientId) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.dm_self'));
         }
