@@ -3,6 +3,7 @@
 <section class="forum-shell shell">
     <header class="forum-hero">
         <div><span class="forum-kicker">{{ ui_text('community') }}</span><h1>{{ ui_text('forum') }}</h1><p>{{ ui_text('forum_intro') }}</p></div>
+        <div class="forum-hero__actions"><form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" minlength="2" placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button type="submit">{{ ui_text('search') }}</button></form>{% if app.user %}<a class="forum-secondary-button" href="{{ path('storefront_forum_following') }}">{{ ui_text('forum_following') }}</a>{% endif %}</div>
     </header>
     <div class="forum-board-list">
         {% for board in boards %}
