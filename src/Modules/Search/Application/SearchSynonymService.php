@@ -51,7 +51,8 @@ final readonly class SearchSynonymService
                 // Synonyms are an optional relevance layer. Missing migration or a
                 // damaged synonym table must never take catalog search down.
             }
-            $groups[] = array_slice(array_keys($alternatives), 0, 12);
+            // Numeric terms ("14", "256") become int array keys in PHP; cast back so callers always get strings.
+            $groups[] = array_map('strval', array_slice(array_keys($alternatives), 0, 12));
         }
         return $groups;
     }
