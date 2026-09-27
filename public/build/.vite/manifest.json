@@ -1,0 +1,122 @@
+{
+  "_icons-CHFUPWRH.js": {
+    "file": "assets/icons-CHFUPWRH.js",
+    "name": "icons"
+  },
+  "_vue-core-k0PCIzeW.js": {
+    "file": "assets/vue-core-k0PCIzeW.js",
+    "name": "vue-core",
+    "imports": [
+      "_icons-CHFUPWRH.js"
+    ]
+  },
+  "assets/admin/admin-builder-media.css": {
+    "file": "assets/adminFeatureCss-N9OmsHTp.css",
+    "name": "adminFeatureCss",
+    "names": [
+      "adminFeatureCss.css"
+    ],
+    "src": "assets/admin/admin-builder-media.css",
+    "isEntry": true
+  },
+  "assets/admin/admin-runtime.css": {
+    "file": "assets/adminRuntimeCss-CGC_dp3t.css",
+    "name": "adminRuntimeCss",
+    "names": [
+      "adminRuntimeCss.css"
+    ],
+    "src": "assets/admin/admin-runtime.css",
+    "isEntry": true
+  },
+  "assets/admin/features/appearance-media.js": {
+    "file": "assets/adminAppearanceMedia-DSE0IHaf.js",
+    "name": "adminAppearanceMedia",
+    "src": "assets/admin/features/appearance-media.js",
+    "isEntry": true
+  },
+  "assets/admin/features/builder.js": {
+    "file": "assets/adminBuilder-aLy8kO2d.js",
+    "name": "adminBuilder",
+    "src": "assets/admin/features/builder.js",
+    "isEntry": true
+  },
+  "assets/admin/features/media-library.js": {
+    "file": "assets/adminMedia-8r-RXYuA.js",
+    "name": "adminMedia",
+    "src": "assets/admin/features/media-library.js",
+    "isEntry": true
+  },
+  "assets/admin/main.ts": {
+    "file": "assets/admin-mUzDQ3gh.js",
+    "name": "admin",
+    "src": "assets/admin/main.ts",
+    "isEntry": true,
+    "imports": [
+      "_icons-CHFUPWRH.js",
+      "_vue-core-k0PCIzeW.js"
+    ],
+    "css": [
+      "assets/admin-CyeOiaGR.css"
+    ]
+  },
+  "assets/storefront/admin-runtime.js": {
+    "file": "assets/adminRuntime-CavJsJHi.js",
+    "name": "adminRuntime",
+    "src": "assets/storefront/admin-runtime.js",
+    "isEntry": true
+  },
+  "assets/storefront/cart.js": {
+    "file": "assets/cart-C1DH_Gco.js",
+    "name": "cart",
+    "src": "assets/storefront/cart.js",
+    "isEntry": true
+  },
+  "assets/storefront/checkout.js": {
+    "file": "assets/checkout-vXk9N08c.js",
+    "name": "checkout",
+    "src": "assets/storefront/checkout.js",
+    "isEntry": true
+  },
+  "assets/storefront/consent.css": {
+    "file": "assets/consentCss-DvkXARg8.css",
+    "name": "consentCss",
+    "names": [
+      "consentCss.css"
+    ],
+    "src": "assets/storefront/consent.css",
+    "isEntry": true
+  },
+  "assets/storefront/consent.js": {
+    "file": "assets/consent-DYWN7dif.js",
+    "name": "consent",
+    "src": "assets/storefront/consent.js",
+    "isEntry": true
+  },
+  "assets/storefront/product-page.js": {
+    "file": "assets/storefront-BvUKQG0U.js",
+    "name": "storefront",
+    "src": "assets/storefront/product-page.js",
+    "isEntry": true
+  },
+  "assets/storefront/slider.js": {
+    "file": "assets/slider-Bp5b7UIw.js",
+    "name": "slider",
+    "src": "assets/storefront/slider.js",
+    "isEntry": true
+  },
+  "assets/storefront/storefront-runtime.js": {
+    "file": "assets/storefrontRuntime-BS36yTl8.js",
+    "name": "storefrontRuntime",
+    "src": "assets/storefront/storefront-runtime.js",
+    "isEntry": true
+  },
+  "assets/storefront/storefront.css": {
+    "file": "assets/storefrontCss-Db71EeK9.css",
+    "name": "storefrontCss",
+    "names": [
+      "storefrontCss.css"
+    ],
+    "src": "assets/storefront/storefront.css",
+    "isEntry": true
+  }
+}
