@@ -10,14 +10,64 @@ use Doctrine\DBAL\Connection;
 
 final readonly class StorefrontPresentationSettings implements StorefrontPresentationWriterInterface
 {
+    /** Texts shown to shoppers; each can be overridden per storefront language under "translations". */
+    public const TEXT_FIELDS = [
+        'utility' => ['location' => 120, 'delivery' => 120, 'support' => 120],
+        'brand' => ['title' => 140, 'subtitle' => 140],
+        'header' => ['search_placeholder' => 160],
+        'hero' => ['eyebrow' => 180, 'title' => 180, 'subtitle' => 180, 'text' => 420, 'button_label' => 180],
+        'promo_left' => ['title' => 180, 'text' => 240],
+        'promo_right' => ['title' => 180, 'text' => 240],
+    ];
+
     public function __construct(
         private Connection $connection,
         private ConfigurationRevisionStore $revisions,
     ) {
     }
 
+    /**
+     * Settings for the store; with $locale the shopper-facing texts of that language replace the base texts
+     * (a text that was not translated keeps the base value, so nothing is ever empty).
+     *
+     * @return array<string,mixed>
+     */
+    public function get(int $storeId, ?string $locale = null): array
+    {
+        $settings = $this->load($storeId);
+        if ($locale === null || !is_array($settings['translations'][$locale] ?? null)) {
+            return $settings;
+        }
+        foreach ($settings['translations'][$locale] as $section => $fields) {
+            foreach ($fields as $key => $text) {
+                if (isset(self::TEXT_FIELDS[$section][$key]) && $text !== '') {
+                    $settings[$section][$key] = $text;
+                }
+            }
+        }
+
+        return $settings;
+    }
+
+    /** @param array<string,mixed> $settings posted form with texts written in $locale (not the default language) */
+    public function saveTranslation(int $storeId, string $locale, array $settings, ?string $actorSubject = null): int
+    {
+        $current = $this->load($storeId);
+        $merged = array_replace_recursive($current, $settings);
+        foreach (self::TEXT_FIELDS as $section => $fields) {
+            foreach ($fields as $key => $max) {
+                $merged[$section][$key] = $current[$section][$key]; // base texts stay in the default language
+                $text = $this->text($settings[$section][$key] ?? '', $max);
+                // The form shows the base text for untranslated fields; submitting it unchanged keeps the field untranslated.
+                $merged['translations'][$locale][$section][$key] = $text === $current[$section][$key] ? '' : $text;
+            }
+        }
+
+        return $this->save($storeId, $merged, $actorSubject);
+    }
+
     /** @return array<string,mixed> */
-    public function get(int $storeId): array
+    private function load(int $storeId): array
     {
         $defaults = self::defaults();
 
@@ -50,6 +100,9 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
     /** @param array<string,mixed> $settings */
     public function save(int $storeId, array $settings, ?string $actorSubject = null): int
     {
+        if (!array_key_exists('translations', $settings)) {
+            $settings['translations'] = $this->load($storeId)['translations'] ?? [];
+        }
         $clean = $this->normalize(array_replace_recursive(self::defaults(), $settings));
         return $this->revisions->activateStoreJson($storeId, 'appearance', 'storefront_presentation', $clean, $actorSubject);
     }
@@ -176,6 +229,20 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             }
             $out[$slot]['image'] = $this->mediaPath($input[$slot]['image'] ?? '');
             $out[$slot]['url'] = $this->url($input[$slot]['url'] ?? '/catalog');
+        }
+        $out['translations'] = [];
+        foreach (is_array($input['translations'] ?? null) ? $input['translations'] : [] as $locale => $sections) {
+            if (!is_string($locale) || preg_match('/^[a-z]{2,3}(-[A-Z]{2})?$/', $locale) !== 1 || !is_array($sections)) {
+                continue;
+            }
+            foreach (self::TEXT_FIELDS as $section => $fields) {
+                foreach ($fields as $key => $max) {
+                    $text = $this->text($sections[$section][$key] ?? '', $max);
+                    if ($text !== '') {
+                        $out['translations'][$locale][$section][$key] = $text;
+                    }
+                }
+            }
         }
         return $out;
     }

@@ -19,6 +19,11 @@ final class CanonicalUiText
         self::$locale = $locale !== '' ? $locale : 'uk-UA';
     }
 
+    public static function currentLocale(): string
+    {
+        return self::$locale;
+    }
+
     /** @param array<string,scalar|null> $replace */
     public static function get(string $key, array $replace = []): string
     {

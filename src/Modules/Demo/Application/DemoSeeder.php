@@ -117,7 +117,7 @@ final readonly class DemoSeeder
             $this->seedInformationPagesDemo($db,$ctx['store_id'],$now);
             $this->seedPromotionDemo($db,$ctx['store_id'],$now);
             $this->seedForumDemo($db,$ctx['store_id'],$now);
-            $this->presentation->save($ctx['store_id'], $this->demoPresentation(), 'demo:seed');
+            $this->presentation->save($ctx['store_id'], $this->demoPresentationWithTranslations(), 'demo:seed');
 
             $this->tag($db,$ctx['store_id'],'store',Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(),'installed',['version'=>'3.5.0']);
             return ['categories'=>count($categoryDefs),'products'=>count($defs),'articles'=>count($articles),'reviews'=>$reviewCount];
@@ -246,6 +246,41 @@ final readonly class DemoSeeder
         $db->insert('mc_forum_topic',['public_id'=>$topicPublic,'board_id'=>(int)$boardId,'slug'=>'welcome-demo','title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.laskavo_prosymo_do_demonstratsiinoho_forumu'),'author_name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.komanda_modern_commerce'),'status'=>'published','is_pinned'=>1,'is_locked'=>0,'created_at'=>$now,'updated_at'=>$now,'published_at'=>$now,'last_post_at'=>$now]);
         $topicId=(int)$db->lastInsertId();
         $db->insert('mc_forum_post',['public_id'=>$this->publicIds->binary(),'topic_id'=>$topicId,'author_name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.komanda_modern_commerce'),'body_text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.tse_demonstratsiina_tema_forum_bloh_mahazyn_i_konten'),'status'=>'published','created_at'=>$now,'updated_at'=>$now,'published_at'=>$now]);
+    }
+
+    /**
+     * Demo texts in the store language plus a translation for every language shipped with the platform,
+     * so switching the demo storefront language never shows the header or hero in another language.
+     *
+     * @return array<string,mixed>
+     */
+    private function demoPresentationWithTranslations(): array
+    {
+        $base = $this->demoPresentation();
+        $previous = \Commerce\Core\I18n\CanonicalUiText::currentLocale();
+        $base['translations'] = [];
+        try {
+            foreach (glob(dirname(__DIR__, 4) . '/resources/translations/*/storefront.php') ?: [] as $file) {
+                $locale = basename(dirname($file));
+                if ($locale === $previous) {
+                    continue;
+                }
+                \Commerce\Core\I18n\CanonicalUiText::useLocale($locale);
+                $translated = $this->demoPresentation();
+                foreach (\Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings::TEXT_FIELDS as $section => $fields) {
+                    foreach (array_keys($fields) as $key) {
+                        $text = (string) ($translated[$section][$key] ?? '');
+                        if ($text !== '' && $text !== (string) ($base[$section][$key] ?? '')) {
+                            $base['translations'][$locale][$section][$key] = $text;
+                        }
+                    }
+                }
+            }
+        } finally {
+            \Commerce\Core\I18n\CanonicalUiText::useLocale($previous);
+        }
+
+        return $base;
     }
 
     /** @return array<string,mixed> */

@@ -29,8 +29,9 @@ final class AppearanceAdminController extends AbstractController
                 return $this->redirectToRoute('admin_appearance_storefront');
             }
             $bool = static fn (string $key): bool => $request->request->has($key);
+            $defaultLocale = (string) $connection->fetchOne('SELECT default_locale FROM mc_store WHERE id=?', [$context->storeId]);
             try {
-                $this->settings->save($context->storeId, [
+                $posted = [
                     'utility' => [
                         'location' => $request->request->get('utility_location',''),
                         'delivery' => $request->request->get('utility_delivery',''),
@@ -87,7 +88,12 @@ final class AppearanceAdminController extends AbstractController
                         'image' => $request->request->get('promo_right_image',''),
                         'url' => $request->request->get('promo_right_url',''),
                     ],
-                ], $this->actor());
+                ];
+                // Texts entered while the admin content language is not the default are stored as that language's
+                // translation; colours, images and switches are shared by all languages.
+                $context->locale !== $defaultLocale && $defaultLocale !== ''
+                    ? $this->settings->saveTranslation($context->storeId, $context->locale, $posted, $this->actor())
+                    : $this->settings->save($context->storeId, $posted, $this->actor());
                 $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.appearanceadmincontroller.oformlennia_vytryny_zberezheno_poperednia_versiia_do'));
             } catch (\Throwable $e) {
                 $message = \Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed');
@@ -95,9 +101,11 @@ final class AppearanceAdminController extends AbstractController
             }
             return $this->redirectToRoute('admin_appearance_storefront');
         }
-        $store = $connection->fetchAssociative('SELECT name FROM mc_store WHERE id=?', [$context->storeId]) ?: [];
+        $store = $connection->fetchAssociative('SELECT name,default_locale FROM mc_store WHERE id=?', [$context->storeId]) ?: [];
+        $translating = ($store['default_locale'] ?? $context->locale) !== $context->locale;
         return $this->render('@storefront/admin/appearance/storefront.html.twig', [
-            'settings' => $this->settings->get($context->storeId),
+            'settings' => $this->settings->get($context->storeId, $translating ? $context->locale : null),
+            'translating_locale' => $translating ? $context->locale : null,
             'store' => $store,
             'platform_version' => PlatformVersion::VERSION,
             'revisions' => $this->settings->history($context->storeId, 12),

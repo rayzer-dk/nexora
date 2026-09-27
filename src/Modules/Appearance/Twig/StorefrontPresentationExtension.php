@@ -69,7 +69,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
     {
         try {
             $ctx = $this->context();
-            return $ctx !== null ? $this->settings->get($ctx->storeId) : StorefrontPresentationSettings::defaults();
+            return $ctx !== null ? $this->settings->get($ctx->storeId, $ctx->locale) : StorefrontPresentationSettings::defaults();
         } catch (\Throwable) {
             return StorefrontPresentationSettings::defaults();
         }

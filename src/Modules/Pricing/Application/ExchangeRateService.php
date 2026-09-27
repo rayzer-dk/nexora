@@ -19,13 +19,13 @@ final class ExchangeRateService
     {
     }
 
-    /** @return list<array{base:string,quote:string}> */
+    /** Pairs that need an official rate (auto-converted currencies whose store did not choose a manual rate). @return list<array{base:string,quote:string}> */
     public function requiredPairs(): array
     {
         return array_map(
             static fn (array $r): array => ['base' => strtoupper((string) $r['base']), 'quote' => strtoupper((string) $r['quote'])],
             $this->db->fetchAllAssociative(
-                "SELECT DISTINCT s.default_currency base, sc.currency_code quote FROM mc_store s JOIN mc_store_currency sc ON sc.store_id=s.id AND sc.enabled=1 AND sc.auto_convert=1 AND sc.currency_code<>s.default_currency WHERE s.status='active'",
+                "SELECT DISTINCT s.default_currency base, sc.currency_code quote FROM mc_store s JOIN mc_store_currency sc ON sc.store_id=s.id AND sc.enabled=1 AND sc.auto_convert=1 AND sc.rate_source<>'manual' AND sc.currency_code<>s.default_currency WHERE s.status='active'",
             ),
         );
     }
