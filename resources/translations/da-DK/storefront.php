@@ -511,4 +511,9 @@ return [
     "forum_try_other" => "Prøv et andet ord eller en anden sætning.",
     "forum_new_reply_subject" => "Nyt svar i “%topic%”",
     "forum_new_reply_text" => "Der er publiceret et nyt svar i “%topic%”: %url%",
+    "forum_member_since" => "Medlem siden %date%",
+    "forum_no_activity" => "Ingen offentlig aktivitet endnu.",
+    "forum_following" => "Fulgte emner",
+    "forum_following_intro" => "Emner du følger og modtager notifikationer om.",
+    "forum_no_followed_topics" => "Du følger endnu ingen emner.",
 ];
