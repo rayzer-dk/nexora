@@ -26,7 +26,7 @@
     "tiptap": "3.31.3",
     "esbuild": "0.28.2"
   },
-  "database_schema": "47",
+  "database_schema": "49",
   "built_at": "2026-09-26",
   "capabilities": [
     "multistore",
@@ -122,6 +122,15 @@
     "site-profile-modes",
     "forum-engine-foundation",
     "forum-community-v2",
+    "browser-installer-handover",
+    "core-update-autoload-preflight",
+    "core-update-real-page-smoke",
+    "per-release-runtime-cache",
+    "utc-database-session",
+    "database-collation-unification",
+    "forum-database-antispam",
+    "forum-rules",
+    "forum-moderation-bans",
     "forum-unified-customer-identity",
     "forum-topic-subscriptions",
     "forum-post-reactions",
@@ -339,7 +348,7 @@
     "extension-runtime-auto-isolation"
   ],
   "database": {
-    "schema": "47",
+    "schema": "49",
     "preferred": [
       "mysql-8.4-lts",
       "mariadb-11.4-lts"
@@ -348,10 +357,10 @@
     "charset": "utf8mb4",
     "minimum": [
       "mysql-8.4-lts",
-      "mariadb-11.4-lts"
+      "mariadb-10.11-lts"
     ]
   },
-  "schema_version": 47,
+  "schema_version": 49,
   "license": "MIT",
   "features": [
     "review-photo-uploads",
