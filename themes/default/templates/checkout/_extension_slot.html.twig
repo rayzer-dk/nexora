@@ -1,0 +1,6 @@
+{% for contribution in extension_slot(slot) %}
+  {% set ext_block = {component: contribution.component, props: {}} %}
+  <div class="checkout-builder-slot is-left extension-slot" data-extension-slot="{{ slot|e('html_attr') }}" data-extension-code="{{ contribution.extension_code|e('html_attr') }}">
+    {% include '@storefront/checkout/blocks/extension_component.html.twig' with {block: ext_block, number: 0} only %}
+  </div>
+{% endfor %}

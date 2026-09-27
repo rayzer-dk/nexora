@@ -1,0 +1,4 @@
+<section class="product-block extension-block" data-extension-component="{{ block.type|e('html_attr') }}">
+  {% if block.settings.title is defined %}<h3>{{ block.settings.title }}</h3>{% endif %}
+  {% if block.settings.text is defined %}<div>{{ block.settings.text|nl2br }}</div>{% endif %}
+</section>

@@ -1,0 +1,6 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="shell account-page"><div class="account-page__header"><div><span class="eyebrow">{{ ui_text('loyalty_program') }}</span><h1>{{ ui_text('rewards') }}</h1><p>{{ ui_text('balance') }}: <strong>{{ account.points_balance }}</strong> {{ ui_text('points') }}</p></div><a class="button button--ghost" href="{{ path('customer_account') }}">{{ ui_text('back_account') }}</a></div>
+<section class="account-panel"><h2>{{ ui_text('how_points_work') }}</h2>{% if config.enabled %}<p>{{ ui_text('points_rules', {earn: config.earn_points_per_major, redeem: config.redeem_minor_per_point, min: config.min_redeem_points}) }}</p>{% else %}<p>{{ ui_text('loyalty_disabled') }}</p>{% endif %}</section>
+<section class="account-panel"><h2>{{ ui_text('history') }}</h2>{% if transactions is empty %}<p class="muted">{{ ui_text('no_transactions') }}</p>{% else %}<div class="account-orders">{% for tx in transactions %}<div class="account-order-row"><span><strong>{{ tx.tx_type }}</strong><small>{{ tx.created_at }}</small></span><span>{{ tx.points > 0 ? '+' : '' }}{{ tx.points }} {{ ui_text('points') }}</span><span>{{ ui_text('balance') }} {{ tx.balance_after }}</span></div>{% endfor %}</div>{% endif %}</section></section>
+{% endblock %}

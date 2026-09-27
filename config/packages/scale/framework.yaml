@@ -1,0 +1,16 @@
+# Opt-in high-traffic profile. Small stores do not need this file activated.
+# Use APP_ENV=scale and set REDIS_DSN, or replace redis:// with valkey:// when preferred.
+framework:
+    session:
+        handler_id: '%env(REDIS_DSN)%'
+        metadata_update_threshold: 60
+    cache:
+        app: cache.adapter.redis
+        default_redis_provider: '%env(REDIS_DSN)%'
+        pools:
+            cache.storefront:
+                adapter: cache.app
+            cache.shipping:
+                adapter: cache.app
+            cache.security:
+                adapter: cache.app

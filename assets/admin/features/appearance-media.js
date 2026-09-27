@@ -1,0 +1,11 @@
+export function initAppearanceMedia(){
+ const root=document.querySelector('[data-appearance-media]'); const picker=document.querySelector('[data-appearance-media-picker]');
+ if(!root||!picker)return; let target=null; const results=picker.querySelector('[data-appearance-media-results]'); const search=picker.querySelector('[data-appearance-media-search]');
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+ async function load(q=''){results.innerHTML='<p>…</p>';try{const r=await fetch(root.dataset.mediaEndpoint+'?q='+encodeURIComponent(q),{headers:{Accept:'application/json'},credentials:'same-origin'});if(!r.ok)throw new Error();const j=await r.json();results.innerHTML=(j.items||[]).filter(i=>String(i.mime_type||'').startsWith('image/')).map(i=>`<button type="button" data-media-url="${esc(i.url)}"><img src="${esc(i.url)}" alt="${esc(i.alt_text||'')}"><span>${esc(i.title||String(i.storage_key||'').split('/').pop())}</span></button>`).join('')||'<p>No images</p>';}catch{results.innerHTML='<p>Media library unavailable</p>';}}
+ function setValue(name,url){const input=root.querySelector(`[data-media-value="${CSS.escape(name)}"]`);if(!input)return;input.value=url;let preview=root.querySelector(`[data-media-preview="${CSS.escape(name)}"]`);if(url){if(!(preview instanceof HTMLImageElement)){const img=document.createElement('img');img.dataset.mediaPreview=name;img.alt='';preview?.replaceWith(img);preview=img;}preview.src=url;}else{const span=document.createElement('span');span.className='admin-media-placeholder';span.dataset.mediaPreview=name;span.textContent='—';preview?.replaceWith(span);}input.dispatchEvent(new Event('change',{bubbles:true}));}
+ root.addEventListener('click',e=>{const choose=e.target.closest('[data-media-choose]');if(choose){target=choose.dataset.mediaChoose;load();picker.showModal();return;}const clear=e.target.closest('[data-media-clear]');if(clear){setValue(clear.dataset.mediaClear,'');}});
+ results.addEventListener('click',e=>{const b=e.target.closest('[data-media-url]');if(!b||!target)return;setValue(target,b.dataset.mediaUrl||'');picker.close();});
+ let timer;search?.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>load(search.value),200);});
+}
+initAppearanceMedia();

@@ -1,0 +1,6 @@
+framework:
+    html_sanitizer:
+        sanitizers:
+            commerce.rich_text:
+                allow_safe_elements: true
+                max_input_length: 250000

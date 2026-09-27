@@ -1,0 +1,49 @@
+framework:
+    default_locale: 'uk-UA'
+    secret: '%env(APP_SECRET)%'
+    csrf_protection: true
+    http_method_override: false
+    session:
+        cookie_secure: auto
+        cookie_samesite: lax
+        cookie_httponly: true
+        metadata_update_threshold: 60
+    php_errors:
+        log: true
+    trusted_proxies: '%env(default::SYMFONY_TRUSTED_PROXIES)%'
+    messenger:
+        default_bus: messenger.bus.default
+    mailer:
+        dsn: '%env(MAILER_DSN)%'
+    lock: '%env(LOCK_DSN)%'
+    cache:
+        prefix_seed: nexora_commerce
+        default_redis_provider: '%env(REDIS_DSN)%'
+        default_valkey_provider: '%env(VALKEY_DSN)%'
+        pools:
+            cache.storefront:
+                adapter: cache.app
+                default_lifetime: 30
+            cache.shipping:
+                adapter: cache.app
+                default_lifetime: 600
+            cache.security:
+                adapter: cache.app
+                default_lifetime: 900
+    rate_limiter:
+        login:
+            policy: fixed_window
+            limit: 10
+            interval: '1 minute'
+        password_recovery:
+            policy: fixed_window
+            limit: 5
+            interval: '1 hour'
+        public_form:
+            policy: fixed_window
+            limit: 8
+            interval: '1 minute'
+        checkout_mutation:
+            policy: fixed_window
+            limit: 120
+            interval: '1 minute'

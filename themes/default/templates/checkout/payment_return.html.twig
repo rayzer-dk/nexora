@@ -1,0 +1,10 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="content-page"><div class="content-shell"><div class="content-card">
+<span class="eyebrow">{{ ui_text('order_number', {number: order.order_number}) }}</span>
+{% if order.payment_status == 'paid' %}<h1>{{ ui_text('payment_confirmed') }}</h1><p>{{ ui_text('payment_confirmed_text') }}</p>
+{% elseif order.payment_status in ['failed','expired'] %}<h1>{{ ui_text('payment_not_completed') }}</h1><p>{{ ui_text('payment_not_completed_text') }}</p>
+{% else %}<h1>{{ ui_text('payment_checking') }}</h1><p>{{ ui_text('payment_checking_text') }}</p>{% endif %}
+<a class="button" href="/catalog">{{ ui_text('go_catalog') }}</a>
+</div></div></section>
+{% endblock %}

@@ -1,0 +1,8 @@
+{
+  "schema_version": 2,
+  "fields": [
+    {"key":"headline","type":"multilingual_text","label":"Headline","group":"content"},
+    {"key":"accent","type":"color","label":"Accent","default":"#0057d9","group":"design"},
+    {"key":"enabled","type":"boolean","label":"Enabled","default":true,"group":"general"}
+  ]
+}

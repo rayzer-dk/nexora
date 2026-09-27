@@ -1,0 +1,37 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.system.site.profil_saitu'),'site') }}
+<header class="admin-runtime__header">
+    <div><small>{{ store.name|default('Nexora Commerce') }} · v{{ platform_version }}</small><h1>{{ ui_text('admin.system.site.profil_i_mozhlyvosti_saitu') }}</h1><p>{{ ui_text('admin.system.site.funktsii_mozhna_vmykaty_i_vymykaty_bez_perevstan') }}</p></div>
+    <a class="admin-preview-link" href="/" target="_blank" rel="noopener">{{ ui_text('admin.system.site.vidkryty_sait') }}</a>
+</header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="store-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<form method="post" class="admin-editor-form" data-dirty-guard>
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('site_capabilities') }}">
+    <section class="admin-editor-card">
+        <div class="admin-card-heading"><div><small>{{ ui_text('admin.system.site.rezhym') }}</small><h2>{{ ui_text('admin.system.site.pochatkovyi_profil') }}</h2></div><span class="admin-status-pill is-active">{{ ui_text('admin.system.site.mozhna_zminyty_bud_koly') }}</span></div>
+        <div class="admin-mode-grid">
+            {% set labels = {'shop':ui_text('admin.system.site.internet_mahazyn'),'catalog':ui_text('admin.system.site.kataloh_bez_pokupky'),'content':ui_text('admin.system.site.informatsiinyi_sait'),'landing':ui_text('admin.system.site.lendynh'),'forum':ui_text('admin.system.site.forum_spilnota'),'hybrid':ui_text('admin.system.site.vse_razom')} %}
+            {% set descriptions = {'shop':ui_text('admin.system.site.kataloh_koshyk_checkout_kontent_i_kabinety'),'catalog':ui_text('admin.system.site.tovary_i_poshuk_bez_koshyka_ta_oformlennia'),'content':ui_text('admin.system.site.storinky_statti_i_novyny_bez_katalohu'),'landing':ui_text('admin.system.site.minimalnyi_prezentatsiinyi_sait'),'forum':ui_text('admin.system.site.forum_statti_ta_spilnota_bez_oboviazkovoho_mahaz'),'hybrid':ui_text('admin.system.site.mahazyn_kontent_forum_z_usima_dostupnymy_funktsi')} %}
+            {% for mode in modes %}
+                <label class="admin-mode-card"><input type="radio" name="mode" value="{{ mode }}" {% if settings.mode == mode %}checked{% endif %}><strong>{{ labels[mode]|default(mode) }}</strong><span>{{ descriptions[mode]|default('') }}</span></label>
+            {% endfor %}
+        </div>
+    </section>
+    <section class="admin-editor-card">
+        <div class="admin-card-heading"><div><small>{{ ui_text('admin.system.site.hnuchkist') }}</small><h2>{{ ui_text('admin.system.site.okremi_mozhlyvosti') }}</h2></div><span class="admin-help">{{ ui_text('admin.system.site.profil_zadaie_osnovu_chekboksy_dozvoliaiut_tochn') }}</span></div>
+        <div class="admin-checkbox-grid admin-checkbox-grid--large">
+            {% for feature,label in feature_labels %}
+                <label><input type="checkbox" name="feature_{{ feature }}" value="1" {% if settings.features[feature]|default(false) %}checked{% endif %}><span><strong>{{ label }}</strong><small>{{ feature }}</small></span></label>
+            {% endfor %}
+        </div>
+        <p class="admin-inline-note">{{ ui_text('admin.system.site.zalezhnosti_normalizuiutsia_bezpechno_bez_katalo') }}</p>
+    </section>
+    <div class="admin-editor-actions"><button type="submit">{{ ui_text('admin.system.site.zberehty_profil') }}</button></div>
+</form>
+<section class="admin-editor-card">
+    <div class="admin-card-heading"><div><small>{{ ui_text('ui.admin.system.site.recovery') }}</small><h2>{{ ui_text('admin.system.site.istoriia_konfihuratsii') }}</h2></div><span class="admin-help">{{ ui_text('admin.system.site.kozhne_zberezhennia_stvoriuie_reviziiu') }}</span></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.site.reviziia') }}</th><th>{{ ui_text('admin.system.site.status') }}</th><th>{{ ui_text('admin.system.site.khto') }}</th><th>{{ ui_text('admin.system.site.chas') }}</th><th class="is-actions">{{ ui_text('admin.system.site.diia') }}</th></tr></thead><tbody>
+    {% for revision in revisions %}<tr><td>#{{ revision.revision_number }}</td><td><span class="admin-status-pill {{ revision.status == 'active' ? 'is-active' : '' }}">{{ revision.status }}</span></td><td>{{ revision.actor_subject|default('system') }}</td><td>{{ revision.created_at }}</td><td class="is-actions">{% if revision.status != 'active' %}<form method="post" action="{{ path('admin_system_site_rollback',{revisionId:revision.id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('site_capabilities_rollback') }}"><button class="admin-icon-button" type="submit" data-confirm="{{ ui_text('admin.system.site.vidnovyty_tsiu_konfihuratsiiu_saitu') }}" title="{{ ui_text('admin.system.site.vidnovyty_reviziiu') }}">↶</button></form>{% else %}<span class="admin-muted">{{ ui_text('admin.system.site.aktyvna') }}</span>{% endif %}</td></tr>{% else %}<tr><td colspan="5">{{ ui_text('admin.system.site.istoriia_ziavytsia_pislia_pershoi_zminy') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+{{ shell.end() }}

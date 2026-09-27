@@ -1,0 +1,28 @@
+{
+  "name": "Nexora Default",
+  "version": "3.5.0",
+  "mode": "auto",
+  "tokens": {
+    "primary": "#0B63F6",
+    "accent": "#B90303",
+    "success": "#12805C",
+    "warning": "#B7791F",
+    "danger": "#B42318",
+    "surface_radius": "14px",
+    "content_width": "1408px",
+    "density": "comfortable",
+    "font_family": "system"
+  },
+  "responsive": {
+    "mobile_first": true,
+    "container_queries": true,
+    "safe_area_support": true,
+    "reduced_motion_support": true
+  },
+  "fonts": {
+    "default_strategy": "system-first",
+    "self_hosted_woff2": true,
+    "variable_fonts": true,
+    "external_font_cdn": false
+  }
+}

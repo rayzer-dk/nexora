@@ -1,0 +1,6 @@
+{% for contribution in extension_slot(slot) %}
+  {% set ext_block = {type: contribution.component, settings: {}} %}
+  <div class="product-block product-block--extension-slot" data-extension-slot="{{ slot|e('html_attr') }}" data-extension-code="{{ contribution.extension_code|e('html_attr') }}">
+    {% include '@storefront/product/blocks/extension_component.html.twig' with {product: product, block: ext_block} only %}
+  </div>
+{% endfor %}

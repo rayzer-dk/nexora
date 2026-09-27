@@ -1,0 +1,18 @@
+{% set tax = product.tax|default(null) %}
+<div class="product-price" aria-label="{{ ui_text('price') }}">
+    <div class="product-price__main">
+        <span class="product-price__current">{{ product.price }}</span>
+        {% if product.compare_at_price %}<span class="product-price__old">{{ product.compare_at_price }}</span>{% endif %}
+    </div>
+    {% if tax %}
+        {% if tax.display_mode == 'gross_with_breakdown' %}
+            <small class="product-price__tax">{{ ui_text('price_vat_included') }}{% if tax.rate_label %} {{ tax.rate_label }}{% endif %}; {{ ui_text('including_vat') }} {{ tax.tax_amount }}</small>
+        {% elseif tax.display_mode == 'net_with_gross' %}
+            <small class="product-price__tax">{{ ui_text('without_vat') }}: {{ tax.net_price }} · {{ ui_text('with_vat') }}: {{ tax.gross_price }}</small>
+        {% elseif tax.display_mode in ['price_only', 'gross'] %}
+            {# Intentionally no VAT wording: the customer sees only the final payable price. #}
+        {% elseif tax.display_mode == 'net' %}
+            <small class="product-price__tax">{{ ui_text('price_without_vat') }}{% if tax.rate_label %}; {{ ui_text('vat') }} {{ tax.rate_label }}{% endif %}</small>
+        {% endif %}
+    {% endif %}
+</div>

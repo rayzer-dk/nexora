@@ -1,0 +1,3 @@
+{% extends '@storefront/base.html.twig' %}
+{% block head %}<script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>{% endblock %}
+{% block body %}<article class="shell article-page">{% include '@storefront/components/breadcrumbs.html.twig' with {items: breadcrumbs} only %}<header class="content-hero"><p class="eyebrow">{{ ui_text('blog') }}</p><h1>{{ article.title }}</h1><p>{{ article.excerpt }}</p></header>{% if article.image %}<div class="article-page__media"><img src="{{ article.image }}" alt="" width="1440" height="810"></div>{% endif %}<div class="article-body">{{ article.body_html|raw }}</div></article>{% endblock %}

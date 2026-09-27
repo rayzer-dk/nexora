@@ -1,0 +1,14 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{% set editing = category is not null %}
+{{ shell.start(editing ? ui_text('admin.catalog.category_form.redahuvaty_katehoriiu') : ui_text('admin.catalog.category_form.nova_katehoriia'),'categories') }}
+<header class="admin-runtime__header"><div><small>{{ ui_text('admin.catalog.category_form.katehorii') }}</small><h1>{{ editing ? ui_text('admin.catalog.category_form.redahuvaty_katehoriiu') : ui_text('admin.catalog.category_form.nova_katehoriia') }}</h1></div><a href="{{ path('admin_catalog_categories') }}">{{ ui_text('admin.catalog.category_form.nazad') }}</a></header>
+{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<form class="admin-editor-form" method="post"><input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}"><section class="admin-editor-card"><h2>{{ ui_text('admin.catalog.category_form.osnovne') }}</h2>
+<label><span>{{ ui_text('admin.catalog.category_form.nazva') }}</span><input type="text" name="name" maxlength="255" value="{{ category.name|default('') }}" required autofocus></label>
+<label><span>SEO URL <small>{{ ui_text('admin.catalog.category_form.neoboviazkovo_pislia_pershoho_stvorennia_ne_zmin') }}</small></span><input type="text" name="slug" value="{{ category.slug|default('') }}" placeholder="{{ ui_text('ui.admin.catalog.category_form.fuel_pumps')|e('html_attr') }}"></label>
+<label><span>{{ ui_text('admin.catalog.category_form.batkivska_katehoriia') }}</span><select name="parent_id"><option value="0">{{ ui_text('admin.catalog.category_form.bez_batkivskoi') }}</option>{% for option in categories %}<option value="{{ option.id }}" {{ category.parent_id|default(0) == option.id ? 'selected' : '' }}>{{ option.name }}</option>{% endfor %}</select></label>
+<label><span>{{ ui_text('admin.catalog.category_form.poriadok') }}</span><input type="number" name="sort_order" value="{{ category.sort_order|default(0) }}" min="0"></label>
+{% if editing %}<label><span>{{ ui_text('admin.catalog.category_form.status') }}</span><select name="status"><option value="active" {{ category.status == 'active' ? 'selected' : '' }}>{{ ui_text('admin.catalog.category_form.aktyvna') }}</option><option value="inactive" {{ category.status == 'inactive' ? 'selected' : '' }}>{{ ui_text('admin.catalog.category_form.vymknena') }}</option></select></label>{% endif %}
+</section><div class="admin-editor-actions"><button type="submit">{{ editing ? ui_text('admin.catalog.category_form.zberehty_katehoriiu') : ui_text('admin.catalog.category_form.stvoryty_katehoriiu') }}</button></div></form>
+{% include '@storefront/admin/extension/slot.html.twig' with {slot:'admin.category.after_main'} only %}
+{{ shell.end() }}

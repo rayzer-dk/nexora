@@ -1,0 +1,10 @@
+{
+  "policy_version": 1,
+  "description": "Temporary explicit baseline for cross-module infrastructure dependencies. New entries require architecture review and should normally be replaced by Contract interfaces.",
+  "allowed_cross_module_infrastructure": [
+    "Customer/Application/CustomerWishlistService.php -> Storefront/Infrastructure/StorefrontMoneyFormatter",
+    "Cart/Application/CartMutationService.php -> Storefront/Infrastructure/DbalStorefrontCatalogQuery",
+    "Cart/Application/DbalCartQuery.php -> Storefront/Infrastructure/StorefrontMoneyFormatter",
+    "Demo/Application/DemoShowcaseQuery.php -> Content/Infrastructure/DbalBlogQuery"
+  ]
+}

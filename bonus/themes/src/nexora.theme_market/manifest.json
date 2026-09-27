@@ -1,0 +1,32 @@
+{
+  "core": "^3.4.8",
+  "extension_api": "2.0",
+  "type": "theme",
+  "execution": "declarative",
+  "permissions": [],
+  "capabilities": [],
+  "events": [],
+  "ui_slots": [],
+  "blocks": [],
+  "routes": [],
+  "pages": [],
+  "slot_contributions": [],
+  "assets": [],
+  "isolation": "contract_only",
+  "hot_disable": true,
+  "data_policy": "retain_on_uninstall",
+  "commercial": {
+    "model": "free"
+  },
+  "localization": {
+    "default_locale": "uk-UA",
+    "locales": [
+      "uk-UA",
+      "en-US"
+    ],
+    "translations_path": "translations"
+  },
+  "code": "nexora.theme_market",
+  "name": "Nexora Market",
+  "version": "1.0.0"
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nexora-commerce:event:commerce.catalog.product_created:1",
+  "type": "object",
+  "required": ["store_id", "market_id", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "store_id": {"type": "integer", "minimum": 1},
+    "market_id": {"type": "integer", "minimum": 1},
+    "status": {"type": "string", "maxLength": 32}
+  }
+}

@@ -1,0 +1,81 @@
+{% macro start(title, section, feature = null) %}
+<!doctype html>
+<html lang="uk-UA">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="robots" content="noindex,nofollow">
+    <title>{{ title }} · Nexora Commerce</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
+    <link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-runtime.css', '/assets/admin-runtime.css') }}">
+    {% if feature in ['builder','media'] %}<link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-builder-media.css', '/assets/admin-builder-media.css') }}">{% endif %}
+</head>
+<body class="admin-runtime" data-admin-runtime>
+<div class="admin-runtime__shell">
+    <aside class="admin-runtime__sidebar" data-admin-sidebar>
+        <a class="admin-runtime__brand" href="/admin" aria-label="Nexora Commerce"><img class="admin-runtime__brand-mark" src="/assets/branding/nexora-mark.svg" alt="" width="36" height="36"><span class="admin-runtime__brand-copy"><strong>Nexora Commerce</strong><small>{{ ui_text('admin_manage') }}</small></span></a>
+        <nav aria-label="{{ ui_text('admin_manage') }}" data-command-source>
+            {% if admin_can('dashboard.view') %}<a class="{{ section == 'dashboard' ? 'is-active' : '' }}" href="/admin">{{ ui_text('admin_overview') }}</a>{% endif %}
+            {% if admin_can('analytics.view') %}<a class="{{ section == 'analytics' ? 'is-active' : '' }}" href="/admin/analytics">{{ ui_text('admin_analytics') }}</a>{% endif %}
+            {% if admin_can('b2b.view') %}<a class="{{ section == 'b2b' ? 'is-active' : '' }}" href="/admin/b2b">{{ ui_text('admin_b2b') }}</a>{% endif %}
+            {% if admin_can('catalog.view') %}<a class="{{ section == 'products' ? 'is-active' : '' }}" href="/admin/catalog/products">{{ ui_text('admin_products') }}</a><a class="{{ section == 'categories' ? 'is-active' : '' }}" href="/admin/catalog/categories">{{ ui_text('admin_categories') }}</a><a class="{{ section == 'metadata' ? 'is-active' : '' }}" href="/admin/catalog/metadata">{{ ui_text('admin_brands_attributes') }}</a>{% endif %}
+            {% if admin_can('search.view') %}<a class="{{ section == 'search' ? 'is-active' : '' }}" href="/admin/catalog/search">{{ ui_text('admin_search_recommendations') }}</a>{% endif %}
+            {% if admin_can('catalog.view') %}<a class="{{ section == 'merchandising' ? 'is-active' : '' }}" href="/admin/catalog/merchandising">{{ ui_text('admin_merchandising') }}</a>{% endif %}
+            {% if admin_can('orders.view') %}<a class="{{ section == 'orders' ? 'is-active' : '' }}" href="/admin/orders">{{ ui_text('admin_orders') }}</a><a class="{{ section == 'shipments' ? 'is-active' : '' }}" href="/admin/shipments">{{ ui_text('admin_shipments') }}</a>{% endif %}
+            {% if admin_can('customers.view') %}<a class="{{ section == 'inquiries' ? 'is-active' : '' }}" href="/admin/commerce/inquiries">{{ ui_text('admin_inquiries') }}</a><a class="{{ section == 'customers' ? 'is-active' : '' }}" href="/admin/commerce/customers">{{ ui_text('admin_customers') }}</a><a class="{{ section == 'customer_experience' ? 'is-active' : '' }}" href="/admin/customer-experience">{{ ui_text('admin_returns_feedback') }}</a>{% endif %}
+            {% if admin_can('marketing.view') %}<a class="{{ section == 'promotions' ? 'is-active' : '' }}" href="/admin/commerce/promotions">{{ ui_text('admin_promotions') }}</a><a class="{{ section == 'campaigns' ? 'is-active' : '' }}" href="/admin/commerce/campaigns">{{ ui_text('admin_campaigns') }}</a><a class="{{ section == 'marketing_automation' ? 'is-active' : '' }}" href="/admin/commerce/marketing-automation">{{ ui_text('admin_automation') }}</a>{% endif %}
+            {% if admin_can('catalog.view') %}<a class="{{ section == 'import_export' ? 'is-active' : '' }}" href="/admin/commerce/import-export">{{ ui_text('admin_import_export') }}</a>{% endif %}
+            {% if admin_can('feeds.view') %}<a class="{{ section == 'feeds' ? 'is-active' : '' }}" href="/admin/commerce/feeds">{{ ui_text('admin_commerce_feeds') }}</a>{% endif %}
+            {% if admin_can('notifications.view') %}<a class="{{ section == 'notifications' ? 'is-active' : '' }}" href="/admin/commerce/notifications">{{ ui_text('admin_notifications') }}</a>{% endif %}
+            {% if admin_can('content.view') %}<a class="{{ section == 'content' ? 'is-active' : '' }}" href="/admin/content/pages">{{ ui_text('admin_pages') }}</a>{% endif %}
+            {% if admin_can('forum.view') %}<a class="{{ section == 'forum' ? 'is-active' : '' }}" href="/admin/forum">{{ ui_text('admin_forum') }}</a>{% endif %}
+            {% if admin_can('appearance.view') %}<a class="{{ section == 'appearance' ? 'is-active' : '' }}" href="/admin/appearance/storefront">{{ ui_text('admin_storefront') }}</a><a class="{{ section == 'appearance' ? 'is-active' : '' }}" href="/admin/appearance/builder/home">{{ ui_text('ui.admin.catalog._shell.page_builder') }}</a><a class="{{ section == 'appearance' ? 'is-active' : '' }}" href="/admin/appearance/builder/product">{{ ui_text('ui.admin.catalog._shell.product_builder') }}</a><a class="{{ section == 'appearance' ? 'is-active' : '' }}" href="/admin/appearance/builder/checkout">{{ ui_text('ui.admin.catalog._shell.checkout_builder') }}</a><a class="{{ section == 'navigation' ? 'is-active' : '' }}" href="/admin/appearance/navigation">{{ ui_text('admin_navigation') }}</a>{% endif %}
+            {% if admin_can('media.view') %}<a class="{{ section == 'media' ? 'is-active' : '' }}" href="/admin/media">{{ ui_text('admin_media_library') }}</a>{% endif %}
+            {% if admin_can('system.settings') or admin_can('extensions.manage') or admin_can('integrations.manage') or admin_can('system.cron.view') or admin_can('admin_users.manage') or admin_can('system.audit.view') or admin_can('developer_tools.view') %}<span class="admin-runtime__nav-label">{{ ui_text('admin_system') }}</span>{% endif %}
+            {% if admin_can('system.settings') %}<a class="{{ section == 'store' ? 'is-active' : '' }}" href="/admin/system/store">{{ ui_text('admin_store_data') }}</a><a class="{{ section == 'site' ? 'is-active' : '' }}" href="/admin/system/site">{{ ui_text('admin_site_profile') }}</a>{% endif %}
+            {% if admin_can('extensions.manage') %}<a class="{{ section == 'extensions' ? 'is-active' : '' }}" href="/admin/system/extensions">{{ ui_text('admin_extensions') }}</a>{% endif %}
+            {% if admin_can('system.update') %}<a class="{{ section == 'migration' ? 'is-active' : '' }}" href="/admin/system/migration">{{ ui_text('admin_migration') }}</a>{% endif %}
+            {% if admin_can('integrations.manage') %}<a class="{{ section == 'integrations' ? 'is-active' : '' }}" href="/admin/system/integrations">{{ ui_text('admin_integrations') }}</a>{% endif %}
+            {% if admin_can('system.settings') %}<a class="{{ section == 'seo_redirects' ? 'is-active' : '' }}" href="/admin/system/seo-redirects">{{ ui_text('admin.system.seo_redirects.nav') }}</a><a class="{{ section == 'stability' ? 'is-active' : '' }}" href="/admin/system/stability">{{ ui_text('admin_stability') }}</a>{% endif %}
+            {% if admin_can('system.cron.view') %}<a class="{{ section == 'cron' ? 'is-active' : '' }}" href="/admin/system/cron">{{ ui_text('admin_cron_automation') }}</a>{% endif %}
+            {% if admin_can('system.audit.view') %}<a class="{{ section == 'activity' ? 'is-active' : '' }}" href="/admin/system/activity">{{ ui_text('admin_activity_log') }}</a>{% endif %}
+            {% if admin_can('developer_tools.view') %}<a class="{{ section == 'developer' ? 'is-active' : '' }}" href="/admin/system/developer">{{ ui_text('ui.admin.catalog._shell.developer_tools') }}</a>{% endif %}
+            {% if admin_can('admin_users.manage') %}<a class="{{ section == 'access' ? 'is-active' : '' }}" href="/admin/system/access">{{ ui_text('admin_admins_permissions') }}</a>{% endif %}
+        </nav>
+        <form method="post" action="/admin/logout"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button class="admin-runtime__logout" type="submit">{{ ui_text('admin_logout') }}</button></form>
+    </aside>
+    <main class="admin-runtime__main">
+        <button class="admin-mobile-toggle" type="button" data-sidebar-toggle aria-label="{{ ui_text('admin_open_menu') }}" title="{{ ui_text('admin_open_menu') }}">☰</button>
+        {% set context_switcher = admin_context_switcher() %}
+        {% if context_switcher.current %}
+        <div class="admin-context-bar" aria-label="{{ ui_text('admin_store_context') }}">
+            {% if context_switcher.stores|length > 1 %}
+            <form method="get" action="{{ app.request.pathInfo }}" class="admin-context-bar__form">
+                <label>{{ ui_text('admin_store') }}<select name="store_id" onchange="this.form.submit()">{% for store in context_switcher.stores %}<option value="{{ store.id }}"{{ store.id == context_switcher.current.store_id ? ' selected' : '' }}>{{ store.name }}{% if store.code %} · {{ store.code }}{% endif %}</option>{% endfor %}</select></label>
+            </form>
+            {% endif %}
+            <form method="get" action="{{ app.request.pathInfo }}" class="admin-context-bar__form">
+                {% if context_switcher.markets|length > 1 %}<label>{{ ui_text('admin_market') }}<select name="market_id" onchange="this.form.submit()">{% for market in context_switcher.markets %}<option value="{{ market.id }}"{{ market.id == context_switcher.current.market_id ? ' selected' : '' }}>{{ market.name }}</option>{% endfor %}</select></label>{% endif %}
+                {% if context_switcher.locales|length > 1 %}<label>{{ ui_text('admin_language') }}<select name="locale" onchange="this.form.submit()">{% for locale in context_switcher.locales %}<option value="{{ locale.locale_code }}"{{ locale.locale_code == context_switcher.current.locale ? ' selected' : '' }}>{{ locale.locale_code }}</option>{% endfor %}</select></label>{% endif %}
+                {% if context_switcher.currencies|length > 1 %}<label>{{ ui_text('admin_currency') }}<select name="currency" onchange="this.form.submit()">{% for currency in context_switcher.currencies %}<option value="{{ currency.currency_code }}"{{ currency.currency_code == context_switcher.current.currency ? ' selected' : '' }}>{{ currency.currency_code }}</option>{% endfor %}</select></label>{% endif %}
+            </form>
+            <span class="admin-context-bar__current">{{ context_switcher.current.locale }} · {{ context_switcher.current.currency }}</span>
+        </div>
+        {% endif %}
+{% endmacro %}
+{% macro end() %}
+    </main>
+</div>
+<div class="admin-command" data-command-palette hidden aria-hidden="true">
+    <div class="admin-command__backdrop" data-command-close></div>
+    <section class="admin-command__dialog" role="dialog" aria-modal="true" aria-label="{{ ui_text('admin_quick_jump') }}">
+        <div class="admin-command__search"><input type="search" placeholder="{{ ui_text('admin_jump_placeholder') }}" autocomplete="off" data-command-input><kbd>Esc</kbd></div>
+        <div class="admin-command__results" data-command-results></div>
+    </section>
+</div>
+<dialog class="admin-quick-preview" data-quick-preview-dialog><div class="admin-quick-preview__bar"><strong>{{ ui_text('admin_quick_preview') }}</strong><button type="button" class="admin-icon-button" data-quick-preview-close title="{{ ui_text('admin_close') }}" aria-label="{{ ui_text('admin_close') }}">×</button></div><div class="admin-quick-preview__body" data-quick-preview-body><p>{{ ui_text('admin_loading') }}</p></div></dialog>
+<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">window.MC_I18N={{ ui_catalog_json() }};</script>
+<script type="module" src="{{ vite_asset('assets/storefront/admin-runtime.js', '/assets/admin-runtime.js') }}"></script>
+</body>
+</html>
+{% endmacro %}

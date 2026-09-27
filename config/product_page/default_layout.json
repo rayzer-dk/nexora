@@ -1,0 +1,138 @@
+{
+  "schema_version": 3,
+  "layout_code": "default",
+  "name": "Conversion-first product page",
+  "regions": {
+    "hero_media": [
+      {
+        "id": "gallery",
+        "type": "media_gallery",
+        "order": 10,
+        "mobile_order": 20,
+        "settings": {
+          "ratio": "1:1",
+          "zoom": true
+        }
+      }
+    ],
+    "hero_summary": [
+      {
+        "id": "title",
+        "type": "title_meta",
+        "order": 10,
+        "mobile_order": 10
+      },
+      {
+        "id": "rating",
+        "type": "rating_summary",
+        "order": 20,
+        "mobile_order": 30
+      },
+      {
+        "id": "price",
+        "type": "price",
+        "order": 30,
+        "mobile_order": 40
+      },
+      {
+        "id": "availability",
+        "type": "availability",
+        "order": 40,
+        "mobile_order": 50
+      },
+      {
+        "id": "features",
+        "type": "key_features",
+        "order": 50,
+        "mobile_order": 60,
+        "settings": {
+          "limit": 5
+        }
+      },
+      {
+        "id": "variants",
+        "type": "variants",
+        "order": 60,
+        "mobile_order": 70
+      },
+      {
+        "id": "buy",
+        "type": "buy_actions",
+        "order": 70,
+        "mobile_order": 80
+      },
+      {
+        "id": "fulfillment",
+        "type": "fulfillment_preview",
+        "order": 80,
+        "mobile_order": 90
+      },
+      {
+        "id": "trust",
+        "type": "payment_trust",
+        "order": 90,
+        "mobile_order": 100
+      }
+    ],
+    "below_primary": [
+      {
+        "id": "description",
+        "type": "description",
+        "order": 10,
+        "mobile_order": 10
+      },
+      {
+        "id": "attributes",
+        "type": "attributes",
+        "order": 20,
+        "mobile_order": 20
+      },
+      {
+        "id": "documents",
+        "type": "documents",
+        "order": 30,
+        "mobile_order": 30
+      },
+      {
+        "id": "compliance",
+        "type": "compliance",
+        "order": 40,
+        "mobile_order": 40
+      },
+      {
+        "id": "consumer_rights",
+        "type": "consumer_rights",
+        "order": 50,
+        "mobile_order": 50
+      }
+    ],
+    "below_secondary": [
+      {
+        "id": "reviews",
+        "type": "reviews",
+        "order": 10,
+        "mobile_order": 10
+      },
+      {
+        "id": "qa",
+        "type": "qa",
+        "order": 20,
+        "mobile_order": 20
+      },
+      {
+        "id": "related",
+        "type": "related_products",
+        "order": 30,
+        "mobile_order": 30
+      }
+    ],
+    "mobile_sticky": [
+      {
+        "id": "sticky_buy",
+        "type": "sticky_buy_bar",
+        "order": 10,
+        "mobile_order": 10
+      }
+    ]
+  }
+}

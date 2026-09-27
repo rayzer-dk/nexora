@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nexora-commerce:event:commerce.payment.status_changed:1",
+  "type": "object",
+  "required": ["status", "provider"],
+  "additionalProperties": true,
+  "properties": {
+    "status": {"type": "string", "maxLength": 64},
+    "provider": {"type": "string", "maxLength": 96},
+    "provider_status": {"type": "string", "maxLength": 96}
+  }
+}

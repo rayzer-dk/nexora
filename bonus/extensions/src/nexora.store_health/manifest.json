@@ -1,0 +1,56 @@
+{
+  "core": "^3.4.8",
+  "extension_api": "2.0",
+  "permissions": [],
+  "events": [],
+  "ui_slots": [],
+  "blocks": [],
+  "routes": [
+    {
+      "name": "extension.nexora_store_health.status",
+      "path": "/extensions/nexora-store-health/status",
+      "methods": [
+        "GET"
+      ],
+      "mode": "trusted_handler"
+    }
+  ],
+  "pages": [],
+  "slot_contributions": [],
+  "assets": [],
+  "isolation": "contract_only",
+  "hot_disable": true,
+  "data_policy": "retain_on_uninstall",
+  "commercial": {
+    "model": "free"
+  },
+  "localization": {
+    "default_locale": "uk-UA",
+    "locales": [
+      "uk-UA",
+      "en-US"
+    ],
+    "translations_path": "translations"
+  },
+  "code": "nexora.store_health",
+  "name": "Store Health Endpoint",
+  "version": "1.0.0",
+  "type": "trusted-module",
+  "execution": "trusted_release",
+  "publisher": {
+    "name": "Nexora",
+    "key_id": "nexora.bonus.2026"
+  },
+  "signature": {
+    "algorithm": "ed25519",
+    "key_id": "nexora.bonus.2026",
+    "file": "SIGNATURE.ed25519"
+  },
+  "autoload": {
+    "psr4": {
+      "Nexora\\StoreHealth\\": "src"
+    }
+  },
+  "entrypoint": "Nexora\\StoreHealth\\Entrypoint",
+  "migrations": []
+}

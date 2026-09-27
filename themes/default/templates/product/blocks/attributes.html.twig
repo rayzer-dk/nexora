@@ -1,0 +1,8 @@
+<section class="detail-card">
+    <h2>{{ ui_text('attributes') }}</h2>
+    <dl class="spec-list">
+        {% for attribute in product.attributes %}
+            <div><dt>{{ attribute.name }}</dt><dd>{{ attribute.value }}</dd></div>
+        {% endfor %}
+    </dl>
+</section>

@@ -1,0 +1,30 @@
+{% set quantity = product.quantity|default({unit_code:'item', unit_label:ui_text('pieces_short'), step:'1', min:'1', max:null}) %}
+{% if product.purchase_allowed %}
+{% if product.product_type|default('physical') == 'digital' %}<div class="purchase-note"><strong>{{ ui_text('digital_product') }}</strong><small>{{ ui_text('digital_product_note') }}</small></div>{% endif %}
+<form class="buy-actions" data-buy-actions method="post" action="/cart/add">
+    <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
+    <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
+    <commerce-quantity class="quantity">
+        <button type="button" data-qty-minus aria-label="{{ ui_text('decrease') }}">−</button>
+        <input name="quantity" data-qty-input type="number" min="{{ quantity.min }}" step="{{ quantity.step }}" value="{{ quantity.min }}"{% if quantity.max %} max="{{ quantity.max }}"{% endif %} inputmode="decimal" aria-label="{{ ui_text('quantity') }}">
+        <span class="quantity__unit" aria-hidden="true">{{ quantity.unit_label }}</span>
+        <button type="button" data-qty-plus aria-label="{{ ui_text('increase') }}">+</button>
+    </commerce-quantity>
+    <button class="buy-primary" type="submit" data-primary-buy>{{ product.purchase_button_label|default(ui_text('add_cart')) }}</button>
+    <button class="buy-now" type="submit" name="next" value="checkout">{{ ui_text('buy_now') }}</button>
+</form>
+{% elseif product.notify_available %}
+<form class="stock-notify-form" data-stock-notify-form method="post" action="/product/{{ product.id }}/stock-notify">
+    <input type="hidden" name="_token" value="{{ csrf_token('stock_notify_' ~ product.id) }}">
+    <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
+    <label><span>{{ ui_text('notify_when_available') }}</span><div class="inline-action"><input type="email" name="email" required autocomplete="email" placeholder="{{ ui_text('your_email') }}"><button class="buy-primary" type="submit">{{ ui_text('notify') }}</button></div></label>
+    <small>{{ ui_text('stock_notification_note') }}</small>
+</form>
+{% elseif product.price_request %}
+<form class="product-inquiry-form" data-inquiry-form method="post" action="/product/{{ product.id }}/inquiry">
+    <input type="hidden" name="_token" value="{{ csrf_token('product_inquiry_' ~ product.id) }}"><input type="hidden" name="inquiry_type" value="price_request"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
+    <h3>{{ ui_text('ask_price') }}</h3><div class="delivery-fields"><label><span>{{ ui_text('name') }}</span><input name="name" required maxlength="190"></label><label><span>{{ ui_text('phone_or_email') }}</span><input name="phone" maxlength="32" placeholder="+380..."></label><label><span>Email</span><input name="email" type="email" maxlength="320"></label></div><label><span>{{ ui_text('message') }}</span><textarea name="message" maxlength="4000" rows="3">{{ ui_text('price_request_default') }}</textarea></label><button class="buy-primary" type="submit">{{ ui_text('send_request') }}</button>
+</form>
+{% else %}
+<div class="purchase-unavailable"><strong>{{ product.availability_label }}</strong>{% if product.purchase_eta_text %}<span>{{ product.purchase_eta_text }}</span>{% endif %}</div>
+{% endif %}

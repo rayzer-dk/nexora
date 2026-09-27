@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'common.security.invalid_csrf' => 'Недійсний токен безпеки. Оновіть сторінку та повторіть дію.',
+    'common.security.invalid_unsubscribe_signature' => 'Недійсний підпис посилання відписки.',
+    'common.error.operation_failed' => 'Операцію не виконано через внутрішню помилку. Спробуйте ще раз або перевірте журнал системи.',
+    'install.error.seed_failed' => 'Не вдалося створити початкові дані магазину. Технічні подробиці записані в журнал.',
+    'install.error.demo_failed' => 'Основний магазин встановлено, але демонстраційні дані не створено. Технічні подробиці записані в журнал.',
+    'install.health.database_failed' => 'Помилка перевірки бази даних',
+    'install.health.details_hidden' => 'Технічні подробиці приховано',
+    'install.health.migrations' => 'Міграції бази даних',
+    'install.finish.summary_title' => 'Підсумок встановлення',
+    'install.finish.php_ok' => 'PHP — OK',
+    'install.finish.database_ok' => 'База даних — OK',
+    'install.finish.kernel_ok' => 'Symfony Kernel — OK',
+    'install.finish.cron_required' => 'Cron — потребує одноразового налаштування на сервері',
+    'install.finish.email_required' => 'Email — не налаштовано, використовується безпечний null transport',
+    'install.finish.backup_recommended' => 'Backup — рекомендується створити першу резервну копію після входу в адмінку',
+    'extension.localization.invalid' => 'Некоректний блок локалізації розширення.',
+    'extension.localization.default_uk_required' => 'Для розширення default_locale має бути uk-UA.',
+    'extension.localization.locales_invalid' => 'Список locales розширення некоректний і має містити uk-UA.',
+    'extension.localization.path_invalid' => 'Шлях translations_path розширення некоректний.',
+    'extension.localization.manifest_required' => 'Файли translations вимагають опису localization у manifest.json.',
+    'extension.localization.file_invalid' => 'Файл локалізації розширення має бути безпечним JSON у заявленому translations_path.',
+    'extension.localization.file_missing' => 'Відсутній файл локалізації для locale: ',
+    'extension.localization.json_invalid' => 'JSON-каталог локалізації розширення некоректний.',
+    'extension.localization.namespace_invalid' => 'Ключ локалізації розширення має належати namespace ',
+    'extension.localization.duplicate_key' => 'Дубльований ключ локалізації розширення: ',
+    'extension.localization.namespace_collision' => 'Namespace локалізації конфліктує з уже встановленим розширенням: ',
+];

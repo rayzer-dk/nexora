@@ -1,0 +1,20 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="content-page shell">
+    <nav class="breadcrumbs" aria-label="{{ ui_text('breadcrumbs') }}"><a href="/">{{ ui_text('home') }}</a><span aria-hidden="true">/</span><span>{{ page_title }}</span></nav>
+    <article class="content-page__body">
+        <h1>{{ page_title }}</h1>
+        {% if published %}
+            {% if page.excerpt %}<p class="content-page__lead">{{ page.excerpt }}</p>{% endif %}
+            <div class="rich-content">{{ page.body_html|raw }}</div>
+        {% if page.system_key|default('') == 'contacts' %}
+            <section class="contact-form-card" id="contact-form"><h2>{{ ui_text('contact_us_title') }}</h2><p>{{ ui_text('contact_us_text') }}</p>{% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}<form method="post" action="/contact/send" data-inquiry-form><input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}"><input type="hidden" name="inquiry_type" value="contact"><input type="hidden" name="source_url" value="{{ app.request.uri }}"><div class="delivery-fields"><label><span>{{ ui_text('name_required') }}</span><input name="name" required maxlength="190" autocomplete="name"></label><label><span>{{ ui_text('phone') }}</span><input name="phone" maxlength="32" type="tel" autocomplete="tel"></label><label><span>Email</span><input name="email" maxlength="320" type="email" autocomplete="email"></label></div><label><span>{{ ui_text('message_required') }}</span><textarea name="message" required maxlength="4000" rows="6"></textarea></label><button class="button" type="submit">{{ ui_text('send') }}</button></form></section>
+        {% endif %}
+        {% else %}
+            <div class="content-placeholder" role="status">
+                <p>{{ ui_text('page_configuring') }}</p>
+            </div>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

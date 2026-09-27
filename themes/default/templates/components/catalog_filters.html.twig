@@ -1,0 +1,63 @@
+<form class="catalog-filters" method="get" action="" data-catalog-filter-form>
+    <div class="catalog-filters__row">
+        <label class="catalog-filter catalog-filter--search">
+            <span>{{ ui_text('filter_search') }}</span>
+            <input type="search" name="q" value="{{ catalog_filter.search }}" placeholder="{{ ui_text('filter_search_placeholder') }}" maxlength="120" autocomplete="off">
+        </label>
+        <label class="catalog-filter">
+            <span>{{ ui_text('brand') }}</span>
+            <select name="brand">
+                <option value="">{{ ui_text('all_brands') }}</option>
+                {% for brand in catalog_facets.brands %}
+                    <option value="{{ brand.id }}"{% if catalog_filter.brandId == brand.id %} selected{% endif %}>{{ brand.name }} ({{ brand.count }})</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="catalog-filter">
+            <span>{{ ui_text('price_from') }}</span>
+            <input type="text" inputmode="decimal" name="min_price" value="{{ catalog_filter.minPriceMinor is not null ? (catalog_filter.minPriceMinor / 100)|number_format(2, '.', '') : '' }}" placeholder="0.00">
+        </label>
+        <label class="catalog-filter">
+            <span>{{ ui_text('price_to') }}</span>
+            <input type="text" inputmode="decimal" name="max_price" value="{{ catalog_filter.maxPriceMinor is not null ? (catalog_filter.maxPriceMinor / 100)|number_format(2, '.', '') : '' }}" placeholder="{{ ui_text('no_limit') }}">
+        </label>
+        <label class="catalog-filter">
+            <span>{{ ui_text('sort') }}</span>
+            <select name="sort">
+                <option value="newest"{% if catalog_filter.sort == 'newest' %} selected{% endif %}>{{ ui_text('sort_newest') }}</option>
+                <option value="price_asc"{% if catalog_filter.sort == 'price_asc' %} selected{% endif %}>{{ ui_text('sort_price_asc') }}</option>
+                <option value="price_desc"{% if catalog_filter.sort == 'price_desc' %} selected{% endif %}>{{ ui_text('sort_price_desc') }}</option>
+                <option value="name_asc"{% if catalog_filter.sort == 'name_asc' %} selected{% endif %}>{{ ui_text('sort_name_asc') }}</option>
+                <option value="name_desc"{% if catalog_filter.sort == 'name_desc' %} selected{% endif %}>{{ ui_text('sort_name_desc') }}</option>
+            </select>
+        </label>
+        <label class="catalog-filter catalog-filter--check">
+            <input type="checkbox" name="in_stock" value="1"{% if catalog_filter.inStockOnly %} checked{% endif %}>
+            <span>{{ ui_text('only_in_stock') }}</span>
+        </label>
+        <div class="catalog-filter__actions">
+            <button class="button button--primary" type="submit">{{ ui_text('apply') }}</button>
+            {% if catalog_filter.isFiltered %}<a class="button button--ghost" href="{{ app.request.pathInfo }}">{{ ui_text('reset') }}</a>{% endif %}
+        </div>
+    </div>
+
+    {% if catalog_facets.attributes|default([]) is not empty %}
+        <div class="catalog-facets" aria-label="{{ ui_text('attribute_filters') }}">
+            {% for facet in catalog_facets.attributes %}
+                {% set selected_values = catalog_filter.attributeFilters[facet.code]|default([]) %}
+                <details class="catalog-facet"{% if selected_values is not empty %} open{% endif %}>
+                    <summary>{{ facet.name }}{% if facet.unit_label %}, {{ facet.unit_label }}{% endif %}{% if selected_values is not empty %}<span class="catalog-facet__badge">{{ selected_values|length }}</span>{% endif %}</summary>
+                    <div class="catalog-facet__values">
+                        {% for value in facet.values %}
+                            <label class="catalog-facet__value">
+                                <input type="checkbox" name="attr[{{ facet.code }}][]" value="{{ value.token }}"{% if value.token in selected_values %} checked{% endif %}>
+                                <span>{{ value.label }}</span>
+                                <small>{{ value.count }}</small>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </details>
+            {% endfor %}
+        </div>
+    {% endif %}
+</form>

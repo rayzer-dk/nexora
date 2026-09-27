@@ -1,0 +1,195 @@
+{
+  "schema_version": 3,
+  "groups": [
+    {
+      "code": "identity",
+      "fields": [
+        "product_type",
+        "status",
+        "brand_id",
+        "condition_code",
+        "country_of_origin",
+        "sku",
+        "gtin",
+        "mpn"
+      ],
+      "label_key": "product_editor.group.identity"
+    },
+    {
+      "code": "content",
+      "fields": [
+        "name",
+        "short_description",
+        "description",
+        "key_features"
+      ],
+      "label_key": "product_editor.group.content"
+    },
+    {
+      "code": "catalog",
+      "fields": [
+        "primary_category",
+        "additional_categories",
+        "stores",
+        "markets",
+        "publish_schedule"
+      ],
+      "label_key": "product_editor.group.catalog"
+    },
+    {
+      "code": "pricing_tax",
+      "fields": [
+        "price_lists",
+        "compare_at_price",
+        "quantity_tiers",
+        "tax_class_id",
+        "tax_display_preview"
+      ],
+      "label_key": "product_editor.group.pricing_tax"
+    },
+    {
+      "code": "units",
+      "fields": [
+        "sale_unit_code",
+        "quantity_step",
+        "min_order_quantity",
+        "max_order_quantity",
+        "unit_pricing"
+      ],
+      "label_key": "product_editor.group.units"
+    },
+    {
+      "code": "variants",
+      "fields": [
+        "options",
+        "variants",
+        "variant_identifiers",
+        "variant_prices",
+        "variant_media"
+      ],
+      "label_key": "product_editor.group.variants"
+    },
+    {
+      "code": "inventory",
+      "fields": [
+        "manage_inventory",
+        "inventory_items",
+        "warehouses",
+        "safety_stock",
+        "backorder_policy"
+      ],
+      "label_key": "product_editor.group.inventory"
+    },
+    {
+      "code": "media",
+      "fields": [
+        "gallery",
+        "video",
+        "alt_text",
+        "focal_point"
+      ],
+      "label_key": "product_editor.group.media"
+    },
+    {
+      "code": "attributes",
+      "fields": [
+        "typed_attributes",
+        "filter_visibility",
+        "comparison_visibility"
+      ],
+      "label_key": "product_editor.group.attributes"
+    },
+    {
+      "code": "shipping",
+      "fields": [
+        "fulfillment_type",
+        "weight_kg",
+        "length_mm",
+        "width_mm",
+        "height_mm",
+        "shipping_class"
+      ],
+      "label_key": "product_editor.group.shipping"
+    },
+    {
+      "code": "seo",
+      "fields": [
+        "seo_slug",
+        "meta_title",
+        "meta_description",
+        "indexing",
+        "canonical",
+        "hreflang_preview"
+      ],
+      "label_key": "product_editor.group.seo"
+    },
+    {
+      "code": "google",
+      "fields": [
+        "google_category",
+        "product_type_path",
+        "custom_labels",
+        "merchant_preview"
+      ],
+      "label_key": "product_editor.group.google"
+    },
+    {
+      "code": "compliance",
+      "fields": [
+        "manufacturer_operator",
+        "eu_responsible_person",
+        "product_model_identifier",
+        "safety_information",
+        "warnings",
+        "regulatory_identifiers",
+        "warranty_months"
+      ],
+      "label_key": "product_editor.group.compliance"
+    },
+    {
+      "code": "documents",
+      "fields": [
+        "manuals",
+        "datasheets",
+        "certificates",
+        "declarations",
+        "test_reports",
+        "safety_data_sheets",
+        "ce_marking",
+        "warranty_documents"
+      ],
+      "label_key": "product_editor.group.documents"
+    },
+    {
+      "code": "relations",
+      "fields": [
+        "related",
+        "accessories",
+        "alternatives",
+        "upsell",
+        "cross_sell",
+        "frequently_bought"
+      ],
+      "label_key": "product_editor.group.relations"
+    },
+    {
+      "code": "consumer_rights",
+      "fields": [
+        "withdrawal_policy",
+        "digital_content_consent",
+        "return_policy",
+        "legal_guarantee",
+        "lowest_30_day_price_preview"
+      ],
+      "label_key": "product_editor.group.consumer_rights"
+    },
+    {
+      "code": "advanced",
+      "fields": [
+        "extension_metadata",
+        "revision_history"
+      ],
+      "label_key": "product_editor.group.advanced"
+    }
+  ]
+}

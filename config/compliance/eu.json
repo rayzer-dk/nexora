@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "region": "EU",
+  "baseline": {
+    "gpsr": true,
+    "consumer_rights": true,
+    "price_reduction_history_days": 30,
+    "withdrawal_days_default": 14,
+    "legal_guarantee_months_default": 24,
+    "accessibility_target": "EN 301 549 / WCAG 2.2 AA"
+  },
+  "conditional": {
+    "ce_marking": "product_specific",
+    "eu_declaration_conformity": "product_specific",
+    "safety_data_sheet": "product_specific"
+  }
+}

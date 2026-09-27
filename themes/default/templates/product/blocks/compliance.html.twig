@@ -1,0 +1,17 @@
+{% if product.compliance is defined and product.compliance %}
+<section class="detail-card product-compliance" aria-labelledby="product-compliance-heading">
+    <h2 id="product-compliance-heading">{{ ui_text('safety_compliance') }}</h2>
+    <dl class="spec-list">
+        {% if product.compliance.manufacturer is defined %}
+            <div><dt>{{ ui_text('manufacturer') }}</dt><dd>{{ product.compliance.manufacturer.name }}{% if product.compliance.manufacturer.contact %}<br><small>{{ product.compliance.manufacturer.contact }}</small>{% endif %}</dd></div>
+        {% endif %}
+        {% if product.compliance.responsible_person is defined %}
+            <div><dt>{{ ui_text('eu_responsible_person') }}</dt><dd>{{ product.compliance.responsible_person.name }}{% if product.compliance.responsible_person.contact %}<br><small>{{ product.compliance.responsible_person.contact }}</small>{% endif %}</dd></div>
+        {% endif %}
+        {% if product.country_of_origin is defined and product.country_of_origin %}<div><dt>{{ ui_text('country_origin') }}</dt><dd>{{ product.country_of_origin }}</dd></div>{% endif %}
+        {% if product.compliance.warranty is defined and product.compliance.warranty %}<div><dt>{{ ui_text('warranty') }}</dt><dd>{{ product.compliance.warranty }}</dd></div>{% endif %}
+    </dl>
+    {% if product.compliance.warnings is defined and product.compliance.warnings %}<div class="compliance-warning"><strong>{{ ui_text('warning') }}</strong><p>{{ product.compliance.warnings }}</p></div>{% endif %}
+    {% if product.compliance.safety_information is defined and product.compliance.safety_information %}<div class="compliance-note"><strong>{{ ui_text('safety_information') }}</strong><p>{{ product.compliance.safety_information }}</p></div>{% endif %}
+</section>
+{% endif %}

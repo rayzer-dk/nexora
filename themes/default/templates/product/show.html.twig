@@ -1,0 +1,66 @@
+{% extends '@storefront/base.html.twig' %}
+
+{% block head %}
+    <script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>
+    <script type="module" src="{{ vite_asset('assets/storefront/product-page.js', '/assets/product-page.js') }}"></script>
+{% endblock %}
+
+{% block body %}
+<article class="product-page">
+    <div class="shell">{% include '@storefront/components/breadcrumbs.html.twig' with {items: product.breadcrumbs|default([])} only %}</div>
+    <div class="shell product-hero">
+        {% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_gallery', product:product} only %}
+        <section class="product-region product-region--media" aria-label="{{ ui_text('ui.product.show.product_media')|e('html_attr') }}">
+            {% for block in regions.hero_media|default([]) %}
+                <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}" style="--block-order:{{ block.order }};--block-mobile-order:{{ block.mobileOrder }};{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}">
+                    {% include block.template with {product: product, block: block} only %}
+                </div>
+            {% endfor %}
+        </section>
+        {% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_gallery', product:product} only %}
+
+        <section class="product-region product-region--summary" aria-label="{{ ui_text('ui.product.show.purchase_information')|e('html_attr') }}">
+            {% for block in regions.hero_summary|default([]) %}
+                {% if block.type == 'title_meta' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_title', product:product} only %}{% endif %}
+                {% if block.type == 'buy_actions' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_buy', product:product} only %}{% endif %}
+                <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}" style="--block-order:{{ block.order }};--block-mobile-order:{{ block.mobileOrder }};{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}">
+                    {% include block.template with {product: product, block: block} only %}
+                </div>
+                {% if block.type == 'title_meta' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_title', product:product} only %}{% endif %}
+                {% if block.type == 'price' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_price', product:product} only %}{% endif %}
+                {% if block.type == 'buy_actions' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_buy', product:product} only %}{% endif %}
+            {% endfor %}
+        </section>
+    </div>
+
+    <div class="shell product-details">
+        <section class="product-region product-region--below-primary" aria-label="{{ ui_text('ui.product.show.product_details')|e('html_attr') }}">
+            {% for block in regions.below_primary|default([]) %}
+                {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_description', product:product} only %}{% endif %}
+                <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}"{% if block.settings.builder_background|default('') or block.settings.builder_color|default('') or block.settings.builder_padding|default('') or block.settings.builder_margin|default('') %} style="{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}"{% endif %}>
+                    {% include block.template with {product: product, block: block} only %}
+                </div>
+                {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_description', product:product} only %}{% endif %}
+                {% if block.type == 'attributes' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_attributes', product:product} only %}{% endif %}
+                {% if block.type == 'reviews' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_reviews', product:product} only %}{% endif %}
+            {% endfor %}
+        </section>
+
+        <section class="product-region product-region--below-secondary" aria-label="{{ ui_text('ui.product.show.additional_product_information')|e('html_attr') }}">
+            {% for block in regions.below_secondary|default([]) %}
+                {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_description', product:product} only %}{% endif %}
+                <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}"{% if block.settings.builder_background|default('') or block.settings.builder_color|default('') or block.settings.builder_padding|default('') or block.settings.builder_margin|default('') %} style="{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}"{% endif %}>
+                    {% include block.template with {product: product, block: block} only %}
+                </div>
+                {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_description', product:product} only %}{% endif %}
+                {% if block.type == 'attributes' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_attributes', product:product} only %}{% endif %}
+                {% if block.type == 'reviews' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_reviews', product:product} only %}{% endif %}
+            {% endfor %}
+        </section>
+    </div>
+
+    {% for block in regions.mobile_sticky|default([]) %}
+        {% include block.template with {product: product, block: block} only %}
+    {% endfor %}
+</article>
+{% endblock %}

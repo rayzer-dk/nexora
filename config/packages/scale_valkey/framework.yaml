@@ -1,0 +1,15 @@
+# Alternative high-traffic profile using Valkey.
+framework:
+    session:
+        handler_id: '%env(VALKEY_SESSION_DSN)%'
+        metadata_update_threshold: 60
+    cache:
+        app: cache.adapter.valkey
+        default_valkey_provider: '%env(VALKEY_DSN)%'
+        pools:
+            cache.storefront:
+                adapter: cache.app
+            cache.shipping:
+                adapter: cache.app
+            cache.security:
+                adapter: cache.app

@@ -1,0 +1,30 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/php:1-8.4-bookworm
+    command: sleep infinity
+    volumes:
+      - ..:/workspace:cached
+    environment:
+      APP_ENV: dev
+      APP_SECRET: devcontainer_change_before_external_use_0123456789abcdef
+      DATABASE_URL: mysql://commerce:commerce@db:3306/commerce?charset=utf8mb4
+      DATABASE_SERVER_VERSION: "8.4"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: commerce
+      MYSQL_USER: commerce
+      MYSQL_PASSWORD: commerce
+      MYSQL_ROOT_PASSWORD: root
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    ports:
+      - "3306:3306"

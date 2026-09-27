@@ -1,0 +1,509 @@
+parameters:
+    commerce.mail.from_address: '%env(MAIL_FROM_ADDRESS)%'
+    commerce.mail.from_name: '%env(MAIL_FROM_NAME)%'
+    commerce.telegram.enabled: '%env(bool:TELEGRAM_NOTIFICATIONS_ENABLED)%'
+    commerce.telegram.bot_token: '%env(TELEGRAM_BOT_TOKEN)%'
+    commerce.telegram.default_chat_id: '%env(TELEGRAM_DEFAULT_CHAT_ID)%'
+    commerce.sms.enabled: '%env(bool:SMS_NOTIFICATIONS_ENABLED)%'
+    commerce.sms.endpoint: '%env(SMS_GATEWAY_ENDPOINT)%'
+    commerce.sms.bearer_token: '%env(SMS_GATEWAY_BEARER_TOKEN)%'
+    commerce.sms.sender: '%env(SMS_SENDER)%'
+    commerce.turnstile.enabled: '%env(bool:TURNSTILE_ENABLED)%'
+    commerce.turnstile.secret_key: '%env(TURNSTILE_SECRET_KEY)%'
+    commerce.nova_post.api_base: '%env(NOVA_POST_API_BASE)%'
+    commerce.nova_post.api_key: '%env(NOVA_POST_API_KEY)%'
+    commerce.nova_post.sender_ref: '%env(NOVA_POST_SENDER_REF)%'
+    commerce.nova_post.contact_sender_ref: '%env(NOVA_POST_CONTACT_SENDER_REF)%'
+    commerce.nova_post.city_sender_ref: '%env(NOVA_POST_CITY_SENDER_REF)%'
+    commerce.nova_post.sender_address_ref: '%env(NOVA_POST_SENDER_ADDRESS_REF)%'
+    commerce.nova_post.sender_phone: '%env(NOVA_POST_SENDER_PHONE)%'
+    commerce.nova_post.payer_type: '%env(NOVA_POST_PAYER_TYPE)%'
+    commerce.nova_post.payment_method: '%env(NOVA_POST_PAYMENT_METHOD)%'
+    commerce.nova_post.label_url_template: '%env(NOVA_POST_LABEL_URL_TEMPLATE)%'
+    commerce.ukrposhta.api_base: '%env(UKRPOSHTA_API_BASE)%'
+    commerce.ukrposhta.bearer: '%env(UKRPOSHTA_BEARER)%'
+    commerce.delivery_auto.api_base: '%env(DELIVERY_AUTO_API_BASE)%'
+    commerce.meest.api_base: '%env(MEEST_API_BASE)%'
+    commerce.meest.token: '%env(MEEST_API_TOKEN)%'
+    commerce.meest.cities_path: '%env(MEEST_CITIES_PATH)%'
+    commerce.meest.points_path: '%env(MEEST_POINTS_PATH)%'
+    commerce.product_page.default_layout: '%kernel.project_dir%/config/product_page/default_layout.json'
+    commerce.product_editor.schema: '%kernel.project_dir%/config/product_editor/schema.json'
+    commerce.google_ucp.enabled: '%env(bool:GOOGLE_UCP_ENABLED)%'
+    commerce.google_ucp.version: '%env(GOOGLE_UCP_VERSION)%'
+    commerce.app_public_url: '%env(resolve:APP_PUBLIC_URL)%'
+    commerce.core_update.public_key: '%env(CORE_UPDATE_PUBLIC_KEY)%'
+    commerce.monobank.enabled: '%env(bool:MONOBANK_ACQUIRING_ENABLED)%'
+    commerce.monobank.api_base: '%env(MONOBANK_ACQUIRING_API_BASE)%'
+    commerce.monobank.token: '%env(MONOBANK_ACQUIRING_TOKEN)%'
+    commerce.google_merchant.enabled: '%env(bool:GOOGLE_MERCHANT_ENABLED)%'
+    commerce.google_merchant.api_base: '%env(GOOGLE_MERCHANT_API_BASE)%'
+    commerce.google_merchant.account_id: '%env(GOOGLE_MERCHANT_ACCOUNT_ID)%'
+    commerce.google_merchant.data_source: '%env(GOOGLE_MERCHANT_DATA_SOURCE)%'
+    commerce.google_merchant.service_account_json: '%env(GOOGLE_MERCHANT_SERVICE_ACCOUNT_JSON)%'
+    commerce.google_merchant.access_token: '%env(GOOGLE_MERCHANT_ACCESS_TOKEN)%'
+    commerce.marketing.ga4.enabled: '%env(bool:MARKETING_GA4_ENABLED)%'
+    commerce.marketing.ga4.measurement_id: '%env(MARKETING_GA4_MEASUREMENT_ID)%'
+    commerce.marketing.ga4.api_secret: '%env(MARKETING_GA4_API_SECRET)%'
+    commerce.marketing.ga4.endpoint: '%env(MARKETING_GA4_ENDPOINT)%'
+    commerce.marketing.meta.enabled: '%env(bool:MARKETING_META_ENABLED)%'
+    commerce.marketing.meta.pixel_id: '%env(MARKETING_META_PIXEL_ID)%'
+    commerce.marketing.meta.access_token: '%env(MARKETING_META_ACCESS_TOKEN)%'
+    commerce.marketing.meta.api_base: '%env(MARKETING_META_API_BASE)%'
+    commerce.marketing.meta.api_version: '%env(MARKETING_META_API_VERSION)%'
+    commerce.marketing.tiktok.enabled: '%env(bool:MARKETING_TIKTOK_ENABLED)%'
+    commerce.marketing.tiktok.pixel_code: '%env(MARKETING_TIKTOK_PIXEL_CODE)%'
+    commerce.marketing.tiktok.access_token: '%env(MARKETING_TIKTOK_ACCESS_TOKEN)%'
+    commerce.marketing.tiktok.endpoint: '%env(MARKETING_TIKTOK_ENDPOINT)%'
+    commerce.search.meilisearch.enabled: '%env(bool:MEILISEARCH_ENABLED)%'
+    commerce.search.meilisearch.endpoint: '%env(MEILISEARCH_ENDPOINT)%'
+    commerce.search.meilisearch.api_key: '%env(MEILISEARCH_API_KEY)%'
+    commerce.search.meilisearch.index: '%env(MEILISEARCH_INDEX)%'
+    commerce.ai.openai.enabled: '%env(bool:AI_OPENAI_ENABLED)%'
+    commerce.ai.openai.api_key: '%env(AI_OPENAI_API_KEY)%'
+    commerce.ai.openai.model: '%env(AI_OPENAI_MODEL)%'
+    commerce.ai.gemini.enabled: '%env(bool:AI_GEMINI_ENABLED)%'
+    commerce.ai.gemini.api_key: '%env(AI_GEMINI_API_KEY)%'
+    commerce.ai.gemini.model: '%env(AI_GEMINI_MODEL)%'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    _instanceof:
+        Commerce\Modules\ProductPage\Contract\ProductBlockProviderInterface:
+            tags: ['commerce.product_block_provider']
+        Commerce\Modules\Shipping\Contract\DeliveryProviderInterface:
+            tags: ['commerce.delivery_provider']
+        Commerce\Modules\Notification\Contract\NotificationSenderInterface:
+            tags: ['commerce.notification_sender']
+        Commerce\Modules\Payment\Contract\PaymentProviderInterface:
+            tags: ['commerce.payment_provider']
+        Commerce\Core\Event\DomainEventSubscriberInterface:
+            tags: ['commerce.domain_event_subscriber']
+        Commerce\Modules\Marketing\Contract\MarketingEventProviderInterface:
+            tags: ['commerce.marketing_event_provider']
+        Commerce\Modules\Ai\Contract\TextGenerationProviderInterface:
+            tags: ['commerce.ai_text_provider']
+
+    Commerce\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+            - '../src/Modules/Migration/Source/'
+
+
+
+    Commerce\Core\I18n\StorefrontUiTranslator:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\DigitalProduct\Application\ProductDigitalAssetService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\DigitalProduct\Application\DigitalDownloadService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Security\SecretVault:
+        arguments:
+            $appSecret: '%kernel.secret%'
+
+    Commerce\Core\Twig\ViteAssetExtension:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\ImportExport\Application\UniversalCatalogImportService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Extension\Theme\ActiveThemeTemplateLoaderSubscriber:
+        arguments:
+            $twigLoader: '@twig.loader.native_filesystem'
+
+    Commerce\Core\Event\EventBusInterface:
+        alias: Commerce\Core\Event\TransactionalOutboxEventBus
+
+    Commerce\Core\Event\DomainEventSubscriberRegistry:
+        arguments:
+            $subscribers: !tagged_iterator commerce.domain_event_subscriber
+
+    Commerce\Modules\Shipping\Application\DeliveryProviderRegistry:
+        arguments:
+            $providers: !tagged_iterator commerce.delivery_provider
+
+    Commerce\Modules\Shipping\Application\DeliveryCityCache:
+        arguments:
+            $cache: '@cache.shipping'
+
+    Commerce\Modules\Shipping\Application\DeliveryPointCache:
+        arguments:
+            $cache: '@cache.shipping'
+
+    Commerce\Modules\Shipping\Application\DeliveryProviderCircuitBreaker:
+        arguments:
+            $cache: '@cache.shipping'
+
+    Commerce\Modules\Shipping\Provider\NovaPost\NovaPostTransport:
+        arguments:
+            $apiBase: '%commerce.nova_post.api_base%'
+            $apiKey: '%commerce.nova_post.api_key%'
+
+    Commerce\Modules\Shipping\Provider\NovaPost\NovaPostShipmentGateway:
+        arguments:
+            $senderRef: '%commerce.nova_post.sender_ref%'
+            $contactSenderRef: '%commerce.nova_post.contact_sender_ref%'
+            $citySenderRef: '%commerce.nova_post.city_sender_ref%'
+            $senderAddressRef: '%commerce.nova_post.sender_address_ref%'
+            $senderPhone: '%commerce.nova_post.sender_phone%'
+            $payerType: '%commerce.nova_post.payer_type%'
+            $paymentMethod: '%commerce.nova_post.payment_method%'
+            $labelUrlTemplate: '%commerce.nova_post.label_url_template%'
+
+    Commerce\Modules\Shipping\Provider\Ukrposhta\UkrposhtaTransport:
+        arguments:
+            $apiBase: '%commerce.ukrposhta.api_base%'
+            $bearer: '%commerce.ukrposhta.bearer%'
+
+    Commerce\Modules\Shipping\Provider\DeliveryAuto\DeliveryAutoTransport:
+        arguments:
+            $apiBase: '%commerce.delivery_auto.api_base%'
+
+    Commerce\Modules\Shipping\Provider\Meest\MeestTransport:
+        arguments:
+            $apiBase: '%commerce.meest.api_base%'
+            $token: '%commerce.meest.token%'
+            $citiesPath: '%commerce.meest.cities_path%'
+            $pointsPath: '%commerce.meest.points_path%'
+
+    Commerce\Modules\ProductPage\Application\ProductBlockRegistry:
+        arguments:
+            $providers: !tagged_iterator commerce.product_block_provider
+
+
+    Commerce\Modules\Inventory\Application\StockNotificationService:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\ProductPage\Application\ProductPageLayoutLoader:
+        arguments:
+            $defaultLayoutPath: '%commerce.product_page.default_layout%'
+
+    Commerce\Modules\Feeds\Application\CanonicalProductExportService:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Feeds\Application\ProductFeedGenerator:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Feeds\Application\FeedStorageService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Admin\Http\FeedAdminController:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Seo\Http\SitemapController:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+
+    Commerce\Modules\GoogleCommerce\EventSubscriber\CatalogGoogleSyncSubscriber:
+        arguments:
+            $enabled: '%commerce.google_merchant.enabled%'
+
+    Commerce\Modules\Marketing\EventSubscriber\CommerceMarketingSubscriber:
+        arguments:
+            $ga4Enabled: '%commerce.marketing.ga4.enabled%'
+            $metaEnabled: '%commerce.marketing.meta.enabled%'
+            $tiktokEnabled: '%commerce.marketing.tiktok.enabled%'
+
+    Commerce\Modules\GoogleCommerce\Ucp\UcpProfileController:
+        arguments:
+            $enabled: '%commerce.google_ucp.enabled%'
+            $version: '%commerce.google_ucp.version%'
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Shipping\Console\ClearShippingCacheCommand:
+        arguments:
+            $shippingCache: '@cache.shipping'
+    Commerce\Modules\Notification\Channel\Email\EmailNotificationSender:
+        arguments:
+            $fromAddress: '%commerce.mail.from_address%'
+            $fromName: '%commerce.mail.from_name%'
+
+    Commerce\Modules\Notification\Channel\Telegram\TelegramNotificationSender:
+        arguments:
+            $enabled: '%commerce.telegram.enabled%'
+            $botToken: '%commerce.telegram.bot_token%'
+            $defaultChatId: '%commerce.telegram.default_chat_id%'
+
+    Commerce\Modules\Notification\Channel\Sms\HttpSmsNotificationSender:
+        arguments:
+            $enabled: '%commerce.sms.enabled%'
+            $endpoint: '%commerce.sms.endpoint%'
+            $bearerToken: '%commerce.sms.bearer_token%'
+            $sender: '%commerce.sms.sender%'
+
+    Commerce\Modules\Notification\Application\NotificationDispatcher:
+        arguments:
+            $senders: !tagged_iterator commerce.notification_sender
+
+    Commerce\Modules\Payment\Application\PaymentProviderRegistry:
+        arguments:
+            $providers: !tagged_iterator commerce.payment_provider
+
+    Commerce\Modules\Payment\Provider\Monobank\MonobankClient:
+        arguments:
+            $apiBase: '%commerce.monobank.api_base%'
+            $token: '%commerce.monobank.token%'
+
+    Commerce\Modules\Payment\Provider\Monobank\MonobankPaymentProvider:
+        arguments:
+            $isEnabled: '%commerce.monobank.enabled%'
+            $token: '%commerce.monobank.token%'
+
+    Commerce\Modules\Payment\Provider\Monobank\MonobankWebhookVerifier:
+        arguments:
+            $cache: '@cache.app'
+
+    Commerce\Modules\Payment\Application\PaymentFlowService:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Security\Bot\TurnstileVerifier:
+        arguments:
+            $enabled: '%commerce.turnstile.enabled%'
+            $secretKey: '%commerce.turnstile.secret_key%'
+
+    Commerce\Core\Runtime\ComponentInventory:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Health\SystemPreflightInspector:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+
+    Commerce\Modules\Catalog\Application\ProductEditQueryInterface:
+        alias: Commerce\Modules\Catalog\Infrastructure\DbalCatalogAdminQuery
+
+    Commerce\Modules\Appearance\Application\StorefrontPresentationWriterInterface:
+        alias: Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings
+
+    Commerce\Modules\Inventory\Contract\InventoryReservationServiceInterface:
+        alias: Commerce\Modules\Inventory\Infrastructure\DbalInventoryReservationService
+
+    Commerce\Modules\Seo\Contract\SeoUrlRepositoryInterface:
+        alias: Commerce\Modules\Seo\Infrastructure\DbalSeoUrlRepository
+
+    Commerce\Modules\Seo\System\SystemPageRouteCatalog:
+        arguments:
+            $configPath: '%kernel.project_dir%/config/seo/system_pages.json'
+
+    Commerce\Modules\Catalog\Application\ProductEditorSchema:
+        arguments:
+            $schemaPath: '%commerce.product_editor.schema%'
+
+    Commerce\Modules\Privacy\Http\ConsentReceiptController:
+        arguments:
+            $appSecret: '%kernel.secret%'
+
+    Commerce\Modules\Customer\Application\CustomerAccountSecurityService:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Content\System\InformationPageCatalog:
+        arguments:
+            $configPath: '%kernel.project_dir%/config/content/information_pages.json'
+
+    Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactoryInterface:
+        alias: security.password_hasher_factory
+
+    Commerce\Core\Install\InstallationSeeder:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Install\InstallCommand:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Install\InstallationHealthVerifier:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Install\Http\WebInstallController:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Catalog\Application\ProductWriter:
+        arguments:
+            $richTextSanitizer: '@html_sanitizer.sanitizer.commerce.rich_text'
+
+    Commerce\Modules\Admin\Http\ContentAdminPageController:
+        arguments:
+            $richTextSanitizer: '@html_sanitizer.sanitizer.commerce.rich_text'
+
+
+    Commerce\Modules\Demo\Application\DemoSeeder:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Runtime\StorefrontLastKnownGoodCache:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Extension\ExtensionPackageManager:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Extension\TrustedExtensionSignatureVerifier:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+
+    Commerce\Core\Extension\Console\ExtensionScaffoldCommand:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Media\Application\MediaImageService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Media\Application\MediaVideoService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Catalog\Application\ProductDocumentService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Runtime\MaintenanceMode:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Recovery\RecoverySnapshotService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Recovery\RecoveryArchiveRestorer:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+
+    Commerce\Core\Update\AtomicCoreReleaseSwitcher:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Update\CoreUpdateProbeTokenStore:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Core\Update\CoreUpdateHttpProbe:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Core\Update\CoreUpdateManager:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $publicKey: '%commerce.core_update.public_key%'
+
+    Commerce\Modules\GoogleCommerce\Infrastructure\GoogleMerchantTokenProvider:
+        arguments:
+            $serviceAccountJson: '%commerce.google_merchant.service_account_json%'
+            $staticAccessToken: '%commerce.google_merchant.access_token%'
+
+    Commerce\Modules\GoogleCommerce\Infrastructure\GoogleMerchantApiClient:
+        arguments:
+            $apiBase: '%commerce.google_merchant.api_base%'
+            $accountId: '%commerce.google_merchant.account_id%'
+            $dataSourceName: '%commerce.google_merchant.data_source%'
+
+    Commerce\Modules\GoogleCommerce\Application\GoogleMerchantProductProjection:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\GoogleCommerce\Application\GoogleMerchantSyncHandler:
+        arguments:
+            $accountId: '%commerce.google_merchant.account_id%'
+
+    Commerce\Modules\Marketing\Provider\Ga4MeasurementProtocolProvider:
+        arguments:
+            $isEnabled: '%commerce.marketing.ga4.enabled%'
+            $measurementId: '%commerce.marketing.ga4.measurement_id%'
+            $apiSecret: '%commerce.marketing.ga4.api_secret%'
+            $endpoint: '%commerce.marketing.ga4.endpoint%'
+
+    Commerce\Modules\Marketing\Provider\MetaConversionsApiProvider:
+        arguments:
+            $isEnabled: '%commerce.marketing.meta.enabled%'
+            $pixelId: '%commerce.marketing.meta.pixel_id%'
+            $accessToken: '%commerce.marketing.meta.access_token%'
+            $apiBase: '%commerce.marketing.meta.api_base%'
+            $apiVersion: '%commerce.marketing.meta.api_version%'
+
+    Commerce\Modules\Marketing\Provider\TikTokEventsApiProvider:
+        arguments:
+            $isEnabled: '%commerce.marketing.tiktok.enabled%'
+            $pixelCode: '%commerce.marketing.tiktok.pixel_code%'
+            $accessToken: '%commerce.marketing.tiktok.access_token%'
+            $endpoint: '%commerce.marketing.tiktok.endpoint%'
+
+    Commerce\Modules\Marketing\Application\MarketingEventDispatcher:
+        arguments:
+            $providers: !tagged_iterator commerce.marketing_event_provider
+
+
+    Commerce\Modules\Search\Infrastructure\MeilisearchClient:
+        arguments:
+            $enabled: '%commerce.search.meilisearch.enabled%'
+            $endpoint: '%commerce.search.meilisearch.endpoint%'
+            $apiKey: '%commerce.search.meilisearch.api_key%'
+            $indexUid: '%commerce.search.meilisearch.index%'
+
+    Commerce\Modules\Search\Infrastructure\MeilisearchCandidateProvider:
+        arguments:
+            $cache: '@cache.storefront'
+
+    Commerce\Modules\Search\Contract\SearchCandidateProviderInterface:
+        alias: Commerce\Modules\Search\Infrastructure\MeilisearchCandidateProvider
+
+    Commerce\Modules\Storefront\Infrastructure\CachedStorefrontCatalogQuery:
+        arguments:
+            $cache: '@cache.storefront'
+
+    Commerce\Modules\Ai\Provider\OpenAiResponsesProvider:
+        arguments:
+            $isEnabled: '%commerce.ai.openai.enabled%'
+            $apiKey: '%commerce.ai.openai.api_key%'
+            $model: '%commerce.ai.openai.model%'
+
+    Commerce\Modules\Ai\Provider\GeminiGenerateContentProvider:
+        arguments:
+            $isEnabled: '%commerce.ai.gemini.enabled%'
+            $apiKey: '%commerce.ai.gemini.api_key%'
+            $model: '%commerce.ai.gemini.model%'
+
+    Commerce\Modules\Ai\Application\AiProviderRegistry:
+        arguments:
+            $providers: !tagged_iterator commerce.ai_text_provider
+
+    Commerce\Modules\Notification\EventSubscriber\OrderPlacedNotificationSubscriber:
+        arguments:
+            $smsEnabled: '%commerce.sms.enabled%'
+
+    Commerce\Modules\Marketing\Application\NewsletterTokenService:
+        arguments:
+            $secret: '%kernel.secret%'
+
+    Commerce\Modules\Marketing\Application\NewsletterCampaignQueueProcessor:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Marketing\Application\MarketingAutomationService:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'

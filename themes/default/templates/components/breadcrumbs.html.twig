@@ -1,0 +1,11 @@
+{% if items is not empty %}
+<nav class="breadcrumbs" aria-label="{{ ui_text('breadcrumbs') }}">
+    <ol>
+        {% for item in items %}
+            <li>
+                {% if item.url is defined and item.url %}<a href="{{ item.url }}">{{ item.name }}</a>{% else %}<span aria-current="page">{{ item.name }}</span>{% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}

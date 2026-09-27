@@ -1,0 +1,5 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.content.pages.informatsiini_storinky'),'content') }}
+<div class="admin-runtime__header"><div><h1>{{ ui_text('admin.content.pages.informatsiini_storinky') }}</h1><p>{{ ui_text('admin.content.pages.zapovnit_i_opublikuite_bazovi_storinky_mahazynu_') }}</p></div></div>
+<div class="admin-runtime__panel"><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.content.pages.storinka') }}</th><th>URL</th><th>{{ ui_text('admin.content.pages.status') }}</th><th></th></tr></thead><tbody>
+{% for item in items %}<tr><td>{{ item.title }}</td><td><code>{{ item.url|default('—') }}</code></td><td><span class="status-pill">{{ item.status }}</span></td><td><a href="/admin/content/pages/{{ item.system_key }}">{{ ui_text('admin.content.pages.redahuvaty') }}</a></td></tr>{% else %}<tr><td colspan="4">{{ ui_text('admin.content.pages.storinky_ne_znaideno') }}</td></tr>{% endfor %}
+</tbody></table></div></div>{{ shell.end() }}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="uk-UA">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex,nofollow">
+    <title>{{ ui_text('admin.login.vkhid_do_keruvannia_modern_commerce') }}</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
+    <link rel="stylesheet" href="{{ vite_asset('assets/storefront/admin-runtime.css', '/assets/admin-runtime.css') }}">
+</head>
+<body class="admin-login-page">
+<main class="admin-login-shell">
+    <section class="admin-login-card" aria-labelledby="login-title">
+        <div class="admin-login-brand"><img src="/assets/branding/nexora-mark.svg" alt="" width="44" height="44"><span><strong>Nexora Commerce</strong><small>Administration</small></span></div>
+        <h1 id="login-title">{{ ui_text('admin.login.vkhid_do_keruvannia') }}</h1>
+        <p>{{ ui_text('admin.login.vykorystovuite_oblikovyi_zapys_administratora_ma') }}</p>
+        {% if error %}<div class="form-error" role="alert">{{ ui_text('admin.login.nevirna_elektronna_adresa_abo_parol') }}</div>{% endif %}
+        <form method="post" action="{{ path('admin_login') }}" autocomplete="on">
+            <label><span>Email</span><input type="email" name="_username" value="{{ last_username }}" autocomplete="username" required autofocus></label>
+            <label><span>{{ ui_text('admin.login.parol') }}</span><input type="password" name="_password" autocomplete="current-password" required></label>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <button type="submit" class="place-order">{{ ui_text('admin.login.uviity') }}</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

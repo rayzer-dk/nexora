@@ -1,0 +1,286 @@
+{
+  "default_locale": "uk-UA",
+  "ascii_only": true,
+  "entity_namespaces": {
+    "uk-UA": {
+      "brand": "brand",
+      "blog_article": "blog"
+    },
+    "en-GB": {
+      "brand": "brand",
+      "blog_article": "blog"
+    },
+    "de-DE": {
+      "brand": "brand",
+      "blog_article": "blog"
+    },
+    "da-DK": {
+      "brand": "brand",
+      "blog_article": "blog"
+    },
+    "pl-PL": {
+      "brand": "brand",
+      "blog_article": "blog"
+    }
+  },
+  "pages": {
+    "home": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "",
+          "title_key": "seo.system_page.home.title"
+        }
+      }
+    },
+    "catalog": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "catalog",
+          "title_key": "seo.system_page.catalog.title"
+        }
+      }
+    },
+    "brands": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "brands",
+          "title_key": "seo.system_page.brands.title"
+        }
+      }
+    },
+    "new_products": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "new",
+          "title_key": "seo.system_page.new_products.title"
+        }
+      }
+    },
+    "specials": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "sale",
+          "title_key": "seo.system_page.specials.title"
+        }
+      }
+    },
+    "search": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "search",
+          "title_key": "seo.system_page.search.title"
+        }
+      }
+    },
+    "cart": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "cart",
+          "title_key": "seo.system_page.cart.title"
+        }
+      }
+    },
+    "checkout": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "checkout",
+          "title_key": "seo.system_page.checkout.title"
+        }
+      }
+    },
+    "account": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "account",
+          "title_key": "seo.system_page.account.title"
+        }
+      }
+    },
+    "login": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "login",
+          "title_key": "seo.system_page.login.title"
+        }
+      }
+    },
+    "register": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "register",
+          "title_key": "seo.system_page.register.title"
+        }
+      }
+    },
+    "orders": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "orders",
+          "title_key": "seo.system_page.orders.title"
+        }
+      }
+    },
+    "wishlist": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "wishlist",
+          "title_key": "seo.system_page.wishlist.title"
+        }
+      }
+    },
+    "compare": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "compare",
+          "title_key": "seo.system_page.compare.title"
+        }
+      }
+    },
+    "order_tracking": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "track-order",
+          "title_key": "seo.system_page.order_tracking.title"
+        }
+      }
+    },
+    "returns": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "returns",
+          "title_key": "seo.system_page.returns.title"
+        }
+      }
+    },
+    "return_request": {
+      "indexable": false,
+      "locales": {
+        "uk-UA": {
+          "path": "return-request",
+          "title_key": "seo.system_page.return_request.title"
+        }
+      }
+    },
+    "delivery": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "shipping",
+          "title_key": "seo.system_page.delivery.title"
+        }
+      }
+    },
+    "payment": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "payment",
+          "title_key": "seo.system_page.payment.title"
+        }
+      }
+    },
+    "warranty": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "warranty",
+          "title_key": "seo.system_page.warranty.title"
+        }
+      }
+    },
+    "contacts": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "contact",
+          "title_key": "seo.system_page.contacts.title"
+        }
+      }
+    },
+    "about": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "about-us",
+          "title_key": "seo.system_page.about.title"
+        }
+      }
+    },
+    "blog": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "blog",
+          "title_key": "seo.system_page.blog.title"
+        }
+      }
+    },
+    "faq": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "faq",
+          "title_key": "seo.system_page.faq.title"
+        }
+      }
+    },
+    "privacy": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "privacy-policy",
+          "title_key": "seo.system_page.privacy.title"
+        }
+      }
+    },
+    "cookies": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "cookie-policy",
+          "title_key": "seo.system_page.cookies.title"
+        }
+      }
+    },
+    "terms": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "terms-and-conditions",
+          "title_key": "seo.system_page.terms.title"
+        }
+      }
+    },
+    "accessibility": {
+      "indexable": true,
+      "locales": {
+        "uk-UA": {
+          "path": "accessibility",
+          "title_key": "seo.system_page.accessibility.title"
+        }
+      }
+    }
+  },
+  "routing_policy": {
+    "public_paths_language": "en",
+    "localized_titles": true,
+    "ascii_only": true,
+    "stable_across_locales": true
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "mode": "eu_strict",
+  "consent_ttl_days": 180,
+  "categories": {
+    "necessary": {"required": true, "default": true},
+    "preferences": {"required": false, "default": false},
+    "analytics": {"required": false, "default": false},
+    "marketing": {"required": false, "default": false}
+  },
+  "ui": {
+    "equal_prominence_accept_reject": true,
+    "settings_available": true,
+    "withdrawal_link_always_available": true,
+    "no_prechecked_optional_categories": true
+  },
+  "google_consent_mode_v2": {
+    "enabled": true,
+    "default": {
+      "analytics_storage": "denied",
+      "ad_storage": "denied",
+      "ad_user_data": "denied",
+      "ad_personalization": "denied",
+      "functionality_storage": "denied",
+      "personalization_storage": "denied",
+      "security_storage": "granted"
+    }
+  }
+}

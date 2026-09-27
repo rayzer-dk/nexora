@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nexora-commerce:event:commerce.order.placed:1",
+  "type": "object",
+  "required": ["order_number", "store_id", "market_id", "currency", "total_minor"],
+  "additionalProperties": false,
+  "properties": {
+    "order_number": {"type": "string", "maxLength": 64},
+    "store_id": {"type": "integer", "minimum": 1},
+    "market_id": {"type": "integer", "minimum": 1},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "total_minor": {"type": "integer", "minimum": 0}
+  }
+}

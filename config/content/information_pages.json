@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "default_locale": "uk-UA",
+  "pages": {
+    "about": {
+      "route_key": "about",
+      "footer_group": "company",
+      "indexable": true,
+      "required_store_fields": [
+        "store_name",
+        "legal_name"
+      ],
+      "sections": [
+        "company_intro",
+        "experience",
+        "values"
+      ],
+      "title_key": "content.information_page.about.title"
+    },
+    "contacts": {
+      "route_key": "contacts",
+      "footer_group": "company",
+      "indexable": true,
+      "required_store_fields": [
+        "legal_name",
+        "registration_address",
+        "email",
+        "phone"
+      ],
+      "sections": [
+        "seller_identity",
+        "contact_channels",
+        "business_hours"
+      ],
+      "title_key": "content.information_page.contacts.title"
+    },
+    "delivery": {
+      "route_key": "delivery",
+      "footer_group": "help",
+      "indexable": true,
+      "required_store_fields": [],
+      "sections": [
+        "delivery_methods",
+        "delivery_costs",
+        "delivery_time",
+        "delivery_restrictions"
+      ],
+      "title_key": "content.information_page.delivery.title"
+    },
+    "payment": {
+      "route_key": "payment",
+      "footer_group": "help",
+      "indexable": true,
+      "required_store_fields": [],
+      "sections": [
+        "payment_methods",
+        "payment_security",
+        "payment_timing"
+      ],
+      "title_key": "content.information_page.payment.title"
+    },
+    "returns": {
+      "route_key": "returns",
+      "footer_group": "help",
+      "indexable": true,
+      "required_store_fields": [
+        "return_contact"
+      ],
+      "sections": [
+        "withdrawal_right",
+        "return_process",
+        "return_costs",
+        "exceptions",
+        "refund_timing"
+      ],
+      "title_key": "content.information_page.returns.title"
+    },
+    "warranty": {
+      "route_key": "warranty",
+      "footer_group": "help",
+      "indexable": true,
+      "required_store_fields": [
+        "warranty_contact"
+      ],
+      "sections": [
+        "legal_guarantee",
+        "commercial_warranty",
+        "claim_process"
+      ],
+      "title_key": "content.information_page.warranty.title"
+    },
+    "faq": {
+      "route_key": "faq",
+      "footer_group": "help",
+      "indexable": true,
+      "required_store_fields": [],
+      "sections": [
+        "orders",
+        "delivery",
+        "payment",
+        "returns"
+      ],
+      "title_key": "content.information_page.faq.title"
+    },
+    "privacy": {
+      "route_key": "privacy",
+      "footer_group": "legal",
+      "indexable": true,
+      "required_store_fields": [
+        "legal_name",
+        "registration_address",
+        "privacy_contact"
+      ],
+      "sections": [
+        "controller_identity",
+        "data_categories",
+        "purposes_and_legal_bases",
+        "processors",
+        "retention",
+        "rights",
+        "contact"
+      ],
+      "title_key": "content.information_page.privacy.title"
+    },
+    "cookies": {
+      "route_key": "cookies",
+      "footer_group": "legal",
+      "indexable": true,
+      "required_store_fields": [
+        "privacy_contact"
+      ],
+      "sections": [
+        "necessary_cookies",
+        "preferences",
+        "analytics",
+        "marketing",
+        "consent_management"
+      ],
+      "title_key": "content.information_page.cookies.title"
+    },
+    "terms": {
+      "route_key": "terms",
+      "footer_group": "legal",
+      "indexable": true,
+      "required_store_fields": [
+        "legal_name",
+        "registration_address",
+        "registration_number",
+        "email"
+      ],
+      "sections": [
+        "seller_identity",
+        "ordering",
+        "prices_and_taxes",
+        "payment",
+        "delivery",
+        "withdrawal_and_returns",
+        "warranty",
+        "liability",
+        "dispute_resolution"
+      ],
+      "title_key": "content.information_page.terms.title"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "10k": {"products": 10000, "category_p95_ms": 250, "search_p95_ms": 350, "product_p95_ms": 200, "cart_p95_ms": 250, "checkout_p95_ms": 700, "admin_catalog_p95_ms": 500},
+    "100k": {"products": 100000, "category_p95_ms": 350, "search_p95_ms": 500, "product_p95_ms": 250, "cart_p95_ms": 300, "checkout_p95_ms": 800, "admin_catalog_p95_ms": 700},
+    "500k": {"products": 500000, "category_p95_ms": 500, "search_p95_ms": 800, "product_p95_ms": 350, "cart_p95_ms": 400, "checkout_p95_ms": 1000, "admin_catalog_p95_ms": 1000}
+  },
+  "worker": {"max_memory_mb": 256, "max_failed_percent": 1.0},
+  "database": {"slow_query_ms": 200, "max_connections_warning_percent": 80}
+}

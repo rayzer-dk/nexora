@@ -1,0 +1,10 @@
+{% if product.variants %}
+<fieldset class="variant-picker">
+    <legend>{{ ui_text('variant') }}</legend>
+    <div class="variant-picker__options">
+        {% for variant in product.variants %}
+            <a href="{{ product.url }}?variant={{ variant.id }}" class="variant-chip{% if variant.selected %} is-selected{% endif %}{% if not variant.available %} is-unavailable{% endif %}" aria-current="{{ variant.selected ? 'true' : 'false' }}" title="SKU {{ variant.sku }} · {{ variant.price }}{% if not variant.available %} · {{ ui_text('out_of_stock') }}{% endif %}">{{ variant.label }}</a>
+        {% endfor %}
+    </div>
+</fieldset>
+{% endif %}

@@ -1,0 +1,6 @@
+{% for contribution in extension_slot(slot) %}
+  <section class="extension-slot extension-slot--{{ slot|replace({'.':'-'})|e('html_attr') }}" data-extension-slot="{{ slot|e('html_attr') }}" data-extension-code="{{ contribution.extension_code|e('html_attr') }}" data-extension-component="{{ contribution.component|e('html_attr') }}">
+    {% if contribution.title_key %}<h2>{{ ui_text(contribution.title_key) }}</h2>{% endif %}
+    {% if contribution.content_key %}<p>{{ ui_text(contribution.content_key) }}</p>{% endif %}
+  </section>
+{% endfor %}

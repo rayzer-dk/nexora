@@ -1,0 +1,13 @@
+{
+  "format": "nexora-commerce-transfer",
+  "version": 1,
+  "source_system": "opencart3",
+  "exported_at": "2026-09-16T13:45:00Z",
+  "files": {
+    "locale": "data/locales.ndjson",
+    "currency": "data/currencies.ndjson",
+    "brand": "data/brands.ndjson",
+    "category": "data/categories.ndjson",
+    "product": "data/products.ndjson"
+  }
+}

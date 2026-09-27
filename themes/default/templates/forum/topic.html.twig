@@ -1,0 +1,33 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="forum-shell shell">
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><a href="{{ path('storefront_forum_board',{slug:topic.board_slug}) }}">{{ topic.board_name }}</a><span>›</span><span>{{ topic.title }}</span></nav>
+    <header class="forum-hero forum-hero--compact"><div><span class="forum-kicker">{{ ui_text('discussion') }}</span><h1>{{ topic.title }}</h1><p>{{ ui_text('author_named')|replace({'%name%': topic.author_name}) }}</p></div>{% if not topic.is_locked %}<button class="forum-primary-button" type="button" data-forum-compose-open>{{ ui_text('reply') }}</button>{% endif %}</header>
+
+    {% for message in app.flashes('success') %}<div class="store-notice is-success" data-store-toast-source>{{ message }}</div>{% endfor %}
+    {% for message in app.flashes('error') %}<div class="store-notice is-error" data-store-toast-source>{{ message }}</div>{% endfor %}
+
+    <div class="forum-post-list">
+        {% for post in posts %}
+            <article class="forum-post" id="post-{{ post.id }}"><header><span class="forum-avatar" aria-hidden="true">{{ post.author_name|first|upper }}</span><div><strong>{{ post.author_name }}</strong><small>{{ post.published_at|default(post.created_at) }}</small></div></header><div class="forum-post__body">{{ post.body_text }}</div></article>
+        {% endfor %}
+    </div>
+</section>
+
+{% if not topic.is_locked %}
+<div class="forum-compose" data-forum-compose hidden aria-hidden="true">
+    <div class="forum-compose__backdrop" data-forum-compose-close></div>
+    <section class="forum-compose__dialog" role="dialog" aria-modal="true" aria-labelledby="forum-reply-title">
+        <button class="forum-compose__close" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">×</button>
+        <span class="forum-kicker">{{ ui_text('reply_label') }}</span><h2 id="forum-reply-title">{{ ui_text('add_reply') }}</h2><p>{{ ui_text('reply_moderation_text') }}</p>
+        <form method="post" action="{{ path('storefront_forum_reply',{id:topic.id,slug:topic.slug}) }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_reply_' ~ topic.id) }}"><input type="hidden" name="rendered_at" value="{{ form_rendered_at }}">
+            <label class="forum-honeypot" aria-hidden="true">{{ ui_text('company') }}<input name="company" tabindex="-1" autocomplete="off"></label>
+            <label><span>{{ ui_text('your_name') }}</span><input name="author_name" required maxlength="120" autocomplete="name"></label>
+            <label><span>{{ ui_text('message') }}</span><textarea name="body" required minlength="3" maxlength="20000" rows="8"></textarea></label>
+            <div class="forum-compose__actions"><button class="forum-secondary-button" type="button" data-forum-compose-close>{{ ui_text('cancel') }}</button><button class="forum-primary-button" type="submit">{{ ui_text('send_for_moderation') }}</button></div>
+        </form>
+    </section>
+</div>
+{% endif %}
+{% endblock %}

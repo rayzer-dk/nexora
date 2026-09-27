@@ -1,0 +1,30 @@
+{
+  "code": "example.hello_settings",
+  "name": "Hello Settings",
+  "version": "1.0.0",
+  "type": "app",
+  "core": "^3.4.8",
+  "extension_api": "2.0",
+  "execution": "declarative",
+  "permissions": [],
+  "capabilities": [],
+  "events": [],
+  "ui_slots": [],
+  "blocks": [],
+  "routes": [],
+  "pages": [],
+  "slot_contributions": [],
+  "assets": [],
+  "settings_schema": "settings.schema.json",
+  "isolation": "contract_only",
+  "hot_disable": true,
+  "data_policy": "retain_on_uninstall",
+  "localization": {
+    "default_locale": "uk-UA",
+    "locales": [
+      "uk-UA",
+      "en-US"
+    ],
+    "translations_path": "translations"
+  }
+}

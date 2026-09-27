@@ -1,0 +1,38 @@
+{
+  "name": "nexora-commerce-ui",
+  "private": true,
+  "version": "3.5.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit",
+    "audit": "npm audit --omit=dev",
+    "assets:audit": "node tools/check-asset-budgets.mjs",
+    "build:production": "vite build && node tools/check-asset-budgets.mjs && node tools/precompress-assets.mjs public/build",
+    "assets:compress": "node tools/precompress-assets.mjs public/assets"
+  },
+  "dependencies": {
+    "vue": "3.5.43",
+    "pinia": "4.0.3",
+    "chart.js": "4.5.1",
+    "@floating-ui/dom": "1.8.0",
+    "@lucide/vue": "1.46.0",
+    "@tiptap/vue-3": "3.31.3",
+    "@tiptap/starter-kit": "3.31.3",
+    "@tiptap/extension-image": "3.31.3",
+    "@tiptap/extension-table": "3.31.3",
+    "@tiptap/extensions": "3.31.3",
+    "@tiptap/core": "3.31.3"
+  },
+  "devDependencies": {
+    "vite": "8.3.0",
+    "@vitejs/plugin-vue": "6.0.9",
+    "typescript": "6.0.3",
+    "vue-tsc": "3.3.11",
+    "@types/node": "^22.0.0",
+    "esbuild": "0.28.2"
+  },
+  "license": "MIT",
+  "description": "Nexora Commerce storefront and admin UI"
+}

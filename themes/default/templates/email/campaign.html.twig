@@ -1,0 +1,2 @@
+{% extends '@storefront/email/base.html.twig' %}
+{% block content %}<h1 style="margin:0 0 16px;font-size:26px;line-height:1.25;color:#101828">{{ notification_subject }}</h1><p style="margin:0;color:#475467;font-size:16px;line-height:1.7;white-space:pre-line">{{ notification_text }}</p>{% if unsubscribe_url is defined and unsubscribe_url %}<p style="margin:28px 0 0;color:#667085;font-size:12px">{{ ui_text('marketing_unsubscribe_question') }} <a href="{{ unsubscribe_url }}" style="color:#475467">{{ ui_text('unsubscribe') }}</a>.</p>{% endif %}{% endblock %}

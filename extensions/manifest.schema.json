@@ -1,0 +1,529 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexora.local/schemas/commerce-extension-manifest-v2.json",
+  "title": "Commerce Extension Manifest",
+  "type": "object",
+  "required": [
+    "code",
+    "name",
+    "version",
+    "type",
+    "core",
+    "extension_api",
+    "permissions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "code": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "type": {
+      "enum": [
+        "trusted-module",
+        "app",
+        "theme"
+      ]
+    },
+    "core": {
+      "type": "string"
+    },
+    "extension_api": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "api": {
+      "type": "string"
+    },
+    "php": {
+      "type": "string"
+    },
+    "data_policy": {
+      "enum": [
+        "retain_on_uninstall",
+        "explicit_purge_only"
+      ]
+    },
+    "hot_disable": {
+      "type": "boolean"
+    },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "events": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "ui_slots": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "regions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "EU",
+          "UA",
+          "EU_UA"
+        ]
+      }
+    },
+    "isolation": {
+      "enum": [
+        "contract_only",
+        "sandboxed_app"
+      ]
+    },
+    "execution": {
+      "enum": [
+        "declarative",
+        "remote_app",
+        "trusted_release"
+      ]
+    },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 64,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_.:-]{1,127}$"
+      }
+    },
+    "settings_schema": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.\\/-]{1,190}\\.json$"
+    },
+    "remote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "base_url"
+      ],
+      "properties": {
+        "base_url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "health_path": {
+          "type": "string",
+          "pattern": "^/[A-Za-z0-9._~!$&'()*+,;=:@%\\/-]*$"
+        },
+        "webhook_path": {
+          "type": "string",
+          "pattern": "^/[A-Za-z0-9._~!$&'()*+,;=:@%\\/-]*$"
+        }
+      }
+    },
+    "publisher": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 190
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,190}$"
+        }
+      }
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "enum": [
+            "ed25519",
+            "rsa-sha256"
+          ]
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 190
+        },
+        "file": {
+          "const": "SIGNATURE.ed25519"
+        }
+      },
+      "required": [
+        "algorithm",
+        "key_id",
+        "file"
+      ]
+    },
+    "healthcheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "declarative",
+            "http",
+            "service"
+          ]
+        },
+        "target": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 10000
+        }
+      }
+    },
+    "migrations": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.\\/-]+\\.php$"
+      }
+    },
+    "uninstall_policy": {
+      "enum": [
+        "retain_data",
+        "explicit_purge_only"
+      ]
+    },
+    "localization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default_locale",
+        "locales",
+        "translations_path"
+      ],
+      "properties": {
+        "default_locale": {
+          "const": "uk-UA"
+        },
+        "locales": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$"
+          }
+        },
+        "translations_path": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.\\/-]{1,160}$"
+        }
+      }
+    },
+    "entrypoint": {
+      "type": "string",
+      "pattern": "^[A-Za-z_\\\\][A-Za-z0-9_\\\\]{2,255}$"
+    },
+    "autoload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "psr4"
+      ],
+      "properties": {
+        "psr4": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 8,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.\\/-]{1,190}$"
+          }
+        }
+      }
+    },
+    "blocks": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "surface",
+          "regions",
+          "label_key"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^extension\\.[a-z0-9_]+\\.[a-z][a-z0-9_.-]{0,95}$"
+          },
+          "surface": {
+            "enum": [
+              "home",
+              "header",
+              "footer",
+              "product",
+              "checkout",
+              "category",
+              "cart",
+              "account",
+              "admin"
+            ]
+          },
+          "regions": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 32,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+            }
+          },
+          "label_key": {
+            "type": "string",
+            "pattern": "^extension\\.[a-z0-9_]+\\.[a-z][a-z0-9_.-]{0,127}$"
+          },
+          "settings_schema": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.\\/-]{1,190}\\.json$"
+          },
+          "allow_multiple": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "routes": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "path",
+          "methods",
+          "mode"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^extension\\.[a-z0-9_]+\\.[a-z][a-z0-9_.-]{0,127}$"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^/[A-Za-z0-9._~!$&'()*+,;=:@%\\/{}-]{1,250}$"
+          },
+          "methods": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE"
+              ]
+            }
+          },
+          "mode": {
+            "enum": [
+              "page",
+              "trusted_handler"
+            ]
+          },
+          "handler": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "page": {
+            "type": "string",
+            "maxLength": 190
+          },
+          "permission": {
+            "type": "string",
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "pages": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title_key"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^extension\\.[a-z0-9_]+\\.[a-z][a-z0-9_.-]{0,127}$"
+          },
+          "title_key": {
+            "type": "string",
+            "pattern": "^extension\\.[a-z0-9_]+\\.[a-z][a-z0-9_.-]{0,127}$"
+          },
+          "content_key": {
+            "type": "string",
+            "pattern": "^extension\\.[a-z0-9_]+\\.[a-z][a-z0-9_.-]{0,127}$"
+          },
+          "template": {
+            "type": "string",
+            "maxLength": 190
+          }
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "type",
+          "scopes"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.\\/-]{1,190}$"
+          },
+          "type": {
+            "enum": [
+              "css",
+              "js"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 32,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_.:-]{0,127}$"
+            }
+          },
+          "defer": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "slot_contributions": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "slot",
+          "component"
+        ],
+        "properties": {
+          "slot": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "component": {
+            "type": "string",
+            "pattern": "^extension\\.[a-z0-9_]+\\.[a-z][a-z0-9_.-]{0,95}$"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": -1000,
+            "maximum": 1000
+          },
+          "title_key": {
+            "type": "string",
+            "pattern": "^extension\\.[a-z0-9_]+\\.[a-z][a-z0-9_.-]{0,127}$"
+          },
+          "content_key": {
+            "type": "string",
+            "pattern": "^extension\\.[a-z0-9_]+\\.[a-z][a-z0-9_.-]{0,127}$"
+          }
+        }
+      }
+    },
+    "commercial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model"
+      ],
+      "properties": {
+        "model": {
+          "enum": [
+            "free",
+            "one_time",
+            "subscription",
+            "external"
+          ]
+        },
+        "product_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]{1,190}$"
+        },
+        "license_url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "manage_url": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "trial_days": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 365
+        }
+      }
+    }
+  }
+}

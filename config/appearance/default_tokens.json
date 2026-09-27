@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "tokens": {
+    "color.primary": "#0B63F6",
+    "color.accent": "#B90303",
+    "color.background": "#FFFFFF",
+    "color.surface": "#FFFFFF",
+    "color.text": "#111827",
+    "color.muted": "#667085",
+    "color.border": "#E5E7EB",
+    "radius.sm": "8px",
+    "radius.md": "14px",
+    "radius.lg": "22px",
+    "space.2": "8px",
+    "space.4": "16px",
+    "space.6": "24px",
+    "space.8": "32px",
+    "content.max": "1408px",
+    "font.size.base": "16px",
+    "button.height": "44px",
+    "input.height": "44px"
+  }
+}

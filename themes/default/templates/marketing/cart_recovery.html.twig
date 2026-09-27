@@ -1,0 +1,4 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="account-page"><div class="account-panel"><small>{{ ui_text('marketing_automation') }}</small><h1>{{ ui_text('recover_cart_question') }}</h1><p>{{ ui_text('recovery_found_prefix') }} <strong>{{ item_count }}</strong>. {{ ui_text('recovery_found_suffix') }}</p><form method="post" action="{{ path('storefront_marketing_cart_recover_apply',{delivery:delivery,token:token}) }}"><input type="hidden" name="_token" value="{{ csrf_token('cart_recovery_' ~ delivery) }}"><button type="submit">{{ ui_text('recover_cart') }}</button></form><p><a href="{{ path('storefront_home') }}">{{ ui_text('do_not_recover') }}</a></p></div></section>
+{% endblock %}

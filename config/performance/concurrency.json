@@ -1,0 +1,20 @@
+{
+  "catalog_target": {
+    "comfortable_products": 50000,
+    "validated_profiles": [10000, 50000, 100000, 500000],
+    "note": "Capacity is accepted only after live load testing on the intended infrastructure."
+  },
+  "traffic_profiles": {
+    "small": {"concurrent_users": 50, "target_dynamic_rps": 20},
+    "medium": {"concurrent_users": 250, "target_dynamic_rps": 80},
+    "large": {"concurrent_users": 1000, "target_dynamic_rps": 250}
+  },
+  "requirements_for_medium_and_above": {
+    "shared_cache": "Redis/Valkey recommended",
+    "sessions": "shared session storage required for more than one application node",
+    "database": "dedicated MySQL/MariaDB with tuned InnoDB buffer pool and slow-query monitoring",
+    "http": "Nginx or equivalent reverse proxy, HTTP/2 or HTTP/3, Brotli/gzip and static asset caching",
+    "workers": "separate long-running queue workers with process supervision",
+    "cdn": "recommended for media and static assets"
+  }
+}

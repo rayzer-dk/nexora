@@ -1,0 +1,24 @@
+; Example only. Run web PHP-FPM separately from durable workers.
+[program:commerce-events]
+command=php /var/www/commerce/current/bin/console commerce:events:work --limit=200
+directory=/var/www/commerce/current
+autostart=true
+autorestart=true
+numprocs=2
+stopwaitsecs=30
+
+[program:commerce-notifications]
+command=php /var/www/commerce/current/bin/console commerce:notifications:work --limit=100
+directory=/var/www/commerce/current
+autostart=true
+autorestart=true
+numprocs=2
+stopwaitsecs=30
+
+[program:commerce-integrations]
+command=php /var/www/commerce/current/bin/console commerce:integration:work --limit=100
+directory=/var/www/commerce/current
+autostart=true
+autorestart=true
+numprocs=2
+stopwaitsecs=30

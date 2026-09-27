@@ -1,0 +1,12 @@
+{% set rights = product.consumer_rights|default(null) %}
+{% if rights %}
+<section class="consumer-rights-card" aria-labelledby="consumer-rights-title">
+    <h2 id="consumer-rights-title">{{ ui_text('consumer_rights') }}</h2>
+    <div class="consumer-rights-grid">
+        {% if rights.withdrawal_days|default(null) %}<p><strong>{{ rights.withdrawal_days }} {{ ui_text('days_short') }}</strong><span>{{ ui_text('withdrawal_right_text') }}</span></p>{% endif %}
+        {% if rights.legal_guarantee_months|default(null) %}<p><strong>{{ rights.legal_guarantee_months }} {{ ui_text('months_short') }}</strong><span>{{ ui_text('legal_guarantee_text') }}</span></p>{% endif %}
+        {% if rights.lowest_price_30_days|default(null) %}<p><strong>{{ rights.lowest_price_30_days }}</strong><span>{{ ui_text('lowest_30_days') }}</span></p>{% endif %}
+    </div>
+    {% if rights.return_policy_url|default(null) %}<a href="{{ rights.return_policy_url }}">{{ ui_text('returns_warranty_terms') }}</a>{% endif %}
+</section>
+{% endif %}

@@ -1,0 +1,19 @@
+{
+  "schema_version": 2,
+  "fields": [
+    {
+      "key": "enabled",
+      "type": "boolean",
+      "label": "Enabled",
+      "default": true,
+      "group": "general"
+    },
+    {
+      "key": "accent",
+      "type": "color",
+      "label": "Accent",
+      "default": "#0B63F6",
+      "group": "design"
+    }
+  ]
+}

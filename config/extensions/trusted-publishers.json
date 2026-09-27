@@ -1,0 +1,9 @@
+{
+  "schema_version": 2,
+  "publishers": {
+    "nexora.bonus.2026": {
+      "name": "Nexora",
+      "public_key": "xDzTYHc9LPybvrKKrCk9zfcjND1MgZv7c5mDVa76Cls="
+    }
+  }
+}

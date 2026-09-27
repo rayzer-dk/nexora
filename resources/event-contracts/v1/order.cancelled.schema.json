@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nexora-commerce:event:commerce.order.cancelled:1",
+  "type": "object",
+  "required": ["reason"],
+  "additionalProperties": false,
+  "properties": {
+    "reason": {"type": "string", "maxLength": 64}
+  }
+}

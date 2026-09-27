@@ -1,0 +1,8 @@
+{% if block.settings.image|default('') %}
+<figure class="product-custom-image">
+    {% if block.settings.url|default('') %}<a href="{{ block.settings.url }}">{% endif %}
+    <img src="{{ block.settings.image }}" alt="{{ block.settings.title|default(product.name) }}" loading="lazy">
+    {% if block.settings.url|default('') %}</a>{% endif %}
+    {% if block.settings.title|default('') or block.settings.text|default('') %}<figcaption>{% if block.settings.title|default('') %}<strong>{{ block.settings.title }}</strong>{% endif %}{% if block.settings.text|default('') %}<span>{{ block.settings.text }}</span>{% endif %}</figcaption>{% endif %}
+</figure>
+{% endif %}

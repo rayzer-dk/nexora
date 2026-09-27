@@ -1,0 +1,25 @@
+{
+  "country": "UA",
+  "locale": "uk-UA",
+  "currency": "UAH",
+  "timezone": "Europe/Kyiv",
+  "seo": {
+    "slug_mode": "transliterate_ascii",
+    "lowercase": true,
+    "separator": "-",
+    "extension": null,
+    "default_locale_prefix": null,
+    "secondary_locale_prefix": "language_code",
+    "automatic_on_create": true,
+    "manual_editable": true,
+    "redirect_old_slug": true,
+    "redirect_status": 301,
+    "flat_category_canonical_urls": true,
+    "native_utf8_allowed": false
+  },
+  "pricing": {
+    "consumer_tax_display": "price_only",
+    "business_tax_display": "net_with_gross",
+    "merchant_price_basis": "gross"
+  }
+}

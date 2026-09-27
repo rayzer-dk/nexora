@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "groups": [
+    {
+      "code": "company",
+      "routes": [
+        "about",
+        "contacts"
+      ],
+      "title_key": "theme.footer.company.title"
+    },
+    {
+      "code": "help",
+      "routes": [
+        "delivery",
+        "payment",
+        "returns",
+        "warranty",
+        "faq"
+      ],
+      "title_key": "theme.footer.help.title"
+    },
+    {
+      "code": "legal",
+      "routes": [
+        "privacy",
+        "cookies",
+        "terms"
+      ],
+      "title_key": "theme.footer.legal.title"
+    }
+  ]
+}

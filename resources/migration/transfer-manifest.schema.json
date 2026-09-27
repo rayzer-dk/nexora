@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Nexora Commerce Transfer Package v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "source_system", "files"],
+  "properties": {
+    "format": {"const": "nexora-commerce-transfer"},
+    "version": {"const": 1},
+    "source_system": {"type": "string", "minLength": 1, "maxLength": 64},
+    "exported_at": {"type": "string", "format": "date-time"},
+    "files": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^[A-Za-z0-9._/-]+$"}
+    }
+  }
+}

@@ -1,0 +1,27 @@
+<article class="catalog-card" data-product-card>
+    <a class="catalog-card__media" href="{{ product.url }}" aria-label="{{ product.name }}">
+        {% if product.compare_at_price %}<span class="catalog-card__badge">{{ ui_text('sale') }}</span>{% elseif product.availability == 'https://schema.org/InStock' %}<span class="catalog-card__badge catalog-card__badge--success">{{ ui_text('in_stock') }}</span>{% endif %}
+        <img src="{{ product.image }}" alt="{{ product.name }}" width="640" height="640" loading="lazy" decoding="async">
+    </a>
+    <div class="catalog-card__body">
+        {% if product.brand %}<div class="catalog-card__brand">{{ product.brand }}</div>{% endif %}
+        <h2><a href="{{ product.url }}">{{ product.name }}</a></h2>
+        {% if product.rating is defined and product.rating.count > 0 %}<div class="catalog-card__rating"><span aria-hidden="true">★★★★★</span><small>{{ product.rating.value }} ({{ product.rating.count }})</small></div>{% endif %}
+        <div class="catalog-card__meta"><span>SKU {{ product.sku }}</span><span class="{{ product.availability == 'https://schema.org/InStock' ? 'is-stock' : 'is-out' }}">{{ product.availability_label }}</span></div>
+        <div class="catalog-card__price"><strong>{{ product.price }}</strong>{% if product.compare_at_price %}<del>{{ product.compare_at_price }}</del>{% endif %}</div>
+        <div class="catalog-card__actions">
+            {% if product.purchase_allowed|default(false) and product.variant_id is defined and product.variant_id %}
+            <form class="catalog-card__cart-form" action="/cart/add" method="post" data-card-add-to-cart>
+                <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
+                <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
+                <input type="hidden" name="quantity" value="1">
+                <button class="catalog-card__buy" type="submit"><span aria-hidden="true">＋</span> {{ product.purchase_button_label|default(ui_text('add_cart')) }}</button>
+            </form>
+            {% else %}
+            <a class="catalog-card__buy catalog-card__buy--secondary" href="{{ product.url }}">{{ ui_text('details') }}</a>
+            {% endif %}
+            <form method="post" action="{{ path('product_compare_add',{product:product.id}) }}" class="catalog-card__compare"><input type="hidden" name="_token" value="{{ csrf_token('compare_' ~ product.id) }}"><button type="submit" class="catalog-card__details" title="{{ ui_text('add_compare') }}" aria-label="{{ ui_text('add_compare') }}: {{ product.name }}">⇄</button></form>
+            <a class="catalog-card__details" href="{{ product.url }}" aria-label="{{ ui_text('view_product_named', {name: product.name}) }}" title="{{ ui_text('view_product') }}">→</a>
+        </div>
+    </div>
+</article>

@@ -1,0 +1,10 @@
+{% if product.documents %}
+<section class="detail-card">
+    <h2>{{ ui_text('documents') }}</h2>
+    <div class="document-list">
+        {% for document in product.documents %}
+            <a href="{{ document.url }}">{{ document.name }}</a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

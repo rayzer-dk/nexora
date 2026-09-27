@@ -1,0 +1,21 @@
+<commerce-product-gallery class="product-gallery">
+    <div class="product-gallery__stage">
+        <button class="gallery-nav gallery-nav--prev" type="button" data-gallery-prev aria-label="{{ ui_text('previous_photo') }}">‹</button>
+        <button class="product-gallery__open" type="button" data-gallery-open aria-label="{{ ui_text('open_fullscreen_photo') }}">
+            <img data-gallery-main src="{{ product.images[0].url }}"{% if product.images[0].srcset %} srcset="{{ product.images[0].srcset }}" sizes="{{ product.images[0].sizes }}"{% endif %} alt="{{ product.images[0].alt }}" width="{{ product.images[0].width|default(1200) }}" height="{{ product.images[0].height|default(1200) }}" fetchpriority="high" decoding="async">
+        </button>
+        <button class="gallery-nav gallery-nav--next" type="button" data-gallery-next aria-label="{{ ui_text('next_photo') }}">›</button>
+        <span class="product-gallery__counter" data-gallery-counter aria-live="polite">1 / {{ product.images|length }}</span>
+    </div>
+    <div class="product-gallery__thumbs" role="list" aria-label="{{ ui_text('product_photos') }}">
+        {% for image in product.images %}
+            <button type="button" class="product-gallery__thumb{% if loop.first %} is-active{% endif %}" data-gallery-thumb data-index="{{ loop.index0 }}" data-src="{{ image.url }}" data-srcset="{{ image.srcset|default('') }}" data-sizes="{{ image.sizes|default('') }}" data-alt="{{ image.alt }}" aria-label="{{ ui_text('photo_number', {number: loop.index}) }}">
+                <img src="{{ image.url }}"{% if image.srcset %} srcset="{{ image.srcset }}" sizes="120px"{% endif %} alt="" width="120" height="120" loading="{% if loop.first %}eager{% else %}lazy{% endif %}" decoding="async">
+            </button>
+        {% endfor %}
+    </div>
+    <dialog class="gallery-lightbox" data-gallery-dialog>
+        <button class="gallery-lightbox__close" type="button" data-gallery-close aria-label="{{ ui_text('close') }}">×</button>
+        <img data-gallery-dialog-image alt="" width="1600" height="1600">
+    </dialog>
+</commerce-product-gallery>

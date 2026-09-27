@@ -1,0 +1,6 @@
+{
+  "extension.example_product_badge.name": "Позначка товару",
+  "extension.example_product_badge.badge.label": "Позначка товару",
+  "extension.example_product_badge.slot.title": "Спеціальна пропозиція",
+  "extension.example_product_badge.slot.text": "Приклад декларативного блоку після ціни товару."
+}

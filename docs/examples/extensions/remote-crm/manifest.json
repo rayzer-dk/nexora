@@ -1,0 +1,36 @@
+{
+  "code": "example.remote_crm",
+  "name": "Remote CRM",
+  "version": "1.0.0",
+  "type": "app",
+  "core": "^3.4.8",
+  "extension_api": "2.0",
+  "execution": "remote_app",
+  "permissions": [],
+  "capabilities": [
+    "integration.crm"
+  ],
+  "events": [],
+  "ui_slots": [],
+  "blocks": [],
+  "routes": [],
+  "pages": [],
+  "slot_contributions": [],
+  "assets": [],
+  "remote": {
+    "base_url": "https://crm.example.com",
+    "health_path": "/health",
+    "webhook_path": "/webhooks/nexora"
+  },
+  "isolation": "contract_only",
+  "hot_disable": true,
+  "data_policy": "retain_on_uninstall",
+  "localization": {
+    "default_locale": "uk-UA",
+    "locales": [
+      "uk-UA",
+      "en-US"
+    ],
+    "translations_path": "translations"
+  }
+}

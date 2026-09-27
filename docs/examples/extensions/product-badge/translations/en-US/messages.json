@@ -1,0 +1,6 @@
+{
+  "extension.example_product_badge.name": "Product Badge",
+  "extension.example_product_badge.badge.label": "Product badge",
+  "extension.example_product_badge.slot.title": "Special offer",
+  "extension.example_product_badge.slot.text": "Example declarative block after the product price."
+}

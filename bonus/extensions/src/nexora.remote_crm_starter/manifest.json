@@ -1,0 +1,40 @@
+{
+  "core": "^3.4.8",
+  "extension_api": "2.0",
+  "permissions": [],
+  "events": [],
+  "ui_slots": [],
+  "blocks": [],
+  "routes": [],
+  "pages": [],
+  "slot_contributions": [],
+  "assets": [],
+  "isolation": "contract_only",
+  "hot_disable": true,
+  "data_policy": "retain_on_uninstall",
+  "commercial": {
+    "model": "free"
+  },
+  "localization": {
+    "default_locale": "uk-UA",
+    "locales": [
+      "uk-UA",
+      "en-US"
+    ],
+    "translations_path": "translations"
+  },
+  "code": "nexora.remote_crm_starter",
+  "name": "Remote CRM Connector Starter",
+  "version": "1.0.0",
+  "type": "app",
+  "execution": "remote_app",
+  "capabilities": [
+    "integration.crm"
+  ],
+  "remote": {
+    "base_url": "https://example.com",
+    "health_path": "/",
+    "webhook_path": "/webhooks/nexora"
+  },
+  "settings_schema": "settings.schema.json"
+}

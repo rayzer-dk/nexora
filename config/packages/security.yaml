@@ -1,0 +1,66 @@
+security:
+    password_hashers:
+        Commerce\Modules\Admin\Domain\AdminUser:
+            algorithm: sodium
+        Commerce\Modules\Customer\Domain\CustomerUser:
+            algorithm: sodium
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+            algorithm: sodium
+
+    providers:
+        admin_users:
+            id: Commerce\Modules\Admin\Security\DbalAdminUserProvider
+        customer_users:
+            id: Commerce\Modules\Customer\Security\DbalCustomerUserProvider
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js|assets)/
+            security: false
+        admin:
+            pattern: ^/admin
+            lazy: true
+            provider: admin_users
+            login_throttling:
+                max_attempts: 8
+                interval: '1 minute'
+            form_login:
+                login_path: admin_login
+                check_path: admin_login
+                enable_csrf: true
+                csrf_token_id: authenticate
+                default_target_path: /admin
+            logout:
+                path: admin_logout
+                target: /
+                enable_csrf: true
+                csrf_token_id: logout
+        customer:
+            lazy: true
+            provider: customer_users
+            login_throttling:
+                max_attempts: 8
+                interval: '1 minute'
+            form_login:
+                login_path: customer_login
+                check_path: customer_login
+                enable_csrf: true
+                csrf_token_id: customer_authenticate
+                default_target_path: /account
+                username_parameter: _username
+                password_parameter: _password
+            logout:
+                path: customer_logout
+                target: /
+                enable_csrf: true
+                csrf_token_id: customer_logout
+
+    access_control:
+        - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/account/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/account/register$, roles: PUBLIC_ACCESS }
+        - { path: ^/account/password/forgot$, roles: PUBLIC_ACCESS }
+        - { path: ^/account/password/reset/, roles: PUBLIC_ACCESS }
+        - { path: ^/account/verify/, roles: PUBLIC_ACCESS }
+        - { path: ^/account, roles: ROLE_CUSTOMER }

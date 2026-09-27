@@ -1,0 +1,12 @@
+<commerce-slider class="slider-shell">
+    <div class="slider-shell__heading">
+        {% if title %}<h2>{{ title }}</h2>{% endif %}
+        <div class="slider-shell__actions">
+            <button type="button" data-slider-prev aria-label="{{ ui_text('previous') }}">‹</button>
+            <button type="button" data-slider-next aria-label="{{ ui_text('next') }}">›</button>
+        </div>
+    </div>
+    <div class="commerce-carousel" data-slider-track>
+        {% block slides %}{% endblock %}
+    </div>
+</commerce-slider>

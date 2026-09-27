@@ -1,0 +1,51 @@
+{
+  "profile": "EU_UA",
+  "scope": "Europe and Ukraine",
+  "exclude_by_default": [
+    "US",
+    "CN",
+    "JP",
+    "AU",
+    "LATAM"
+  ],
+  "principles": {
+    "regional_packages_only": true,
+    "country_specific_features_are_optional": true,
+    "system_core_has_no_us_or_china_business_logic": true
+  },
+  "default_languages": [
+    "uk-UA",
+    "en-GB",
+    "da-DK",
+    "de-DE",
+    "pl-PL"
+  ],
+  "default_currencies": [
+    "UAH",
+    "EUR",
+    "DKK",
+    "PLN"
+  ],
+  "payments": [
+    "cards",
+    "apple_pay",
+    "google_pay",
+    "sepa",
+    "local_provider_adapters"
+  ],
+  "shipping": [
+    "nova_post",
+    "ukrposhta",
+    "meest",
+    "delivery_auto",
+    "eu_provider_adapters"
+  ],
+  "supported_language_policy": "arbitrary-bcp47-locales; language packs are independently installable",
+  "supported_currency_policy": "ISO-4217 currencies enabled per store; explicit price lists first, conversion optional",
+  "default_store": {
+    "country": "UA",
+    "locale": "uk-UA",
+    "currency": "UAH",
+    "timezone": "Europe/Kyiv"
+  }
+}

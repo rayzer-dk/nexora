@@ -1,0 +1,13 @@
+{% extends '@storefront/email/base.html.twig' %}
+{% block content %}
+  <h1 style="margin:0 0 18px;font-size:24px;line-height:1.25;">{{ ui_text('order_number')|replace({'%number%': order_number}) }}</h1>
+  {% if customer_name %}<p>{{ ui_text('hello_named')|replace({'%name%': customer_name}) }}</p>{% endif %}
+  <p>{{ ui_text('order_status_updated') }}</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:20px 0;">
+    <tr><td style="padding:8px 0;color:#667085;">{{ ui_text('order') }}</td><td style="padding:8px 0;text-align:right;font-weight:600;">{{ status }}</td></tr>
+    <tr><td style="padding:8px 0;color:#667085;">{{ ui_text('payment') }}</td><td style="padding:8px 0;text-align:right;font-weight:600;">{{ payment_status }}</td></tr>
+    <tr><td style="padding:8px 0;color:#667085;">{{ ui_text('delivery') }}</td><td style="padding:8px 0;text-align:right;font-weight:600;">{{ fulfillment_status }}</td></tr>
+    {% if tracking_number %}<tr><td style="padding:8px 0;color:#667085;">{{ ui_text('tracking_number') }}</td><td style="padding:8px 0;text-align:right;font-weight:600;">{{ tracking_number }}</td></tr>{% endif %}
+  </table>
+  <p style="margin:18px 0 0;">{{ ui_text('amount') }}: <strong>{{ (total_minor / 100)|number_format(2, ',', ' ') }} {{ currency }}</strong></p>
+{% endblock %}

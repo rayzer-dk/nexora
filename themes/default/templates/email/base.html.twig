@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="{{ locale|default('uk-UA') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>{{ notification_subject }}</title>
+</head>
+<body style="margin:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#172033">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f7fb;padding:28px 12px">
+<tr><td align="center">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#fff;border-radius:18px;overflow:hidden;border:1px solid #e6ebf2">
+<tr><td style="padding:24px 28px;background:#0b63f6;color:#fff"><div style="font-size:20px;font-weight:700">{{ store_name|default('Nexora Commerce') }}</div></td></tr>
+<tr><td style="padding:30px 28px">{% block content %}{% endblock %}</td></tr>
+<tr><td style="padding:18px 28px;border-top:1px solid #edf0f5;color:#667085;font-size:12px;line-height:1.5">{{ footer_text|default(ui_text('service_email_footer')) }}</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>

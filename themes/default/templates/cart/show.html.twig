@@ -1,0 +1,22 @@
+{% extends '@storefront/base.html.twig' %}
+{% block head %}<script type="module" src="{{ vite_asset('assets/storefront/cart.js', '/assets/cart.js') }}"></script>{% endblock %}
+{% block body %}
+<section class="cart-page shell" data-cart-page data-i18n-update-failed="{{ ui_text('cart_update_failed') }}" data-i18n-item-removed="{{ ui_text('cart_item_removed') }}">
+    <header class="catalog-heading"><div><p class="eyebrow">{{ ui_text('cart') }}</p><h1>{{ ui_text('your_order') }}</h1></div><a href="/catalog">{{ ui_text('continue_shopping') }}</a></header>
+    {% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}{% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
+    <div data-cart-content {% if not cart.items %}hidden{% endif %}>
+    {% include '@storefront/extension/slot.html.twig' with {slot:'cart.before_summary'} only %}
+    <div class="cart-layout"><div class="cart-lines" data-cart-lines>
+        {% for item in cart.items %}
+        <article class="cart-line" data-cart-item="{{ item.id }}">
+            <a href="{{ item.url }}"><img src="{{ item.image }}" alt="{{ item.name }}" width="160" height="160" loading="lazy"></a>
+            <div class="cart-line__info"><h2><a href="{{ item.url }}">{{ item.name }}</a></h2><small>SKU {{ item.sku }}</small><strong>{{ item.unit_price }}</strong></div>
+            <form class="cart-line__quantity" data-cart-update method="post" action="/cart/{{ item.id }}/update"><input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}"><label>{{ ui_text('quantity') }}<div class="cart-qty"><button type="button" data-cart-minus aria-label="{{ ui_text('decrease') }}">−</button><input type="number" name="quantity" min="{{ item.min_quantity }}" step="{{ item.quantity_step }}" value="{{ item.quantity }}"{% if item.max_quantity %} max="{{ item.max_quantity }}"{% endif %} inputmode="decimal" data-cart-qty><button type="button" data-cart-plus aria-label="{{ ui_text('increase') }}">+</button></div></label><button class="cart-update-fallback" type="submit">{{ ui_text('update') }}</button></form>
+            <div class="cart-line__total"><strong data-line-total>{{ item.line_total }}</strong><form method="post" action="/cart/{{ item.id }}/remove" data-cart-remove><input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}"><button class="link-danger" type="submit">{{ ui_text('remove') }}</button></form></div>
+        </article>{% endfor %}
+    </div><aside class="cart-summary"><h2>{{ ui_text('total') }}</h2><div><span>{{ ui_text('products_sum') }}</span><strong data-cart-subtotal>{{ cart.subtotal }}</strong></div><div class="cart-summary__discount" data-cart-discount-row {% if cart.discount_minor <= 0 %}hidden{% endif %}><span>{{ ui_text('automatic_discount') }}</span><strong data-cart-discount>−{{ cart.discount }}</strong></div><div><span>{{ ui_text('amount_due') }}</span><strong data-cart-total>{{ cart.total }}</strong></div><p>{{ ui_text('shipping_payment_next') }}</p><a class="buy-primary cart-checkout" href="/checkout">{{ ui_text('checkout_action') }}</a></aside></div></div>
+    {% include '@storefront/extension/slot.html.twig' with {slot:'cart.after_summary'} only %}
+    <div class="empty-state" data-cart-empty {% if cart.items %}hidden{% endif %}><h2>{{ ui_text('cart_empty') }}</h2><p>{{ ui_text('cart_empty_text') }}</p><a class="button" href="/catalog">{{ ui_text('go_catalog') }}</a></div>
+</section>
+{% if app.user and is_granted('ROLE_CUSTOMER') and cart.items %}<section class="cart-save shell"><form method="post" action="{{ path('customer_saved_cart_save') }}" class="feedback-form"><input type="hidden" name="_token" value="{{ csrf_token('saved_cart_save') }}"><label>{{ ui_text('save_cart_later') }}<input type="text" name="name" maxlength="190" placeholder="{{ ui_text('save_cart_placeholder') }}"></label><button class="button" type="submit">{{ ui_text('save_cart') }}</button></form></section>{% endif %}
+{% endblock %}

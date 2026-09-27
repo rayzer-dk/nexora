@@ -1,0 +1,12 @@
+{
+  "contract_version": "1.0",
+  "events": {
+    "commerce.order.placed": "order.placed.schema.json",
+    "commerce.order.cancelled": "order.cancelled.schema.json",
+    "commerce.order.completed": "order.completed.schema.json",
+    "commerce.payment.status_changed": "payment.status_changed.schema.json",
+    "commerce.catalog.product_created": "catalog.product_created.schema.json",
+    "commerce.catalog.product_updated": "catalog.product_updated.schema.json",
+    "commerce.customer.registered": "customer.registered.schema.json"
+  }
+}

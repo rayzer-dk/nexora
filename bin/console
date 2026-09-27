@@ -1,0 +1,40 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Commerce\Kernel;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+
+$root = dirname(__DIR__);
+$vendorRuntime = $root . '/vendor/autoload_runtime.php';
+$vendorAutoload = $root . '/vendor/autoload.php';
+
+if (!is_file($vendorRuntime) || !is_file($vendorAutoload)) {
+    require_once $root . '/src/Core/I18n/TranslationCatalogLoader.php';
+    $catalog = (new \Commerce\Core\I18n\TranslationCatalogLoader($root))->load('uk-UA');
+    $message = is_array($catalog) && isset($catalog['cli.error.dependencies_missing'])
+        ? (string) $catalog['cli.error.dependencies_missing']
+        : 'cli.error.dependencies_missing';
+
+    fwrite(STDERR, $message . PHP_EOL);
+    exit(1);
+}
+
+if (!is_file($root . '/.env') && is_file($root . '/.env.local')) {
+    $_SERVER['APP_RUNTIME_OPTIONS'] = array_merge(
+        is_array($_SERVER['APP_RUNTIME_OPTIONS'] ?? null) ? $_SERVER['APP_RUNTIME_OPTIONS'] : [],
+        [
+            'dotenv_path' => '.env.local',
+            'dotenv_use_putenv' => true,
+        ],
+    );
+}
+
+require_once $vendorRuntime;
+
+return static function (array $context): Application {
+    $kernel = new Kernel($context['APP_ENV'], (bool) $context['APP_DEBUG']);
+
+    return new Application($kernel);
+};

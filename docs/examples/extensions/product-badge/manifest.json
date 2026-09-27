@@ -1,0 +1,53 @@
+{
+  "code": "example.product_badge",
+  "name": "Product Badge",
+  "version": "1.0.0",
+  "type": "app",
+  "core": "^3.4.8",
+  "extension_api": "2.0",
+  "execution": "declarative",
+  "permissions": [],
+  "capabilities": [
+    "catalog.product.block"
+  ],
+  "events": [],
+  "ui_slots": [
+    "product.after_price"
+  ],
+  "blocks": [
+    {
+      "id": "extension.example_product_badge.badge",
+      "surface": "product",
+      "regions": [
+        "main",
+        "sidebar"
+      ],
+      "label_key": "extension.example_product_badge.badge.label",
+      "settings_schema": "blocks/badge.schema.json",
+      "allow_multiple": false
+    }
+  ],
+  "routes": [],
+  "pages": [],
+  "slot_contributions": [
+    {
+      "slot": "product.after_price",
+      "component": "extension.example_product_badge.badge",
+      "priority": 20,
+      "title_key": "extension.example_product_badge.slot.title",
+      "content_key": "extension.example_product_badge.slot.text"
+    }
+  ],
+  "assets": [],
+  "isolation": "contract_only",
+  "hot_disable": true,
+  "data_policy": "retain_on_uninstall",
+  "localization": {
+    "default_locale": "uk-UA",
+    "locales": [
+      "uk-UA",
+      "en-US"
+    ],
+    "translations_path": "translations"
+  }
+}

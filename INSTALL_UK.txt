@@ -1,0 +1,52 @@
+NEXORA COMMERCE 3.5.0 — КОРОТКА ІНСТРУКЦІЯ ВСТАНОВЛЕННЯ
+
+1. Сервер: PHP 8.4 або 8.5, MySQL 8.4+ або MariaDB 11.4+, InnoDB, utf8mb4, HTTPS.
+2. PHP extensions: ctype, curl, dom, fileinfo, gd, iconv, intl, json, mbstring, openssl, pcre, PDO, pdo_mysql, session, simplexml, sodium, tokenizer, zip.
+3. Завантажте й розпакуйте весь release в один каталог, наприклад /home/account/nexora-commerce/.
+4. Document Root домену встановіть на /home/account/nexora-commerce/public/.
+5. Відкрийте https://ваш-домен/setup.php.
+6. Заповніть дані БД, магазину й адміністратора та виконайте встановлення.
+7. Після встановлення відкрийте /admin/login.
+
+ПІСЛЯ ВСТАНОВЛЕННЯ НІЧОГО ПЕРЕНОСИТИ НЕ ПОТРІБНО.
+Не копіюйте index.php, public, var або config в інші каталоги.
+
+За замовчуванням: Україна, українська uk-UA, гривня UAH, Europe/Kyiv.
+Системні URL залишаються англійськими: /cart, /checkout, /shipping, /about-us тощо.
+
+ВАЖЛИВО: якщо setup.php показує "vendor — відсутній", перед вами source-пакет. Для прямого встановлення потрібен production-release з Composer vendor або необхідно попередньо виконати composer install.
+
+Повна інструкція: docs/INSTALLATION.md
+
+
+ДЕМО:
+Під час браузерної установки можна залишити позначку «Встановити презентаційне демо». Через CLI після встановлення: php bin/console commerce:demo:install. Видалення: php bin/console commerce:demo:remove.
+
+CRON / АВТОМАТИЗАЦІЯ:
+Після встановлення достатньо одного cron-запису кожні 5 хвилин:
+php bin/console commerce:cron:run
+Усі внутрішні задачі та їхній стан видно в адмінці «Cron / Автоматизація».
+
+ЗБІРКА PRODUCTION-RELEASE І ДОСТУП ДО NPM / PACKAGIST:
+Залежності потрібні лише на машині збірки. Сам production-сервер після one-upload збірки не потребує Node.js або Composer.
+
+Машина збірки повинна мати вихідний HTTPS (TCP 443) і робочий DNS щонайменше до:
+registry.npmjs.org
+packagist.org
+repo.packagist.org
+getcomposer.org
+api.github.com та github.com — для пакетів, які Composer отримує з GitHub.
+
+Швидка перевірка мережі:
+getent hosts registry.npmjs.org
+getent hosts repo.packagist.org
+curl -I https://registry.npmjs.org/
+curl -I https://repo.packagist.org/
+npm ping
+
+Якщо використовується HTTP(S)-proxy, задайте HTTPS_PROXY/HTTP_PROXY для shell, а для npm за потреби npm config set proxy та npm config set https-proxy. Не вимикайте перевірку TLS і не використовуйте strict-ssl=false.
+
+Після появи мережевого доступу з кореня SOURCE-пакета виконайте:
+bash tools/bootstrap-production-online.sh
+
+Скрипт створить справжні composer.lock і package-lock.json, встановить vendor, виконає npm ci, typecheck, dependency audit, Vite build, перевірку assets і сформує production ZIP. Якщо будь-який dependency/build крок не пройде, production-архів створюватися не повинен.

@@ -1,0 +1,45 @@
+{
+  "core": "^3.4.8",
+  "extension_api": "2.0",
+  "permissions": [],
+  "events": [],
+  "ui_slots": [
+    "product.after_price"
+  ],
+  "blocks": [],
+  "routes": [],
+  "pages": [],
+  "slot_contributions": [
+    {
+      "slot": "product.after_price",
+      "component": "extension.nexora_product_trust.badge",
+      "priority": 20,
+      "title_key": "extension.nexora_product_trust.badge.title",
+      "content_key": "extension.nexora_product_trust.badge.text"
+    }
+  ],
+  "assets": [],
+  "isolation": "contract_only",
+  "hot_disable": true,
+  "data_policy": "retain_on_uninstall",
+  "commercial": {
+    "model": "free"
+  },
+  "localization": {
+    "default_locale": "uk-UA",
+    "locales": [
+      "uk-UA",
+      "en-US"
+    ],
+    "translations_path": "translations"
+  },
+  "code": "nexora.product_trust",
+  "name": "Product Trust Badge",
+  "version": "1.0.0",
+  "type": "app",
+  "execution": "declarative",
+  "capabilities": [
+    "catalog.product.block"
+  ],
+  "settings_schema": "settings.schema.json"
+}

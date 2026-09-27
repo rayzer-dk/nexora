@@ -1,0 +1,12 @@
+<div class="product-title">
+    {% if product.brand %}<a class="product-brand" href="/catalog?brand={{ product.brand_id|default(0) }}">{{ product.brand }}</a>{% endif %}
+    <h1>{{ product.name }}</h1>
+    <div class="product-meta">
+        <span>SKU {{ product.sku }}</span>
+        {% if product.gtin %}<span>GTIN {{ product.gtin }}</span>{% endif %}
+    </div>
+    {% set customer_caps = site_capabilities() %}
+    {% if customer_caps.features.customer_accounts|default(false) %}
+        {% if app.user %}<form class="product-wishlist" method="post" action="{{ path('customer_wishlist_add',{product:product.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('wishlist_add_' ~ product.id) }}"><button type="submit" class="button button--ghost" title="{{ ui_text('add_wishlist') }}">♡ {{ ui_text('to_wishlist') }}</button></form>{% else %}<a class="button button--ghost product-wishlist" href="{{ path('customer_login') }}">♡ {{ ui_text('login_to_save') }}</a>{% endif %}
+    {% endif %}
+</div>

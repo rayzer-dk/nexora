@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "fields": [
+    {
+      "key": "api_token",
+      "type": "secret",
+      "label": "API token",
+      "group": "connection",
+      "help": "Token issued by your CRM/integration service."
+    },
+    {
+      "key": "sync_orders",
+      "type": "boolean",
+      "label": "Sync orders",
+      "default": true,
+      "group": "sync"
+    },
+    {
+      "key": "sync_customers",
+      "type": "boolean",
+      "label": "Sync customers",
+      "default": true,
+      "group": "sync"
+    }
+  ]
+}
