@@ -8,6 +8,7 @@ const MC_MIN_MEMORY_BYTES = 268435456; // 256 MiB
 const MC_RECOMMENDED_DISK_BYTES = 1073741824; // 1 GiB
 
 $projectDir = dirname(__DIR__);
+require_once $projectDir . '/src/Core/Platform/PlatformVersion.php';
 $installerCatalogPath = $projectDir . '/resources/translations/uk-UA/installer.php';
 $installerCatalog = is_file($installerCatalogPath) ? require $installerCatalogPath : [];
 function it(string $key, array $replace = []): string
@@ -217,10 +218,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $serverVersion = (string) $pdo->query('SELECT VERSION()')->fetchColumn();
             $engine = strtolower($serverVersion);
             $numericVersion = databaseNumericVersion($serverVersion);
-            if (!str_contains($engine, 'mariadb') && version_compare($numericVersion, '8.4.0', '<')) {
+            if (!str_contains($engine, 'mariadb') && version_compare($numericVersion, \Commerce\Core\Platform\PlatformVersion::MIN_MYSQL, '<')) {
                 throw new RuntimeException(it('installer.potriben_mysql_8_4_abo_novishyy_vyyavleno') . $serverVersion);
             }
-            if (str_contains($engine, 'mariadb') && version_compare($numericVersion, '11.4.0', '<')) {
+            if (str_contains($engine, 'mariadb') && version_compare($numericVersion, \Commerce\Core\Platform\PlatformVersion::MIN_MARIADB, '<')) {
                 throw new RuntimeException(it('installer.potribna_mariadb_11_4_abo_novisha_vyyavleno') . $serverVersion);
             }
 
@@ -369,6 +370,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             session_regenerate_id(true);
             header('Location: /install/finish?token=' . rawurlencode($token), true, 303);
             exit;
+        } catch (PDOException $e) {
+            $driverCode = (int) ($e->errorInfo[1] ?? 0);
+            if ($driverCode === 0 && preg_match('/\\[(\\d{4})\\]/', $e->getMessage(), $codeMatch) === 1) {
+                $driverCode = (int) $codeMatch[1];
+            }
+            $errors[] = match ($driverCode) {
+                1045, 1698 => it('installer.db_access_denied'),
+                1049 => it('installer.db_unknown_database'),
+                1044, 1142 => it('installer.db_insufficient_privileges'),
+                2002, 2003, 2005, 2006 => it('installer.db_unreachable'),
+                default => it('installer.configuration_check_failed_safe'),
+            };
+        } catch (RuntimeException $e) {
+            $errors[] = $e->getMessage();
         } catch (Throwable $e) {
             $errors[] = it('installer.configuration_check_failed_safe');
         }
