@@ -6,7 +6,9 @@ use Commerce\Kernel;
 
 $projectDir = dirname(__DIR__);
 $installedLock = $projectDir . '/var/install/installed.lock';
-if (!is_file($installedLock) && PHP_SAPI !== 'cli') {
+$requestPath = (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/');
+$installHandover = in_array($requestPath, ['/install', '/install/finish'], true);
+if (!is_file($installedLock) && PHP_SAPI !== 'cli' && !$installHandover) {
     $script = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? '/index.php'));
     $base = rtrim(str_replace('\\', '/', dirname($script)), '/.');
     header('Location: ' . ($base !== '' ? $base : '') . '/setup.php', true, 302);
