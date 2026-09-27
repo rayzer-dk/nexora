@@ -537,4 +537,6 @@ return [
     "forum_block_member" => "Blokér medlem",
     "forum_report_reason_harassment" => "Chikane",
     "forum_report_reason_fraud" => "Svindel",
+    "verification_code_subject" => "Bekræftelseskode",
+    "verification_code_text" => "Din bekræftelseskode er %code%. Den udløber om 15 minutter.",
 ];
