@@ -23,13 +23,13 @@ final class RecoverySnapshotCommand extends Command
     {
         $this->addOption('reason', null, InputOption::VALUE_REQUIRED, 'Snapshot reason', 'manual-cli')
             ->addOption('without-vendor', null, InputOption::VALUE_NONE, 'Do not include installed Composer vendor files.')
-            ->addOption('profile', null, InputOption::VALUE_REQUIRED, 'Backup profile: recovery, database, data or full.', 'recovery');
+            ->addOption('backup-profile', 'b', InputOption::VALUE_REQUIRED, 'Backup profile: recovery, database, data or full.', 'recovery');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $profile=(string)$input->getOption('profile');
+        $profile=(string)$input->getOption('backup-profile');
         if(!in_array($profile,['recovery','database','data','full'],true)){ $io->error('Unknown backup profile.'); return Command::INVALID; }
         $io->note($profile==='full'?'Creating a full backup with database, media and application files.':'Creating a consistent backup profile: '.$profile.'.');
         $result = $this->snapshots->create(
