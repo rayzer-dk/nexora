@@ -12,7 +12,7 @@ use Commerce\Core\Platform\PlatformVersion;
 
 $errors = [];
 $release = json_decode((string) file_get_contents($root . '/resources/platform/release.json'), true, 512, JSON_THROW_ON_ERROR);
-$readiness = require $root . '/resources/platform/beta-readiness.php';
+$readiness = require $root . '/resources/platform/module-certification.php';
 
 if (PlatformVersion::CHANNEL !== 'production' || ($release['channel'] ?? null) !== 'production') {
     $errors[] = 'Release channel is not production.';
@@ -28,14 +28,31 @@ if ($beta !== []) {
     $errors[] = 'Beta system modules remain: ' . implode(', ', $beta);
 }
 
-$pending = [];
+$invalidStates = [];
 foreach ($readiness as $code => $entry) {
-    if (($entry['state'] ?? '') === 'integration_pending' || ($entry['state'] ?? '') === 'foundation_incomplete') {
-        $pending[] = $code . ':' . ($entry['state'] ?? 'unknown');
+    $state = (string)($entry['state'] ?? '');
+    if ($state !== 'production_certified') {
+        $invalidStates[] = $code . ':' . ($state !== '' ? $state : 'missing');
+    }
+    if (!isset($entry['evidence']) || !is_array($entry['evidence']) || $entry['evidence'] === []) {
+        $errors[] = 'Missing certification evidence for module: ' . $code;
+    }
+    $runtime = trim((string)($entry['runtime'] ?? ''));
+    if ($runtime === '') {
+        $errors[] = 'Missing runtime certification statement for module: ' . $code;
+    }
+    if (preg_match('/before\s+Stable|integration_pending|foundation_incomplete/i', $runtime) === 1) {
+        $errors[] = 'Unresolved/pre-Stable wording remains for module: ' . $code;
     }
 }
-if ($pending !== []) {
-    $errors[] = 'Unresolved readiness states remain: ' . implode(', ', $pending);
+if ($invalidStates !== []) {
+    $errors[] = 'Non-certified module states remain: ' . implode(', ', $invalidStates);
+}
+
+foreach (SystemModuleCatalog::all() as $code => $definition) {
+    if (isset($readiness[$code]) && $definition->maturity !== ModuleMaturity::Stable) {
+        $errors[] = 'Certified module is not Stable in system catalog: ' . $code;
+    }
 }
 
 if ($errors !== []) {
