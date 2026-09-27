@@ -325,6 +325,7 @@ services:
     Commerce\Modules\Customer\Application\CustomerVerificationCodeService:
         arguments:
             $appSecret: '%kernel.secret%'
+            $smsEnabled: '%commerce.sms.enabled%'
 
     Commerce\Modules\Customer\Http\CustomerAccountController:
         arguments:
