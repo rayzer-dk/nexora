@@ -6,6 +6,7 @@ namespace Commerce\Modules\Forum\Http;
 
 use Commerce\Modules\Forum\Application\ForumService;
 use Commerce\Modules\Forum\Application\ForumCommunityService;
+use Commerce\Modules\Forum\Application\ForumAccessPolicy;
 use Commerce\Modules\Customer\Domain\CustomerUser;
 use Commerce\Modules\Security\Spam\PublicFormSpamGuard;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
@@ -21,6 +22,7 @@ final class ForumController extends AbstractController
         private readonly StorefrontContextResolver $contexts,
         private readonly ForumService $forum,
         private readonly ForumCommunityService $community,
+        private readonly ForumAccessPolicy $accessPolicy,
         private readonly PublicFormSpamGuard $spamGuard,
     ) {
     }
@@ -98,6 +100,7 @@ final class ForumController extends AbstractController
             return $this->redirectToRoute('customer_login');
         }
         try {
+            $this->accessPolicy->assertCanParticipate($user->id());
             $this->forum->createTopic(
                 $context->storeId,
                 $slug,
@@ -185,6 +188,7 @@ final class ForumController extends AbstractController
             return $this->redirectToRoute('customer_login');
         }
         try {
+            $this->accessPolicy->assertCanParticipate($user->id());
             $this->forum->createReply(
                 $context->storeId,
                 $id,
@@ -252,6 +256,7 @@ final class ForumController extends AbstractController
     {
         $context = $this->contexts->resolve($request);
         $user = $this->requireCustomer();
+        $this->accessPolicy->assertCanParticipate($user->id());
         if (!$this->isCsrfTokenValid('forum_subscription_' . $id, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -265,6 +270,7 @@ final class ForumController extends AbstractController
     {
         $context = $this->contexts->resolve($request);
         $user = $this->requireCustomer();
+        $this->accessPolicy->assertCanParticipate($user->id());
         if (!$this->isCsrfTokenValid('forum_like_' . $postId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -277,6 +283,7 @@ final class ForumController extends AbstractController
     {
         $context = $this->contexts->resolve($request);
         $user = $this->requireCustomer();
+        $this->accessPolicy->assertCanParticipate($user->id());
         if (!$this->isCsrfTokenValid('forum_report_' . $postId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -296,6 +303,7 @@ final class ForumController extends AbstractController
     {
         $context = $this->contexts->resolve($request);
         $user = $this->requireCustomer();
+        $this->accessPolicy->assertCanParticipate($user->id());
         if (!$this->isCsrfTokenValid('forum_edit_' . $postId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
