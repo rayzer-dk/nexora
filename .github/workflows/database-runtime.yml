@@ -20,6 +20,10 @@ jobs:
             image: mysql:8.4
             server_version: '8.4.0'
             health: mysqladmin ping -h 127.0.0.1 -uroot -proot --silent
+          - db: mariadb1011
+            image: mariadb:10.11
+            server_version: 'mariadb-10.11.0'
+            health: healthcheck.sh --connect --innodb_initialized
           - db: mariadb114
             image: mariadb:11.4
             server_version: 'mariadb-11.4.0'
@@ -67,4 +71,5 @@ jobs:
       - run: php bin/google-commerce-integration-contract-check.php
       - run: php bin/migration-opencart-runtime-check.php
       - run: php bin/forum-schema-runtime-check.php
+      - run: php bin/database-hardening-runtime-check.php
       - run: vendor/bin/phpunit --configuration phpunit.xml.dist
