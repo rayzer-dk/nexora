@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Commerce\Modules\Forum\Http;
 
 use Commerce\Modules\Forum\Application\ForumService;
+use Commerce\Modules\Forum\Application\ForumCommunityService;
+use Commerce\Modules\Customer\Domain\CustomerUser;
 use Commerce\Modules\Security\Spam\PublicFormSpamGuard;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,6 +20,7 @@ final class ForumController extends AbstractController
     public function __construct(
         private readonly StorefrontContextResolver $contexts,
         private readonly ForumService $forum,
+        private readonly ForumCommunityService $community,
         private readonly PublicFormSpamGuard $spamGuard,
     ) {
     }
@@ -86,11 +89,17 @@ final class ForumController extends AbstractController
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.povidomlennia_ne_proishlo_antyspam_perevirku'));
             return $this->redirectToRoute('storefront_forum_board', ['slug' => $slug]);
         }
+        $user = $this->getUser();
+        if (!$user instanceof CustomerUser) {
+            $this->addFlash('error', 'Sign in to create a forum topic.');
+            return $this->redirectToRoute('customer_login');
+        }
         try {
             $this->forum->createTopic(
                 $context->storeId,
                 $slug,
-                (string) $request->request->get('author_name', ''),
+                $user->id(),
+                $user->displayName(),
                 (string) $request->request->get('title', ''),
                 (string) $request->request->get('body', ''),
             );
@@ -113,11 +122,16 @@ final class ForumController extends AbstractController
         if ($slug !== (string) $topic['slug']) {
             return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => (string) $topic['slug']], 301);
         }
+        $this->community->recordView($context->storeId, $id);
+        $user = $this->getUser();
+        $customerId = $user instanceof CustomerUser ? $user->id() : null;
         return $this->render('@storefront/forum/topic.html.twig', [
             'page_title' => (string) $topic['title'],
             'store_name' => $context->storeName,
             'topic' => $topic,
             'posts' => $this->forum->posts($id),
+            'current_customer_id' => $customerId,
+            'is_subscribed' => $customerId !== null ? $this->community->isSubscribed($context->storeId, $id, $customerId) : false,
             'form_rendered_at' => time(),
             'seo_head' => [
                 'canonical' => $request->getSchemeAndHttpHost() . '/forum/t/' . $id . '/' . $slug,
@@ -153,11 +167,17 @@ final class ForumController extends AbstractController
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.povidomlennia_ne_proishlo_antyspam_perevirku'));
             return $this->redirectToRoute('storefront_forum_topic', $target);
         }
+        $user = $this->getUser();
+        if (!$user instanceof CustomerUser) {
+            $this->addFlash('error', 'Sign in to reply on the forum.');
+            return $this->redirectToRoute('customer_login');
+        }
         try {
             $this->forum->createReply(
                 $context->storeId,
                 $id,
-                (string) $request->request->get('author_name', ''),
+                $user->id(),
+                $user->displayName(),
                 (string) $request->request->get('body', ''),
             );
             $this->rememberSessionPost($request);
@@ -166,6 +186,90 @@ final class ForumController extends AbstractController
             $this->addFlash('error', $this->safeMessage($e));
         }
         return $this->redirectToRoute('storefront_forum_topic', $target);
+    }
+
+    #[Route('/forum/search', name: 'storefront_forum_search', methods: ['GET'], priority: 290)]
+    public function search(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $query = trim((string) $request->query->get('q', ''));
+        return $this->render('@storefront/forum/search.html.twig', [
+            'page_title' => 'Forum search',
+            'store_name' => $context->storeName,
+            'query' => $query,
+            'results' => $query !== '' ? $this->community->search($context->storeId, $query) : [],
+            'seo_head' => ['robots' => 'noindex,follow'],
+        ]);
+    }
+
+    #[Route('/forum/t/{id}/{slug}/subscription', name: 'storefront_forum_subscription', methods: ['POST'], requirements: ['id' => '\\d+'], priority: 290)]
+    public function subscription(Request $request, int $id, string $slug): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireCustomer();
+        if (!$this->isCsrfTokenValid('forum_subscription_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $enabled = (string) $request->request->get('enabled', '1') === '1';
+        $this->community->setSubscription($context->storeId, $id, $user->id(), $enabled);
+        return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug]);
+    }
+
+    #[Route('/forum/t/{id}/{slug}/posts/{postId}/like', name: 'storefront_forum_post_like', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]
+    public function like(Request $request, int $id, string $slug, int $postId): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireCustomer();
+        if (!$this->isCsrfTokenValid('forum_like_' . $postId, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->community->toggleLike($context->storeId, $postId, $user->id());
+        return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
+    }
+
+    #[Route('/forum/t/{id}/{slug}/posts/{postId}/report', name: 'storefront_forum_post_report', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]
+    public function report(Request $request, int $id, string $slug, int $postId): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireCustomer();
+        if (!$this->isCsrfTokenValid('forum_report_' . $postId, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->community->reportPost(
+            $context->storeId,
+            $postId,
+            $user->id(),
+            (string) $request->request->get('reason', 'other'),
+            (string) $request->request->get('details', ''),
+        );
+        $this->addFlash('success', 'Report sent to moderators.');
+        return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
+    }
+
+    #[Route('/forum/t/{id}/{slug}/posts/{postId}/edit', name: 'storefront_forum_post_edit', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]
+    public function editPost(Request $request, int $id, string $slug, int $postId): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireCustomer();
+        if (!$this->isCsrfTokenValid('forum_edit_' . $postId, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->community->editOwnPost($context->storeId, $postId, $user->id(), (string) $request->request->get('body', ''));
+            $this->addFlash('success', 'Post updated.');
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+        return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
+    }
+
+    private function requireCustomer(): CustomerUser
+    {
+        $user = $this->getUser();
+        if (!$user instanceof CustomerUser) {
+            throw $this->createAccessDeniedException();
+        }
+        return $user;
     }
 
     private function allowSessionPost(Request $request): bool
