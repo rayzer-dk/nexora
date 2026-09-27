@@ -9,6 +9,7 @@ use Commerce\Modules\Forum\Application\ForumService;
 use Commerce\Modules\Forum\Application\ForumCommunityService;
 use Commerce\Modules\Forum\Application\ForumNotificationService;
 use Commerce\Modules\Forum\Application\ForumDirectMessageService;
+use Commerce\Modules\Forum\Application\ForumModerationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +24,7 @@ final class ForumAdminController extends AbstractController
         private readonly ForumCommunityService $community,
         private readonly ForumNotificationService $notifications,
         private readonly ForumDirectMessageService $directMessages,
+        private readonly ForumModerationService $moderation,
     ) {
     }
 
@@ -30,11 +32,12 @@ final class ForumAdminController extends AbstractController
     public function index(Request $request): Response
     {
         $context = $this->contexts->resolve($request);
-        $queue = ['boards' => [], 'topics' => [], 'posts' => [], 'published_topics' => [], 'reports' => [], 'dm_reports' => []];
+        $queue = ['boards' => [], 'topics' => [], 'posts' => [], 'published_topics' => [], 'reports' => [], 'dm_reports' => [], 'bans' => []];
         try {
             $queue = $this->forum->moderationQueue($context->storeId);
             $queue['reports'] = $this->community->openReports($context->storeId);
             $queue['dm_reports'] = $this->directMessages->openReports($context->storeId);
+            $queue['bans'] = $this->moderation->activeBans($context->storeId);
         } catch (Throwable $e) {
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.forumadmincontroller.forum_tymchasovo_nedostupnyi') . $this->safeMessage($e));
         }
@@ -129,6 +132,41 @@ final class ForumAdminController extends AbstractController
         }
         $this->directMessages->resolveReport($context->storeId, $id);
         $this->addFlash('success', 'Private message report resolved.');
+        return $this->redirectToRoute('admin_forum');
+    }
+
+    #[Route('/admin/forum/bans', name: 'admin_forum_ban_create', methods: ['POST'])]
+    public function createBan(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_ban_create', (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $daysRaw = trim((string) $request->request->get('duration_days', ''));
+        $days = $daysRaw === '' ? null : max(1, min(3650, (int) $daysRaw));
+        try {
+            $this->moderation->ban(
+                $context->storeId,
+                $request->request->getInt('customer_id'),
+                (string) $request->request->get('reason', ''),
+                $days,
+            );
+            $this->addFlash('success', 'Forum ban applied.');
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+        return $this->redirectToRoute('admin_forum');
+    }
+
+    #[Route('/admin/forum/bans/{id}/revoke', name: 'admin_forum_ban_revoke', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function revokeBan(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_ban_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->moderation->revoke($context->storeId, $id);
+        $this->addFlash('success', 'Forum ban revoked.');
         return $this->redirectToRoute('admin_forum');
     }
 
