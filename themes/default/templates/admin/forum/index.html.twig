@@ -76,4 +76,36 @@
     {% else %}<tr><td colspan="6">{{ ui_text('admin.forum.index.no_private_message_reports') }}</td></tr>{% endfor %}
     </tbody></table></div>
 </section>
+
+<section class="admin-editor-card">
+    <div class="admin-card-heading">
+        <div><small>{{ ui_text('admin.forum.index.community_safety') }}</small><h2>{{ ui_text('admin.forum.index.user_bans') }}</h2></div>
+        <span class="admin-status-pill">{{ queue.bans|length }}</span>
+    </div>
+    <form method="post" action="{{ path('admin_forum_ban_create') }}" class="admin-inline-form">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_ban_create') }}">
+        <label><span>{{ ui_text('admin.forum.index.customer_id') }}</span><input type="number" min="1" name="customer_id" required></label>
+        <label><span>{{ ui_text('admin.forum.index.ban_days') }}</span><input type="number" min="1" max="3650" name="duration_days" placeholder="{{ ui_text('admin.forum.index.permanent') }}"></label>
+        <label class="admin-inline-form__wide"><span>{{ ui_text('admin.forum.index.ban_reason') }}</span><input type="text" name="reason" maxlength="1000" required></label>
+        <button type="submit">{{ ui_text('admin.forum.index.apply_ban') }}</button>
+    </form>
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr><th>{{ ui_text('admin.forum.index.user') }}</th><th>{{ ui_text('admin.forum.index.ban_reason') }}</th><th>{{ ui_text('admin.forum.index.expires') }}</th><th>{{ ui_text('admin.forum.index.data') }}</th><th class="is-actions">{{ ui_text('admin.forum.index.dii') }}</th></tr></thead>
+            <tbody>
+            {% for ban in queue.bans %}
+                <tr>
+                    <td><strong>{{ ban.nickname }}</strong><small class="admin-cell-subtitle">ID {{ ban.customer_id }}</small></td>
+                    <td><span title="{{ ban.reason|e('html_attr') }}">{{ ban.reason|slice(0,220) }}{% if ban.reason|length > 220 %}…{% endif %}</span></td>
+                    <td>{{ ban.expires_at|default(ui_text('admin.forum.index.permanent')) }}</td>
+                    <td>{{ ban.created_at }}</td>
+                    <td class="is-actions"><form method="post" action="{{ path('admin_forum_ban_revoke',{id:ban.id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_ban_' ~ ban.id) }}"><button class="admin-icon-button is-success" type="submit" title="{{ ui_text('admin.forum.index.revoke_ban') }}">✓</button></form></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5">{{ ui_text('admin.forum.index.no_active_bans') }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 {{ shell.end() }}
