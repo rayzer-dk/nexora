@@ -102,9 +102,9 @@ final class DeveloperToolsAdminController extends AbstractController
     private function operations(): array
     {
         $queries=[
-            'queue_pending'=>"SELECT COUNT(*) FROM mc_queue_job WHERE status IN ('pending','retry')",
-            'queue_failed'=>"SELECT COUNT(*) FROM mc_queue_job WHERE status IN ('failed','dead')",
-            'outbox_pending'=>"SELECT COUNT(*) FROM mc_outbox_event WHERE published_at IS NULL",
+            'queue_pending'=>"SELECT COUNT(*) FROM mc_notification_outbox WHERE status IN ('pending','processing')",
+            'queue_failed'=>"SELECT (SELECT COUNT(*) FROM mc_notification_outbox WHERE status IN ('failed','dead'))+(SELECT COUNT(*) FROM mc_outbox_event WHERE status IN ('dead','delivered_with_failures'))",
+            'outbox_pending'=>"SELECT COUNT(*) FROM mc_outbox_event WHERE status IN ('pending','partial','processing')",
             'runtime_incidents_24h'=>"SELECT COUNT(*) FROM mc_runtime_incident WHERE created_at>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 DAY)",
             'active_extensions'=>"SELECT COUNT(*) FROM mc_extension_installation WHERE status='active'",
         ];
