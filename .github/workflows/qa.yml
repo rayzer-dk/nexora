@@ -1,0 +1,40 @@
+name: Nexora QA
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: composer validate --strict
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: vendor/bin/phpunit --configuration phpunit.xml.dist
+      - run: php bin/twig-syntax-check.php themes/default/templates
+      - run: php bin/admin-access-check.php
+      - run: php bin/license-audit.php
+      - run: php bin/commerce-analytics-check.php
+      - run: php bin/full-release-static-check.php
+      - run: php bin/security-audit.php
+      - run: php bin/security-regression-check.php
+      - run: php bin/xss-hardening-check.php
+      - run: npm ci
+      - run: npm audit --omit=dev
+      - run: npm run typecheck
+      - run: npm run build:production
