@@ -1,0 +1,29 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="forum-shell shell">
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ member.display_name }}</span></nav>
+    <header class="forum-hero forum-hero--compact">
+        <div>
+            <span class="forum-avatar" aria-hidden="true">{{ member.display_name|first|upper }}</span>
+            <h1>{{ member.display_name }}</h1>
+            <p>{{ ui_text('forum_member_since')|replace({'%date%': member.created_at}) }}</p>
+        </div>
+        <div class="forum-member-stats">
+            <span><b>{{ member.stats.topics }}</b><small>{{ ui_text('topics_count_label') }}</small></span>
+            <span><b>{{ member.stats.posts }}</b><small>{{ ui_text('messages_count_label') }}</small></span>
+            <span><b>{{ member.stats.likes }}</b><small>{{ ui_text('forum_likes') }}</small></span>
+        </div>
+    </header>
+    <div class="forum-topic-list">
+        {% for item in activity %}
+            <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:item.topic_id,slug:item.slug}) }}#post-{{ item.post_id }}">
+                <span class="forum-topic-row__status">{{ item.board_name }}</span>
+                <span class="forum-topic-row__body"><strong>{{ item.title }}</strong><small>{{ item.published_at|default(item.created_at) }}</small></span>
+                <span class="forum-topic-row__arrow" aria-hidden="true">→</span>
+            </a>
+        {% else %}
+            <div class="forum-empty"><h2>{{ ui_text('forum_no_activity') }}</h2></div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
