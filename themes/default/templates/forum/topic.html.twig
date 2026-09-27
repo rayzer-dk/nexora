@@ -29,6 +29,7 @@
                 <footer class="forum-post__actions">
                     <span>{{ post.like_count|default(0) }} {{ ui_text('forum_likes') }}</span>
                     {% if app.user %}
+                        {% if not topic.is_locked %}<button type="button" class="forum-secondary-button" data-forum-quote data-forum-quote-author="{{ post.author_name|e('html_attr') }}" data-forum-quote-body="{{ post.body_text|slice(0,1000)|e('html_attr') }}">{{ ui_text('forum_quote') }}</button>{% endif %}
                         <form method="post" action="{{ path('storefront_forum_post_like',{id:topic.id,slug:topic.slug,postId:post.id}) }}">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_like_' ~ post.id) }}">
                             <button type="submit" class="forum-secondary-button">{{ ui_text('forum_like') }}</button>
