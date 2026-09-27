@@ -59,6 +59,7 @@ return array(
     'Commerce\\Core\\Extension\\TrustedExtensionSignatureVerifier' => $baseDir . '/src/Core/Extension/TrustedExtensionSignatureVerifier.php',
     'Commerce\\Core\\Health\\Console\\BackgroundQueuePurgeCommand' => $baseDir . '/src/Core/Health/Console/BackgroundQueuePurgeCommand.php',
     'Commerce\\Core\\Health\\Console\\BackgroundQueueStatusCommand' => $baseDir . '/src/Core/Health/Console/BackgroundQueueStatusCommand.php',
+    'Commerce\\Core\\Health\\Console\\DataRetentionCommand' => $baseDir . '/src/Core/Health/Console/DataRetentionCommand.php',
     'Commerce\\Core\\Health\\InstallationHealthCommand' => $baseDir . '/src/Core/Health/InstallationHealthCommand.php',
     'Commerce\\Core\\Health\\RequirementLevel' => $baseDir . '/src/Core/Health/RequirementLevel.php',
     'Commerce\\Core\\Health\\RequirementResult' => $baseDir . '/src/Core/Health/RequirementResult.php',

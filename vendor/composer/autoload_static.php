@@ -566,6 +566,7 @@ class ComposerStaticInitb70ac10207745cbe78d150a67290fdc2
         'Commerce\\Core\\Extension\\TrustedExtensionSignatureVerifier' => __DIR__ . '/../..' . '/src/Core/Extension/TrustedExtensionSignatureVerifier.php',
         'Commerce\\Core\\Health\\Console\\BackgroundQueuePurgeCommand' => __DIR__ . '/../..' . '/src/Core/Health/Console/BackgroundQueuePurgeCommand.php',
         'Commerce\\Core\\Health\\Console\\BackgroundQueueStatusCommand' => __DIR__ . '/../..' . '/src/Core/Health/Console/BackgroundQueueStatusCommand.php',
+        'Commerce\\Core\\Health\\Console\\DataRetentionCommand' => __DIR__ . '/../..' . '/src/Core/Health/Console/DataRetentionCommand.php',
         'Commerce\\Core\\Health\\InstallationHealthCommand' => __DIR__ . '/../..' . '/src/Core/Health/InstallationHealthCommand.php',
         'Commerce\\Core\\Health\\RequirementLevel' => __DIR__ . '/../..' . '/src/Core/Health/RequirementLevel.php',
         'Commerce\\Core\\Health\\RequirementResult' => __DIR__ . '/../..' . '/src/Core/Health/RequirementResult.php',
