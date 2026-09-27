@@ -14,14 +14,25 @@ concurrency:
 
 jobs:
   import:
-    if: hashFiles('Nexora_Commerce_v3.5.0_RC.zip') != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Detect uploaded RC
+        id: marker
+        shell: bash
+        run: |
+          if [[ -f Nexora_Commerce_v3.5.0_RC.zip ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "RC archive already imported; nothing to do."
+          fi
+
       - name: Verify uploaded RC
+        if: steps.marker.outputs.present == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -33,6 +44,7 @@ jobs:
           unzip -t Nexora_Commerce_v3.5.0_RC.zip >/dev/null
 
       - name: Expand clean source tree
+        if: steps.marker.outputs.present == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -48,10 +60,12 @@ jobs:
           rsync -a "$tmp/" ./             --exclude '/vendor/'             --exclude '/public/build/'             --exclude '*.gz'             --exclude '*.br'             --exclude '/release-manifest.json'             --exclude '/SHA256SUMS.txt'             --exclude '/.env'             --exclude '/.env.local'
 
           rm -f Nexora_Commerce_v3.5.0_RC.zip
-          rm -rf vendor node_modules public/build build var/cache/* var/log/* || true
+          rm -rf vendor node_modules public/build build
+          find var/cache var/log -mindepth 1 -delete 2>/dev/null || true
           mkdir -p var/cache var/log var/install public/media
 
       - name: Validate source tree
+        if: steps.marker.outputs.present == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -67,6 +81,7 @@ jobs:
           test ! -d public/build
 
       - name: Commit source tree
+        if: steps.marker.outputs.present == 'true'
         shell: bash
         run: |
           set -euo pipefail
