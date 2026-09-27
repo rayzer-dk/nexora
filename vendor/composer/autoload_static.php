@@ -606,6 +606,7 @@ class ComposerStaticInitb70ac10207745cbe78d150a67290fdc2
         'Commerce\\Core\\Region\\RegionProfile' => __DIR__ . '/../..' . '/src/Core/Region/RegionProfile.php',
         'Commerce\\Core\\Region\\RegionalFeature' => __DIR__ . '/../..' . '/src/Core/Region/RegionalFeature.php',
         'Commerce\\Core\\Region\\StoreDefaults' => __DIR__ . '/../..' . '/src/Core/Region/StoreDefaults.php',
+        'Commerce\\Core\\Runtime\\CanonicalPathRedirectSubscriber' => __DIR__ . '/../..' . '/src/Core/Runtime/CanonicalPathRedirectSubscriber.php',
         'Commerce\\Core\\Runtime\\ComponentInventory' => __DIR__ . '/../..' . '/src/Core/Runtime/ComponentInventory.php',
         'Commerce\\Core\\Runtime\\Console\\DeferredWorkCommand' => __DIR__ . '/../..' . '/src/Core/Runtime/Console/DeferredWorkCommand.php',
         'Commerce\\Core\\Runtime\\DeferredWorkSignal' => __DIR__ . '/../..' . '/src/Core/Runtime/DeferredWorkSignal.php',

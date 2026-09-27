@@ -99,6 +99,7 @@ return array(
     'Commerce\\Core\\Region\\RegionProfile' => $baseDir . '/src/Core/Region/RegionProfile.php',
     'Commerce\\Core\\Region\\RegionalFeature' => $baseDir . '/src/Core/Region/RegionalFeature.php',
     'Commerce\\Core\\Region\\StoreDefaults' => $baseDir . '/src/Core/Region/StoreDefaults.php',
+    'Commerce\\Core\\Runtime\\CanonicalPathRedirectSubscriber' => $baseDir . '/src/Core/Runtime/CanonicalPathRedirectSubscriber.php',
     'Commerce\\Core\\Runtime\\ComponentInventory' => $baseDir . '/src/Core/Runtime/ComponentInventory.php',
     'Commerce\\Core\\Runtime\\Console\\DeferredWorkCommand' => $baseDir . '/src/Core/Runtime/Console/DeferredWorkCommand.php',
     'Commerce\\Core\\Runtime\\DeferredWorkSignal' => $baseDir . '/src/Core/Runtime/DeferredWorkSignal.php',

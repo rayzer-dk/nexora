@@ -102,6 +102,10 @@ final class StorefrontCatalogController extends AbstractController
             }
         }
         $products = $this->catalog->products($context, null, $page, 24, null, $filter);
+        if ($page > (int) ($products['pages'] ?? 1)) {
+            // Pages past the end are soft-404s ("empty but indexable"); answer 404 instead.
+            throw $this->createNotFoundException();
+        }
         if ($page === 1 && $filter->search !== '') $this->searchAnalytics->record($context->storeId, $context->locale, $filter->search, (int)($products['total'] ?? 0));
         $facets = $this->catalog->catalogFacets($context);
         $query = $this->filterQuery($request);
@@ -158,6 +162,9 @@ final class StorefrontCatalogController extends AbstractController
         $page = max(1, $request->query->getInt('page', 1));
         $filter = $this->catalogFilter($request);
         $products = $this->catalog->products($context, (int) $category['id'], $page, 24, null, $filter);
+        if ($page > (int) ($products['pages'] ?? 1)) {
+            throw $this->createNotFoundException();
+        }
         if ($page === 1 && $filter->search !== '') $this->searchAnalytics->record($context->storeId, $context->locale, $filter->search, (int)($products['total'] ?? 0));
         $facets = $this->catalog->catalogFacets($context, (int) $category['id']);
         $canonical = $request->getSchemeAndHttpHost() . $category['url'] . (!$filter->isFiltered() && $page > 1 ? '?page=' . $page : '');
