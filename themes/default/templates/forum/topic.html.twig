@@ -4,7 +4,7 @@
     <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><a href="{{ path('storefront_forum_board',{slug:topic.board_slug}) }}">{{ topic.board_name }}</a><span>›</span><span>{{ topic.title }}</span></nav>
     <header class="forum-hero forum-hero--compact">
         <div><span class="forum-kicker">{{ ui_text('discussion') }}</span><h1>{{ topic.title }}</h1><p>{{ ui_text('author_named')|replace({'%name%': topic.author_name}) }} · {{ topic.views_count|default(0) }} {{ ui_text('forum_views') }}</p></div>
-        <div class="forum-hero__actions">
+        <div class="forum-hero__actions"><a class="forum-secondary-button" href="{{ path('storefront_forum_rules') }}">{{ ui_text('forum_rules_link') }}</a>
             {% if app.user %}
                 <form method="post" action="{{ path('storefront_forum_subscription',{id:topic.id,slug:topic.slug}) }}">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_subscription_' ~ topic.id) }}">
