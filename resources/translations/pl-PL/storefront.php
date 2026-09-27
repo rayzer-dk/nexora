@@ -518,4 +518,5 @@ return [
     "forum_no_followed_topics" => "Nie obserwujesz jeszcze żadnych tematów.",
     "forum_unread" => "Nowe",
     "forum_member_profile" => "Profil użytkownika",
+    "forum_quote" => "Cytuj",
 ];
