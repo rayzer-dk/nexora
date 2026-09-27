@@ -1,0 +1,81 @@
+name: Bootstrap Nexora source
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nexora-bootstrap-source
+  cancel-in-progress: false
+
+jobs:
+  import:
+    if: hashFiles('Nexora_Commerce_v3.5.0_RC.zip') != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify uploaded RC
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED='89f27913538e2bea0fca81d1b31872cced2709ac3a85df72a39e03a1f2437279'
+          ACTUAL="$(sha256sum Nexora_Commerce_v3.5.0_RC.zip | awk '{print $1}')"
+          echo "Expected: $EXPECTED"
+          echo "Actual:   $ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          unzip -t Nexora_Commerce_v3.5.0_RC.zip >/dev/null
+
+      - name: Expand clean source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          unzip -q Nexora_Commerce_v3.5.0_RC.zip -d "$tmp"
+
+          test -f "$tmp/src/Core/Platform/PlatformVersion.php"
+          test -f "$tmp/resources/platform/release.json"
+          grep -q "VERSION = '3.5.0'" "$tmp/src/Core/Platform/PlatformVersion.php"
+          grep -q "EXTENSION_API = '2.0'" "$tmp/src/Core/Platform/PlatformVersion.php"
+          grep -q "DATABASE_SCHEMA = 45" "$tmp/src/Core/Platform/PlatformVersion.php"
+
+          rsync -a "$tmp/" ./             --exclude '/vendor/'             --exclude '/public/build/'             --exclude '*.gz'             --exclude '*.br'             --exclude '/release-manifest.json'             --exclude '/SHA256SUMS.txt'             --exclude '/.env'             --exclude '/.env.local'
+
+          rm -f Nexora_Commerce_v3.5.0_RC.zip
+          rm -rf vendor node_modules public/build build var/cache/* var/log/* || true
+          mkdir -p var/cache var/log var/install public/media
+
+      - name: Validate source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f composer.json
+          test -f composer.lock
+          test -f package.json
+          test -f package-lock.json
+          test -f src/Core/Platform/PlatformVersion.php
+          test -f bin/twig-syntax-check.php
+          test -f tools/certify-production.sh
+          test ! -d vendor
+          test ! -d node_modules
+          test ! -d public/build
+
+      - name: Commit source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No source changes to commit."
+            exit 0
+          fi
+          git commit -m "Import Nexora Commerce 3.5.0 source"
+          git push origin HEAD:main
