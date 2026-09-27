@@ -537,4 +537,6 @@ return [
     "forum_block_member" => "Заблокировать пользователя",
     "forum_report_reason_harassment" => "Преследование",
     "forum_report_reason_fraud" => "Мошенничество",
+    "verification_code_subject" => "Код подтверждения",
+    "verification_code_text" => "Ваш код подтверждения: %code%. Он действует 15 минут.",
 ];
