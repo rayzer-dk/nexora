@@ -32,7 +32,7 @@ declare(strict_types=1);
         // switched release so the updater can verify the real HTTP/runtime path
         // before maintenance is released. The token lives outside the web root.
         $probeAllowed = false;
-        if ($path === '/__health/core-update') {
+        if (isset($_SERVER['HTTP_X_COMMERCE_UPDATE_PROBE'])) {
             $candidate = trim((string) ($_SERVER['HTTP_X_COMMERCE_UPDATE_PROBE'] ?? ''));
             $probeRaw = @file_get_contents($projectDir . '/var/update/probe.token');
             $stored = is_string($probeRaw) ? trim($probeRaw) : '';
