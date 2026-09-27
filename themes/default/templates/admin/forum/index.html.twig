@@ -60,4 +60,20 @@
     {% else %}<tr><td colspan="5">Відкритих скарг немає.</td></tr>{% endfor %}
     </tbody></table></div>
 </section>
+
+<section class="admin-editor-card">
+    <div class="admin-card-heading"><div><small>Community safety</small><h2>{{ ui_text('admin.forum.index.private_message_reports') }}</h2></div><span class="admin-status-pill">{{ queue.dm_reports|length }}</span></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.forum.index.private_message') }}</th><th>{{ ui_text('admin.forum.index.sender') }}</th><th>{{ ui_text('admin.forum.index.reporter') }}</th><th>{{ ui_text('admin.forum.index.reason') }}</th><th>{{ ui_text('admin.forum.index.data') }}</th><th class="is-actions">{{ ui_text('admin.forum.index.dii') }}</th></tr></thead><tbody>
+    {% for report in queue.dm_reports %}
+        <tr>
+            <td><span title="{{ report.body_text|e('html_attr') }}">{{ report.body_text|slice(0,220) }}{% if report.body_text|length > 220 %}…{% endif %}</span></td>
+            <td>{{ report.sender_nickname|default('—') }}</td>
+            <td>{{ report.reporter_nickname|default('—') }}</td>
+            <td><strong>{{ report.reason }}</strong>{% if report.details %}<small class="admin-cell-subtitle" title="{{ report.details|e('html_attr') }}">{{ report.details|slice(0,220) }}{% if report.details|length > 220 %}…{% endif %}</small>{% endif %}</td>
+            <td>{{ report.created_at }}</td>
+            <td class="is-actions"><form method="post" action="{{ path('admin_forum_dm_report_resolve',{id:report.id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_dm_report_' ~ report.id) }}"><button class="admin-icon-button is-success" type="submit" title="{{ ui_text('admin.forum.index.mark_resolved') }}">✓</button></form></td>
+        </tr>
+    {% else %}<tr><td colspan="6">{{ ui_text('admin.forum.index.no_private_message_reports') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
 {{ shell.end() }}
