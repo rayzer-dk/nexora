@@ -511,4 +511,9 @@ return [
     "forum_try_other" => "Попробуйте другое слово или фразу.",
     "forum_new_reply_subject" => "Новый ответ в теме «%topic%»",
     "forum_new_reply_text" => "В теме «%topic%» опубликован новый ответ: %url%",
+    "forum_member_since" => "Участник с %date%",
+    "forum_no_activity" => "Публичной активности пока нет.",
+    "forum_following" => "Отслеживаемые темы",
+    "forum_following_intro" => "Темы, за которыми вы следите и получаете уведомления.",
+    "forum_no_followed_topics" => "Вы пока не следите ни за одной темой.",
 ];
