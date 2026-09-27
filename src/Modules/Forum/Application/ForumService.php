@@ -86,7 +86,7 @@ final readonly class ForumService
         $limit = max(1, min(100, $limit));
         $offset = (max(1, $page) - 1) * $limit;
         return $this->connection->fetchAllAssociative(
-            "SELECT p.id,p.customer_id,CASE WHEN p.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(HEX(c.public_id),1,8)))) ELSE p.author_name END AS author_name,p.body_text,p.created_at,p.published_at,p.edited_at,p.edit_count,\n                (SELECT COUNT(*) FROM mc_forum_reaction r WHERE r.post_id=p.id AND r.reaction='like') AS like_count\n             FROM mc_forum_post p\n             LEFT JOIN mc_customer c ON c.id=p.customer_id\n             WHERE p.topic_id=? AND p.status='published' ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}",
+            "SELECT p.id,p.customer_id,CASE WHEN p.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(HEX(c.public_id),1,8)))) ELSE p.author_name END AS author_name,p.body_text,p.created_at,p.published_at,p.edited_at,p.edit_count,\n                (SELECT COUNT(*) FROM mc_forum_reaction r WHERE r.post_id=p.id AND r.reaction='like') AS like_count\n             FROM mc_forum_post p\n             JOIN mc_forum_topic t ON t.id=p.topic_id\n             JOIN mc_forum_board b ON b.id=t.board_id\n             LEFT JOIN mc_customer c ON c.id=p.customer_id\n             LEFT JOIN mc_forum_profile fp ON fp.customer_id=p.customer_id AND fp.store_id=b.store_id\n             WHERE p.topic_id=? AND b.store_id=? AND p.status='published' ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}",
             [$topicId, $storeId],
         );
     }
