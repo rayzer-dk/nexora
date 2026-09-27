@@ -516,4 +516,6 @@ return [
     "forum_following" => "Beobachtete Themen",
     "forum_following_intro" => "Themen, denen Sie folgen und zu denen Sie Benachrichtigungen erhalten.",
     "forum_no_followed_topics" => "Sie folgen noch keinen Themen.",
+    "forum_unread" => "Neu",
+    "forum_member_profile" => "Mitgliederprofil",
 ];
