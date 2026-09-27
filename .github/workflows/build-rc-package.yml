@@ -1,0 +1,57 @@
+name: Build Nexora RC package
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: composer validate --strict
+      - run: composer install --no-dev --classmap-authoritative --no-interaction --prefer-dist --no-progress
+      - run: npm ci
+      - run: npm run build:production
+      - name: Validate release-candidate contract
+        run: php bin/release-contract-check.php --release-candidate
+      - name: Validate one-upload runtime package
+        run: php bin/release-check.php
+      - name: Build RC archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf package-root
+          mkdir package-root
+          rsync -a ./ package-root/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'node_modules/' \
+            --exclude 'package-root/' \
+            --exclude 'Nexora_Commerce_v3.5.0_RC_CI.zip'
+          cd package-root
+          zip -qr ../Nexora_Commerce_v3.5.0_RC_CI.zip .
+          cd ..
+          sha256sum Nexora_Commerce_v3.5.0_RC_CI.zip > Nexora_Commerce_v3.5.0_RC_CI.zip.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nexora_Commerce_v3.5.0_RC_CI
+          path: |
+            Nexora_Commerce_v3.5.0_RC_CI.zip
+            Nexora_Commerce_v3.5.0_RC_CI.zip.sha256
+          if-no-files-found: error
+          retention-days: 7
