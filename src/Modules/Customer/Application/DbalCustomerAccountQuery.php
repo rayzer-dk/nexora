@@ -17,7 +17,7 @@ final readonly class DbalCustomerAccountQuery
     public function profile(int $customerId): ?array
     {
         $row = $this->db->fetchAssociative(
-            'SELECT public_id,email,email_verified_at,phone_e164,display_name,locale,status,created_at,last_seen_at FROM mc_customer WHERE id=? LIMIT 1',
+            'SELECT public_id,email,email_verified_at,phone_e164,phone_verified_at,display_name,locale,status,created_at,last_seen_at FROM mc_customer WHERE id=? LIMIT 1',
             [$customerId],
         );
         if (!is_array($row)) {
