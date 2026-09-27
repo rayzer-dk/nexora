@@ -26,11 +26,12 @@ final readonly class ForumCommunityService
 
         return $this->connection->fetchAllAssociative(
             "SELECT DISTINCT t.id,t.title,t.slug,b.slug AS board_slug,b.name AS board_name,
-                    COALESCE(NULLIF(c.display_name,''),t.author_name) AS author_name,
+                    CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(HEX(c.public_id),1,8)))) ELSE t.author_name END AS author_name,
                     t.last_post_at,t.published_at,t.created_at
              FROM mc_forum_topic t
              JOIN mc_forum_board b ON b.id=t.board_id
              LEFT JOIN mc_customer c ON c.id=t.customer_id
+             LEFT JOIN mc_forum_profile fp ON fp.customer_id=t.customer_id AND fp.store_id=b.store_id
              LEFT JOIN mc_forum_post p ON p.topic_id=t.id AND p.status='published'
              WHERE b.store_id=? AND b.status='active' AND t.status='published'
                AND (t.title LIKE ? ESCAPE '\\' OR p.body_text LIKE ? ESCAPE '\\')
@@ -151,7 +152,7 @@ final readonly class ForumCommunityService
     {
         $body = trim(str_replace(["\r\n", "\r"], "\n", strip_tags($body)));
         if (mb_strlen($body, 'UTF-8') < 3) {
-            throw new \DomainException('Message is too short.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.post_short'));
         }
         $body = mb_substr($body, 0, 20000, 'UTF-8');
         $row = $this->connection->fetchAssociative(
@@ -163,12 +164,12 @@ final readonly class ForumCommunityService
             [$postId, $customerId, $storeId],
         );
         if (!is_array($row)) {
-            throw new \DomainException('Forum post was not found.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.post_missing'));
         }
         $created = new DateTimeImmutable((string) $row['created_at'], new DateTimeZone('UTC'));
         $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
         if (($now->getTimestamp() - $created->getTimestamp()) > 1800) {
-            throw new \DomainException('The 30 minute editing window has expired.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.edit_expired'));
         }
 
         $this->connection->transactional(function (Connection $db) use ($row, $postId, $customerId, $body, $now): void {
@@ -190,13 +191,14 @@ final readonly class ForumCommunityService
     public function member(int $storeId, int $customerId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT c.id,c.display_name,c.created_at,c.last_seen_at
+            "SELECT c.id AS customer_id,p.nickname,p.bio,p.show_email,p.show_phone,p.allow_private_messages,c.created_at,c.last_seen_at
              FROM mc_customer c
+             JOIN mc_forum_profile p ON p.customer_id=c.id AND p.store_id=?
              WHERE c.id=? AND c.status='active'
                AND (EXISTS(SELECT 1 FROM mc_forum_topic t JOIN mc_forum_board b ON b.id=t.board_id WHERE t.customer_id=c.id AND b.store_id=?)
                     OR EXISTS(SELECT 1 FROM mc_forum_post p JOIN mc_forum_topic t ON t.id=p.topic_id JOIN mc_forum_board b ON b.id=t.board_id WHERE p.customer_id=c.id AND b.store_id=?))
              LIMIT 1",
-            [$customerId, $storeId, $storeId],
+            [$storeId, $customerId, $storeId, $storeId],
         );
         if (!is_array($row)) {
             return null;
@@ -262,12 +264,13 @@ final readonly class ForumCommunityService
         $limit = max(1, min(200, $limit));
         return $this->connection->fetchAllAssociative(
             "SELECT r.id,r.post_id,r.reason,r.details,r.created_at,
-                    COALESCE(NULLIF(rc.display_name,''),rc.email) AS reporter_name,
+                    COALESCE(NULLIF(rp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(HEX(rc.public_id),1,8)))) AS reporter_name,
                     p.body_text,t.id AS topic_id,t.title AS topic_title
              FROM mc_forum_report r
              JOIN mc_forum_post p ON p.id=r.post_id
              JOIN mc_forum_topic t ON t.id=p.topic_id
              JOIN mc_customer rc ON rc.id=r.customer_id
+             LEFT JOIN mc_forum_profile rp ON rp.customer_id=r.customer_id AND rp.store_id=r.store_id
              WHERE r.store_id=? AND r.status='open'
              ORDER BY r.created_at ASC,r.id ASC
              LIMIT {$limit}",
@@ -291,7 +294,7 @@ final readonly class ForumCommunityService
             [$topicId, $storeId],
         );
         if (!$ok) {
-            throw new \DomainException('Forum topic was not found.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.topic_missing'));
         }
     }
 
@@ -305,7 +308,7 @@ final readonly class ForumCommunityService
             [$postId, $storeId],
         );
         if (!$ok) {
-            throw new \DomainException('Forum post was not found.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.post_missing'));
         }
     }
 
