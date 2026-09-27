@@ -32,6 +32,7 @@ $drop = static function () use ($pdo, $p, $tables): void {
 };
 
 $drop();
+$currentStage = 'schema';
 try {
     foreach ([
         "CREATE TABLE {$p}language(language_id INT PRIMARY KEY,name VARCHAR(64),code VARCHAR(32),locale VARCHAR(255),status TINYINT,sort_order INT)",
@@ -88,6 +89,7 @@ try {
     $source = new OpenCart3CatalogSource($pdo, $p);
     $records = [];
     foreach ($source->supportedEntities() as $type) {
+        $currentStage = 'read:' . $type->value;
         $batch = $source->read($type, null, 250);
         if (!$batch->complete || count($batch->records) < 1) throw new RuntimeException('Missing fixture entity: ' . $type->value);
         $records[$type->value] = $batch->records;
@@ -100,6 +102,7 @@ try {
     $order = $records[MigrationEntityType::Order->value][0]->data;
     if (($order['customer_source_key'] ?? '') !== '100' || count((array)$order['items']) !== 1 || count((array)$order['totals']) !== 3) throw new RuntimeException('Customer/order migration mismatch.');
 
+    $currentStage = 'dry-run';
     $report = (new MigrationDryRunAnalyzer())->analyze($source, 100);
     $errors = array_filter($report->issues, static fn($i): bool => $i->severity === 'error');
     if ($errors !== []) throw new RuntimeException('Dry-run validation produced errors.');
@@ -107,7 +110,7 @@ try {
     echo "OpenCart/ocStore migration runtime: PASSED\n";
     echo "multilingual=yes images=yes options=yes discounts=yes seo=yes customers=yes orders=yes dry_run_errors=0\n";
 } catch (Throwable $e) {
-    fwrite(STDERR, "OpenCart/ocStore migration runtime FAILED: {$e->getMessage()}\n");
+    fwrite(STDERR, "OpenCart/ocStore migration runtime FAILED at {$currentStage}: {$e->getMessage()}\n");
     exit(1);
 } finally {
     $drop();
