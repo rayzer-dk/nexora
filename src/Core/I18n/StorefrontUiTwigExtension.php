@@ -14,10 +14,25 @@ final class StorefrontUiTwigExtension extends AbstractExtension
 
 
     /** @param array<string,mixed> $context */
-    public function catalogJson(array $context): string
+    public function catalogJson(array $context, array $prefixes = []): string
     {
+        $catalog = $this->catalog($context);
+        if ($prefixes !== []) {
+            $catalog = array_filter(
+                $catalog,
+                static function (string $key) use ($prefixes): bool {
+                    foreach ($prefixes as $prefix) {
+                        if (str_starts_with($key, (string) $prefix)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+                ARRAY_FILTER_USE_KEY,
+            );
+        }
         try {
-            return json_encode($this->catalog($context), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+            return json_encode($catalog, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         } catch (\JsonException) {
             return '{}';
         }
