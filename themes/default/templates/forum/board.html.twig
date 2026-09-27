@@ -34,7 +34,7 @@
         <button class="forum-compose__close" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">×</button>
         <span class="forum-kicker">{{ ui_text('new_topic') }}</span>
         <h2 id="forum-compose-title">{{ ui_text('create_topic_in')|replace({'%board%': board.name}) }}</h2>
-        <p>{{ ui_text('forum_posting_as')|replace({'%name%': app.user.displayName}) }} {{ ui_text('topic_moderation_text') }}</p>
+        <p>{{ ui_text('forum_posting_as')|replace({'%name%': forum_nickname}) }} {{ ui_text('topic_moderation_text') }}</p>
         <form method="post" action="{{ path('storefront_forum_topic_create',{slug:board.slug}) }}" data-store-async-form>
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_topic_' ~ board.id) }}">
             <input type="hidden" name="rendered_at" value="{{ form_rendered_at }}">
