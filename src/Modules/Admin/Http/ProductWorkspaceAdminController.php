@@ -40,7 +40,7 @@ final class ProductWorkspaceAdminController extends AbstractController
         $ctx=$this->contexts->resolve($request);
         try{$product=$this->query->productForEdit($ctx->storeId,$ctx->marketId,$ctx->locale,$publicId);}catch(\Throwable){return new Response(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.productworkspaceadmincontroller.section_class_admin_preview_card_p_tovar_ne_znaideno'),404);}
         $images=[];
-        try{$images=$this->db->fetchAllAssociative('SELECT ma.storage_key,ma.alt_text,ma.title FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_id WHERE pm.product_id=? ORDER BY pm.is_primary DESC,pm.sort_order,pm.id LIMIT 4',[(int)$product['id']]);}catch(\Throwable){}
+        $images=$this->db->fetchAllAssociative("SELECT ma.storage_key,COALESCE(pm.alt_text,mam.alt_text) alt_text,mam.title FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id LEFT JOIN mc_media_asset_meta mam ON mam.asset_id=ma.id WHERE pm.product_id=? AND pm.variant_id IS NULL ORDER BY (pm.role='primary') DESC,pm.sort_order,pm.media_asset_id LIMIT 4",[(int)$product['id']]);
         foreach($images as &$image){$image['url']='/media/'.ltrim((string)$image['storage_key'],'/');}unset($image);
         $product['price_display']=$product['amount_minor']===null?'—':number_format(((int)$product['amount_minor'])/100,2,',',' ').' '.($product['currency']??$ctx->currency);
         return $this->render('@storefront/admin/catalog/_product_preview.html.twig',['product'=>$product,'images'=>$images]);
