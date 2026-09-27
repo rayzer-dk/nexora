@@ -518,4 +518,5 @@ return [
     "forum_no_followed_topics" => "Du følger endnu ingen emner.",
     "forum_unread" => "Ny",
     "forum_member_profile" => "Medlemsprofil",
+    "forum_quote" => "Citér",
 ];
