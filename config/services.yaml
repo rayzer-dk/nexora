@@ -253,6 +253,10 @@ services:
         arguments:
             $senders: !tagged_iterator commerce.notification_sender
 
+    Commerce\Modules\Forum\Application\ForumNotificationService:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
     Commerce\Modules\Payment\Application\PaymentProviderRegistry:
         arguments:
             $providers: !tagged_iterator commerce.payment_provider
