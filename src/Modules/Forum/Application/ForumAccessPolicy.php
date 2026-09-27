@@ -25,7 +25,7 @@ final readonly class ForumAccessPolicy
     public function assertCanParticipate(int $customerId): void
     {
         if (!$this->canParticipate($customerId)) {
-            throw new \DomainException('Verify your email before participating in the forum.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.verify_required'));
         }
     }
 }
