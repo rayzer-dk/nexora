@@ -670,4 +670,6 @@ return [
     "forum_following" => "Відстежувані теми",
     "forum_following_intro" => "Теми, за якими ви стежите та отримуєте сповіщення.",
     "forum_no_followed_topics" => "Ви ще не стежите за жодною темою.",
+    "forum_unread" => "Нове",
+    "forum_member_profile" => "Профіль учасника",
 ];
