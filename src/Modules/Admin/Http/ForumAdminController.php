@@ -26,7 +26,7 @@ final class ForumAdminController extends AbstractController
     public function index(Request $request): Response
     {
         $context = $this->contexts->resolve($request);
-        $queue = ['boards' => [], 'topics' => [], 'posts' => [], 'reports' => []];
+        $queue = ['boards' => [], 'topics' => [], 'posts' => [], 'published_topics' => [], 'reports' => []];
         try {
             $queue = $this->forum->moderationQueue($context->storeId);
             $queue['reports'] = $this->community->openReports($context->storeId);
