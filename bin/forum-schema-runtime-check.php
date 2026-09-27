@@ -32,6 +32,7 @@ $requiredTables = [
     'mc_forum_dm_thread',
     'mc_forum_dm_message',
     'mc_forum_dm_report',
+    'mc_forum_ban',
 ];
 
 $requiredColumns = [
@@ -49,6 +50,7 @@ $requiredColumns = [
     'mc_forum_dm_thread' => ['store_id', 'customer_low_id', 'customer_high_id', 'last_message_at'],
     'mc_forum_dm_message' => ['thread_id', 'sender_customer_id', 'body_text', 'status', 'read_at'],
     'mc_forum_dm_report' => ['store_id', 'message_id', 'reporter_customer_id', 'reason', 'status'],
+    'mc_forum_ban' => ['store_id', 'customer_id', 'reason', 'expires_at', 'revoked_at', 'created_at'],
 ];
 
 $requiredForeignKeys = [
@@ -80,6 +82,8 @@ $requiredForeignKeys = [
     'fk_forum_dm_report_store',
     'fk_forum_dm_report_message',
     'fk_forum_dm_report_customer',
+    'fk_forum_ban_store',
+    'fk_forum_ban_customer',
 ];
 
 $errors = [];
@@ -118,4 +122,4 @@ if ($errors !== []) {
 }
 
 echo "Forum schema runtime check: PASSED\n";
-echo "tables=" . count($requiredTables) . " foreign_keys=" . count($requiredForeignKeys) . " schema=47\n";
+echo "tables=" . count($requiredTables) . " foreign_keys=" . count($requiredForeignKeys) . " schema=49\n";
