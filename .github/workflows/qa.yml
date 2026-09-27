@@ -13,14 +13,14 @@ jobs:
   unit-static:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo_mysql,simplexml,sodium,zip
           coverage: none
           tools: composer:v2
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
