@@ -1,0 +1,20 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="forum-shell shell">
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ ui_text('forum_private_messages') }}</span></nav>
+    <header class="forum-hero forum-hero--compact"><div><span class="forum-kicker">{{ ui_text('community') }}</span><h1>{{ ui_text('forum_private_messages') }}</h1><p>{{ ui_text('forum_private_messages_intro') }}</p></div></header>
+    {% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
+    {% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}
+    <div class="forum-topic-list">
+        {% for thread in threads %}
+            <a class="forum-topic-row" href="{{ path('storefront_forum_message_thread',{id:thread.id}) }}">
+                <span class="forum-topic-row__status">{{ thread.unread_count > 0 ? ui_text('forum_unread') : ui_text('forum_private_message') }}</span>
+                <span class="forum-topic-row__body"><strong>{{ thread.other_nickname }}</strong><small>{{ thread.last_message_at|default(thread.created_at) }}</small></span>
+                <span class="forum-topic-row__count"><b>{{ thread.unread_count }}</b><small>{{ ui_text('forum_unread') }}</small></span>
+            </a>
+        {% else %}
+            <div class="forum-empty"><h2>{{ ui_text('forum_no_private_messages') }}</h2></div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
