@@ -346,7 +346,11 @@ final class SystemAdminController extends AbstractController
     #[Route('/admin/system/recovery/{id}/download', name: 'admin_system_recovery_download', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function downloadRecoverySnapshot(int $id): Response
     {
-        $row = $this->recovery->get($id);
+        try {
+            $row = $this->recovery->get($id);
+        } catch (\DomainException) {
+            throw $this->createNotFoundException();
+        }
         $path = $row['archive_path_absolute'] ?? null;
         if (!is_string($path) || !is_file($path)) {
             throw $this->createNotFoundException();
