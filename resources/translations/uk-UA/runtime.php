@@ -1916,4 +1916,9 @@ return [
     'verification.runtime.email_missing' => 'Email-адреса недоступна.',
     'verification.runtime.sms_disabled' => 'SMS-підтвердження не налаштовано для цього магазину.',
 
+    'forum.runtime.post_short' => 'Повідомлення занадто коротке.',
+    'forum.runtime.post_missing' => 'Повідомлення форуму не знайдено.',
+    'forum.runtime.edit_expired' => '30-хвилинний період редагування завершився.',
+    'forum.runtime.topic_missing' => 'Тему форуму не знайдено.',
+
 ];
