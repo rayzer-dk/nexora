@@ -63,6 +63,7 @@
         </div>
         {% endif %}
 {% endmacro %}
+{% macro flashes(flashes) %}{% for type,messages in flashes %}{% for message in messages %}<div class="admin-flash admin-flash--{{ type }}" role="status">{{ message }}</div>{% endfor %}{% endfor %}{% endmacro %}
 {% macro end() %}
     </main>
 </div>
@@ -74,7 +75,7 @@
     </section>
 </div>
 <dialog class="admin-quick-preview" data-quick-preview-dialog><div class="admin-quick-preview__bar"><strong>{{ ui_text('admin_quick_preview') }}</strong><button type="button" class="admin-icon-button" data-quick-preview-close title="{{ ui_text('admin_close') }}" aria-label="{{ ui_text('admin_close') }}">×</button></div><div class="admin-quick-preview__body" data-quick-preview-body><p>{{ ui_text('admin_loading') }}</p></div></dialog>
-<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">window.MC_I18N={{ ui_catalog_json() }};</script>
+<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">window.MC_I18N={{ ui_catalog_json(['js_', 'vue.', 'builder_', 'admin.ai.']) }};</script>
 <script type="module" src="{{ vite_asset('assets/storefront/admin-runtime.js', '/assets/admin-runtime.js') }}"></script>
 </body>
 </html>
