@@ -32,7 +32,7 @@ if (!is_file($root . '/.env')) {
     } else {
         // CI, containers and production may provide the environment entirely
         // through real process variables. Do not require a repository .env file.
-        $runtimeOptions['dotenv_path'] = false;
+        $runtimeOptions['disable_dotenv'] = true;
     }
 
     $_SERVER['APP_RUNTIME_OPTIONS'] = $runtimeOptions;
