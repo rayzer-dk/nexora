@@ -23,7 +23,7 @@ final readonly class CustomerVerificationCodeService
     public function requestCode(int $customerId, string $channel, string $storeName): bool
     {
         if (!in_array($channel, ['email', 'sms'], true)) {
-            throw new \InvalidArgumentException('Unsupported verification channel.');
+            throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('verification.runtime.channel_unsupported'));
         }
 
         $row = $this->db->fetchAssociative(
@@ -42,7 +42,7 @@ final readonly class CustomerVerificationCodeService
 
         $recipient = $channel === 'email' ? trim((string) ($row['email'] ?? '')) : trim((string) ($row['phone_e164'] ?? ''));
         if ($recipient === '') {
-            throw new \DomainException($channel === 'sms' ? 'Add a phone number to your account first.' : 'Email address is unavailable.');
+            throw new \DomainException($channel === 'sms' ? \Commerce\Core\I18n\CanonicalUiText::get('verification.runtime.phone_required') : \Commerce\Core\I18n\CanonicalUiText::get('verification.runtime.email_missing'));
         }
 
         $latest = $this->db->fetchOne(
