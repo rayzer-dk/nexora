@@ -26,7 +26,7 @@ if (!is_file($projectDir . '/.env')) {
     } else {
         // Support immutable/container deployments where configuration is
         // injected exclusively through environment variables.
-        $runtimeOptions['dotenv_path'] = false;
+        $runtimeOptions['disable_dotenv'] = true;
     }
 
     $_SERVER['APP_RUNTIME_OPTIONS'] = $runtimeOptions;
