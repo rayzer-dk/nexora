@@ -33,7 +33,7 @@ final class StorefrontFacetWarmupCommand extends Command
         $categoryLimit = min(200, max(1, (int)$input->getOption('categories')));
         $ttl = min(3600, max(30, (int)$input->getOption('ttl')));
         $contexts = $this->db->fetchAllAssociative(
-            "SELECT s.id store_id,s.name store_name,m.id market_id,m.country_code,sl.locale_code locale,sc.currency_code currency
+            "SELECT s.id store_id,s.name store_name,m.id market_id,COALESCE((SELECT MIN(mc.country_code) FROM mc_market_country mc WHERE mc.market_id=m.id),'UA') country_code,sl.locale_code locale,sc.currency_code currency
              FROM mc_store s JOIN mc_market m ON m.store_id=s.id AND m.status='active'
              JOIN mc_store_locale sl ON sl.store_id=s.id AND sl.enabled=1
              JOIN mc_store_currency sc ON sc.store_id=s.id AND sc.enabled=1
