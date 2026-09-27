@@ -188,6 +188,39 @@ final class ForumController extends AbstractController
         return $this->redirectToRoute('storefront_forum_topic', $target);
     }
 
+    #[Route('/forum/member/{id}', name: 'storefront_forum_member', methods: ['GET'], requirements: ['id' => '\\d+'], priority: 295)]
+    public function member(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $member = $this->community->member($context->storeId, $id);
+        if ($member === null) {
+            throw $this->createNotFoundException();
+        }
+        return $this->render('@storefront/forum/member.html.twig', [
+            'page_title' => (string) $member['display_name'],
+            'store_name' => $context->storeName,
+            'member' => $member,
+            'activity' => $this->community->memberRecentActivity($context->storeId, $id),
+            'seo_head' => [
+                'canonical' => $request->getSchemeAndHttpHost() . '/forum/member/' . $id,
+                'robots' => 'index,follow,max-image-preview:large',
+            ],
+        ]);
+    }
+
+    #[Route('/forum/following', name: 'storefront_forum_following', methods: ['GET'], priority: 295)]
+    public function following(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireCustomer();
+        return $this->render('@storefront/forum/following.html.twig', [
+            'page_title' => 'Followed forum topics',
+            'store_name' => $context->storeName,
+            'topics' => $this->community->followedTopics($context->storeId, $user->id()),
+            'seo_head' => ['robots' => 'noindex,nofollow'],
+        ]);
+    }
+
     #[Route('/forum/search', name: 'storefront_forum_search', methods: ['GET'], priority: 290)]
     public function search(Request $request): Response
     {
