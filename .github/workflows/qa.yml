@@ -35,7 +35,7 @@ jobs:
       - run: php bin/security-audit.php
       - run: php bin/security-regression-check.php
       - run: php bin/xss-hardening-check.php
-      - run: php bin/beta-readiness-check.php
+      - run: php bin/module-certification-check.php
       - run: php bin/commerce-operations-check.php
       - run: php bin/rewards-commerce-check.php
       - run: php bin/commerce-ux-check.php
