@@ -516,4 +516,6 @@ return [
     "forum_following" => "Отслеживаемые темы",
     "forum_following_intro" => "Темы, за которыми вы следите и получаете уведомления.",
     "forum_no_followed_topics" => "Вы пока не следите ни за одной темой.",
+    "forum_unread" => "Новое",
+    "forum_member_profile" => "Профиль участника",
 ];
