@@ -8,6 +8,7 @@ use Commerce\Core\Platform\PlatformVersion;
 use Commerce\Modules\Forum\Application\ForumService;
 use Commerce\Modules\Forum\Application\ForumCommunityService;
 use Commerce\Modules\Forum\Application\ForumNotificationService;
+use Commerce\Modules\Forum\Application\ForumDirectMessageService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,6 +22,7 @@ final class ForumAdminController extends AbstractController
         private readonly ForumService $forum,
         private readonly ForumCommunityService $community,
         private readonly ForumNotificationService $notifications,
+        private readonly ForumDirectMessageService $directMessages,
     ) {
     }
 
@@ -28,10 +30,11 @@ final class ForumAdminController extends AbstractController
     public function index(Request $request): Response
     {
         $context = $this->contexts->resolve($request);
-        $queue = ['boards' => [], 'topics' => [], 'posts' => [], 'published_topics' => [], 'reports' => []];
+        $queue = ['boards' => [], 'topics' => [], 'posts' => [], 'published_topics' => [], 'reports' => [], 'dm_reports' => []];
         try {
             $queue = $this->forum->moderationQueue($context->storeId);
             $queue['reports'] = $this->community->openReports($context->storeId);
+            $queue['dm_reports'] = $this->directMessages->openReports($context->storeId);
         } catch (Throwable $e) {
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.forumadmincontroller.forum_tymchasovo_nedostupnyi') . $this->safeMessage($e));
         }
@@ -114,6 +117,18 @@ final class ForumAdminController extends AbstractController
         }
         $this->community->resolveReport($context->storeId, $id);
         $this->addFlash('success', 'Forum report resolved.');
+        return $this->redirectToRoute('admin_forum');
+    }
+
+    #[Route('/admin/forum/dm-reports/{id}/resolve', name: 'admin_forum_dm_report_resolve', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function resolveDirectMessageReport(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_dm_report_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->directMessages->resolveReport($context->storeId, $id);
+        $this->addFlash('success', 'Private message report resolved.');
         return $this->redirectToRoute('admin_forum');
     }
 
