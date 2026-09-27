@@ -151,8 +151,8 @@ foreach ([
     }
 }
 
-if ((string) ($release['database_schema'] ?? '') !== '49') {
-    $fail[] = 'release schema is not 49';
+if ((string) ($release['database_schema'] ?? '') !== '50') {
+    $fail[] = 'release schema is not 50';
 }
 
 if ($fail !== []) {
