@@ -15,10 +15,10 @@ final class ExtensionListContractsCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $contracts = [
-            'provider.payment' => 'Commerce\\Modules\\Payment\\Application\\PaymentProviderInterface',
-            'provider.shipping' => 'Commerce\\Modules\\Delivery\\Application\\DeliveryProviderInterface',
-            'provider.product_block' => 'Commerce\\Modules\\ProductPage\\Application\\ProductBlockProviderInterface',
-            'provider.ai' => 'Commerce\\Modules\\Ai\\Application\\TextGenerationProviderInterface',
+            'provider.payment' => \Commerce\Modules\Payment\Contract\PaymentProviderInterface::class,
+            'provider.shipping' => \Commerce\Modules\Shipping\Contract\DeliveryProviderInterface::class,
+            'provider.product_block' => \Commerce\Modules\ProductPage\Contract\ProductBlockProviderInterface::class,
+            'provider.ai' => \Commerce\Modules\Ai\Contract\TextGenerationProviderInterface::class,
         ];
         foreach ($contracts as $capability => $interface) {
             $output->writeln($capability . ' => ' . $interface);
