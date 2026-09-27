@@ -211,7 +211,7 @@ final class ForumController extends AbstractController
                 $context->storeId,
                 $id,
                 $user->id(),
-                $user->displayName(),
+                $this->profiles->nickname($context->storeId, $user->id()),
                 (string) $request->request->get('body', ''),
             );
             $this->rememberSessionPost($request);
