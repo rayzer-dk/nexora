@@ -26,6 +26,12 @@ $requiredTables = [
     'mc_forum_report',
     'mc_forum_post_revision',
     'mc_forum_topic_read',
+    'mc_customer_verification_code',
+    'mc_forum_profile',
+    'mc_forum_block',
+    'mc_forum_dm_thread',
+    'mc_forum_dm_message',
+    'mc_forum_dm_report',
 ];
 
 $requiredColumns = [
@@ -36,6 +42,13 @@ $requiredColumns = [
     'mc_forum_report' => ['store_id', 'post_id', 'customer_id', 'reason', 'status', 'resolved_at'],
     'mc_forum_post_revision' => ['post_id', 'editor_customer_id', 'body_text', 'created_at'],
     'mc_forum_topic_read' => ['topic_id', 'customer_id', 'last_read_post_id', 'read_at'],
+    'mc_customer' => ['phone_verified_at'],
+    'mc_customer_verification_code' => ['customer_id', 'channel', 'code_hash', 'attempts', 'expires_at', 'consumed_at'],
+    'mc_forum_profile' => ['store_id', 'customer_id', 'nickname', 'show_email', 'show_phone', 'allow_private_messages'],
+    'mc_forum_block' => ['store_id', 'blocker_customer_id', 'blocked_customer_id'],
+    'mc_forum_dm_thread' => ['store_id', 'customer_low_id', 'customer_high_id', 'last_message_at'],
+    'mc_forum_dm_message' => ['thread_id', 'sender_customer_id', 'body_text', 'status', 'read_at'],
+    'mc_forum_dm_report' => ['store_id', 'message_id', 'reporter_customer_id', 'reason', 'status'],
 ];
 
 $requiredForeignKeys = [
@@ -53,6 +66,20 @@ $requiredForeignKeys = [
     'fk_forum_post_revision_customer',
     'fk_forum_topic_read_topic',
     'fk_forum_topic_read_customer',
+    'fk_customer_verification_code_customer',
+    'fk_forum_profile_store',
+    'fk_forum_profile_customer',
+    'fk_forum_block_store',
+    'fk_forum_block_blocker',
+    'fk_forum_block_blocked',
+    'fk_forum_dm_thread_store',
+    'fk_forum_dm_thread_low',
+    'fk_forum_dm_thread_high',
+    'fk_forum_dm_message_thread',
+    'fk_forum_dm_message_sender',
+    'fk_forum_dm_report_store',
+    'fk_forum_dm_report_message',
+    'fk_forum_dm_report_customer',
 ];
 
 $errors = [];
@@ -91,4 +118,4 @@ if ($errors !== []) {
 }
 
 echo "Forum schema runtime check: PASSED\n";
-echo "tables=" . count($requiredTables) . " foreign_keys=" . count($requiredForeignKeys) . " schema=46\n";
+echo "tables=" . count($requiredTables) . " foreign_keys=" . count($requiredForeignKeys) . " schema=47\n";
