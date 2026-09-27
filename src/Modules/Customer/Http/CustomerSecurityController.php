@@ -6,6 +6,8 @@ namespace Commerce\Modules\Customer\Http;
 
 use Commerce\Core\Site\SiteCapabilitySettings;
 use Commerce\Modules\Customer\Application\CustomerAccountSecurityService;
+use Commerce\Modules\Customer\Application\CustomerVerificationCodeService;
+use Commerce\Modules\Customer\Application\DbalCustomerAccountQuery;
 use Commerce\Modules\Customer\Domain\CustomerUser;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,6 +22,8 @@ final class CustomerSecurityController extends AbstractController
         private readonly StorefrontContextResolver $contexts,
         private readonly SiteCapabilitySettings $capabilities,
         private readonly CustomerAccountSecurityService $security,
+        private readonly CustomerVerificationCodeService $verificationCodes,
+        private readonly DbalCustomerAccountQuery $accounts,
     ) {
     }
 
@@ -114,6 +118,66 @@ final class CustomerSecurityController extends AbstractController
         }
 
         return $this->redirectToRoute($this->getUser() instanceof CustomerUser ? 'customer_account' : 'customer_login');
+    }
+
+    #[Route('/account/verification', name: 'customer_verification', methods: ['GET'], priority: 135)]
+    public function verification(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->getUser();
+        if (!$user instanceof CustomerUser) {
+            throw $this->createAccessDeniedException();
+        }
+        return $this->render('@storefront/account/verification.html.twig', [
+            'page_title' => 'Account verification',
+            'store_name' => $context->storeName,
+            'customer' => $this->accounts->profile($user->id()),
+            'seo_head' => ['robots' => 'noindex,nofollow'],
+        ]);
+    }
+
+    #[Route('/account/verification/request', name: 'customer_verification_request', methods: ['POST'], priority: 135)]
+    public function requestVerificationCode(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->getUser();
+        if (!$user instanceof CustomerUser) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('customer_verification_request', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+        $channel = (string) $request->request->get('channel', 'email');
+        try {
+            $this->verificationCodes->requestCode($user->id(), $channel, $context->storeName);
+            $this->addFlash('success', 'Verification code sent.');
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        } catch (Throwable) {
+            $this->addFlash('error', 'Verification code could not be sent.');
+        }
+        return $this->redirectToRoute('customer_verification');
+    }
+
+    #[Route('/account/verification/confirm', name: 'customer_verification_confirm', methods: ['POST'], priority: 135)]
+    public function confirmVerificationCode(Request $request): Response
+    {
+        $this->contexts->resolve($request);
+        $user = $this->getUser();
+        if (!$user instanceof CustomerUser) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('customer_verification_confirm', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+        $channel = (string) $request->request->get('channel', 'email');
+        $code = (string) $request->request->get('code', '');
+        if ($this->verificationCodes->verify($user->id(), $channel, $code)) {
+            $this->addFlash('success', 'Account contact verified.');
+        } else {
+            $this->addFlash('error', 'Invalid or expired verification code.');
+        }
+        return $this->redirectToRoute('customer_verification');
     }
 
     #[Route('/account/email/resend-verification', name: 'customer_email_resend_verification', methods: ['POST'], priority: 130)]
