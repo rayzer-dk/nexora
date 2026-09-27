@@ -1,0 +1,67 @@
+name: Database runtime QA
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    name: PHP 8.4 / ${{ matrix.db }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - db: mysql84
+            image: mysql:8.4
+            server_version: '8.4.0'
+            health: mysqladmin ping -h 127.0.0.1 -uroot -proot --silent
+          - db: mariadb114
+            image: mariadb:11.4
+            server_version: 'mariadb-11.4.0'
+            health: healthcheck.sh --connect --innodb_initialized
+    services:
+      db:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_DATABASE: nexora_test
+          MYSQL_USER: nexora
+          MYSQL_PASSWORD: nexora
+          MYSQL_ROOT_PASSWORD: root
+          MARIADB_DATABASE: nexora_test
+          MARIADB_USER: nexora
+          MARIADB_PASSWORD: nexora
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="${{ matrix.health }}"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      APP_ENV: test
+      APP_DEBUG: 0
+      APP_SECRET: test-secret-0123456789abcdef0123456789abcdef
+      DATABASE_URL: mysql://nexora:nexora@127.0.0.1:3306/nexora_test?charset=utf8mb4
+      DATABASE_SERVER_VERSION: ${{ matrix.server_version }}
+      LOCK_DSN: flock
+      REDIS_DSN: redis://127.0.0.1:6379
+      VALKEY_DSN: redis://127.0.0.1:6379
+      MAILER_DSN: null://null
+      SYMFONY_TRUSTED_PROXIES: ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: php bin/console lint:container
+      - run: php bin/console lint:twig themes/default/templates
+      - run: php bin/console doctrine:migrations:migrate --no-interaction
+      - run: vendor/bin/phpunit --configuration phpunit.xml.dist
