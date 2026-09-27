@@ -16,7 +16,7 @@ final readonly class ForumAccessPolicy
     {
         return (bool) $this->connection->fetchOne(
             "SELECT 1 FROM mc_customer
-             WHERE id=? AND status='active' AND email_verified_at IS NOT NULL
+             WHERE id=? AND status='active' AND (email_verified_at IS NOT NULL OR phone_verified_at IS NOT NULL)
              LIMIT 1",
             [$customerId],
         );
