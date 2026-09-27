@@ -53,6 +53,11 @@ $must = [
         "storefront_forum_post_like",
         "storefront_forum_post_report",
         "storefront_forum_post_edit",
+        'data-forum-quote',
+    ],
+    'assets/storefront/storefront-runtime.js' => [
+        'data-forum-quote',
+        'forumQuoteBody',
     ],
     'themes/default/templates/forum/search.html.twig' => [
         "storefront_forum_search",
@@ -100,6 +105,7 @@ foreach ([
     'forum-follow-notifications',
     'forum-unread-tracking',
     'forum-post-pagination',
+    'forum-quote-replies',
     'forum-removable-optional-module',
 ] as $capability) {
     if (!in_array($capability, (array) ($release['capabilities'] ?? []), true)) {
