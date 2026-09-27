@@ -1,14 +1,14 @@
-# Nexora Commerce 3.5.0
+# Nexora Commerce 3.5.1
 
-3.5.0 використовує чистий Extension API 2.0 без legacy-сумісності Settings Schema v1; додає bonus extension packs, комерційні моделі розширень, покращений Theme Preset runtime та multilingual catalog import/export. Extension API 2.0: динамічні Builder-блоки, extension routes/pages, стабільні UI slots, extension permissions, scoped assets, власний журнал міграцій модулів і Trusted Signed Module Package з Ed25519-підписом. Непідписаний PHP/JS як і раніше не активується, а Core-файли не модифікуються.
+3.5.1 використовує чистий Extension API 2.0 без legacy-сумісності Settings Schema v1; додає bonus extension packs, комерційні моделі розширень, покращений Theme Preset runtime та multilingual catalog import/export. Extension API 2.0: динамічні Builder-блоки, extension routes/pages, стабільні UI slots, extension permissions, scoped assets, власний журнал міграцій модулів і Trusted Signed Module Package з Ed25519-підписом. Непідписаний PHP/JS як і раніше не активується, а Core-файли не модифікуються.
 
 
-Release status: `release-candidate`. The packaged application passes static/runtime-independent gates, but the label `production-certified` is reserved for a build that also passes `tools/certify-production.sh` against an isolated supported database and live HTTP environment.
+Release channel: `production`. Repository CI certifies source/package contracts and the supported database matrix. Live deployment certification (HTTP, load, accessibility and configured external APIs) remains environment-specific and is performed separately.
 
 
 3.3.9 adds transactional gift cards and store-scoped loyalty accounts with checkout redemption, paid-order accrual, idempotent rollback and customer/admin reward views.
 
-Сучасна модульна e-commerce платформа для України та Європи. Сертифікований діапазон PHP: 8.4–8.5. Backend — Symfony 8.1, адміністративний frontend — Vue 3.5 + TypeScript 7, база — MySQL/MariaDB, InnoDB, utf8mb4.
+Сучасна модульна e-commerce платформа для України та Європи. Сертифікований діапазон PHP: 8.4–8.5. Backend — Symfony 8.1, адміністративний frontend — Vue 3.5 + TypeScript 6, база — MySQL/MariaDB, InnoDB, utf8mb4.
 
 
 ## Локалізація
@@ -88,7 +88,7 @@ The visual builder now supports reusable validated sections and one-click block 
 - Окремий XSS regression gate: Twig autoescape + HtmlSanitizer для rich text + recursive Builder sanitization + перевірка небезпечних DOM sinks.
 - Feed Center доповнено AI / Agentic Commerce JSONL.
 
-3.5.0 — pre-release production candidate with CI-certified core runtime із Backup/Feed/Sitemap hardening та production commerce operations: promotion/coupon engine, bulk actions, CSV import/export, Notification Center, SMS gateway, double-opt-in newsletter/campaign queue та optional OpenAI/Gemini authoring. Попередні security/scale/asset hardening залишаються обов’язковою базою. Core має MIT-ліцензію та не вимагає платного runtime-компонента для базового self-hosted магазину. Додано dependency-license gate, tokenized design foundation, versioned Home/Header/Footer/Product builders із Safe Layout fallback, immutable `releases/current/shared` executor і failure-injection rollback tests, resumable Migration Center journal, ізольовані Google Commerce/Marketing sync queues, повноцінний Media Library admin UI, розширений visual Builder з draft/live preview/media picker, locale fallback та last-known-good currency-rate policy.
+3.5.1 — production build with CI-certified core runtime із Backup/Feed/Sitemap hardening та production commerce operations: promotion/coupon engine, bulk actions, CSV import/export, Notification Center, SMS gateway, double-opt-in newsletter/campaign queue та optional OpenAI/Gemini authoring. Попередні security/scale/asset hardening залишаються обов’язковою базою. Core має MIT-ліцензію та не вимагає платного runtime-компонента для базового self-hosted магазину. Додано dependency-license gate, tokenized design foundation, versioned Home/Header/Footer/Product builders із Safe Layout fallback, immutable `releases/current/shared` executor і failure-injection rollback tests, resumable Migration Center journal, ізольовані Google Commerce/Marketing sync queues, повноцінний Media Library admin UI, розширений visual Builder з draft/live preview/media picker, locale fallback та last-known-good currency-rate policy.
 
 Це повна one-upload PRODUCTION-збірка з `vendor/`, compiled assets і lock-файлами, яка проходить статичні release/security/performance gates. Статус Stable/Production-certified ще потребує реальних load tests на MySQL/MariaDB, browser E2E на підтримуваній матриці та sandbox/E2E зовнішніх інтеграцій. Media Library і Builders реалізовані; Migration Center має повний основний OpenCart/ocStore import surface з dry-run/resume/mapping/rollback; Google Commerce залишається integration_pending до перевірки з реальним Merchant Center.
 
