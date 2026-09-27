@@ -14,6 +14,24 @@ if (!is_file($installedLock) && PHP_SAPI !== 'cli') {
 }
 
 require_once $projectDir . '/bootstrap/emergency.php';
+
+if (!is_file($projectDir . '/.env')) {
+    $runtimeOptions = is_array($_SERVER['APP_RUNTIME_OPTIONS'] ?? null)
+        ? $_SERVER['APP_RUNTIME_OPTIONS']
+        : [];
+
+    if (is_file($projectDir . '/.env.local')) {
+        $runtimeOptions['dotenv_path'] = '.env.local';
+        $runtimeOptions['dotenv_use_putenv'] = true;
+    } else {
+        // Support immutable/container deployments where configuration is
+        // injected exclusively through environment variables.
+        $runtimeOptions['dotenv_path'] = false;
+    }
+
+    $_SERVER['APP_RUNTIME_OPTIONS'] = $runtimeOptions;
+}
+
 require_once $projectDir . '/vendor/autoload_runtime.php';
 
 return static function (array $context): Kernel {
