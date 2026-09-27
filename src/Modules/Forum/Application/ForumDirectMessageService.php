@@ -183,6 +183,34 @@ final readonly class ForumDirectMessageService
         );
     }
 
+    /** @return list<array<string,mixed>> */
+    public function openReports(int $storeId, int $limit = 100): array
+    {
+        $limit = max(1, min(200, $limit));
+        return $this->connection->fetchAllAssociative(
+            "SELECT r.id,r.message_id,r.reason,r.details,r.created_at,m.body_text,
+                    reporter.nickname AS reporter_nickname,
+                    sender.nickname AS sender_nickname
+             FROM mc_forum_dm_report r
+             JOIN mc_forum_dm_message m ON m.id=r.message_id
+             JOIN mc_forum_dm_thread t ON t.id=m.thread_id
+             LEFT JOIN mc_forum_profile reporter ON reporter.store_id=r.store_id AND reporter.customer_id=r.reporter_customer_id
+             LEFT JOIN mc_forum_profile sender ON sender.store_id=r.store_id AND sender.customer_id=m.sender_customer_id
+             WHERE r.store_id=? AND r.status='open' AND t.store_id=r.store_id
+             ORDER BY r.created_at ASC,r.id ASC
+             LIMIT {$limit}",
+            [$storeId],
+        );
+    }
+
+    public function resolveReport(int $storeId, int $reportId): void
+    {
+        $this->connection->executeStatement(
+            "UPDATE mc_forum_dm_report SET status='resolved',resolved_at=? WHERE id=? AND store_id=? AND status='open'",
+            [$this->now(), $reportId, $storeId],
+        );
+    }
+
     private function blocked(int $storeId, int $a, int $b): bool
     {
         return (bool) $this->connection->fetchOne(
