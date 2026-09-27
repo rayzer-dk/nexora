@@ -74,6 +74,19 @@ final class Version20260927123000 extends AbstractMigration
             CONSTRAINT fk_forum_report_customer FOREIGN KEY (customer_id) REFERENCES mc_customer(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+        $this->addSql("CREATE TABLE mc_forum_topic_read (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            topic_id BIGINT UNSIGNED NOT NULL,
+            customer_id BIGINT UNSIGNED NOT NULL,
+            last_read_post_id BIGINT UNSIGNED NULL,
+            read_at DATETIME(6) NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_forum_topic_read (topic_id, customer_id),
+            KEY idx_forum_topic_read_customer (customer_id, read_at),
+            CONSTRAINT fk_forum_topic_read_topic FOREIGN KEY (topic_id) REFERENCES mc_forum_topic(id) ON DELETE CASCADE,
+            CONSTRAINT fk_forum_topic_read_customer FOREIGN KEY (customer_id) REFERENCES mc_customer(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
         $this->addSql("CREATE TABLE mc_forum_post_revision (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             post_id BIGINT UNSIGNED NOT NULL,
@@ -90,6 +103,7 @@ final class Version20260927123000 extends AbstractMigration
     public function down(Schema $schema): void
     {
         $this->addSql('DROP TABLE IF EXISTS mc_forum_post_revision');
+        $this->addSql('DROP TABLE IF EXISTS mc_forum_topic_read');
         $this->addSql('DROP TABLE IF EXISTS mc_forum_report');
         $this->addSql('DROP TABLE IF EXISTS mc_forum_reaction');
         $this->addSql('DROP TABLE IF EXISTS mc_forum_subscription');
