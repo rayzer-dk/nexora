@@ -46,6 +46,20 @@ final class ForumController extends AbstractController
         ]);
     }
 
+    #[Route('/forum/rules', name: 'storefront_forum_rules', methods: ['GET'], priority: 310)]
+    public function rules(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        return $this->render('@storefront/forum/rules.html.twig', [
+            'page_title' => 'Forum rules',
+            'store_name' => $context->storeName,
+            'seo_head' => [
+                'canonical' => $request->getSchemeAndHttpHost() . '/forum/rules',
+                'robots' => 'index,follow,max-image-preview:large',
+            ],
+        ]);
+    }
+
     #[Route('/forum/{slug}', name: 'storefront_forum_board', methods: ['GET'], requirements: ['slug' => '[a-z0-9][a-z0-9-]{0,159}'], priority: 240)]
     public function board(Request $request, string $slug): Response
     {
@@ -226,7 +240,7 @@ final class ForumController extends AbstractController
             'activity' => $this->community->memberRecentActivity($context->storeId, $id),
             'seo_head' => [
                 'canonical' => $request->getSchemeAndHttpHost() . '/forum/member/' . $id,
-                'robots' => 'index,follow,max-image-preview:large',
+                'robots' => 'noindex,follow',
             ],
         ]);
     }
