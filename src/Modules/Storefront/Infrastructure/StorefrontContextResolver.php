@@ -47,6 +47,7 @@ final readonly class StorefrontContextResolver
         }
 
         $request->setLocale($locale);
+        \Commerce\Core\I18n\CanonicalUiText::useLocale($locale);
 
         return new StorefrontContext(
             storeId: $storeId,
