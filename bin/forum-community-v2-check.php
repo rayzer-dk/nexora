@@ -1,0 +1,101 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$root = dirname(__DIR__);
+$fail = [];
+
+$must = [
+    'migrations/Version20260927123000.php' => [
+        'customer_id BIGINT UNSIGNED NULL',
+        'mc_forum_subscription',
+        'mc_forum_reaction',
+        'mc_forum_report',
+        'mc_forum_post_revision',
+    ],
+    'src/Modules/Forum/Http/ForumController.php' => [
+        'CustomerUser',
+        'storefront_forum_search',
+        'storefront_forum_subscription',
+        'storefront_forum_post_like',
+        'storefront_forum_post_report',
+        'storefront_forum_post_edit',
+    ],
+    'src/Modules/Forum/Application/ForumCommunityService.php' => [
+        'setSubscription',
+        'toggleLike',
+        'reportPost',
+        'editOwnPost',
+        'memberStats',
+        'openReports',
+    ],
+    'src/Modules/Forum/Application/ForumService.php' => [
+        "'customer_id' => \$customerId",
+        'mc_forum_subscription',
+        "'pin', 'unpin'",
+    ],
+    'src/Core/Site/SiteCapabilityAccessSubscriber.php' => [
+        "str_starts_with(\$route, 'storefront_forum')",
+        "return 'forum'",
+    ],
+    'themes/default/templates/forum/board.html.twig' => [
+        "path('customer_login')",
+        'app.user.displayName',
+    ],
+    'themes/default/templates/forum/topic.html.twig' => [
+        "storefront_forum_subscription",
+        "storefront_forum_post_like",
+        "storefront_forum_post_report",
+        "storefront_forum_post_edit",
+    ],
+    'themes/default/templates/forum/search.html.twig' => [
+        "storefront_forum_search",
+    ],
+];
+
+foreach ($must as $file => $needles) {
+    $text = @file_get_contents($root . '/' . $file);
+    if (!is_string($text)) {
+        $fail[] = 'missing ' . $file;
+        continue;
+    }
+    foreach ($needles as $needle) {
+        if (!str_contains($text, $needle)) {
+            $fail[] = $file . ' missing ' . $needle;
+        }
+    }
+}
+
+foreach (['themes/default/templates/forum/board.html.twig', 'themes/default/templates/forum/topic.html.twig'] as $file) {
+    $text = (string) @file_get_contents($root . '/' . $file);
+    if (preg_match('/name=["\']author_name["\']/', $text) === 1) {
+        $fail[] = $file . ' still permits free-form forum identity';
+    }
+}
+
+$release = json_decode((string) @file_get_contents($root . '/resources/platform/release.json'), true);
+foreach ([
+    'forum-community-v2',
+    'forum-unified-customer-identity',
+    'forum-topic-subscriptions',
+    'forum-post-reactions',
+    'forum-user-reports',
+    'forum-post-edit-history',
+    'forum-search',
+] as $capability) {
+    if (!in_array($capability, (array) ($release['capabilities'] ?? []), true)) {
+        $fail[] = 'missing capability ' . $capability;
+    }
+}
+
+if ((string) ($release['database_schema'] ?? '') !== '46') {
+    $fail[] = 'release schema is not 46';
+}
+
+if ($fail !== []) {
+    fwrite(STDERR, "Forum Community v2 Check: FAILED\n - " . implode("\n - ", $fail) . "\n");
+    exit(1);
+}
+
+echo "Forum Community v2 Check: OK\n";
