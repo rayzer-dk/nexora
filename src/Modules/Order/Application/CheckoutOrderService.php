@@ -81,7 +81,7 @@ final readonly class CheckoutOrderService
             if ($rows === []) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.koshyk_porozhnii'));
             foreach($rows as &$priceRow){
                 $retail=$db->fetchOne("SELECT px.amount_minor FROM mc_price px WHERE px.variant_id=? AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=? AND (px.max_quantity IS NULL OR px.max_quantity>=?) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1",[(int)$priceRow['variant_id'],$context->storeId,$context->marketId,$context->currency,(string)$priceRow['quantity'],(string)$priceRow['quantity']]);
-                $base=$retail===false?(int)$priceRow['unit_price_minor']:(int)$retail;
+                if($retail===false){throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout.error.item_price_unavailable',['name'=>(string)$priceRow['name'],'currency'=>$context->currency]));} $base=(int)$retail; // never charge a stored price that may belong to another currency or an expired price
                 $resolved=$this->b2b->priceFor($context->storeId,$customerId,(int)$priceRow['variant_id'],(string)$priceRow['quantity'],$base,$context->currency);
                 $priceRow['unit_price_minor']=$resolved; $db->update('mc_cart_item',['unit_price_minor'=>$resolved,'updated_at'=>$this->now()],['id'=>(int)$priceRow['cart_item_id'],'cart_id'=>$cartId]);
             } unset($priceRow);

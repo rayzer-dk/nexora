@@ -17,6 +17,14 @@ final readonly class DbalCartQuery
     }
 
     /** @return array{items:list<array<string,mixed>>,count:int,subtotal_minor:int,subtotal:string,discount_minor:int,discount:string,total_minor:int,total:string,currency:string,requires_shipping:bool} */
+    /** Summary of a cart that does not exist yet (nothing persisted for read-only visits). */
+    public function emptySummary(StorefrontContext $context): array
+    {
+        $zero = $this->money->format(0, $context->currency, $context->locale);
+
+        return ['items'=>[],'count'=>0,'subtotal_minor'=>0,'subtotal'=>$zero,'discount_minor'=>0,'discount'=>$zero,'total_minor'=>0,'total'=>$zero,'currency'=>$context->currency,'requires_shipping'=>false];
+    }
+
     public function summary(int $cartId, StorefrontContext $context): array
     {
         $rows = $this->connection->fetchAllAssociative(

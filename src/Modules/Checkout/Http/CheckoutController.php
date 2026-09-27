@@ -45,7 +45,9 @@ final class CheckoutController extends AbstractController
     public function show(Request $request): Response
     {
         $context = $this->contexts->resolve($request);
-        $cart = $this->carts->open($context, $request->cookies->get('mc_cart'));
+        $cart = $this->carts->find($context, $request->cookies->get('mc_cart'));
+        if ($cart === null) return $this->redirectToRoute('storefront_cart');
+        $context = $this->carts->contextFor($context, $cart);
         $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id());
         $summary = $this->cartQuery->summary($cart['id'], $context);
         if ($summary['items'] === []) return $this->redirectToRoute('storefront_cart');
@@ -71,7 +73,7 @@ final class CheckoutController extends AbstractController
     public function promotionPreview(Request $request): JsonResponse
     {
         if (!$this->isCsrfTokenValid('checkout_promotion', (string)$request->request->get('_token'))) return $this->json(['ok'=>false,'message'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_formy_zavershylas')], 403);
-        $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart'));
+        $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id());
         $result=$this->promotions->calculateForCart($context->storeId,$cart['id'],trim((string)$request->request->get('coupon_code')) ?: null,$customer instanceof CustomerUser ? $customer->id() : null,trim((string)$request->request->get('email')) ?: null);
         return $this->json([
@@ -89,7 +91,7 @@ final class CheckoutController extends AbstractController
     public function place(Request $request): Response
     {
         if (!$this->isCsrfTokenValid('checkout_place', (string)$request->request->get('_token'))) throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
-        $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart'));
+        $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         $key=(string)$request->request->get('checkout_key');
         if ($key==='' || !hash_equals((string)$request->getSession()->get('checkout.idempotency_key',''),$key)) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_oformlennia_zastarila_onovit_storinku'));
         try { $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id()); $order=$this->orders->place($context,$cart['id'],$request->request->all(),$key,$customer instanceof CustomerUser ? $customer->id() : null); $this->attribution->attachOrder($order['public_id'],$request->getSession()); }

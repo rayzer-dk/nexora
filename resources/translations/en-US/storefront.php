@@ -562,4 +562,5 @@ return [
     'seo.home.description' => '%store% online store with up-to-date prices, stock availability, convenient payment and delivery.',
     'seo.catalog.description' => '%store% product catalog: current prices, availability, brand and attribute filters, fast checkout.',
     'seo.blog.description' => '%store% blog: reviews, buying guides and store news.',
+    'checkout.error.item_price_unavailable' => '“%name%” cannot be ordered in %currency% right now. Remove it from the cart or choose another currency.',
 ];
