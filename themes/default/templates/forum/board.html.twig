@@ -16,7 +16,7 @@
     <div class="forum-topic-list">
         {% for topic in topics %}
             <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}">
-                <span class="forum-topic-row__status">{{ topic.is_pinned ? ui_text('pinned') : ui_text('topic') }}</span>
+                <span class="forum-topic-row__status">{{ topic.is_pinned ? ui_text('pinned') : ui_text('topic') }}{% if topic.is_unread %} · {{ ui_text('forum_unread') }}{% endif %}</span>
                 <span class="forum-topic-row__body"><strong>{{ topic.title }}</strong><small>{{ topic.author_name }} · {{ topic.published_at|default(topic.created_at) }}</small></span>
                 <span class="forum-topic-row__count"><b>{{ topic.post_count }}</b><small>{{ ui_text('messages_count_label') }}</small><b>{{ topic.views_count|default(0) }}</b><small>{{ ui_text('forum_views') }}</small></span>
                 {% if topic.is_locked %}<span class="forum-lock" title="{{ ui_text('topic_closed') }}">{{ ui_text('closed') }}</span>{% endif %}
