@@ -33,7 +33,7 @@ return [
     'installer.potriben_innodb_yak_default_storage_engine_potochne_znac' => 'Потрібен InnoDB як default_storage_engine. Поточне значення: ',
     'installer.potriben_mysql_8_4_abo_novishyy_vyyavleno' => 'Потрібен MySQL 8.4 або новіший. Виявлено: ',
     'installer.potriben_strict_sql_mode_strict_trans_tables_abo_strict_' => 'Потрібен strict SQL mode: STRICT_TRANS_TABLES або STRICT_ALL_TABLES.',
-    'installer.potribna_mariadb_11_4_abo_novisha_vyyavleno' => 'Потрібна MariaDB 11.4 або новіша. Виявлено: ',
+    'installer.potribna_mariadb_11_4_abo_novisha_vyyavleno' => 'Потрібна MariaDB 10.11 LTS або новіша (рекомендовано 11.4 LTS). Виявлено: ',
     'installer.potribno_8_4_8_6' => ' · потрібно >=8.4 <8.6',
     'installer.rekomendovano_1_gb' => ' · рекомендовано >=1 GB',
     'installer.rekomendovano_256m' => ' · рекомендовано >=256M',
@@ -106,4 +106,8 @@ return [
     'installer.foreign_keys_required' => 'foreign_key_checks має бути увімкнено під час встановлення.',
     'installer.collation_required' => 'Collation бази має бути сумісною з utf8mb4. Поточне значення: %current%',
     'installer.db_privileges_failed' => 'Користувач бази даних не має повного набору прав, потрібних для встановлення та оновлень: SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP і REFERENCES.',
+    'installer.db_access_denied' => 'Невірний користувач або пароль бази даних, або доступ із цього сервера заборонено.',
+    'installer.db_unknown_database' => 'Вказану базу даних не знайдено. Створіть її або увімкніть опцію автоматичного створення.',
+    'installer.db_insufficient_privileges' => 'Користувач бази даних не має достатніх прав для встановлення або оновлення.',
+    'installer.db_unreachable' => 'Сервер бази даних недоступний. Перевірте адресу, порт і доступність MySQL/MariaDB.',
 ];
