@@ -15,6 +15,7 @@ use Throwable;
  */
 final readonly class CoreUpdateHttpProbe
 {
+    private const SMOKE_PATHS = ['/', '/catalog', '/cart', '/checkout', '/admin/login', '/sitemap.xml', '/robots.txt'];
     public function __construct(
         private HttpClientInterface $http,
         private CoreUpdateProbeTokenStore $tokens,
@@ -59,6 +60,18 @@ final readonly class CoreUpdateHttpProbe
                     $database ? 'ok' : 'failed',
                     $installation ? 'ok' : 'failed',
                 ));
+            }
+
+            foreach (self::SMOKE_PATHS as $path) {
+                $page = $this->http->request('GET', $base . $path, [
+                    'headers' => ['X-Commerce-Update-Probe' => $token, 'Cache-Control' => 'no-cache'],
+                    'timeout' => 20.0,
+                    'max_redirects' => 0,
+                ]);
+                $pageStatus = $page->getStatusCode();
+                if ($pageStatus >= 500) {
+                    throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.b83e49816a6f') . $pageStatus . ' ' . $path . '.');
+                }
             }
 
             return ['status' => $status, 'version' => $version, 'database' => true, 'installation' => true];
