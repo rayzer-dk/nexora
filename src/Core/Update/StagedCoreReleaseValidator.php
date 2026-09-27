@@ -115,7 +115,7 @@ final class StagedCoreReleaseValidator
 
             if (in_array($extension, ['yaml', 'yml'], true)) {
                 try {
-                    Yaml::parseFile($path, Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE);
+                    Yaml::parseFile($path, Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE | Yaml::PARSE_CUSTOM_TAGS | Yaml::PARSE_CONSTANT);
                 } catch (\Throwable $e) {
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.814217feb49e') . $relative . ': ' . $e->getMessage(), 0, $e);
                 }
