@@ -1903,4 +1903,8 @@ return [
     "admin.forum.index.expires" => "Діє до",
     "admin.forum.index.revoke_ban" => "Зняти блокування",
     "admin.forum.index.no_active_bans" => "Активних блокувань немає.",
+    'admin.context.content_language' => 'Мова контенту',
+    'admin.context.content_language_help' => 'Мовна версія товарів, категорій і сторінок, яку ви зараз редагуєте. Не змінює мову інтерфейсу.',
+    'admin.context.interface_language' => 'Мова інтерфейсу',
+    'admin.context.interface_language_help' => 'Мова меню, кнопок і підказок адмінки лише для вас. Не впливає на вітрину і на контент.',
 ];

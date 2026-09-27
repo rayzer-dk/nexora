@@ -139,6 +139,20 @@ final class StorefrontCatalogController extends AbstractController
         $context = $this->contexts->resolve($request);
         $resolved = $this->seo->resolve($context->storeId, $context->locale, $path);
         if ($resolved->route === null) {
+            // The visitor switched to a language this page is not translated into yet. Show the
+            // default-language content (the URL is the default-language URL anyway) instead of a 404;
+            // the interface stays in the chosen language.
+            $defaultLocale = $this->contexts->defaultLocale($context->storeId);
+            if ($defaultLocale !== null && $defaultLocale !== $context->locale) {
+                $fallback = $this->seo->resolve($context->storeId, $defaultLocale, $path);
+                if ($fallback->route !== null) {
+                    $resolved = $fallback;
+                    $context = new \Commerce\Modules\Storefront\Domain\StorefrontContext($context->storeId, $context->marketId, $defaultLocale, $context->currency, $context->countryCode, $context->storeName);
+                    $request->attributes->set('_content_locale_fallback', $defaultLocale);
+                }
+            }
+        }
+        if ($resolved->route === null) {
             throw $this->createNotFoundException();
         }
         if ($resolved->isRedirect()) {

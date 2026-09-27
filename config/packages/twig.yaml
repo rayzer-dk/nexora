@@ -1,4 +1,6 @@
 twig:
+    # Bundle template overrides (e.g. bundles/TwigBundle/Exception/error404.html.twig) live in the theme.
+    default_path: '%kernel.project_dir%/themes/default/templates'
     file_name_pattern: '*.twig'
     paths:
         '%kernel.project_dir%/themes/default/templates': storefront

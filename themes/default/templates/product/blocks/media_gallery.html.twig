@@ -7,7 +7,7 @@
         <button class="gallery-nav gallery-nav--next" type="button" data-gallery-next aria-label="{{ ui_text('next_photo') }}">›</button>
         <span class="product-gallery__counter" data-gallery-counter aria-live="polite">1 / {{ product.images|length }}</span>
     </div>
-    <div class="product-gallery__thumbs" role="list" aria-label="{{ ui_text('product_photos') }}">
+    <div class="product-gallery__thumbs" role="group" aria-label="{{ ui_text('product_photos') }}">
         {% for image in product.images %}
             <button type="button" class="product-gallery__thumb{% if loop.first %} is-active{% endif %}" data-gallery-thumb data-index="{{ loop.index0 }}" data-src="{{ image.url }}" data-srcset="{{ image.srcset|default('') }}" data-sizes="{{ image.sizes|default('') }}" data-alt="{{ image.alt }}" aria-label="{{ ui_text('photo_number', {number: loop.index}) }}">
                 <img src="{{ image.url }}"{% if image.srcset %} srcset="{{ image.srcset }}" sizes="120px"{% endif %} alt="" width="120" height="120" loading="{% if loop.first %}eager{% else %}lazy{% endif %}" decoding="async">

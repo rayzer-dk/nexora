@@ -40,7 +40,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
     private function permissionForRoute(string $route, Request $request): ?string
     {
         $get=$request->isMethod('GET');
-        if ($route==='admin_dashboard'||$route==='admin_api_session') return AdminPermissionCatalog::DASHBOARD_VIEW;
+        if ($route==='admin_dashboard'||$route==='admin_api_session'||$route==='admin_interface_language') return AdminPermissionCatalog::DASHBOARD_VIEW;
         if ($route==='admin_analytics') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if (str_starts_with($route,'admin_b2b')) return $get?AdminPermissionCatalog::B2B_VIEW:AdminPermissionCatalog::B2B_MANAGE;
         if (str_starts_with($route,'admin_rewards')) return $get?AdminPermissionCatalog::REWARDS_VIEW:AdminPermissionCatalog::REWARDS_MANAGE;

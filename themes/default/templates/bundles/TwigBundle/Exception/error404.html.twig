@@ -1,0 +1,16 @@
+{% extends '@storefront/base.html.twig' %}
+{% set page_title = ui_text('error404_title') %}
+{% set seo_head = {robots: 'noindex,follow'} %}
+{% block body %}
+<section class="shell error-page" aria-labelledby="error-title">
+    <p class="error-page__code">404</p>
+    <h1 id="error-title">{{ ui_text('error404_title') }}</h1>
+    <p>{{ ui_text('error404_text') }}</p>
+    <form class="error-page__search" action="/catalog" method="get" role="search">
+        <label class="sr-only" for="error-search">{{ ui_text('search') }}</label>
+        <input id="error-search" type="search" name="q" placeholder="{{ storefront_presentation().header.search_placeholder|default(ui_text('search')) }}" autocomplete="off">
+        <button type="submit">{{ ui_text('find') }}</button>
+    </form>
+    <p class="error-page__links"><a href="/">{{ ui_text('home') }}</a> · <a href="/catalog">{{ ui_text('catalog') }}</a></p>
+</section>
+{% endblock %}

@@ -40,14 +40,14 @@ final class StorefrontUiTwigExtension extends AbstractExtension
     /** @param array<string,mixed> $context @return array<string,string> */
     public function catalog(array $context): array
     {
-        $locale=trim((string)($context['locale']??''));
+        $locale=trim((string)($this->requests->getCurrentRequest()?->attributes->get('_ui_locale')??($context['locale']??'')));
         if($locale===''){$locale=$this->requests->getCurrentRequest()?->getLocale()??'uk-UA';}
         return $this->translator->catalogFor($locale);
     }
     /** @param array<string,mixed> $context */
     public function text(array $context,string $key,array $replace=[]):string
     {
-        $locale=trim((string)($context['locale']??''));
+        $locale=trim((string)($this->requests->getCurrentRequest()?->attributes->get('_ui_locale')??($context['locale']??'')));
         if($locale===''){$locale=$this->requests->getCurrentRequest()?->getLocale()??'uk-UA';}
         return $this->translator->translate($key,$locale,$replace);
     }

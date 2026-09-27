@@ -119,7 +119,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
             $ctx = $this->context();
             if ($ctx === null) { return []; }
             return array_map(static fn(array $row): array => ['code'=>(string)$row['code'],'symbol'=>(string)($row['symbol'] ?? '')], $this->connection->fetchAllAssociative(
-                'SELECT c.code,c.symbol FROM mc_store_currency sc JOIN mc_currency c ON c.code=sc.currency_code WHERE sc.store_id=? AND sc.enabled=1 ORDER BY sc.is_default DESC,sc.sort_order,c.code', [$ctx->storeId]
+                'SELECT c.code,c.symbol FROM mc_store_currency sc JOIN mc_currency c ON c.code=sc.currency_code WHERE sc.store_id=? AND sc.enabled=1 AND (sc.is_default=1 OR EXISTS (SELECT 1 FROM mc_price p WHERE p.store_id=sc.store_id AND p.currency=sc.currency_code)) ORDER BY sc.is_default DESC,sc.sort_order,c.code', [$ctx->storeId]
             ));
         } catch (\Throwable) { return []; }
     }

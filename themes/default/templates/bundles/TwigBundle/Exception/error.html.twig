@@ -1,0 +1,10 @@
+{# Dependency-light: no storefront queries, so it still renders when the database or a module fails. #}
+<!doctype html>
+<html lang="{{ app.request.locale|default('uk-UA') }}">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>{{ status_code }} · {{ ui_text('error_generic_title') }}</title>
+<style>body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f5f7fb;color:#172033}main{max-width:640px;margin:14vh auto;padding:24px}h1{font-size:28px;margin:0 0 12px}p{line-height:1.6;color:#4a5568}a{color:#0b63f6}</style>
+</head>
+<body><main><p>{{ status_code }}</p><h1>{{ ui_text('error_generic_title') }}</h1><p>{{ ui_text('error_generic_text') }}</p><p><a href="/">{{ ui_text('home') }}</a></p></main></body>
+</html>

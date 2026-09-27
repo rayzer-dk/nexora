@@ -160,6 +160,10 @@ services:
 
 
 
+    Commerce\Core\I18n\AdminInterfaceLocale:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     Commerce\Core\I18n\StorefrontUiTranslator:
         arguments:
             $projectDir: '%kernel.project_dir%'

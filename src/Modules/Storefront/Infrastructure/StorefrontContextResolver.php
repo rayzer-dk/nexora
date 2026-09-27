@@ -92,6 +92,13 @@ final readonly class StorefrontContextResolver
         );
     }
 
+    public function defaultLocale(int $storeId): ?string
+    {
+        $locale = $this->connection->fetchOne('SELECT default_locale FROM mc_store WHERE id=?', [$storeId]);
+
+        return is_string($locale) && $locale !== '' ? $locale : null;
+    }
+
     private function isEnabledLocale(int $storeId, string $locale): bool
     {
         return (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_store_locale WHERE store_id=? AND locale_code=? AND enabled=1', [$storeId, $locale]) === 1;
@@ -100,7 +107,8 @@ final readonly class StorefrontContextResolver
     private function isEnabledCurrency(int $storeId, string $currency): bool
     {
         return preg_match('/^[A-Z]{3}$/', $currency) === 1
-            && (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_store_currency WHERE store_id=? AND currency_code=? AND enabled=1', [$storeId, $currency]) === 1;
+            // Offered only when prices exist (explicit or converted); otherwise the whole catalog showed 0,00.
+            && (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_store_currency sc WHERE sc.store_id=? AND sc.currency_code=? AND sc.enabled=1 AND (sc.is_default=1 OR EXISTS (SELECT 1 FROM mc_price p WHERE p.store_id=sc.store_id AND p.currency=sc.currency_code))', [$storeId, $currency]) === 1;
     }
 
     private function normalizeHost(string $host): string

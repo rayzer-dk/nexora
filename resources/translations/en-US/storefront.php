@@ -563,4 +563,9 @@ return [
     'seo.catalog.description' => '%store% product catalog: current prices, availability, brand and attribute filters, fast checkout.',
     'seo.blog.description' => '%store% blog: reviews, buying guides and store news.',
     'checkout.error.item_price_unavailable' => '“%name%” cannot be ordered in %currency% right now. Remove it from the cart or choose another currency.',
+    'content_not_translated' => 'This page is not translated into your language yet, so it is shown in the store’s default language.',
+    'error404_title' => 'Page not found',
+    'error404_text' => 'The link may be outdated or the product is no longer sold. Try searching or browse the catalog.',
+    'error_generic_title' => 'A temporary error occurred',
+    'error_generic_text' => 'We already know about the problem. Refresh the page in a minute or go back to the home page.',
 ];
