@@ -26,6 +26,7 @@ final class ManagedPlatformPaths
             'resources',
             'extensions',
             'public/assets',
+            'public/build',
         ];
 
         if ($includeVendor) {
