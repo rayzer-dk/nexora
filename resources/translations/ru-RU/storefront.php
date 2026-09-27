@@ -518,4 +518,5 @@ return [
     "forum_no_followed_topics" => "Вы пока не следите ни за одной темой.",
     "forum_unread" => "Новое",
     "forum_member_profile" => "Профиль участника",
+    "forum_quote" => "Цитировать",
 ];
