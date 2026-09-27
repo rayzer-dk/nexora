@@ -80,6 +80,15 @@ $must = [
         'verify(',
         'hash_hmac',
     ],
+    'src/Modules/Forum/Application/ForumModerationService.php' => [
+        'activeBans',
+        'ban(',
+        'revoke(',
+    ],
+    'themes/default/templates/forum/rules.html.twig' => [
+        'forum_rules_title',
+        'forum_rule_8_text',
+    ],
     'src/Modules/Forum/Application/ForumNotificationService.php' => [
         'notifyPublishedReply',
         'NotificationOutbox',
@@ -113,6 +122,9 @@ foreach (['themes/default/templates/forum/board.html.twig', 'themes/default/temp
 $release = json_decode((string) @file_get_contents($root . '/resources/platform/release.json'), true);
 foreach ([
     'forum-community-v2',
+    'forum-database-antispam',
+    'forum-rules',
+    'forum-moderation-bans',
     'forum-unified-customer-identity',
     'forum-topic-subscriptions',
     'forum-post-reactions',
@@ -139,8 +151,8 @@ foreach ([
     }
 }
 
-if ((string) ($release['database_schema'] ?? '') !== '47') {
-    $fail[] = 'release schema is not 47';
+if ((string) ($release['database_schema'] ?? '') !== '49') {
+    $fail[] = 'release schema is not 49';
 }
 
 if ($fail !== []) {
