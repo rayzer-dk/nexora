@@ -35,6 +35,20 @@ jobs:
       - run: php bin/security-audit.php
       - run: php bin/security-regression-check.php
       - run: php bin/xss-hardening-check.php
+      - run: php bin/beta-readiness-check.php
+      - run: php bin/commerce-operations-check.php
+      - run: php bin/rewards-commerce-check.php
+      - run: php bin/commerce-ux-check.php
+      - run: php bin/b2b-commerce-check.php
+      - run: php bin/system-completeness-check.php
+      - run: php bin/builder-navigation-check.php
+      - run: php bin/recommendation-engine-check.php
+      - run: php bin/backup-feed-seo-check.php
+      - run: php bin/marketing-automation-check.php
+      - run: php bin/public-api-contract-check.php
+      - run: php bin/outbound-webhook-check.php
+      - run: php bin/developer-tools-check.php
+      - run: php bin/google-commerce-integration-contract-check.php
       - run: npm ci
       - run: npm audit --omit=dev
       - run: npm run typecheck
