@@ -10,7 +10,7 @@ The admin Stability screen provides three backup profiles:
 
 Archives stay under `var/recovery` and can be downloaded to a workstation. Database/data profiles may be restored from the admin UI after CSRF validation; the platform creates a full pre-restore safety backup first. Full application restore remains an emergency CLI operation so a running PHP process never replaces its own application/vendor tree.
 
-CLI backups support the same profiles through `commerce:recovery:snapshot --profile=database|data|full`.
+CLI backups support the same profiles through `commerce:recovery:snapshot --backup-profile=database|data|full`.
 
 ## Catalog import/export
 
