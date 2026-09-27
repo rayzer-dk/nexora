@@ -56,7 +56,11 @@ final class ContentAdminPageController extends AbstractController
     public function edit(Request $request, string $systemKey): Response
     {
         $context = $this->context->resolve($request);
-        $definition = $this->definitions->get($systemKey);
+        try {
+            $definition = $this->definitions->get($systemKey);
+        } catch (\InvalidArgumentException) {
+            throw $this->createNotFoundException();
+        }
         $row = $this->connection->fetchAssociative(
             "SELECT ce.id,ce.status,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description
              FROM mc_content_entry ce
