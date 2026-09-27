@@ -559,4 +559,7 @@ return [
     "forum_rule_8_text" => "If content breaks the rules, report it to moderators rather than escalating the dispute.",
     "forum_rules_enforcement" => "Moderators may reject or remove posts, close topics and temporarily or permanently restrict forum participation.",
     "forum_rules_link" => "Forum rules",
+    'seo.home.description' => '%store% online store with up-to-date prices, stock availability, convenient payment and delivery.',
+    'seo.catalog.description' => '%store% product catalog: current prices, availability, brand and attribute filters, fast checkout.',
+    'seo.blog.description' => '%store% blog: reviews, buying guides and store news.',
 ];

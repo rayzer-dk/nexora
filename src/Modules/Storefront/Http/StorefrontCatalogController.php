@@ -118,6 +118,7 @@ final class StorefrontCatalogController extends AbstractController
             'catalog_query' => $query,
             'catalog_query_base' => $this->filterQueryString($request),
             'seo_head' => [
+                'description' => \Commerce\Core\I18n\CanonicalUiText::get('seo.catalog.description', ['store' => $context->storeName]),
                 'canonical' => $canonical,
                 'robots' => $filter->isFiltered() ? 'noindex,follow' : 'index,follow,max-image-preview:large',
             ],
@@ -171,7 +172,14 @@ final class StorefrontCatalogController extends AbstractController
             'catalog_facets' => $facets,
             'catalog_query' => $this->filterQuery($request),
             'catalog_query_base' => $this->filterQueryString($request),
-            'seo_head' => ['canonical' => $canonical, 'robots' => $filter->isFiltered() ? 'noindex,follow' : 'index,follow,max-image-preview:large'],
+            'seo_head' => [
+                'title' => $category['meta_title'] !== '' ? $category['meta_title'] : $category['name'],
+                'description' => $category['meta_description'] !== '' ? $category['meta_description'] : $category['description'],
+                'image' => $this->shareImage($request->getSchemeAndHttpHost(), [(string) ($category['image'] ?? '')]),
+                'canonical' => $canonical,
+                'robots' => $filter->isFiltered() ? 'noindex,follow' : 'index,follow,max-image-preview:large',
+                'hreflang' => $filter->isFiltered() ? [] : [$context->locale => $canonical, 'x-default' => $canonical],
+            ],
         ]);
     }
 
@@ -212,6 +220,9 @@ final class StorefrontCatalogController extends AbstractController
             'breadcrumbs' => $breadcrumbs,
             'structured_data_json' => $structuredDataJson,
             'seo_head' => [
+                'description' => (string) ($article['meta_description'] ?? '') !== '' ? (string) $article['meta_description'] : (string) ($article['excerpt'] ?? ''),
+                'image' => (string) ($article['image'] ?? '') !== '' ? $baseUrl . $article['image'] : '',
+                'type' => 'article',
                 'canonical' => $canonical,
                 'robots' => 'index,follow,max-image-preview:large',
                 'hreflang' => [$context->locale => $canonical, 'x-default' => $canonical],
@@ -271,12 +282,33 @@ final class StorefrontCatalogController extends AbstractController
             'regions' => $this->composer->compose($layout),
             'structured_data_json' => $structuredDataJson,
             'seo_head' => [
+                'title' => $product['meta_title'] !== '' ? $product['meta_title'] : $product['name'],
+                'description' => $product['meta_description'] !== '' ? $product['meta_description'] : ($product['short_description'] !== '' ? $product['short_description'] : $product['description']),
+                'image' => $this->shareImage($baseUrl, [$displayImage, ...array_map(static fn (array $image): string => (string) ($image['url'] ?? ''), $product['images'])]),
+                'type' => 'product',
                 'canonical' => $baseUrl . $product['url'],
                 'robots' => 'index,follow,max-image-preview:large',
                 'hreflang' => [$context->locale => $baseUrl . $product['url'], 'x-default' => $baseUrl . $product['url']],
             ],
         ]);
     }
+    /**
+     * First real raster image for og:image; placeholders are never shared.
+     *
+     * @param list<string> $candidates
+     */
+    private function shareImage(string $baseUrl, array $candidates): string
+    {
+        foreach ($candidates as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate === '' || str_contains($candidate, 'placeholder')) {
+                continue;
+            }
+            return str_starts_with($candidate, '/') ? $baseUrl . $candidate : $candidate;
+        }
+        return '';
+    }
+
     private function catalogFilter(Request $request): ProductCatalogFilter
     {
         $search = mb_substr(trim((string) $request->query->get('q', '')), 0, 120, 'UTF-8');

@@ -476,6 +476,8 @@ final readonly class DbalStorefrontCatalogQuery
         $product = $this->productCardRow($row, $context);
         $product['description'] = (string) ($row['description'] ?? '');
         $product['short_description'] = (string) ($row['short_description'] ?? '');
+        $product['meta_title'] = (string) ($row['meta_title'] ?? '');
+        $product['meta_description'] = (string) ($row['meta_description'] ?? '');
         $product['gtin'] = $row['gtin'] ?: null; $product['mpn'] = $row['mpn'] ?: null;
         $product['condition'] = 'https://schema.org/NewCondition';
         $product['country_of_origin'] = $row['country_of_origin'] ?: null;
@@ -639,7 +641,7 @@ final readonly class DbalStorefrontCatalogQuery
 
     private function categoryRow(array $row): array
     {
-        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'description'=>(string)($row['description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null)];
+        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'description'=>(string)($row['description']??''),'meta_title'=>(string)($row['meta_title']??''),'meta_description'=>(string)($row['meta_description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null)];
     }
 
     /** @return list<array<string,mixed>> */

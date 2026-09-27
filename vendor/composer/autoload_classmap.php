@@ -505,6 +505,7 @@ return array(
     'Commerce\\Modules\\Seo\\StructuredData\\WebSiteBuilder' => $baseDir . '/src/Modules/Seo/StructuredData/WebSiteBuilder.php',
     'Commerce\\Modules\\Seo\\System\\SystemPageDefinition' => $baseDir . '/src/Modules/Seo/System/SystemPageDefinition.php',
     'Commerce\\Modules\\Seo\\System\\SystemPageRouteCatalog' => $baseDir . '/src/Modules/Seo/System/SystemPageRouteCatalog.php',
+    'Commerce\\Modules\\Seo\\Twig\\SeoTextTwigExtension' => $baseDir . '/src/Modules/Seo/Twig/SeoTextTwigExtension.php',
     'Commerce\\Modules\\Shipping\\Application\\DeliveryCityCache' => $baseDir . '/src/Modules/Shipping/Application/DeliveryCityCache.php',
     'Commerce\\Modules\\Shipping\\Application\\DeliveryLocationGateway' => $baseDir . '/src/Modules/Shipping/Application/DeliveryLocationGateway.php',
     'Commerce\\Modules\\Shipping\\Application\\DeliveryPointCache' => $baseDir . '/src/Modules/Shipping/Application/DeliveryPointCache.php',

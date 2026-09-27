@@ -60,6 +60,8 @@ final class InformationPageController extends AbstractController
             'page' => $page,
             'published' => $published,
             'seo_head' => [
+                'title' => (string) ($page['meta_title'] ?? ''),
+                'description' => (string) ($page['meta_description'] ?? '') !== '' ? (string) $page['meta_description'] : (string) ($page['excerpt'] ?? ''),
                 'canonical' => $canonical,
                 'robots' => $published && $definition->indexable ? 'index,follow,max-image-preview:large' : 'noindex,follow',
                 'hreflang' => [$context->locale => $canonical, 'x-default' => $canonical],

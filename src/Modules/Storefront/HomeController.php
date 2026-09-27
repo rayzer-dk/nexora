@@ -7,6 +7,9 @@ namespace Commerce\Modules\Storefront;
 use Commerce\Core\Site\SiteCapabilitySettings;
 use Commerce\Modules\Demo\Application\DemoShowcaseQuery;
 use Commerce\Modules\Content\Infrastructure\DbalBlogQuery;
+use Commerce\Modules\Seo\StructuredData\OrganizationCommerceBuilder;
+use Commerce\Modules\Seo\StructuredData\StructuredDataGraphBuilder;
+use Commerce\Modules\Seo\StructuredData\WebSiteBuilder;
 use Commerce\Modules\Storefront\Infrastructure\DbalStorefrontCatalogQuery;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,6 +25,9 @@ final class HomeController extends AbstractController
         private readonly DbalBlogQuery $blog,
         private readonly SiteCapabilitySettings $capabilities,
         private readonly DemoShowcaseQuery $demoShowcase,
+        private readonly WebSiteBuilder $webSite,
+        private readonly OrganizationCommerceBuilder $organization,
+        private readonly StructuredDataGraphBuilder $graph,
     ) {
     }
 
@@ -86,10 +92,29 @@ final class HomeController extends AbstractController
                 ['title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.homecontroller.bezpechna_pokupka'), 'text' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.homecontroller.zakhyshchene_oformlennia'), 'icon' => 'lock'],
             ],
             'seo_head' => [
+                'json_ld' => $this->homeStructuredData($request->getSchemeAndHttpHost() . '/', $context->storeName),
+                'description' => \Commerce\Core\I18n\CanonicalUiText::get('seo.home.description', ['store' => $context->storeName]),
                 'canonical' => $request->getSchemeAndHttpHost() . '/',
                 'robots' => 'index,follow,max-image-preview:large',
                 'hreflang' => [$context->locale => $request->getSchemeAndHttpHost() . '/', 'x-default' => $request->getSchemeAndHttpHost() . '/'],
             ],
         ]);
+    }
+
+    /** Organization + WebSite with a sitelinks SearchAction pointing at the catalog search. */
+    private function homeStructuredData(string $homeUrl, string $storeName): array
+    {
+        $webSite = $this->webSite->build($storeName, $homeUrl);
+        $webSite['publisher'] = ['@id' => rtrim($homeUrl, '/') . '#organization'];
+        $webSite['potentialAction'] = [
+            '@type' => 'SearchAction',
+            'target' => ['@type' => 'EntryPoint', 'urlTemplate' => rtrim($homeUrl, '/') . '/catalog?q={search_term_string}'],
+            'query-input' => 'required name=search_term_string',
+        ];
+
+        return $this->graph->build(
+            $this->organization->build(['name' => $storeName, 'url' => $homeUrl]),
+            $webSite,
+        );
     }
 }

@@ -1012,6 +1012,7 @@ class ComposerStaticInitb70ac10207745cbe78d150a67290fdc2
         'Commerce\\Modules\\Seo\\StructuredData\\WebSiteBuilder' => __DIR__ . '/../..' . '/src/Modules/Seo/StructuredData/WebSiteBuilder.php',
         'Commerce\\Modules\\Seo\\System\\SystemPageDefinition' => __DIR__ . '/../..' . '/src/Modules/Seo/System/SystemPageDefinition.php',
         'Commerce\\Modules\\Seo\\System\\SystemPageRouteCatalog' => __DIR__ . '/../..' . '/src/Modules/Seo/System/SystemPageRouteCatalog.php',
+        'Commerce\\Modules\\Seo\\Twig\\SeoTextTwigExtension' => __DIR__ . '/../..' . '/src/Modules/Seo/Twig/SeoTextTwigExtension.php',
         'Commerce\\Modules\\Shipping\\Application\\DeliveryCityCache' => __DIR__ . '/../..' . '/src/Modules/Shipping/Application/DeliveryCityCache.php',
         'Commerce\\Modules\\Shipping\\Application\\DeliveryLocationGateway' => __DIR__ . '/../..' . '/src/Modules/Shipping/Application/DeliveryLocationGateway.php',
         'Commerce\\Modules\\Shipping\\Application\\DeliveryPointCache' => __DIR__ . '/../..' . '/src/Modules/Shipping/Application/DeliveryPointCache.php',

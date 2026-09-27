@@ -11,16 +11,32 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="light">
-    <title>{% block title %}{{ page_title|default(store_name|default(ui_text('store'))) }}{% endblock %}</title>
-    {% if presentation.brand.favicon %}<link rel="icon" href="{{ presentation.brand.favicon }}">{% endif %}
+    {% set seo = seo_head is defined and seo_head is iterable ? seo_head : {} %}
+    {% set site_name = store_name|default(store_identity.name|default(ui_text('store'))) %}
+    {% set seo_title = seo.title|default(page_title|default(''))|trim %}
+    {% set full_title = seo_title == '' ? site_name : (seo_title == site_name or site_name in seo_title ? seo_title : seo_title ~ ' — ' ~ site_name) %}
+    {% set seo_description = seo.description|default('')|seo_text(160) %}
+    <title>{% block title %}{{ full_title }}{% endblock %}</title>
+    {% if seo_description != '' %}<meta name="description" content="{{ seo_description }}">{% endif %}
+    <link rel="icon" href="{{ presentation.brand.favicon ?: '/assets/branding/nexora-mark.svg' }}"{% if not presentation.brand.favicon %} type="image/svg+xml"{% endif %}>
     {% if seo_head is defined and seo_head.canonical is defined %}<link rel="canonical" href="{{ seo_head.canonical }}">{% endif %}
     {% if seo_head is defined and seo_head.robots is defined %}<meta name="robots" content="{{ seo_head.robots }}">{% endif %}
     {% if seo_head is defined and seo_head.hreflang is defined %}{% for language, url in seo_head.hreflang %}<link rel="alternate" hreflang="{{ language }}" href="{{ url }}">{% endfor %}{% endif %}
+    {% if seo.canonical is defined %}
+    <meta property="og:type" content="{{ seo.type|default('website') }}">
+    <meta property="og:site_name" content="{{ site_name }}">
+    <meta property="og:title" content="{{ seo_title ?: site_name }}">
+    {% if seo_description != '' %}<meta property="og:description" content="{{ seo_description }}">{% endif %}
+    <meta property="og:url" content="{{ seo.canonical }}">
+    <meta property="og:locale" content="{{ app.request.locale|default('uk-UA')|replace({'-': '_'}) }}">
+    {% if seo.image|default('') != '' %}<meta property="og:image" content="{{ seo.image }}"><meta name="twitter:card" content="summary_large_image">{% else %}<meta name="twitter:card" content="summary">{% endif %}
+    {% endif %}
     <link rel="stylesheet" href="{{ vite_asset('assets/storefront/storefront.css', '/assets/storefront.css') }}">
     {% if active_theme_css %}<link rel="stylesheet" href="{{ active_theme_css }}">{% endif %}
     <link rel="stylesheet" href="{{ vite_asset('assets/storefront/consent.css', '/assets/consent.css') }}">
     <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('consent','default',{security_storage:'granted',functionality_storage:'denied',personalization_storage:'denied',analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});</script>
     <script type="module" src="{{ vite_asset('assets/storefront/consent.js', '/assets/consent.js') }}"></script>
+    {% if seo.json_ld|default([]) is not empty %}<script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ seo.json_ld|json_encode(constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP'))|raw }}</script>{% endif %}
     {% block head %}{% endblock %}
 {% for ext_asset in extension_assets() %}
   {% if ext_asset.type == 'css' %}<link rel="stylesheet" href="{{ ext_asset.url }}">{% endif %}
