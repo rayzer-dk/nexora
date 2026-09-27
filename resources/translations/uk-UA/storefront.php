@@ -691,4 +691,6 @@ return [
     "forum_block_member" => "Заблокувати користувача",
     "forum_report_reason_harassment" => "Переслідування",
     "forum_report_reason_fraud" => "Шахрайство",
+    "verification_code_subject" => "Код підтвердження",
+    "verification_code_text" => "Ваш код підтвердження: %code%. Він діє 15 хвилин.",
 ];
