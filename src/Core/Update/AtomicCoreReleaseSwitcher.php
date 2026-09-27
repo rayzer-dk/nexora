@@ -44,7 +44,7 @@ final class AtomicCoreReleaseSwitcher
             foreach ($directories as $relative) {
                 $source = $releaseDir . '/' . $relative;
                 if (!is_dir($source)) {
-                    if ($relative === 'vendor') {
+                    if (in_array($relative, ['vendor', 'public/build'], true)) {
                         continue;
                     }
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.d755df3c2d71') . $relative . '.');
