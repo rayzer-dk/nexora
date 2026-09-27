@@ -8,6 +8,7 @@ use Commerce\Modules\Forum\Application\ForumService;
 use Commerce\Modules\Forum\Application\ForumCommunityService;
 use Commerce\Modules\Forum\Application\ForumAccessPolicy;
 use Commerce\Modules\Forum\Application\ForumProfileService;
+use Commerce\Modules\Forum\Application\ForumDirectMessageService;
 use Commerce\Modules\Customer\Domain\CustomerUser;
 use Commerce\Modules\Security\Spam\PublicFormSpamGuard;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
@@ -25,6 +26,7 @@ final class ForumController extends AbstractController
         private readonly ForumCommunityService $community,
         private readonly ForumAccessPolicy $accessPolicy,
         private readonly ForumProfileService $profiles,
+        private readonly ForumDirectMessageService $directMessages,
         private readonly PublicFormSpamGuard $spamGuard,
     ) {
     }
@@ -210,14 +212,17 @@ final class ForumController extends AbstractController
     public function member(Request $request, int $id): Response
     {
         $context = $this->contexts->resolve($request);
-        $member = $this->community->member($context->storeId, $id);
+        $member = $this->profiles->publicProfile($context->storeId, $id);
         if ($member === null) {
             throw $this->createNotFoundException();
         }
+        $member['stats'] = $this->community->memberStats($context->storeId, $id);
+        $viewer = $this->getUser();
         return $this->render('@storefront/forum/member.html.twig', [
-            'page_title' => (string) $member['display_name'],
+            'page_title' => (string) $member['nickname'],
             'store_name' => $context->storeName,
             'member' => $member,
+            'can_message' => $viewer instanceof CustomerUser && $viewer->id() !== $id && (int)($member['allow_private_messages'] ?? 0) === 1 && $this->accessPolicy->canParticipate($viewer->id()),
             'activity' => $this->community->memberRecentActivity($context->storeId, $id),
             'seo_head' => [
                 'canonical' => $request->getSchemeAndHttpHost() . '/forum/member/' . $id,
@@ -237,6 +242,134 @@ final class ForumController extends AbstractController
             'topics' => $this->community->followedTopics($context->storeId, $user->id()),
             'seo_head' => ['robots' => 'noindex,nofollow'],
         ]);
+    }
+
+    #[Route('/forum/profile', name: 'storefront_forum_profile', methods: ['GET', 'POST'], priority: 296)]
+    public function profile(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant();
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('forum_profile', (string) $request->request->get('_csrf_token'))) {
+                throw $this->createAccessDeniedException();
+            }
+            try {
+                $this->profiles->update(
+                    $context->storeId,
+                    $user->id(),
+                    (string) $request->request->get('nickname', ''),
+                    (string) $request->request->get('bio', ''),
+                    $request->request->getBoolean('show_email'),
+                    $request->request->getBoolean('show_phone'),
+                    $request->request->getBoolean('allow_private_messages'),
+                );
+                $this->addFlash('success', 'Forum profile updated.');
+            } catch (\DomainException $e) {
+                $this->addFlash('error', $e->getMessage());
+            }
+            return $this->redirectToRoute('storefront_forum_profile');
+        }
+        return $this->render('@storefront/forum/profile.html.twig', [
+            'page_title' => 'Forum profile',
+            'store_name' => $context->storeName,
+            'profile' => $this->profiles->getOrCreate($context->storeId, $user->id()),
+            'seo_head' => ['robots' => 'noindex,nofollow'],
+        ]);
+    }
+
+    #[Route('/forum/messages', name: 'storefront_forum_messages', methods: ['GET'], priority: 296)]
+    public function messages(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant();
+        return $this->render('@storefront/forum/messages.html.twig', [
+            'page_title' => 'Private messages',
+            'store_name' => $context->storeName,
+            'threads' => $this->directMessages->threads($context->storeId, $user->id()),
+            'seo_head' => ['robots' => 'noindex,nofollow'],
+        ]);
+    }
+
+    #[Route('/forum/messages/{id}', name: 'storefront_forum_message_thread', methods: ['GET'], requirements: ['id' => '\\d+'], priority: 297)]
+    public function messageThread(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant();
+        $data = $this->directMessages->thread($context->storeId, $id, $user->id());
+        if ($data === null) {
+            throw $this->createNotFoundException();
+        }
+        return $this->render('@storefront/forum/message_thread.html.twig', [
+            'page_title' => 'Private conversation',
+            'store_name' => $context->storeName,
+            'thread' => $data['thread'],
+            'messages' => $data['messages'],
+            'current_customer_id' => $user->id(),
+            'seo_head' => ['robots' => 'noindex,nofollow'],
+        ]);
+    }
+
+    #[Route('/forum/member/{id}/message', name: 'storefront_forum_message_start', methods: ['POST'], requirements: ['id' => '\\d+'], priority: 297)]
+    public function startMessage(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant();
+        if (!$this->isCsrfTokenValid('forum_message_start_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->directMessages->send($context->storeId, $user->id(), $id, (string) $request->request->get('body', ''));
+            $this->addFlash('success', 'Private message sent.');
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+        return $this->redirectToRoute('storefront_forum_messages');
+    }
+
+    #[Route('/forum/messages/{id}/reply', name: 'storefront_forum_message_reply', methods: ['POST'], requirements: ['id' => '\\d+'], priority: 297)]
+    public function replyMessage(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant();
+        if (!$this->isCsrfTokenValid('forum_message_reply_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $data = $this->directMessages->thread($context->storeId, $id, $user->id());
+        if ($data === null) {
+            throw $this->createNotFoundException();
+        }
+        try {
+            $this->directMessages->send($context->storeId, $user->id(), (int) $data['thread']['other_customer_id'], (string) $request->request->get('body', ''));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+        return $this->redirectToRoute('storefront_forum_message_thread', ['id' => $id]);
+    }
+
+    #[Route('/forum/messages/{threadId}/block/{memberId}', name: 'storefront_forum_message_block', methods: ['POST'], requirements: ['threadId' => '\\d+', 'memberId' => '\\d+'], priority: 297)]
+    public function blockMember(Request $request, int $threadId, int $memberId): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant();
+        if (!$this->isCsrfTokenValid('forum_block_' . $memberId, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->directMessages->block($context->storeId, $user->id(), $memberId);
+        $this->addFlash('success', 'Member blocked.');
+        return $this->redirectToRoute('storefront_forum_message_thread', ['id' => $threadId]);
+    }
+
+    #[Route('/forum/messages/{threadId}/report/{messageId}', name: 'storefront_forum_message_report', methods: ['POST'], requirements: ['threadId' => '\\d+', 'messageId' => '\\d+'], priority: 297)]
+    public function reportMessage(Request $request, int $threadId, int $messageId): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant();
+        if (!$this->isCsrfTokenValid('forum_dm_report_' . $messageId, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->directMessages->report($context->storeId, $messageId, $user->id(), (string) $request->request->get('reason', 'other'), (string) $request->request->get('details', ''));
+        $this->addFlash('success', 'Private message reported.');
+        return $this->redirectToRoute('storefront_forum_message_thread', ['id' => $threadId]);
     }
 
     #[Route('/forum/search', name: 'storefront_forum_search', methods: ['GET'], priority: 290)]
