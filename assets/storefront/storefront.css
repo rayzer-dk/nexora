@@ -116,6 +116,10 @@ a { color: inherit; }
 .section-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
 .section-heading span { color:var(--color-muted); font-size:.9rem; }
 .review { padding-block:1rem; border-top:1px solid var(--color-border); }
+.detail-card,.review,.qa-item,.product-region--below-primary,.product-region--below-secondary { min-width:0; max-width:100%; }
+.review,.review p,.qa-item,.qa-item p,.detail-card { overflow-wrap:anywhere; word-break:normal; }
+.detail-card table,.review table,.qa-item table { display:block; max-width:100%; overflow-x:auto; }
+.detail-card img,.review img,.qa-item img { max-width:100%; height:auto; }
 .review p { margin-bottom:0; }
 .qa-item { padding:.8rem 0; border-top:1px solid var(--color-border); }
 .qa-item summary { cursor:pointer; font-weight:750; }
