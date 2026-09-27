@@ -155,6 +155,57 @@ final readonly class ForumCommunityService
         });
     }
 
+    /** @return array<string,mixed>|null */
+    public function member(int $storeId, int $customerId): ?array
+    {
+        $row = $this->connection->fetchAssociative(
+            "SELECT c.id,c.display_name,c.created_at,c.last_seen_at
+             FROM mc_customer c
+             WHERE c.id=? AND c.status='active'
+               AND (EXISTS(SELECT 1 FROM mc_forum_topic t JOIN mc_forum_board b ON b.id=t.board_id WHERE t.customer_id=c.id AND b.store_id=?)
+                    OR EXISTS(SELECT 1 FROM mc_forum_post p JOIN mc_forum_topic t ON t.id=p.topic_id JOIN mc_forum_board b ON b.id=t.board_id WHERE p.customer_id=c.id AND b.store_id=?))
+             LIMIT 1",
+            [$customerId, $storeId, $storeId],
+        );
+        if (!is_array($row)) {
+            return null;
+        }
+        $row['stats'] = $this->memberStats($storeId, $customerId);
+        return $row;
+    }
+
+    /** @return list<array<string,mixed>> */
+    public function memberRecentActivity(int $storeId, int $customerId, int $limit = 30): array
+    {
+        $limit = max(1, min(100, $limit));
+        return $this->connection->fetchAllAssociative(
+            "SELECT p.id AS post_id,p.published_at,p.created_at,t.id AS topic_id,t.title,t.slug,b.slug AS board_slug,b.name AS board_name
+             FROM mc_forum_post p
+             JOIN mc_forum_topic t ON t.id=p.topic_id
+             JOIN mc_forum_board b ON b.id=t.board_id
+             WHERE b.store_id=? AND p.customer_id=? AND p.status='published' AND t.status='published'
+             ORDER BY COALESCE(p.published_at,p.created_at) DESC,p.id DESC
+             LIMIT {$limit}",
+            [$storeId, $customerId],
+        );
+    }
+
+    /** @return list<array<string,mixed>> */
+    public function followedTopics(int $storeId, int $customerId, int $limit = 50): array
+    {
+        $limit = max(1, min(100, $limit));
+        return $this->connection->fetchAllAssociative(
+            "SELECT t.id,t.title,t.slug,b.slug AS board_slug,b.name AS board_name,t.last_post_at,s.created_at AS followed_at
+             FROM mc_forum_subscription s
+             JOIN mc_forum_topic t ON t.id=s.topic_id
+             JOIN mc_forum_board b ON b.id=t.board_id
+             WHERE s.store_id=? AND s.customer_id=? AND t.status='published' AND b.status='active'
+             ORDER BY COALESCE(t.last_post_at,t.published_at,t.created_at) DESC,t.id DESC
+             LIMIT {$limit}",
+            [$storeId, $customerId],
+        );
+    }
+
     /** @return array<string,int> */
     public function memberStats(int $storeId, int $customerId): array
     {
