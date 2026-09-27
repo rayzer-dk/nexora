@@ -516,4 +516,6 @@ return [
     "forum_following" => "Fulgte emner",
     "forum_following_intro" => "Emner du følger og modtager notifikationer om.",
     "forum_no_followed_topics" => "Du følger endnu ingen emner.",
+    "forum_unread" => "Ny",
+    "forum_member_profile" => "Medlemsprofil",
 ];
