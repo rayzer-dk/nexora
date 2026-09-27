@@ -41,6 +41,7 @@ jobs:
       - run: php bin/commerce-ux-check.php
       - run: php bin/b2b-commerce-check.php
       - run: php bin/system-completeness-check.php
+      - run: php bin/forum-community-v2-check.php
       - run: php bin/builder-navigation-check.php
       - run: php bin/recommendation-engine-check.php
       - run: php bin/backup-feed-seo-check.php
