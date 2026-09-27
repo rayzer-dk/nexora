@@ -100,6 +100,7 @@ final readonly class ForumService
         if ($board === null) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.application.forumservice.rozdil_forumu_ne_znaideno'));
         }
+        $this->guardPosting($storeId, $customerId, $body, true);
         $slugger = new AsciiSlugger('uk');
         $slug = mb_strtolower((string) $slugger->slug($title), 'UTF-8');
         if ($slug === '') {
@@ -156,6 +157,7 @@ final readonly class ForumService
         if ((int) ($topic['is_locked'] ?? 0) === 1) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.application.forumservice.tsia_tema_zakryta_dlia_novykh_vidpovidei'));
         }
+        $this->guardPosting($storeId, $customerId, $body, false);
         $now = $this->now();
         $this->connection->insert('mc_forum_post', [
             'public_id' => $this->publicIds->binary(),
@@ -276,6 +278,54 @@ final readonly class ForumService
                 $db->update('mc_forum_topic', ['last_post_at' => $now, 'updated_at' => $now], ['id' => (int) $row['topic_id']]);
             }
         });
+    }
+
+    private function guardPosting(int $storeId, int $customerId, string $body, bool $topic): void
+    {
+        $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
+        $tenMinutesAgo = $now->modify('-10 minutes')->format('Y-m-d H:i:s.u');
+        $hourAgo = $now->modify('-1 hour')->format('Y-m-d H:i:s.u');
+        $dayAgo = $now->modify('-24 hours')->format('Y-m-d H:i:s.u');
+
+        $recentPosts = (int) $this->connection->fetchOne(
+            "SELECT COUNT(*) FROM mc_forum_post p
+             JOIN mc_forum_topic t ON t.id=p.topic_id
+             JOIN mc_forum_board b ON b.id=t.board_id
+             WHERE b.store_id=? AND p.customer_id=? AND p.created_at>=?",
+            [$storeId, $customerId, $tenMinutesAgo],
+        );
+        if ($recentPosts >= 5) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.post_rate'));
+        }
+
+        if ($topic) {
+            $recentTopics = (int) $this->connection->fetchOne(
+                "SELECT COUNT(*) FROM mc_forum_topic t
+                 JOIN mc_forum_board b ON b.id=t.board_id
+                 WHERE b.store_id=? AND t.customer_id=? AND t.created_at>=?",
+                [$storeId, $customerId, $hourAgo],
+            );
+            if ($recentTopics >= 2) {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.topic_rate'));
+            }
+        }
+
+        $duplicate = (bool) $this->connection->fetchOne(
+            "SELECT 1 FROM mc_forum_post p
+             JOIN mc_forum_topic t ON t.id=p.topic_id
+             JOIN mc_forum_board b ON b.id=t.board_id
+             WHERE b.store_id=? AND p.customer_id=? AND p.body_text=? AND p.created_at>=?
+             LIMIT 1",
+            [$storeId, $customerId, $body, $dayAgo],
+        );
+        if ($duplicate) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.duplicate_post'));
+        }
+
+        preg_match_all('#(?:https?://|www\.)#iu', $body, $matches);
+        if (count($matches[0]) > 3) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.too_many_links'));
+        }
     }
 
     private function plain(string $value, int $max, string $emptyMessage): string
