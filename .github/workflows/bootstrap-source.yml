@@ -1,3 +1,4 @@
+# Runner re-enabled after repository visibility change; bootstrap trigger.
 name: Bootstrap Nexora source
 
 on:
