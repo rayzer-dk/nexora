@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectNoServerError } from './helpers';
 
+test.describe.configure({ retries: 0 });
+
 async function loginAdmin(page: Page): Promise<void> {
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
   await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
