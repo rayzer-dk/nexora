@@ -6,6 +6,8 @@
 {% endblock %}
 
 {% block body %}
+{% set has_primary = regions.below_primary|default([])|length > 0 %}
+{% set has_secondary = regions.below_secondary|default([])|length > 0 %}
 <article class="product-page">
     <div class="shell">{% include '@storefront/components/breadcrumbs.html.twig' with {items: product.breadcrumbs|default([])} only %}</div>
     <div class="shell product-hero">
@@ -33,8 +35,8 @@
         </section>
     </div>
 
-    <div class="shell product-details">
-        <section class="product-region product-region--below-primary" aria-label="{{ ui_text('ui.product.show.product_details')|e('html_attr') }}">
+    <div class="shell product-details{{ not has_primary or not has_secondary ? ' product-details--single' : '' }}">
+        <section class="product-region product-region--below-primary{{ not has_primary ? ' is-empty' : '' }}" aria-label="{{ ui_text('ui.product.show.product_details')|e('html_attr') }}">
             {% for block in regions.below_primary|default([]) %}
                 {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_description', product:product} only %}{% endif %}
                 <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}"{% if block.settings.builder_background|default('') or block.settings.builder_color|default('') or block.settings.builder_padding|default('') or block.settings.builder_margin|default('') %} style="{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}"{% endif %}>
@@ -46,7 +48,7 @@
             {% endfor %}
         </section>
 
-        <section class="product-region product-region--below-secondary" aria-label="{{ ui_text('ui.product.show.additional_product_information')|e('html_attr') }}">
+        <section class="product-region product-region--below-secondary{{ not has_secondary ? ' is-empty' : '' }}" aria-label="{{ ui_text('ui.product.show.additional_product_information')|e('html_attr') }}">
             {% for block in regions.below_secondary|default([]) %}
                 {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_description', product:product} only %}{% endif %}
                 <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}"{% if block.settings.builder_background|default('') or block.settings.builder_color|default('') or block.settings.builder_padding|default('') or block.settings.builder_margin|default('') %} style="{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}"{% endif %}>
