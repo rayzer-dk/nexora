@@ -21,7 +21,20 @@ $allowedRaw = [
     'themes/default/templates/product/blocks/description.html.twig',
     'themes/default/templates/blog/article.html.twig',
     'themes/default/templates/content/page.html.twig',
+    'themes/default/templates/base.html.twig',
 ];
+
+$baseTemplate = @file_get_contents($root . '/themes/default/templates/base.html.twig');
+if (is_string($baseTemplate)) {
+    if (substr_count($baseTemplate, '|raw') !== 1
+        || !str_contains($baseTemplate, 'seo_head.json_ld|json_encode')
+        || !str_contains($baseTemplate, "constant('JSON_HEX_TAG')")
+        || !str_contains($baseTemplate, "constant('JSON_HEX_AMP')")
+        || !str_contains($baseTemplate, "constant('JSON_HEX_APOS')")
+        || !str_contains($baseTemplate, "constant('JSON_HEX_QUOT')")) {
+        $errors[] = 'base template raw output is allowed only for HEX-escaped JSON-LD';
+    }
+}
 $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/themes', FilesystemIterator::SKIP_DOTS));
 foreach ($it as $file) {
     if (!$file->isFile() || $file->getExtension() !== 'twig') continue;
