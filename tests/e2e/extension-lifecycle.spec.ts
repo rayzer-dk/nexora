@@ -20,8 +20,6 @@ test('extension package can be installed, activated and disabled', async ({ page
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin E2E credentials are required.');
 
   await loginAdmin(page);
-  page.on('dialog', async (dialog) => dialog.accept());
-
   await page.goto('/admin/system/extensions', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
 
@@ -45,6 +43,8 @@ test('extension package can be installed, activated and disabled', async ({ page
     response.url().includes('/activate') && response.request().method() === 'POST'
   );
   await activateForm.locator('button[type="submit"]').click();
+  await expect(page.locator('[data-admin-confirm]')).toBeVisible();
+  await page.locator('[data-admin-confirm] [data-confirm-accept]').click();
   const activateResponse = await activateResponsePromise;
   expect(activateResponse.status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
@@ -56,6 +56,8 @@ test('extension package can be installed, activated and disabled', async ({ page
     response.url().includes('/disable') && response.request().method() === 'POST'
   );
   await disableForm.locator('button[type="submit"]').click();
+  await expect(page.locator('[data-admin-confirm]')).toBeVisible();
+  await page.locator('[data-admin-confirm] [data-confirm-accept]').click();
   const disableResponse = await disableResponsePromise;
   expect(disableResponse.status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
