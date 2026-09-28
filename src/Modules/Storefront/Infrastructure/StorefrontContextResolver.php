@@ -113,8 +113,16 @@ final readonly class StorefrontContextResolver
 
     private function isEnabledCurrency(int $storeId, string $currency): bool
     {
-        return preg_match('/^[A-Z]{3}$/', $currency) === 1
-            && (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_store_currency WHERE store_id=? AND currency_code=? AND enabled=1', [$storeId, $currency]) === 1;
+        if (preg_match('/^[A-Z]{3}$/', $currency) !== 1) {
+            return false;
+        }
+
+        return (int) $this->connection->fetchOne(
+            "SELECT COUNT(*) FROM mc_store_currency sc
+             WHERE sc.store_id=? AND sc.currency_code=? AND sc.enabled=1
+               AND (sc.is_default=1 OR EXISTS (SELECT 1 FROM mc_price p WHERE p.store_id=sc.store_id AND p.currency=sc.currency_code LIMIT 1))",
+            [$storeId, $currency],
+        ) === 1;
     }
 
     private function normalizeHost(string $host): string
