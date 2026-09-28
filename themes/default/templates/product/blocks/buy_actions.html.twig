@@ -1,5 +1,6 @@
+{% set capabilities = site_capabilities() %}
 {% set quantity = product.quantity|default({unit_code:'item', unit_label:ui_text('pieces_short'), step:'1', min:'1', max:null}) %}
-{% if product.purchase_allowed %}
+{% if product.purchase_allowed and capabilities.features.cart|default(false) %}
 {% if product.product_type|default('physical') == 'digital' %}<div class="purchase-note"><strong>{{ ui_text('digital_product') }}</strong><small>{{ ui_text('digital_product_note') }}</small></div>{% endif %}
 <form class="buy-actions" data-buy-actions method="post" action="/cart/add">
     <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
@@ -11,8 +12,10 @@
         <button type="button" data-qty-plus aria-label="{{ ui_text('increase') }}">{{ ui_icon('plus', 18) }}</button>
     </commerce-quantity>
     <button class="buy-primary" type="submit" data-primary-buy>{{ product.purchase_button_label|default(ui_text('add_cart')) }}</button>
-    <button class="buy-now" type="submit" name="next" value="checkout">{{ ui_text('buy_now') }}</button>
+    {% if capabilities.features.checkout|default(false) %}<button class="buy-now" type="submit" name="next" value="checkout">{{ ui_text('buy_now') }}</button>{% endif %}
 </form>
+{% elseif product.purchase_allowed %}
+<div class="purchase-unavailable"><strong>{{ product.availability_label }}</strong></div>
 {% elseif product.notify_available %}
 <form class="stock-notify-form" data-stock-notify-form method="post" action="/product/{{ product.id }}/stock-notify">
     <input type="hidden" name="_token" value="{{ csrf_token('stock_notify_' ~ product.id) }}">
