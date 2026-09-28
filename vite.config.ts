@@ -34,9 +34,8 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules/@tiptap/')) return 'editor-tiptap';
-          if (id.includes('node_modules/chart.js/')) return 'charts';
           if (id.includes('node_modules/@lucide/')) return 'icons';
-          if (id.includes('node_modules/vue/') || id.includes('node_modules/pinia/')) return 'vue-core';
+          if (id.includes('node_modules/vue/')) return 'vue-core';
           return undefined;
         },
       },
