@@ -2020,4 +2020,9 @@ return [
     'admin.appearance.preset.premium' => 'Premium',
     'admin.appearance.preset.minimal' => 'Minimal',
     'admin.appearance.preset.soft' => 'Soft',
+    'ui.checkout.blocks.shipping.delivery' => 'Delivery',
+    'ui.product.show.additional_product_information' => 'Additional product information',
+    'ui.product.show.product_details' => 'Product details',
+    'ui.product.show.product_media' => 'Product media',
+    'ui.product.show.purchase_information' => 'Purchase information',
 ];
