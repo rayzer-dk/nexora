@@ -1,0 +1,133 @@
+import { execFileSync } from 'node:child_process';
+import { expect, test } from '@playwright/test';
+import { expectNoServerError } from './helpers';
+
+test('catalog to cart, registration, checkout and forum topic lifecycle', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Full mutating commerce lifecycle runs once per CI database.');
+
+  const suffix = `${Date.now()}-${testInfo.retry}`;
+  const email = `e2e-customer-${suffix}@example.test`;
+  const password = 'Nexora-Customer-2026!';
+  const displayName = `E2E Customer ${suffix}`;
+
+  const catalogResponse = await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  expect(catalogResponse?.status() ?? 0).toBeLessThan(500);
+  await expectNoServerError(page);
+
+  const purchasableCard = page.locator('[data-product-card]').filter({
+    has: page.locator('form[data-card-add-to-cart]'),
+  }).first();
+  await expect(purchasableCard).toBeVisible();
+  const productName = (await purchasableCard.locator('h2 a').innerText()).trim();
+  const productUrl = await purchasableCard.locator('h2 a').getAttribute('href');
+  expect(productName).not.toBe('');
+  expect(productUrl).toBeTruthy();
+
+  await page.goto(productUrl!, { waitUntil: 'domcontentloaded' });
+  const buyForm = page.locator('form[data-buy-actions]');
+  await expect(buyForm).toBeVisible();
+  const addResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/cart/add') && response.request().method() === 'POST'
+  );
+  await buyForm.locator('[data-primary-buy]').click();
+  const addResponse = await addResponsePromise;
+  expect(addResponse.status()).toBeLessThan(500);
+  const addPayload = await addResponse.json();
+  expect(addPayload.ok).toBe(true);
+  expect(Number(addPayload.cart?.count ?? 0)).toBeGreaterThan(0);
+
+  await page.goto('/cart', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('body')).toContainText(productName);
+
+  await page.goto('/account/register', { waitUntil: 'domcontentloaded' });
+  await page.locator('input[name="display_name"]').fill(displayName);
+  await page.locator('input[name="email"]').fill(email);
+  await page.locator('input[name="password"]').fill(password);
+  await Promise.all([
+    page.waitForURL(/\/account\/login(?:\?|$)/),
+    page.locator('form.account-form button[type="submit"]').click(),
+  ]);
+
+  await page.locator('input[name="_username"]').fill(email);
+  await page.locator('input[name="_password"]').fill(password);
+  await Promise.all([
+    page.waitForURL(/\/account(?:\/|$)/),
+    page.locator('form.account-form button[type="submit"]').click(),
+  ]);
+  await expectNoServerError(page);
+
+  await page.goto('/account/verification', { waitUntil: 'domcontentloaded' });
+  const requestForm = page.locator('form[action="/account/verification/request"]');
+  if (await requestForm.count()) {
+    await requestForm.locator('input[name="channel"][value="email"]').check().catch(() => {});
+    await requestForm.locator('button[type="submit"]').click();
+    await page.waitForLoadState('domcontentloaded');
+  }
+
+  const verificationCode = execFileSync('php', ['tests/e2e/read-verification-code.php', email], {
+    encoding: 'utf8',
+    env: process.env,
+  }).trim();
+  expect(verificationCode).toMatch(/^\d{6}$/);
+  const confirmForm = page.locator('form[action="/account/verification/confirm"]');
+  await confirmForm.locator('input[name="channel"][value="email"]').check().catch(() => {});
+  await confirmForm.locator('input[name="code"]').fill(verificationCode);
+  await Promise.all([
+    page.waitForURL(/\/account\/verification/),
+    confirmForm.locator('button[type="submit"]').click(),
+  ]);
+
+  await page.goto('/cart', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('body')).toContainText(productName);
+
+  await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-checkout-form]')).toBeVisible();
+  await page.locator('[name="name"]').fill(displayName);
+  await page.locator('[name="phone"]').fill('+380501234567');
+  const checkoutEmail = page.locator('[name="email"]');
+  if (await checkoutEmail.count()) await checkoutEmail.fill(email);
+
+  const city = page.locator('[data-delivery-city]');
+  if (await city.count()) {
+    await city.fill('Київ');
+    const manual = page.locator('[name="delivery_manual"]');
+    if (await manual.count()) {
+      await manual.evaluate((element) => {
+        const input = element as HTMLInputElement;
+        input.value = 'Київ, тестове відділення 1';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+  }
+
+  const cod = page.locator('input[name="payment_method"][value="cash_on_delivery"]');
+  const bank = page.locator('input[name="payment_method"][value="bank_transfer"]');
+  if (await cod.count()) await cod.check();
+  else if (await bank.count()) await bank.check();
+
+  await Promise.all([
+    page.waitForURL(/\/checkout\/success\//, { timeout: 20_000 }),
+    page.locator('button.place-order').click(),
+  ]);
+  await expectNoServerError(page);
+
+  await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-forum-compose-open]')).toBeVisible();
+  await page.locator('[data-forum-compose-open]').click();
+  const topicForm = page.locator('form[action="/forum/general/topics"]');
+  await expect(topicForm).toBeVisible();
+  await topicForm.locator('input[name="title"]').fill(`E2E forum topic ${suffix}`);
+  await topicForm.locator('textarea[name="body"]').fill('Автоматичний E2E тест створення теми форуму після реєстрації та підтвердження клієнта.');
+  await page.waitForTimeout(1100);
+  const topicResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/forum/general/topics') && response.request().method() === 'POST'
+  );
+  await topicForm.locator('button[type="submit"]').click();
+  const topicResponse = await topicResponsePromise;
+  expect(topicResponse.status()).toBeLessThan(500);
+  await page.waitForLoadState('domcontentloaded');
+  await expectNoServerError(page);
+  await expect(page.locator('.store-notice.is-success')).toBeVisible();
+});
