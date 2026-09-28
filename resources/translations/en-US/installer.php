@@ -110,4 +110,7 @@ return [
     'installer.db_unknown_database' => 'The specified database was not found. Create it or enable the automatic-creation option.',
     'installer.db_insufficient_privileges' => 'The database user does not have sufficient privileges to install or update.',
     'installer.db_unreachable' => 'The database server is unavailable. Check the address, port, and MySQL/MariaDB availability.',
+    'installer.language_ukrainian' => 'Українська',
+    'installer.language_russian' => 'Русский',
+    'installer.language_english' => 'English',
 ];
