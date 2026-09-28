@@ -271,6 +271,7 @@ final readonly class ExtensionPackageManager
             $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122();
             $row['failure_count'] = (int) $row['failure_count'];
             $row['rollback_id'] = null;
+            $row['rollback_version'] = null;
             try {
                 $manifest = json_decode((string) ($row['manifest_json'] ?? ''), true, 32, JSON_THROW_ON_ERROR);
                 $row['has_settings'] = is_array($manifest) && isset($manifest['settings_schema']);
