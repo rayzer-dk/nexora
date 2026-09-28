@@ -11,7 +11,7 @@
                     {% set demo_button_url = props.button_url|default('') ?: presentation.hero.button_url ?: '/catalog' %}
                     {% set demo_button_label = props.button_label|default('') ?: presentation.hero.button_label ?: ui_text('go_catalog') %}
                     {% if site_features.catalog|default(false) and demo_button_label and demo_button_url %}<a class="button button--primary" href="{{ demo_button_url }}">{{ demo_button_label }}</a>{% endif %}
-                    <a class="button button--light" href="/about-us">{{ ui_text('about_platform') }}</a>
+                    {% if site_features.content|default(false) %}<a class="button button--light" href="/about-us">{{ ui_text('about_platform') }}</a>{% endif %}
                 </div>
                 <div class="demo-hero-card__facts"><span>{{ ui_text('demo_products_10') }}</span><span>{{ ui_text('demo_categories_8') }}</span><span>{{ ui_text('coupon') }} {{ demo_showcase.coupon.code }}</span></div>
             </div>
