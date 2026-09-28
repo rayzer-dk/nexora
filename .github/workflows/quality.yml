@@ -4,12 +4,15 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   static-quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
@@ -19,26 +22,84 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run ui:icons:audit
+      - run: npm run configurability:audit
       - run: npm run build:production
 
   browser-qa:
-    if: ${{ vars.E2E_BASE_URL != '' }}
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: nexora_e2e
+          MYSQL_USER: nexora
+          MYSQL_PASSWORD: nexora
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      APP_ENV: prod
+      APP_DEBUG: 0
+      APP_SECRET: e2e-secret-0123456789abcdef0123456789abcdef
+      DATABASE_URL: mysql://nexora:nexora@127.0.0.1:3306/nexora_e2e?charset=utf8mb4
+      DATABASE_SERVER_VERSION: '8.4.0'
+      LOCK_DSN: flock
+      MAILER_DSN: null://null
+      E2E_BASE_URL: http://127.0.0.1:8000
+      E2E_ADMIN_EMAIL: e2e-admin@example.test
+      E2E_ADMIN_PASSWORD: Nexora-E2E-2026-Strong!
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
+      - run: composer install --no-interaction --prefer-dist --no-progress
       - run: npm install --ignore-scripts --no-audit --no-fund
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - run: npm run build:production
       - run: npx playwright install --with-deps chromium firefox webkit
-      - run: npm run e2e
-        env:
-          E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
-          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
-          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      - name: Prepare writable runtime directories
+        run: |
+          mkdir -p var/cache var/log var/install public/media
+          chmod -R u+rwX var public/media
+          rm -f var/install/installed.lock
+      - name: Install Nexora E2E store
+        run: >
+          php bin/console commerce:install --no-interaction
+          --store-name="Nexora E2E"
+          --admin-name="E2E Admin"
+          --admin-email="$E2E_ADMIN_EMAIL"
+          --admin-password="$E2E_ADMIN_PASSWORD"
+          --public-url="$E2E_BASE_URL"
+          --site-mode=hybrid
+          --demo
+      - name: Start storefront
+        run: |
+          php -S 127.0.0.1:8000 -t public public/index.php > var/log/e2e-web.log 2>&1 &
+          echo $! > var/e2e-server.pid
+          for i in {1..30}; do
+            if curl --fail --silent --show-error "$E2E_BASE_URL/" >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat var/log/e2e-web.log
+          exit 1
+      - name: Playwright Chromium, Firefox and WebKit
+        run: npm run e2e
+      - name: Visual regression
+        run: npm run e2e:visual
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -46,4 +107,6 @@ jobs:
           path: |
             playwright-report/
             var/test-results/playwright/
+            var/log/e2e-web.log
           if-no-files-found: ignore
+          retention-days: 7
