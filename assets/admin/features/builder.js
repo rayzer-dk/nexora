@@ -5,7 +5,7 @@ const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? k
  const picker=document.querySelector('[data-media-picker]'); let data=JSON.parse(json.value||'{"schema_version":1,"blocks":[]}'), selected=null, drag=null, mediaTarget=null;
  const localDraftKey='mc.builder.local:'+location.pathname+':'+builderType; let localSaveTimer=null;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
- const idFor=c=>{let i=1,id=c.replace(/[^a-z0-9]+/g,'_');while(data.blocks.some(b=>b.id===id+'_'+i))i++;return id+'_'+i};
+ const idFor=c=>{let i=1;const id=c.replace(/[^a-z0-9]+/g,'_');while(data.blocks.some(b=>b.id===id+'_'+i))i++;return id+'_'+i};
  const saveLocal=()=>{window.clearTimeout(localSaveTimer);localSaveTimer=window.setTimeout(()=>{try{localStorage.setItem(localDraftKey,JSON.stringify({saved_at:Date.now(),payload:data}));}catch(_){/* browser storage is optional */}},350);};
  const sync=()=>{json.value=JSON.stringify(data);renderList();renderPreview();saveLocal();};
  const label=b=>b.props?.title||b.props?.text||b.component;
