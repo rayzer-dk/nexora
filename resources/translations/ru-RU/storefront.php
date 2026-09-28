@@ -559,4 +559,10 @@ return [
     "forum_rule_8_text" => "Если сообщение нарушает правила, отправьте жалобу модератору и не разжигайте спор.",
     "forum_rules_enforcement" => "Модераторы могут отклонять или удалять сообщения, закрывать темы и временно или бессрочно ограничивать участие в форуме.",
     "forum_rules_link" => "Правила форума",
+    'ui.checkout.blocks.shipping.delivery' => 'Доставка',
+    'ui.product.show.product_media' => 'Медиа товара',
+    'ui.product.show.purchase_information' => 'Информация о покупке',
+    'ui.product.show.product_details' => 'Детали товара',
+    'ui.product.show.additional_product_information' => 'Дополнительная информация о товаре',
+    'document_vat' => 'НДС',
 ];
