@@ -122,3 +122,47 @@ test('every static public HTML route renders with no runtime failure', async ({ 
 
   expect(failures, failures.join('\n')).toEqual([]);
 });
+
+
+test('rendered admin links and form actions resolve instead of pointing to dead routes', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Admin interaction route contract runs once per CI database.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await loginAdmin(page);
+  const pages = staticHtmlRoutes('/admin');
+  const targets = new Map<string, Set<string>>();
+
+  for (const route of pages) {
+    const response = await page.goto(route.path, { waitUntil: 'domcontentloaded' });
+    if ((response?.status() ?? 500) >= 500) continue;
+
+    const discovered = await page.locator('a[href],form[action]').evaluateAll((nodes) => nodes.map((node) => {
+      const isForm = node instanceof HTMLFormElement;
+      const raw = isForm ? node.getAttribute('action') : node.getAttribute('href');
+      const method = isForm ? (node.getAttribute('method') || 'GET').toUpperCase() : 'GET';
+      return { raw: raw || '', method };
+    }));
+
+    for (const item of discovered) {
+      if (!item.raw || item.raw === '#' || item.raw.startsWith('javascript:')) continue;
+      let url: URL;
+      try { url = new URL(item.raw, page.url()); } catch { continue; }
+      if (url.origin !== new URL(page.url()).origin || !url.pathname.startsWith('/admin')) continue;
+      const key = url.pathname + url.search;
+      if (!targets.has(key)) targets.set(key, new Set());
+      targets.get(key)!.add(item.method);
+    }
+  }
+
+  const failures: string[] = [];
+  for (const [target, methods] of targets) {
+    // GET against a POST-only action should return 405, which proves that the route exists without mutating data.
+    const response = await page.request.get(target, { maxRedirects: 0 });
+    const status = response.status();
+    if (status === 404 || status >= 500) {
+      failures.push(`${target} [rendered methods: ${[...methods].join(',')}]: HTTP ${status}`);
+    }
+  }
+
+  expect(failures, failures.join('\n')).toEqual([]);
+});
