@@ -1,6 +1,6 @@
 {
   "name": "Nexora Default",
-  "version": "3.5.2",
+  "version": "3.6.5",
   "mode": "auto",
   "tokens": {
     "primary": "#0B63F6",
@@ -23,6 +23,6 @@
     "default_strategy": "system-first",
     "self_hosted_woff2": true,
     "variable_fonts": true,
-    "external_font_cdn": false
+    "external_font_cdn": "optional-google-fonts-when-selected"
   }
 }
