@@ -8,6 +8,7 @@ use Commerce\Core\Platform\PlatformVersion;
 use Commerce\Core\Store\StoreIdentitySettings;
 use Commerce\Modules\Admin\Domain\AdminUser;
 use Doctrine\DBAL\Connection;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,6 +20,7 @@ final class StoreSettingsAdminController extends AbstractController
     public function __construct(
         private readonly AdminContextResolver $contexts,
         private readonly StoreIdentitySettings $settings,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -54,6 +56,10 @@ final class StoreSettingsAdminController extends AbstractController
                 ], $this->actor());
                 $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.storesettingsadmincontroller.dani_mahazynu_zberezheno_atomarno_poperednia_konfihu'));
             } catch (Throwable $e) {
+                $this->logger->error('Store settings save failed.', [
+                    'exception' => $e,
+                    'store_id' => $context->storeId,
+                ]);
                 $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.systemadmincontroller.zminy_ne_zastosovano') . $this->safeMessage($e));
             }
             return $this->redirectToRoute('admin_system_store');
