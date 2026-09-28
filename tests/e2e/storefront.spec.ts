@@ -33,3 +33,10 @@ test('storefront header uses the installed store identity rather than the platfo
   await expect(brand.locator('strong')).toHaveText('Nexora E2E');
   await expect(brand.locator('img[src*="nexora-mark.svg"]')).toHaveCount(0);
 });
+
+
+test('unknown SEO route returns a normal 404 without a storefront runtime exception', async ({ page }) => {
+  const response = await page.goto('/e2e-definitely-missing-seo-route', { waitUntil: 'domcontentloaded' });
+  expect(response?.status()).toBe(404);
+  await expectNoServerError(page);
+});
