@@ -1,3 +1,4 @@
+import { lucideIcon } from '../shared/lucide-icons.js';
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
 class CommerceQuantity extends HTMLElement {
     connectedCallback() {
@@ -112,7 +113,7 @@ function storefrontToast(message, type = 'success') {
     text.textContent = message;
     const close = document.createElement('button');
     close.type = 'button';
-    close.textContent = '×';
+    close.innerHTML = lucideIcon('x', 20);
     close.setAttribute('aria-label', t('js_close'));
     close.addEventListener('click', () => item.remove());
     item.append(text, close);
