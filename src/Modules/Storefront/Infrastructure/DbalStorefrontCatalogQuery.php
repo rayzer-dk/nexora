@@ -835,7 +835,7 @@ final readonly class DbalStorefrontCatalogQuery
     /** @return list<array{name:string,value:string}> */
     private function productAttributes(int $productId,string $locale):array
     {
-        $rows=$this->connection->fetchAllAssociative(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.select_coalesce_at_name_ad_code_name_coalesce_pav_va'),[$locale,$productId]);
+        $rows=$this->connection->fetchAllAssociative("SELECT COALESCE(at.name,ad.code) name,COALESCE(pav.value_text,CAST(pav.value_decimal AS CHAR),IF(pav.value_boolean=1,'1',IF(pav.value_boolean=0,'0',''))) value FROM mc_product_attribute_value pav JOIN mc_attribute_definition ad ON ad.id=pav.attribute_id LEFT JOIN mc_attribute_translation at ON at.attribute_id=ad.id AND at.locale=? WHERE pav.product_id=? ORDER BY ad.sort_order,pav.sort_order,pav.id",[$locale,$productId]);
         return array_values(array_filter(array_map(static fn(array $r):array=>['name'=>(string)$r['name'],'value'=>(string)$r['value']],$rows),static fn(array $r):bool=>$r['value']!==''));
     }
 
