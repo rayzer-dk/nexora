@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Storefront\Http;
 
 use Commerce\Core\Extension\ExtensionRouteController;
+use Commerce\Core\Site\SiteCapabilitySettings;
 use Commerce\Modules\ProductPage\Application\ProductPageComposer;
 use Commerce\Modules\Content\Infrastructure\DbalBlogQuery;
 use Commerce\Modules\Seo\StructuredData\ArticleStructuredDataBuilder;
@@ -42,6 +43,7 @@ final class StorefrontCatalogController extends AbstractController
         private readonly Connection $db,
         private readonly SearchAnalyticsRecorder $searchAnalytics,
         private readonly ExtensionRouteController $extensionRoutes,
+        private readonly SiteCapabilitySettings $capabilities,
     ) {
     }
 
@@ -157,6 +159,15 @@ final class StorefrontCatalogController extends AbstractController
         }
         if ($resolved->isRedirect()) {
             return $this->redirect('/' . ltrim($resolved->route->path, '/'), $resolved->redirectStatus ?? 301);
+        }
+
+        $requiredFeature = match ($resolved->route->entityType) {
+            SeoEntityType::Product, SeoEntityType::Category => 'catalog',
+            SeoEntityType::BlogArticle => 'blog',
+            default => null,
+        };
+        if ($requiredFeature !== null && !$this->capabilities->enabled($context->storeId, $requiredFeature)) {
+            throw $this->createNotFoundException();
         }
 
         return match ($resolved->route->entityType) {
