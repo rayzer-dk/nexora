@@ -30,7 +30,10 @@ final readonly class ForumProfileService
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.customer_missing'));
         }
 
-        $nickname = 'member-' . substr(bin2hex($customer['public_id']), 0, 8);
+        // UUIDv7 starts with a timestamp, so using its leading bytes creates identical
+        // nicknames for customers registered in the same time window. Hash the full public
+        // identifier instead to keep the generated nickname deterministic and collision-safe.
+        $nickname = 'member-' . substr(hash('sha256', $customer['public_id']), 0, 12);
         $now = $this->now();
         $this->connection->insert('mc_forum_profile', [
             'store_id' => $storeId,
