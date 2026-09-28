@@ -31,7 +31,7 @@ final readonly class ConfigurationRevisionStore
         $json = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $checksum = hash('sha256', $json);
 
-        return $this->connection->transactional(function (Connection $db) use ($storeId, $namespace, $configKey, $json, $checksum, $actorSubject): int {
+        $operation = function (Connection $db) use ($storeId, $namespace, $configKey, $json, $checksum, $actorSubject): int {
             $storePublicId = $db->fetchOne('SELECT public_id FROM mc_store WHERE id=? FOR UPDATE', [$storeId]);
             if (!is_string($storePublicId) || $storePublicId === '') {
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.4aa4f8267cce'));
@@ -110,7 +110,13 @@ final readonly class ConfigurationRevisionStore
             );
 
             return $revisionId;
-        });
+        };
+
+        if ($this->connection->isTransactionActive()) {
+            return $operation($this->connection);
+        }
+
+        return $this->connection->transactional($operation);
     }
 
     /**
