@@ -438,7 +438,7 @@ final class StorefrontCatalogController extends AbstractController
     {
         $value=trim($query); if($value===''||mb_strlen($value,'UTF-8')>190)return null;
         try{
-            $rows=$this->db->fetchAllAssociative("SELECT DISTINCT sr.path,v.public_id variant_public_id FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id AND p.status='published' JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id WHERE v.status='active' AND (v.sku=? OR v.gtin=? OR v.mpn=?) LIMIT 2",[$storeId,$storeId,$locale,$value,$value,$value]);
+            $rows=$this->db->fetchAllAssociative("SELECT DISTINCT sr.path,v.public_id variant_public_id FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id AND p.status='published' JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_seo_route sr ON sr.id=(SELECT srx.id FROM mc_seo_route srx JOIN mc_store srxs ON srxs.id=srx.store_id WHERE srx.store_id=? AND srx.locale IN (?,srxs.default_locale) AND srx.entity_type='product' AND srx.entity_public_id=p.public_id ORDER BY (srx.locale=srxs.default_locale) ASC LIMIT 1) WHERE v.status='active' AND (v.sku=? OR v.gtin=? OR v.mpn=?) LIMIT 2",[$storeId,$storeId,$locale,$value,$value,$value]);
             if(count($rows)!==1)return null;
             $variant=\Symfony\Component\Uid\Uuid::fromBinary((string)$rows[0]['variant_public_id'])->toRfc4122();
             return '/'.ltrim((string)$rows[0]['path'],'/').'?variant='.rawurlencode($variant);

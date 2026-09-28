@@ -86,7 +86,7 @@ final readonly class StorefrontProductProjectionService
              FROM mc_product p
              JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?
              JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=?
-             JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
+             JOIN mc_product_translation pt ON pt.id=(SELECT ptx.id FROM mc_product_translation ptx JOIN mc_store ptxs ON ptxs.id=ptx.store_id WHERE ptx.product_id=p.id AND ptx.store_id=? AND ptx.locale IN (?,ptxs.default_locale) ORDER BY (ptx.locale=ptxs.default_locale) ASC LIMIT 1)
              JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active' AND v.sort_order=0
              LEFT JOIN mc_brand b ON b.id=p.brand_id
              LEFT JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)

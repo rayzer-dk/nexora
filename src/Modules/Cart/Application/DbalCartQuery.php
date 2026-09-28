@@ -28,13 +28,18 @@ final readonly class DbalCartQuery
     public function summary(int $cartId, StorefrontContext $context): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT ci.id,ci.quantity,ci.unit_code,ci.unit_price_minor,v.sku,v.quantity_step,v.min_order_quantity,v.max_order_quantity,pt.name,p.product_type,sr.path,ma.storage_key
+            // A product not yet translated into the shopper's language keeps its default-language name and URL:
+            // it must never silently disappear from the cart.
+            "SELECT ci.id,ci.quantity,ci.unit_code,ci.unit_price_minor,v.sku,v.quantity_step,v.min_order_quantity,v.max_order_quantity,COALESCE(pt.name,ptd.name,v.sku) AS name,p.product_type,COALESCE(sr.path,srd.path) AS path,ma.storage_key
              FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id JOIN mc_product p ON p.id=v.product_id
-             JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
-             LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
+             JOIN mc_store st ON st.id=?
+             LEFT JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=st.id AND pt.locale=?
+             LEFT JOIN mc_product_translation ptd ON ptd.product_id=p.id AND ptd.store_id=st.id AND ptd.locale=st.default_locale
+             LEFT JOIN mc_seo_route sr ON sr.store_id=st.id AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
+             LEFT JOIN mc_seo_route srd ON srd.store_id=st.id AND srd.locale=st.default_locale AND srd.entity_type='product' AND srd.entity_public_id=p.public_id
              LEFT JOIN mc_media_asset ma ON ma.id=(SELECT pm.media_asset_id FROM mc_product_media pm WHERE pm.product_id=p.id AND pm.role='primary' ORDER BY pm.sort_order ASC,pm.media_asset_id ASC LIMIT 1)
              WHERE ci.cart_id=? ORDER BY ci.created_at ASC,ci.id ASC",
-            [$context->storeId,$context->locale,$context->storeId,$context->locale,$cartId],
+            [$context->storeId,$context->locale,$context->locale,$cartId],
         );
         $subtotal=0; $items=[]; $requiresShipping=false;
         foreach($rows as $row){

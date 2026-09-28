@@ -31,8 +31,8 @@ final readonly class DbalStorefrontCatalogQuery
              FROM mc_category c
              JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active'
              JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active'
-             JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=?
-             JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id
+             JOIN mc_category_translation ct ON ct.id=(SELECT ctx.id FROM mc_category_translation ctx JOIN mc_store ctxs ON ctxs.id=ctx.store_id WHERE ctx.category_id=c.id AND ctx.store_id=? AND ctx.locale IN (?,ctxs.default_locale) ORDER BY (ctx.locale=ctxs.default_locale) ASC LIMIT 1)
+             JOIN mc_seo_route sr ON sr.id=(SELECT srx.id FROM mc_seo_route srx JOIN mc_store srxs ON srxs.id=srx.store_id WHERE srx.store_id=? AND srx.locale IN (?,srxs.default_locale) AND srx.entity_type='category' AND srx.entity_public_id=c.public_id ORDER BY (srx.locale=srxs.default_locale) ASC LIMIT 1)
              WHERE c.status='active' AND c.parent_id IS NULL
              ORDER BY sc.sort_order ASC,c.sort_order ASC,c.id ASC LIMIT {$limit}",
             [$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale],
@@ -168,7 +168,7 @@ final readonly class DbalStorefrontCatalogQuery
         $baseJoins = "FROM mc_product p
                 JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?
                 JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=?
-                JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
+                JOIN mc_product_translation pt ON pt.id=(SELECT ptx.id FROM mc_product_translation ptx JOIN mc_store ptxs ON ptxs.id=ptx.store_id WHERE ptx.product_id=p.id AND ptx.store_id=? AND ptx.locale IN (?,ptxs.default_locale) ORDER BY (ptx.locale=ptxs.default_locale) ASC LIMIT 1)
                 JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active' AND v.sort_order=0
                 LEFT JOIN mc_brand b ON b.id=p.brand_id
                 {$priceJoin}";
@@ -248,7 +248,7 @@ final readonly class DbalStorefrontCatalogQuery
                        COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) AS available_quantity,
                        (SELECT ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=p.id AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC LIMIT 1) AS image_key
                 {$baseJoins}
-                JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
+                JOIN mc_seo_route sr ON sr.id=(SELECT srx.id FROM mc_seo_route srx JOIN mc_store srxs ON srxs.id=srx.store_id WHERE srx.store_id=? AND srx.locale IN (?,srxs.default_locale) AND srx.entity_type='product' AND srx.entity_public_id=p.public_id ORDER BY (srx.locale=srxs.default_locale) ASC LIMIT 1)
                 LEFT JOIN mc_tax_rate tr ON tr.id=(SELECT tx.id FROM mc_tax_rate tx WHERE tx.tax_class_id=p.tax_class_id AND tx.country_code=? AND tx.enabled=1 AND tx.valid_from<=UTC_TIMESTAMP(6) AND (tx.valid_to IS NULL OR tx.valid_to>UTC_TIMESTAMP(6)) ORDER BY tx.priority ASC,tx.id DESC LIMIT 1)
                 WHERE {$where}
                 ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}";
@@ -300,11 +300,11 @@ final readonly class DbalStorefrontCatalogQuery
                 FROM mc_product p
                 JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?
                 JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=?
-                JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
+                JOIN mc_product_translation pt ON pt.id=(SELECT ptx.id FROM mc_product_translation ptx JOIN mc_store ptxs ON ptxs.id=ptx.store_id WHERE ptx.product_id=p.id AND ptx.store_id=? AND ptx.locale IN (?,ptxs.default_locale) ORDER BY (ptx.locale=ptxs.default_locale) ASC LIMIT 1)
                 JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active' AND v.sort_order=0
                 LEFT JOIN mc_brand b ON b.id=p.brand_id
                 LEFT JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
-                JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
+                JOIN mc_seo_route sr ON sr.id=(SELECT srx.id FROM mc_seo_route srx JOIN mc_store srxs ON srxs.id=srx.store_id WHERE srx.store_id=? AND srx.locale IN (?,srxs.default_locale) AND srx.entity_type='product' AND srx.entity_public_id=p.public_id ORDER BY (srx.locale=srxs.default_locale) ASC LIMIT 1)
                 LEFT JOIN mc_tax_rate tr ON tr.id=(SELECT tx.id FROM mc_tax_rate tx WHERE tx.tax_class_id=p.tax_class_id AND tx.country_code=? AND tx.enabled=1 AND tx.valid_from<=UTC_TIMESTAMP(6) AND (tx.valid_to IS NULL OR tx.valid_to>UTC_TIMESTAMP(6)) ORDER BY tx.priority ASC,tx.id DESC LIMIT 1)
                 WHERE {$where}
                 ORDER BY p.id DESC
@@ -454,7 +454,7 @@ final readonly class DbalStorefrontCatalogQuery
     public function categoryByPublicId(StorefrontContext $context, string $publicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT c.id,c.public_id,c.parent_id,ct.name,ct.description,ct.meta_title,ct.meta_description,sr.path FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active' JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? AND c.status='active' LIMIT 1",
+            "SELECT c.id,c.public_id,c.parent_id,ct.name,ct.description,ct.meta_title,ct.meta_description,sr.path FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active' JOIN mc_category_translation ct ON ct.id=(SELECT ctx.id FROM mc_category_translation ctx JOIN mc_store ctxs ON ctxs.id=ctx.store_id WHERE ctx.category_id=c.id AND ctx.store_id=? AND ctx.locale IN (?,ctxs.default_locale) ORDER BY (ctx.locale=ctxs.default_locale) ASC LIMIT 1) JOIN mc_seo_route sr ON sr.id=(SELECT srx.id FROM mc_seo_route srx JOIN mc_store srxs ON srxs.id=srx.store_id WHERE srx.store_id=? AND srx.locale IN (?,srxs.default_locale) AND srx.entity_type='category' AND srx.entity_public_id=c.public_id ORDER BY (srx.locale=srxs.default_locale) ASC LIMIT 1) WHERE c.public_id=? AND c.status='active' LIMIT 1",
             [$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,Uuid::fromString($publicId)->toBinary()],
         );
         return is_array($row) ? $this->categoryRow($row) : null;
@@ -478,8 +478,8 @@ final readonly class DbalStorefrontCatalogQuery
                     mtp.consumer_display_mode,COALESCE(ppp.mode,'auto') AS purchase_mode,ppp.button_label AS purchase_button_label,ppp.eta_text AS purchase_eta_text,
                     COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) AS available_quantity
              FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active'
-             JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=? JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active' AND ((? IS NOT NULL AND v.public_id=?) OR (? IS NULL AND v.sort_order=0))
-             JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
+             JOIN mc_product_translation pt ON pt.id=(SELECT ptx.id FROM mc_product_translation ptx JOIN mc_store ptxs ON ptxs.id=ptx.store_id WHERE ptx.product_id=p.id AND ptx.store_id=? AND ptx.locale IN (?,ptxs.default_locale) ORDER BY (ptx.locale=ptxs.default_locale) ASC LIMIT 1) JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active' AND ((? IS NOT NULL AND v.public_id=?) OR (? IS NULL AND v.sort_order=0))
+             JOIN mc_seo_route sr ON sr.id=(SELECT srx.id FROM mc_seo_route srx JOIN mc_store srxs ON srxs.id=srx.store_id WHERE srx.store_id=? AND srx.locale IN (?,srxs.default_locale) AND srx.entity_type='product' AND srx.entity_public_id=p.public_id ORDER BY (srx.locale=srxs.default_locale) ASC LIMIT 1)
              LEFT JOIN mc_brand b ON b.id=p.brand_id
              LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id
              LEFT JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
@@ -553,7 +553,7 @@ final readonly class DbalStorefrontCatalogQuery
             "SELECT v.id,v.public_id,v.sku,p.product_type,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.allow_backorder,pt.name,pr.amount_minor,pr.currency,
                     COALESCE(ppp.mode,'auto') AS purchase_mode,
                     COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) AS available_quantity
-             FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id AND p.status='published' JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active' JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
+             FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id AND p.status='published' JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active' JOIN mc_product_translation pt ON pt.id=(SELECT ptx.id FROM mc_product_translation ptx JOIN mc_store ptxs ON ptxs.id=ptx.store_id WHERE ptx.product_id=p.id AND ptx.store_id=? AND ptx.locale IN (?,ptxs.default_locale) ORDER BY (ptx.locale=ptxs.default_locale) ASC LIMIT 1)
              LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id
              JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
              WHERE v.public_id=? AND v.status='active' LIMIT 1",
@@ -673,9 +673,9 @@ final readonly class DbalStorefrontCatalogQuery
              JOIN mc_product rp ON rp.id=rel.related_product_id AND rp.status='published'
              JOIN mc_store_product rsp ON rsp.product_id=rp.id AND rsp.store_id=? AND rsp.status='active'
              JOIN mc_market_product rmp ON rmp.product_id=rp.id AND rmp.market_id=? AND rmp.status='active'
-             JOIN mc_product_translation rpt ON rpt.product_id=rp.id AND rpt.store_id=? AND rpt.locale=?
+             JOIN mc_product_translation rpt ON rpt.id=(SELECT rptx.id FROM mc_product_translation rptx JOIN mc_store rptxs ON rptxs.id=rptx.store_id WHERE rptx.product_id=rp.id AND rptx.store_id=? AND rptx.locale IN (?,rptxs.default_locale) ORDER BY (rptx.locale=rptxs.default_locale) ASC LIMIT 1)
              JOIN mc_product_variant rv ON rv.product_id=rp.id AND rv.status='active' AND rv.sort_order=0
-             JOIN mc_seo_route rsr ON rsr.store_id=? AND rsr.locale=? AND rsr.entity_type='product' AND rsr.entity_public_id=rp.public_id
+             JOIN mc_seo_route rsr ON rsr.id=(SELECT rsrx.id FROM mc_seo_route rsrx JOIN mc_store rsrxs ON rsrxs.id=rsrx.store_id WHERE rsrx.store_id=? AND rsrx.locale IN (?,rsrxs.default_locale) AND rsrx.entity_type='product' AND rsrx.entity_public_id=rp.public_id ORDER BY (rsrx.locale=rsrxs.default_locale) ASC LIMIT 1)
              LEFT JOIN mc_price rr ON rr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=rv.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
              WHERE rel.product_id=? AND rel.relation_type=? ORDER BY rel.sort_order,rel.related_product_id LIMIT {$limit}",
             [$context->marketId,$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,$context->storeId,$context->marketId,$context->currency,$productId,$relationType],
@@ -781,9 +781,9 @@ final readonly class DbalStorefrontCatalogQuery
              FROM mc_product rp
              JOIN mc_store_product rsp ON rsp.product_id=rp.id AND rsp.store_id=? AND rsp.status='active'
              JOIN mc_market_product rmp ON rmp.product_id=rp.id AND rmp.market_id=? AND rmp.status='active'
-             JOIN mc_product_translation rpt ON rpt.product_id=rp.id AND rpt.store_id=? AND rpt.locale=?
+             JOIN mc_product_translation rpt ON rpt.id=(SELECT rptx.id FROM mc_product_translation rptx JOIN mc_store rptxs ON rptxs.id=rptx.store_id WHERE rptx.product_id=rp.id AND rptx.store_id=? AND rptx.locale IN (?,rptxs.default_locale) ORDER BY (rptx.locale=rptxs.default_locale) ASC LIMIT 1)
              JOIN mc_product_variant rv ON rv.product_id=rp.id AND rv.status='active' AND rv.sort_order=0
-             JOIN mc_seo_route rsr ON rsr.store_id=? AND rsr.locale=? AND rsr.entity_type='product' AND rsr.entity_public_id=rp.public_id
+             JOIN mc_seo_route rsr ON rsr.id=(SELECT rsrx.id FROM mc_seo_route rsrx JOIN mc_store rsrxs ON rsrxs.id=rsrx.store_id WHERE rsrx.store_id=? AND rsrx.locale IN (?,rsrxs.default_locale) AND rsrx.entity_type='product' AND rsrx.entity_public_id=rp.public_id ORDER BY (rsrx.locale=rsrxs.default_locale) ASC LIMIT 1)
              LEFT JOIN mc_price rr ON rr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=rv.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
              WHERE rp.id IN ({$placeholders})",
             [$context->marketId,$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,$context->storeId,$context->marketId,$context->currency,...$ids],
@@ -892,7 +892,7 @@ final readonly class DbalStorefrontCatalogQuery
         $categoryId=$this->connection->fetchOne('SELECT category_id FROM mc_product_category WHERE product_id=? ORDER BY is_primary DESC,sort_order ASC,category_id ASC LIMIT 1',[$productId]);
         $chain=[]; $guard=0;
         while($categoryId!==false && $categoryId!==null && $guard++<32){
-            $r=$this->connection->fetchAssociative("SELECT c.parent_id,ct.name,sr.path FROM mc_category c JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.id=? LIMIT 1",[$context->storeId,$context->locale,$context->storeId,$context->locale,(int)$categoryId]);
+            $r=$this->connection->fetchAssociative("SELECT c.parent_id,ct.name,sr.path FROM mc_category c JOIN mc_category_translation ct ON ct.id=(SELECT ctx.id FROM mc_category_translation ctx JOIN mc_store ctxs ON ctxs.id=ctx.store_id WHERE ctx.category_id=c.id AND ctx.store_id=? AND ctx.locale IN (?,ctxs.default_locale) ORDER BY (ctx.locale=ctxs.default_locale) ASC LIMIT 1) JOIN mc_seo_route sr ON sr.id=(SELECT srx.id FROM mc_seo_route srx JOIN mc_store srxs ON srxs.id=srx.store_id WHERE srx.store_id=? AND srx.locale IN (?,srxs.default_locale) AND srx.entity_type='category' AND srx.entity_public_id=c.public_id ORDER BY (srx.locale=srxs.default_locale) ASC LIMIT 1) WHERE c.id=? LIMIT 1",[$context->storeId,$context->locale,$context->storeId,$context->locale,(int)$categoryId]);
             if(!is_array($r)){break;} $chain[]=['name'=>(string)$r['name'],'url'=>'/'.ltrim((string)$r['path'],'/')]; $categoryId=$r['parent_id'];
         }
         foreach(array_reverse($chain) as $c){$items[]=$c;} $items[]=['name'=>$productName]; return $items;

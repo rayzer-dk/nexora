@@ -48,6 +48,18 @@ final class InformationPageController extends AbstractController
         $route = $this->routes->route($definition->routeKey, $context->locale);
         $page = $this->pages->bySystemKey($context, $key);
         if ($page === null) {
+            // Not translated into the chosen language yet: show the default-language page, never a 404.
+            $defaultLocale = $this->contexts->defaultLocale($context->storeId);
+            if ($defaultLocale !== null && $defaultLocale !== $context->locale) {
+                $fallbackContext = new \Commerce\Modules\Storefront\Domain\StorefrontContext($context->storeId, $context->marketId, $defaultLocale, $context->currency, $context->countryCode, $context->storeName);
+                $page = $this->pages->bySystemKey($fallbackContext, $key);
+                if ($page !== null) {
+                    $request->attributes->set('_content_locale_fallback', $defaultLocale);
+                    $route = $this->routes->route($definition->routeKey, $defaultLocale);
+                }
+            }
+        }
+        if ($page === null) {
             throw $this->createNotFoundException();
         }
 
