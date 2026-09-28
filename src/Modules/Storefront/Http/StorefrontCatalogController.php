@@ -102,6 +102,10 @@ final class StorefrontCatalogController extends AbstractController
             }
         }
         $products = $this->catalog->products($context, null, $page, 24, null, $filter);
+        if ($page > (int) ($products['pages'] ?? 1)) {
+            // Pages past the end are soft-404s ("empty but indexable"); answer 404 instead.
+            throw $this->createNotFoundException();
+        }
         if ($page === 1 && $filter->search !== '') $this->searchAnalytics->record($context->storeId, $context->locale, $filter->search, (int)($products['total'] ?? 0));
         $facets = $this->catalog->catalogFacets($context);
         $query = $this->filterQuery($request);
@@ -118,6 +122,7 @@ final class StorefrontCatalogController extends AbstractController
             'catalog_query' => $query,
             'catalog_query_base' => $this->filterQueryString($request),
             'seo_head' => [
+                'description' => \Commerce\Core\I18n\CanonicalUiText::get('seo.catalog.description', ['store' => $context->storeName]),
                 'canonical' => $canonical,
                 'robots' => $filter->isFiltered() ? 'noindex,follow' : 'index,follow,max-image-preview:large',
             ],
@@ -133,6 +138,20 @@ final class StorefrontCatalogController extends AbstractController
         }
         $context = $this->contexts->resolve($request);
         $resolved = $this->seo->resolve($context->storeId, $context->locale, $path);
+        if ($resolved->route === null) {
+            // The visitor switched to a language this page is not translated into yet. Show the
+            // default-language content (the URL is the default-language URL anyway) instead of a 404;
+            // the interface stays in the chosen language.
+            $defaultLocale = $this->contexts->defaultLocale($context->storeId);
+            if ($defaultLocale !== null && $defaultLocale !== $context->locale) {
+                $fallback = $this->seo->resolve($context->storeId, $defaultLocale, $path);
+                if ($fallback->route !== null) {
+                    $resolved = $fallback;
+                    $context = new \Commerce\Modules\Storefront\Domain\StorefrontContext($context->storeId, $context->marketId, $defaultLocale, $context->currency, $context->countryCode, $context->storeName);
+                    $request->attributes->set('_content_locale_fallback', $defaultLocale);
+                }
+            }
+        }
         if ($resolved->route === null) {
             throw $this->createNotFoundException();
         }
@@ -157,6 +176,9 @@ final class StorefrontCatalogController extends AbstractController
         $page = max(1, $request->query->getInt('page', 1));
         $filter = $this->catalogFilter($request);
         $products = $this->catalog->products($context, (int) $category['id'], $page, 24, null, $filter);
+        if ($page > (int) ($products['pages'] ?? 1)) {
+            throw $this->createNotFoundException();
+        }
         if ($page === 1 && $filter->search !== '') $this->searchAnalytics->record($context->storeId, $context->locale, $filter->search, (int)($products['total'] ?? 0));
         $facets = $this->catalog->catalogFacets($context, (int) $category['id']);
         $canonical = $request->getSchemeAndHttpHost() . $category['url'] . (!$filter->isFiltered() && $page > 1 ? '?page=' . $page : '');
@@ -171,7 +193,14 @@ final class StorefrontCatalogController extends AbstractController
             'catalog_facets' => $facets,
             'catalog_query' => $this->filterQuery($request),
             'catalog_query_base' => $this->filterQueryString($request),
-            'seo_head' => ['canonical' => $canonical, 'robots' => $filter->isFiltered() ? 'noindex,follow' : 'index,follow,max-image-preview:large'],
+            'seo_head' => [
+                'title' => $category['meta_title'] !== '' ? $category['meta_title'] : $category['name'],
+                'description' => $category['meta_description'] !== '' ? $category['meta_description'] : $category['description'],
+                'image' => $this->shareImage($request->getSchemeAndHttpHost(), [(string) ($category['image'] ?? '')]),
+                'canonical' => $canonical,
+                'robots' => $filter->isFiltered() ? 'noindex,follow' : 'index,follow,max-image-preview:large',
+                'hreflang' => $filter->isFiltered() ? [] : [$context->locale => $canonical, 'x-default' => $canonical],
+            ],
         ]);
     }
 
@@ -212,6 +241,9 @@ final class StorefrontCatalogController extends AbstractController
             'breadcrumbs' => $breadcrumbs,
             'structured_data_json' => $structuredDataJson,
             'seo_head' => [
+                'description' => (string) ($article['meta_description'] ?? '') !== '' ? (string) $article['meta_description'] : (string) ($article['excerpt'] ?? ''),
+                'image' => (string) ($article['image'] ?? '') !== '' ? $baseUrl . $article['image'] : '',
+                'type' => 'article',
                 'canonical' => $canonical,
                 'robots' => 'index,follow,max-image-preview:large',
                 'hreflang' => [$context->locale => $canonical, 'x-default' => $canonical],
@@ -271,12 +303,33 @@ final class StorefrontCatalogController extends AbstractController
             'regions' => $this->composer->compose($layout),
             'structured_data_json' => $structuredDataJson,
             'seo_head' => [
+                'title' => $product['meta_title'] !== '' ? $product['meta_title'] : $product['name'],
+                'description' => $product['meta_description'] !== '' ? $product['meta_description'] : ($product['short_description'] !== '' ? $product['short_description'] : $product['description']),
+                'image' => $this->shareImage($baseUrl, [$displayImage, ...array_map(static fn (array $image): string => (string) ($image['url'] ?? ''), $product['images'])]),
+                'type' => 'product',
                 'canonical' => $baseUrl . $product['url'],
                 'robots' => 'index,follow,max-image-preview:large',
                 'hreflang' => [$context->locale => $baseUrl . $product['url'], 'x-default' => $baseUrl . $product['url']],
             ],
         ]);
     }
+    /**
+     * First real raster image for og:image; placeholders are never shared.
+     *
+     * @param list<string> $candidates
+     */
+    private function shareImage(string $baseUrl, array $candidates): string
+    {
+        foreach ($candidates as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate === '' || str_contains($candidate, 'placeholder')) {
+                continue;
+            }
+            return str_starts_with($candidate, '/') ? $baseUrl . $candidate : $candidate;
+        }
+        return '';
+    }
+
     private function catalogFilter(Request $request): ProductCatalogFilter
     {
         $search = mb_substr(trim((string) $request->query->get('q', '')), 0, 120, 'UTF-8');
@@ -385,7 +438,7 @@ final class StorefrontCatalogController extends AbstractController
     {
         $value=trim($query); if($value===''||mb_strlen($value,'UTF-8')>190)return null;
         try{
-            $rows=$this->db->fetchAllAssociative("SELECT DISTINCT sr.path,v.public_id variant_public_id FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id AND p.status='published' JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id WHERE v.status='active' AND (v.sku=? OR v.gtin=? OR v.mpn=?) LIMIT 2",[$storeId,$storeId,$locale,$value,$value,$value]);
+            $rows=$this->db->fetchAllAssociative("SELECT DISTINCT sr.path,v.public_id variant_public_id FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id AND p.status='published' JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_seo_route sr ON sr.id=(SELECT srx.id FROM mc_seo_route srx JOIN mc_store srxs ON srxs.id=srx.store_id WHERE srx.store_id=? AND srx.locale IN (?,srxs.default_locale) AND srx.entity_type='product' AND srx.entity_public_id=p.public_id ORDER BY (srx.locale=srxs.default_locale) ASC LIMIT 1) WHERE v.status='active' AND (v.sku=? OR v.gtin=? OR v.mpn=?) LIMIT 2",[$storeId,$storeId,$locale,$value,$value,$value]);
             if(count($rows)!==1)return null;
             $variant=\Symfony\Component\Uid\Uuid::fromBinary((string)$rows[0]['variant_public_id'])->toRfc4122();
             return '/'.ltrim((string)$rows[0]['path'],'/').'?variant='.rawurlencode($variant);
