@@ -12,12 +12,12 @@
       {% for benefit in benefits %}<article><span class="reference-benefits__icon" aria-hidden="true">{{ ui_icon(benefit.icon, 24) }}</span><div><strong>{{ benefit.title }}</strong><small>{{ benefit.text }}</small></div></article>{% endfor %}
       </section>
       {% endif %}
-      {% if demo_showcase %}
+      {% if demo_showcase and site_features.catalog|default(false) %}
       <section class="shell demo-coupon-strip" aria-label="{{ ui_text('demo_promotion') }}"><div><span class="demo-coupon-strip__icon">{{ ui_icon('badge-percent', 21) }}</span><div><small>{{ ui_text('check_promotions_engine') }}</small><strong>{{ ui_text('coupon') }} {{ demo_showcase.coupon.code }} — {{ demo_showcase.coupon.text }}</strong></div></div><a href="/catalog">{{ ui_text('choose_product_arrow') }} {{ ui_icon('arrow-right', 17) }}</a></section>
       {% endif %}
     {% elseif layout_block.component == 'product_grid' %}
       {% include '@storefront/home/blocks/products.html.twig' %}
-      {% if presentation.home.show_promos and demo_showcase and demo_showcase.promos %}
+      {% if site_features.catalog|default(false) and presentation.home.show_promos and demo_showcase and demo_showcase.promos %}
       <section class="shell demo-promo-grid" aria-label="{{ ui_text('collections') }}">
       {% for promo in demo_showcase.promos %}<a class="demo-promo-card demo-promo-card--{{ promo.tone }}" href="{{ promo.url }}"><img src="{{ promo.image }}" alt="" width="900" height="520" loading="lazy" decoding="async"><div><small>{{ promo.eyebrow }}</small><h2>{{ promo.title }}</h2><p>{{ promo.text }}</p><span>{{ ui_text('view_arrow') }}</span></div></a>{% endfor %}
       </section>
@@ -27,7 +27,7 @@
       {% if presentation.promo_right.image %}<a class="reference-side-promo reference-side-promo--right" href="{{ presentation.promo_right.url }}" style="--promo-image:url('{{ presentation.promo_right.image }}')"><div><h2>{{ presentation.promo_right.title }}</h2><p>{{ presentation.promo_right.text }}</p><span>{{ ui_text('to_catalog_arrow') }}</span></div></a>{% endif %}
       </div></section>
       {% endif %}
-      {% if demo_showcase and demo_showcase.brands %}
+      {% if site_features.catalog|default(false) and demo_showcase and demo_showcase.brands %}
       <section class="shell demo-brands"><div class="reference-section-title"><div><small class="section-kicker">{{ ui_text('brand_showcase') }}</small><h2>{{ ui_text('trusted_brands') }}</h2></div></div><div class="demo-brand-list">{% for brand in demo_showcase.brands %}<span>{{ brand }}</span>{% endfor %}</div></section>
       {% endif %}
     {% elseif layout_block.component == 'article_grid' %}
