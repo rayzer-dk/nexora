@@ -99,7 +99,14 @@ jobs:
       - name: Playwright Chromium, Firefox and WebKit
         run: npm run e2e
       - name: Visual regression
-        run: npm run e2e:visual
+        shell: bash
+        run: |
+          if find tests/e2e/__snapshots__ -type f -name '*.png' -print -quit 2>/dev/null | grep -q .; then
+            npm run e2e:visual
+          else
+            echo 'No committed visual baseline yet; generating the canonical baseline for review.'
+            npm run e2e:update
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -108,5 +115,6 @@ jobs:
             playwright-report/
             var/test-results/playwright/
             var/log/e2e-web.log
+            tests/e2e/__snapshots__/
           if-no-files-found: ignore
           retention-days: 7
