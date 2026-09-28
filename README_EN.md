@@ -46,7 +46,7 @@ Remaining stable-release blockers are real populated-database load tests on MySQ
 
 - PHP 8.4–8.5 certified; newer stable PHP branches are enabled only after platform QA.
 - Symfony 8.1 stable backend and Vue 3.5 + TypeScript administration.
-- MySQL 8.4 LTS / MariaDB 11.4 LTS supported baseline; InnoDB, utf8mb4 and Unicode NFC normalization.
+- MySQL 8.4 LTS / MariaDB 10.11 LTS+ (11.4 recommended) supported baseline; InnoDB, utf8mb4 and Unicode NFC normalization.
 - Europe + Ukraine regional profile; unrelated country-specific packages are not loaded.
 - Protected system modules for critical commerce capabilities; optional extensions are isolated and removable.
 - No OCMOD/file patching. Extensions use versioned contracts, events, UI slots, APIs and webhooks.
@@ -98,7 +98,7 @@ Schema v32 is the current database schema. Schema v30 adds domain-to-store routi
 - PHP 8.4–8.5 certified
 - Symfony 8.1 stable
 - Doctrine DBAL 4.4 + Doctrine Migrations
-- MySQL 8.4 LTS or MariaDB 11.4 LTS for production installs
+- MySQL 8.4 LTS or MariaDB 10.11 LTS+ (11.4 LTS recommended) for production installs
 - Vue 3.5 / Pinia / Vite 8 / TypeScript 7.0.2
 - Redis, workers, external search and object storage remain optional accelerators
 

@@ -1,6 +1,6 @@
 # Database architecture
 
-Nexora Commerce uses current LTS database tracks. Production deployments target the certified MySQL 8.4 LTS or MariaDB 11.4 LTS baseline. The SQL deliberately avoids vendor-specific shortcuts where they would damage portability between these two engines.
+Nexora Commerce uses current LTS database tracks. Production deployments target the certified MySQL 8.4 LTS or MariaDB 10.11 LTS+ baseline (11.4 LTS recommended). The SQL deliberately avoids vendor-specific shortcuts where they would damage portability between these two engines.
 
 Internal relations use compact `BIGINT UNSIGNED` keys for fast InnoDB joins. Public URLs/API identifiers use 128-bit UUIDv7 values stored as `BINARY(16)`, so sequential database IDs are never exposed.
 

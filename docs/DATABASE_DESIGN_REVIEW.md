@@ -50,4 +50,4 @@ Development releases retain incremental Doctrine migrations so upgrading test in
 - Price rows have deterministic priority and quantity-range validation.
 - Stock reservation is an atomic database operation, not a read-then-write check. The conditional UPDATE prevents two concurrent checkouts from claiming the same units.
 - Reservation lifecycle is idempotent and records release/commit timestamps. Order/item snapshots stay independent from live catalog data.
-- Current certified production database tracks are MySQL 8.4 LTS and MariaDB 11.4 LTS; older legacy branches are not a design target.
+- Current certified production database tracks are MySQL 8.4 LTS and MariaDB 10.11 LTS+ (11.4 LTS recommended); older legacy branches are not a design target.
