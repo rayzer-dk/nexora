@@ -32,7 +32,7 @@
       {% endif %}
     {% elseif layout_block.component == 'article_grid' %}
       {% include '@storefront/home/blocks/articles.html.twig' %}
-      {% if demo_showcase %}
+      {% if demo_showcase and site_features.content|default(false) %}
       <section class="shell demo-contact-cta"><div><small>{{ ui_text('form_showcase') }}</small><h2>{{ ui_text('questions_about_product_store') }}</h2><p>{{ ui_text('contact_form_demo_text') }}</p></div><a class="button button--primary" href="/contact">{{ ui_text('contact_us') }}</a></section>
       {% endif %}
     {% endif %}
