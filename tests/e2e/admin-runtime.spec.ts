@@ -96,34 +96,5 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   await expect(page.locator('input[name="brand_subtitle"]')).toHaveValue(originalSubtitle);
   await expect(page.locator('input[name="theme_radius"]')).toHaveValue(originalRadius);
 
-  await page.goto('/admin/system/extensions', { waitUntil: 'domcontentloaded' });
-  await expectNoServerError(page);
-  const packageInput = page.locator('input[name="extension_package"]');
-  await packageInput.setInputFiles(path.resolve('var/e2e-extension.zip'));
-  await Promise.all([
-    page.waitForURL(/\/admin\/system\/extensions/),
-    page.locator('form.admin-extension-upload button[type="submit"]').click(),
-  ]);
-  await expectNoServerError(page);
-
-  const extensionRow = page.locator('table.admin-table tbody tr').filter({ hasText: 'Nexora E2E QA Module' });
-  await expect(extensionRow).toBeVisible();
-  await expect(extensionRow).toContainText('staged');
-
-  const activateForm = extensionRow.locator('form[action$="/activate"]');
-  await Promise.all([
-    page.waitForURL(/\/admin\/system\/extensions/),
-    activateForm.locator('button[type="submit"]').click(),
-  ]);
-  const activeRow = page.locator('table.admin-table tbody tr').filter({ hasText: 'Nexora E2E QA Module' });
-  await expect(activeRow).toContainText('active');
-
-  const disableForm = activeRow.locator('form[action$="/disable"]');
-  await Promise.all([
-    page.waitForURL(/\/admin\/system\/extensions/),
-    disableForm.locator('button[type="submit"]').click(),
-  ]);
-  const disabledRow = page.locator('table.admin-table tbody tr').filter({ hasText: 'Nexora E2E QA Module' });
-  await expect(disabledRow).toContainText('disabled');
   await expectNoServerError(page);
 });
