@@ -72,7 +72,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'preset' => 'modern',
                 'primary' => '#0B63F6',
                 'accent' => '#FF7A1A',
-                'success' => '#16A364',
+                'success' => '#0F7A4B',
                 'surface' => '#FFFFFF',
                 'radius' => '18',
                 'shadow' => 'medium',
