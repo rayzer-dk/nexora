@@ -203,7 +203,7 @@ function initCommandPalette() {
   document.addEventListener('keydown', (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      palette.hidden ? open() : close();
+      if (palette.hidden) open(); else close();
     } else if (event.key === 'Escape' && !palette.hidden) close();
   });
 }
@@ -222,7 +222,7 @@ function initHealthCheck() {
         const data = await response.json();
         if (data.healthy) toast(t('js_health_ok'), 'success');
         else toast(t('js_health_issues', { count: data.required_failed || 0 }), 'warning', 7000);
-      } catch (error) {
+      } catch (_) {
         toast(t('js_health_failed'), 'error', 7000);
       } finally {
         button.disabled = false;
