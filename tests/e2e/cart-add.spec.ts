@@ -1,9 +1,22 @@
 import { expect, test } from '@playwright/test';
+import { expectNoServerError } from './helpers';
 
-test('in-stock product can be added to the cart', async ({ page }) => {
-  const productResponse = await page.goto('/apple-macbook-pro-14-inch-space-grey', { waitUntil: 'domcontentloaded' });
-  expect(productResponse?.status() ?? 0).toBeLessThan(500);
+test('an in-stock catalog product can be added to the cart', async ({ page }) => {
+  const catalogResponse = await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  expect(catalogResponse?.status() ?? 0).toBeLessThan(500);
+  await expectNoServerError(page);
 
+  const card = page.locator('[data-product-card]').filter({
+    has: page.locator('form[data-card-add-to-cart]'),
+  }).first();
+  await expect(card).toBeVisible();
+
+  const productName = (await card.locator('h2 a').innerText()).trim();
+  const productUrl = await card.locator('h2 a').getAttribute('href');
+  expect(productName).not.toBe('');
+  expect(productUrl).toBeTruthy();
+
+  await page.goto(productUrl!, { waitUntil: 'domcontentloaded' });
   const form = page.locator('form[data-buy-actions]');
   await expect(form).toBeVisible();
 
@@ -20,5 +33,6 @@ test('in-stock product can be added to the cart', async ({ page }) => {
 
   const cartResponse = await page.goto('/cart', { waitUntil: 'domcontentloaded' });
   expect(cartResponse?.status() ?? 0).toBeLessThan(500);
-  await expect(page.locator('body')).toContainText('Apple MacBook Pro 14 Inch Space Grey');
+  await expectNoServerError(page);
+  await expect(page.locator('body')).toContainText(productName);
 });
