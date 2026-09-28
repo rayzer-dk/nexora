@@ -1017,8 +1017,8 @@ test('enabled non-default currency without prices stays hidden from storefront c
   for (let i = 0; i < await rows.count(); i++) {
     const row = rows.nth(i);
     if ((await row.locator('.admin-status-pill.is-active').count()) > 0) continue;
-    const text = await row.innerText();
-    if (!/\b0\b/.test(text)) continue;
+    const priceCount = Number((await row.locator('td').nth(2).innerText()).trim().match(/^\d+/)?.[0] ?? '-1');
+    if (priceCount !== 0) continue;
     const toggle = row.locator('input[type="checkbox"][name$="[enabled]"]');
     if ((await toggle.count()) === 0) continue;
     const inputName = await toggle.getAttribute('name');
