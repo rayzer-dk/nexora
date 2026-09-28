@@ -8,6 +8,7 @@ use Commerce\Modules\Cart\Application\CartMutationService;
 use Commerce\Modules\Cart\Application\DbalCartQuery;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Commerce\Modules\Customer\Domain\CustomerUser;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,8 +19,12 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class CartController extends AbstractController
 {
-    public function __construct(private readonly StorefrontContextResolver $contexts, private readonly CartMutationService $mutations, private readonly DbalCartQuery $query)
-    {
+    public function __construct(
+        private readonly StorefrontContextResolver $contexts,
+        private readonly CartMutationService $mutations,
+        private readonly DbalCartQuery $query,
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     #[Route('/cart', name:'storefront_cart', methods:['GET'], priority:100)]
@@ -60,7 +65,12 @@ final class CartController extends AbstractController
                 return $response;
             }
             $this->addFlash('error', $e->getMessage());
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            $this->logger->error('Cart add failed unexpectedly.', [
+                'exception' => $e,
+                'store_id' => $context->storeId,
+                'cart_id' => $cart['id'],
+            ]);
             if ($this->wantsJson($request)) {
                 $response = new JsonResponse(['ok' => false, 'message' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.cart.http.cartcontroller.ne_vdalosia_dodaty_tovar_povtorit_sprobu')], Response::HTTP_SERVICE_UNAVAILABLE);
                 $this->attachCookie($response, $request, $cart);
