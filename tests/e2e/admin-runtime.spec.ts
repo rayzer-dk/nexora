@@ -126,3 +126,36 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
 
   await expectNoServerError(page);
 });
+
+
+test('progressive admin features initialize on their real pages', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Progressive feature audit runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin E2E credentials are required.');
+
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  await loginAdmin(page);
+
+  await page.goto('/admin/appearance/builder/product', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('[data-builder-list] .mc-builder-block').first()).toBeVisible();
+  await page.locator('[data-builder-list] .mc-builder-select').first().click();
+  await expect(page.locator('[data-inspector] h3')).toBeVisible();
+
+  await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const choose = page.locator('[data-media-choose]').first();
+  await expect(choose).toBeVisible();
+  await choose.click();
+  await expect(page.locator('[data-appearance-media-picker]')).toHaveJSProperty('open', true);
+
+  await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
+  const edit = page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first();
+  await expect(edit).toBeVisible();
+  await page.goto((await edit.getAttribute('href'))!, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.rich-editor')).toBeVisible();
+  await expect(page.locator('textarea[data-rich-editor]')).toBeHidden();
+
+  expect(pageErrors, pageErrors.join('\n')).toEqual([]);
+});
