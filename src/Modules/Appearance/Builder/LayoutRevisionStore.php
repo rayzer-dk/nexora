@@ -106,7 +106,7 @@ final readonly class LayoutRevisionStore
 
     private function assertType(string $type): void
     {
-        if (!in_array($type, ['home','header','footer','product','checkout'], true)) {
+        if (!in_array($type, ['home','product','checkout'], true)) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.6b74c5d04543'));
         }
     }
