@@ -168,6 +168,10 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
+    Commerce\Modules\Appearance\Infrastructure\ThemePresetCatalog:
+        arguments:
+            $configPath: '%kernel.project_dir%/config/appearance/presets.json'
+
     Commerce\Core\I18n\StorefrontUiTranslator:
         arguments:
             $projectDir: '%kernel.project_dir%'
