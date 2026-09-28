@@ -208,6 +208,42 @@ function initCommandPalette() {
   });
 }
 
+function initAutoSubmit() {
+  qa('[data-autosubmit]').forEach((control) => {
+    control.addEventListener('change', () => {
+      const form = control.closest('form');
+      if (form) form.requestSubmit();
+    });
+  });
+}
+
+function initCopyControls() {
+  qa('[data-copy-value], [data-copy-target]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const targetSelector = button.dataset.copyTarget;
+      const target = targetSelector ? q(targetSelector) : null;
+      const value = button.dataset.copyValue ?? target?.textContent?.trim() ?? '';
+      if (!value) return;
+      try {
+        await navigator.clipboard.writeText(value);
+        toast(t('js_copied'), 'success', 1800);
+      } catch (_) {
+        const fallback = document.createElement('textarea');
+        fallback.value = value;
+        fallback.setAttribute('readonly', '');
+        fallback.style.position = 'fixed';
+        fallback.style.opacity = '0';
+        document.body.appendChild(fallback);
+        fallback.select();
+        const copied = document.execCommand('copy');
+        fallback.remove();
+        if (copied) toast(t('js_copied'), 'success', 1800);
+        else toast(t('js_copy_failed'), 'error', 4000);
+      }
+    });
+  });
+}
+
 function initHealthCheck() {
   qa('[data-health-check]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -309,6 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initImagePreviews();
   initSidebar();
   initCommandPalette();
+  initAutoSubmit();
+  initCopyControls();
   initHealthCheck();
   initSiteProfilePreset();
   initSecretToggles();
@@ -319,8 +357,13 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initPageFeatures() {
   const feature = document.querySelector('[data-builder]') ? 'builder' : document.querySelector('[data-appearance-media]') ? 'appearance-media' : document.querySelector('[data-media-drop]') ? 'media-library' : null;
   if (!feature) return;
+  const loaders = {
+    builder: () => import('../admin/features/builder.js'),
+    'appearance-media': () => import('../admin/features/appearance-media.js'),
+    'media-library': () => import('../admin/features/media-library.js'),
+  };
   try {
-    await import(`./admin-features/${feature}.js`);
+    await loaders[feature]?.();
   } catch (error) {
     console.error(`Admin feature ${feature} failed to load`, error);
     toast(t('js_extra_ui_failed'), 'error', 7000);
