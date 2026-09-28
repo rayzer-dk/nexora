@@ -86,7 +86,7 @@ jobs:
           --demo
       - name: Start storefront
         run: |
-          php -S 127.0.0.1:8000 -t public public/index.php > var/log/e2e-web.log 2>&1 &
+          php -S 127.0.0.1:8000 -t public tests/e2e/router.php > var/log/e2e-web.log 2>&1 &
           echo $! > var/e2e-server.pid
           for i in {1..30}; do
             if curl --fail --silent --show-error "$E2E_BASE_URL/" >/dev/null; then
