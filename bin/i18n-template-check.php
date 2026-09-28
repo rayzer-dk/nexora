@@ -25,6 +25,19 @@ $load = static function (string $locale) use ($root): array {
     return $all;
 };
 
+foreach (glob($root . '/resources/translations/*/*.php') ?: [] as $translationFile) {
+    $source = (string) file_get_contents($translationFile);
+    preg_match_all('/^\\s*([\'\"])([^\'\"]+)\\1\\s*=>/m', $source, $matches);
+    $seen = [];
+    foreach ($matches[2] as $key) {
+        if (isset($seen[$key])) {
+            $errors[] = str_replace($root . '/', '', $translationFile) . ': duplicate key ' . $key;
+            continue;
+        }
+        $seen[$key] = true;
+    }
+}
+
 $uk = $load('uk-UA');
 $en = $load('en-US');
 foreach (array_diff_key($uk, $en) as $key => $_) {
