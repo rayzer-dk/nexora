@@ -1,6 +1,6 @@
-# Nexora Commerce 3.5.2
+# Nexora Commerce 3.6.6
 
-3.5.2 використовує чистий Extension API 2.0 без legacy-сумісності Settings Schema v1; додає bonus extension packs, комерційні моделі розширень, покращений Theme Preset runtime та multilingual catalog import/export. Extension API 2.0: динамічні Builder-блоки, extension routes/pages, стабільні UI slots, extension permissions, scoped assets, власний журнал міграцій модулів і Trusted Signed Module Package з Ed25519-підписом. Непідписаний PHP/JS як і раніше не активується, а Core-файли не модифікуються.
+3.6.6 — production-лінія Nexora Commerce з Extension API 2.0, schema 50, Vite 8, TypeScript 6, Playwright Chromium/Firefox/WebKit QA, MySQL 8.4 та MariaDB 10.11/11.4 runtime CI. Реліз включає production packaging, browser E2E для критичного commerce lifecycle, перевірку журналів помилок і release-contract контроль узгодженості версій.
 
 
 Release channel: `production`. Repository CI certifies source/package contracts and the supported database matrix. Live deployment certification (HTTP, load, accessibility and configured external APIs) remains environment-specific and is performed separately.
