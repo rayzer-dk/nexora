@@ -957,3 +957,106 @@ test('product slug change updates canonical links and creates a direct old-URL r
     await submitAndWait(page, 'form.admin-editor-form', editUrl!);
   }
 });
+
+
+test('locale visibility in admin changes the real storefront language selector and context', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating localization contract runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await loginAdmin(page);
+  await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
+  const form = page.locator('form[action="/admin/system/localization/locales"]');
+  const candidates = form.locator('input[type="checkbox"][name^="locale["]:not([disabled])');
+  test.skip((await candidates.count()) === 0, 'No non-default locale is available.');
+  const localeToggle = candidates.first();
+  const name = await localeToggle.getAttribute('name');
+  expect(name).toBeTruthy();
+  const match = name!.match(/^locale\[([^\]]+)\]\[enabled\]$/);
+  expect(match).toBeTruthy();
+  const locale = match![1];
+  const original = await localeToggle.isChecked();
+
+  try {
+    if (!original) await localeToggle.check();
+    const responsePromise = page.waitForResponse((response) =>
+      response.url().includes('/admin/system/localization/locales') && response.request().method() === 'POST'
+    );
+    await form.locator('button[type="submit"]').click();
+    expect((await responsePromise).status()).toBeLessThan(400);
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.goto('/?lang=' + encodeURIComponent(locale), { waitUntil: 'domcontentloaded' });
+    await expectNoServerError(page);
+    await expect(page.locator('html')).toHaveAttribute('lang', locale);
+    await expect(page.locator('select[name="lang"] option[value="' + locale + '"]')).toHaveCount(1);
+  } finally {
+    if (!original) {
+      await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
+      const restoreForm = page.locator('form[action="/admin/system/localization/locales"]');
+      await restoreForm.locator('input[name="locale[' + locale + '][enabled]"]').uncheck();
+      const restoreResponse = page.waitForResponse((response) =>
+        response.url().includes('/admin/system/localization/locales') && response.request().method() === 'POST'
+      );
+      await restoreForm.locator('button[type="submit"]').click();
+      expect((await restoreResponse).status()).toBeLessThan(400);
+    }
+  }
+});
+
+test('enabled non-default currency without prices stays hidden from storefront context', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating currency invariant test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await loginAdmin(page);
+  await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
+  const currencyForm = page.locator('form[action="/admin/system/localization/currencies"]');
+  const rows = currencyForm.locator('tbody tr');
+  let targetCode = '';
+  let originalEnabled = false;
+
+  for (let i = 0; i < await rows.count(); i++) {
+    const row = rows.nth(i);
+    if ((await row.locator('.admin-status-pill.is-active').count()) > 0) continue;
+    const text = await row.innerText();
+    if (!/\b0\b/.test(text)) continue;
+    const toggle = row.locator('input[type="checkbox"][name$="[enabled]"]');
+    if ((await toggle.count()) === 0) continue;
+    const inputName = await toggle.getAttribute('name');
+    const match = inputName?.match(/^currency\[([A-Z]{3})\]\[enabled\]$/);
+    if (!match) continue;
+    targetCode = match[1];
+    originalEnabled = await toggle.isChecked();
+    if (!originalEnabled) await toggle.check();
+    const auto = row.locator('input[type="checkbox"][name$="[auto_convert]"]');
+    if (await auto.count()) await auto.uncheck();
+    break;
+  }
+  test.skip(targetCode === '', 'No non-default zero-price currency is available.');
+
+  try {
+    const saveResponse = page.waitForResponse((response) =>
+      response.url().includes('/admin/system/localization/currencies') && response.request().method() === 'POST'
+    );
+    await currencyForm.locator('button[type="submit"]').click();
+    expect((await saveResponse).status()).toBeLessThan(400);
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.goto('/?currency=' + targetCode, { waitUntil: 'domcontentloaded' });
+    await expectNoServerError(page);
+    await expect(page.locator('select[name="currency"] option[value="' + targetCode + '"]')).toHaveCount(0);
+    const footerContext = await page.locator('.site-footer__bottom span').last().innerText();
+    expect(footerContext).not.toContain(targetCode);
+  } finally {
+    if (!originalEnabled) {
+      await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
+      const restoreForm = page.locator('form[action="/admin/system/localization/currencies"]');
+      const toggle = restoreForm.locator('input[name="currency[' + targetCode + '][enabled]"]');
+      if (await toggle.count()) await toggle.uncheck();
+      const restoreResponse = page.waitForResponse((response) =>
+        response.url().includes('/admin/system/localization/currencies') && response.request().method() === 'POST'
+      );
+      await restoreForm.locator('button[type="submit"]').click();
+      expect((await restoreResponse).status()).toBeLessThan(400);
+    }
+  }
+});
