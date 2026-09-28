@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'seo.system_page.about.title' => 'О компании',
+    'seo.system_page.accessibility.title' => 'Доступность',
+    'seo.system_page.account.title' => 'Личный кабинет',
+    'seo.system_page.blog.title' => 'Блог',
+    'seo.system_page.brands.title' => 'Бренды',
+    'seo.system_page.cart.title' => 'Корзина',
+    'seo.system_page.catalog.title' => 'Каталог',
+    'seo.system_page.checkout.title' => 'Оформление заказа',
+    'seo.system_page.compare.title' => 'Сравнение',
+    'seo.system_page.contacts.title' => 'Контакты',
+    'seo.system_page.cookies.title' => 'Политика cookie',
+    'seo.system_page.delivery.title' => 'Доставка',
+    'seo.system_page.faq.title' => 'Частые вопросы',
+    'seo.system_page.home.title' => 'Главная',
+    'seo.system_page.login.title' => 'Вход',
+    'seo.system_page.new_products.title' => 'Новинки',
+    'seo.system_page.order_tracking.title' => 'Отслеживание заказа',
+    'seo.system_page.orders.title' => 'Мои заказы',
+    'seo.system_page.payment.title' => 'Оплата',
+    'seo.system_page.privacy.title' => 'Политика конфиденциальности',
+    'seo.system_page.register.title' => 'Регистрация',
+    'seo.system_page.return_request.title' => 'Оформить возврат',
+    'seo.system_page.returns.title' => 'Возврат и обмен',
+    'seo.system_page.search.title' => 'Поиск',
+    'seo.system_page.specials.title' => 'Акции',
+    'seo.system_page.terms.title' => 'Условия и положения',
+    'seo.system_page.warranty.title' => 'Гарантия',
+    'seo.system_page.wishlist.title' => 'Избранное',
+    'seo.home.description' => '%store% — интернет-магазин с актуальными ценами, наличием товаров, удобной оплатой и доставкой.',
+    'seo.catalog.description' => 'Каталог товаров %store%: актуальные цены, наличие, фильтры по бренду и характеристикам, быстрое оформление заказа.',
+    'seo.blog.description' => 'Блог %store%: обзоры, советы по выбору товаров и новости магазина.',
+    'checkout.error.item_price_unavailable' => 'Товар «%name%» сейчас недоступен для заказа в валюте %currency%. Удалите его из корзины или выберите другую валюту.',
+];
