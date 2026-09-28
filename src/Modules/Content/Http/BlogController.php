@@ -30,6 +30,7 @@ final class BlogController extends AbstractController
             'store_name' => $context->storeName,
             'articles' => $this->blog->latest($context->storeId, $context->locale, 24),
             'seo_head' => [
+                'description' => \Commerce\Core\I18n\CanonicalUiText::get('seo.blog.description', ['store' => $context->storeName]),
                 'canonical' => $canonical,
                 'robots' => 'index,follow,max-image-preview:large',
                 'hreflang' => [$context->locale => $canonical, 'x-default' => $canonical],
