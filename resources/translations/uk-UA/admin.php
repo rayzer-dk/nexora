@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 return [
+    'js_copied' => 'Скопійовано',
+    'js_copy_failed' => 'Не вдалося скопіювати',
+
     'admin.analytics.index.analityka' => 'Аналітика',
     'admin.analytics.index.analityka_mahazynu' => 'Аналітика магазину',
     'admin.analytics.index.atrybutsiia' => 'Атрибуція',
