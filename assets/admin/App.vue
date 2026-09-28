@@ -34,13 +34,13 @@ const dark = ref(false);
 const primary = ref('#0B63F6');
 const radius = ref(14);
 const density = ref<'compact' | 'comfortable' | 'spacious'>('comfortable');
-const fontFamily = ref<'system' | 'sans' | 'serif'>('system');
+const fontFamily = ref<'system' | 'inter' | 'manrope'>('system');
 
 const shellStyle = computed(() => ({
   '--admin-primary': primary.value,
   '--admin-radius': `${radius.value}px`,
   '--admin-density': density.value === 'compact' ? '.9' : density.value === 'spacious' ? '1.1' : '1',
-  '--admin-font': fontFamily.value === 'serif' ? 'ui-serif, Georgia, serif' : 'ui-sans-serif, system-ui, sans-serif',
+  '--admin-font': fontFamily.value === 'inter' ? 'Inter, ui-sans-serif, system-ui, sans-serif' : (fontFamily.value === 'manrope' ? 'Manrope, ui-sans-serif, system-ui, sans-serif' : 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif'),
 }));
 
 const systemStatus = [
@@ -62,12 +62,12 @@ const navigation = [
 ];
 
 const componentStatus = [
-  [t('vue.app.platforma'), '3.5.2'],
+  [t('vue.app.platforma'), '3.6.6'],
   ['PHP', '8.4–8.5'],
   ['Symfony', '8.1 stable'],
   ['Doctrine DBAL', '4.4'],
   ['Extension API', '2.0'],
-  [t('vue.app.skhema_bd'), '50'],
+  [t('vue.app.skhema_bd'), '48'],
   ['TypeScript', '6.0.3'],
 ];
 
@@ -76,7 +76,7 @@ const activity = [
   [t('vue.app.merchant_dani'), t('vue.app.taksonomiia_ta_avtomatychna_klasyfikatsiia_hotovi')],
   ['SEO URL', t('vue.app.chysti_canonical_ta_polityka_indeksatsii_filtriv')],
   [t('vue.app.systemni_moduli'), t('vue.app.zakhyshcheni_pakety_core')],
-  [t('vue.app.kompiliator'), 'TypeScript 6 toolchain'],
+  [t('vue.app.kompiliator'), 'Vite 8 + TypeScript 6'],
 ];
 </script>
 
@@ -150,7 +150,7 @@ const activity = [
                 <select v-model="density"><option value="compact">{{ t('vue.app.kompaktno') }}</option><option value="comfortable">{{ t('vue.app.zvychaino') }}</option><option value="spacious">{{ t('vue.app.prostoro') }}</option></select>
               </label>
               <label>{{ t('vue.app.typohrafika') }}
-                <select v-model="fontFamily"><option value="system">{{ t('vue.app.systemnyi_naishvydshyi') }}</option><option value="sans">{{ t('vue.app.lokalnyi_sans') }}</option><option value="serif">Serif</option></select>
+                <select v-model="fontFamily"><option value="system">System UI</option><option value="inter">Inter Variable</option><option value="manrope">Manrope Variable</option></select>
               </label>
               <div class="theme-preview"><button type="button">{{ t('vue.app.osnovna_diia') }}</button><span>{{ t('vue.app.tovar_u_naiavnosti') }}</span></div>
             </div>
