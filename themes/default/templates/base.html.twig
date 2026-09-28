@@ -12,11 +12,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="color-scheme" content="light">
-    <title>{% block title %}{{ page_title|default(store_name|default(ui_text('store'))) }}{% endblock %}</title>
+    <title>{% block title %}{{ seo_head.title|default('') ?: page_title|default(store_name|default(ui_text('store'))) }}{% endblock %}</title>
+    {% if seo_head is defined and seo_head.description|default('') %}<meta name="description" content="{{ seo_head.description }}">{% endif %}
+    {% if seo_head is defined and seo_head.title|default('') %}<meta property="og:title" content="{{ seo_head.title }}">{% endif %}
+    {% if seo_head is defined and seo_head.description|default('') %}<meta property="og:description" content="{{ seo_head.description }}">{% endif %}
+    {% if seo_head is defined and seo_head.type|default('') %}<meta property="og:type" content="{{ seo_head.type }}">{% endif %}
+    {% if seo_head is defined and seo_head.image|default('') %}<meta property="og:image" content="{{ seo_head.image }}">{% endif %}
     {% if presentation.brand.favicon %}<link rel="icon" href="{{ presentation.brand.favicon }}"><link rel="shortcut icon" href="{{ presentation.brand.favicon }}">{% endif %}
     {% if seo_head is defined and seo_head.canonical is defined %}<link rel="canonical" href="{{ seo_head.canonical }}">{% endif %}
     {% if seo_head is defined and seo_head.robots is defined %}<meta name="robots" content="{{ seo_head.robots }}">{% endif %}
     {% if seo_head is defined and seo_head.hreflang is defined %}{% for language, url in seo_head.hreflang %}<link rel="alternate" hreflang="{{ language }}" href="{{ url }}">{% endfor %}{% endif %}
+    {% if seo_head is defined and seo_head.json_ld|default(null) %}<script type="application/ld+json">{{ seo_head.json_ld|json_encode(constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>{% endif %}
     {% if presentation.theme.font == 'inter' %}<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">{% elseif presentation.theme.font == 'manrope' %}<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">{% endif %}
     <link rel="stylesheet" href="{{ vite_asset('assets/storefront/storefront.css', '/assets/storefront.css') }}">
     <style nonce="{{ app.request.attributes.get('_csp_nonce') }}">
