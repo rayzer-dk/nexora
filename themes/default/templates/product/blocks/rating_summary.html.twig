@@ -1,6 +1,6 @@
 {% if product.rating %}
-<a class="rating-summary" href="#reviews" aria-label="{{ product.rating.value }} {{ ui_text('out_of_five') }}, {{ product.rating.count }} {{ ui_text('reviews_count') }}">
-    <span class="rating-summary__score">{{ product.rating.value }}</span>
+<a class="rating-summary" href="#reviews">
+    <span class="rating-summary__score">{{ product.rating.value }}</span><span class="sr-only"> {{ ui_text('out_of_five') }},</span>
     <span aria-hidden="true">★★★★★</span>
     <span class="rating-summary__count">{{ product.rating.count }} {{ ui_text('reviews_count') }}</span>
 </a>
