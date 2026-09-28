@@ -18,6 +18,7 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin E2E credentials are required.');
 
   await loginAdmin(page);
+  page.on('dialog', async (dialog) => dialog.accept());
 
   await page.goto('/admin/system/store', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
@@ -51,7 +52,12 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   const qaSubtitle = `Nexora E2E presentation ${Date.now()}`;
   const qaRadius = originalRadius === '19' ? '20' : '19';
   await subtitle.fill(qaSubtitle);
-  await appearanceForm.locator('input[name="theme_radius"]').fill(qaRadius);
+  await appearanceForm.locator('input[name="theme_radius"]').evaluate((element, value) => {
+    const input = element as HTMLInputElement;
+    input.value = String(value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, qaRadius);
   await Promise.all([
     page.waitForURL(/\/admin\/appearance\/storefront/),
     appearanceForm.locator('button[type="submit"]').last().click(),
@@ -61,7 +67,12 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
 
   const restoreAppearance = page.locator('form.admin-storefront-form');
   await restoreAppearance.locator('input[name="brand_subtitle"]').fill(originalSubtitle);
-  await restoreAppearance.locator('input[name="theme_radius"]').fill(originalRadius);
+  await restoreAppearance.locator('input[name="theme_radius"]').evaluate((element, value) => {
+    const input = element as HTMLInputElement;
+    input.value = String(value);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, originalRadius);
   await Promise.all([
     page.waitForURL(/\/admin\/appearance\/storefront/),
     restoreAppearance.locator('button[type="submit"]').last().click(),
