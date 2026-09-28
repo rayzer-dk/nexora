@@ -1,4 +1,12 @@
 ## 3.5.0 — 2026-09-26
+## 3.6.6 - 2026-09-28
+
+- Removed SQL accidentally extracted into a translation catalog and added a regression gate.
+- Added immediate built-in search refresh after category changes.
+- Hardened storefront DOM updates and appearance preset JSON handling against XSS sinks.
+- Closed remaining installer/runtime i18n hardcode debt.
+- Synchronized release metadata with the actual frontend and QA stack.
+
 
 - Full-audit hardening: fixed missing RBAC mappings for Universal Import, multilingual export, SEO redirect manager and Nova Poshta shipment actions; `admin-access-check.php` now audits every discovered Symfony admin route against the real permission resolver.
 - Trusted extension migrations are now reversible-only (`up` + `down`). Failed activation compensates newly applied migrations, downgrade is forced through rollback, and rollback reverses the newer version delta before activating the previous version.
