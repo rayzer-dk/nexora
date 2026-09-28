@@ -9,6 +9,7 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   const email = `e2e-customer-${suffix}@example.test`;
   const password = 'Nexora-Customer-2026!';
   const displayName = `E2E Customer ${suffix}`;
+  const forumTopicTitle = `E2E forum topic ${suffix}`;
 
   const catalogResponse = await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   expect(catalogResponse?.status() ?? 0).toBeLessThan(500);
@@ -120,7 +121,7 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   await page.locator('[data-forum-compose-open]').click();
   const topicForm = page.locator('form[action="/forum/general/topics"]');
   await expect(topicForm).toBeVisible();
-  await topicForm.locator('input[name="title"]').fill(`E2E forum topic ${suffix}`);
+  await topicForm.locator('input[name="title"]').fill(forumTopicTitle);
   await topicForm.locator('textarea[name="body"]').fill('Автоматичний E2E тест створення теми форуму після реєстрації та підтвердження клієнта.');
   await page.waitForTimeout(1100);
   const topicResponsePromise = page.waitForResponse((response) =>
@@ -132,4 +133,60 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   await page.waitForLoadState('domcontentloaded');
   await expectNoServerError(page);
   await expect(page.locator('.store-notice.is-success')).toBeVisible();
+
+  await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.forum-topic-row').filter({ hasText: forumTopicTitle })).toHaveCount(0);
+
+  if (process.env.E2E_ADMIN_EMAIL && process.env.E2E_ADMIN_PASSWORD) {
+    await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
+    await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL);
+    await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD);
+    await Promise.all([
+      page.waitForURL(/\/admin(?:\/|$)/),
+      page.locator('button[type="submit"]').click(),
+    ]);
+
+    await page.goto('/admin/forum', { waitUntil: 'domcontentloaded' });
+    const pending = page.locator('table.admin-table tbody tr').filter({ hasText: forumTopicTitle }).first();
+    await expect(pending).toBeVisible();
+    const approve = pending.locator('form[action$="/approve"]');
+    const approveResponsePromise = page.waitForResponse((response) =>
+      response.url().includes('/admin/forum/topics/') && response.url().endsWith('/approve') && response.request().method() === 'POST'
+    );
+    await approve.locator('button[type="submit"]').click();
+    expect((await approveResponsePromise).status()).toBeLessThan(400);
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
+    const publicTopic = page.locator('.forum-topic-row').filter({ hasText: forumTopicTitle });
+    await expect(publicTopic).toBeVisible();
+    await expect(publicTopic.locator('.forum-lock')).toHaveCount(0);
+
+    await page.goto('/admin/forum', { waitUntil: 'domcontentloaded' });
+    const published = page.locator('table.admin-table tbody tr').filter({ hasText: forumTopicTitle }).last();
+    await expect(published).toBeVisible();
+    const lock = published.locator('form[action$="/lock"]');
+    const lockResponsePromise = page.waitForResponse((response) =>
+      response.url().includes('/admin/forum/topics/') && response.url().endsWith('/lock') && response.request().method() === 'POST'
+    );
+    await lock.locator('button[type="submit"]').click();
+    expect((await lockResponsePromise).status()).toBeLessThan(400);
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('.forum-topic-row').filter({ hasText: forumTopicTitle }).locator('.forum-lock')).toBeVisible();
+
+    await page.goto('/admin/forum', { waitUntil: 'domcontentloaded' });
+    const locked = page.locator('table.admin-table tbody tr').filter({ hasText: forumTopicTitle }).last();
+    const unlock = locked.locator('form[action$="/unlock"]');
+    const unlockResponsePromise = page.waitForResponse((response) =>
+      response.url().includes('/admin/forum/topics/') && response.url().endsWith('/unlock') && response.request().method() === 'POST'
+    );
+    await unlock.locator('button[type="submit"]').click();
+    expect((await unlockResponsePromise).status()).toBeLessThan(400);
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('.forum-topic-row').filter({ hasText: forumTopicTitle }).locator('.forum-lock')).toHaveCount(0);
+  }
 });
