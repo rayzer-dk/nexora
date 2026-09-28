@@ -2,7 +2,7 @@ name: Build Nexora production package
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop/3.6.5-canonical]
   workflow_dispatch:
 
 permissions:
@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -31,27 +33,78 @@ jobs:
         run: php bin/release-contract-check.php --production
       - name: Validate one-upload runtime package
         run: php bin/release-check.php
-      - name: Build production archive
+      - name: Build production and 3.5.1 update archives
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf package-root
-          mkdir package-root
+          BASE_351='cb36abc28a08b149a21337228e5d5836b064aacd'
+          rm -rf package-root update-root
+          mkdir package-root update-root
+
           rsync -a ./ package-root/ \
             --exclude '.git/' \
             --exclude '.github/' \
             --exclude 'node_modules/' \
             --exclude 'package-root/' \
-            --exclude 'Nexora_Commerce_v3.6.5_Production_CI.zip'
+            --exclude 'update-root/' \
+            --exclude 'Nexora_Commerce_v3.6.5_Production_CI.zip' \
+            --exclude 'Nexora_v3.5.1_to_v3.6.5_Update.zip'
+
+          git diff --name-status "$BASE_351"..HEAD > CHANGES_FROM_3.5.1.txt
+          git diff --name-only --diff-filter=ACMRT "$BASE_351"..HEAD > CHANGED_FILES.txt
+          git diff --name-only --diff-filter=D "$BASE_351"..HEAD > DELETED_FILES.txt
+
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            [ -e "$path" ] || continue
+            mkdir -p "update-root/$(dirname "$path")"
+            cp -a "$path" "update-root/$path"
+          done < CHANGED_FILES.txt
+
+          # Keep runtime dependencies and compiled assets coherent with 3.6.5.
+          cp -a vendor update-root/vendor
+          mkdir -p update-root/public
+          cp -a public/build update-root/public/build
+          cp -a composer.lock package-lock.json update-root/
+          cp -a CHANGES_FROM_3.5.1.txt CHANGED_FILES.txt DELETED_FILES.txt update-root/
+
+          cat > update-root/UPDATE_FROM_3.5.1.txt <<'EOF'
+Nexora Commerce update 3.5.1 -> 3.6.5
+
+1. Make a full backup of files and database.
+2. Copy this archive over the existing installation.
+3. Remove paths listed in DELETED_FILES.txt if they still exist.
+4. Run database migrations according to the normal Nexora update procedure.
+5. Clear application cache and PHP OPcache/CDN cache when applicable.
+6. Verify storefront, admin login, cart, checkout and scheduled tasks.
+
+This package includes the complete vendor directory and compiled public/build assets
+so runtime dependencies match Nexora Commerce 3.6.5.
+EOF
+
           cd package-root
           zip -qr ../Nexora_Commerce_v3.6.5_Production_CI.zip .
+          cd ../update-root
+          zip -qr ../Nexora_v3.5.1_to_v3.6.5_Update.zip .
           cd ..
+
           sha256sum Nexora_Commerce_v3.6.5_Production_CI.zip > Nexora_Commerce_v3.6.5_Production_CI.zip.sha256
+          sha256sum Nexora_v3.5.1_to_v3.6.5_Update.zip > Nexora_v3.5.1_to_v3.6.5_Update.zip.sha256
+
       - uses: actions/upload-artifact@v4
         with:
           name: Nexora_Commerce_v3.6.5_Production_CI
           path: |
             Nexora_Commerce_v3.6.5_Production_CI.zip
             Nexora_Commerce_v3.6.5_Production_CI.zip.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nexora_v3.5.1_to_v3.6.5_Update
+          path: |
+            Nexora_v3.5.1_to_v3.6.5_Update.zip
+            Nexora_v3.5.1_to_v3.6.5_Update.zip.sha256
           if-no-files-found: error
           retention-days: 7
