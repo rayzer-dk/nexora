@@ -1,0 +1,14 @@
+{
+  "code": "e2e.qa.module",
+  "name": "Nexora E2E QA Module",
+  "version": "1.0.0",
+  "type": "app",
+  "core": "3.6.6",
+  "extension_api": "2.0",
+  "permissions": [],
+  "execution": "declarative",
+  "capabilities": [],
+  "commercial": {
+    "model": "free"
+  }
+}
