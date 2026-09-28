@@ -11,10 +11,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'commerce:search:reindex', description: 'Rebuild the optional Meilisearch index from canonical storefront data.')]
+#[AsCommand(name: 'commerce:search:reindex', description: 'Rebuild the built-in search index (and Meilisearch when configured) from canonical catalog data.')]
 final class SearchReindexCommand extends Command
 {
-    public function __construct(private readonly MeilisearchProductIndexer $indexer)
+    public function __construct(private readonly MeilisearchProductIndexer $indexer, private readonly \Commerce\Modules\Search\Application\SqlSearchIndex $sqlIndex)
     {
         parent::__construct();
     }
@@ -26,8 +26,9 @@ final class SearchReindexCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $sql = $this->sqlIndex->rebuildAll(max(50, (int) $input->getOption('batch')));
+        $output->writeln(sprintf('sql index: documents=%d terms=%d', $sql['documents'], $sql['terms']));
         if (!$this->indexer->isEnabled()) {
-            $output->writeln('<comment>Meilisearch is disabled. SQL search remains active.</comment>');
             return Command::SUCCESS;
         }
         $result = $this->indexer->rebuildAll((int)$input->getOption('batch'));
