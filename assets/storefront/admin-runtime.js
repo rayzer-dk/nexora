@@ -85,21 +85,35 @@ function initConfirmations() {
     }
   });
 
+  const open = (trigger, text) => {
+    pending = trigger;
+    message.textContent = text || t('js_confirm_question');
+    modal.hidden = false;
+    requestAnimationFrame(() => modal.classList.add('is-open'));
+    document.body.classList.add('has-admin-modal');
+    accept.focus();
+  };
+  // Forms carrying data-confirm are confirmed on submit (buttons and Enter alike); inline handlers are blocked by CSP.
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-confirm')) return;
+    if (form.dataset.confirmedSubmit === '1') {
+      delete form.dataset.confirmedSubmit;
+      return;
+    }
+    event.preventDefault();
+    open(event.submitter || form, form.dataset.confirm);
+  });
   document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-confirm]');
-    if (!trigger) return;
+    if (!trigger || trigger.tagName === 'FORM') return;
     const form = trigger.form || trigger.closest('form');
     if (form?.dataset.confirmedSubmit === '1') {
       delete form.dataset.confirmedSubmit;
       return;
     }
     event.preventDefault();
-    pending = trigger;
-    message.textContent = trigger.dataset.confirm || t('js_confirm_question');
-    modal.hidden = false;
-    requestAnimationFrame(() => modal.classList.add('is-open'));
-    document.body.classList.add('has-admin-modal');
-    accept.focus();
+    open(trigger, trigger.dataset.confirm);
   });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !modal.hidden) close();
@@ -292,6 +306,13 @@ function initQuickPreview() {
   });
 }
 
+function initAutoSubmit() {
+  document.addEventListener('change', (event) => {
+    const field = event.target.closest('[data-autosubmit]');
+    if (field?.form) field.form.requestSubmit();
+  });
+}
+
 function initFileLabels() {
   qa('.admin-dropzone input[type="file"]').forEach((input) => {
     input.addEventListener('change', () => {
@@ -305,6 +326,7 @@ function initFileLabels() {
 document.addEventListener('DOMContentLoaded', () => {
   initFlashToasts();
   initConfirmations();
+  initAutoSubmit();
   initDirtyGuard();
   initImagePreviews();
   initSidebar();

@@ -240,6 +240,19 @@ function initMobileNavigation() {
   });
 }
 
+// Declarative helpers instead of inline handlers, which the Content-Security-Policy blocks.
+document.addEventListener('click', (event) => {
+  if (event.target.closest('[data-print]')) window.print();
+});
+document.addEventListener('change', (event) => {
+  const field = event.target.closest('[data-autosubmit]');
+  if (field?.form) field.form.requestSubmit();
+});
+document.addEventListener('submit', (event) => {
+  const form = event.target;
+  if (form instanceof HTMLFormElement && form.dataset.confirm && !window.confirm(form.dataset.confirm)) event.preventDefault();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   try { initStoreNotices(); } catch (_) {}
   try { initForumCompose(); } catch (_) {}
