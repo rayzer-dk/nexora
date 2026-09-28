@@ -40,7 +40,7 @@ const shellStyle = computed(() => ({
   '--admin-primary': primary.value,
   '--admin-radius': `${radius.value}px`,
   '--admin-density': density.value === 'compact' ? '.9' : density.value === 'spacious' ? '1.1' : '1',
-  '--admin-font': fontFamily.value === 'inter' ? 'Inter, ui-sans-serif, system-ui, sans-serif' : (fontFamily.value === 'manrope' ? 'Manrope, ui-sans-serif, system-ui, sans-serif' : 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif'),
+  '--admin-font': fontFamily.value === 'inter' ? 'Inter, ui-sans-serif, system-ui, sans-serif' : (fontFamily.value === 'manrope' ? 'Manrope, ui-sans-serif, system-ui, sans-serif' : 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'),
 }));
 
 const systemStatus = [
