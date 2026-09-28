@@ -8,6 +8,7 @@
     <title>{{ title }} · Nexora Commerce</title>
     <link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
     <link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-runtime.css', '/assets/admin-runtime.css') }}">
+    <script type="module" src="{{ vite_asset('assets/admin/main.ts', '/assets/admin.js') }}"></script>
     {% if feature in ['builder','media'] %}<link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-builder-media.css', '/assets/admin-builder-media.css') }}">{% endif %}
 </head>
 <body class="admin-runtime" data-admin-runtime>
