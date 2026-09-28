@@ -519,3 +519,57 @@ test('storefront order is fully operable from admin lifecycle actions', async ({
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('.admin-runtime__metrics')).toContainText('completed');
 });
+
+
+test('system information page content and SEO fields render exactly on storefront', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating content contract test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await loginAdmin(page);
+  await page.goto('/admin/content/pages/about', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+
+  const token = await page.locator('input[name="_token"]').inputValue();
+  const original = {
+    title: await page.locator('input[name="title"]').inputValue(),
+    excerpt: await page.locator('textarea[name="excerpt"]').inputValue(),
+    body_html: await page.locator('textarea[name="body_html"]').inputValue(),
+    meta_title: await page.locator('input[name="meta_title"]').inputValue(),
+    meta_description: await page.locator('textarea[name="meta_description"]').inputValue(),
+    status: await page.locator('select[name="status"]').inputValue(),
+  };
+  const marker = `E2E information page ${Date.now()}`;
+  const metaMarker = `E2E meta ${Date.now()}`;
+
+  const save = await page.request.post('/admin/content/pages/about', {
+    maxRedirects: 0,
+    form: {
+      _token: token,
+      title: marker,
+      excerpt: marker,
+      body_html: `<p><strong>${marker}</strong></p>`,
+      meta_title: metaMarker,
+      meta_description: `${metaMarker} description`,
+      status: 'published',
+    },
+  });
+  expect(save.status()).toBeGreaterThanOrEqual(300);
+  expect(save.status()).toBeLessThan(400);
+
+  const publicResponse = await page.goto('/about-us', { waitUntil: 'domcontentloaded' });
+  expect(publicResponse?.status()).toBe(200);
+  await expectNoServerError(page);
+  await expect(page.locator('.content-page h1')).toHaveText(marker);
+  await expect(page.locator('.content-page .rich-content')).toContainText(marker);
+  await expect(page).toHaveTitle(metaMarker);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', `${metaMarker} description`);
+
+  await page.goto('/admin/content/pages/about', { waitUntil: 'domcontentloaded' });
+  const restoreToken = await page.locator('input[name="_token"]').inputValue();
+  const restore = await page.request.post('/admin/content/pages/about', {
+    maxRedirects: 0,
+    form: { _token: restoreToken, ...original },
+  });
+  expect(restore.status()).toBeGreaterThanOrEqual(300);
+  expect(restore.status()).toBeLessThan(400);
+});
