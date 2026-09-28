@@ -5,10 +5,10 @@
     <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
     <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
     <commerce-quantity class="quantity">
-        <button type="button" data-qty-minus aria-label="{{ ui_text('decrease') }}">−</button>
+        <button type="button" data-qty-minus aria-label="{{ ui_text('decrease') }}">{{ ui_icon('minus', 18) }}</button>
         <input name="quantity" data-qty-input type="number" min="{{ quantity.min }}" step="{{ quantity.step }}" value="{{ quantity.min }}"{% if quantity.max %} max="{{ quantity.max }}"{% endif %} inputmode="decimal" aria-label="{{ ui_text('quantity') }}">
         <span class="quantity__unit" aria-hidden="true">{{ quantity.unit_label }}</span>
-        <button type="button" data-qty-plus aria-label="{{ ui_text('increase') }}">+</button>
+        <button type="button" data-qty-plus aria-label="{{ ui_text('increase') }}">{{ ui_icon('plus', 18) }}</button>
     </commerce-quantity>
     <button class="buy-primary" type="submit" data-primary-buy>{{ product.purchase_button_label|default(ui_text('add_cart')) }}</button>
     <button class="buy-now" type="submit" name="next" value="checkout">{{ ui_text('buy_now') }}</button>
