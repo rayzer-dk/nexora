@@ -17,7 +17,7 @@
       {% endif %}
     {% elseif layout_block.component == 'product_grid' %}
       {% include '@storefront/home/blocks/products.html.twig' %}
-      {% if demo_showcase and demo_showcase.promos %}
+      {% if presentation.home.show_promos and demo_showcase and demo_showcase.promos %}
       <section class="shell demo-promo-grid" aria-label="{{ ui_text('collections') }}">
       {% for promo in demo_showcase.promos %}<a class="demo-promo-card demo-promo-card--{{ promo.tone }}" href="{{ promo.url }}"><img src="{{ promo.image }}" alt="" width="900" height="520" loading="lazy" decoding="async"><div><small>{{ promo.eyebrow }}</small><h2>{{ promo.title }}</h2><p>{{ promo.text }}</p><span>{{ ui_text('view_arrow') }}</span></div></a>{% endfor %}
       </section>
