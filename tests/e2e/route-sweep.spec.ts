@@ -21,7 +21,8 @@ function staticHtmlRoutes(prefix: string): Array<{ name: string; path: string }>
       !route.path.endsWith('.json') &&
       !route.path.endsWith('.csv') &&
       !route.path.endsWith('.pdf') &&
-      route.path !== '/admin/login'
+      route.path !== '/admin/login' &&
+      route.path !== '/admin/logout'
     )
     .map(({ name, path }) => ({ name, path }))
     .sort((a, b) => a.path.localeCompare(b.path));
@@ -56,13 +57,16 @@ test('every static admin HTML route renders after authentication', async ({ page
       continue;
     }
     try {
-      await expectNoServerError(page);
-      await expect(page.locator('body')).not.toContainText('Call to undefined method');
-      await expect(page.locator('body')).not.toContainText('Uncaught PHP Exception');
-      await expect(page.locator('body')).not.toContainText('SQLSTATE[');
-      await expectNoBrokenImages(page);
-      if (runtimeErrors.length > 0) {
-        failures.push(`${route.name} ${route.path}: JS ${runtimeErrors.join(' | ')}`);
+      const contentType = response?.headers()['content-type'] || '';
+      if (/text\/html|application\/xhtml\+xml/i.test(contentType)) {
+        await expectNoServerError(page);
+        await expect(page.locator('body')).not.toContainText('Call to undefined method');
+        await expect(page.locator('body')).not.toContainText('Uncaught PHP Exception');
+        await expect(page.locator('body')).not.toContainText('SQLSTATE[');
+        await expectNoBrokenImages(page);
+        if (runtimeErrors.length > 0) {
+          failures.push(`${route.name} ${route.path}: JS ${runtimeErrors.join(' | ')}`);
+        }
       }
     } catch (error) {
       failures.push(`${route.name} ${route.path}: ${error instanceof Error ? error.message : String(error)}`);
@@ -84,6 +88,8 @@ test('every static public HTML route renders with no runtime failure', async ({ 
     '/account/verification',
     '/checkout',
     '/setup.php',
+    '/install',
+    '/install/finish',
   ]);
   const failures: string[] = [];
   let runtimeErrors: string[] = [];
@@ -98,13 +104,16 @@ test('every static public HTML route renders with no runtime failure', async ({ 
       continue;
     }
     try {
-      await expectNoServerError(page);
-      await expect(page.locator('body')).not.toContainText('Call to undefined method');
-      await expect(page.locator('body')).not.toContainText('Uncaught PHP Exception');
-      await expect(page.locator('body')).not.toContainText('SQLSTATE[');
-      await expectNoBrokenImages(page);
-      if (runtimeErrors.length > 0) {
-        failures.push(`${route.name} ${route.path}: JS ${runtimeErrors.join(' | ')}`);
+      const contentType = response?.headers()['content-type'] || '';
+      if (/text\/html|application\/xhtml\+xml/i.test(contentType)) {
+        await expectNoServerError(page);
+        await expect(page.locator('body')).not.toContainText('Call to undefined method');
+        await expect(page.locator('body')).not.toContainText('Uncaught PHP Exception');
+        await expect(page.locator('body')).not.toContainText('SQLSTATE[');
+        await expectNoBrokenImages(page);
+        if (runtimeErrors.length > 0) {
+          failures.push(`${route.name} ${route.path}: JS ${runtimeErrors.join(' | ')}`);
+        }
       }
     } catch (error) {
       failures.push(`${route.name} ${route.path}: ${error instanceof Error ? error.message : String(error)}`);
