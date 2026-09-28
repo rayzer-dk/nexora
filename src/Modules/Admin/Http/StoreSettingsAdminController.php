@@ -56,7 +56,9 @@ final class StoreSettingsAdminController extends AbstractController
                 ], $this->actor());
                 $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.storesettingsadmincontroller.dani_mahazynu_zberezheno_atomarno_poperednia_konfihu'));
             } catch (Throwable $e) {
-                $this->logger->error('Store settings save failed.', [
+                $this->logger->error('Store settings save failed: {exception_class}: {exception_message}', [
+                    'exception_class' => $e::class,
+                    'exception_message' => $e->getMessage(),
                     'exception' => $e,
                     'store_id' => $context->storeId,
                 ]);
