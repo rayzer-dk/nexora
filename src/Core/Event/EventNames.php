@@ -40,6 +40,8 @@ final class EventNames
 
     public const PRODUCT_CREATED = 'commerce.catalog.product_created';
     public const PRODUCT_UPDATED = 'commerce.catalog.product_updated';
+    public const CATEGORY_CREATED = 'commerce.catalog.category_created';
+    public const CATEGORY_UPDATED = 'commerce.catalog.category_updated';
 
     private function __construct()
     {
