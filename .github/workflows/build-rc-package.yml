@@ -2,7 +2,8 @@ name: Build Nexora production package
 
 on:
   push:
-    branches: [main, develop/3.6.6-canonical]
+    branches: [main, develop/3.6.5-canonical]
+  pull_request:
   workflow_dispatch:
 
 permissions:
