@@ -768,3 +768,90 @@ test('recovery snapshot can be created, verified, downloaded and deleted from ad
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('table.admin-table tbody tr').filter({ hasText: 'manual-admin-database' })).toHaveCount(0);
 });
+
+
+test('Product Builder publication changes the real product page and restores cleanly', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating product builder contract runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const productUrl = await page.locator('[data-product-card] h2 a').first().getAttribute('href');
+  expect(productUrl).toBeTruthy();
+
+  await loginAdmin(page);
+  await page.goto('/admin/appearance/builder/product', { waitUntil: 'domcontentloaded' });
+  const token = await page.locator('input[name="_csrf_token"]').inputValue();
+  const originalRaw = await page.locator('textarea[name="layout_json"]').inputValue();
+  const layout = JSON.parse(originalRaw);
+  const description = layout.blocks?.find((row: { component?: string }) => row.component === 'product_description');
+  test.skip(!description, 'Current product layout has no description component to exercise.');
+  description.enabled = false;
+
+  const save = await page.request.post('/admin/appearance/builder/product', {
+    maxRedirects: 0,
+    form: { _csrf_token: token, layout_json: JSON.stringify(layout), builder_action: 'publish' },
+  });
+  expect(save.status()).toBeGreaterThanOrEqual(300);
+  expect(save.status()).toBeLessThan(400);
+
+  try {
+    await page.goto(productUrl!, { waitUntil: 'domcontentloaded' });
+    await expectNoServerError(page);
+    await expect(page.locator('.product-block--description')).toHaveCount(0);
+  } finally {
+    await page.goto('/admin/appearance/builder/product', { waitUntil: 'domcontentloaded' });
+    const restoreToken = await page.locator('input[name="_csrf_token"]').inputValue();
+    const restore = await page.request.post('/admin/appearance/builder/product', {
+      maxRedirects: 0,
+      form: { _csrf_token: restoreToken, layout_json: originalRaw, builder_action: 'publish' },
+    });
+    expect(restore.status()).toBeGreaterThanOrEqual(300);
+    expect(restore.status()).toBeLessThan(400);
+  }
+});
+
+test('Checkout Builder publication changes the real checkout page and restores cleanly', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating checkout builder contract runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const card = page.locator('[data-product-card]').filter({ has: page.locator('form[data-card-add-to-cart]') }).first();
+  await expect(card).toBeVisible();
+  const addResponse = page.waitForResponse((response) =>
+    response.url().endsWith('/cart/add') && response.request().method() === 'POST'
+  );
+  await card.locator('form[data-card-add-to-cart] button[type="submit"]').click();
+  expect((await addResponse).status()).toBeLessThan(400);
+
+  await loginAdmin(page);
+  await page.goto('/admin/appearance/builder/checkout', { waitUntil: 'domcontentloaded' });
+  const token = await page.locator('input[name="_csrf_token"]').inputValue();
+  const originalRaw = await page.locator('textarea[name="layout_json"]').inputValue();
+  const layout = JSON.parse(originalRaw);
+  const comment = layout.blocks?.find((row: { component?: string }) => row.component === 'checkout_comment');
+  test.skip(!comment, 'Current checkout layout has no optional comment component to exercise.');
+  comment.enabled = false;
+
+  const save = await page.request.post('/admin/appearance/builder/checkout', {
+    maxRedirects: 0,
+    form: { _csrf_token: token, layout_json: JSON.stringify(layout), builder_action: 'publish' },
+  });
+  expect(save.status()).toBeGreaterThanOrEqual(300);
+  expect(save.status()).toBeLessThan(400);
+
+  try {
+    const checkout = await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+    expect(checkout?.status()).toBeLessThan(400);
+    await expectNoServerError(page);
+    await expect(page.locator('[data-checkout-block="comment"],textarea[name="customer_comment"]')).toHaveCount(0);
+  } finally {
+    await page.goto('/admin/appearance/builder/checkout', { waitUntil: 'domcontentloaded' });
+    const restoreToken = await page.locator('input[name="_csrf_token"]').inputValue();
+    const restore = await page.request.post('/admin/appearance/builder/checkout', {
+      maxRedirects: 0,
+      form: { _csrf_token: restoreToken, layout_json: originalRaw, builder_action: 'publish' },
+    });
+    expect(restore.status()).toBeGreaterThanOrEqual(300);
+    expect(restore.status()).toBeLessThan(400);
+  }
+});
