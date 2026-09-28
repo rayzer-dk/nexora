@@ -236,7 +236,7 @@ final readonly class StoreIdentitySettings
     private function defaults(): array
     {
         return [
-            'name' => 'Modern Shop',
+            'name' => 'Nexora Commerce',
             'default_locale' => 'uk-UA',
             'default_currency' => 'UAH',
             'timezone' => 'Europe/Kyiv',
