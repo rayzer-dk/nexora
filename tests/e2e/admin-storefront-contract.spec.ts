@@ -573,3 +573,40 @@ test('system information page content and SEO fields render exactly on storefron
   expect(restore.status()).toBeGreaterThanOrEqual(300);
   expect(restore.status()).toBeLessThan(400);
 });
+
+
+test('generated JSON feed matches published storefront catalog data', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating feed contract test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const card = page.locator('[data-product-card]').first();
+  await expect(card).toBeVisible();
+  const skuText = await card.locator('.catalog-card__meta span').first().innerText();
+  const sku = skuText.replace(/^SKU\s*/i, '').trim();
+  expect(sku).not.toBe('');
+
+  await loginAdmin(page);
+  await page.goto('/admin/commerce/feeds', { waitUntil: 'domcontentloaded' });
+  const generateForm = page.locator('form[action="/admin/commerce/feeds/json/generate"]');
+  await expect(generateForm).toBeVisible();
+  const generateResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/admin/commerce/feeds/json/generate') && response.request().method() === 'POST'
+  );
+  await generateForm.locator('button[type="submit"]').click();
+  expect((await generateResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
+
+  const urlField = page.locator('input[readonly][value*="/feeds/"][value*="/json?locale="]');
+  await expect(urlField).toBeVisible();
+  const feedUrl = await urlField.inputValue();
+  const feedResponse = await page.request.get(feedUrl);
+  expect(feedResponse.status()).toBe(200);
+  expect(feedResponse.headers()['content-type']).toContain('application/json');
+  const payload = await feedResponse.json();
+  expect(Array.isArray(payload.products)).toBe(true);
+  expect(payload.products.length).toBeGreaterThan(0);
+  expect(Number(feedResponse.headers()['x-feed-items'] || -1)).toBe(payload.products.length);
+  expect(JSON.stringify(payload.products)).toContain(sku);
+});
