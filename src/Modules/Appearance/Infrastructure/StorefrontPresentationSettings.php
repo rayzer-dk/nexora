@@ -62,10 +62,10 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'support' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.pidtrymka_24_7'),
             ],
             'brand' => [
-                'title' => 'Nexora Commerce',
+                'title' => '',
                 'subtitle' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.suchasni_rishennia_dlia_krashchoho_zhyttia'),
                 'logo' => '',
-                'icon' => '/assets/branding/nexora-mark.svg',
+                'icon' => '',
                 'favicon' => '',
             ],
             'theme' => [
