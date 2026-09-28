@@ -43,7 +43,9 @@ final class LayoutSchemaValidator
             }
             $knownExtension = $this->extensions?->hasBuilderComponent($component, $layoutType) ?? false;
             $missingExtension = str_starts_with($component, 'extension.') && preg_match('/^extension\.[a-z0-9_]+\.[a-z][a-z0-9_.-]{0,95}$/D', $component) === 1 && !$knownExtension;
-            if (!in_array($component, self::ALLOWED_COMPONENTS, true) && !$knownExtension && !$missingExtension) {
+            $allowedBuiltIn = in_array($component, self::ALLOWED_COMPONENTS, true)
+                && ($layoutType === null || in_array($component, $this->allowedForType($layoutType), true));
+            if (!$allowedBuiltIn && !$knownExtension && !$missingExtension) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.f55134ecaa1c') . $component);
             }
             $props = is_array($block['props'] ?? null) ? $block['props'] : [];
@@ -64,6 +66,19 @@ final class LayoutSchemaValidator
             $ids[$id] = true;
         }
         return ['schema_version' => 1, 'blocks' => $normalized];
+    }
+
+    /** @return list<string> */
+    private function allowedForType(string $layoutType): array
+    {
+        return match ($layoutType) {
+            'home' => ['hero','category_grid','product_grid','article_grid'],
+            'header' => ['logo','search','catalog_button','menu','language','currency','account','wishlist','cart','button'],
+            'footer' => ['logo','menu','contacts','social_links','newsletter','button'],
+            'product' => ['product_gallery','product_title','product_price','product_stock','product_variants','product_buy','product_description','product_attributes','product_documents','product_reviews','related_products','rich_text','image','info_card'],
+            'checkout' => ['checkout_contact','checkout_shipping','checkout_company','checkout_comment','checkout_payment','checkout_coupon','checkout_summary','checkout_consent'],
+            default => [],
+        };
     }
 
     /** @param array<mixed> $map @return array<string,mixed> */
