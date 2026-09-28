@@ -147,3 +147,87 @@ test('rich product description editor saves through the standard form and render
   }, originalDescription);
   await submitAndWait(page, 'form.admin-editor-form', editUrl!);
 });
+
+
+test('custom header navigation created in admin appears on storefront and can be removed', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating storefront contract test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await loginAdmin(page);
+  const marker = `E2E Nav ${Date.now()}`;
+  await page.goto('/admin/appearance/navigation?menu=header', { waitUntil: 'domcontentloaded' });
+  const form = page.locator('form[action="/admin/appearance/navigation/save"]');
+  await expect(form).toBeVisible();
+  await form.locator('select[name="item_type"]').selectOption('custom');
+  await form.locator('input[name="url"]').fill('/catalog');
+  const label = form.locator('input[name^="label["]').first();
+  await label.fill(marker);
+  const responsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/appearance/navigation/save') && response.request().method() === 'POST'
+  );
+  await form.locator('button[type="submit"]').click();
+  expect((await responsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-notice.is-error,.store-notice.is-error')).toHaveCount(0);
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.reference-category-nav').getByText(marker, { exact: true })).toBeVisible();
+
+  await page.goto('/admin/appearance/navigation?menu=header', { waitUntil: 'domcontentloaded' });
+  const row = page.locator('table.admin-table tbody tr').filter({ hasText: marker });
+  await expect(row).toBeVisible();
+  const deleteForm = row.locator('form[action*="/delete"]');
+  const deleteResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/appearance/navigation/') && response.url().endsWith('/delete') && response.request().method() === 'POST'
+  );
+  await deleteForm.locator('button[type="submit"]').click();
+  expect((await deleteResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.reference-category-nav').getByText(marker, { exact: true })).toHaveCount(0);
+});
+
+test('admin search synonym changes real catalog search and deletion removes the configured group', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating storefront contract test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const card = page.locator('[data-product-card]').first();
+  await expect(card).toBeVisible();
+  const productName = (await card.locator('h2 a').innerText()).trim();
+  const skuText = await card.locator('.catalog-card__meta span').first().innerText();
+  const sku = skuText.replace(/^SKU\s*/i, '').trim();
+  expect(sku).not.toBe('');
+
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/search', { waitUntil: 'domcontentloaded' });
+  const fakeTerm = `e2esynonym${Date.now()}`;
+  const label = `E2E Synonym ${Date.now()}`;
+  const form = page.locator('form[action="/admin/catalog/search/synonyms/create"]');
+  await form.locator('input[name="label"]').fill(label);
+  await form.locator('textarea[name="terms"]').fill(`${fakeTerm}\n${sku}`);
+  const createResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/catalog/search/synonyms/create') && response.request().method() === 'POST'
+  );
+  await form.locator('button[type="submit"]').click();
+  expect((await createResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
+
+  await page.goto('/catalog?q=' + encodeURIComponent(fakeTerm), { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('[data-product-card]').filter({ hasText: productName }).first()).toBeVisible();
+
+  await page.goto('/admin/catalog/search', { waitUntil: 'domcontentloaded' });
+  const group = page.locator('.admin-editor-card').filter({ hasText: label });
+  await expect(group).toBeVisible();
+  const deleteForm = group.locator('form[action*="/synonyms/"][action$="/delete"]');
+  const deleteResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/catalog/search/synonyms/') && response.url().endsWith('/delete') && response.request().method() === 'POST'
+  );
+  await deleteForm.locator('button[type="submit"]').click();
+  expect((await deleteResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByText(label, { exact: true })).toHaveCount(0);
+});
