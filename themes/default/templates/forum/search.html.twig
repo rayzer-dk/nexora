@@ -3,7 +3,7 @@
 <section class="forum-shell shell">
     <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ ui_text('forum_search') }}</span></nav>
     <header class="forum-hero forum-hero--compact">
-        <div><span class="forum-kicker">Community</span><h1>{{ ui_text('forum_search') }}</h1><p>{{ ui_text('forum_search_intro') }}</p></div>
+        <div><span class="forum-kicker">{{ ui_text('forum_kicker_community') }}</span><h1>{{ ui_text('forum_search') }}</h1><p>{{ ui_text('forum_search_intro') }}</p></div>
         <form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" value="{{ query }}" minlength="2" required placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button type="submit" class="forum-primary-button">{{ ui_text('search') }}</button></form>
     </header>
     {% if query %}

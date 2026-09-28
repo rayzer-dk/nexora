@@ -31,7 +31,7 @@ return [
     'api.cli.revoke.not_found' => 'Не знайдено рівно одного активного токена з таким префіксом.',
     'api.cli.revoke.done' => 'API-токен відкликано.',
     'api.openapi.authentication' => 'Bearer-токен',
-    'api.openapi.title' => 'Public API Nexora Commerce',
+    'api.openapi.title' => 'Публічний API Nexora Commerce',
     'api.openapi.products_list' => 'Список опублікованих товарів.',
     'api.openapi.product_collection' => 'Колекція товарів.',
     'api.openapi.auth_required' => 'Потрібна автентифікація.',

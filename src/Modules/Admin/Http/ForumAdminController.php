@@ -119,7 +119,7 @@ final class ForumAdminController extends AbstractController
             throw $this->createAccessDeniedException();
         }
         $this->community->resolveReport($context->storeId, $id);
-        $this->addFlash('success', 'Forum report resolved.');
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.forum_report_resolved'));
         return $this->redirectToRoute('admin_forum');
     }
 
@@ -131,7 +131,7 @@ final class ForumAdminController extends AbstractController
             throw $this->createAccessDeniedException();
         }
         $this->directMessages->resolveReport($context->storeId, $id);
-        $this->addFlash('success', 'Private message report resolved.');
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.pm_report_resolved'));
         return $this->redirectToRoute('admin_forum');
     }
 
@@ -151,7 +151,7 @@ final class ForumAdminController extends AbstractController
                 (string) $request->request->get('reason', ''),
                 $days,
             );
-            $this->addFlash('success', 'Forum ban applied.');
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.forum_ban_applied'));
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }
@@ -166,7 +166,7 @@ final class ForumAdminController extends AbstractController
             throw $this->createAccessDeniedException();
         }
         $this->moderation->revoke($context->storeId, $id);
-        $this->addFlash('success', 'Forum ban revoked.');
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.forum_ban_revoked'));
         return $this->redirectToRoute('admin_forum');
     }
 

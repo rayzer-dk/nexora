@@ -1,7 +1,7 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
 {{ shell.start(ui_text('admin.system.extension_settings.nalashtuvannia_rozshyrennia'),'extensions') }}
 <header class="admin-runtime__header">
-    <div><small>Extension SDK · v{{ platform_version }}</small><h1>{{ extension.name }}</h1><p>{{ extension.code }} · {{ extension.version }} {{ ui_text('admin.system.extension_settings.deklaratyvni_nalashtuvannia_bez_vykonannia_kodu_') }}</p></div>
+    <div><small>{{ ui_text('admin.eyebrow.extension_sdk') }} · v{{ platform_version }}</small><h1>{{ extension.name }}</h1><p>{{ extension.code }} · {{ extension.version }} {{ ui_text('admin.system.extension_settings.deklaratyvni_nalashtuvannia_bez_vykonannia_kodu_') }}</p></div>
     <a class="admin-preview-link" href="{{ path('admin_system_extensions') }}">{{ ui_text('admin.system.extension_settings.do_rozshyren') }}</a>
 </header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="store-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}

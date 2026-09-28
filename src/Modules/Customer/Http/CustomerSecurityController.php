@@ -150,11 +150,11 @@ final class CustomerSecurityController extends AbstractController
         $channel = (string) $request->request->get('channel', 'email');
         try {
             $this->verificationCodes->requestCode($user->id(), $channel, $context->storeName);
-            $this->addFlash('success', 'Verification code sent.');
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.verification_sent'));
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         } catch (Throwable) {
-            $this->addFlash('error', 'Verification code could not be sent.');
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('flash.verification_send_failed'));
         }
         return $this->redirectToRoute('customer_verification');
     }
@@ -173,9 +173,9 @@ final class CustomerSecurityController extends AbstractController
         $channel = (string) $request->request->get('channel', 'email');
         $code = (string) $request->request->get('code', '');
         if ($this->verificationCodes->verify($user->id(), $channel, $code)) {
-            $this->addFlash('success', 'Account contact verified.');
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.contact_verified'));
         } else {
-            $this->addFlash('error', 'Invalid or expired verification code.');
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('flash.verification_invalid'));
         }
         return $this->redirectToRoute('customer_verification');
     }

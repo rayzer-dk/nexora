@@ -2,7 +2,7 @@
 {% block body %}
 <section class="forum-shell shell">
     <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ ui_text('forum_following') }}</span></nav>
-    <header class="forum-hero forum-hero--compact"><div><span class="forum-kicker">Community</span><h1>{{ ui_text('forum_following') }}</h1><p>{{ ui_text('forum_following_intro') }}</p></div></header>
+    <header class="forum-hero forum-hero--compact"><div><span class="forum-kicker">{{ ui_text('forum_kicker_community') }}</span><h1>{{ ui_text('forum_following') }}</h1><p>{{ ui_text('forum_following_intro') }}</p></div></header>
     <div class="forum-topic-list">
         {% for topic in topics %}
             <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}">

@@ -14,7 +14,7 @@ return [
     'install.finish.summary_title' => 'Підсумок встановлення',
     'install.finish.php_ok' => 'PHP — OK',
     'install.finish.database_ok' => 'База даних — OK',
-    'install.finish.kernel_ok' => 'Symfony Kernel — OK',
+    'install.finish.kernel_ok' => 'Ядро Symfony — OK',
     'install.finish.cron_required' => 'Cron — потребує одноразового налаштування на сервері',
     'install.finish.email_required' => 'Email — не налаштовано, використовується безпечний null transport',
     'install.finish.backup_recommended' => 'Backup — рекомендується створити першу резервну копію після входу в адмінку',

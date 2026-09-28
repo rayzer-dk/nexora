@@ -67,7 +67,7 @@ final class MediaLibraryAdminController extends AbstractController
                 'include_original'=>$request->request->has('include_original'),
                 'quality'=>max(35,min(95,(int)$request->request->get('quality',85))),
             ],$actor);
-            $this->addFlash('success','Image processing settings saved.');
+            $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('flash.image_settings_saved'));
         }catch(\Throwable){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         return $this->redirectToRoute('admin_media_library');
     }

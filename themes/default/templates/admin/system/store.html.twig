@@ -1,7 +1,7 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
 {{ shell.start(ui_text('admin.system.store.dani_mahazynu'),'store') }}
 <header class="admin-runtime__header">
-    <div><small>Store setup · v{{ platform_version }}</small><h1>{{ ui_text('admin.system.store.dani_mahazynu') }}</h1><p>{{ ui_text('admin.system.store.osnovni_rekvizyty_lokal_valiuta_ta_kontakty_kozh') }}</p></div>
+    <div><small>{{ ui_text('admin.eyebrow.store_setup') }} · v{{ platform_version }}</small><h1>{{ ui_text('admin.system.store.dani_mahazynu') }}</h1><p>{{ ui_text('admin.system.store.osnovni_rekvizyty_lokal_valiuta_ta_kontakty_kozh') }}</p></div>
 </header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="store-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 <form method="post" class="admin-editor-card" data-dirty-guard>
