@@ -15,12 +15,12 @@ final readonly class ThemePresetCatalog
     {
         $json = @file_get_contents($this->configPath);
         if (!is_string($json) || $json === '') {
-            throw new \RuntimeException('Theme preset configuration is unavailable.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.theme_presets_unavailable'));
         }
 
         $data = json_decode($json, true, 32, JSON_THROW_ON_ERROR);
         if (!is_array($data) || $data === []) {
-            throw new \RuntimeException('Theme preset configuration is invalid.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.theme_presets_invalid'));
         }
 
         $out = [];
@@ -37,7 +37,7 @@ final readonly class ThemePresetCatalog
         }
 
         if ($out === []) {
-            throw new \RuntimeException('Theme preset configuration contains no usable presets.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.theme_presets_empty'));
         }
 
         return $out;
