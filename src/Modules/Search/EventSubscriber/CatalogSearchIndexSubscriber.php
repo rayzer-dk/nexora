@@ -27,7 +27,7 @@ final readonly class CatalogSearchIndexSubscriber implements DomainEventSubscrib
 
     public function subscribedEvents(): array
     {
-        return [EventNames::PRODUCT_CREATED, EventNames::PRODUCT_UPDATED, EventNames::ORDER_PLACED, EventNames::ORDER_CANCELLED];
+        return [EventNames::PRODUCT_CREATED, EventNames::PRODUCT_UPDATED, EventNames::CATEGORY_CREATED, EventNames::CATEGORY_UPDATED, EventNames::ORDER_PLACED, EventNames::ORDER_CANCELLED];
     }
 
     public function handle(StoredDomainEvent $event): void
@@ -39,6 +39,21 @@ final readonly class CatalogSearchIndexSubscriber implements DomainEventSubscrib
                 $this->sqlIndex->rebuildProduct($productId);
                 if ($this->indexer->isEnabled()) {
                     $this->indexer->rebuildProduct($productId);
+                }
+            }
+            return;
+        }
+        if (in_array($event->eventName, [EventNames::CATEGORY_CREATED, EventNames::CATEGORY_UPDATED], true)) {
+            $categoryId = $this->internalId('mc_category', $event->aggregateId);
+            if ($categoryId > 0) {
+                $productIds = array_map('intval', $this->db->fetchFirstColumn(
+                    "WITH RECURSIVE category_tree AS (SELECT id FROM mc_category WHERE id=? UNION ALL SELECT c.id FROM mc_category c JOIN category_tree p ON c.parent_id=p.id) SELECT DISTINCT pc.product_id FROM mc_product_category pc JOIN category_tree ct ON ct.id=pc.category_id",
+                    [$categoryId],
+                ));
+                foreach ($productIds as $productId) {
+                    if ($productId < 1) { continue; }
+                    $this->sqlIndex->rebuildProduct($productId);
+                    if ($this->indexer->isEnabled()) { $this->indexer->rebuildProduct($productId); }
                 }
             }
             return;
@@ -65,6 +80,7 @@ final readonly class CatalogSearchIndexSubscriber implements DomainEventSubscrib
         }
         $safeTable = match ($table) {
             'mc_product' => 'mc_product',
+            'mc_category' => 'mc_category',
             'mc_sales_order' => 'mc_sales_order',
             default => throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.5caa01613796')),
         };
