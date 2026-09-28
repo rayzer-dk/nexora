@@ -562,7 +562,7 @@ final readonly class DemoSeeder
     {
         return [
             'utility'=>['location'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.ukraina'),'delivery'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.bezkoshtovna_dostavka_vid_2_000'),'support'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.pidtrymka_shchodnia')],
-            'brand'=>['title'=>'Modern Market','subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.demonstratsiina_vitryna_modern_commerce')],
+            'brand'=>['title'=>'Nexora Commerce','subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.demo_vitryna_modern_commerce'),'icon'=>'/assets/branding/nexora-mark.svg'],
             'theme'=>['primary'=>'#0B63F6','accent'=>'#FF7A1A','success'=>'#16A364'],
             'header'=>['search_placeholder'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.poshuk_tovariv_brendiv_abo_katehorii'),'show_category_nav'=>true],
             'home'=>['show_benefits'=>true,'show_categories'=>true,'show_products'=>true,'show_promos'=>true,'show_articles'=>true],
