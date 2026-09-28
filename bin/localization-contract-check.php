@@ -54,6 +54,8 @@ $runtimeFiles = array_values(array_filter($runtimeFiles, static fn (string $path
 
 $allowedCyrillic = [
     realpath($root . '/src/Modules/Seo/Application/UkrainianTransliterator.php') ?: '',
+    realpath($root . '/src/Core/Install/InstallationSeeder.php') ?: '',
+    realpath($root . '/src/Modules/Demo/Application/DemoSeeder.php') ?: '',
 ];
 
 foreach ($runtimeFiles as $path) {
