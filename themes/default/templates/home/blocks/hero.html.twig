@@ -1,0 +1,42 @@
+{% set props = layout_block.props|default({}) %}
+{% if demo_showcase %}
+<section class="demo-hero-section" data-home-builder-block="{{ layout_block.id }}">
+    <div class="shell demo-hero-grid">
+        <article class="demo-hero-card demo-hero-card--main">
+            <div class="demo-hero-card__copy">
+                <span class="demo-kicker">{{ ui_text('home_demo_kicker') }}</span>
+                <h1>{{ props.title|default('') ?: ui_text('home_demo_title') }}</h1>
+                <p>{{ props.text|default('') ?: ui_text('home_demo_text') }}</p>
+                <div class="demo-hero-card__actions">
+                    <a class="button button--primary" href="{{ props.button_url|default('') ?: '/catalog' }}">{{ props.button_label|default('') ?: ui_text('go_catalog') }}</a>
+                    <a class="button button--light" href="/about-us">{{ ui_text('about_platform') }}</a>
+                </div>
+                <div class="demo-hero-card__facts"><span>{{ ui_text('demo_products_10') }}</span><span>{{ ui_text('demo_categories_8') }}</span><span>{{ ui_text('coupon') }} {{ demo_showcase.coupon.code }}</span></div>
+            </div>
+            <div class="demo-hero-card__media"><img src="{{ props.image|default('') ?: '/media/demo/laptop-pro-14.webp' }}" alt="{{ ui_text('demo_laptop_alt') }}" width="1100" height="720" fetchpriority="high" decoding="async"></div>
+        </article>
+        <div class="demo-hero-stack">
+            <a class="demo-mini-banner demo-mini-banner--home" href="/home-appliances"><img src="/media/demo/hero-coffee-reference.webp" alt="{{ ui_text('home_appliances') }}" width="780" height="420"><span><small>{{ ui_text('for_home') }}</small><strong>{{ ui_text('coffee_comfort') }}</strong><b>{{ ui_text('view_arrow') }}</b></span></a>
+            <a class="demo-mini-banner demo-mini-banner--beauty" href="/beauty-health"><img src="/media/demo/promo-beauty-reference.webp" alt="{{ ui_text('beauty_health') }}" width="780" height="420"><span><small>{{ ui_text('up_to_15_off') }}</small><strong>{{ ui_text('beauty_care') }}</strong><b>{{ ui_text('to_collection_arrow') }}</b></span></a>
+        </div>
+    </div>
+</section>
+{% elseif props.title|default('') or props.text|default('') or props.image|default('') or presentation.hero.title or presentation.hero.image %}
+<section class="reference-hero-wrap" data-home-builder-block="{{ layout_block.id }}">
+    <div class="shell reference-hero">
+        <div class="reference-hero__copy">
+            {% if presentation.hero.eyebrow %}<p class="eyebrow">{{ presentation.hero.eyebrow }}</p>{% endif %}
+            <h1>{{ props.title|default('') ?: presentation.hero.title ?: store_name }}</h1>
+            {% if presentation.hero.subtitle %}<h2>{{ presentation.hero.subtitle }}</h2>{% endif %}
+            {% if props.text|default('') or presentation.hero.text %}<p>{{ props.text|default('') ?: presentation.hero.text }}</p>{% endif %}
+            {% set button_label = props.button_label|default('') ?: presentation.hero.button_label %}
+            {% set button_url = props.button_url|default('') ?: presentation.hero.button_url %}
+            {% if button_label and button_url %}<a class="reference-hero__button" href="{{ button_url }}">{{ button_label }} <span aria-hidden="true">{{ ui_icon('arrow-right', 16) }}</span></a>{% endif %}
+        </div>
+        {% set hero_image = props.image|default('') ?: presentation.hero.image %}
+        {% if hero_image %}<div class="reference-hero__visual"><img src="{{ hero_image }}" alt="" width="1200" height="452" fetchpriority="high" decoding="async"></div>{% endif %}
+    </div>
+</section>
+{% else %}
+<section class="home-hero shell" data-home-builder-block="{{ layout_block.id }}"><div><p class="eyebrow">{{ site_mode == 'landing' ? ui_text('presentation') : ui_text('site') }}</p><h1>{{ store_name }}</h1>{% if site_features.catalog|default(false) %}<a class="button" href="/catalog">{{ ui_text('go_catalog') }}</a>{% endif %}</div></section>
+{% endif %}
