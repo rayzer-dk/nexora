@@ -6,14 +6,14 @@ namespace Commerce\Modules\Appearance\Infrastructure;
 
 use Commerce\Modules\Appearance\Application\StorefrontPresentationWriterInterface;
 use Commerce\Core\Configuration\ConfigurationRevisionStore;
-use Doctrine\DBAL\Connection;
 
 final readonly class StorefrontPresentationSettings implements StorefrontPresentationWriterInterface
 {
     public function __construct(
-        private Connection $connection,
         private ConfigurationRevisionStore $revisions,
-    ) {
+        private ThemePresetCatalog $presets,
+    )
+    {
     }
 
     /** @return array<string,mixed> */
@@ -21,30 +21,10 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
     {
         $defaults = self::defaults();
 
-        // Revision storage is the canonical source. A damaged metadata cache must never break rendering.
         $revision = $this->revisions->latestValidPayload($storeId, 'appearance', 'storefront_presentation');
-        if (is_array($revision)) {
-            return $this->normalize(array_replace_recursive($defaults, $revision));
-        }
-
-        // Legacy fallback for installations created before configuration revisions existed.
-        try {
-            $publicId = $this->connection->fetchOne('SELECT public_id FROM mc_store WHERE id=?', [$storeId]);
-            if (!is_string($publicId) || $publicId === '') {
-                return $defaults;
-            }
-            $json = $this->connection->fetchOne(
-                "SELECT value_json FROM mc_entity_metadata WHERE entity_type='store' AND entity_public_id=? AND namespace='appearance' AND meta_key='storefront_presentation' LIMIT 1",
-                [$publicId],
-            );
-            if (!is_string($json) || trim($json) === '') {
-                return $defaults;
-            }
-            $saved = json_decode($json, true, 64, JSON_THROW_ON_ERROR);
-            return is_array($saved) ? $this->normalize(array_replace_recursive($defaults, $saved)) : $defaults;
-        } catch (\Throwable) {
-            return $defaults;
-        }
+        return is_array($revision)
+            ? $this->normalize(array_replace_recursive($defaults, $revision))
+            : $defaults;
     }
 
     /** @param array<string,mixed> $settings */
@@ -150,7 +130,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             $out['brand'][$key] = $this->mediaPath($input['brand'][$key] ?? '');
         }
         $preset=(string)($input['theme']['preset']??$defaults['theme']['preset']);
-        if(!in_array($preset,['modern','marketplace','premium','minimal','soft'],true)){$preset=$defaults['theme']['preset'];}
+        if(!in_array($preset,$this->presets->codes(),true)){$preset=$defaults['theme']['preset'];}
         $out['theme']['preset']=$preset;
         foreach (['primary','accent','success','surface'] as $key) {
             $out['theme'][$key] = $this->hex($input['theme'][$key] ?? $defaults['theme'][$key], $defaults['theme'][$key]);
@@ -159,7 +139,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $shadow=(string)($input['theme']['shadow']??$defaults['theme']['shadow']); $out['theme']['shadow']=in_array($shadow,['none','soft','medium','strong'],true)?$shadow:$defaults['theme']['shadow'];
         $density=(string)($input['theme']['density']??$defaults['theme']['density']); $out['theme']['density']=in_array($density,['compact','comfortable','spacious'],true)?$density:$defaults['theme']['density'];
         $container=(int)($input['theme']['container']??$defaults['theme']['container']); $out['theme']['container']=(string)max(960,min(1680,$container));
-        $font=(string)($input['theme']['font']??$defaults['theme']['font']); $out['theme']['font']=in_array($font,['system','inter','humanist','rounded'],true)?$font:$defaults['theme']['font'];
+        $font=(string)($input['theme']['font']??$defaults['theme']['font']); $out['theme']['font']=in_array($font,['system','inter','manrope'],true)?$font:$defaults['theme']['font'];
         $out['header']['search_placeholder'] = $this->text($input['header']['search_placeholder'] ?? '', 160);
         $out['header']['show_category_nav'] = (bool) ($input['header']['show_category_nav'] ?? false);
         foreach (array_keys($defaults['home']) as $key) {
