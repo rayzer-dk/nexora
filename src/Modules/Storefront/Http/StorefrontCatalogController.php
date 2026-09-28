@@ -268,6 +268,13 @@ final class StorefrontCatalogController extends AbstractController
         if ($product === null) {
             throw $this->createNotFoundException();
         }
+        $reviewsEnabled = $this->capabilities->enabled($context->storeId, 'reviews');
+        if (!$reviewsEnabled) {
+            $product['rating'] = null;
+            $product['reviews'] = [];
+            $product['questions'] = [];
+        }
+
         $baseUrl = $request->getSchemeAndHttpHost();
         $product['url'] = $baseUrl . $product['url'];
         $displayImage = (string) ($product['image'] ?? '');
@@ -306,12 +313,23 @@ final class StorefrontCatalogController extends AbstractController
         }, $breadcrumbs);
 
         $layout = $this->layoutLoader->loadForStore($context->storeId);
+        $regions = $this->composer->compose($layout);
+        if (!$reviewsEnabled) {
+            foreach ($regions as &$blocks) {
+                $blocks = array_values(array_filter(
+                    $blocks,
+                    static fn ($block): bool => !in_array($block->type, ['rating_summary', 'reviews', 'qa'], true),
+                ));
+            }
+            unset($blocks);
+        }
+
         return $this->render('@storefront/product/show.html.twig', [
             'page_title' => $product['name'],
             'store_name' => $context->storeName,
             'product' => $product,
             'layout' => $layout,
-            'regions' => $this->composer->compose($layout),
+            'regions' => $regions,
             'structured_data_json' => $structuredDataJson,
             'seo_head' => [
                 'title' => (string) ($product['meta_title'] ?? '') !== '' ? (string) $product['meta_title'] : (string) ($product['name'] ?? ''),
