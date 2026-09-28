@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Storefront;
 
 use Commerce\Core\Site\SiteCapabilitySettings;
+use Commerce\Modules\Appearance\Builder\LayoutRevisionStore;
 use Commerce\Modules\Demo\Application\DemoShowcaseQuery;
 use Commerce\Modules\Content\Infrastructure\DbalBlogQuery;
 use Commerce\Modules\Seo\StructuredData\OrganizationCommerceBuilder;
@@ -24,6 +25,7 @@ final class HomeController extends AbstractController
         private readonly DbalStorefrontCatalogQuery $catalog,
         private readonly DbalBlogQuery $blog,
         private readonly SiteCapabilitySettings $capabilities,
+        private readonly LayoutRevisionStore $layouts,
         private readonly DemoShowcaseQuery $demoShowcase,
         private readonly WebSiteBuilder $webSite,
         private readonly OrganizationCommerceBuilder $organization,
@@ -83,6 +85,7 @@ final class HomeController extends AbstractController
             'products' => $products,
             'articles' => $articles,
             'demo_showcase' => $demoShowcase,
+            'home_layout' => $this->layouts->active($context->storeId, 'home'),
             'benefits' => is_array($demoShowcase) ? ($demoShowcase['benefits'] ?? []) : [
                 ['title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.shvydka_dostavka'), 'text' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.homecontroller.zruchnyi_sposib_otrymannia'), 'icon' => 'truck'],
                 ['title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.ofitsiina_harantiia'), 'text' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.prozori_umovy'), 'icon' => 'shield'],
