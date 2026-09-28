@@ -77,11 +77,11 @@ final readonly class CheckoutOrderService
             }
             $cart = $db->fetchAssociative("SELECT id,store_id,currency,status FROM mc_cart WHERE id=? AND store_id=? FOR UPDATE", [$cartId,$context->storeId]);
             if (!is_array($cart) || $cart['status'] !== 'active') throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.koshyk_bilshe_ne_aktyvnyi'));
-            $rows = $db->fetchAllAssociative("SELECT ci.id cart_item_id,ci.variant_id,ci.quantity,ci.unit_code,ci.unit_price_minor,v.sku,v.product_id,pt.name,p.product_type,v.allow_backorder,COALESCE(ppp.mode,'auto') AS purchase_mode,vii.inventory_item_id,vii.required_quantity,sl.location_id,sl.stocked_quantity,sl.reserved_quantity,sl.safety_stock FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id JOIN mc_product p ON p.id=v.product_id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=? LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id LEFT JOIN mc_variant_inventory_item vii ON vii.variant_id=v.id LEFT JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id WHERE ci.cart_id=? ORDER BY ci.id ASC FOR UPDATE", [$context->storeId,$context->locale,$cartId]);
+            $rows = $db->fetchAllAssociative("SELECT ci.id cart_item_id,ci.variant_id,ci.quantity,ci.unit_code,ci.unit_price_minor,v.sku,v.product_id,COALESCE(pt.name,ptd.name,v.sku) AS name,p.product_type,v.allow_backorder,COALESCE(ppp.mode,'auto') AS purchase_mode,vii.inventory_item_id,vii.required_quantity,sl.location_id,sl.stocked_quantity,sl.reserved_quantity,sl.safety_stock FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id JOIN mc_product p ON p.id=v.product_id JOIN mc_store st ON st.id=? LEFT JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=st.id AND pt.locale=? LEFT JOIN mc_product_translation ptd ON ptd.product_id=p.id AND ptd.store_id=st.id AND ptd.locale=st.default_locale LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id LEFT JOIN mc_variant_inventory_item vii ON vii.variant_id=v.id LEFT JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id WHERE ci.cart_id=? ORDER BY ci.id ASC FOR UPDATE", [$context->storeId,$context->locale,$cartId]);
             if ($rows === []) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.koshyk_porozhnii'));
             foreach($rows as &$priceRow){
                 $retail=$db->fetchOne("SELECT px.amount_minor FROM mc_price px WHERE px.variant_id=? AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=? AND (px.max_quantity IS NULL OR px.max_quantity>=?) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1",[(int)$priceRow['variant_id'],$context->storeId,$context->marketId,$context->currency,(string)$priceRow['quantity'],(string)$priceRow['quantity']]);
-                $base=$retail===false?(int)$priceRow['unit_price_minor']:(int)$retail;
+                if($retail===false){throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout.error.item_price_unavailable',['name'=>(string)$priceRow['name'],'currency'=>$context->currency]));} $base=(int)$retail; // never charge a stored price that may belong to another currency or an expired price
                 $resolved=$this->b2b->priceFor($context->storeId,$customerId,(int)$priceRow['variant_id'],(string)$priceRow['quantity'],$base,$context->currency);
                 $priceRow['unit_price_minor']=$resolved; $db->update('mc_cart_item',['unit_price_minor'=>$resolved,'updated_at'=>$this->now()],['id'=>(int)$priceRow['cart_item_id'],'cart_id'=>$cartId]);
             } unset($priceRow);
@@ -108,7 +108,7 @@ final readonly class CheckoutOrderService
             $b2bApproval=$b2bTerms['approval_status']??null;
             $paymentTerms=$b2bTerms===null?null:(int)$b2bTerms['payment_terms_days'];
             $dueAt=$paymentTerms!==null&&$paymentTerms>0?(new DateTimeImmutable('+'.$paymentTerms.' days',new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'):null;
-            $now=$this->now(); $public=$this->ids->generate(); $storeCode=(string)($db->fetchOne('SELECT code FROM mc_store WHERE id=?',[$context->storeId]) ?: 'MC'); $orderNumber=$this->orderNumber($storeCode,$public->toRfc4122());
+            $now=$this->now(); $public=$this->ids->generate(); $storeCode=(string)($db->fetchOne('SELECT code FROM mc_store WHERE id=?',[$context->storeId]) ?: 'MC'); $orderNumber=$this->orderNumber($db,$context->storeId,$storeCode);
             $db->insert('mc_sales_order',['public_id'=>$public->toBinary(),'store_id'=>$context->storeId,'customer_id'=>$customerId,'b2b_company_id'=>$b2bTerms===null?null:(int)$b2bTerms['company_id'],'b2b_approval_status'=>$b2bApproval,'purchase_order_number'=>$purchaseOrderNumber!==''?$purchaseOrderNumber:null,'payment_terms_days'=>$paymentTerms,'due_at'=>$dueAt,'order_number'=>$orderNumber,'checkout_idempotency_key'=>$idempotencyKey,'status'=>$b2bApproval==='pending'?'pending_approval':'placed','payment_status'=>'pending','fulfillment_status'=>'unfulfilled','currency'=>$context->currency,'prices_include_tax'=>1,'subtotal_minor'=>$subtotal,'discount_minor'=>$discount,'shipping_minor'=>$shipping,'tax_minor'=>$tax,'tax_country_code'=>$context->countryCode,'tax_calculation_mode'=>'included','total_minor'=>$total,'customer_email'=>$email!==''?$email:null,'customer_email_normalized'=>$email!==''?$email:null,'customer_phone'=>$phone,'customer_name'=>$name,'customer_comment'=>$customerComment!==''?$customerComment:null,'company_name'=>$companyName!==''?$companyName:($b2bTerms!==null?(string)$b2bTerms['name']:null),'company_tax_id'=>$companyTaxId!==''?$companyTaxId:($b2bTerms!==null?(string)($b2bTerms['tax_id']??''):null),'locale'=>$context->locale,'created_at'=>$now,'updated_at'=>$now]);
             $orderId=(int)$db->lastInsertId();
             $gift=$giftCode!==''?$this->giftCards->redeem($db,$context->storeId,$giftCode,$context->currency,$total,$orderId):null;
@@ -170,6 +170,22 @@ final readonly class CheckoutOrderService
         return $result;
     }
 
-    private function orderNumber(string $storeCode,string $uuid): string { $prefix=strtoupper((string)(preg_replace('/[^A-Z0-9]+/i','',trim($storeCode)) ?: 'MC')); $prefix=substr($prefix,0,8); return $prefix.'-'.gmdate('ymd').'-'.strtoupper(substr(str_replace('-','',$uuid),0,8)); }
+    /**
+     * PREFIX-YYMMDD-XXXXXX with a random, unambiguous suffix (32^6 ≈ 1 billion per store and day).
+     * The first bytes of a UUIDv7 are a millisecond clock and repeat for ~65 s, so they must not be used:
+     * two orders within a minute would collide on uq_sales_order_number.
+     */
+    private function orderNumber(Connection $db,int $storeId,string $storeCode): string
+    {
+        $prefix=substr(strtoupper((string)(preg_replace('/[^A-Z0-9]+/i','',trim($storeCode)) ?: 'MC')),0,8);
+        $alphabet='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        for($attempt=0;$attempt<8;$attempt++){
+            $suffix='';
+            foreach(str_split(random_bytes(6)) as $byte){$suffix.=$alphabet[ord($byte)%32];}
+            $number=$prefix.'-'.gmdate('ymd').'-'.$suffix;
+            if(!$db->fetchOne('SELECT 1 FROM mc_sales_order WHERE store_id=? AND order_number=? LIMIT 1',[$storeId,$number]))return $number;
+        }
+        throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));
+    }
     private function now(): string { return (new DateTimeImmutable('now',new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'); }
 }
