@@ -52,7 +52,7 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   await page.locator('input[name="_username"]').fill(email);
   await page.locator('input[name="_password"]').fill(password);
   await Promise.all([
-    page.waitForURL(/\/account(?:\/|$)/),
+    page.waitForURL(/\/account(?:\?.*)?$/),
     page.locator('form.account-form button[type="submit"]').click(),
   ]);
   await expectNoServerError(page);
@@ -71,7 +71,7 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   }).trim();
   expect(verificationCode).toMatch(/^\d{6}$/);
   const confirmForm = page.locator('form[action="/account/verification/confirm"]');
-  await confirmForm.locator('input[name="channel"][value="email"]').check().catch(() => {});
+  await confirmForm.locator('select[name="channel"]').selectOption('email');
   await confirmForm.locator('input[name="code"]').fill(verificationCode);
   await Promise.all([
     page.waitForURL(/\/account\/verification/),
