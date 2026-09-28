@@ -74,14 +74,23 @@ test('appearance settings change computed storefront design tokens and brand sub
   const subtitle = form.locator('input[name="brand_subtitle"]');
   const primary = form.locator('input[name="theme_primary"]');
   const radius = form.locator('input[name="theme_radius"]');
+  const heroTitle = form.locator('input[name="hero_title"]');
+  const showProducts = form.locator('input[name="show_products"]');
+  const showPromos = form.locator('input[name="show_promos"]');
   const originalSubtitle = await subtitle.inputValue();
   const originalPrimary = await primary.inputValue();
   const originalRadius = await radius.inputValue();
+  const originalHeroTitle = await heroTitle.inputValue();
+  const originalShowProducts = await showProducts.isChecked();
+  const originalShowPromos = await showPromos.isChecked();
 
   const marker = `E2E storefront contract ${Date.now()}`;
   const qaPrimary = originalPrimary.toUpperCase() === '#123456' ? '#654321' : '#123456';
   const qaRadius = originalRadius === '23' ? '22' : '23';
   await subtitle.fill(marker);
+  await heroTitle.fill(marker);
+  await showProducts.uncheck();
+  await showPromos.uncheck();
   await primary.fill(qaPrimary);
   await radius.evaluate((element, value) => {
     const input = element as HTMLInputElement;
@@ -93,6 +102,9 @@ test('appearance settings change computed storefront design tokens and brand sub
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.reference-brand small')).toHaveText(marker);
+  await expect(page.locator('.demo-hero-card h1,.reference-hero h1,.home-hero h1').first()).toHaveText(marker);
+  await expect(page.locator('.product-grid.demo-product-grid')).toHaveCount(0);
+  await expect(page.locator('.demo-promo-grid,.reference-products-layout')).toHaveCount(0);
   const tokens = await page.evaluate(() => {
     const style = getComputedStyle(document.documentElement);
     return {
@@ -106,6 +118,11 @@ test('appearance settings change computed storefront design tokens and brand sub
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
   const restore = page.locator('form.admin-storefront-form');
   await restore.locator('input[name="brand_subtitle"]').fill(originalSubtitle);
+  await restore.locator('input[name="hero_title"]').fill(originalHeroTitle);
+  const restoreProducts = restore.locator('input[name="show_products"]');
+  const restorePromos = restore.locator('input[name="show_promos"]');
+  if (originalShowProducts) await restoreProducts.check(); else await restoreProducts.uncheck();
+  if (originalShowPromos) await restorePromos.check(); else await restorePromos.uncheck();
   await restore.locator('input[name="theme_primary"]').fill(originalPrimary);
   await restore.locator('input[name="theme_radius"]').evaluate((element, value) => {
     const input = element as HTMLInputElement;
