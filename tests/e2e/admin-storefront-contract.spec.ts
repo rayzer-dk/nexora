@@ -43,8 +43,15 @@ test('site capability changes alter the real storefront and can be restored', as
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   const forumLinks = page.locator('a[href="/forum"]');
-  if (original) await expect(forumLinks).toHaveCount(0);
-  else await expect(forumLinks.first()).toBeVisible();
+  if (original) {
+    await expect(forumLinks).toHaveCount(0);
+    const disabledForum = await page.goto('/forum', { waitUntil: 'domcontentloaded' });
+    expect(disabledForum?.status()).toBe(404);
+  } else {
+    await expect(forumLinks.first()).toBeVisible();
+    const enabledForum = await page.goto('/forum', { waitUntil: 'domcontentloaded' });
+    expect(enabledForum?.status()).toBeLessThan(400);
+  }
 
   await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
   const restoreForm = page.locator('form.admin-editor-form[data-dirty-guard]');
