@@ -651,3 +651,67 @@ test('locale visibility saved in admin changes the storefront language selector'
   expect((await restoreResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
 });
+
+
+test('disabled commerce and content capabilities remove both routes and misleading storefront UI', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating capability contract test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const productUrl = await page.locator('[data-product-card] h2 a').first().getAttribute('href');
+  expect(productUrl).toBeTruthy();
+
+  await loginAdmin(page);
+  await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
+  const form = page.locator('form.admin-editor-form[data-dirty-guard]');
+  const originalMode = await form.locator('input[name="mode"]:checked').inputValue();
+  const originalFeatures = await form.locator('input[type="checkbox"][name^="feature_"]').evaluateAll((nodes) =>
+    Object.fromEntries(nodes.map((node) => {
+      const input = node as HTMLInputElement;
+      return [input.name, input.checked];
+    }))
+  );
+
+  const restore = async () => {
+    await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
+    const restoreForm = page.locator('form.admin-editor-form[data-dirty-guard]');
+    await restoreForm.locator(`input[name="mode"][value="${originalMode}"]`).check();
+    for (const [name, checked] of Object.entries(originalFeatures)) {
+      const input = restoreForm.locator(`input[name="${name}"]`);
+      if (checked) await input.check(); else await input.uncheck();
+    }
+    await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+  };
+
+  try {
+    await form.locator('input[name="feature_catalog"]').check();
+    await form.locator('input[name="feature_cart"]').uncheck();
+    await form.locator('input[name="feature_checkout"]').uncheck();
+    await form.locator('input[name="feature_content"]').uncheck();
+    await form.locator('input[name="feature_reviews"]').uncheck();
+    await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+
+    const cartResponse = await page.goto('/cart', { waitUntil: 'domcontentloaded' });
+    expect(cartResponse?.status()).toBe(404);
+    const checkoutResponse = await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+    expect(checkoutResponse?.status()).toBe(404);
+    const aboutResponse = await page.goto('/about-us', { waitUntil: 'domcontentloaded' });
+    expect(aboutResponse?.status()).toBe(404);
+
+    await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+    await expectNoServerError(page);
+    await expect(page.locator('form[data-card-add-to-cart]')).toHaveCount(0);
+    await expect(page.locator('a[href="/about-us"],a[href="/contact"],a[href="/shipping"]')).toHaveCount(0);
+    await expect(page.locator('.catalog-card__rating')).toHaveCount(0);
+
+    await page.goto(productUrl!, { waitUntil: 'domcontentloaded' });
+    await expectNoServerError(page);
+    await expect(page.locator('form[data-buy-actions]')).toHaveCount(0);
+    await expect(page.locator('#reviews,.rating-summary')).toHaveCount(0);
+    const productJsonLd = (await page.locator('script[type="application/ld+json"]').allTextContents()).join('\n');
+    expect(productJsonLd).not.toContain('aggregateRating');
+    expect(productJsonLd).not.toContain('reviewCount');
+  } finally {
+    await restore();
+  }
+});
