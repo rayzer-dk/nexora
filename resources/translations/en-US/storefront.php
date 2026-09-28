@@ -713,4 +713,10 @@ return [
     'admin_check_notifications' => '4. Test Email / Telegram / SMS',
     'admin_check_feeds' => '5. Feeds and Google',
     'admin_check_store' => '6. Check the store',
+    'ui.checkout.blocks.shipping.delivery' => 'Delivery',
+    'ui.product.show.product_media' => 'Product media',
+    'ui.product.show.purchase_information' => 'Purchase information',
+    'ui.product.show.product_details' => 'Product details',
+    'ui.product.show.additional_product_information' => 'Additional product information',
+    'document_vat' => 'VAT',
 ];
