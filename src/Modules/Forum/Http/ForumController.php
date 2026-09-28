@@ -115,7 +115,7 @@ final class ForumController extends AbstractController
         }
         $user = $this->getUser();
         if (!$user instanceof CustomerUser) {
-            $this->addFlash('error', 'Sign in to create a forum topic.');
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('flash.forum_sign_in_topic'));
             return $this->redirectToRoute('customer_login');
         }
         try {
@@ -204,7 +204,7 @@ final class ForumController extends AbstractController
         }
         $user = $this->getUser();
         if (!$user instanceof CustomerUser) {
-            $this->addFlash('error', 'Sign in to reply on the forum.');
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('flash.forum_sign_in_reply'));
             return $this->redirectToRoute('customer_login');
         }
         try {
@@ -279,7 +279,7 @@ final class ForumController extends AbstractController
                     $request->request->getBoolean('show_phone'),
                     $request->request->getBoolean('allow_private_messages'),
                 );
-                $this->addFlash('success', 'Forum profile updated.');
+                $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.forum_profile_updated'));
             } catch (\DomainException $e) {
                 $this->addFlash('error', $e->getMessage());
             }
@@ -335,7 +335,7 @@ final class ForumController extends AbstractController
         }
         try {
             $this->directMessages->send($context->storeId, $user->id(), $id, (string) $request->request->get('body', ''));
-            $this->addFlash('success', 'Private message sent.');
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.pm_sent'));
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }
@@ -371,7 +371,7 @@ final class ForumController extends AbstractController
             throw $this->createAccessDeniedException();
         }
         $this->directMessages->block($context->storeId, $user->id(), $memberId);
-        $this->addFlash('success', 'Member blocked.');
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.member_blocked'));
         return $this->redirectToRoute('storefront_forum_message_thread', ['id' => $threadId]);
     }
 
@@ -384,7 +384,7 @@ final class ForumController extends AbstractController
             throw $this->createAccessDeniedException();
         }
         $this->directMessages->report($context->storeId, $messageId, $user->id(), (string) $request->request->get('reason', 'other'), (string) $request->request->get('details', ''));
-        $this->addFlash('success', 'Private message reported.');
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.pm_reported'));
         return $this->redirectToRoute('storefront_forum_message_thread', ['id' => $threadId]);
     }
 
@@ -442,7 +442,7 @@ final class ForumController extends AbstractController
             (string) $request->request->get('reason', 'other'),
             (string) $request->request->get('details', ''),
         );
-        $this->addFlash('success', 'Report sent to moderators.');
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.forum_report_sent'));
         return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
     }
 
@@ -456,7 +456,7 @@ final class ForumController extends AbstractController
         }
         try {
             $this->community->editOwnPost($context->storeId, $postId, $user->id(), (string) $request->request->get('body', ''));
-            $this->addFlash('success', 'Post updated.');
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.post_updated'));
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }
