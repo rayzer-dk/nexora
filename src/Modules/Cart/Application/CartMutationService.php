@@ -23,17 +23,38 @@ final readonly class CartMutationService
     ) {
     }
 
-    /** @return array{id:int,token:string,created:bool} */
+    /**
+     * Existing cart for this visitor, or null. Never creates a row, so read-only pages
+     * (GET /cart, GET /checkout, crawlers following the header link) do not grow mc_cart.
+     *
+     * @return array{id:int,token:string,created:bool,currency:string}|null
+     */
+    public function find(StorefrontContext $context, ?string $token): ?array
+    {
+        if (!is_string($token) || preg_match('/^[A-Za-z0-9_-]{32,128}$/', $token) !== 1) {
+            return null;
+        }
+        $row = $this->connection->fetchAssociative(
+            "SELECT id,currency FROM mc_cart WHERE token_hash=? AND store_id=? AND status='active' AND expires_at>UTC_TIMESTAMP(6) LIMIT 1",
+            [hash('sha256', $token, true), $context->storeId],
+        );
+        if (!is_array($row)) {
+            return null;
+        }
+        $currency = (string) $row['currency'];
+        if ($currency !== $context->currency && $this->switchCurrency((int) $row['id'], $context)) {
+            $currency = $context->currency;
+        }
+
+        return ['id' => (int) $row['id'], 'token' => $token, 'created' => false, 'currency' => $currency];
+    }
+
+    /** @return array{id:int,token:string,created:bool,currency:string} */
     public function open(StorefrontContext $context, ?string $token): array
     {
-        if (is_string($token) && preg_match('/^[A-Za-z0-9_-]{32,128}$/', $token) === 1) {
-            $id = $this->connection->fetchOne(
-                "SELECT id FROM mc_cart WHERE token_hash=? AND store_id=? AND currency=? AND status='active' AND expires_at>UTC_TIMESTAMP(6) LIMIT 1",
-                [hash('sha256', $token, true), $context->storeId, $context->currency],
-            );
-            if ($id !== false) {
-                return ['id' => (int) $id, 'token' => $token, 'created' => false];
-            }
+        $existing = $this->find($context, $token);
+        if ($existing !== null) {
+            return $existing;
         }
 
         $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
@@ -51,9 +72,50 @@ final readonly class CartMutationService
             'expires_at' => $expires,
         ]);
 
-        return ['id' => (int) $this->connection->lastInsertId(), 'token' => $token, 'created' => true];
+        return ['id' => (int) $this->connection->lastInsertId(), 'token' => $token, 'created' => true, 'currency' => $context->currency];
     }
 
+    /**
+     * Context whose currency matches the cart. A cart only follows the currency switcher when
+     * every line is priced in the new currency; otherwise it keeps its own currency so totals
+     * are never shown or charged with a price from another currency.
+     *
+     * @param array{currency?:string} $cart
+     */
+    public function contextFor(StorefrontContext $context, array $cart): StorefrontContext
+    {
+        $currency = (string) ($cart['currency'] ?? $context->currency);
+        if ($currency === '' || $currency === $context->currency) {
+            return $context;
+        }
+
+        return new StorefrontContext($context->storeId, $context->marketId, $context->locale, $currency, $context->countryCode, $context->storeName);
+    }
+
+    private function switchCurrency(int $cartId, StorefrontContext $context): bool
+    {
+        return $this->connection->transactional(function (Connection $db) use ($cartId, $context): bool {
+            $cart = $db->fetchAssociative("SELECT id,store_id,customer_id FROM mc_cart WHERE id=? AND status='active' FOR UPDATE", [$cartId]);
+            if (!is_array($cart)) {
+                return false;
+            }
+            $items = $db->fetchAllAssociative('SELECT ci.id,ci.quantity,v.public_id FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id WHERE ci.cart_id=?', [$cartId]);
+            $prices = [];
+            foreach ($items as $item) {
+                $variant = $this->catalog->purchasableVariant($context, \Symfony\Component\Uid\Uuid::fromBinary((string) $item['public_id'])->toRfc4122());
+                if ($variant === null || (string) ($variant['currency'] ?? $context->currency) !== $context->currency) {
+                    return false;
+                }
+                $prices[(int) $item['id']] = $this->b2b->priceFor((int) $cart['store_id'], $cart['customer_id'] === null ? null : (int) $cart['customer_id'], (int) $variant['variant_id'], (string) $item['quantity'], (int) $variant['price_minor'], $context->currency);
+            }
+            foreach ($prices as $itemId => $price) {
+                $db->update('mc_cart_item', ['unit_price_minor' => $price, 'updated_at' => $this->now()], ['id' => $itemId, 'cart_id' => $cartId]);
+            }
+            $db->update('mc_cart', ['currency' => $context->currency, 'updated_at' => $this->now()], ['id' => $cartId]);
+
+            return true;
+        });
+    }
 
     public function bindCustomer(int $cartId, int $storeId, int $customerId): void
     {
