@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const roots = ['themes/default/templates', 'assets'];
 const extensions = new Set(['.twig', '.vue', '.js', '.ts']);
-const interactivePattern = /<(button|a)\b[^>]*>[\s\S]{0,180}?[◉☰⇄✎⚙▶■●○✕✔✓★☆][\s\S]{0,180}?<\/\1>/giu;
+const interactivePattern = /<(button|a)\b[^>]*>[\s\S]{0,180}?[◉☰⇄✎⚙▶■●○✕✔✓★☆×＋→↶−][\s\S]{0,180}?<\/\1>/giu;
 const violations = [];
 
 function walk(dir) {
