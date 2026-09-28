@@ -25,9 +25,11 @@ final class CartController extends AbstractController
     #[Route('/cart', name:'storefront_cart', methods:['GET'], priority:100)]
     public function show(Request $request): Response
     {
-        $context=$this->contexts->resolve($request); $cart=$this->mutations->open($context,$request->cookies->get('mc_cart')); $this->bind($cart['id'],$context->storeId);
-        $response=$this->render('@storefront/cart/show.html.twig',['page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.cart.http.cartcontroller.koshyk'),'store_name'=>$context->storeName,'cart'=>$this->query->summary($cart['id'],$context),'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/cart','robots'=>'noindex,follow']]);
-        $this->attachCookie($response,$request,$cart); return $response;
+        // Viewing the cart must not create one: crawlers and first-time visitors follow the header link.
+        $context=$this->contexts->resolve($request); $cart=$this->mutations->find($context,$request->cookies->get('mc_cart'));
+        if($cart!==null){$this->bind($cart['id'],$context->storeId); $context=$this->mutations->contextFor($context,$cart);}
+        $response=$this->render('@storefront/cart/show.html.twig',['page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.cart.http.cartcontroller.koshyk'),'store_name'=>$context->storeName,'cart'=>$cart!==null?$this->query->summary($cart['id'],$context):$this->query->emptySummary($context),'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/cart','robots'=>'noindex,follow']]);
+        if($cart!==null){$this->attachCookie($response,$request,$cart);} return $response;
     }
 
     #[Route('/cart/add', name:'storefront_cart_add', methods:['POST'], priority:100)]
@@ -35,7 +37,7 @@ final class CartController extends AbstractController
     {
         $this->guard($request);
         $context = $this->contexts->resolve($request);
-        $cart = $this->mutations->open($context, $request->cookies->get('mc_cart')); $this->bind($cart['id'],$context->storeId);
+        $cart = $this->mutations->open($context, $request->cookies->get('mc_cart')); $this->bind($cart['id'],$context->storeId); $context=$this->mutations->contextFor($context,$cart);
         try {
             $this->mutations->add($context, $cart['id'], (string) $request->request->get('variant_id'), (string) $request->request->get('quantity', '1'));
             if ($this->wantsJson($request)) {
@@ -74,7 +76,7 @@ final class CartController extends AbstractController
     #[Route('/cart/{itemId}/update', name:'storefront_cart_update', methods:['POST'], requirements:['itemId'=>'\\d+'], priority:100)]
     public function update(Request $request,int $itemId): Response
     {
-        $this->guard($request); $context=$this->contexts->resolve($request); $cart=$this->mutations->open($context,$request->cookies->get('mc_cart')); $this->bind($cart['id'],$context->storeId);
+        $this->guard($request); $context=$this->contexts->resolve($request); $cart=$this->mutations->open($context,$request->cookies->get('mc_cart')); $this->bind($cart['id'],$context->storeId); $context=$this->mutations->contextFor($context,$cart);
         try{
             $this->mutations->update($context,$cart['id'],$itemId,(string)$request->request->get('quantity','1'));
             if($this->wantsJson($request)){ $response=new JsonResponse(['ok'=>true,'cart'=>$this->query->summary($cart['id'],$context)]); $this->attachCookie($response,$request,$cart); return $response; }
@@ -85,7 +87,7 @@ final class CartController extends AbstractController
     #[Route('/cart/{itemId}/remove', name:'storefront_cart_remove', methods:['POST'], requirements:['itemId'=>'\\d+'], priority:100)]
     public function remove(Request $request,int $itemId): Response
     {
-        $this->guard($request); $context=$this->contexts->resolve($request); $cart=$this->mutations->open($context,$request->cookies->get('mc_cart')); $this->bind($cart['id'],$context->storeId); $this->mutations->remove($cart['id'],$itemId);
+        $this->guard($request); $context=$this->contexts->resolve($request); $cart=$this->mutations->open($context,$request->cookies->get('mc_cart')); $this->bind($cart['id'],$context->storeId); $context=$this->mutations->contextFor($context,$cart); $this->mutations->remove($cart['id'],$itemId);
         if($this->wantsJson($request)){ $response=new JsonResponse(['ok'=>true,'cart'=>$this->query->summary($cart['id'],$context)]); $this->attachCookie($response,$request,$cart); return $response; }
         $response=$this->redirectToRoute('storefront_cart'); $this->attachCookie($response,$request,$cart); return $response;
     }
