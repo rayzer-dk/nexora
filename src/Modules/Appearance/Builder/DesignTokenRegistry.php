@@ -22,12 +22,14 @@ final class DesignTokenRegistry
             'color.muted' => '#667085',
             'color.border' => '#E1E7EF',
             'color.focus' => '#8BB8FF',
+
             'radius.xs' => '6px',
             'radius.sm' => '8px',
             'radius.md' => '12px',
             'radius.lg' => '18px',
             'radius.xl' => '24px',
             'radius.full' => '999px',
+
             'space.0' => '0px',
             'space.1' => '4px',
             'space.2' => '8px',
@@ -41,6 +43,7 @@ final class DesignTokenRegistry
             'space.16' => '64px',
             'space.20' => '80px',
             'space.24' => '96px',
+
             'font.body' => 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, Arial, sans-serif',
             'font.size.xs' => '12px',
             'font.size.sm' => '14px',
@@ -55,26 +58,31 @@ final class DesignTokenRegistry
             'line.height.heading' => '1.25',
             'line.height.body' => '1.5',
             'line.height.relaxed' => '1.7',
+
             'control.height.sm' => '36px',
             'control.height.md' => '44px',
             'control.height.lg' => '52px',
             'control.height.xl' => '56px',
             'button.height' => '44px',
             'input.height' => '44px',
+
             'icon.size.sm' => '16px',
             'icon.size.md' => '20px',
             'icon.size.lg' => '24px',
             'icon.size.xl' => '28px',
+
             'shadow.none' => 'none',
             'shadow.sm' => '0 4px 14px rgba(15,23,42,.06)',
             'shadow.md' => '0 10px 30px rgba(15,23,42,.09)',
             'shadow.lg' => '0 20px 50px rgba(15,23,42,.13)',
             'shadow.card' => '0 10px 30px rgba(15,23,42,.08)',
+
             'breakpoint.sm' => '560px',
             'breakpoint.md' => '820px',
             'breakpoint.lg' => '1100px',
             'breakpoint.xl' => '1400px',
             'content.max' => '1408px',
+
             'z.base' => '1',
             'z.dropdown' => '200',
             'z.sticky' => '400',
