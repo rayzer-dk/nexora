@@ -48,7 +48,7 @@ final readonly class ConfigurationRevisionStore
                 if (is_string($activeJson) && is_string($activeChecksum) && hash_equals(strtolower($activeChecksum), hash('sha256', $activeJson))) {
                     try {
                         $activePayload = json_decode($activeJson, true, 64, JSON_THROW_ON_ERROR);
-                        if (is_array($activePayload) && $activePayload === $payload) {
+                        if (is_array($activePayload) && $activePayload == $payload) {
                             return (int) $active['id'];
                         }
                     } catch (\JsonException) {
