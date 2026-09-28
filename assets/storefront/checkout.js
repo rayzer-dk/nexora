@@ -56,7 +56,7 @@ if (checkout) {
       const data = await fetchJson(`/api/shipping/cities?provider=${encodeURIComponent(carrier)}&country=${encodeURIComponent(country)}&q=${encodeURIComponent(q)}&limit=12`);
       renderOptions(cityResults, data.items || [], (item) => { selectedCity = item; cityInput.value = item.name; if (cityId) cityId.value = item.id || ''; if (cityName) cityName.value = item.name || ''; pointInput.disabled = false; pointInput.placeholder = i18n.branchPlaceholder; pointInput.focus(); showFallback(false); });
       showFallback(false);
-    } catch (error) {
+    } catch (_) {
       clearResults(cityResults); showFallback(true, i18n.citiesFailed);
     }
   };
@@ -68,7 +68,7 @@ if (checkout) {
       const data = await fetchJson(`/api/shipping/points?${params.toString()}`);
       if (data.manual_fallback_allowed && data.availability !== 'available') showFallback(true, data.notice || i18n.carrierUnavailable); else showFallback(false);
       renderOptions(pointResults, data.items || [], (item) => { const label = item.address ? `${item.name} — ${item.address}` : item.name; pointInput.value = label; pointInput.dataset.pointId = item.id || ''; if (pointId) pointId.value = item.id || ''; if (pointName) pointName.value = label || ''; showFallback(false); });
-    } catch (error) {
+    } catch (_) {
       clearResults(pointResults); showFallback(true, i18n.pointsFailed);
     }
   };
