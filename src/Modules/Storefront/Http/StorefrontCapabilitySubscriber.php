@@ -72,6 +72,9 @@ final readonly class StorefrontCapabilitySubscriber implements EventSubscriberIn
         if (str_starts_with($route, 'storefront_forum')) {
             return 'forum';
         }
+        if ($route === 'storefront_information_page') {
+            return 'content';
+        }
         if ($route === 'storefront_blog') {
             return 'blog';
         }
