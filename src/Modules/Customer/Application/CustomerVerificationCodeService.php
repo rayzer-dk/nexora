@@ -51,49 +51,90 @@ final readonly class CustomerVerificationCodeService
             throw new \DomainException($channel === 'sms' ? \Commerce\Core\I18n\CanonicalUiText::get('verification.runtime.phone_required') : \Commerce\Core\I18n\CanonicalUiText::get('verification.runtime.email_missing'));
         }
 
-        $latest = $this->db->fetchOne(
-            'SELECT created_at FROM mc_customer_verification_code WHERE customer_id=? AND channel=? AND consumed_at IS NULL ORDER BY id DESC LIMIT 1',
-            [$customerId, $channel],
-        );
-        $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-        if (is_string($latest) && $latest !== '') {
-            $created = new DateTimeImmutable($latest, new DateTimeZone('UTC'));
-            if ($created > $now->modify('-60 seconds')) {
-                return true;
-            }
+        $locale = trim((string) ($row['locale'] ?? '')) ?: 'uk-UA';
+        try {
+            $subject = $this->translator->translate('verification_code_subject', $locale);
+            $textTemplate = $this->translator->translate('verification_code_text', $locale, ['code' => '%code%']);
+        } catch (\Throwable) {
+            // Account verification is security-critical and must not become unavailable
+            // because an optional extension translation catalog is malformed or unavailable.
+            $subject = \Commerce\Core\I18n\CanonicalUiText::get('verification_code_subject');
+            $textTemplate = \Commerce\Core\I18n\CanonicalUiText::get('verification_code_text', ['code' => '%code%']);
         }
 
-        $code = (string) random_int(100000, 999999);
-        $this->db->executeStatement(
-            'UPDATE mc_customer_verification_code SET consumed_at=? WHERE customer_id=? AND channel=? AND consumed_at IS NULL',
-            [$now->format('Y-m-d H:i:s.u'), $customerId, $channel],
-        );
-        $this->db->insert('mc_customer_verification_code', [
-            'customer_id' => $customerId,
-            'channel' => $channel,
-            'code_hash' => $this->hash($customerId, $channel, $code),
-            'attempts' => 0,
-            'expires_at' => $now->modify('+15 minutes')->format('Y-m-d H:i:s.u'),
-            'consumed_at' => null,
-            'created_at' => $now->format('Y-m-d H:i:s.u'),
-        ]);
+        $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
-        $locale = trim((string) ($row['locale'] ?? '')) ?: 'uk-UA';
-        $message = new NotificationMessage(
-            type: 'customer_verification_code',
-            subject: $this->translator->translate('verification_code_subject', $locale),
-            text: $this->translator->translate('verification_code_text', $locale, ['code' => $code]),
-            context: ['store_name' => $storeName, 'verification_code' => $code, 'expires_minutes' => 15, 'locale' => $locale],
-            emailTemplate: 'generic',
-        );
-        $this->outbox->enqueue(
-            $channel === 'email' ? NotificationChannel::Email : NotificationChannel::Sms,
-            $message,
-            $recipient,
-            null,
-            'verify-code:' . $customerId . ':' . $channel . ':' . $this->db->lastInsertId(),
-        );
-        return true;
+        return $this->db->transactional(function (Connection $db) use ($customerId, $channel, $storeName, $recipient, $locale, $subject, $textTemplate, $now): bool {
+            // Lock the customer row so concurrent verification requests cannot create
+            // multiple active codes or enqueue duplicate notifications.
+            $locked = $db->fetchAssociative(
+                'SELECT email_verified_at,phone_verified_at,status FROM mc_customer WHERE id=? LIMIT 1 FOR UPDATE',
+                [$customerId],
+            );
+            if (!is_array($locked) || (string) $locked['status'] !== 'active') {
+                return false;
+            }
+            if ($channel === 'email' && $locked['email_verified_at'] !== null) {
+                return true;
+            }
+            if ($channel === 'sms' && $locked['phone_verified_at'] !== null) {
+                return true;
+            }
+
+            $latest = $db->fetchAssociative(
+                'SELECT id,created_at FROM mc_customer_verification_code WHERE customer_id=? AND channel=? AND consumed_at IS NULL ORDER BY id DESC LIMIT 1',
+                [$customerId, $channel],
+            );
+            if (is_array($latest) && is_string($latest['created_at'] ?? null) && $latest['created_at'] !== '') {
+                $created = new DateTimeImmutable((string) $latest['created_at'], new DateTimeZone('UTC'));
+                if ($created > $now->modify('-60 seconds')) {
+                    $hasQueuedNotification = (int) $db->fetchOne(
+                        "SELECT COUNT(*) FROM mc_notification_outbox WHERE recipient=? AND notification_type='customer_verification_code' AND created_at>=? AND status IN ('pending','processing','sent')",
+                        [$recipient, (string) $latest['created_at']],
+                    ) > 0;
+                    if ($hasQueuedNotification) {
+                        return true;
+                    }
+                    // Repair a historical partial write: invalidate the orphaned code and issue
+                    // a new code together with its notification in the same transaction.
+                    $db->update('mc_customer_verification_code', ['consumed_at' => $now->format('Y-m-d H:i:s.u')], ['id' => (int) $latest['id']]);
+                }
+            }
+
+            $code = (string) random_int(100000, 999999);
+            $timestamp = $now->format('Y-m-d H:i:s.u');
+            $db->executeStatement(
+                'UPDATE mc_customer_verification_code SET consumed_at=? WHERE customer_id=? AND channel=? AND consumed_at IS NULL',
+                [$timestamp, $customerId, $channel],
+            );
+            $db->insert('mc_customer_verification_code', [
+                'customer_id' => $customerId,
+                'channel' => $channel,
+                'code_hash' => $this->hash($customerId, $channel, $code),
+                'attempts' => 0,
+                'expires_at' => $now->modify('+15 minutes')->format('Y-m-d H:i:s.u'),
+                'consumed_at' => null,
+                'created_at' => $timestamp,
+            ]);
+            $codeId = (string) $db->lastInsertId();
+
+            $message = new NotificationMessage(
+                type: 'customer_verification_code',
+                subject: $subject,
+                text: str_replace('%code%', $code, $textTemplate),
+                context: ['store_name' => $storeName, 'verification_code' => $code, 'expires_minutes' => 15, 'locale' => $locale],
+                emailTemplate: 'generic',
+            );
+            $this->outbox->enqueue(
+                $channel === 'email' ? NotificationChannel::Email : NotificationChannel::Sms,
+                $message,
+                $recipient,
+                null,
+                'verify-code:' . $customerId . ':' . $channel . ':' . $codeId,
+            );
+
+            return true;
+        });
     }
 
     public function verify(int $customerId, string $channel, string $code): bool
