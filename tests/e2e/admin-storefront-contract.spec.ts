@@ -855,3 +855,63 @@ test('Checkout Builder publication changes the real checkout page and restores c
     expect(restore.status()).toBeLessThan(400);
   }
 });
+
+
+test('admin-created coupon is applied by the real checkout promotion engine', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating promotion contract runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  const code = `E2E${Date.now().toString().slice(-9)}`;
+  await loginAdmin(page);
+  await page.goto('/admin/commerce/promotions', { waitUntil: 'domcontentloaded' });
+  const form = page.locator('form.admin-form-grid').first();
+  await expect(form).toBeVisible();
+  await form.locator('input[name="name"]').fill(`E2E coupon ${code}`);
+  await form.locator('select[name="trigger_type"]').selectOption('coupon');
+  await form.locator('input[name="code"]').fill(code);
+  await form.locator('select[name="discount_type"]').selectOption('percent');
+  await form.locator('input[name="discount_value"]').fill('10');
+  const createResponse = page.waitForResponse((response) =>
+    response.url().includes('/admin/commerce/promotions') && response.request().method() === 'POST'
+  );
+  await form.locator('button[type="submit"]').click();
+  expect((await createResponse).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
+  const promotionRow = page.locator('table tbody tr').filter({ hasText: code });
+  await expect(promotionRow).toBeVisible();
+
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const card = page.locator('[data-product-card]').filter({ has: page.locator('form[data-card-add-to-cart]') }).first();
+  await expect(card).toBeVisible();
+  const addResponse = page.waitForResponse((response) =>
+    response.url().endsWith('/cart/add') && response.request().method() === 'POST'
+  );
+  await card.locator('form[data-card-add-to-cart] button[type="submit"]').click();
+  expect((await addResponse).status()).toBeLessThan(400);
+
+  await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-checkout-form]')).toBeVisible();
+  const couponInput = page.locator('[data-coupon-code]');
+  test.skip((await couponInput.count()) === 0, 'Checkout layout has no coupon block.');
+  await couponInput.fill(code);
+  const previewResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/checkout/promotion/preview') && response.request().method() === 'POST'
+  );
+  await page.locator('[data-coupon-apply]').click();
+  const previewResponse = await previewResponsePromise;
+  expect(previewResponse.status()).toBe(200);
+  const preview = await previewResponse.json();
+  expect(preview.ok).toBe(true);
+  expect(Number(preview.discount_minor)).toBeGreaterThan(0);
+  expect(Number(preview.total_minor)).toBeLessThan(Number(preview.subtotal_minor));
+
+  await page.goto('/admin/commerce/promotions', { waitUntil: 'domcontentloaded' });
+  const createdRow = page.locator('table tbody tr').filter({ hasText: code });
+  const toggle = createdRow.locator('form[action$="/toggle"]');
+  const disableResponse = page.waitForResponse((response) =>
+    response.url().includes('/admin/commerce/promotions/') && response.url().endsWith('/toggle') && response.request().method() === 'POST'
+  );
+  await toggle.locator('button[type="submit"]').click();
+  expect((await disableResponse).status()).toBeLessThan(400);
+});
