@@ -118,6 +118,7 @@ jobs:
             exit 1
           fi
       - name: Audit application error logs
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
@@ -151,6 +152,8 @@ jobs:
             playwright-report/
             var/test-results/playwright/
             var/log/e2e-web.log
+            var/log/e2e-errors.log
+            var/log/prod.log
             tests/e2e/__snapshots__/
           if-no-files-found: ignore
           retention-days: 7
