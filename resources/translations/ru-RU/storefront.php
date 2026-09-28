@@ -642,4 +642,6 @@ return [
     'ui.product.show.product_media' => 'Фото и видео товара',
     'ui.product.show.purchase_information' => 'Информация о покупке',
     'ui.checkout.blocks.shipping.delivery' => 'Доставка',
+    'attribute.boolean.yes' => 'Да',
+    'attribute.boolean.no' => 'Нет',
 ];

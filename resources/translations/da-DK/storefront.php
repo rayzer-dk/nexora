@@ -642,4 +642,6 @@ return [
     'ui.product.show.product_media' => 'Produktbilleder og -video',
     'ui.product.show.purchase_information' => 'Købsinformation',
     'ui.checkout.blocks.shipping.delivery' => 'Levering',
+    'attribute.boolean.yes' => 'Ja',
+    'attribute.boolean.no' => 'Nej',
 ];

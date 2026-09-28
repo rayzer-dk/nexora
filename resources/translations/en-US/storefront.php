@@ -782,4 +782,6 @@ return [
     'ui.product.show.product_media' => 'Product media',
     'ui.product.show.purchase_information' => 'Purchase information',
     'ui.checkout.blocks.shipping.delivery' => 'Delivery',
+    'attribute.boolean.yes' => 'Yes',
+    'attribute.boolean.no' => 'No',
 ];

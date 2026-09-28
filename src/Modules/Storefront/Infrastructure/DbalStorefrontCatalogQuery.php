@@ -501,7 +501,7 @@ final readonly class DbalStorefrontCatalogQuery
         $product['tax']['display_mode'] = (string) ($row['consumer_display_mode'] ?: 'price_only');
         $product['images'] = $this->productImages((int)$row['id'], (string)$row['name']);
         $product['attributes'] = $this->productAttributes((int)$row['id'], $context->locale);
-        $product['features'] = array_map(static fn(array $a): string => $a['name'] . ': ' . $a['value'], array_slice($product['attributes'], 0, 5));
+        $product['features'] = array_map(static fn(array $a): string => $a['name'] . ': ' . (($a['type'] ?? 'text') === 'boolean' ? \Commerce\Core\I18n\CanonicalUiText::get($a['value'] === '1' ? 'attribute.boolean.yes' : 'attribute.boolean.no') : $a['value']), array_slice($product['attributes'], 0, 5));
         $product['documents'] = $this->productDocuments((int)$row['id'], $context->locale);
         $product['rating'] = $this->rating((int)$row['id']);
         $product['reviews'] = $this->reviews((int)$row['id'], $context);
@@ -835,8 +835,10 @@ final readonly class DbalStorefrontCatalogQuery
     /** @return list<array{name:string,value:string}> */
     private function productAttributes(int $productId,string $locale):array
     {
-        $rows=$this->connection->fetchAllAssociative("SELECT COALESCE(at.name,ad.code) name,COALESCE(pav.value_text,CAST(pav.value_decimal AS CHAR),IF(pav.value_boolean=1,'1',IF(pav.value_boolean=0,'0',''))) value FROM mc_product_attribute_value pav JOIN mc_attribute_definition ad ON ad.id=pav.attribute_id LEFT JOIN mc_attribute_translation at ON at.attribute_id=ad.id AND at.locale=? WHERE pav.product_id=? ORDER BY ad.sort_order,pav.sort_order,pav.id",[$locale,$productId]);
-        return array_values(array_filter(array_map(static fn(array $r):array=>['name'=>(string)$r['name'],'value'=>(string)$r['value']],$rows),static fn(array $r):bool=>$r['value']!==''));
+        $rows=$this->connection->fetchAllAssociative("SELECT COALESCE(at.name,ad.code) name,COALESCE(pav.value_text,CAST(pav.value_decimal AS CHAR)) value,pav.value_boolean FROM mc_product_attribute_value pav JOIN mc_attribute_definition ad ON ad.id=pav.attribute_id LEFT JOIN mc_attribute_translation at ON at.attribute_id=ad.id AND at.locale=? WHERE pav.product_id=? ORDER BY ad.sort_order,pav.sort_order,pav.id",[$locale,$productId]);
+        // Boolean values stay machine-readable here; the template renders yes/no in the shopper's interface language.
+        $map=static fn(array $r):array=>['name'=>(string)$r['name'],'value'=>$r['value']!==null?(string)$r['value']:($r['value_boolean']===null?'':((int)$r['value_boolean']===1?'1':'0')),'type'=>$r['value']===null&&$r['value_boolean']!==null?'boolean':'text'];
+        return array_values(array_filter(array_map($map,$rows),static fn(array $r):bool=>$r['value']!==''));
     }
 
     /** @return list<array{name:string,url:string}> */
