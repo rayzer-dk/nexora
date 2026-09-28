@@ -6,10 +6,24 @@ const MC_REQUIRED_PHP = '8.4.0';
 const MC_MAX_PHP = '8.6.0';
 const MC_MIN_MEMORY_BYTES = 268435456; // 256 MiB
 const MC_RECOMMENDED_DISK_BYTES = 1073741824; // 1 GiB
+const MC_MIN_MYSQL = '8.4.0';
+const MC_MIN_MARIADB = '10.11.0';
 
 $projectDir = dirname(__DIR__);
-require_once $projectDir . '/src/Core/Platform/PlatformVersion.php';
-$installerCatalogPath = $projectDir . '/resources/translations/uk-UA/installer.php';
+
+$installerLocales = ['uk-UA', 'ru-RU', 'en-US'];
+$requestedInstallerLocale = (string) ($_GET['lang'] ?? $_POST['_lang'] ?? $_COOKIE['nexora_setup_lang'] ?? 'uk-UA');
+$installerLocale = in_array($requestedInstallerLocale, $installerLocales, true) ? $requestedInstallerLocale : 'uk-UA';
+if (!headers_sent()) {
+    setcookie('nexora_setup_lang', $installerLocale, [
+        'expires' => time() + 31536000,
+        'path' => '/',
+        'secure' => isHttpsRequest(),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+$installerCatalogPath = $projectDir . '/resources/translations/' . $installerLocale . '/installer.php';
 $installerCatalog = is_file($installerCatalogPath) ? require $installerCatalogPath : [];
 function it(string $key, array $replace = []): string
 {
@@ -83,8 +97,18 @@ $addCheck('HTTPS', isHttpsRequest() ? it('installer.uvimkneno') : ($isLocal ? it
 
 $documentRoot = realpath((string) ($_SERVER['DOCUMENT_ROOT'] ?? '')) ?: '';
 $expectedDocumentRoot = realpath($projectDir . '/public') ?: $projectDir . '/public';
+$sharedHostingGateway = $documentRoot !== ''
+    && rtrim($documentRoot, DIRECTORY_SEPARATOR) === rtrim((realpath($projectDir) ?: $projectDir), DIRECTORY_SEPARATOR)
+    && is_file($projectDir . '/.htaccess')
+    && str_contains((string) @file_get_contents($projectDir . '/.htaccess'), 'Nexora Commerce shared-hosting compatibility gateway');
 $documentRootOk = $documentRoot !== '' && rtrim($documentRoot, DIRECTORY_SEPARATOR) === rtrim($expectedDocumentRoot, DIRECTORY_SEPARATOR);
-$addCheck('Document Root', $documentRootOk ? it('installer.document_root_ok') : it('installer.document_root_bad', ['current' => $documentRoot ?: it('installer.nevidomo')]), $documentRootOk);
+$documentRootCompatible = $documentRootOk || $sharedHostingGateway;
+$documentRootMessage = $documentRootOk
+    ? it('installer.document_root_ok')
+    : ($sharedHostingGateway
+        ? it('installer.document_root_shared_hosting')
+        : it('installer.document_root_bad', ['current' => $documentRoot ?: it('installer.nevidomo')]));
+$addCheck('Document Root', $documentRootMessage, $documentRootCompatible);
 
 $memoryBytes = iniBytes((string) ini_get('memory_limit'));
 $memoryOk = $memoryBytes < 0 || $memoryBytes >= MC_MIN_MEMORY_BYTES;
@@ -111,9 +135,8 @@ $opcacheLoaded = extension_loaded('Zend OPcache') || extension_loaded('opcache')
 $opcacheEnabled = $opcacheLoaded && filter_var((string) ini_get('opcache.enable'), FILTER_VALIDATE_BOOL);
 $addCheck('OPcache', $opcacheEnabled ? it('installer.opcache_enabled') : ($opcacheLoaded ? it('installer.opcache_disabled') : it('installer.ne_znaydeno_rekomendovano_production')), $opcacheEnabled, false);
 
-$tmpDir = sys_get_temp_dir();
-$tmpProbe = writableDirectoryProbe($tmpDir);
-$addCheck('PHP tmp', $tmpDir . ' · ' . $tmpProbe['message'], $tmpProbe['passed'], false);
+$tmpProbe = phpTempProbe($projectDir);
+$addCheck('PHP tmp', $tmpProbe['message'], $tmpProbe['passed'], false);
 
 $timezone = date_default_timezone_get();
 $addCheck('Timezone', $timezone !== '' ? $timezone : it('installer.nevidomo'), $timezone !== '', false);
@@ -132,7 +155,7 @@ $runtimeReady = !in_array(false, array_map(static fn (array $check): bool => !$c
 
 $errors = [];
 $values = [
-    'db_host' => $_POST['db_host'] ?? '127.0.0.1',
+    'db_host' => $_POST['db_host'] ?? 'localhost',
     'db_port' => $_POST['db_port'] ?? '3306',
     'db_name' => $_POST['db_name'] ?? 'nexora_commerce',
     'db_user' => $_POST['db_user'] ?? '',
@@ -186,8 +209,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (!filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
         $errors[] = it('installer.nekorektnyy_email_administratora');
     }
-    if (strlen($adminPassword) < 12) {
-        $errors[] = it('installer.parol_administratora_maye_mistyty_shchonaymenshe_12_symv');
+    $adminPasswordLength = function_exists('mb_strlen') ? mb_strlen($adminPassword, 'UTF-8') : strlen($adminPassword);
+    if ($adminPasswordLength < 12 || $adminPasswordLength > 128) {
+        $errors[] = it('installer.admin_password_length');
     }
     if (!filter_var($publicUrl, FILTER_VALIDATE_URL)) {
         $errors[] = it('installer.nekorektna_publichna_adresa_mahazynu');
@@ -199,6 +223,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     }
 
     if ($errors === []) {
+        $installStage = 'database_connection';
         try {
             $serverDsn = sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $dbHost, $dbPort);
             $pdo = new PDO($serverDsn, $dbUser, $dbPassword, [
@@ -207,46 +232,77 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 PDO::ATTR_TIMEOUT => 5,
             ]);
             if ($createDatabase) {
+                $installStage = 'database_create';
                 $pdo->exec(sprintf('CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci', $dbName));
             }
 
+            $installStage = 'database_selection';
             $pdo = new PDO($serverDsn . ';dbname=' . $dbName, $dbUser, $dbPassword, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_TIMEOUT => 5,
             ]);
+            $installStage = 'database_requirements';
             $serverVersion = (string) $pdo->query('SELECT VERSION()')->fetchColumn();
             $engine = strtolower($serverVersion);
             $numericVersion = databaseNumericVersion($serverVersion);
-            if (!str_contains($engine, 'mariadb') && version_compare($numericVersion, \Commerce\Core\Platform\PlatformVersion::MIN_MYSQL, '<')) {
+            if (!str_contains($engine, 'mariadb') && version_compare($numericVersion, MC_MIN_MYSQL, '<')) {
                 throw new RuntimeException(it('installer.potriben_mysql_8_4_abo_novishyy_vyyavleno') . $serverVersion);
             }
-            if (str_contains($engine, 'mariadb') && version_compare($numericVersion, \Commerce\Core\Platform\PlatformVersion::MIN_MARIADB, '<')) {
+            if (str_contains($engine, 'mariadb') && version_compare($numericVersion, MC_MIN_MARIADB, '<')) {
                 throw new RuntimeException(it('installer.potribna_mariadb_11_4_abo_novisha_vyyavleno') . $serverVersion);
             }
 
             $defaultEngine = strtolower((string) $pdo->query('SELECT @@default_storage_engine')->fetchColumn());
-            if ($defaultEngine !== 'innodb') {
-                throw new RuntimeException(it('installer.potriben_innodb_yak_default_storage_engine_potochne_znac') . $defaultEngine);
+            $engineRows = $pdo->query('SHOW ENGINES')->fetchAll(PDO::FETCH_ASSOC);
+            $innodbAvailable = false;
+            foreach ($engineRows as $engineRow) {
+                if (strtolower((string) ($engineRow['Engine'] ?? '')) !== 'innodb') {
+                    continue;
+                }
+                $support = strtoupper((string) ($engineRow['Support'] ?? ''));
+                $innodbAvailable = in_array($support, ['YES', 'DEFAULT'], true);
+                break;
             }
+            if (!$innodbAvailable) {
+                throw new RuntimeException(it('installer.innodb_unavailable'));
+            }
+            // The platform creates its own tables explicitly with ENGINE=InnoDB.
+            // A hosting-wide MyISAM default must not block installation when InnoDB is available.
+            $pdo->exec('SET SESSION default_storage_engine=InnoDB');
+            // Configure only this installer connection. Hosting-wide defaults are not requirements:
+            // every Nexora migration creates its tables explicitly as InnoDB + utf8mb4.
+            $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+
             $charset = strtolower((string) $pdo->query('SELECT @@character_set_database')->fetchColumn());
-            if ($charset !== 'utf8mb4') {
-                throw new RuntimeException(it('installer.baza_danykh_povynna_vykorystovuvaty_utf8mb4_potochne_kod') . $charset);
-            }
-            $sqlMode = strtoupper((string) $pdo->query('SELECT @@sql_mode')->fetchColumn());
-            if (!str_contains($sqlMode, 'STRICT_TRANS_TABLES') && !str_contains($sqlMode, 'STRICT_ALL_TABLES')) {
-                throw new RuntimeException(it('installer.potriben_strict_sql_mode_strict_trans_tables_abo_strict_'));
-            }
-            $foreignKeyChecks = (int) $pdo->query('SELECT @@foreign_key_checks')->fetchColumn();
-            if ($foreignKeyChecks !== 1) {
-                throw new RuntimeException(it('installer.foreign_keys_required'));
-            }
             $collation = strtolower((string) $pdo->query('SELECT @@collation_database')->fetchColumn());
-            if (!str_starts_with($collation, 'utf8mb4_')) {
-                throw new RuntimeException(it('installer.collation_required', ['current' => $collation]));
+            if ($charset !== 'utf8mb4' || !str_starts_with($collation, 'utf8mb4_')) {
+                // Best effort only. Some managed hostings do not grant ALTER DATABASE even though
+                // CREATE/ALTER TABLE is allowed. That must not block a clean Nexora installation.
+                $installStage = 'database_charset';
+                try {
+                    $pdo->exec(sprintf('ALTER DATABASE `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci', $dbName));
+                } catch (Throwable) {
+                    // Safe to continue: all platform tables explicitly declare utf8mb4.
+                }
             }
+
+            $sqlMode = strtoupper((string) $pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn());
+            if (!str_contains($sqlMode, 'STRICT_TRANS_TABLES') && !str_contains($sqlMode, 'STRICT_ALL_TABLES')) {
+                $modes = array_values(array_filter(array_map('trim', explode(',', $sqlMode)), static fn (string $mode): bool => $mode !== ''));
+                $modes[] = 'STRICT_TRANS_TABLES';
+                $modes = array_values(array_unique($modes));
+                $statement = $pdo->prepare('SET SESSION sql_mode = :sql_mode');
+                $statement->execute(['sql_mode' => implode(',', $modes)]);
+            }
+
+            // Foreign keys are required by the schema, but a hosting-level session default of 0
+            // is self-correctable and therefore must not block installation.
+            $pdo->exec('SET SESSION foreign_key_checks=1');
+            $installStage = 'database_privileges';
             probeDatabasePrivileges($pdo);
 
+            $installStage = 'configuration_write';
             $doctrineServerVersion = str_contains($engine, 'mariadb') ? 'mariadb-' . $numericVersion : $numericVersion;
             $databaseUrl = sprintf(
                 'mysql://%s:%s@%s:%d/%s?charset=utf8mb4',
@@ -264,7 +320,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'SYMFONY_TRUSTED_PROXIES' => '',
                 'APP_PUBLIC_URL' => $publicUrl,
                 'STORE_DEFAULT_COUNTRY' => 'UA',
-                'STORE_DEFAULT_LOCALE' => 'uk-UA',
+                'STORE_DEFAULT_LOCALE' => $installerLocale,
                 'STORE_DEFAULT_CURRENCY' => 'UAH',
                 'STORE_DEFAULT_TIMEZONE' => 'Europe/Kyiv',
                 'DATABASE_URL' => $databaseUrl,
@@ -292,6 +348,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'GOOGLE_UCP_ENABLED' => '0',
                 'GOOGLE_UCP_VERSION' => '2026-04-08',
                 'TURNSTILE_ENABLED' => '0',
+                'TURNSTILE_SITE_KEY' => '',
                 'TURNSTILE_SECRET_KEY' => '',
                 'CORE_UPDATE_PUBLIC_KEY' => '',
                 'MARKETING_GA4_ENABLED' => '0',
@@ -350,12 +407,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $baseEnv = "APP_ENV=prod\nAPP_DEBUG=0\n";
             atomicWrite($projectDir . '/.env', $baseEnv, 0600);
 
-            if (!is_dir($installDir) && !mkdir($installDir, 0700, true) && !is_dir($installDir)) {
-                throw new RuntimeException(it('installer.ne_vdalosya_stvoryty_sluzhbovyy_kataloh_instalyatora'));
-            }
-            $token = bin2hex(random_bytes(32));
-            $requestFile = $installDir . '/request-' . $token . '.json';
-            $payload = json_encode([
+            $installStage = 'application_install';
+            $installPayload = [
                 'store_name' => $storeName,
                 'admin_name' => $adminName,
                 'admin_email' => $adminEmail,
@@ -363,29 +416,48 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'public_url' => $publicUrl,
                 'install_demo' => $installDemo,
                 'site_mode' => $siteMode,
-                'created_at' => gmdate('c'),
-            ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-            atomicWrite($requestFile, $payload, 0600);
-
-            session_regenerate_id(true);
-            header('Location: /install/finish?token=' . rawurlencode($token), true, 303);
-            exit;
+                'locale' => $installerLocale,
+            ];
+            $installResult = runApplicationInstall($projectDir, $installPayload, [$dbPassword, $adminPassword]);
+            if (($installResult['code'] ?? 1) !== 0 || !is_file($lockFile)) {
+                $traceId = (string) ($installResult['trace'] ?? logInstallerTextFailure(
+                    $projectDir,
+                    'application_install',
+                    (string) ($installResult['output'] ?? 'Installation command returned no output.'),
+                    [$dbPassword, $adminPassword]
+                ));
+                // Keep raw console diagnostics in var/log/installer.log. The browser UI must stay
+                // concise and readable instead of dumping Symfony console tables into an alert box.
+                $errors[] = it('installer.application_install_failed_trace', ['trace' => $traceId]);
+            } else {
+                @unlink(__FILE__);
+                installationSuccessResponse($installDemo);
+            }
         } catch (PDOException $e) {
+            // Driver messages may echo host/user details; map the vendor code to a safe, actionable hint.
             $driverCode = (int) ($e->errorInfo[1] ?? 0);
-            if ($driverCode === 0 && preg_match('/\\[(\\d{4})\\]/', $e->getMessage(), $codeMatch) === 1) {
+            if ($driverCode === 0 && preg_match('/\[(\d{4})\]/', $e->getMessage(), $codeMatch) === 1) {
                 $driverCode = (int) $codeMatch[1];
             }
-            $errors[] = match ($driverCode) {
-                1045, 1698 => it('installer.db_access_denied'),
+            $mappedError = match ($driverCode) {
+                1045, 1698 => it('installer.db_access_denied_details', ['user' => $dbUser, 'host' => $dbHost]),
                 1049 => it('installer.db_unknown_database'),
-                1044, 1142 => it('installer.db_insufficient_privileges'),
-                2002, 2003, 2005, 2006 => it('installer.db_unreachable'),
-                default => it('installer.configuration_check_failed_safe'),
+                1044, 1142 => (($installStage ?? '') === 'database_create' ? it('installer.db_create_not_allowed') : it('installer.db_insufficient_privileges')),
+                2002, 2003, 2005, 2006 => it('installer.db_unreachable_details', ['host' => $dbHost, 'port' => (string) $dbPort]),
+                default => '',
             };
+            $traceId = logInstallerFailure($projectDir, $installStage ?? 'database', $e, [$dbHost, $dbUser, $dbName, $dbPassword]);
+            if ($mappedError !== '') {
+                $errors[] = $mappedError . ' ' . it('installer.diagnostic_code', ['trace' => $traceId]);
+            } else {
+                $errors[] = it('installer.configuration_check_failed_trace', ['trace' => $traceId, 'stage' => installerStageLabel($installStage ?? 'database')]);
+            }
         } catch (RuntimeException $e) {
+            // Requirement failures above are translated, actionable and contain no secrets.
             $errors[] = $e->getMessage();
         } catch (Throwable $e) {
-            $errors[] = it('installer.configuration_check_failed_safe');
+            $traceId = logInstallerFailure($projectDir, $installStage ?? 'configuration', $e, [$dbHost, $dbUser, $dbName, $dbPassword]);
+            $errors[] = it('installer.configuration_check_failed_trace', ['trace' => $traceId, 'stage' => installerStageLabel($installStage ?? 'configuration')]);
         }
     }
 }
@@ -529,6 +601,37 @@ function writableDirectoryProbe(string $path): array
     }
 }
 
+/** @return array{passed:bool,message:string} */
+function phpTempProbe(string $projectDir): array
+{
+    $configured = trim((string) ini_get('upload_tmp_dir'));
+    $tmpDir = $configured !== '' ? $configured : sys_get_temp_dir();
+    $probe = writableDirectoryProbe($tmpDir);
+    if ($probe['passed']) {
+        return ['passed' => true, 'message' => $tmpDir . ' · ' . $probe['message']];
+    }
+
+    $fallback = $projectDir . '/var/tmp';
+    if (!is_dir($fallback)) {
+        @mkdir($fallback, 0700, true);
+    }
+    $fallbackProbe = writableDirectoryProbe($fallback);
+    if ($fallbackProbe['passed']) {
+        return [
+            'passed' => false,
+            'message' => it('installer.php_tmp_system_unavailable_fallback', [
+                'current' => $tmpDir,
+                'fallback' => $fallback,
+            ]),
+        ];
+    }
+
+    return [
+        'passed' => false,
+        'message' => it('installer.php_tmp_unavailable', ['current' => $tmpDir]),
+    ];
+}
+
 /** @return array{passed:bool,message:string,console_passed:bool,console_message:string} */
 function phpCliProbe(string $projectDir): array
 {
@@ -542,22 +645,33 @@ function phpCliProbe(string $projectDir): array
         ];
     }
 
+    $majorMinor = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
+    $compact = PHP_MAJOR_VERSION . PHP_MINOR_VERSION;
+    $candidateNames = ['php' . $majorMinor, 'php' . $compact, 'php-' . $majorMinor, 'php'];
     $candidates = [];
-    if (defined('PHP_BINDIR')) {
-        $candidates[] = rtrim(PHP_BINDIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'php';
-    }
-    $which = [];
-    $whichCode = 1;
-    @exec('command -v php 2>/dev/null', $which, $whichCode);
-    if ($whichCode === 0 && isset($which[0])) {
-        $candidates[] = trim((string) $which[0]);
-    }
-    $candidates[] = '/usr/bin/php';
-    $candidates[] = '/usr/local/bin/php';
-    $candidates = array_values(array_unique(array_filter($candidates, static fn (string $path): bool => $path !== '' && is_file($path) && is_executable($path))));
 
-    $binary = $candidates[0] ?? '';
-    if ($binary === '') {
+    foreach ($candidateNames as $name) {
+        $out = [];
+        $code = 1;
+        @exec('command -v ' . escapeshellarg($name) . ' 2>/dev/null', $out, $code);
+        if ($code === 0 && isset($out[0])) {
+            $candidates[] = trim((string) $out[0]);
+        }
+    }
+
+    foreach ([
+        '/usr/bin/php' . $majorMinor,
+        '/usr/local/bin/php' . $majorMinor,
+        '/opt/php' . $majorMinor . '/bin/php',
+        '/opt/php/' . $majorMinor . '/bin/php',
+        '/usr/bin/php',
+        '/usr/local/bin/php',
+    ] as $path) {
+        $candidates[] = $path;
+    }
+
+    $candidates = array_values(array_unique(array_filter($candidates, static fn (string $path): bool => $path !== '' && is_file($path) && is_executable($path))));
+    if ($candidates === []) {
         return [
             'passed' => false,
             'message' => it('installer.cli_not_found'),
@@ -566,24 +680,54 @@ function phpCliProbe(string $projectDir): array
         ];
     }
 
-    $output = [];
-    $code = 1;
-    @exec(escapeshellarg($binary) . ' -r ' . escapeshellarg('echo PHP_VERSION;'), $output, $code);
-    $version = trim(implode('', $output));
-    $phpOk = $code === 0 && $version !== ''
-        && version_compare($version, MC_REQUIRED_PHP, '>=')
-        && version_compare($version, MC_MAX_PHP, '<');
+    $best = null;
+    $firstDetected = null;
+    foreach ($candidates as $binary) {
+        $output = [];
+        $code = 1;
+        @exec(escapeshellarg($binary) . ' -r ' . escapeshellarg('echo PHP_VERSION;'), $output, $code);
+        $version = trim(implode('', $output));
+        if ($code !== 0 || $version === '') {
+            continue;
+        }
+        $firstDetected ??= ['binary' => $binary, 'version' => $version];
+        if (version_compare($version, MC_REQUIRED_PHP, '>=') && version_compare($version, MC_MAX_PHP, '<')) {
+            $best = ['binary' => $binary, 'version' => $version];
+            break;
+        }
+    }
+
+    $selected = $best ?? $firstDetected;
+    if ($selected === null) {
+        return [
+            'passed' => false,
+            'message' => it('installer.cli_not_found'),
+            'console_passed' => false,
+            'console_message' => it('installer.console_not_working'),
+        ];
+    }
+
+    $binary = $selected['binary'];
+    $version = $selected['version'];
+    $phpOk = $best !== null;
+    $message = $phpOk
+        ? $version . ' · ' . $binary
+        : it('installer.cli_version_mismatch', ['web' => PHP_VERSION, 'cli' => $version, 'binary' => $binary]);
 
     $consoleOutput = [];
     $consoleCode = 1;
-    if (is_file($projectDir . '/bin/console')) {
+    if ($phpOk && is_file($projectDir . '/bin/console')) {
         @exec(escapeshellarg($binary) . ' -l ' . escapeshellarg($projectDir . '/bin/console') . ' 2>&1', $consoleOutput, $consoleCode);
     }
+    $consolePassed = $phpOk && $consoleCode === 0;
+
     return [
         'passed' => $phpOk,
-        'message' => $version !== '' ? $version . ' · ' . $binary : it('installer.cli_not_found'),
-        'console_passed' => $consoleCode === 0,
-        'console_message' => $consoleCode === 0 ? it('installer.console_syntax_ok') : it('installer.console_not_working'),
+        'message' => $message,
+        'console_passed' => $consolePassed,
+        'console_message' => $consolePassed
+            ? it('installer.console_syntax_ok')
+            : ($phpOk ? it('installer.console_not_working') : it('installer.console_cli_mismatch')),
     ];
 }
 
@@ -663,6 +807,172 @@ function probeDatabasePrivileges(PDO $pdo): void
     }
 }
 
+function installerStageLabel(string $stage): string
+{
+    $key = match ($stage) {
+        'database_connection' => 'installer.stage_database_connection',
+        'database_selection' => 'installer.stage_database_selection',
+        'database_requirements' => 'installer.stage_database_requirements',
+        'database_privileges' => 'installer.stage_database_privileges',
+        'database_create' => 'installer.stage_database_create',
+        'database_charset' => 'installer.stage_database_charset',
+        'configuration_write' => 'installer.stage_configuration_write',
+        'installation_request' => 'installer.stage_installation_request',
+        'configuration' => 'installer.stage_configuration',
+        default => 'installer.stage_database',
+    };
+    return it($key);
+}
+
+function logInstallerFailure(string $projectDir, string $stage, Throwable $error, array $secrets = []): string
+{
+    $traceId = gmdate('YmdHis') . '-' . bin2hex(random_bytes(4));
+    $logDir = $projectDir . '/var/log';
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0700, true);
+    }
+
+    $redact = static function (string $value) use ($secrets): string {
+        foreach ($secrets as $secret) {
+            $secret = (string) $secret;
+            if ($secret !== '') {
+                $value = str_replace($secret, '[redacted]', $value);
+            }
+        }
+        return preg_replace('/[\r\n]+/', ' ', $value) ?? 'Installer error';
+    };
+
+    $lines = [
+        '[' . gmdate('c') . '] trace=' . $traceId . ' stage=' . $stage,
+        'exception=' . get_class($error),
+        'code=' . (string) $error->getCode(),
+        'message=' . $redact($error->getMessage()),
+        'location=' . $redact($error->getFile()) . ':' . $error->getLine(),
+    ];
+    foreach ($error->getTrace() as $index => $frame) {
+        if ($index >= 12) {
+            break;
+        }
+        $file = isset($frame['file']) ? $redact((string) $frame['file']) : '[internal]';
+        $line = isset($frame['line']) ? (int) $frame['line'] : 0;
+        $call = (string) ($frame['class'] ?? '') . (string) ($frame['type'] ?? '') . (string) ($frame['function'] ?? '');
+        $lines[] = sprintf('trace#%d=%s:%d %s', $index, $file, $line, $call);
+    }
+    $lines[] = '';
+    @file_put_contents($logDir . '/installer.log', implode("\n", $lines) . "\n", FILE_APPEND | LOCK_EX);
+    @chmod($logDir . '/installer.log', 0600);
+    return $traceId;
+}
+
+function runApplicationInstall(string $projectDir, array $payload, array $secrets = []): array
+{
+    $traceId = logInstallerEvent($projectDir, 'application_install_start', 'Browser installer started application installation.', $secrets);
+    $outputText = '';
+    $kernel = null;
+    try {
+        $autoload = $projectDir . '/vendor/autoload.php';
+        if (!is_file($autoload)) {
+            throw new RuntimeException('Composer autoload file is missing.');
+        }
+        require_once $autoload;
+
+        if (class_exists(\Symfony\Component\Dotenv\Dotenv::class)) {
+            (new \Symfony\Component\Dotenv\Dotenv())->usePutenv()->bootEnv($projectDir . '/.env');
+        }
+
+        $environment = (string) ($_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'prod');
+        $kernel = new \Commerce\Kernel($environment, false);
+        $application = new \Symfony\Bundle\FrameworkBundle\Console\Application($kernel);
+        $application->setAutoExit(false);
+        $arguments = [
+            'command' => 'commerce:install',
+            '--store-name' => (string) ($payload['store_name'] ?? ''),
+            '--admin-name' => (string) ($payload['admin_name'] ?? ''),
+            '--admin-email' => (string) ($payload['admin_email'] ?? ''),
+            '--admin-password' => (string) ($payload['admin_password'] ?? ''),
+            '--public-url' => (string) ($payload['public_url'] ?? ''),
+            '--site-mode' => (string) ($payload['site_mode'] ?? 'shop'),
+            '--locale' => (string) ($payload['locale'] ?? 'uk-UA'),
+            '--no-interaction' => true,
+        ];
+        if ((bool) ($payload['install_demo'] ?? false)) {
+            $arguments['--demo'] = true;
+        }
+
+        $input = new \Symfony\Component\Console\Input\ArrayInput($arguments);
+        $input->setInteractive(false);
+        $output = new \Symfony\Component\Console\Output\BufferedOutput();
+        $code = $application->run($input, $output);
+        $outputText = $output->fetch();
+        logInstallerEvent($projectDir, 'application_install_result', 'exit_code=' . $code . ' output=' . $outputText, $secrets, $traceId);
+
+        return ['code' => $code, 'output' => $outputText, 'trace' => $traceId];
+    } catch (Throwable $error) {
+        $failureTrace = logInstallerFailure($projectDir, 'application_install', $error, $secrets);
+        return ['code' => 1, 'output' => $outputText !== '' ? $outputText : $error->getMessage(), 'trace' => $failureTrace];
+    } finally {
+        if ($kernel instanceof \Symfony\Component\HttpKernel\KernelInterface) {
+            try { $kernel->shutdown(); } catch (Throwable) {}
+        }
+    }
+}
+
+function logInstallerEvent(string $projectDir, string $stage, string $message, array $secrets = [], ?string $traceId = null): string
+{
+    $traceId ??= gmdate('YmdHis') . '-' . bin2hex(random_bytes(4));
+    $logDir = $projectDir . '/var/log';
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0700, true);
+    }
+    foreach ($secrets as $secret) {
+        $secret = (string) $secret;
+        if ($secret !== '') {
+            $message = str_replace($secret, '[redacted]', $message);
+        }
+    }
+    $message = preg_replace('/\x1B(?:[@-_][0-?]*[ -\/]*[@-~]|\[[0-?]*[ -\/]*[@-~])/', '', $message) ?? $message;
+    $message = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $message) ?? $message;
+    $entry = '[' . gmdate('c') . '] trace=' . $traceId . ' stage=' . $stage . "\n" . trim($message) . "\n\n";
+    @file_put_contents($logDir . '/installer.log', $entry, FILE_APPEND | LOCK_EX);
+    @chmod($logDir . '/installer.log', 0600);
+    return $traceId;
+}
+
+function logInstallerTextFailure(string $projectDir, string $stage, string $message, array $secrets = []): string
+{
+    return logInstallerEvent($projectDir, $stage, $message !== '' ? $message : 'Installation failed without console output.', $secrets);
+}
+
+function installerOutputSummary(string $output, array $secrets = []): string
+{
+    foreach ($secrets as $secret) {
+        $secret = (string) $secret;
+        if ($secret !== '') {
+            $output = str_replace($secret, '[redacted]', $output);
+        }
+    }
+    $output = preg_replace('/\x1B(?:[@-_][0-?]*[ -\/]*[@-~]|\[[0-?]*[ -\/]*[@-~])/', '', $output) ?? $output;
+    $output = strip_tags($output);
+    $output = preg_replace('/\s+/', ' ', trim($output)) ?? '';
+    if ($output === '') {
+        return '';
+    }
+    if (function_exists('mb_substr')) {
+        return mb_substr($output, 0, 700, 'UTF-8');
+    }
+    return substr($output, 0, 700);
+}
+
+function installationSuccessResponse(bool $demoInstalled): never
+{
+    http_response_code(200);
+    $title = e(it('installer.install_success_title'));
+    $message = e(it('installer.install_success_message'));
+    $demo = $demoInstalled ? '<p class="note">' . e(it('installer.install_success_demo')) . '</p>' : '';
+    echo '<!doctype html><html lang="' . e((string) ($GLOBALS['installerLocale'] ?? 'uk-UA')) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>' . $title . '</title><style>body{margin:0;background:#f5f7fb;color:#172033;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}.box{max-width:760px;margin:8vh auto;padding:28px;background:#fff;border:1px solid #dfe5ef;border-radius:18px;box-shadow:0 18px 50px rgba(29,43,76,.08)}h1{margin:0 0 12px}.ok{padding:14px;border:1px solid #b7e4c7;background:#f0fff4;border-radius:10px}.note{color:#1e4f8f;background:#eff6ff;border-left:3px solid #3b82f6;padding:10px 12px;border-radius:7px}.actions{display:flex;gap:10px;margin-top:20px}.btn{display:inline-block;padding:11px 16px;border-radius:9px;background:#165dff;color:#fff;text-decoration:none;font-weight:700}.btn.alt{background:#eef2f7;color:#172033}</style></head><body><main class="box"><h1>' . $title . '</h1><div class="ok">' . $message . '</div>' . $demo . '<div class="actions"><a class="btn" href="/admin/login">' . e(it('installer.open_admin')) . '</a><a class="btn alt" href="/">' . e(it('installer.open_store')) . '</a></div></main></body></html>';
+    exit;
+}
+
 function iniBytes(string $value): int
 {
     $value = trim($value);
@@ -688,63 +998,3 @@ function formatBytes(float $bytes): string
     $index = 0;
     while ($bytes >= 1024 && $index < count($units) - 1) {
         $bytes /= 1024;
-        $index++;
-    }
-    return number_format($bytes, $index === 0 ? 0 : 1, '.', '') . ' ' . $units[$index];
-}
-
-function installedResponse(): never
-{
-    http_response_code(410);
-    echo it('installer.doctype_html_meta_charset_utf_8_meta_name_robots_content');
-    exit;
-}
-
-function e(string $value): string
-{
-    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-}
-?><!doctype html>
-<html lang="uk-UA">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
-<title><?= e(it('installer.page_title')) ?></title>
-<link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
-<style>
-:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;background:#f5f7fb}*{box-sizing:border-box}body{margin:0}.wrap{max-width:980px;margin:40px auto;padding:0 20px}.card{background:#fff;border:1px solid #dfe5ef;border-radius:18px;box-shadow:0 18px 50px rgba(29,43,76,.08);padding:28px;margin-bottom:20px}h1{margin:0 0 8px;font-size:30px}h2{font-size:19px;margin:0 0 18px}.muted{color:#667085;margin:0}.setup-brand{display:flex;align-items:center;gap:14px}.setup-brand img{width:48px;height:48px;flex:0 0 48px}.setup-brand h1{margin:0 0 3px}.setup-brand__copy{min-width:0}.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.check{padding:10px 12px;border:1px solid #e4e7ec;border-radius:10px;font-size:14px}.ok{border-color:#b7e4c7;background:#f0fff4}.bad{border-color:#f4b9b9;background:#fff5f5}.warn{border-color:#f1d88c;background:#fff9e8}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.full{grid-column:1/-1}.setup-group{grid-column:1/-1;padding:16px;border:1px solid #e4e7ec;border-radius:14px;background:#fbfcfe}.setup-group h3{margin:0 0 4px;font-size:16px}.setup-group p{margin:0;color:#667085;font-size:13px}.password-wrap{position:relative}.password-wrap input{padding-right:48px}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:1px solid #d0d5dd;border-radius:8px;background:#fff;cursor:pointer;font-size:16px}.password-toggle:hover{background:#f2f6ff;border-color:#9bb9ff}label{display:block;font-size:13px;font-weight:650;margin-bottom:6px}input,select{width:100%;padding:12px 13px;border:1px solid #cfd6e4;border-radius:10px;font:inherit;background:#fff}input:focus,select:focus{outline:2px solid #1f6feb33;border-color:#1f6feb}.button{display:inline-flex;border:0;border-radius:10px;padding:13px 18px;background:#165dff;color:#fff;font-weight:700;cursor:pointer}.button:disabled{opacity:.45;cursor:not-allowed}.errors{background:#fff1f1;border:1px solid #f0b6b6;padding:14px;border-radius:10px;margin-bottom:18px}.checkbox{display:flex;align-items:center;gap:8px}.checkbox input{width:auto}code{background:#f2f4f7;padding:2px 5px;border-radius:5px}@media(max-width:700px){.grid{grid-template-columns:1fr}.wrap{margin:18px auto}.card{padding:20px}}
-</style>
-</head>
-<body><main class="wrap">
-<section class="card"><div class="setup-brand"><img src="/assets/branding/nexora-mark.svg" alt="" width="48" height="48"><div class="setup-brand__copy"><h1>Nexora Commerce</h1><p class="muted"><?= e(it('installer.intro')) ?></p></div></div></section>
-<section class="card"><h2><?= e(it('installer.server_check')) ?></h2><div class="checks">
-<?php foreach ($checks as $check): ?>
-<div class="check <?= $check['passed'] ? 'ok' : ($check['required'] ? 'bad' : 'warn') ?>"><strong><?= e((string) $check['label']) ?></strong><br><?= e((string) $check['current']) ?></div>
-<?php endforeach; ?>
-</div><?php if (!$vendorReady): ?><p class="muted" style="margin-top:14px"><?= e(it('installer.source_vendor_notice')) ?></p><?php endif; ?></section>
-<section class="card"><h2><?= e(it('installer.store_install')) ?></h2>
-<?php if ($errors !== []): ?><div class="errors"><?php foreach ($errors as $error): ?><div><?= e($error) ?></div><?php endforeach; ?></div><?php endif; ?>
-<form method="post" autocomplete="off"><input type="hidden" name="_csrf" value="<?= e((string) $_SESSION['mc_setup_csrf']) ?>"><div class="grid">
-<div class="setup-group"><h3><?= e(it('installer.step_database')) ?></h3><p><?= e(it('installer.database_hint')) ?></p></div>
-<div><label><?= e(it('installer.db_host')) ?></label><input name="db_host" value="<?= e((string) $values['db_host']) ?>" required></div>
-<div><label><?= e(it('installer.db_port')) ?></label><input name="db_port" inputmode="numeric" value="<?= e((string) $values['db_port']) ?>" required></div>
-<div><label><?= e(it('installer.db_name')) ?></label><input name="db_name" value="<?= e((string) $values['db_name']) ?>" required></div>
-<div><label><?= e(it('installer.db_user')) ?></label><input name="db_user" value="<?= e((string) $values['db_user']) ?>" required></div>
-<div class="full"><label><?= e(it('installer.db_password')) ?></label><div class="password-wrap"><input id="db_password" type="password" name="db_password" autocomplete="new-password"><button class="password-toggle" type="button" data-toggle-password="db_password" title="<?= e(it('installer.password_toggle')) ?>" aria-label="<?= e(it('installer.password_toggle')) ?>">◉</button></div></div>
-<div class="full checkbox"><input id="create_database" type="checkbox" name="create_database" value="1"><label for="create_database" style="margin:0"><?= e(it('installer.create_database')) ?></label></div>
-<div class="setup-group"><h3><?= e(it('installer.step_store')) ?></h3><p><?= e(it('installer.store_hint')) ?></p></div>
-<div><label><?= e(it('installer.store_name')) ?></label><input name="store_name" value="<?= e((string) $values['store_name']) ?>" required></div>
-<div><label><?= e(it('installer.store_url')) ?></label><input name="public_url" value="<?= e((string) $values['public_url']) ?>" required></div>
-<div class="full"><label><?= e(it('installer.site_profile')) ?></label><select name="site_mode"><option value="shop" <?= $values['site_mode'] === 'shop' ? 'selected' : '' ?>><?= e(it('installer.mode_shop')) ?></option><option value="catalog" <?= $values['site_mode'] === 'catalog' ? 'selected' : '' ?>><?= e(it('installer.mode_catalog')) ?></option><option value="content" <?= $values['site_mode'] === 'content' ? 'selected' : '' ?>><?= e(it('installer.mode_content')) ?></option><option value="landing" <?= $values['site_mode'] === 'landing' ? 'selected' : '' ?>><?= e(it('installer.mode_landing')) ?></option><option value="forum" <?= $values['site_mode'] === 'forum' ? 'selected' : '' ?>><?= e(it('installer.mode_forum')) ?></option><option value="hybrid" <?= $values['site_mode'] === 'hybrid' ? 'selected' : '' ?>><?= e(it('installer.mode_hybrid')) ?></option></select><p class="muted" style="margin:7px 0 0"><?= e(it('installer.profile_hint')) ?></p></div>
-<div class="setup-group"><h3><?= e(it('installer.step_admin')) ?></h3><p><?= e(it('installer.admin_hint')) ?></p></div>
-<div><label><?= e(it('installer.admin_name')) ?></label><input name="admin_name" value="<?= e((string) $values['admin_name']) ?>" required></div>
-<div><label><?= e(it('installer.admin_email')) ?></label><input type="email" name="admin_email" value="<?= e((string) $values['admin_email']) ?>" required></div>
-<div class="full"><label><?= e(it('installer.admin_password')) ?></label><div class="password-wrap"><input id="admin_password" type="password" name="admin_password" minlength="12" autocomplete="new-password" required><button class="password-toggle" type="button" data-toggle-password="admin_password" title="<?= e(it('installer.password_toggle')) ?>" aria-label="<?= e(it('installer.password_toggle')) ?>">◉</button></div></div>
-<div class="setup-group"><h3><?= e(it('installer.step_demo')) ?></h3><p><?= e(it('installer.demo_hint')) ?></p></div>
-<div class="full checkbox"><input id="install_demo" type="checkbox" name="install_demo" value="1" checked><label for="install_demo" style="margin:0"><?= e(it('installer.demo_checkbox')) ?></label></div>
-<div class="full"><button class="button" <?= $runtimeReady ? '' : 'disabled' ?>><?= e(it('installer.install_button')) ?></button></div>
-</div></form></section>
-</main><script>
-document.querySelectorAll('[data-toggle-password]').forEach(function(button){button.addEventListener('click',function(){var input=document.getElementById(button.getAttribute('data-toggle-password'));if(!input)return;var reveal=input.type==='password';input.type=reveal?'text':'password';button.textContent=reveal?'◌':'◉';button.setAttribute('aria-pressed',reveal?'true':'false');});});
-</script></body></html>
