@@ -1,7 +1,14 @@
+import { lucideIcon } from '../shared/lucide-icons.js';
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
 const q = (selector, root = document) => root.querySelector(selector);
 const qa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
+function iconNode(name, size = 20) {
+  const parsed = new DOMParser().parseFromString(lucideIcon(name, size), 'image/svg+xml');
+  const svg = parsed.documentElement;
+  if (!svg || svg.nodeName.toLowerCase() !== 'svg') return document.createTextNode('');
+  return document.importNode(svg, true);
+}
 function toast(message, type = 'success', timeout = 4200) {
   if (!message) return;
   let stack = q('[data-storefront-toast-stack]');
@@ -20,7 +27,7 @@ function toast(message, type = 'success', timeout = 4200) {
   close.type = 'button';
   close.setAttribute('aria-label', t('js_close'));
   close.title = t('js_close');
-  close.textContent = '×';
+  close.replaceChildren(iconNode('x', 20));
   close.addEventListener('click', () => item.remove());
   item.append(text, close);
   stack.appendChild(item);
@@ -195,21 +202,35 @@ function initMobileNavigation() {
   toggle.className = 'reference-mobile-menu';
   toggle.dataset.mobileCatalogToggle = '';
   toggle.setAttribute('aria-expanded', 'false');
-  toggle.innerHTML = '<span aria-hidden="true">☰</span><span data-mobile-menu-label></span>';
-  q('[data-mobile-menu-label]', toggle).textContent = t('js_menu');
+  const toggleLabel = document.createElement('span');
+  toggleLabel.dataset.mobileMenuLabel = '';
+  toggleLabel.textContent = t('js_menu');
+  toggle.replaceChildren(iconNode('menu', 18), toggleLabel);
   row.appendChild(toggle);
 
   const drawer = document.createElement('div');
   drawer.className = 'mobile-catalog-drawer';
   drawer.hidden = true;
-  drawer.innerHTML = '<div class="mobile-catalog-drawer__backdrop" data-mobile-menu-close></div><aside class="mobile-catalog-drawer__panel"><header><strong data-mobile-catalog-title></strong><button type="button" data-mobile-menu-close>×</button></header><nav></nav></aside>';
-  const panel = q('.mobile-catalog-drawer__panel', drawer);
-  const closeButton = q('button[data-mobile-menu-close]', drawer);
+  const backdrop = document.createElement('div');
+  backdrop.className = 'mobile-catalog-drawer__backdrop';
+  backdrop.dataset.mobileMenuClose = '';
+  const panel = document.createElement('aside');
+  panel.className = 'mobile-catalog-drawer__panel';
+  const header = document.createElement('header');
+  const title = document.createElement('strong');
+  title.dataset.mobileCatalogTitle = '';
+  const closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.dataset.mobileMenuClose = '';
+  closeButton.replaceChildren(iconNode('x', 20));
+  const drawerNav = document.createElement('nav');
+  header.append(title, closeButton);
+  panel.append(header, drawerNav);
+  drawer.append(backdrop, panel);
   panel.setAttribute('aria-label', t('js_navigation'));
   q('[data-mobile-catalog-title]', drawer).textContent = t('js_catalog_sections');
   closeButton.setAttribute('aria-label', t('js_close'));
   closeButton.setAttribute('title', t('js_close'));
-  const drawerNav = q('nav', drawer);
   qa('a', nav).forEach((link) => drawerNav.appendChild(link.cloneNode(true)));
   const serviceLinks = qa('.reference-topbar nav a');
   if (serviceLinks.length) {
@@ -255,7 +276,7 @@ function initProductCardCartActions() {
       event.preventDefault();
       const button = q('button[type="submit"]', form);
       if (button?.disabled) return;
-      const original = button?.innerHTML || '';
+      const original = button ? Array.from(button.childNodes, (node) => node.cloneNode(true)) : [];
       if (button) { button.disabled = true; button.classList.add('is-loading'); button.textContent = t('js_add_ellipsis'); }
       try {
         const response = await fetch(form.action, {
@@ -276,7 +297,7 @@ function initProductCardCartActions() {
       } catch (error) {
         toast(error?.message || t('js_add_failed'), 'error', 6500);
       } finally {
-        if (button) { button.disabled = false; button.classList.remove('is-loading'); button.innerHTML = original; }
+        if (button) { button.disabled = false; button.classList.remove('is-loading'); button.replaceChildren(...original.map((node) => node.cloneNode(true))); }
       }
     });
   });
