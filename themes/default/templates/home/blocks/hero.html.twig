@@ -5,15 +5,18 @@
         <article class="demo-hero-card demo-hero-card--main">
             <div class="demo-hero-card__copy">
                 <span class="demo-kicker">{{ ui_text('home_demo_kicker') }}</span>
-                <h1>{{ props.title|default('') ?: ui_text('home_demo_title') }}</h1>
-                <p>{{ props.text|default('') ?: ui_text('home_demo_text') }}</p>
+                <h1>{{ props.title|default('') ?: presentation.hero.title ?: ui_text('home_demo_title') }}</h1>
+                <p>{{ props.text|default('') ?: presentation.hero.text ?: ui_text('home_demo_text') }}</p>
                 <div class="demo-hero-card__actions">
-                    {% if site_features.catalog|default(false) %}<a class="button button--primary" href="{{ props.button_url|default('') ?: '/catalog' }}">{{ props.button_label|default('') ?: ui_text('go_catalog') }}</a>{% endif %}
+                    {% set demo_button_url = props.button_url|default('') ?: presentation.hero.button_url ?: '/catalog' %}
+                    {% set demo_button_label = props.button_label|default('') ?: presentation.hero.button_label ?: ui_text('go_catalog') %}
+                    {% if site_features.catalog|default(false) and demo_button_label and demo_button_url %}<a class="button button--primary" href="{{ demo_button_url }}">{{ demo_button_label }}</a>{% endif %}
                     <a class="button button--light" href="/about-us">{{ ui_text('about_platform') }}</a>
                 </div>
                 <div class="demo-hero-card__facts"><span>{{ ui_text('demo_products_10') }}</span><span>{{ ui_text('demo_categories_8') }}</span><span>{{ ui_text('coupon') }} {{ demo_showcase.coupon.code }}</span></div>
             </div>
-            <div class="demo-hero-card__media"><img src="{{ props.image|default('') ?: '/media/demo/laptop-pro-14.webp' }}" alt="{{ ui_text('demo_laptop_alt') }}" width="1100" height="720" fetchpriority="high" decoding="async"></div>
+            {% set demo_hero_image = props.image|default('') ?: presentation.hero.image ?: '/media/demo/laptop-pro-14.webp' %}
+            <div class="demo-hero-card__media"><img src="{{ demo_hero_image }}" alt="{{ ui_text('demo_laptop_alt') }}" width="1100" height="720" fetchpriority="high" decoding="async"></div>
         </article>
         {% if site_features.catalog|default(false) %}<div class="demo-hero-stack">
             <a class="demo-mini-banner demo-mini-banner--home" href="/home-appliances"><img src="/media/demo/hero-coffee-reference.webp" alt="{{ ui_text('home_appliances') }}" width="780" height="420"><span><small>{{ ui_text('for_home') }}</small><strong>{{ ui_text('coffee_comfort') }}</strong><b>{{ ui_text('view_arrow') }}</b></span></a>
