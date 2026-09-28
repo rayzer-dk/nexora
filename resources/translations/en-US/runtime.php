@@ -1926,4 +1926,10 @@ return [
     'php.modules.demo.application.demoseeder.poshuk_tovariv_brendiv_abo_katehorii' => 'Search products, brands or categories…',
     'php.modules.demo.application.demoseeder.ukraina' => 'Ukraine',
     'php.modules.demo.application.demoshowcasequery.smartfony_ta_hadzhety' => 'Smartphones and gadgets',
+    'runtime.exception.unsupported_install_locale' => 'Unsupported installation language.',
+    'runtime.exception.theme_presets_unavailable' => 'Theme preset configuration is unavailable.',
+    'runtime.exception.theme_presets_invalid' => 'Theme preset configuration is invalid.',
+    'runtime.exception.theme_presets_empty' => 'Theme configuration contains no usable presets.',
+    'runtime.exception.demo_snapshot_missing' => 'Demo catalog snapshot file is missing.',
+    'runtime.exception.demo_snapshot_invalid' => 'Demo catalog snapshot file is invalid.',
 ];
