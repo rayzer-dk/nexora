@@ -45,7 +45,7 @@
         <form method="post" action="/admin/logout"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button class="admin-runtime__logout" type="submit">{{ ui_text('admin_logout') }}</button></form>
     </aside>
     <main class="admin-runtime__main">
-        <button class="admin-mobile-toggle" type="button" data-sidebar-toggle aria-label="{{ ui_text('admin_open_menu') }}" title="{{ ui_text('admin_open_menu') }}">☰</button>
+        <button class="admin-mobile-toggle" type="button" data-sidebar-toggle aria-label="{{ ui_text('admin_open_menu') }}" title="{{ ui_text('admin_open_menu') }}">{{ ui_icon('menu', 18) }}</button>
         {% set context_switcher = admin_context_switcher() %}
         {% if context_switcher.current %}
         <div class="admin-context-bar" aria-label="{{ ui_text('admin_store_context') }}">
