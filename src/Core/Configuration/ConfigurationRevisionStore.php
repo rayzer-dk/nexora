@@ -48,17 +48,20 @@ final readonly class ConfigurationRevisionStore
             // on MySQL when a revision already exists.
 
             if (is_array($active)) {
-                $activeJson = $active['payload'] ?? null;
-                $activeChecksum = $active['checksum_sha256'] ?? null;
-                if (is_string($activeJson) && is_string($activeChecksum) && hash_equals(strtolower($activeChecksum), hash('sha256', $activeJson))) {
-                    try {
+                // Matching the previous revision is only a no-op optimization. A legacy,
+                // driver-normalized or otherwise unreadable previous payload must never
+                // prevent a new valid configuration revision from being saved.
+                try {
+                    $activeJson = $active['payload'] ?? null;
+                    $activeChecksum = $active['checksum_sha256'] ?? null;
+                    if (is_string($activeJson) && is_string($activeChecksum) && hash_equals(strtolower($activeChecksum), hash('sha256', $activeJson))) {
                         $activePayload = json_decode($activeJson, true, 64, JSON_THROW_ON_ERROR);
                         if (is_array($activePayload) && $activePayload == $payload) {
                             return (int) $active['id'];
                         }
-                    } catch (\JsonException) {
-                        // A malformed active revision is superseded by the new valid payload below.
                     }
+                } catch (\Throwable) {
+                    // Supersede the unreadable revision below instead of blocking the save.
                 }
             }
 
