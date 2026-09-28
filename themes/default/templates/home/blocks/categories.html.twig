@@ -1,0 +1,14 @@
+{% if presentation.home.show_categories and categories %}
+<section class="shell demo-category-section" aria-label="{{ ui_text('product_categories') }}" data-home-builder-block="{{ layout_block.id }}">
+    <div class="reference-section-title reference-section-title--spaced"><div><small class="section-kicker">{{ ui_text('quick_choice') }}</small><h2>{{ layout_block.props.title|default('') ?: ui_text('popular_categories') }}</h2></div><a href="/catalog">{{ ui_text('all_catalog_arrow') }}</a></div>
+    <div class="reference-categories">
+    {% for category in categories %}
+    <a class="reference-category" href="{{ category.url }}">
+        <span class="reference-category__image"><img src="{{ category.image|default('/assets/product-placeholder.svg') }}" alt="" width="480" height="360" loading="lazy" decoding="async"></span>
+        <span class="reference-category__copy"><strong>{{ category.name }}</strong>{% if category.subtitle is defined %}<small>{{ category.subtitle }}</small>{% endif %}</span>
+        <span class="reference-category__arrow" aria-hidden="true">{{ ui_icon('arrow-right', 16) }}</span>
+    </a>
+    {% endfor %}
+    </div>
+</section>
+{% endif %}
