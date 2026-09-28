@@ -3,6 +3,12 @@ import fs from 'node:fs';
 const settings = fs.readFileSync('src/Modules/Appearance/Infrastructure/StorefrontPresentationSettings.php', 'utf8');
 const base = fs.readFileSync('themes/default/templates/base.html.twig', 'utf8');
 const home = fs.readFileSync('themes/default/templates/home.html.twig', 'utf8');
+const homeBlocks = [
+  'themes/default/templates/home/blocks/hero.html.twig',
+  'themes/default/templates/home/blocks/categories.html.twig',
+  'themes/default/templates/home/blocks/products.html.twig',
+  'themes/default/templates/home/blocks/articles.html.twig',
+].map((path) => fs.readFileSync(path, 'utf8')).join('\n');
 const admin = fs.readFileSync('themes/default/templates/admin/appearance/storefront.html.twig', 'utf8');
 const css = fs.readFileSync('assets/storefront/storefront.css', 'utf8');
 
@@ -23,7 +29,7 @@ const required = [
   ['promo right', 'settings.promo_right.title', 'presentation.promo_right.title'],
 ];
 
-const haystack = `${settings}\n${base}\n${home}\n${admin}\n${css}`;
+const haystack = `${settings}\n${base}\n${home}\n${homeBlocks}\n${admin}\n${css}`;
 const missing = required.filter(([, ...needles]) => needles.some((needle) => !haystack.includes(needle)));
 if (missing.length) {
   console.error('Appearance settings are saved but not wired through the runtime:');
