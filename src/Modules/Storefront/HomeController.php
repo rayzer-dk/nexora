@@ -69,8 +69,12 @@ final class HomeController extends AbstractController
         try {
             $demoShowcase = $this->demoShowcase->homepage($context);
             if (is_array($demoShowcase)) {
-                $categories = $demoShowcase['category_tiles'] ?? $categories;
-                $articles = $demoShowcase['articles'] ?? $articles;
+                if ((bool) ($features['catalog'] ?? true)) {
+                    $categories = $demoShowcase['category_tiles'] ?? $categories;
+                }
+                if ((bool) ($features['blog'] ?? true)) {
+                    $articles = $demoShowcase['articles'] ?? $articles;
+                }
             }
         } catch (\Throwable) {
             $demoShowcase = null;
@@ -95,7 +99,11 @@ final class HomeController extends AbstractController
                 ['title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.homecontroller.bezpechna_pokupka'), 'text' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.homecontroller.zakhyshchene_oformlennia'), 'icon' => 'lock'],
             ],
             'seo_head' => [
-                'json_ld' => $this->homeStructuredData($request->getSchemeAndHttpHost() . '/', $context->storeName),
+                'json_ld' => $this->homeStructuredData(
+                    $request->getSchemeAndHttpHost() . '/',
+                    $context->storeName,
+                    (bool) ($features['search'] ?? false),
+                ),
                 'description' => \Commerce\Core\I18n\CanonicalUiText::get('seo.home.description', ['store' => $context->storeName]),
                 'canonical' => $request->getSchemeAndHttpHost() . '/',
                 'robots' => 'index,follow,max-image-preview:large',
@@ -105,15 +113,19 @@ final class HomeController extends AbstractController
     }
 
     /** Organization + WebSite with a sitelinks SearchAction pointing at the catalog search. */
-    private function homeStructuredData(string $homeUrl, string $storeName): array
+    private function homeStructuredData(string $homeUrl, string $storeName, bool $searchEnabled): array
     {
         $webSite = $this->webSite->build($storeName, $homeUrl);
         $webSite['publisher'] = ['@id' => rtrim($homeUrl, '/') . '#organization'];
-        $webSite['potentialAction'] = [
-            '@type' => 'SearchAction',
-            'target' => ['@type' => 'EntryPoint', 'urlTemplate' => rtrim($homeUrl, '/') . '/catalog?q={search_term_string}'],
-            'query-input' => 'required name=search_term_string',
-        ];
+        if ($searchEnabled) {
+            $webSite['potentialAction'] = [
+                '@type' => 'SearchAction',
+                'target' => ['@type' => 'EntryPoint', 'urlTemplate' => rtrim($homeUrl, '/') . '/catalog?q={search_term_string}'],
+                'query-input' => 'required name=search_term_string',
+            ];
+        } else {
+            unset($webSite['potentialAction']);
+        }
 
         return $this->graph->build(
             $this->organization->build(['name' => $storeName, 'url' => $homeUrl]),
