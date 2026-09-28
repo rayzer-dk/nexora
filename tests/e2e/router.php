@@ -15,4 +15,5 @@ if ($uriPath !== '/' && !str_contains($uriPath, "\0")) {
     }
 }
 
+$_SERVER['SCRIPT_FILENAME'] = $publicDir . '/index.php';
 require $publicDir . '/index.php';
