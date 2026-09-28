@@ -86,7 +86,8 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   await expect(page.locator('[data-checkout-form]')).toBeVisible();
   await page.locator('[name="name"]').fill(displayName);
   await page.locator('[name="phone"]').fill('+380501234567');
-  const checkoutEmail = page.locator('[name="email"]');
+  const checkoutForm = page.locator('[data-checkout-form]');
+  const checkoutEmail = checkoutForm.locator('[name="email"]');
   if (await checkoutEmail.count()) await checkoutEmail.fill(email);
 
   const city = page.locator('[data-delivery-city]');
