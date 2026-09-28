@@ -1,19 +1,30 @@
 export default {
   extends: ['stylelint-config-standard'],
-  ignoreFiles: ['public/build/**', 'var/**', 'vendor/**', 'node_modules/**'],
+  ignoreFiles: ['public/build/**', 'var/**', 'vendor/**'],
   rules: {
     'selector-class-pattern': null,
     'custom-property-pattern': null,
     'declaration-block-no-redundant-longhand-properties': null,
-    'declaration-block-single-line-max-declarations': null,
     'color-function-notation': null,
-    'color-function-alias-notation': null,
     'alpha-value-notation': null,
     'media-feature-range-notation': null,
-    'no-descending-specificity': null,
-    'no-duplicate-selectors': null,
-    'selector-not-notation': null,
-    'property-no-vendor-prefix': null,
-    'value-no-vendor-prefix': null,
+
+    // Nexora source still contains compact legacy CSS blocks. Keep the quality gate
+    // focused on semantic correctness while the design system is normalized.
+    'at-rule-empty-line-before': null,
+    'rule-empty-line-before': null,
+    'comment-empty-line-before': null,
+    'declaration-empty-line-before': null,
+    'custom-property-empty-line-before': null,
+    'selector-attribute-quotes': null,
+    'selector-pseudo-element-colon-notation': null,
+    'color-hex-length': null,
+    'value-keyword-case': null,
+    'shorthand-property-no-redundant-values': null,
+    'declaration-property-value-keyword-no-deprecated': null,
+
+    // Semantic safeguards remain enabled by the standard config:
+    // unknown properties/selectors/media features, duplicate declarations,
+    // invalid hex values and malformed syntax still fail CI.
   },
 };
