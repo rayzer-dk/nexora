@@ -1,13 +1,13 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
 {{ shell.start(ui_text('admin.system.stability.stabilnist'),'stability') }}
 <header class="admin-runtime__header">
-    <div><small>Health & Recovery · v{{ platform_version }}</small><h1>{{ ui_text('admin.system.stability.stabilnist_systemy') }}</h1><p>{{ ui_text('admin.system.stability.perevirky_seredovyshcha_bd_i_zhurnal_avtomatychn') }}</p></div>
+    <div><small>{{ ui_text('admin.system.stability.health_recovery') }} · v{{ platform_version }}</small><h1>{{ ui_text('admin.system.stability.stabilnist_systemy') }}</h1><p>{{ ui_text('admin.system.stability.perevirky_seredovyshcha_bd_i_zhurnal_avtomatychn') }}</p></div>
     <button class="admin-preview-link" type="button" data-health-check>{{ ui_text('admin.system.stability.pereviryty_zaraz') }}</button>
 </header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="store-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 <section class="admin-runtime__metrics">
     <article><span>{{ ui_text('admin.system.stability.instaliatsiia') }}</span><strong>{{ health.healthy ? 'OK' : ui_text('admin.system.stability.uvaha') }}</strong><small>{{ health.checks|length }} {{ ui_text('admin.system.stability.perevirok') }}</small></article>
-    <article><span>PHP / FS</span><strong>{{ runtime_checks|filter(v => not v.passed and v.level == 'required')|length == 0 ? 'OK' : ui_text('admin.system.stability.uvaha') }}</strong><small>{{ ui_text('admin.system.stability.oboviazkovi_vymohy') }}</small></article>
+    <article><span>{{ ui_text('admin.system.stability.runtime_php_fs') }}</span><strong>{{ runtime_checks|filter(v => not v.passed and v.level == 'required')|length == 0 ? 'OK' : ui_text('admin.system.stability.uvaha') }}</strong><small>{{ ui_text('admin.system.stability.oboviazkovi_vymohy') }}</small></article>
     <article><span>{{ ui_text('admin.system.stability.baza_danykh') }}</span><strong>{{ database_checks|filter(v => not v.passed and v.level == 'required')|length == 0 ? 'OK' : ui_text('admin.system.stability.uvaha') }}</strong><small>{{ ui_text('admin.system.stability.tsilisnist_seredovyshcha') }}</small></article>
     <article><span>{{ ui_text('admin.system.stability.fallback_podii') }}</span><strong>{{ incidents|length }}</strong><small>{{ ui_text('admin.system.stability.ostanni_50') }}</small></article>
 </section>
@@ -20,7 +20,7 @@
 </section>
 
 <section class="admin-editor-card admin-recovery-card">
-    <div class="admin-card-heading"><div><small>{{ ui_text('ui.admin.system.stability.rollback_points') }}</small><h2>{{ ui_text('admin.system.stability.tochky_vidnovlennia') }}</h2><p>{{ ui_text('admin.system.stability.stvoriuite_backup_bd_danykh_mahazynu_abo_vsiiei_') }}</p></div><span class="admin-status-pill">{{ maintenance_state ? 'Maintenance active' : 'Live protected' }}</span></div>
+    <div class="admin-card-heading"><div><small>{{ ui_text('ui.admin.system.stability.rollback_points') }}</small><h2>{{ ui_text('admin.system.stability.tochky_vidnovlennia') }}</h2><p>{{ ui_text('admin.system.stability.stvoriuite_backup_bd_danykh_mahazynu_abo_vsiiei_') }}</p></div><span class="admin-status-pill">{{ ui_text(maintenance_state ? 'admin.system.stability.maintenance_active' : 'admin.system.stability.live_protected') }}</span></div>
     <div class="admin-inline-actions">
         <form method="post" action="{{ path('admin_system_recovery_create') }}" class="admin-inline-actions">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('recovery_snapshot_create') }}">
