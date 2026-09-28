@@ -41,12 +41,13 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   await expect(page.locator('body')).toContainText(productName);
 
   await page.goto('/account/register', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="display_name"]').fill(displayName);
-  await page.locator('input[name="email"]').fill(email);
-  await page.locator('input[name="password"]').fill(password);
+  const registerForm = page.locator('form.account-form');
+  await registerForm.locator('input[name="display_name"]').fill(displayName);
+  await registerForm.locator('input[name="email"]').fill(email);
+  await registerForm.locator('input[name="password"]').fill(password);
   await Promise.all([
     page.waitForURL(/\/account\/login(?:\?|$)/),
-    page.locator('form.account-form button[type="submit"]').click(),
+    registerForm.locator('button[type="submit"]').click(),
   ]);
 
   await page.locator('input[name="_username"]').fill(email);
