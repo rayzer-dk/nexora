@@ -23,3 +23,13 @@ test('interactive controls have usable labels and target sizes', async ({ page }
   }).slice(0, 20).map((el) => el.outerHTML.slice(0, 180)));
   expect(unlabeled).toEqual([]);
 });
+
+
+test('storefront header uses the installed store identity rather than the platform brand', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const brand = page.locator('.reference-brand');
+  await expect(brand).toBeVisible();
+  await expect(brand.locator('strong')).toHaveText('Nexora E2E');
+  await expect(brand.locator('img[src*="nexora-mark.svg"]')).toHaveCount(0);
+});
