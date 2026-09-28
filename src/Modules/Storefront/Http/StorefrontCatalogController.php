@@ -194,8 +194,8 @@ final class StorefrontCatalogController extends AbstractController
             'catalog_query' => $this->filterQuery($request),
             'catalog_query_base' => $this->filterQueryString($request),
             'seo_head' => [
-                'title' => $category['meta_title'] !== '' ? $category['meta_title'] : $category['name'],
-                'description' => $category['meta_description'] !== '' ? $category['meta_description'] : $category['description'],
+                'title' => (string) ($category['meta_title'] ?? '') !== '' ? (string) $category['meta_title'] : (string) ($category['name'] ?? ''),
+                'description' => (string) ($category['meta_description'] ?? '') !== '' ? (string) $category['meta_description'] : (string) ($category['description'] ?? ''),
                 'image' => $this->shareImage($request->getSchemeAndHttpHost(), [(string) ($category['image'] ?? '')]),
                 'canonical' => $canonical,
                 'robots' => $filter->isFiltered() ? 'noindex,follow' : 'index,follow,max-image-preview:large',
@@ -235,7 +235,7 @@ final class StorefrontCatalogController extends AbstractController
             $structuredDataJson = '{}';
         }
         return $this->render('@storefront/blog/article.html.twig', [
-            'page_title' => $article['meta_title'],
+            'page_title' => (string) ($article['meta_title'] ?? '') !== '' ? (string) $article['meta_title'] : (string) ($article['title'] ?? ''),
             'store_name' => $context->storeName,
             'article' => $article,
             'breadcrumbs' => $breadcrumbs,
@@ -303,8 +303,8 @@ final class StorefrontCatalogController extends AbstractController
             'regions' => $this->composer->compose($layout),
             'structured_data_json' => $structuredDataJson,
             'seo_head' => [
-                'title' => $product['meta_title'] !== '' ? $product['meta_title'] : $product['name'],
-                'description' => $product['meta_description'] !== '' ? $product['meta_description'] : ($product['short_description'] !== '' ? $product['short_description'] : $product['description']),
+                'title' => (string) ($product['meta_title'] ?? '') !== '' ? (string) $product['meta_title'] : (string) ($product['name'] ?? ''),
+                'description' => (string) ($product['meta_description'] ?? '') !== '' ? (string) $product['meta_description'] : ((string) ($product['short_description'] ?? '') !== '' ? (string) $product['short_description'] : (string) ($product['description'] ?? '')),
                 'image' => $this->shareImage($baseUrl, [$displayImage, ...array_map(static fn (array $image): string => (string) ($image['url'] ?? ''), $product['images'])]),
                 'type' => 'product',
                 'canonical' => $baseUrl . $product['url'],
