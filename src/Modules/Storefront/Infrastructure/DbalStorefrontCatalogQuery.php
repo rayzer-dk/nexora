@@ -555,7 +555,7 @@ final readonly class DbalStorefrontCatalogQuery
         $taxMinor = $rate > 0 ? $priceMinor - intdiv(($priceMinor * 10000) + intdiv(10000 + $rate,2),10000+$rate) : 0;
         return [
             'id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(), 'internal_id'=>(int)$row['id'], 'variant_id'=>Uuid::fromBinary((string)$row['variant_public_id'])->toRfc4122(),
-            'product_type'=>(string)($row['product_type'] ?? 'physical'), 'name'=>(string)$row['name'], 'brand'=>(string)($row['brand_name']??''), 'brand_id'=>isset($row['brand_id']) && $row['brand_id'] !== null ? (int)$row['brand_id'] : null, 'sku'=>(string)$row['sku'], 'url'=>'/'.ltrim((string)$row['path'],'/'),
+            'product_type'=>(string)($row['product_type'] ?? 'physical'), 'name'=>(string)$row['name'], 'meta_title'=>(string)($row['meta_title']??''), 'meta_description'=>(string)($row['meta_description']??''), 'brand'=>(string)($row['brand_name']??''), 'brand_id'=>isset($row['brand_id']) && $row['brand_id'] !== null ? (int)$row['brand_id'] : null, 'sku'=>(string)$row['sku'], 'url'=>'/'.ltrim((string)$row['path'],'/'),
             'price'=>$this->money->format($priceMinor,(string)$row['currency'],$context->locale), 'price_minor'=>$priceMinor,
             'compare_at_price'=>$compareMinor!==null?$this->money->format($compareMinor,(string)$row['currency'],$context->locale):null, 'currency'=>(string)$row['currency'], 'gross_price'=>number_format($priceMinor/100,2,'.',''), 'merchant_price'=>number_format($priceMinor/100,2,'.',''),
             'image'=>$this->mediaUrl($row['image_key']??null), ...$this->purchaseState($row), 'available_quantity'=>(string)$row['available_quantity'],
@@ -639,7 +639,7 @@ final readonly class DbalStorefrontCatalogQuery
 
     private function categoryRow(array $row): array
     {
-        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'description'=>(string)($row['description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null)];
+        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'description'=>(string)($row['description']??''),'meta_title'=>(string)($row['meta_title']??''),'meta_description'=>(string)($row['meta_description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null)];
     }
 
     /** @return list<array<string,mixed>> */
