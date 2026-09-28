@@ -46,6 +46,7 @@ foreach ($scanFiles($root . '/src', ['php']) as $path) {
 
     // Demo content and transliteration tables are data, not interface copy.
     $isDataException = str_contains($path, '/Modules/Demo/')
+        || str_ends_with($path, '/Core/Install/InstallationSeeder.php')
         || str_ends_with($path, '/Modules/Seo/Application/UkrainianTransliterator.php');
     if (!$isDataException && preg_match($cyr, $text)) {
         $groups['runtime_php_cyrillic'][] = $relative;
