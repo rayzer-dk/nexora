@@ -49,7 +49,7 @@ final readonly class ForumService
         $limit = max(1, min(100, $limit));
         $offset = (max(1, $page) - 1) * $limit;
         return $this->connection->fetchAllAssociative(
-            "SELECT t.id,t.customer_id,t.title,t.slug,CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(HEX(c.public_id),1,8)))) ELSE t.author_name END AS author_name,t.is_pinned,t.is_locked,t.views_count,t.created_at,t.published_at,t.last_post_at,
+            "SELECT t.id,t.customer_id,t.title,t.slug,CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE t.author_name END AS author_name,t.is_pinned,t.is_locked,t.views_count,t.created_at,t.published_at,t.last_post_at,
                 (SELECT COUNT(*) FROM mc_forum_post p WHERE p.topic_id=t.id AND p.status='published') AS post_count,
                 CASE WHEN ? <= 0 THEN 0 WHEN tr.id IS NULL OR tr.read_at < COALESCE(t.last_post_at,t.published_at,t.created_at) THEN 1 ELSE 0 END AS is_unread
              FROM mc_forum_topic t
@@ -68,7 +68,7 @@ final readonly class ForumService
     public function topic(int $storeId, int $topicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT t.id,t.customer_id,t.title,t.slug,CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(HEX(c.public_id),1,8)))) ELSE t.author_name END AS author_name,t.is_pinned,t.is_locked,t.views_count,t.created_at,t.published_at,b.id AS board_id,b.slug AS board_slug,b.name AS board_name,
+            "SELECT t.id,t.customer_id,t.title,t.slug,CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE t.author_name END AS author_name,t.is_pinned,t.is_locked,t.views_count,t.created_at,t.published_at,b.id AS board_id,b.slug AS board_slug,b.name AS board_name,
                 (SELECT COUNT(*) FROM mc_forum_post p2 WHERE p2.topic_id=t.id AND p2.status='published') AS post_count
              FROM mc_forum_topic t
              JOIN mc_forum_board b ON b.id=t.board_id
@@ -86,7 +86,7 @@ final readonly class ForumService
         $limit = max(1, min(100, $limit));
         $offset = (max(1, $page) - 1) * $limit;
         return $this->connection->fetchAllAssociative(
-            "SELECT p.id,p.customer_id,CASE WHEN p.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(HEX(c.public_id),1,8)))) ELSE p.author_name END AS author_name,p.body_text,p.created_at,p.published_at,p.edited_at,p.edit_count,\n                (SELECT COUNT(*) FROM mc_forum_reaction r WHERE r.post_id=p.id AND r.reaction='like') AS like_count\n             FROM mc_forum_post p\n             JOIN mc_forum_topic t ON t.id=p.topic_id\n             JOIN mc_forum_board b ON b.id=t.board_id\n             LEFT JOIN mc_customer c ON c.id=p.customer_id\n             LEFT JOIN mc_forum_profile fp ON fp.customer_id=p.customer_id AND fp.store_id=b.store_id\n             WHERE p.topic_id=? AND b.store_id=? AND p.status='published' ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}",
+            "SELECT p.id,p.customer_id,CASE WHEN p.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE p.author_name END AS author_name,p.body_text,p.created_at,p.published_at,p.edited_at,p.edit_count,\n                (SELECT COUNT(*) FROM mc_forum_reaction r WHERE r.post_id=p.id AND r.reaction='like') AS like_count\n             FROM mc_forum_post p\n             JOIN mc_forum_topic t ON t.id=p.topic_id\n             JOIN mc_forum_board b ON b.id=t.board_id\n             LEFT JOIN mc_customer c ON c.id=p.customer_id\n             LEFT JOIN mc_forum_profile fp ON fp.customer_id=p.customer_id AND fp.store_id=b.store_id\n             WHERE p.topic_id=? AND b.store_id=? AND p.status='published' ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}",
             [$topicId, $storeId],
         );
     }
