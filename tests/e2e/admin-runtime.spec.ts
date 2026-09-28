@@ -49,6 +49,35 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
   await expect(page.locator('input[name="name"]')).toHaveValue(originalStoreName);
 
+  await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const siteForm = page.locator('form.admin-editor-form[data-dirty-guard]');
+  await expect(siteForm).toBeVisible();
+  const originalMode = await siteForm.locator('input[name="mode"]:checked').inputValue();
+  const qaMode = originalMode === 'shop' ? 'hybrid' : 'shop';
+  await siteForm.locator(`input[name="mode"][value="${qaMode}"]`).check();
+  const saveSiteResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/system/site') && response.request().method() === 'POST'
+  );
+  await siteForm.locator('button[type="submit"]').click();
+  const saveSiteResponse = await saveSiteResponsePromise;
+  expect(saveSiteResponse.status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
+  await expect(page.locator(`input[name="mode"][value="${qaMode}"]`)).toBeChecked();
+
+  const restoreSiteForm = page.locator('form.admin-editor-form[data-dirty-guard]');
+  await restoreSiteForm.locator(`input[name="mode"][value="${originalMode}"]`).check();
+  const restoreSiteResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/system/site') && response.request().method() === 'POST'
+  );
+  await restoreSiteForm.locator('button[type="submit"]').click();
+  const restoreSiteResponse = await restoreSiteResponsePromise;
+  expect(restoreSiteResponse.status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
+  await expect(page.locator(`input[name="mode"][value="${originalMode}"]`)).toBeChecked();
+
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
   const appearanceForm = page.locator('form.admin-storefront-form');
