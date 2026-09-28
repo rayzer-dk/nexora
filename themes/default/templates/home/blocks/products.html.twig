@@ -1,0 +1,6 @@
+{% if products and presentation.home.show_products %}
+<section class="shell reference-products-section" data-home-builder-block="{{ layout_block.id }}">
+    <div class="reference-section-title reference-section-title--spaced"><div><small class="section-kicker">{{ ui_text('store_selection') }}</small><h2>{{ layout_block.props.title|default('') ?: ui_text('popular_products') }}</h2></div><a href="/catalog">{{ ui_text('all_products_arrow') }}</a></div>
+    <div class="product-grid demo-product-grid">{% for product in products %}{% include '@storefront/components/product_card.html.twig' with {product:product} only %}{% endfor %}</div>
+</section>
+{% endif %}
