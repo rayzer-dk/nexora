@@ -285,3 +285,44 @@ test('published Home Builder layout changes SSR storefront and can be restored',
   expect((await restoreResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
 });
+
+
+test('disabling catalog removes catalog runtime, demo catalog blocks and search structured data', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating site-capability contract test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await loginAdmin(page);
+  await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
+  const form = page.locator('form.admin-editor-form[data-dirty-guard]');
+  const originalMode = await form.locator('input[name="mode"]:checked').inputValue();
+  const originalFeatures = await form.locator('input[type="checkbox"][name^="feature_"]').evaluateAll((nodes) =>
+    Object.fromEntries(nodes.map((node) => {
+      const input = node as HTMLInputElement;
+      return [input.name, input.checked];
+    }))
+  );
+
+  const catalog = form.locator('input[name="feature_catalog"]');
+  await expect(catalog).toBeChecked();
+  await catalog.uncheck();
+  await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+
+  const catalogResponse = await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  expect(catalogResponse?.status()).toBe(404);
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('a[href="/catalog"]')).toHaveCount(0);
+  await expect(page.locator('[data-product-card]')).toHaveCount(0);
+  const jsonLd = await page.locator('script[type="application/ld+json"]').allTextContents();
+  expect(jsonLd.join('\n')).not.toContain('SearchAction');
+
+  await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
+  const restore = page.locator('form.admin-editor-form[data-dirty-guard]');
+  await restore.locator(`input[name="mode"][value="${originalMode}"]`).check();
+  for (const [name, checked] of Object.entries(originalFeatures)) {
+    const input = restore.locator(`input[name="${name}"]`);
+    if (checked) await input.check(); else await input.uncheck();
+  }
+  await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+});
