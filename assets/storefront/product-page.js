@@ -144,7 +144,7 @@ function initAjaxBuyActions() {
             event.preventDefault();
             if (form.dataset.busy === '1') return;
             form.dataset.busy = '1';
-            const originalText = submitter.textContent;
+            const originalContent = Array.from(submitter.childNodes, (node) => node.cloneNode(true));
             submitter.disabled = true;
             submitter.classList.add('is-loading');
             submitter.textContent = t('js_add_ellipsis');
@@ -170,7 +170,7 @@ function initAjaxBuyActions() {
             } finally {
                 submitter.disabled = false;
                 submitter.classList.remove('is-loading');
-                submitter.textContent = originalText;
+                submitter.replaceChildren(...originalContent.map((node) => node.cloneNode(true)));
                 form.dataset.busy = '0';
             }
         });
