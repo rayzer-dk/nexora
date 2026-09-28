@@ -18,6 +18,7 @@ final readonly class DbalStorefrontCatalogQuery
         private StorefrontMoneyFormatter $money,
         private SearchSynonymService $synonyms,
         private SearchCandidateProviderInterface $searchCandidates,
+        private ?\Commerce\Modules\Search\Application\SqlSearchIndex $sqlIndex = null,
     ) {
     }
 
@@ -61,6 +62,7 @@ final readonly class DbalStorefrontCatalogQuery
             '(mp.published_at IS NULL OR mp.published_at<=UTC_TIMESTAMP(6))',
         ];
         $filterParams = [];
+        $searchCorrections = [];
 
         if ($categoryId !== null) {
             $conditions[] = 'EXISTS (SELECT 1 FROM mc_product_category fpc WHERE fpc.product_id=p.id AND fpc.category_id=?)';
@@ -128,6 +130,21 @@ final readonly class DbalStorefrontCatalogQuery
                 }
                 $conditions[] = 'p.id IN (' . implode(',', array_fill(0, count($acceleratedSearchIds), '?')) . ')';
                 array_push($filterParams, ...$acceleratedSearchIds);
+            } elseif ($this->sqlIndex !== null && $this->sqlIndex->isAvailable($context->storeId, $context->locale)) {
+                // Built-in index: all store languages, categories and brands, stemming and spelling correction.
+                $tokens = $this->searchTokens($filter->search);
+                $prepared = $this->sqlIndex->prepare($context->storeId, $context->locale, $this->synonyms->expandTokenGroups($context->storeId, $context->locale, $tokens));
+                $searchCorrections = $prepared['corrections'];
+                foreach ($prepared['groups'] as $alternatives) {
+                    $alternativeSql = [];
+                    $filterParams[] = $context->storeId;
+                    $filterParams[] = $context->locale;
+                    foreach (array_slice($alternatives, 0, 8) as $stem) {
+                        $alternativeSql[] = "sd.document LIKE ? ESCAPE '!'";
+                        $filterParams[] = '%' . $this->escapeLike($stem) . '%';
+                    }
+                    $conditions[] = 'EXISTS (SELECT 1 FROM mc_search_document sd WHERE sd.store_id=? AND sd.locale=? AND sd.product_id=p.id AND (' . implode(' OR ', $alternativeSql) . '))';
+                }
             } else {
                 $tokens = $this->searchTokens($filter->search);
                 $tokenGroups = $this->synonyms->expandTokenGroups($context->storeId, $context->locale, $tokens);
@@ -246,7 +263,7 @@ final readonly class DbalStorefrontCatalogQuery
         ];
         $rows = $this->connection->fetchAllAssociative($sql, $queryParams);
         $items = array_map(fn(array $r): array => $this->productCardRow($r, $context), $rows);
-        return ['items'=>$items,'total'=>$count,'page'=>$page,'pages'=>max(1,(int)ceil($count/$limit))];
+        return ['items'=>$items,'total'=>$count,'page'=>$page,'pages'=>max(1,(int)ceil($count/$limit)),'search_corrections'=>$searchCorrections];
     }
 
 

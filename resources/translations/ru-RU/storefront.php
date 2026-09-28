@@ -658,4 +658,5 @@ return [
     'flash.forum_ban_applied' => 'Пользователь заблокирован на форуме.',
     'flash.antibot_failed' => 'Проверка на бота не пройдена. Попробуйте ещё раз.',
     'flash.contact_verified' => 'Контакт подтверждён.',
+    'search_corrected' => 'Учтена возможная опечатка: %terms%',
 ];

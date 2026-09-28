@@ -798,4 +798,5 @@ return [
     'flash.forum_ban_applied' => 'Forum ban applied.',
     'flash.antibot_failed' => 'Anti-bot verification failed. Please try again.',
     'flash.contact_verified' => 'Account contact verified.',
+    'search_corrected' => 'Showing results with a spelling fix: %terms%',
 ];

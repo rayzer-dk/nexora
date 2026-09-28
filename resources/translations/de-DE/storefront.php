@@ -658,4 +658,5 @@ return [
     'flash.forum_ban_applied' => 'Forumsperre verhängt.',
     'flash.antibot_failed' => 'Bot-Prüfung fehlgeschlagen. Bitte erneut versuchen.',
     'flash.contact_verified' => 'Kontakt bestätigt.',
+    'search_corrected' => 'Ergebnisse mit korrigierter Schreibweise: %terms%',
 ];

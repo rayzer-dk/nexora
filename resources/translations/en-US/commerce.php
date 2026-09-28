@@ -46,4 +46,6 @@ Product: %product%',
     'scheduler.description.currency_prices' => 'Fetches official NBU exchange rates and recalculates prices for auto-converted currencies. Explicitly set prices are not changed.',
     'scheduler.label.retention' => 'Technical data cleanup',
     'scheduler.description.retention' => 'Once a day, removes expired tokens, old guest carts, search and security logs, delivered webhooks, old automatic pre-update snapshots, update leftovers, and expired cache. Orders, customers, catalog, and manual backups are not affected.',
+    'scheduler.label.search_index' => 'Search index',
+    'scheduler.description.search_index' => 'Every 6 hours refreshes the built-in search index: names in all languages, categories, brands and the vocabulary for typo correction. Product changes are indexed immediately.',
 ];

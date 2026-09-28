@@ -472,6 +472,7 @@ return array(
     'Commerce\\Modules\\Rewards\\Http\\RewardsAdminController' => $baseDir . '/src/Modules/Rewards/Http/RewardsAdminController.php',
     'Commerce\\Modules\\Rewards\\Http\\RewardsController' => $baseDir . '/src/Modules/Rewards/Http/RewardsController.php',
     'Commerce\\Modules\\Search\\Application\\SearchSynonymService' => $baseDir . '/src/Modules/Search/Application/SearchSynonymService.php',
+    'Commerce\\Modules\\Search\\Application\\SqlSearchIndex' => $baseDir . '/src/Modules/Search/Application/SqlSearchIndex.php',
     'Commerce\\Modules\\Search\\Console\\SearchReindexCommand' => $baseDir . '/src/Modules/Search/Console/SearchReindexCommand.php',
     'Commerce\\Modules\\Search\\Contract\\SearchCandidateProviderInterface' => $baseDir . '/src/Modules/Search/Contract/SearchCandidateProviderInterface.php',
     'Commerce\\Modules\\Search\\Domain\\SearchCandidateResult' => $baseDir . '/src/Modules/Search/Domain/SearchCandidateResult.php',

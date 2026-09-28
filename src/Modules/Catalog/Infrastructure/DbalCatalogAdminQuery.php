@@ -10,7 +10,7 @@ use Symfony\Component\Uid\Uuid;
 
 final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
 {
-    public function __construct(private Connection $connection)
+    public function __construct(private Connection $connection, private ?\Commerce\Modules\Search\Application\SqlSearchIndex $searchIndex = null)
     {
     }
 
@@ -20,9 +20,34 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         $page = max(1, $page); $limit = min(100, max(1, $limit)); $offset = ($page - 1) * $limit;
         $where = 'sp.store_id = ? AND pt.locale = ?'; $params = [$storeId, $locale];
         if (trim($search) !== '') {
-            $where .= ' AND (pt.name LIKE ? OR v.sku LIKE ? OR b.name LIKE ?)';
             $needle = '%' . str_replace(['%', '_'], ['\\%', '\\_'], trim($search)) . '%';
-            $params[] = $needle; $params[] = $needle; $params[] = $needle;
+            $exact = '(pt.name LIKE ? OR v.sku LIKE ? OR v.gtin LIKE ? OR v.mpn LIKE ? OR b.name LIKE ?)';
+            $exactParams = [$needle, $needle, $needle, $needle, $needle];
+            if ($this->searchIndex !== null && $this->searchIndex->isAvailable($storeId, $locale)) {
+                // Same index as the storefront: every language, categories, word forms and typos.
+                $tokens = array_slice(preg_split('/\s+/u', trim($search), -1, PREG_SPLIT_NO_EMPTY) ?: [], 0, 8);
+                $prepared = $this->searchIndex->prepare($storeId, $locale, array_map(static fn (string $t): array => [$t], $tokens));
+                $groupSql = [];
+                $groupParams = [];
+                foreach ($prepared['groups'] as $alternatives) {
+                    $like = [];
+                    foreach (array_slice($alternatives, 0, 8) as $stem) {
+                        $like[] = 'sd.document LIKE ?';
+                        $groupParams[] = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $stem) . '%';
+                    }
+                    $groupSql[] = '(' . implode(' OR ', $like) . ')';
+                }
+                if ($groupSql !== []) {
+                    $where .= ' AND (' . $exact . ' OR EXISTS (SELECT 1 FROM mc_search_document sd WHERE sd.store_id=sp.store_id AND sd.locale=pt.locale AND sd.product_id=p.id AND ' . implode(' AND ', $groupSql) . '))';
+                    array_push($params, ...$exactParams, ...$groupParams);
+                } else {
+                    $where .= ' AND ' . $exact;
+                    array_push($params, ...$exactParams);
+                }
+            } else {
+                $where .= ' AND ' . $exact;
+                array_push($params, ...$exactParams);
+            }
         }
         $total = (int) $this->connection->fetchOne(
             "SELECT COUNT(DISTINCT p.id) FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id LEFT JOIN mc_product_variant v ON v.product_id=p.id LEFT JOIN mc_brand b ON b.id=p.brand_id WHERE {$where}",

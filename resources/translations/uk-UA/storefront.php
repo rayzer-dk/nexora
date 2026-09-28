@@ -748,4 +748,5 @@ return [
     'flash.forum_ban_applied' => 'Користувача заблоковано на форумі.',
     'flash.antibot_failed' => 'Перевірка на бота не пройдена. Спробуйте ще раз.',
     'flash.contact_verified' => 'Контакт підтверджено.',
+    'search_corrected' => 'Враховано можливу помилку: %terms%',
 ];

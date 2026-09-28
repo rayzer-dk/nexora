@@ -658,4 +658,5 @@ return [
     'flash.forum_ban_applied' => 'Forumudelukkelse anvendt.',
     'flash.antibot_failed' => 'Bot-kontrollen mislykkedes. Prøv igen.',
     'flash.contact_verified' => 'Kontakt bekræftet.',
+    'search_corrected' => 'Viser resultater med rettet stavning: %terms%',
 ];

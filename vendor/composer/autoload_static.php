@@ -979,6 +979,7 @@ class ComposerStaticInitb70ac10207745cbe78d150a67290fdc2
         'Commerce\\Modules\\Rewards\\Http\\RewardsAdminController' => __DIR__ . '/../..' . '/src/Modules/Rewards/Http/RewardsAdminController.php',
         'Commerce\\Modules\\Rewards\\Http\\RewardsController' => __DIR__ . '/../..' . '/src/Modules/Rewards/Http/RewardsController.php',
         'Commerce\\Modules\\Search\\Application\\SearchSynonymService' => __DIR__ . '/../..' . '/src/Modules/Search/Application/SearchSynonymService.php',
+        'Commerce\\Modules\\Search\\Application\\SqlSearchIndex' => __DIR__ . '/../..' . '/src/Modules/Search/Application/SqlSearchIndex.php',
         'Commerce\\Modules\\Search\\Console\\SearchReindexCommand' => __DIR__ . '/../..' . '/src/Modules/Search/Console/SearchReindexCommand.php',
         'Commerce\\Modules\\Search\\Contract\\SearchCandidateProviderInterface' => __DIR__ . '/../..' . '/src/Modules/Search/Contract/SearchCandidateProviderInterface.php',
         'Commerce\\Modules\\Search\\Domain\\SearchCandidateResult' => __DIR__ . '/../..' . '/src/Modules/Search/Domain/SearchCandidateResult.php',

@@ -16,6 +16,7 @@ final readonly class CatalogSearchIndexSubscriber implements DomainEventSubscrib
     public function __construct(
         private Connection $db,
         private MeilisearchProductIndexer $indexer,
+        private \Commerce\Modules\Search\Application\SqlSearchIndex $sqlIndex,
     ) {
     }
 
@@ -31,14 +32,18 @@ final readonly class CatalogSearchIndexSubscriber implements DomainEventSubscrib
 
     public function handle(StoredDomainEvent $event): void
     {
-        if (!$this->indexer->isEnabled()) {
-            return;
-        }
         if (in_array($event->eventName, [EventNames::PRODUCT_CREATED, EventNames::PRODUCT_UPDATED], true)) {
             $productId = $this->internalId('mc_product', $event->aggregateId);
             if ($productId > 0) {
-                $this->indexer->rebuildProduct($productId);
+                // The built-in index is always kept current; Meilisearch only when configured.
+                $this->sqlIndex->rebuildProduct($productId);
+                if ($this->indexer->isEnabled()) {
+                    $this->indexer->rebuildProduct($productId);
+                }
             }
+            return;
+        }
+        if (!$this->indexer->isEnabled()) {
             return;
         }
         $orderId = $this->internalId('mc_sales_order', $event->aggregateId);

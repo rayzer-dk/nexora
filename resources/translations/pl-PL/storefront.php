@@ -658,4 +658,5 @@ return [
     'flash.forum_ban_applied' => 'Nałożono blokadę na forum.',
     'flash.antibot_failed' => 'Weryfikacja antybotowa nie powiodła się. Spróbuj ponownie.',
     'flash.contact_verified' => 'Kontakt potwierdzony.',
+    'search_corrected' => 'Uwzględniono możliwą literówkę: %terms%',
 ];

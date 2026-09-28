@@ -1,7 +1,7 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="catalog-page shell">
-    <header class="catalog-heading"><div><p class="eyebrow">{{ ui_text('catalog_title') }}</p><h1>{% if search_query|default('') %}{{ ui_text('catalog_search_title', {query: search_query}) }}{% else %}{{ ui_text('catalog_products') }}{% endif %}</h1></div><p>{{ ui_text('catalog_total', {count: products.total}) }}</p></header>
+    <header class="catalog-heading"><div><p class="eyebrow">{{ ui_text('catalog_title') }}</p><h1>{% if search_query|default('') %}{{ ui_text('catalog_search_title', {query: search_query}) }}{% else %}{{ ui_text('catalog_products') }}{% endif %}</h1></div><p>{{ ui_text('catalog_total', {count: products.total}) }}</p>{% if products.search_corrections|default([]) is not empty %}<p class="catalog-search-correction" role="status">{{ ui_text('search_corrected', {terms: products.search_corrections|map((to, from) => from ~ ' → ' ~ to)|join(', ')}) }}</p>{% endif %}</header>
     {% if categories %}
     <nav class="category-chips" aria-label="{{ ui_text('categories') }}">
         {% for category in categories %}<a href="{{ category.url }}">{{ category.name }}</a>{% endfor %}
