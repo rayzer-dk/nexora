@@ -59,6 +59,20 @@ final readonly class StorefrontContextResolver
         );
     }
 
+    public function defaultLocale(int $storeId): ?string
+    {
+        $locale = $this->connection->fetchOne(
+            "SELECT s.default_locale FROM mc_store s WHERE s.id=? AND s.status='active' LIMIT 1",
+            [$storeId],
+        );
+
+        if (!is_string($locale) || $locale === '') {
+            return null;
+        }
+
+        return $this->isEnabledLocale($storeId, $locale) ? $locale : null;
+    }
+
     private function storeForHost(string $host): array|false
     {
         if ($host === '') {
