@@ -2025,4 +2025,8 @@ return [
     'ui.product.show.product_details' => 'Product details',
     'ui.product.show.product_media' => 'Product media',
     'ui.product.show.purchase_information' => 'Purchase information',
+    'admin.system.stability.health_recovery' => 'Health & Recovery',
+    'admin.system.stability.runtime_php_fs' => 'PHP / File system',
+    'admin.system.stability.maintenance_active' => 'Maintenance active',
+    'admin.system.stability.live_protected' => 'Live protected',
 ];
