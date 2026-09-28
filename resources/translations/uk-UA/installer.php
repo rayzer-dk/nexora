@@ -110,4 +110,7 @@ return [
     'installer.db_unknown_database' => 'Вказану базу даних не знайдено. Створіть її або увімкніть опцію автоматичного створення.',
     'installer.db_insufficient_privileges' => 'Користувач бази даних не має достатніх прав для встановлення або оновлення.',
     'installer.db_unreachable' => 'Сервер бази даних недоступний. Перевірте адресу, порт і доступність MySQL/MariaDB.',
+    'installer.language_ukrainian' => 'Українська',
+    'installer.language_russian' => 'Русский',
+    'installer.language_english' => 'English',
 ];
