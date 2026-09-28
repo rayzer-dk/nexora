@@ -713,4 +713,10 @@ return [
     "forum_rule_8_text" => "Якщо повідомлення порушує правила, надішліть скаргу модератору та не розпалюйте суперечку.",
     "forum_rules_enforcement" => "Модератори можуть відхиляти або видаляти повідомлення, закривати теми та тимчасово або безстроково обмежувати участь у форумі.",
     "forum_rules_link" => "Правила форуму",
+    'ui.checkout.blocks.shipping.delivery' => 'Доставка',
+    'ui.product.show.product_media' => 'Медіа товару',
+    'ui.product.show.purchase_information' => 'Інформація про покупку',
+    'ui.product.show.product_details' => 'Деталі товару',
+    'ui.product.show.additional_product_information' => 'Додаткова інформація про товар',
+    'document_vat' => 'ПДВ',
 ];
