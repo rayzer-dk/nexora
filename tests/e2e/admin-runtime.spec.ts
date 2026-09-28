@@ -19,8 +19,6 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin E2E credentials are required.');
 
   await loginAdmin(page);
-  page.on('dialog', async (dialog) => dialog.accept());
-
   await page.goto('/admin/system/store', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
   const storeForm = page.locator('form.admin-editor-card[data-dirty-guard]').first();
