@@ -8,7 +8,7 @@ Required on the release build machine: PHP 8.4, Composer, Node.js/npm and networ
 2. Run `tools/build-production.sh`.
 3. The script installs Composer dependencies without dev packages, runs `npm ci`, typecheck, Vite production build, asset compression and release/security/commerce gates.
 4. Output: `build/Nexora_Commerce_vX.Y.Z_PRODUCTION.zip`.
-5. The archive includes `vendor`, compiled `public/build` assets, production `.env`, `release-manifest.json` and `SHA256SUMS.txt`.
+5. The archive includes `vendor`, compiled `public/build` assets, `release-manifest.json` and `SHA256SUMS.txt`. It must not ship `.env` or `.env.local`; the installer creates installation-specific environment configuration.
 
 A release must not be labelled PRODUCTION when either lock file, `vendor/autoload_runtime.php`, or the Vite manifest is missing.
 
