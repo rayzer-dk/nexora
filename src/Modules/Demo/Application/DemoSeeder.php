@@ -218,7 +218,7 @@ final readonly class DemoSeeder
             $this->seedInformationPagesDemo($db, $ctx['store_id'], $now, $ctx['locale']);
             $this->seedPromotionDemo($db, $ctx['store_id'], $now);
             $this->seedForumDemo($db, $ctx['store_id'], $now);
-            $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog), 'demo:seed');
+            $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
                 'version' => '3.6.6',
@@ -255,9 +255,9 @@ final readonly class DemoSeeder
 
     private function context(): array
     {
-        $row=$this->connection->fetchAssociative("SELECT s.id store_id,s.public_id store_public_id,s.default_locale,s.default_currency,m.id market_id FROM mc_store s JOIN mc_market m ON m.store_id=s.id AND m.status='active' WHERE s.status='active' ORDER BY s.id,m.id LIMIT 1");
+        $row=$this->connection->fetchAssociative("SELECT s.id store_id,s.public_id store_public_id,s.name store_name,s.default_locale,s.default_currency,m.id market_id FROM mc_store s JOIN mc_market m ON m.store_id=s.id AND m.status='active' WHERE s.status='active' ORDER BY s.id,m.id LIMIT 1");
         if(!is_array($row)){throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.spochatku_vstanovit_mahazyn'));}
-        return ['store_id'=>(int)$row['store_id'],'store_public_id'=>(string)$row['store_public_id'],'market_id'=>(int)$row['market_id'],'locale'=>(string)$row['default_locale'],'currency'=>(string)$row['default_currency']];
+        return ['store_id'=>(int)$row['store_id'],'store_public_id'=>(string)$row['store_public_id'],'store_name'=>(string)$row['store_name'],'market_id'=>(int)$row['market_id'],'locale'=>(string)$row['default_locale'],'currency'=>(string)$row['default_currency']];
     }
 
     private function isInstalled(int $storeId, string $storePublicId): bool
@@ -558,11 +558,11 @@ final readonly class DemoSeeder
     }
 
     /** @return array<string,mixed> */
-    private function demoPresentation(array $catalog): array
+    private function demoPresentation(array $catalog, string $storeName): array
     {
         return [
             'utility'=>['location'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.ukraina'),'delivery'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.bezkoshtovna_dostavka_vid_2_000'),'support'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.pidtrymka_shchodnia')],
-            'brand'=>['title'=>'Nexora Commerce','subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.demo_vitryna_modern_commerce'),'icon'=>'/assets/branding/nexora-mark.svg'],
+            'brand'=>['title'=>$storeName,'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.demo_vitryna_modern_commerce'),'icon'=>''],
             'theme'=>['primary'=>'#0B63F6','accent'=>'#FF7A1A','success'=>'#0F7A4B'],
             'header'=>['search_placeholder'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.poshuk_tovariv_brendiv_abo_katehorii'),'show_category_nav'=>true],
             'home'=>['show_benefits'=>true,'show_categories'=>true,'show_products'=>true,'show_promos'=>true,'show_articles'=>true],
