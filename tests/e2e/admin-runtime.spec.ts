@@ -58,10 +58,14 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }, qaRadius);
-  await Promise.all([
-    page.waitForURL(/\/admin\/appearance\/storefront/),
-    appearanceForm.locator('button[type="submit"]').last().click(),
-  ]);
+  const saveAppearance = page.waitForResponse((response) =>
+    response.url().includes('/admin/appearance/storefront') &&
+    response.request().method() === 'POST'
+  );
+  await appearanceForm.locator('button[type="submit"]').last().click();
+  const saveAppearanceResponse = await saveAppearance;
+  expect(saveAppearanceResponse.status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('input[name="brand_subtitle"]')).toHaveValue(qaSubtitle);
   await expect(page.locator('input[name="theme_radius"]')).toHaveValue(qaRadius);
 
@@ -73,10 +77,14 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }, originalRadius);
-  await Promise.all([
-    page.waitForURL(/\/admin\/appearance\/storefront/),
-    restoreAppearance.locator('button[type="submit"]').last().click(),
-  ]);
+  const restoreAppearanceResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/appearance/storefront') &&
+    response.request().method() === 'POST'
+  );
+  await restoreAppearance.locator('button[type="submit"]').last().click();
+  const restoreAppearanceResponse = await restoreAppearanceResponsePromise;
+  expect(restoreAppearanceResponse.status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('input[name="brand_subtitle"]')).toHaveValue(originalSubtitle);
   await expect(page.locator('input[name="theme_radius"]')).toHaveValue(originalRadius);
 
