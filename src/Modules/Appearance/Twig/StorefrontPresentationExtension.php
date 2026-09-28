@@ -97,7 +97,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
             }
         } catch (\Throwable) {
         }
-        return ['name' => 'Nexora Commerce', 'locale' => 'uk-UA', 'currency' => 'UAH', 'timezone' => 'Europe/Kyiv'];
+        return ['name' => '', 'locale' => 'uk-UA', 'currency' => 'UAH', 'timezone' => 'Europe/Kyiv'];
     }
 
     /** @return list<array{code:string,name:string}> */
