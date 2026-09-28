@@ -1,0 +1,12 @@
+.rich-editor-mount{display:block}
+.rich-editor{border:1px solid var(--admin-line,#d9dee7);border-radius:12px;overflow:hidden;background:var(--admin-surface,#fff)}
+.rich-editor__toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px;border-bottom:1px solid var(--admin-line,#d9dee7);background:#f8fafc}
+.rich-editor__toolbar button{min-width:36px;min-height:36px;border:0;border-radius:7px;background:transparent;color:inherit;cursor:pointer}
+.rich-editor__toolbar button:hover,.rich-editor__toolbar button.active{background:#eaf2ff}
+.rich-editor__toolbar button:disabled{opacity:.45;cursor:not-allowed}
+.rich-editor__content{min-height:224px;padding:16px 18px;outline:0;line-height:1.65}
+.rich-editor__content>:first-child{margin-top:0}
+.rich-editor__content>:last-child{margin-bottom:0}
+.rich-editor__content table{width:100%;border-collapse:collapse}
+.rich-editor__content th,.rich-editor__content td{border:1px solid var(--admin-line,#d9dee7);padding:8px;vertical-align:top}
+.rich-editor__content img{max-width:100%;height:auto}
