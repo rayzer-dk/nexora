@@ -1928,4 +1928,10 @@ return [
     "forum.runtime.topic_rate" => "Забагато нових тем за короткий час. Спробуйте пізніше.",
     "forum.runtime.duplicate_post" => "Повторне однакове повідомлення заблоковано.",
     "forum.runtime.too_many_links" => "У повідомленні забагато зовнішніх посилань.",
+    'runtime.exception.unsupported_install_locale' => 'Непідтримувана мова встановлення.',
+    'runtime.exception.theme_presets_unavailable' => 'Конфігурація пресетів теми недоступна.',
+    'runtime.exception.theme_presets_invalid' => 'Конфігурація пресетів теми некоректна.',
+    'runtime.exception.theme_presets_empty' => 'Конфігурація теми не містить придатних пресетів.',
+    'runtime.exception.demo_snapshot_missing' => 'Файл демонстраційного каталогу відсутній.',
+    'runtime.exception.demo_snapshot_invalid' => 'Файл демонстраційного каталогу некоректний.',
 ];
