@@ -38,12 +38,23 @@ final readonly class ConfigurationRevisionStore
             }
 
             $active = $db->fetchAssociative(
-                "SELECT id,revision_number,checksum_sha256 FROM mc_configuration_revision WHERE store_id=? AND namespace=? AND config_key=? AND status='active' ORDER BY revision_number DESC LIMIT 1 FOR UPDATE",
+                "SELECT id,revision_number,payload,checksum_sha256 FROM mc_configuration_revision WHERE store_id=? AND namespace=? AND config_key=? AND status='active' ORDER BY revision_number DESC LIMIT 1 FOR UPDATE",
                 [$storeId, $namespace, $configKey],
             );
 
-            if (is_array($active) && hash_equals((string) $active['checksum_sha256'], $checksum)) {
-                return (int) $active['id'];
+            if (is_array($active)) {
+                $activeJson = $active['payload'] ?? null;
+                $activeChecksum = $active['checksum_sha256'] ?? null;
+                if (is_string($activeJson) && is_string($activeChecksum) && hash_equals(strtolower($activeChecksum), hash('sha256', $activeJson))) {
+                    try {
+                        $activePayload = json_decode($activeJson, true, 64, JSON_THROW_ON_ERROR);
+                        if (is_array($activePayload) && $activePayload === $payload) {
+                            return (int) $active['id'];
+                        }
+                    } catch (\JsonException) {
+                        // A malformed active revision is superseded by the new valid payload below.
+                    }
+                }
             }
 
             $latestRevision = (int) $db->fetchOne(
@@ -71,6 +82,19 @@ final readonly class ConfigurationRevisionStore
                 'activated_at' => $now,
             ]);
             $revisionId = (int) $db->lastInsertId();
+
+            // MySQL's native JSON type normalizes the textual representation on write.
+            // The integrity checksum must therefore cover the representation actually stored
+            // by the database, not the pre-insert JSON string. MariaDB may preserve the input
+            // representation, so this works consistently on both engines.
+            $storedJson = $db->fetchOne('SELECT payload FROM mc_configuration_revision WHERE id=?', [$revisionId]);
+            if (!is_string($storedJson) || $storedJson === '') {
+                throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.fc75d0c940f5'));
+            }
+            $storedChecksum = hash('sha256', $storedJson);
+            if (!hash_equals($checksum, $storedChecksum)) {
+                $db->update('mc_configuration_revision', ['checksum_sha256' => $storedChecksum], ['id' => $revisionId]);
+            }
 
             $db->executeStatement(
                 "INSERT INTO mc_entity_metadata (entity_type,entity_public_id,namespace,meta_key,value_json,updated_at) VALUES ('store',?,?,?,?,?) ON DUPLICATE KEY UPDATE value_json=VALUES(value_json),updated_at=VALUES(updated_at)",
