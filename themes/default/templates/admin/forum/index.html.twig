@@ -62,7 +62,7 @@
 </section>
 
 <section class="admin-editor-card">
-    <div class="admin-card-heading"><div><small>Community safety</small><h2>{{ ui_text('admin.forum.index.private_message_reports') }}</h2></div><span class="admin-status-pill">{{ queue.dm_reports|length }}</span></div>
+    <div class="admin-card-heading"><div><small>{{ ui_text('admin.forum.index.community_safety') }}</small><h2>{{ ui_text('admin.forum.index.private_message_reports') }}</h2></div><span class="admin-status-pill">{{ queue.dm_reports|length }}</span></div>
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.forum.index.private_message') }}</th><th>{{ ui_text('admin.forum.index.sender') }}</th><th>{{ ui_text('admin.forum.index.reporter') }}</th><th>{{ ui_text('admin.forum.index.reason') }}</th><th>{{ ui_text('admin.forum.index.data') }}</th><th class="is-actions">{{ ui_text('admin.forum.index.dii') }}</th></tr></thead><tbody>
     {% for report in queue.dm_reports %}
         <tr>
