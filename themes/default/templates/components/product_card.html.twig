@@ -1,3 +1,4 @@
+{% set capabilities = site_capabilities() %}
 <article class="catalog-card" data-product-card>
     <a class="catalog-card__media" href="{{ product.url }}" aria-label="{{ product.name }}">
         {% if product.compare_at_price %}<span class="catalog-card__badge">{{ ui_text('sale') }}</span>{% elseif product.availability == 'https://schema.org/InStock' %}<span class="catalog-card__badge catalog-card__badge--success">{{ ui_text('in_stock') }}</span>{% endif %}
@@ -6,11 +7,11 @@
     <div class="catalog-card__body">
         {% if product.brand %}<div class="catalog-card__brand">{{ product.brand }}</div>{% endif %}
         <h2><a href="{{ product.url }}">{{ product.name }}</a></h2>
-        {% if product.rating is defined and product.rating.count > 0 %}<div class="catalog-card__rating"><span aria-hidden="true">★★★★★</span><small>{{ product.rating.value }} ({{ product.rating.count }})</small></div>{% endif %}
+        {% if capabilities.features.reviews|default(false) and product.rating is defined and product.rating.count > 0 %}<div class="catalog-card__rating"><span aria-hidden="true">★★★★★</span><small>{{ product.rating.value }} ({{ product.rating.count }})</small></div>{% endif %}
         <div class="catalog-card__meta"><span>SKU {{ product.sku }}</span><span class="{{ product.availability == 'https://schema.org/InStock' ? 'is-stock' : 'is-out' }}">{{ product.availability_label }}</span></div>
         <div class="catalog-card__price"><strong>{{ product.price }}</strong>{% if product.compare_at_price %}<del>{{ product.compare_at_price }}</del>{% endif %}</div>
         <div class="catalog-card__actions">
-            {% if product.purchase_allowed|default(false) and product.variant_id is defined and product.variant_id %}
+            {% if capabilities.features.cart|default(false) and product.purchase_allowed|default(false) and product.variant_id is defined and product.variant_id %}
             <form class="catalog-card__cart-form" action="/cart/add" method="post" data-card-add-to-cart>
                 <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
                 <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
