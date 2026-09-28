@@ -419,3 +419,103 @@ test('promotion created in admin changes checkout totals and disabling it stops 
   expect(disabledPreview.ok).toBe(false);
   expect(Number(disabledPreview.discount_minor || 0)).toBe(0);
 });
+
+
+test('storefront order is fully operable from admin lifecycle actions', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating order lifecycle contract test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const card = page.locator('[data-product-card]').filter({ has: page.locator('form[data-card-add-to-cart]') }).first();
+  await expect(card).toBeVisible();
+  const productName = (await card.locator('h2 a').innerText()).trim();
+  const addResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/cart/add') && response.request().method() === 'POST'
+  );
+  await card.locator('form[data-card-add-to-cart] button[type="submit"]').click();
+  expect((await addResponsePromise).status()).toBeLessThan(500);
+
+  await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+  const checkout = page.locator('[data-checkout-form]');
+  await expect(checkout).toBeVisible();
+  await checkout.locator('[name="name"]').fill('E2E Admin Lifecycle');
+  const checkoutEmail = checkout.locator('[name="email"]');
+  if (await checkoutEmail.count()) await checkoutEmail.fill(`order-lifecycle-${Date.now()}@example.test`);
+  await checkout.locator('[name="phone"]').fill('+380501112233');
+
+  const city = checkout.locator('[data-delivery-city]');
+  if (await city.count()) {
+    await city.fill('Київ');
+    const manual = checkout.locator('[name="delivery_manual"]');
+    if (await manual.count()) {
+      await manual.evaluate((element) => {
+        const input = element as HTMLInputElement;
+        input.value = 'Київ, E2E відділення';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+  }
+
+  const bank = checkout.locator('input[name="payment_method"][value="bank_transfer"]');
+  const cod = checkout.locator('input[name="payment_method"][value="cash_on_delivery"]');
+  if (await bank.count()) await bank.check();
+  else await cod.check();
+
+  await Promise.all([
+    page.waitForURL(/\/checkout\/success\/([0-9a-f-]{36})/i, { timeout: 20_000 }),
+    checkout.locator('button.place-order').click(),
+  ]);
+  await expectNoServerError(page);
+  const match = page.url().match(/\/checkout\/success\/([0-9a-f-]{36})/i);
+  expect(match).toBeTruthy();
+  const orderId = match![1];
+
+  await loginAdmin(page);
+  await page.goto(`/admin/orders/${orderId}`, { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('body')).toContainText(productName);
+
+  const noteMarker = `E2E internal note ${Date.now()}`;
+  const noteForm = page.locator(`form[action="/admin/orders/${orderId}/note"]`);
+  await expect(noteForm).toBeVisible();
+  await noteForm.locator('textarea[name="note"]').fill(noteMarker);
+  const noteResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith(`/admin/orders/${orderId}/note`) && response.request().method() === 'POST'
+  );
+  await noteForm.locator('button[type="submit"]').click();
+  expect((await noteResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('body')).toContainText(noteMarker);
+
+  const paidForm = page.locator(`form[action="/admin/orders/${orderId}/mark-paid"]`);
+  await expect(paidForm).toBeVisible();
+  const paidResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith(`/admin/orders/${orderId}/mark-paid`) && response.request().method() === 'POST'
+  );
+  await paidForm.locator('button[type="submit"]').click();
+  expect((await paidResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-runtime__metrics')).toContainText('paid');
+
+  const fulfillmentForm = page.locator(`form[action="/admin/orders/${orderId}/fulfillment"]`);
+  await expect(fulfillmentForm).toBeVisible();
+  await fulfillmentForm.locator('select[name="status"]').selectOption('delivered');
+  const fulfillmentResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith(`/admin/orders/${orderId}/fulfillment`) && response.request().method() === 'POST'
+  );
+  await fulfillmentForm.locator('button[type="submit"]').click();
+  expect((await fulfillmentResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-runtime__metrics')).toContainText('delivered');
+
+  const completeForm = page.locator(`form[action="/admin/orders/${orderId}/complete"]`);
+  await expect(completeForm).toBeVisible();
+  const completeResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith(`/admin/orders/${orderId}/complete`) && response.request().method() === 'POST'
+  );
+  await completeForm.locator('button[type="submit"]').click();
+  expect((await completeResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-runtime__metrics')).toContainText('completed');
+});
