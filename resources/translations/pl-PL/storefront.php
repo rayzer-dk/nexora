@@ -559,4 +559,10 @@ return [
     "forum_rule_8_text" => "Jeśli treść łamie zasady, zgłoś ją moderatorom zamiast eskalować konflikt.",
     "forum_rules_enforcement" => "Moderatorzy mogą odrzucać lub usuwać posty, zamykać tematy oraz czasowo lub bezterminowo ograniczać udział w forum.",
     "forum_rules_link" => "Zasady forum",
+    'ui.checkout.blocks.shipping.delivery' => 'Dostawa',
+    'ui.product.show.product_media' => 'Multimedia produktu',
+    'ui.product.show.purchase_information' => 'Informacje o zakupie',
+    'ui.product.show.product_details' => 'Szczegóły produktu',
+    'ui.product.show.additional_product_information' => 'Dodatkowe informacje o produkcie',
+    'document_vat' => 'VAT',
 ];
