@@ -6,6 +6,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import { TableKit } from '@tiptap/extension-table';
 import { Placeholder } from '@tiptap/extensions';
+import { Undo2, Redo2 } from '@lucide/vue';
 
 const props = withDefaults(defineProps<{ modelValue: string; placeholder?: string }>(), { placeholder: t('vue.components.richtexteditor.pochnit_vvodyty_tekst') });
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
@@ -48,8 +49,8 @@ const setLink = () => {
       <button type="button" :title="t('vue.components.richtexteditor.markirovanyi_spysok')" @click="editor.chain().focus().toggleBulletList().run()">• List</button>
       <button type="button" :title="t('vue.components.richtexteditor.numerovanyi_spysok')" @click="editor.chain().focus().toggleOrderedList().run()">1. List</button>
       <button type="button" :title="t('vue.components.richtexteditor.posylannia')" @click="setLink">Link</button>
-      <button type="button" :title="t('vue.components.richtexteditor.skasuvaty')" :disabled="!editor.can().undo()" @click="editor.chain().focus().undo().run()">↶</button>
-      <button type="button" :title="t('vue.components.richtexteditor.povtoryty')" :disabled="!editor.can().redo()" @click="editor.chain().focus().redo().run()">↷</button>
+      <button type="button" :title="t('vue.components.richtexteditor.skasuvaty')" :disabled="!editor.can().undo()" @click="editor.chain().focus().undo().run()"><Undo2 :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.povtoryty')" :disabled="!editor.can().redo()" @click="editor.chain().focus().redo().run()"><Redo2 :size="16" /></button>
     </div>
     <EditorContent :editor="editor" />
   </div>
