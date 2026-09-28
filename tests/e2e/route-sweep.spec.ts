@@ -44,8 +44,11 @@ test('every static admin HTML route renders after authentication', async ({ page
 
   await loginAdmin(page);
   const failures: string[] = [];
+  let runtimeErrors: string[] = [];
+  page.on('pageerror', (error) => runtimeErrors.push(error.message));
 
   for (const route of staticHtmlRoutes('/admin')) {
+    runtimeErrors = [];
     const response = await page.goto(route.path, { waitUntil: 'domcontentloaded' });
     const status = response?.status() ?? 0;
     if (status >= 500 || status === 0) {
@@ -58,6 +61,9 @@ test('every static admin HTML route renders after authentication', async ({ page
       await expect(page.locator('body')).not.toContainText('Uncaught PHP Exception');
       await expect(page.locator('body')).not.toContainText('SQLSTATE[');
       await expectNoBrokenImages(page);
+      if (runtimeErrors.length > 0) {
+        failures.push(`${route.name} ${route.path}: JS ${runtimeErrors.join(' | ')}`);
+      }
     } catch (error) {
       failures.push(`${route.name} ${route.path}: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -80,8 +86,11 @@ test('every static public HTML route renders with no runtime failure', async ({ 
     '/setup.php',
   ]);
   const failures: string[] = [];
+  let runtimeErrors: string[] = [];
+  page.on('pageerror', (error) => runtimeErrors.push(error.message));
 
   for (const route of staticHtmlRoutes('/').filter((route) => !route.path.startsWith('/admin') && !route.path.startsWith('/api/') && !excluded.has(route.path))) {
+    runtimeErrors = [];
     const response = await page.goto(route.path, { waitUntil: 'domcontentloaded' });
     const status = response?.status() ?? 0;
     if (status >= 500 || status === 0) {
@@ -94,6 +103,9 @@ test('every static public HTML route renders with no runtime failure', async ({ 
       await expect(page.locator('body')).not.toContainText('Uncaught PHP Exception');
       await expect(page.locator('body')).not.toContainText('SQLSTATE[');
       await expectNoBrokenImages(page);
+      if (runtimeErrors.length > 0) {
+        failures.push(`${route.name} ${route.path}: JS ${runtimeErrors.join(' | ')}`);
+      }
     } catch (error) {
       failures.push(`${route.name} ${route.path}: ${error instanceof Error ? error.message : String(error)}`);
     }
