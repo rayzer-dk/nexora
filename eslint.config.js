@@ -48,6 +48,9 @@ const browserGlobals = Object.fromEntries(
     'setInterval',
     'clearInterval',
     'console',
+    'CSS',
+    'XMLHttpRequest',
+    'DOMParser',
   ].map((name) => [name, 'readonly']),
 );
 
@@ -56,6 +59,12 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...vue.configs['flat/recommended'],
+  {
+    files: ['assets/**/*.vue'],
+    languageOptions: {
+      parserOptions: { parser: tseslint.parser },
+    },
+  },
   {
     files: ['assets/**/*.{js,ts,vue}', 'tests/e2e/**/*.ts', 'vite.config.ts', 'playwright.config.ts'],
     languageOptions: {
