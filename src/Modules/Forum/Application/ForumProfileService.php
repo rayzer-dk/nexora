@@ -33,19 +33,32 @@ final readonly class ForumProfileService
         // UUIDv7 starts with a timestamp, so using its leading bytes creates identical
         // nicknames for customers registered in the same time window. Hash the full public
         // identifier instead to keep the generated nickname deterministic and collision-safe.
-        $nickname = 'member-' . substr(hash('sha256', $customer['public_id']), 0, 12);
+        $nickname = 'member-' . substr(hash('sha256', $customer['public_id']), 0, 12) . '-' . base_convert((string) $customerId, 10, 36);
         $now = $this->now();
-        $this->connection->insert('mc_forum_profile', [
-            'store_id' => $storeId,
-            'customer_id' => $customerId,
-            'nickname' => $nickname,
-            'bio' => null,
-            'show_email' => 0,
-            'show_phone' => 0,
-            'allow_private_messages' => 1,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
+        try {
+            $this->connection->insert('mc_forum_profile', [
+                'store_id' => $storeId,
+                'customer_id' => $customerId,
+                'nickname' => $nickname,
+                'bio' => null,
+                'show_email' => 0,
+                'show_phone' => 0,
+                'allow_private_messages' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException) {
+            // Two concurrent first visits can both observe no profile. If another request
+            // created this customer's profile first, return it instead of surfacing a 500.
+            $existing = $this->connection->fetchAssociative(
+                'SELECT id,nickname,bio,show_email,show_phone,allow_private_messages FROM mc_forum_profile WHERE store_id=? AND customer_id=? LIMIT 1',
+                [$storeId, $customerId],
+            );
+            if (is_array($existing)) {
+                return $existing;
+            }
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.nickname_taken'));
+        }
 
         return [
             'id' => (int) $this->connection->lastInsertId(),
