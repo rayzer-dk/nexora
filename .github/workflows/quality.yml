@@ -97,7 +97,13 @@ jobs:
           cat var/log/e2e-web.log
           exit 1
       - name: Playwright Chromium, Firefox and WebKit
-        run: npm run e2e
+        shell: bash
+        run: |
+          if ! npm run e2e; then
+            echo '--- Nexora E2E server log ---'
+            cat var/log/e2e-web.log || true
+            exit 1
+          fi
       - name: Visual regression
         shell: bash
         run: |
