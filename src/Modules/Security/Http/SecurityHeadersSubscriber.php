@@ -5,15 +5,26 @@ declare(strict_types=1);
 namespace Commerce\Modules\Security\Http;
 
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
 final class SecurityHeadersSubscriber
 {
+    public function __construct(private readonly RequestStack $requests)
+    {
+    }
+
     #[AsEventListener(event: 'kernel.request', priority: 32)]
     public function onRequest(RequestEvent $event): void
     {
         if (!$event->isMainRequest()) {
+            // Error pages and fragments render in sub-requests; they must reuse the nonce sent in the
+            // main response's CSP header, otherwise their inline scripts are blocked.
+            $nonce = $this->requests->getMainRequest()?->attributes->get('_csp_nonce');
+            if (is_string($nonce) && $nonce !== '') {
+                $event->getRequest()->attributes->set('_csp_nonce', $nonce);
+            }
             return;
         }
 

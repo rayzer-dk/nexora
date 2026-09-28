@@ -5,7 +5,7 @@
     <section class="account-panel">
         {% for cart in saved_carts %}
             <div class="account-return">
-                <span><strong>{{ cart.name }}</strong><small>{{ cart.item_count }} {{ ui_text('products') }} · {{ cart.currency }} · {{ cart.updated_at }}</small></span>
+                <span><strong>{{ cart.name }}</strong><small>{{ cart.item_count }} {{ ui_text('products') }} · {{ cart.currency }} · {{ cart.updated_at|local_datetime }}</small></span>
                 <div>
                     <form method="post" action="{{ path('customer_saved_cart_restore',{id:cart.public_id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('saved_cart_restore_'~cart.public_id) }}"><button class="button" type="submit">{{ ui_text('add_to_current_cart') }}</button></form>
                     <form method="post" action="{{ path('customer_saved_cart_rename',{id:cart.public_id}) }}" class="account-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('saved_cart_rename_'~cart.public_id) }}"><input type="text" name="name" maxlength="190" value="{{ cart.name }}" aria-label="{{ ui_text('new_cart_name') }}"><button class="link-button" type="submit">{{ ui_text('rename') }}</button></form>

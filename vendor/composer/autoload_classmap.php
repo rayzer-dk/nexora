@@ -67,6 +67,8 @@ return array(
     'Commerce\\Core\\Health\\SystemPreflightInspector' => $baseDir . '/src/Core/Health/SystemPreflightInspector.php',
     'Commerce\\Core\\I18n\\AdminInterfaceLocale' => $baseDir . '/src/Core/I18n/AdminInterfaceLocale.php',
     'Commerce\\Core\\I18n\\CanonicalUiText' => $baseDir . '/src/Core/I18n/CanonicalUiText.php',
+    'Commerce\\Core\\I18n\\LocalDateTimeTwigExtension' => $baseDir . '/src/Core/I18n/LocalDateTimeTwigExtension.php',
+    'Commerce\\Core\\I18n\\StatusLabelTwigExtension' => $baseDir . '/src/Core/I18n/StatusLabelTwigExtension.php',
     'Commerce\\Core\\I18n\\StorefrontUiTranslator' => $baseDir . '/src/Core/I18n/StorefrontUiTranslator.php',
     'Commerce\\Core\\I18n\\StorefrontUiTwigExtension' => $baseDir . '/src/Core/I18n/StorefrontUiTwigExtension.php',
     'Commerce\\Core\\I18n\\TranslationCatalogLoader' => $baseDir . '/src/Core/I18n/TranslationCatalogLoader.php',

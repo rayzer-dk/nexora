@@ -574,6 +574,8 @@ class ComposerStaticInitb70ac10207745cbe78d150a67290fdc2
         'Commerce\\Core\\Health\\SystemPreflightInspector' => __DIR__ . '/../..' . '/src/Core/Health/SystemPreflightInspector.php',
         'Commerce\\Core\\I18n\\AdminInterfaceLocale' => __DIR__ . '/../..' . '/src/Core/I18n/AdminInterfaceLocale.php',
         'Commerce\\Core\\I18n\\CanonicalUiText' => __DIR__ . '/../..' . '/src/Core/I18n/CanonicalUiText.php',
+        'Commerce\\Core\\I18n\\LocalDateTimeTwigExtension' => __DIR__ . '/../..' . '/src/Core/I18n/LocalDateTimeTwigExtension.php',
+        'Commerce\\Core\\I18n\\StatusLabelTwigExtension' => __DIR__ . '/../..' . '/src/Core/I18n/StatusLabelTwigExtension.php',
         'Commerce\\Core\\I18n\\StorefrontUiTranslator' => __DIR__ . '/../..' . '/src/Core/I18n/StorefrontUiTranslator.php',
         'Commerce\\Core\\I18n\\StorefrontUiTwigExtension' => __DIR__ . '/../..' . '/src/Core/I18n/StorefrontUiTwigExtension.php',
         'Commerce\\Core\\I18n\\TranslationCatalogLoader' => __DIR__ . '/../..' . '/src/Core/I18n/TranslationCatalogLoader.php',

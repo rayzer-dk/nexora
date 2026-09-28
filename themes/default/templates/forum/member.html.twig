@@ -33,7 +33,7 @@
         {% for item in activity %}
             <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:item.topic_id,slug:item.slug}) }}#post-{{ item.post_id }}">
                 <span class="forum-topic-row__status">{{ item.board_name }}</span>
-                <span class="forum-topic-row__body"><strong>{{ item.title }}</strong><small>{{ item.published_at|default(item.created_at) }}</small></span>
+                <span class="forum-topic-row__body"><strong>{{ item.title }}</strong><small>{{ item.published_at|default(item.created_at)|local_datetime }}</small></span>
                 <span class="forum-topic-row__arrow" aria-hidden="true">→</span>
             </a>
         {% else %}

@@ -14,7 +14,7 @@
     <div class="forum-post-list">
         {% for message in messages %}
             <article class="forum-post {{ message.sender_customer_id == current_customer_id ? 'is-own' : '' }}">
-                <header><strong>{{ message.sender_nickname }}</strong><small>{{ message.created_at }}</small></header>
+                <header><strong>{{ message.sender_nickname }}</strong><small>{{ message.created_at|local_datetime }}</small></header>
                 <div class="forum-post__body">{{ message.body_text|nl2br }}</div>
                 {% if message.sender_customer_id != current_customer_id %}
                     <details><summary>{{ ui_text('forum_report') }}</summary>

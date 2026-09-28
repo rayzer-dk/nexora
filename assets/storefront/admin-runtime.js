@@ -339,10 +339,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function initPageFeatures() {
-  const feature = document.querySelector('[data-builder]') ? 'builder' : document.querySelector('[data-appearance-media]') ? 'appearance-media' : document.querySelector('[data-media-drop]') ? 'media-library' : null;
+  // Static import paths so the bundler emits (and fingerprints) each feature chunk.
+  const features = {
+    builder: () => import('../admin/features/builder.js'),
+    'media-library': () => import('../admin/features/media-library.js'),
+  };
+  const feature = document.querySelector('[data-builder]') ? 'builder' : document.querySelector('[data-media-drop]') ? 'media-library' : null;
   if (!feature) return;
   try {
-    await import(`./admin-features/${feature}.js`);
+    await features[feature]();
   } catch (error) {
     console.error(`Admin feature ${feature} failed to load`, error);
     toast(t('js_extra_ui_failed'), 'error', 7000);

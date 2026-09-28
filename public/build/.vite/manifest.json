@@ -20,7 +20,7 @@
     "isEntry": true
   },
   "assets/admin/admin-runtime.css": {
-    "file": "assets/adminRuntimeCss-B2RMhxon.css",
+    "file": "assets/adminRuntimeCss-BZTqELUf.css",
     "name": "adminRuntimeCss",
     "names": [
       "adminRuntimeCss.css"
@@ -60,10 +60,14 @@
     ]
   },
   "assets/storefront/admin-runtime.js": {
-    "file": "assets/adminRuntime-BSYzb6c0.js",
+    "file": "assets/adminRuntime-DjaLaGFZ.js",
     "name": "adminRuntime",
     "src": "assets/storefront/admin-runtime.js",
-    "isEntry": true
+    "isEntry": true,
+    "dynamicImports": [
+      "assets/admin/features/builder.js",
+      "assets/admin/features/media-library.js"
+    ]
   },
   "assets/storefront/cart.js": {
     "file": "assets/cart-C1DH_Gco.js",

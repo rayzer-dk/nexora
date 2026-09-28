@@ -33,7 +33,7 @@
     {% if maintenance_state %}<div class="admin-notice is-warning"><strong>{{ ui_text('admin.system.stability.rezhym_obsluhovuvannia_aktyvnyi') }}</strong> {{ ui_text('admin.system.stability.prychyna') }} {{ maintenance_state.reason|default('maintenance') }}{{ ui_text('admin.system.stability.poky_praporets_aktyvnyi_bootstrap_ne_zapuskaie_f') }}</div>{% endif %}
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.stability.stvoreno') }}</th><th>{{ ui_text('admin.system.stability.kliuch') }}</th><th>{{ ui_text('admin.system.stability.versiia') }}</th><th>{{ ui_text('admin.system.stability.prychyna_2') }}</th><th>{{ ui_text('admin.system.stability.rozmir') }}</th><th>{{ ui_text('admin.system.stability.stan') }}</th><th class="is-actions">{{ ui_text('admin.system.stability.diia') }}</th></tr></thead><tbody>
     {% for snapshot in recovery_snapshots %}<tr>
-        <td>{{ snapshot.created_at }}</td>
+        <td>{{ snapshot.created_at|local_datetime }}</td>
         <td><code>{{ snapshot.snapshot_key }}</code></td>
         <td>{{ snapshot.platform_version }}</td>
         <td>{{ snapshot.reason }}</td>
@@ -54,7 +54,7 @@
 <section class="admin-editor-card">
     <div class="admin-card-heading"><div><small>{{ ui_text('ui.admin.system.stability.fail_safe_journal') }}</small><h2>{{ ui_text('admin.system.stability.ostanni_perekhopleni_pomylky') }}</h2></div><span class="admin-help">{{ ui_text('admin.system.stability.povnyi_stack_trace_lyshaietsia_u_zakhyshchenomu_') }}</span></div>
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.stability.chas') }}</th><th>{{ ui_text('admin.system.stability.zona') }}</th><th>{{ ui_text('ui.admin.system.stability.route') }}</th><th>{{ ui_text('admin.system.stability.rezervnyi_rezhym') }}</th><th>{{ ui_text('admin.system.stability.podiia') }}</th><th>{{ ui_text('ui.admin.system.stability.request_id') }}</th></tr></thead><tbody>
-    {% for incident in incidents %}<tr><td>{{ incident.created_at }}</td><td>{{ incident.area }}</td><td>{{ incident.route_name|default('—') }}</td><td><span class="admin-status-pill">{{ incident.fallback_mode|default('—') }}</span></td><td><strong>{{ incident.error_class|split('\\')|last }}</strong><small class="admin-cell-sub" title="{{ incident.error_summary }}">{{ incident.error_summary }}</small></td><td><code>{{ incident.request_id }}</code></td></tr>{% else %}<tr><td colspan="6">{{ ui_text('admin.system.stability.perekhoplenykh_krytychnykh_podii_nemaie') }}</td></tr>{% endfor %}
+    {% for incident in incidents %}<tr><td>{{ incident.created_at|local_datetime }}</td><td>{{ incident.area }}</td><td>{{ incident.route_name|default('—') }}</td><td><span class="admin-status-pill">{{ incident.fallback_mode|default('—') }}</span></td><td><strong>{{ incident.error_class|split('\\')|last }}</strong><small class="admin-cell-sub" title="{{ incident.error_summary }}">{{ incident.error_summary }}</small></td><td><code>{{ incident.request_id }}</code></td></tr>{% else %}<tr><td colspan="6">{{ ui_text('admin.system.stability.perekhoplenykh_krytychnykh_podii_nemaie') }}</td></tr>{% endfor %}
     </tbody></table></div>
 </section>
 <section class="admin-safety-note"><strong>{{ ui_text('admin.system.stability.rezervnyi_rezhym_ne_prykhovuie_problemu') }}</strong><span>{{ ui_text('admin.system.stability.vin_zberihaie_dostupnist_vytryny_poky_pomylka_fi') }}</span></section>
