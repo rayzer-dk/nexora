@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 return [
+    'js_copied' => 'Copied',
+    'js_copy_failed' => 'Could not copy',
+
     'admin.analytics.index.analityka' => 'Analytics',
     'admin.analytics.index.analityka_mahazynu' => 'Store analytics',
     'admin.analytics.index.atrybutsiia' => 'Attribution',
