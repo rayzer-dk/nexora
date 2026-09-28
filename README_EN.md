@@ -1,6 +1,6 @@
-# Nexora Commerce 3.5.2
+# Nexora Commerce 3.6.6
 
-3.5.2 uses a clean Extension API 2.0 with no legacy Settings Schema v1 compatibility and adds bonus extension packs, commercial extension metadata, stronger storefront presets and multilingual catalog import/export. Extension API 2.0 with dynamic Builder blocks, extension routes/pages, stable UI slots, extension permissions, scoped assets, an extension-owned migration ledger, and Ed25519-signed Trusted Module Packages. Unsigned PHP/JS still cannot activate and extensions never patch Core files.
+3.6.6 is the Nexora Commerce production line with Extension API 2.0, schema 50, Vite 8, TypeScript 6, Playwright Chromium/Firefox/WebKit QA, MySQL 8.4 and MariaDB 10.11/11.4 runtime CI. The release includes production packaging, browser E2E for the critical commerce lifecycle, runtime error-log auditing and release-contract version consistency checks.
 
 
 Release channel: `production`. Repository CI certifies source/package contracts and the supported database matrix. Live deployment certification (HTTP, load, accessibility and configured external APIs) remains environment-specific and is performed separately.
@@ -40,7 +40,7 @@ Repository QA and production packaging are certified in CI. Live deployment, loa
 
 3.0.4 added SSRF protection, ZIP compression-ratio bomb detection, webhook replay protection, security regression and runtime failure-isolation gates. 3.0.5 added bounded storefront read caching and scale-oriented catalog indexes for the normal 5k–50k product range. 3.0.6 adds optional Meilisearch with automatic SQL fallback, incremental indexing, storefront read projections, precomputed facets, cursor/keyset traversal, opt-in Redis/Valkey scale profiles and database observability. 3.0.7 separates admin/storefront assets, adds lazy feature loading, bundle budgets and production precompression.
 
-Remaining stable-release blockers are real populated-database load tests on MySQL and MariaDB, browser/device E2E on the supported matrix, and a certified PRODUCTION package containing vendor dependencies, compiled assets, checksums and release metadata.
+Repository CI now certifies the supported database runtime matrix, browser E2E on Chromium/Firefox/WebKit, and the one-upload production package with vendor dependencies, compiled assets, checksums and release metadata. Live deployment load tests and configured external carrier/payment API certification remain environment-specific.
 
 ## Core direction
 
