@@ -7,6 +7,7 @@ namespace Commerce\Modules\Admin\Http;
 use Commerce\Core\Platform\PlatformVersion;
 use Commerce\Modules\Admin\Domain\AdminUser;
 use Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings;
+use Commerce\Modules\Appearance\Infrastructure\ThemePresetCatalog;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,8 +16,11 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AppearanceAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly StorefrontPresentationSettings $settings)
-    {
+    public function __construct(
+        private readonly AdminContextResolver $contexts,
+        private readonly StorefrontPresentationSettings $settings,
+        private readonly ThemePresetCatalog $presets,
+    ) {
     }
 
     #[Route('/admin/appearance/storefront', name: 'admin_appearance_storefront', methods: ['GET','POST'])]
@@ -47,7 +51,7 @@ final class AppearanceAdminController extends AbstractController
                         'preset' => $request->request->get('theme_preset','modern'),
                         'primary' => $request->request->get('theme_primary','#0B63F6'),
                         'accent' => $request->request->get('theme_accent','#FF7A1A'),
-                        'success' => $request->request->get('theme_success','#16A364'),
+                        'success' => $request->request->get('theme_success','#0F7A4B'),
                         'surface' => $request->request->get('theme_surface','#FFFFFF'),
                         'radius' => $request->request->get('theme_radius','18'),
                         'shadow' => $request->request->get('theme_shadow','medium'),
@@ -101,6 +105,7 @@ final class AppearanceAdminController extends AbstractController
             'store' => $store,
             'platform_version' => PlatformVersion::VERSION,
             'revisions' => $this->settings->history($context->storeId, 12),
+            'theme_presets' => $this->presets->all(),
         ]);
     }
 
