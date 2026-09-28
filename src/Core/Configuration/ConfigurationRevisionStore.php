@@ -38,9 +38,14 @@ final readonly class ConfigurationRevisionStore
             }
 
             $active = $db->fetchAssociative(
-                "SELECT id,revision_number,payload,checksum_sha256 FROM mc_configuration_revision WHERE store_id=? AND namespace=? AND config_key=? AND status='active' ORDER BY revision_number DESC LIMIT 1 FOR UPDATE",
+                "SELECT id,revision_number,payload,checksum_sha256 FROM mc_configuration_revision WHERE store_id=? AND namespace=? AND config_key=? AND status='active' ORDER BY revision_number DESC LIMIT 1",
                 [$storeId, $namespace, $configKey],
             );
+
+            // The store row is already locked above. That single lock serializes every
+            // configuration write for the same store, so additional locking reads on the
+            // JSON revision row are unnecessary and can cause nested-transaction failures
+            // on MySQL when a revision already exists.
 
             if (is_array($active)) {
                 $activeJson = $active['payload'] ?? null;
@@ -58,7 +63,7 @@ final readonly class ConfigurationRevisionStore
             }
 
             $latestRevision = (int) $db->fetchOne(
-                'SELECT COALESCE(MAX(revision_number),0) FROM mc_configuration_revision WHERE store_id=? AND namespace=? AND config_key=? FOR UPDATE',
+                'SELECT COALESCE(MAX(revision_number),0) FROM mc_configuration_revision WHERE store_id=? AND namespace=? AND config_key=?',
                 [$storeId, $namespace, $configKey],
             );
             $nextRevision = $latestRevision + 1;
