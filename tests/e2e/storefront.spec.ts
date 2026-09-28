@@ -1,0 +1,25 @@
+import { expect, test } from '@playwright/test';
+import { expectNoBrokenImages, expectNoHorizontalOverflow, expectNoServerError, publicRoutes } from './helpers';
+
+for (const route of publicRoutes) {
+  test(`${route} renders without overflow or server error`, async ({ page }) => {
+    const response = await page.goto(route, { waitUntil: 'domcontentloaded' });
+    expect(response?.status() ?? 0).toBeLessThan(500);
+    await expectNoServerError(page);
+    await expectNoHorizontalOverflow(page);
+    await expectNoBrokenImages(page);
+  });
+}
+
+test('interactive controls have usable labels and target sizes', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const unlabeled = await page.locator('button, a, input, select, textarea').evaluateAll((nodes) => nodes.filter((node) => {
+    const el = node as HTMLElement;
+    const hidden = el.getAttribute('aria-hidden') === 'true' || el.closest('[hidden]');
+    if (hidden) return false;
+    if (el instanceof HTMLInputElement && el.type === 'hidden') return false;
+    const label = el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent?.trim() || (el as HTMLInputElement).placeholder;
+    return !label;
+  }).slice(0, 20).map((el) => el.outerHTML.slice(0, 180)));
+  expect(unlabeled).toEqual([]);
+});
