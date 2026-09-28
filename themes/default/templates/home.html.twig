@@ -31,7 +31,7 @@
             <h1>{{ presentation.hero.title ?: store_name }}</h1>
             {% if presentation.hero.subtitle %}<h2>{{ presentation.hero.subtitle }}</h2>{% endif %}
             {% if presentation.hero.text %}<p>{{ presentation.hero.text }}</p>{% endif %}
-            {% if presentation.hero.button_label and presentation.hero.button_url %}<a class="reference-hero__button" href="{{ presentation.hero.button_url }}">{{ presentation.hero.button_label }} <span aria-hidden="true">→</span></a>{% endif %}
+            {% if presentation.hero.button_label and presentation.hero.button_url %}<a class="reference-hero__button" href="{{ presentation.hero.button_url }}">{{ presentation.hero.button_label }} <span aria-hidden="true">{{ ui_icon('arrow-right', 16) }}</span></a>{% endif %}
         </div>
         {% if presentation.hero.image %}<div class="reference-hero__visual"><img src="{{ presentation.hero.image }}" alt="" width="1200" height="452" fetchpriority="high" decoding="async"></div>{% endif %}
     </div>
@@ -48,7 +48,7 @@
     <a class="reference-category" href="{{ category.url }}">
         <span class="reference-category__image"><img src="{{ category.image|default('/assets/product-placeholder.svg') }}" alt="" width="480" height="360" loading="lazy" decoding="async"></span>
         <span class="reference-category__copy"><strong>{{ category.name }}</strong>{% if category.subtitle is defined %}<small>{{ category.subtitle }}</small>{% endif %}</span>
-        <span class="reference-category__arrow" aria-hidden="true">→</span>
+        <span class="reference-category__arrow" aria-hidden="true">{{ ui_icon('arrow-right', 16) }}</span>
     </a>
     {% endfor %}
     </div>
@@ -57,12 +57,12 @@
 
 {% if presentation.home.show_benefits and benefits %}
 <section class="shell reference-benefits" aria-label="{{ ui_text('benefits') }}">
-{% for benefit in benefits %}<article><span class="reference-benefits__icon" data-icon="{{ benefit.icon }}" aria-hidden="true"></span><div><strong>{{ benefit.title }}</strong><small>{{ benefit.text }}</small></div></article>{% endfor %}
+{% for benefit in benefits %}<article><span class="reference-benefits__icon" aria-hidden="true">{{ ui_icon(benefit.icon, 24) }}</span><div><strong>{{ benefit.title }}</strong><small>{{ benefit.text }}</small></div></article>{% endfor %}
 </section>
 {% endif %}
 
 {% if demo_showcase %}
-<section class="shell demo-coupon-strip" aria-label="{{ ui_text('demo_promotion') }}"><div><span class="demo-coupon-strip__icon">%</span><div><small>{{ ui_text('check_promotions_engine') }}</small><strong>{{ ui_text('coupon') }} {{ demo_showcase.coupon.code }} — {{ demo_showcase.coupon.text }}</strong></div></div><a href="/catalog">{{ ui_text('choose_product_arrow') }}</a></section>
+<section class="shell demo-coupon-strip" aria-label="{{ ui_text('demo_promotion') }}"><div><span class="demo-coupon-strip__icon">{{ ui_icon('badge-percent', 21) }}</span><div><small>{{ ui_text('check_promotions_engine') }}</small><strong>{{ ui_text('coupon') }} {{ demo_showcase.coupon.code }} — {{ demo_showcase.coupon.text }}</strong></div></div><a href="/catalog">{{ ui_text('choose_product_arrow') }} {{ ui_icon('arrow-right', 17) }}</a></section>
 {% endif %}
 
 {% if products and presentation.home.show_products %}
