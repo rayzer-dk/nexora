@@ -70,7 +70,7 @@
 <div class="forum-compose" data-forum-compose hidden aria-hidden="true">
     <div class="forum-compose__backdrop" data-forum-compose-close></div>
     <section class="forum-compose__dialog" role="dialog" aria-modal="true" aria-labelledby="forum-reply-title">
-        <button class="forum-compose__close" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">×</button>
+        <button class="forum-compose__close" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">{{ ui_icon('x',18) }}</button>
         <span class="forum-kicker">{{ ui_text('reply_label') }}</span><h2 id="forum-reply-title">{{ ui_text('add_reply') }}</h2><p>{{ ui_text('forum_posting_as')|replace({'%name%': forum_nickname}) }} {{ ui_text('reply_moderation_text') }}</p>
         <form method="post" action="{{ path('storefront_forum_reply',{id:topic.id,slug:topic.slug}) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_reply_' ~ topic.id) }}"><input type="hidden" name="rendered_at" value="{{ form_rendered_at }}">
