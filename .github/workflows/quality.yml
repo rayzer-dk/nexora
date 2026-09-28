@@ -97,6 +97,14 @@ jobs:
           done
           cat var/log/e2e-web.log
           exit 1
+      - name: Build E2E extension fixture
+        run: |
+          rm -f var/e2e-extension.zip
+          (
+            cd tests/e2e/fixtures/e2e-extension
+            zip -q "$GITHUB_WORKSPACE/var/e2e-extension.zip" manifest.json
+          )
+          unzip -t var/e2e-extension.zip
       - name: Playwright Chromium, Firefox and WebKit
         shell: bash
         run: |
@@ -105,6 +113,23 @@ jobs:
             cat var/log/e2e-web.log || true
             exit 1
           fi
+      - name: Audit application error logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > var/log/e2e-errors.log
+          for file in var/log/e2e-web.log var/log/prod.log; do
+            [ -f "$file" ] || continue
+            if grep -E -i '\[(critical|alert|emergency|error)\]|PHP (Fatal error|Parse error|Warning)|Uncaught .*(Exception|Error)|SQLSTATE\[' "$file" >> var/log/e2e-errors.log; then
+              true
+            fi
+          done
+          if [ -s var/log/e2e-errors.log ]; then
+            echo "Runtime error audit found errors:"
+            cat var/log/e2e-errors.log
+            exit 1
+          fi
+          echo "Runtime error audit: clean"
       - name: Visual regression
         shell: bash
         run: |
