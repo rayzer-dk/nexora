@@ -2,6 +2,55 @@ import js from '@eslint/js';
 import vue from 'eslint-plugin-vue';
 import tseslint from 'typescript-eslint';
 
+const browserGlobals = Object.fromEntries(
+  [
+    'window',
+    'document',
+    'navigator',
+    'location',
+    'history',
+    'fetch',
+    'Request',
+    'Response',
+    'Headers',
+    'FormData',
+    'URL',
+    'URLSearchParams',
+    'HTMLElement',
+    'HTMLInputElement',
+    'HTMLButtonElement',
+    'HTMLImageElement',
+    'HTMLDialogElement',
+    'HTMLFormElement',
+    'HTMLSelectElement',
+    'HTMLTextAreaElement',
+    'Element',
+    'Node',
+    'Event',
+    'CustomEvent',
+    'MouseEvent',
+    'KeyboardEvent',
+    'IntersectionObserver',
+    'ResizeObserver',
+    'MutationObserver',
+    'AbortController',
+    'customElements',
+    'requestAnimationFrame',
+    'cancelAnimationFrame',
+    'localStorage',
+    'sessionStorage',
+    'File',
+    'FileReader',
+    'Blob',
+    'Image',
+    'setTimeout',
+    'clearTimeout',
+    'setInterval',
+    'clearInterval',
+    'console',
+  ].map((name) => [name, 'readonly']),
+);
+
 export default [
   { ignores: ['vendor/**', 'public/build/**', 'var/**', 'node_modules/**'] },
   js.configs.recommended,
@@ -9,13 +58,19 @@ export default [
   ...vue.configs['flat/recommended'],
   {
     files: ['assets/**/*.{js,ts,vue}', 'tests/e2e/**/*.ts', 'vite.config.ts', 'playwright.config.ts'],
-    languageOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: browserGlobals,
+    },
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
+      'no-empty': ['error', { allowEmptyCatch: true }],
       'eqeqeq': ['error', 'always'],
       'prefer-const': 'error',
-      'vue/multi-word-component-names': 'off'
-    }
-  }
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+      'vue/multi-word-component-names': 'off',
+    },
+  },
 ];
