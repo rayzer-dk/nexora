@@ -2020,4 +2020,8 @@ return [
     'admin.appearance.preset.premium' => 'Преміум',
     'admin.appearance.preset.minimal' => 'Мінімалістична',
     'admin.appearance.preset.soft' => 'М’яка',
+    'admin.system.stability.health_recovery' => 'Стан системи та відновлення',
+    'admin.system.stability.runtime_php_fs' => 'PHP / файлова система',
+    'admin.system.stability.maintenance_active' => 'Режим обслуговування активний',
+    'admin.system.stability.live_protected' => 'Сайт захищений',
 ];
