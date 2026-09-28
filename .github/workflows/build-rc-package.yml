@@ -76,6 +76,10 @@ jobs:
           cp -a composer.lock package-lock.json update-root/
           cp -a CHANGES_FROM_3.5.1.txt CHANGED_FILES.txt DELETED_FILES.txt update-root/
 
+          php tools/create-release-manifest.php package-root
+          php tools/create-release-manifest.php update-root
+          php tools/verify-packaged-release.php package-root
+
           printf '%s\n' \
             'Nexora Commerce update 3.5.1 -> 3.6.6' \
             '' \
