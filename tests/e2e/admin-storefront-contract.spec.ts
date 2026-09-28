@@ -610,3 +610,44 @@ test('generated JSON feed matches published storefront catalog data', async ({ p
   expect(Number(feedResponse.headers()['x-feed-items'] || -1)).toBe(payload.products.length);
   expect(JSON.stringify(payload.products)).toContain(sku);
 });
+
+
+test('locale visibility saved in admin changes the storefront language selector', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating localization contract test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await loginAdmin(page);
+  await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
+  const form = page.locator('form[action="/admin/system/localization/locales"]');
+  const candidate = form.locator('input[type="checkbox"][name^="locale["][name$="[enabled]"]:not(:disabled)').first();
+  await expect(candidate).toBeVisible();
+  const name = await candidate.getAttribute('name');
+  expect(name).toBeTruthy();
+  const localeCode = name!.match(/^locale\[([^\]]+)\]\[enabled\]$/)?.[1];
+  expect(localeCode).toBeTruthy();
+  const original = await candidate.isChecked();
+
+  if (original) await candidate.uncheck(); else await candidate.check();
+  const saveResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/admin/system/localization/locales') && response.request().method() === 'POST'
+  );
+  await form.locator('button[type="submit"]').click();
+  expect((await saveResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const option = page.locator(`select[name="lang"] option[value="${localeCode}"]`);
+  if (original) await expect(option).toHaveCount(0);
+  else await expect(option).toHaveCount(1);
+
+  await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
+  const restoreForm = page.locator('form[action="/admin/system/localization/locales"]');
+  const restore = restoreForm.locator(`input[name="locale[${localeCode}][enabled]"]`);
+  if (original) await restore.check(); else await restore.uncheck();
+  const restoreResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/admin/system/localization/locales') && response.request().method() === 'POST'
+  );
+  await restoreForm.locator('button[type="submit"]').click();
+  expect((await restoreResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+});
