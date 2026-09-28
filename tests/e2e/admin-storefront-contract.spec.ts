@@ -326,3 +326,79 @@ test('disabling catalog removes catalog runtime, demo catalog blocks and search 
   }
   await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
 });
+
+
+test('promotion created in admin changes checkout totals and disabling it stops the discount', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating promotion contract test runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  const suffix = Date.now();
+  const code = `E2E${String(suffix).slice(-10)}`;
+  const name = `E2E Promotion ${suffix}`;
+
+  await loginAdmin(page);
+  await page.goto('/admin/commerce/promotions', { waitUntil: 'domcontentloaded' });
+  const promotionForm = page.locator('form.admin-form-grid').first();
+  await expect(promotionForm).toBeVisible();
+  await promotionForm.locator('input[name="name"]').fill(name);
+  await promotionForm.locator('select[name="trigger_type"]').selectOption('coupon');
+  await promotionForm.locator('input[name="code"]').fill(code);
+  await promotionForm.locator('select[name="discount_type"]').selectOption('percent');
+  await promotionForm.locator('input[name="discount_value"]').fill('10');
+  const createResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/commerce/promotions') && response.request().method() === 'POST'
+  );
+  await promotionForm.locator('button[type="submit"]').click();
+  expect((await createResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
+  const promotionRow = page.locator('table.admin-data-table tbody tr').filter({ hasText: name });
+  await expect(promotionRow).toBeVisible();
+
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const card = page.locator('[data-product-card]').filter({ has: page.locator('form[data-card-add-to-cart]') }).first();
+  await expect(card).toBeVisible();
+  const addResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/cart/add') && response.request().method() === 'POST'
+  );
+  await card.locator('form[data-card-add-to-cart] button[type="submit"]').click();
+  expect((await addResponsePromise).status()).toBeLessThan(500);
+
+  await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-checkout-form]')).toBeVisible();
+  const coupon = page.locator('[data-coupon-code]');
+  await expect(coupon).toBeVisible();
+  await coupon.fill(code);
+  const previewResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/checkout/promotion/preview') && response.request().method() === 'POST'
+  );
+  await page.locator('[data-coupon-apply]').click();
+  const previewResponse = await previewResponsePromise;
+  expect(previewResponse.status()).toBeLessThan(400);
+  const preview = await previewResponse.json();
+  expect(preview.ok).toBe(true);
+  expect(Number(preview.discount_minor)).toBeGreaterThan(0);
+  expect(Number(preview.total_minor)).toBeLessThan(Number(preview.subtotal_minor));
+  await expect(page.locator('[data-coupon-message]')).toHaveAttribute('data-state', 'success');
+
+  await page.goto('/admin/commerce/promotions', { waitUntil: 'domcontentloaded' });
+  const activeRow = page.locator('table.admin-data-table tbody tr').filter({ hasText: name });
+  const toggle = activeRow.locator('form[action*="/toggle"]');
+  const toggleResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/commerce/promotions/') && response.url().endsWith('/toggle') && response.request().method() === 'POST'
+  );
+  await toggle.locator('button[type="submit"]').click();
+  expect((await toggleResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('table.admin-data-table tbody tr').filter({ hasText: name })).toContainText('disabled');
+
+  await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-coupon-code]').fill(code);
+  const disabledPreviewPromise = page.waitForResponse((response) =>
+    response.url().endsWith('/checkout/promotion/preview') && response.request().method() === 'POST'
+  );
+  await page.locator('[data-coupon-apply]').click();
+  const disabledPreview = await (await disabledPreviewPromise).json();
+  expect(disabledPreview.ok).toBe(false);
+  expect(Number(disabledPreview.discount_minor || 0)).toBe(0);
+});
