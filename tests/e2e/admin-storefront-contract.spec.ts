@@ -715,3 +715,56 @@ test('disabled commerce and content capabilities remove both routes and misleadi
     await restore();
   }
 });
+
+
+test('recovery snapshot can be created, verified, downloaded and deleted from admin', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Recovery lifecycle contract runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await loginAdmin(page);
+  await page.goto('/admin/system/stability', { waitUntil: 'domcontentloaded' });
+  const createForm = page.locator('form[action="/admin/system/recovery/create"]');
+  await expect(createForm).toBeVisible();
+  await createForm.locator('select[name="profile"]').selectOption('database');
+  const createResponsePromise = page.waitForResponse((response) =>
+    response.url().endsWith('/admin/system/recovery/create') && response.request().method() === 'POST'
+  );
+  await createForm.locator('button[type="submit"]').click();
+  expect((await createResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
+
+  const row = page.locator('table.admin-table tbody tr').filter({ hasText: 'manual-admin-database' }).first();
+  await expect(row).toBeVisible();
+  const download = row.locator('a[href*="/admin/system/recovery/"][href$="/download"]');
+  const verify = row.locator('form[action$="/verify"]');
+  const remove = row.locator('form[action$="/delete"]');
+  await expect(download).toBeVisible();
+  await expect(verify).toBeVisible();
+  await expect(remove).toBeVisible();
+
+  const verifyResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/system/recovery/') && response.url().endsWith('/verify') && response.request().method() === 'POST'
+  );
+  await verify.locator('button[type="submit"]').click();
+  expect((await verifyResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.store-notice.is-success')).toBeVisible();
+
+  const verifiedRow = page.locator('table.admin-table tbody tr').filter({ hasText: 'manual-admin-database' }).first();
+  const downloadHref = await verifiedRow.locator('a[href$="/download"]').getAttribute('href');
+  expect(downloadHref).toBeTruthy();
+  const downloadResponse = await page.request.get(downloadHref!);
+  expect(downloadResponse.status()).toBe(200);
+  expect(downloadResponse.headers()['content-disposition'] || '').toContain('.zip');
+  expect((await downloadResponse.body()).byteLength).toBeGreaterThan(100);
+
+  const deleteForm = verifiedRow.locator('form[action$="/delete"]');
+  const deleteResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/system/recovery/') && response.url().endsWith('/delete') && response.request().method() === 'POST'
+  );
+  await deleteForm.locator('button[type="submit"]').click();
+  expect((await deleteResponsePromise).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('table.admin-table tbody tr').filter({ hasText: 'manual-admin-database' })).toHaveCount(0);
+});
