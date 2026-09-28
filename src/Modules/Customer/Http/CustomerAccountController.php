@@ -81,7 +81,7 @@ final class CustomerAccountController extends AbstractController
                 throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
             }
             if (!$this->turnstile->verify((string) $request->request->get('cf-turnstile-response', ''), $request->getClientIp())) {
-                $this->addFlash('error', 'Anti-bot verification failed. Please try again.');
+                $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('flash.antibot_failed'));
                 return $this->render('@storefront/account/register.html.twig', [
                     'page_title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.http.customeraccountcontroller.stvoryty_oblikovyi_zapys'),
                     'store_name' => $context->storeName,
