@@ -705,4 +705,12 @@ return [
     'admin_visual_editor_hint' => 'Preview and builders in one place',
     'admin_cron_state' => 'Scheduled tasks status',
     'admin_backup_health_recovery' => 'Backup, health checks and recovery',
+    'admin_first_run' => 'First run',
+    'admin_short_checklist' => 'Quick checklist',
+    'admin_check_company' => '1. Company details and contacts',
+    'admin_check_storefront' => '2. Storefront appearance',
+    'admin_check_products' => '3. Products and stock',
+    'admin_check_notifications' => '4. Test Email / Telegram / SMS',
+    'admin_check_feeds' => '5. Feeds and Google',
+    'admin_check_store' => '6. Check the store',
 ];
