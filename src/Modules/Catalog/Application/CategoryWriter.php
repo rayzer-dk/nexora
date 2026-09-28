@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Catalog\Application;
 
+use Commerce\Core\Event\DomainEventFactory;
+use Commerce\Core\Event\EventBusInterface;
+use Commerce\Core\Event\EventNames;
 use Commerce\Core\Id\PublicIdFactory;
 use Commerce\Modules\Catalog\Application\Command\CreateCategoryCommand;
 use Commerce\Modules\Catalog\Application\Command\UpdateCategoryCommand;
@@ -20,6 +23,8 @@ final readonly class CategoryWriter
         private Connection $connection,
         private PublicIdFactory $publicIds,
         private SeoUrlManager $seo,
+        private EventBusInterface $events,
+        private DomainEventFactory $eventFactory,
     ) {
     }
 
@@ -46,6 +51,13 @@ final readonly class CategoryWriter
             $route = $this->seo->ensureForCreatedEntity(
                 $command->storeId, $command->locale, SeoEntityType::Category, $uuid->toRfc4122(), $command->name, $command->manualSlug,
             );
+            $this->events->publish($this->eventFactory->create(
+                EventNames::CATEGORY_CREATED,
+                'category',
+                $uuid->toRfc4122(),
+                ['store_id' => $command->storeId, 'market_id' => $command->marketId],
+                ['source' => 'catalog'],
+            ));
 
             return ['id' => $id, 'public_id' => $uuid->toRfc4122(), 'url' => '/' . ltrim($route->path, '/')];
         });
@@ -78,6 +90,13 @@ final readonly class CategoryWriter
             if ($command->manualSlug !== null && trim($command->manualSlug) !== '' && trim($command->manualSlug) !== $route->slug) {
                 $route = $this->seo->changeSlug($route, $command->manualSlug);
             }
+            $this->events->publish($this->eventFactory->create(
+                EventNames::CATEGORY_UPDATED,
+                'category',
+                $publicId,
+                ['store_id' => $command->storeId, 'market_id' => $command->marketId],
+                ['source' => 'catalog'],
+            ));
 
             return ['id' => $command->categoryId, 'public_id' => $publicId, 'url' => '/' . ltrim($route->path, '/'), 'status' => $command->status];
         });
