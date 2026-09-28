@@ -559,4 +559,10 @@ return [
     "forum_rule_8_text" => "Melden Sie Regelverstöße an die Moderation, statt den Konflikt zu verschärfen.",
     "forum_rules_enforcement" => "Moderatoren können Beiträge ablehnen oder entfernen, Themen schließen und die Teilnahme zeitweise oder dauerhaft sperren.",
     "forum_rules_link" => "Forenregeln",
+    'ui.checkout.blocks.shipping.delivery' => 'Lieferung',
+    'ui.product.show.product_media' => 'Produktmedien',
+    'ui.product.show.purchase_information' => 'Kaufinformationen',
+    'ui.product.show.product_details' => 'Produktdetails',
+    'ui.product.show.additional_product_information' => 'Zusätzliche Produktinformationen',
+    'document_vat' => 'MwSt.',
 ];
