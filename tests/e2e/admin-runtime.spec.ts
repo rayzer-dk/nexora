@@ -28,18 +28,26 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   const originalStoreName = await storeName.inputValue();
   const qaStoreName = `${originalStoreName} QA`;
   await storeName.fill(qaStoreName);
-  await Promise.all([
-    page.waitForURL(/\/admin\/system\/store/),
-    storeForm.locator('button[type="submit"]').click(),
-  ]);
+  const saveStoreResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/system/store') && response.request().method() === 'POST'
+  );
+  await storeForm.locator('button[type="submit"]').click();
+  const saveStoreResponse = await saveStoreResponsePromise;
+  expect(saveStoreResponse.status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
   await expect(page.locator('input[name="name"]')).toHaveValue(qaStoreName);
 
   const restoredStoreForm = page.locator('form.admin-editor-card[data-dirty-guard]').first();
   await restoredStoreForm.locator('input[name="name"]').fill(originalStoreName);
-  await Promise.all([
-    page.waitForURL(/\/admin\/system\/store/),
-    restoredStoreForm.locator('button[type="submit"]').click(),
-  ]);
+  const restoreStoreResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/system/store') && response.request().method() === 'POST'
+  );
+  await restoredStoreForm.locator('button[type="submit"]').click();
+  const restoreStoreResponse = await restoreStoreResponsePromise;
+  expect(restoreStoreResponse.status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
   await expect(page.locator('input[name="name"]')).toHaveValue(originalStoreName);
 
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
