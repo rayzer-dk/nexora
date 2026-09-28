@@ -15,13 +15,13 @@
                 <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
                 <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
                 <input type="hidden" name="quantity" value="1">
-                <button class="catalog-card__buy" type="submit"><span aria-hidden="true">＋</span> {{ product.purchase_button_label|default(ui_text('add_cart')) }}</button>
+                <button class="catalog-card__buy" type="submit">{{ ui_icon('plus', 18) }} {{ product.purchase_button_label|default(ui_text('add_cart')) }}</button>
             </form>
             {% else %}
             <a class="catalog-card__buy catalog-card__buy--secondary" href="{{ product.url }}">{{ ui_text('details') }}</a>
             {% endif %}
             <form method="post" action="{{ path('product_compare_add',{product:product.id}) }}" class="catalog-card__compare"><input type="hidden" name="_token" value="{{ csrf_token('compare_' ~ product.id) }}"><button type="submit" class="catalog-card__details" title="{{ ui_text('add_compare') }}" aria-label="{{ ui_text('add_compare') }}: {{ product.name }}">{{ ui_icon('arrow-left-right', 18) }}</button></form>
-            <a class="catalog-card__details" href="{{ product.url }}" aria-label="{{ ui_text('view_product_named', {name: product.name}) }}" title="{{ ui_text('view_product') }}">→</a>
+            <a class="catalog-card__details" href="{{ product.url }}" aria-label="{{ ui_text('view_product_named', {name: product.name}) }}" title="{{ ui_text('view_product') }}">{{ ui_icon('arrow-right', 18) }}</a>
         </div>
     </div>
 </article>
