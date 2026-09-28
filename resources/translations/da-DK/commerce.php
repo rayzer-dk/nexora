@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'seo.system_page.about.title' => 'Om os',
+    'seo.system_page.accessibility.title' => 'Tilgængelighed',
+    'seo.system_page.account.title' => 'Min konto',
+    'seo.system_page.blog.title' => 'Blog',
+    'seo.system_page.brands.title' => 'Mærker',
+    'seo.system_page.cart.title' => 'Kurv',
+    'seo.system_page.catalog.title' => 'Katalog',
+    'seo.system_page.checkout.title' => 'Kassen',
+    'seo.system_page.compare.title' => 'Sammenlign',
+    'seo.system_page.contacts.title' => 'Kontakt',
+    'seo.system_page.cookies.title' => 'Cookiepolitik',
+    'seo.system_page.delivery.title' => 'Levering',
+    'seo.system_page.faq.title' => 'Ofte stillede spørgsmål',
+    'seo.system_page.home.title' => 'Forside',
+    'seo.system_page.login.title' => 'Log ind',
+    'seo.system_page.new_products.title' => 'Nyheder',
+    'seo.system_page.order_tracking.title' => 'Sporing af ordre',
+    'seo.system_page.orders.title' => 'Mine ordrer',
+    'seo.system_page.payment.title' => 'Betaling',
+    'seo.system_page.privacy.title' => 'Privatlivspolitik',
+    'seo.system_page.register.title' => 'Opret konto',
+    'seo.system_page.return_request.title' => 'Anmod om returnering',
+    'seo.system_page.returns.title' => 'Returnering og ombytning',
+    'seo.system_page.search.title' => 'Søg',
+    'seo.system_page.specials.title' => 'Tilbud',
+    'seo.system_page.terms.title' => 'Handelsbetingelser',
+    'seo.system_page.warranty.title' => 'Garanti',
+    'seo.system_page.wishlist.title' => 'Ønskeliste',
+    'seo.home.description' => '%store% — webshop med aktuelle priser, lagerstatus, nem betaling og levering.',
+    'seo.catalog.description' => 'Produktkatalog hos %store%: aktuelle priser, lagerstatus, filtre efter mærke og egenskaber, hurtig bestilling.',
+    'seo.blog.description' => '%store%s blog: anmeldelser, købsråd og nyheder fra butikken.',
+    'checkout.error.item_price_unavailable' => 'Varen “%name%” kan i øjeblikket ikke bestilles i valutaen %currency%. Fjern den fra kurven, eller vælg en anden valuta.',
+];

@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'seo.system_page.about.title' => 'O firmie',
+    'seo.system_page.accessibility.title' => 'Dostępność',
+    'seo.system_page.account.title' => 'Moje konto',
+    'seo.system_page.blog.title' => 'Blog',
+    'seo.system_page.brands.title' => 'Marki',
+    'seo.system_page.cart.title' => 'Koszyk',
+    'seo.system_page.catalog.title' => 'Katalog',
+    'seo.system_page.checkout.title' => 'Zamówienie',
+    'seo.system_page.compare.title' => 'Porównanie',
+    'seo.system_page.contacts.title' => 'Kontakt',
+    'seo.system_page.cookies.title' => 'Polityka cookies',
+    'seo.system_page.delivery.title' => 'Dostawa',
+    'seo.system_page.faq.title' => 'Najczęstsze pytania',
+    'seo.system_page.home.title' => 'Strona główna',
+    'seo.system_page.login.title' => 'Logowanie',
+    'seo.system_page.new_products.title' => 'Nowości',
+    'seo.system_page.order_tracking.title' => 'Śledzenie zamówienia',
+    'seo.system_page.orders.title' => 'Moje zamówienia',
+    'seo.system_page.payment.title' => 'Płatność',
+    'seo.system_page.privacy.title' => 'Polityka prywatności',
+    'seo.system_page.register.title' => 'Rejestracja',
+    'seo.system_page.return_request.title' => 'Zgłoś zwrot',
+    'seo.system_page.returns.title' => 'Zwroty i wymiany',
+    'seo.system_page.search.title' => 'Wyszukiwanie',
+    'seo.system_page.specials.title' => 'Promocje',
+    'seo.system_page.terms.title' => 'Regulamin',
+    'seo.system_page.warranty.title' => 'Gwarancja',
+    'seo.system_page.wishlist.title' => 'Ulubione',
+    'seo.home.description' => '%store% — sklep internetowy z aktualnymi cenami, dostępnością produktów, wygodną płatnością i dostawą.',
+    'seo.catalog.description' => 'Katalog produktów %store%: aktualne ceny, dostępność, filtry według marki i parametrów, szybkie zamówienie.',
+    'seo.blog.description' => 'Blog %store%: recenzje, porady zakupowe i nowości sklepu.',
+    'checkout.error.item_price_unavailable' => 'Produkt „%name%” nie jest obecnie dostępny w walucie %currency%. Usuń go z koszyka lub wybierz inną walutę.',
+];

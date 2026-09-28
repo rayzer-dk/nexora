@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'seo.system_page.about.title' => 'Über uns',
+    'seo.system_page.accessibility.title' => 'Barrierefreiheit',
+    'seo.system_page.account.title' => 'Mein Konto',
+    'seo.system_page.blog.title' => 'Blog',
+    'seo.system_page.brands.title' => 'Marken',
+    'seo.system_page.cart.title' => 'Warenkorb',
+    'seo.system_page.catalog.title' => 'Katalog',
+    'seo.system_page.checkout.title' => 'Kasse',
+    'seo.system_page.compare.title' => 'Vergleich',
+    'seo.system_page.contacts.title' => 'Kontakt',
+    'seo.system_page.cookies.title' => 'Cookie-Richtlinie',
+    'seo.system_page.delivery.title' => 'Lieferung',
+    'seo.system_page.faq.title' => 'Häufige Fragen',
+    'seo.system_page.home.title' => 'Startseite',
+    'seo.system_page.login.title' => 'Anmelden',
+    'seo.system_page.new_products.title' => 'Neuheiten',
+    'seo.system_page.order_tracking.title' => 'Sendungsverfolgung',
+    'seo.system_page.orders.title' => 'Meine Bestellungen',
+    'seo.system_page.payment.title' => 'Zahlung',
+    'seo.system_page.privacy.title' => 'Datenschutzerklärung',
+    'seo.system_page.register.title' => 'Registrieren',
+    'seo.system_page.return_request.title' => 'Rücksendung anmelden',
+    'seo.system_page.returns.title' => 'Rückgabe und Umtausch',
+    'seo.system_page.search.title' => 'Suche',
+    'seo.system_page.specials.title' => 'Angebote',
+    'seo.system_page.terms.title' => 'AGB',
+    'seo.system_page.warranty.title' => 'Garantie',
+    'seo.system_page.wishlist.title' => 'Merkliste',
+    'seo.home.description' => '%store% — Onlineshop mit aktuellen Preisen, Verfügbarkeit, bequemer Zahlung und Lieferung.',
+    'seo.catalog.description' => 'Produktkatalog von %store%: aktuelle Preise, Verfügbarkeit, Filter nach Marke und Merkmalen, schnelle Bestellung.',
+    'seo.blog.description' => 'Blog von %store%: Tests, Kaufberatung und Neuigkeiten aus dem Shop.',
+    'checkout.error.item_price_unavailable' => 'Der Artikel „%name%“ ist in der Währung %currency% derzeit nicht bestellbar. Entfernen Sie ihn aus dem Warenkorb oder wählen Sie eine andere Währung.',
+];

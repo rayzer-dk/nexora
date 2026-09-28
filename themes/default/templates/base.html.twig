@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="{{ vite_asset('assets/storefront/consent.css', '/assets/consent.css') }}">
     <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};window.gtag('consent','default',{security_storage:'granted',functionality_storage:'denied',personalization_storage:'denied',analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});</script>
     <script type="module" src="{{ vite_asset('assets/storefront/consent.js', '/assets/consent.js') }}"></script>
-    {% if seo.json_ld|default([]) is not empty %}<script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ seo.json_ld|json_encode(constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP'))|raw }}</script>{% endif %}
+    {% if seo.json_ld|default([]) is not empty %}<script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ seo.json_ld|json_ld }}</script>{% endif %}
     {% block head %}{% endblock %}
 {% for ext_asset in extension_assets() %}
   {% if ext_asset.type == 'css' %}<link rel="stylesheet" href="{{ ext_asset.url }}">{% endif %}
