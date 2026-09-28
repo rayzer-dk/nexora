@@ -915,3 +915,45 @@ test('admin-created coupon is applied by the real checkout promotion engine', as
   await toggle.locator('button[type="submit"]').click();
   expect((await disableResponse).status()).toBeLessThan(400);
 });
+
+
+test('product slug change updates canonical links and creates a direct old-URL redirect', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating SEO lifecycle contract runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
+
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
+  const editLink = page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first();
+  const editUrl = await editLink.getAttribute('href');
+  expect(editUrl).toBeTruthy();
+  await page.goto(editUrl!, { waitUntil: 'domcontentloaded' });
+
+  const name = await page.locator('input[name="name"]').inputValue();
+  const slugInput = page.locator('input[name="slug"]');
+  const originalSlug = (await slugInput.inputValue()).replace(/^\\/+|\\/+$/g, '');
+  expect(originalSlug).not.toBe('');
+  const qaSlug = `e2e-seo-${Date.now()}`;
+
+  await slugInput.fill(qaSlug);
+  await submitAndWait(page, 'form.admin-editor-form', editUrl!);
+
+  try {
+    const current = await page.goto('/' + qaSlug, { waitUntil: 'domcontentloaded' });
+    expect(current?.status()).toBe(200);
+    await expect(page.locator('h1')).toContainText(name);
+    const expectedCanonical = new URL('/' + qaSlug, page.url()).toString();
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', expectedCanonical);
+
+    const old = await page.request.get('/' + originalSlug, { maxRedirects: 0 });
+    expect(old.status()).toBe(301);
+    expect(old.headers()['location']).toBe('/' + qaSlug);
+
+    await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+    const card = page.locator('[data-product-card]').filter({ hasText: name }).first();
+    await expect(card.locator('h2 a')).toHaveAttribute('href', '/' + qaSlug);
+  } finally {
+    await page.goto(editUrl!, { waitUntil: 'domcontentloaded' });
+    await page.locator('input[name="slug"]').fill(originalSlug);
+    await submitAndWait(page, 'form.admin-editor-form', editUrl!);
+  }
+});
