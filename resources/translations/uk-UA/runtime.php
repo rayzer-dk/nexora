@@ -1119,7 +1119,6 @@ return [
     'php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.peredzamovyty' => 'Передзамовити',
     'php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.pid_zamovlennia' => 'Під замовлення · ',
     'php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.prodano' => 'Продано',
-    'php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.select_coalesce_at_name_ad_code_name_coalesce_pav_va' => 'SELECT COALESCE(at.name,ad.code) name,COALESCE(pav.value_text,CAST(pav.value_decimal AS CHAR),IF(pav.value_boolean=1,\'Так\',IF(pav.value_boolean=0,\'Ні\',\'\'))) value FROM mc_product_attribute_value pav JOIN mc_attribute_definition ad ON ad.id=pav.attribute_id LEFT JOIN mc_attribute_translation at ON at.attribute_id=ad.id AND at.locale=? WHERE pav.product_id=? ORDER BY ad.sort_order,pav.sort_order,pav.id',
     'php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.tsina_za_zapytom' => 'Ціна за запитом',
     'php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.v_naiavnosti' => 'В наявності',
     'php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.zamovyty' => 'Замовити',
@@ -1929,3 +1928,4 @@ return [
     "forum.runtime.duplicate_post" => "Повторне однакове повідомлення заблоковано.",
     "forum.runtime.too_many_links" => "У повідомленні забагато зовнішніх посилань.",
 ];
+
