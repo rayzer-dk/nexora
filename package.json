@@ -1,7 +1,7 @@
 {
   "name": "nexora-commerce-ui",
   "private": true,
-  "version": "3.5.2",
+  "version": "3.6.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,13 +10,22 @@
     "audit": "npm audit --omit=dev",
     "assets:audit": "node tools/check-asset-budgets.mjs",
     "build:production": "vite build && node tools/check-asset-budgets.mjs && node tools/precompress-assets.mjs public/build",
-    "assets:compress": "node tools/precompress-assets.mjs public/assets"
+    "assets:compress": "node tools/precompress-assets.mjs public/assets",
+    "lint": "npm run lint:js && npm run lint:css && npm run format:check",
+    "lint:js": "eslint assets vite.config.ts playwright.config.ts tests/e2e",
+    "lint:css": "stylelint \"assets/**/*.css\"",
+    "format:check": "prettier --check \"assets/**/*.{js,ts,vue,css}\" \"tests/e2e/**/*.ts\" \"*.{js,mjs,ts,json}\"",
+    "format": "prettier --write \"assets/**/*.{js,ts,vue,css}\" \"tests/e2e/**/*.ts\" \"*.{js,mjs,ts,json}\"",
+    "e2e": "playwright test",
+    "e2e:chromium": "playwright test --project=chromium-desktop --project=chromium-mobile",
+    "e2e:visual": "E2E_VISUAL=1 playwright test tests/e2e/visual.spec.ts",
+    "e2e:update": "E2E_VISUAL=1 playwright test tests/e2e/visual.spec.ts --update-snapshots",
+    "qa": "npm run typecheck && npm run lint && npm run ui:icons:audit && npm run configurability:audit && npm run build:production && npm run e2e:chromium",
+    "ui:icons:audit": "node tools/check-ui-icons.mjs",
+    "configurability:audit": "node tools/check-configurability.mjs"
   },
   "dependencies": {
     "vue": "3.5.43",
-    "pinia": "4.0.3",
-    "chart.js": "4.5.1",
-    "@floating-ui/dom": "1.8.0",
     "@lucide/vue": "1.46.0",
     "@tiptap/vue-3": "3.31.3",
     "@tiptap/starter-kit": "3.31.3",
@@ -31,7 +40,16 @@
     "typescript": "6.0.3",
     "vue-tsc": "3.3.11",
     "@types/node": "^22.0.0",
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "@playwright/test": "1.63.0",
+    "@axe-core/playwright": "4.13.0",
+    "eslint": "10.11.0",
+    "@eslint/js": "10.0.1",
+    "eslint-plugin-vue": "10.11.0",
+    "typescript-eslint": "8.70.0",
+    "stylelint": "17.15.0",
+    "stylelint-config-standard": "40.0.0",
+    "prettier": "3.9.9"
   },
   "license": "MIT",
   "description": "Nexora Commerce storefront and admin UI"
