@@ -195,3 +195,78 @@ test('progressive admin features initialize on their real pages', async ({ page 
 
   expect(pageErrors, pageErrors.join('\n')).toEqual([]);
 });
+
+
+test('navigation and content edits are reflected by the storefront', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating wiring audit runs once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin E2E credentials are required.');
+
+  await loginAdmin(page);
+
+  const menuLabel = `E2E navigation ${Date.now()}`;
+  await page.goto('/admin/appearance/navigation?menu=header', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const navForm = page.locator('form[action="/admin/appearance/navigation/save"]');
+  await expect(navForm).toBeVisible();
+  await navForm.locator('select[name="item_type"]').selectOption('custom');
+  await navForm.locator('input[name="url"]').fill('/contact');
+  const labels = navForm.locator('input[name^="label["]');
+  const labelCount = await labels.count();
+  for (let i = 0; i < labelCount; i += 1) await labels.nth(i).fill(menuLabel);
+  const navSave = page.waitForResponse((response) =>
+    response.url().includes('/admin/appearance/navigation/save') && response.request().method() === 'POST'
+  );
+  await navForm.locator('button[type="submit"]').click();
+  expect((await navSave).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('.reference-category-nav a').filter({ hasText: menuLabel })).toBeVisible();
+
+  await page.goto('/admin/appearance/navigation?menu=header', { waitUntil: 'domcontentloaded' });
+  const navRow = page.locator('table.admin-table tbody tr').filter({ hasText: menuLabel }).first();
+  await expect(navRow).toBeVisible();
+  const deleteForm = navRow.locator('form[action$="/delete"]');
+  const deleteResponse = page.waitForResponse((response) =>
+    response.url().includes('/admin/appearance/navigation/') &&
+    response.url().endsWith('/delete') &&
+    response.request().method() === 'POST'
+  );
+  await deleteForm.evaluate((form: HTMLFormElement) => form.requestSubmit());
+  expect((await deleteResponse).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.reference-category-nav a').filter({ hasText: menuLabel })).toHaveCount(0);
+
+  await page.goto('/admin/content/pages/about', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const contentForm = page.locator('form.admin-runtime__panel.admin-form');
+  await expect(contentForm).toBeVisible();
+  const title = contentForm.locator('input[name="title"]');
+  const originalTitle = await title.inputValue();
+  const qaTitle = `${originalTitle} E2E`;
+  await title.fill(qaTitle);
+  const contentSave = page.waitForResponse((response) =>
+    response.url().includes('/admin/content/pages/about') && response.request().method() === 'POST'
+  );
+  await contentForm.locator('button[type="submit"]').click();
+  expect((await contentSave).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+
+  const publicPageResponse = await page.goto('/about-us', { waitUntil: 'domcontentloaded' });
+  expect(publicPageResponse?.status() ?? 0).toBeLessThan(600);
+  await expect(page.locator('h1')).toContainText(qaTitle);
+
+  await page.goto('/admin/content/pages/about', { waitUntil: 'domcontentloaded' });
+  const restoreContentForm = page.locator('form.admin-runtime__panel.admin-form');
+  await restoreContentForm.locator('input[name="title"]').fill(originalTitle);
+  const restoreContent = page.waitForResponse((response) =>
+    response.url().includes('/admin/content/pages/about') && response.request().method() === 'POST'
+  );
+  await restoreContentForm.locator('button[type="submit"]').click();
+  expect((await restoreContent).status()).toBeLessThan(400);
+  await page.waitForLoadState('domcontentloaded');
+  await expectNoServerError(page);
+});
