@@ -120,7 +120,7 @@ final readonly class InstallationSeeder
             $this->siteCapabilities->applyMode($storeId, $request->siteMode, 'system:installer');
             $this->seedForumBoards($db, $storeId, $now);
 
-            $this->seedInformationPages($db, $storeId, $now);
+            $this->seedInformationPages($db, $storeId, $now, trim($request->storeName), trim($request->adminEmail));
             $db->insert('mc_consent_policy', [
                 'public_id' => $this->publicIds->binary(), 'store_id' => $storeId, 'policy_version' => '1.0',
                 'legal_document_id' => null, 'status' => 'active', 'default_region_mode' => 'eu_strict',
@@ -173,10 +173,12 @@ final readonly class InstallationSeeder
         }
     }
 
-    private function seedInformationPages(Connection $db, int $storeId, string $now): void
+    private function seedInformationPages(Connection $db, int $storeId, string $now, string $storeName, string $email): void
     {
         $path = $this->projectDir . '/config/content/information_pages.json';
         $document = json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR);
+        $templates = new \Commerce\Modules\Content\System\InformationPageTemplates($this->projectDir);
+        $profile = ['store_name' => $storeName, 'email' => $email, 'privacy_contact' => $email, 'return_contact' => $email, 'warranty_contact' => $email];
         foreach (($document['pages'] ?? []) as $key => $definition) {
             $db->insert('mc_content_entry', [
                 'public_id' => $this->publicIds->binary(), 'store_id' => $storeId, 'content_type' => 'page', 'system_key' => (string) $key, 'status' => 'draft',
@@ -185,7 +187,7 @@ final readonly class InstallationSeeder
             $contentId = (int) $db->lastInsertId();
             $db->insert('mc_content_translation', [
                 'content_id' => $contentId, 'locale' => 'uk-UA', 'title' => trim((string) ($definition['title_key'] ?? '')) !== '' ? \Commerce\Core\I18n\CanonicalUiText::get((string) $definition['title_key']) : (string) ($definition['title'] ?? $key),
-                'excerpt' => null, 'body_html' => null, 'meta_title' => null, 'meta_description' => null,
+                'excerpt' => null, 'body_html' => $templates->body((string) $key, 'uk-UA', $profile), 'meta_title' => null, 'meta_description' => null,
                 'created_at' => $now, 'updated_at' => $now,
             ]);
         }

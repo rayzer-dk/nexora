@@ -221,7 +221,7 @@ final readonly class DemoSeeder
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.7.0',
+                'version' => '3.7.1',
                 'catalog_source' => 'DummyJSON',
             ]);
 
@@ -327,11 +327,14 @@ final readonly class DemoSeeder
             'cookies'=>[\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.polityka_cookie'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.demonstratsiina_informatsiia_pro_cookies'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.p_neobkhidni_cookies_zabezpechuiut_koshyk_sesiiu_ta_')],
             'terms'=>[\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.umovy_ta_polozhennia'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.demonstratsiini_umovy_vykorystannia_mahazynu'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.p_zaminit_tsei_tekst_iurydychnymy_umovamy_vashoi_kom')],
         ];
+        $templates=new \Commerce\Modules\Content\System\InformationPageTemplates($this->projectDir);
+        $profile=$db->fetchAssociative('SELECT sp.legal_name,sp.registration_number,sp.registration_address,sp.email,sp.phone,sp.privacy_contact,sp.return_contact,sp.warranty_contact,s.name AS store_name FROM mc_store s LEFT JOIN mc_store_profile sp ON sp.store_id=s.id WHERE s.id=?',[$storeId]) ?: [];
         foreach($pages as $key=>$page){
             $row=$db->fetchAssociative("SELECT ce.id,ce.status,ct.body_html FROM mc_content_entry ce JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=? WHERE ce.store_id=? AND ce.content_type='page' AND ce.system_key=? LIMIT 1",[$locale,$storeId,$key]);
-            if(!is_array($row) || trim((string)($row['body_html']??''))!==''){continue;}
+            if(!is_array($row) || ((string)($row['status']??'')==='published' && trim((string)($row['body_html']??''))!=='')){continue;}
             $db->update('mc_content_entry',['status'=>'published','author_subject'=>'demo:seed','published_at'=>$now,'updated_at'=>$now],['id'=>(int)$row['id']]);
-            $db->update('mc_content_translation',['title'=>$page[0],'excerpt'=>$page[1],'body_html'=>$page[2],'meta_title'=>$page[0],'meta_description'=>$page[1],'updated_at'=>$now],['content_id'=>(int)$row['id'],'locale'=>$locale]);
+            $body=$templates->body((string)$key,$locale,$profile) ?? $page[2];
+            $db->update('mc_content_translation',['title'=>$page[0],'excerpt'=>$page[1],'body_html'=>$body,'meta_title'=>$page[0],'meta_description'=>$page[1],'updated_at'=>$now],['content_id'=>(int)$row['id'],'locale'=>$locale]);
         }
     }
 
@@ -379,13 +382,18 @@ final readonly class DemoSeeder
                 'image_url' => (string) ($product['image_url'] ?? ''),
                 'gallery_urls' => array_values(array_filter(array_map('strval', is_array($product['gallery_urls'] ?? null) ? $product['gallery_urls'] : []))),
                 'fallback' => (string) ($product['fallback'] ?? 'demo/smartphone-neo-x1.webp'),
-                'attrs' => [
-                    [$this->attributeLabel('brand', $locale), (string) ($product['brand'] ?? 'Demo')],
-                    [$this->attributeLabel('category', $locale), (string) ($categoryNames[(string)($product['category'] ?? '')] ?? $product['category'] ?? '')],
-                    [$this->attributeLabel('warranty', $locale), $this->sourceDetail((string) ($attrs['warranty'] ?? ''), $locale)],
-                    [$this->attributeLabel('delivery', $locale), $this->sourceDetail((string) ($attrs['shipping'] ?? ''), $locale)],
-                    [$this->attributeLabel('returns', $locale), $this->sourceDetail((string) ($attrs['return_policy'] ?? ''), $locale)],
-                ],
+                'attrs' => array_merge(
+                    [
+                        [$this->attributeLabel('brand', $locale), (string) ($product['brand'] ?? 'Demo')],
+                        [$this->attributeLabel('category', $locale), (string) ($categoryNames[(string)($product['category'] ?? '')] ?? $product['category'] ?? '')],
+                    ],
+                    $this->specAttributes(is_array($product['specs'] ?? null) ? $product['specs'] : [], $locale),
+                    [
+                        [$this->attributeLabel('warranty', $locale), $this->sourceDetail((string) ($attrs['warranty'] ?? ''), $locale)],
+                        [$this->attributeLabel('delivery', $locale), $this->sourceDetail((string) ($attrs['shipping'] ?? ''), $locale)],
+                        [$this->attributeLabel('returns', $locale), $this->sourceDetail((string) ($attrs['return_policy'] ?? ''), $locale)],
+                    ]
+                ),
             ];
         }
         return ['categories' => $categories, 'products' => $products];
@@ -434,7 +442,7 @@ final readonly class DemoSeeder
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.7.0',
+            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.7.1',
             CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$data): int {
                 if (strlen($data) + strlen($chunk) > 5 * 1024 * 1024) { return 0; }
                 $data .= $chunk;
@@ -490,13 +498,31 @@ final readonly class DemoSeeder
         return $this->formatNumber($attrs['width_cm'] ?? null) . ' × ' . $this->formatNumber($attrs['height_cm'] ?? null) . ' × ' . $this->formatNumber($attrs['depth_cm'] ?? null) . ' cm';
     }
 
+    /**
+     * Curated technical specifications, listed in a fixed order between the identity and the service rows.
+     *
+     * @param array<string,mixed> $specs
+     * @return list<array{0:string,1:string}>
+     */
+    private function specAttributes(array $specs, string $locale): array
+    {
+        $rows = [];
+        foreach (['year', 'display', 'chipset', 'camera', 'battery', 'connectivity', 'os', 'ports', 'weight', 'features'] as $key) {
+            $value = trim((string) ($specs[$key] ?? ''));
+            if ($value !== '') {
+                $rows[] = [$this->attributeLabel($key, $locale), $value];
+            }
+        }
+        return $rows;
+    }
+
     private function attributeLabel(string $key, string $locale): string
     {
         $lang = strtolower(substr($locale, 0, 2));
         $labels = [
-            'uk' => ['brand'=>'Бренд','category'=>'Категорія','warranty'=>'Гарантія','delivery'=>'Доставка','returns'=>'Повернення'],
-            'ru' => ['brand'=>'Бренд','category'=>'Категория','warranty'=>'Гарантия','delivery'=>'Доставка','returns'=>'Возврат'],
-            'en' => ['brand'=>'Brand','category'=>'Category','warranty'=>'Warranty','delivery'=>'Delivery','returns'=>'Returns'],
+            'uk' => ['brand'=>'Бренд','category'=>'Категорія','warranty'=>'Гарантія','delivery'=>'Доставка','returns'=>'Повернення','year'=>'Рік випуску','display'=>'Дисплей','chipset'=>'Процесор','camera'=>'Камера','battery'=>'Акумулятор','connectivity'=>'Зв’язок','os'=>'Операційна система','ports'=>'Порти','weight'=>'Вага','features'=>'Особливості'],
+            'ru' => ['brand'=>'Бренд','category'=>'Категория','warranty'=>'Гарантия','delivery'=>'Доставка','returns'=>'Возврат','year'=>'Год выпуска','display'=>'Дисплей','chipset'=>'Процессор','camera'=>'Камера','battery'=>'Аккумулятор','connectivity'=>'Связь','os'=>'Операционная система','ports'=>'Порты','weight'=>'Вес','features'=>'Особенности'],
+            'en' => ['brand'=>'Brand','category'=>'Category','warranty'=>'Warranty','delivery'=>'Delivery','returns'=>'Returns','year'=>'Release year','display'=>'Display','chipset'=>'Processor','camera'=>'Camera','battery'=>'Battery','connectivity'=>'Connectivity','os'=>'Operating system','ports'=>'Ports','weight'=>'Weight','features'=>'Features'],
         ];
         return $labels[$lang][$key] ?? $labels['en'][$key] ?? $key;
     }

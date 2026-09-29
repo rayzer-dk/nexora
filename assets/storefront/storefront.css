@@ -1054,3 +1054,14 @@ commerce-slider, .slider-shell { display: block; min-width: 0; }
 .rating-summary__count { text-decoration: underline; text-underline-offset: 2px; }
 .product-block:not(:has(*)) { display: none; }
 .catalog-card__media img, .product-gallery__open img, .product-gallery__thumb img, .related-card img, .wishlist-card > a img, .cart-line > a img, .summary-image, .compare-table thead img, .live-search__item img { mix-blend-mode: multiply; }
+
+/* Long-form legal and help pages (privacy, cookies, terms, FAQ). */
+.rich-content { max-width: 78ch; }
+.rich-content h3 { font-size: var(--mc-font-size-lg); }
+.rich-content ol { padding-left: var(--mc-space-6); }
+.rich-content a { color: var(--mc-color-primary); text-decoration: underline; text-underline-offset: 0.18em; }
+.rich-content table { width: 100%; border-collapse: collapse; font-size: var(--mc-font-size-sm); display: block; overflow-x: auto; }
+.rich-content th, .rich-content td { padding: var(--mc-space-3) var(--mc-space-4); border-bottom: 1px solid var(--mc-color-border); text-align: left; vertical-align: top; }
+.rich-content th { background: var(--mc-color-surface); font-weight: var(--mc-font-weight-semibold); white-space: nowrap; }
+.rich-content code { padding: 0 var(--mc-space-1); border-radius: var(--mc-radius-xs); background: var(--mc-color-surface-subtle); font-family: var(--mc-font-mono); font-size: var(--mc-font-size-sm); }
+.rich-content mark.rich-placeholder { padding: 0 var(--mc-space-1); border-radius: var(--mc-radius-xs); background: var(--mc-color-warning-soft); color: var(--mc-color-warning); }
