@@ -70,6 +70,10 @@ final class SystemAdminController extends AbstractController
             'store' => $store,
             'settings' => $this->capabilities->get($context->storeId),
             'modes' => SiteCapabilitySettings::modes(),
+            'mode_profiles' => array_combine(
+                SiteCapabilitySettings::modes(),
+                array_map(static fn (string $mode): array => SiteCapabilitySettings::profile($mode), SiteCapabilitySettings::modes()),
+            ),
             'feature_labels' => $this->featureLabels(),
             'revisions' => $this->capabilities->history($context->storeId, 12),
         ]);
