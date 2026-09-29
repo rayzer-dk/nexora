@@ -122,7 +122,7 @@ final class StorefrontUiTwigExtension extends AbstractExtension
     /** @param array<string,mixed> $context @return array<string,string> */
     public function catalog(array $context): array
     {
-        $locale = trim((string)($context['locale'] ?? ''));
+        $locale = is_string($context['locale'] ?? null) ? trim($context['locale']) : ''; // a template loop variable named `locale` must not shadow the UI locale
         if ($locale === '') {
             $locale = $this->requests->getCurrentRequest()?->getLocale() ?? 'uk-UA';
         }
@@ -133,7 +133,7 @@ final class StorefrontUiTwigExtension extends AbstractExtension
     /** @param array<string,mixed> $context */
     public function text(array $context, string $key, array $replace = []): string
     {
-        $locale = trim((string)($context['locale'] ?? ''));
+        $locale = is_string($context['locale'] ?? null) ? trim($context['locale']) : ''; // a template loop variable named `locale` must not shadow the UI locale
         if ($locale === '') {
             $locale = $this->requests->getCurrentRequest()?->getLocale() ?? 'uk-UA';
         }
