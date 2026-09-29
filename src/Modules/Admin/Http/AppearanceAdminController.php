@@ -46,6 +46,7 @@ final class AppearanceAdminController extends AbstractController
                         'logo' => $request->request->get('brand_logo',''),
                         'icon' => $request->request->get('brand_icon',''),
                         'favicon' => $request->request->get('brand_favicon',''),
+                        'pwa' => $request->request->get('brand_pwa','0') === '1' ? '1' : '0',
                     ],
                     'theme' => [
                         'preset' => $request->request->get('theme_preset','modern'),
@@ -56,6 +57,7 @@ final class AppearanceAdminController extends AbstractController
                         'radius' => $request->request->get('theme_radius','18'),
                         'shadow' => $request->request->get('theme_shadow','medium'),
                         'density' => $request->request->get('theme_density','comfortable'),
+                        'color_scheme' => $request->request->get('theme_color_scheme','light'),
                         'container' => $request->request->get('theme_container','1408'),
                         'font' => $request->request->get('theme_font','system'),
                     ],

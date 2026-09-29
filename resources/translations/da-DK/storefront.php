@@ -656,4 +656,9 @@ return [
     'unit_ml' => 'ml',
     'unit_m' => 'm',
     'unit_sqm' => 'm²',
+    'theme_toggle' => 'Skift farvetema',
+    'offline_title' => 'Ingen forbindelse',
+    'offline_text' => 'Forbindelsen ser ud til at være væk. Tjek dit netværk og prøv igen – din kurv er gemt.',
+    'offline_retry' => 'Prøv igen',
+    'recently_viewed' => 'Nyligt viste',
 ];

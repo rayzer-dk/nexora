@@ -332,6 +332,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'MAILER_DSN' => 'null://null',
                 'MAIL_FROM_ADDRESS' => 'no-reply@localhost',
                 'MAIL_FROM_NAME' => $storeName,
+                'ERROR_WEBHOOK_URL' => '',
                 'TELEGRAM_NOTIFICATIONS_ENABLED' => '0',
                 'TELEGRAM_BOT_TOKEN' => '',
                 'TELEGRAM_DEFAULT_CHAT_ID' => '',

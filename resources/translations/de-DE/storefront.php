@@ -587,4 +587,9 @@ return [
     'unit_ml' => 'ml',
     'unit_m' => 'm',
     'unit_sqm' => 'm²',
+    'theme_toggle' => 'Farbschema wechseln',
+    'offline_title' => 'Keine Verbindung',
+    'offline_text' => 'Die Internetverbindung scheint unterbrochen. Prüfen Sie Ihr Netzwerk und versuchen Sie es erneut – Ihr Warenkorb bleibt erhalten.',
+    'offline_retry' => 'Erneut versuchen',
+    'recently_viewed' => 'Zuletzt angesehen',
 ];

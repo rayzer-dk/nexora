@@ -1,0 +1,54 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.mfa.title'), 'security') }}
+<header class="admin-page-header">
+    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.mfa.title') }}</span></nav><h1>{{ ui_text('admin.mfa.title') }}</h1><p>{{ ui_text('admin.mfa.lead') }}</p></div>
+</header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+
+{% if recovery_codes %}
+<section class="admin-panel" aria-labelledby="recovery-title" data-mfa-recovery>
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.mfa.recovery.eyebrow') }}</small><h2 id="recovery-title">{{ ui_text('admin.mfa.recovery.title') }}</h2></div></div>
+    <p class="admin-card-note">{{ ui_text('admin.mfa.recovery.once') }}</p>
+    <ul class="admin-code-list">{% for code in recovery_codes %}<li><code>{{ code }}</code></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+<section class="admin-panel" aria-labelledby="mfa-status">
+    <div class="admin-panel__header"><div><small>TOTP</small><h2 id="mfa-status">{{ ui_text('admin.mfa.status') }}</h2></div>
+        <span class="admin-badge {{ enabled ? 'is-active' : 'is-muted' }}">{{ enabled ? ui_text('admin.mfa.on') : ui_text('admin.mfa.off') }}</span></div>
+
+    {% if enabled %}
+        <p class="admin-card-note">{{ ui_text('admin.mfa.recovery.remaining', {count: recovery_remaining}) }}</p>
+        <div class="admin-form-grid">
+            <form method="post" action="{{ path('admin_account_security_recovery') }}" class="admin-card-form">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_mfa_recovery') }}">
+                <label><span>{{ ui_text('admin.mfa.code_from_app') }}</span><input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" required></label>
+                <button class="admin-button" type="submit">{{ ui_icon('refresh-cw', 16) }}<span>{{ ui_text('admin.mfa.recovery.regenerate') }}</span></button>
+            </form>
+            <form method="post" action="{{ path('admin_account_security_disable') }}" class="admin-card-form" data-confirm="{{ ui_text('admin.mfa.disable_confirm') }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_mfa_disable') }}">
+                <label><span>{{ ui_text('admin.mfa.code') }}</span><input type="text" name="code" autocomplete="one-time-code" required></label>
+                <button class="admin-button is-danger" type="submit">{{ ui_icon('shield-off', 16) }}<span>{{ ui_text('admin.mfa.disable') }}</span></button>
+            </form>
+        </div>
+    {% elseif secret %}
+        <ol class="admin-steps">
+            <li>{{ ui_text('admin.mfa.setup.step1') }}</li>
+            <li>{{ ui_text('admin.mfa.setup.step2') }}
+                <p class="admin-secret" data-mfa-secret aria-label="{{ ui_text('admin.mfa.secret') }}"><code>{% for group in secret_groups %}{{ group }} {% endfor %}</code></p>
+                <p><a class="admin-button" href="{{ provisioning_uri }}">{{ ui_icon('smartphone', 16) }}<span>{{ ui_text('admin.mfa.setup.open_app') }}</span></a></p>
+            </li>
+            <li>{{ ui_text('admin.mfa.setup.step3') }}</li>
+        </ol>
+        <form method="post" action="{{ path('admin_account_security_confirm') }}" class="admin-card-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_mfa_confirm') }}">
+            <label><span>{{ ui_text('admin.mfa.code_from_app') }}</span><input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" required autofocus></label>
+            <button class="admin-button is-primary" type="submit">{{ ui_icon('shield-check', 16) }}<span>{{ ui_text('admin.mfa.setup.confirm') }}</span></button>
+        </form>
+        <form method="post" action="{{ path('admin_account_security_cancel') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_mfa_cancel') }}"><button class="admin-button is-ghost" type="submit">{{ ui_text('admin.mfa.setup.cancel') }}</button></form>
+    {% else %}
+        <p class="admin-card-note">{{ ui_text('admin.mfa.off_help') }}</p>
+        <a class="admin-button is-primary" href="{{ path('admin_account_security', {setup: 1}) }}">{{ ui_icon('shield-plus', 16) }}<span>{{ ui_text('admin.mfa.enable') }}</span></a>
+    {% endif %}
+</section>
+{{ shell.end() }}

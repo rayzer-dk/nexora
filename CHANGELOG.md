@@ -2,6 +2,22 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.8.0 — 2026-09-29
+
+Schema 52, Extension API 2.0, production channel.
+
+### Added
+- **Two-factor authentication for administrators** (TOTP, RFC 6238): enrolment with secret + `otpauth://` URI, 8 single-use recovery codes, replay protection (a time step can be used once), lock-out of the session after 5 wrong codes, secrets encrypted with `SecretVault`. Managed at Admin → Account security; migration `Version20260929120000` adds `mc_admin_mfa`.
+- **Dark theme**: `theme.color_scheme` (light / auto / dark) in Admin → Appearance. Auto follows the device and shows a visitor toggle remembered in the browser; the admin panel has its own toggle. All colours come from design tokens.
+- **PWA**: web app manifest, service worker (static assets cached, HTML never cached, private areas bypassed) and an `/offline` page; can be switched off in Appearance (a self-unregistering worker is served then).
+- **Recently viewed** block on the home and product pages (stored in the visitor's browser only).
+- **Error monitoring hook**: optional `ERROR_WEBHOOK_URL` (https) receives a minimal JSON payload for every intercepted runtime incident; no stack traces or personal data.
+- Playwright coverage: `admin-mfa`, `color-scheme`, `pwa`, `recently-viewed`; PHPUnit: `TotpTest`, `IncidentWebhookNotifierTest`.
+
+### Changed
+- Design tokens gained `--mc-color-primary-base` / `--mc-color-accent-base` (brand colours) with derived hover colours and dark-mode overrides.
+- Lucide set extended to 140 icons.
+
 ## 3.7.2 — 2026-09-29
 
 Schema 51, Extension API 2.0, production channel.

@@ -10,18 +10,20 @@
 :root {
   color-scheme: light;
 
-  /* Brand colours are overridden per store by ThemeCssVariablesBuilder. */
-  --mc-color-primary: #0b63f6;
-  --mc-color-primary-hover: #084fc5;
-  --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary) 10%, #fff);
+  /* Brand colours are overridden per store: base.html.twig emits --mc-color-primary-base and --mc-color-accent-base. */
+  --mc-color-primary-base: #0b63f6;
+  --mc-color-primary: var(--mc-color-primary-base);
+  --mc-color-primary-hover: color-mix(in srgb, var(--mc-color-primary) 82%, #000);
+  --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary) 10%, var(--mc-color-background));
   --mc-color-primary-contrast: #fff;
-  --mc-color-accent: #ff7a1a;
+  --mc-color-accent-base: #ff7a1a;
+  --mc-color-accent: var(--mc-color-accent-base);
   --mc-color-success: #0f7a4b;
   --mc-color-warning: #b7791f;
   --mc-color-danger: #b42318;
-  --mc-color-success-soft: color-mix(in srgb, var(--mc-color-success) 11%, #fff);
-  --mc-color-warning-soft: color-mix(in srgb, var(--mc-color-warning) 13%, #fff);
-  --mc-color-danger-soft: color-mix(in srgb, var(--mc-color-danger) 10%, #fff);
+  --mc-color-success-soft: color-mix(in srgb, var(--mc-color-success) 11%, var(--mc-color-background));
+  --mc-color-warning-soft: color-mix(in srgb, var(--mc-color-warning) 13%, var(--mc-color-background));
+  --mc-color-danger-soft: color-mix(in srgb, var(--mc-color-danger) 10%, var(--mc-color-background));
 
   --mc-color-background: #fff;
   --mc-color-surface: #f6f8fb;
@@ -32,7 +34,7 @@
   --mc-color-border: #e2e7ef;
   --mc-color-border-strong: #c9d1de;
   --mc-color-ink: #0c1424;
-  --mc-color-focus: color-mix(in srgb, var(--mc-color-primary) 55%, #fff);
+  --mc-color-focus: color-mix(in srgb, var(--mc-color-primary) 55%, var(--mc-color-background));
 
   /* Spacing: 4px base scale. */
   --mc-space-0: 0;
@@ -118,6 +120,61 @@
   line-height: var(--mc-line-height-body);
   font-synthesis: none;
   -webkit-text-size-adjust: 100%;
+}
+
+/*
+ * Dark scheme. The store chooses light / auto / dark (Appearance); in "auto" the visitor's device
+ * decides and a header toggle stores an explicit override in data-theme.
+ */
+:root[data-color-scheme="dark"]:not([data-theme="light"]),
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --mc-color-primary: color-mix(in srgb, var(--mc-color-primary-base) 72%, #fff);
+  --mc-color-primary-hover: color-mix(in srgb, var(--mc-color-primary-base) 58%, #fff);
+  --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary-base) 22%, var(--mc-color-background));
+  --mc-color-accent: color-mix(in srgb, var(--mc-color-accent-base) 88%, #fff);
+  --mc-color-success: #34c78a;
+  --mc-color-warning: #e3a94b;
+  --mc-color-danger: #ff6b5e;
+  --mc-color-background: #0b1220;
+  --mc-color-surface: #111a2b;
+  --mc-color-surface-subtle: #172238;
+  --mc-color-surface-raised: #141f34;
+  --mc-color-text: #e7ecf6;
+  --mc-color-muted: #9aa7bd;
+  --mc-color-border: #25324b;
+  --mc-color-border-strong: #364766;
+  --mc-color-ink: #060b16;
+  --mc-shadow-xs: 0 1px 2px rgb(0 0 0 / 0.4);
+  --mc-shadow-sm: 0 2px 8px rgb(0 0 0 / 0.42);
+  --mc-shadow-md: 0 8px 24px rgb(0 0 0 / 0.5);
+  --mc-shadow-lg: 0 18px 48px rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+    --mc-color-primary: color-mix(in srgb, var(--mc-color-primary-base) 72%, #fff);
+    --mc-color-primary-hover: color-mix(in srgb, var(--mc-color-primary-base) 58%, #fff);
+    --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary-base) 22%, var(--mc-color-background));
+    --mc-color-accent: color-mix(in srgb, var(--mc-color-accent-base) 88%, #fff);
+    --mc-color-success: #34c78a;
+    --mc-color-warning: #e3a94b;
+    --mc-color-danger: #ff6b5e;
+    --mc-color-background: #0b1220;
+    --mc-color-surface: #111a2b;
+    --mc-color-surface-subtle: #172238;
+    --mc-color-surface-raised: #141f34;
+    --mc-color-text: #e7ecf6;
+    --mc-color-muted: #9aa7bd;
+    --mc-color-border: #25324b;
+    --mc-color-border-strong: #364766;
+    --mc-color-ink: #060b16;
+    --mc-shadow-xs: 0 1px 2px rgb(0 0 0 / 0.4);
+    --mc-shadow-sm: 0 2px 8px rgb(0 0 0 / 0.42);
+    --mc-shadow-md: 0 8px 24px rgb(0 0 0 / 0.5);
+    --mc-shadow-lg: 0 18px 48px rgb(0 0 0 / 0.6);
+  }
 }
 
 @media (min-width: 768px) {

@@ -1,0 +1,10 @@
+{% extends '@storefront/base.html.twig' %}
+{% block title %}{{ ui_text('offline_title') }}{% endblock %}
+{% block body %}
+<section class="shell offline-page">
+    <span class="offline-page__icon" aria-hidden="true">{{ ui_icon('wifi-off', 32) }}</span>
+    <h1>{{ ui_text('offline_title') }}</h1>
+    <p>{{ ui_text('offline_text') }}</p>
+    <a class="button button--primary button--lg" href="/" data-offline-retry>{{ ui_text('offline_retry') }}</a>
+</section>
+{% endblock %}

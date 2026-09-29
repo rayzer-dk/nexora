@@ -587,4 +587,9 @@ return [
     'unit_ml' => 'ml',
     'unit_m' => 'm',
     'unit_sqm' => 'm²',
+    'theme_toggle' => 'Zmień motyw kolorystyczny',
+    'offline_title' => 'Brak połączenia',
+    'offline_text' => 'Wygląda na to, że połączenie zostało utracone. Sprawdź sieć i spróbuj ponownie — koszyk został zapisany.',
+    'offline_retry' => 'Spróbuj ponownie',
+    'recently_viewed' => 'Ostatnio oglądane',
 ];

@@ -26,6 +26,7 @@ final readonly class FailSafeSubscriber implements EventSubscriberInterface
         private LoggerInterface $logger,
         private Connection $connection,
         private PublicIdFactory $publicIds,
+        private ?IncidentWebhookNotifier $webhook = null,
     ) {
     }
 
@@ -135,6 +136,14 @@ final readonly class FailSafeSubscriber implements EventSubscriberInterface
 
     private function recordIncident(Request $request, Throwable $throwable, string $requestId, string $area, string $fallback): void
     {
+        $this->webhook?->notify(
+            $requestId,
+            $area,
+            ($route = $request->attributes->get('_route')) !== null ? (string) $route : null,
+            $throwable::class,
+            (string) (preg_replace('/[\r\n\t]+/', ' ', $throwable->getMessage()) ?: 'Runtime error'),
+            $fallback,
+        );
         try {
             if (!$this->connection->createSchemaManager()->tablesExist(['mc_runtime_incident'])) {
                 return;

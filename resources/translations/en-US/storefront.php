@@ -796,4 +796,9 @@ return [
     'unit_ml' => 'ml',
     'unit_m' => 'm',
     'unit_sqm' => 'm²',
+    'theme_toggle' => 'Toggle color theme',
+    'offline_title' => 'You are offline',
+    'offline_text' => 'The connection seems to be lost. Check your network and try again — your cart is saved.',
+    'offline_retry' => 'Try again',
+    'recently_viewed' => 'Recently viewed',
 ];

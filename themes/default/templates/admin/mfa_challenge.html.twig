@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="{{ app.request.attributes.get('_ui_locale', 'uk-UA') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex,nofollow">
+    <title>{{ ui_text('admin.mfa.challenge.title') }} · Nexora Commerce</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
+    <link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-runtime.css', '/assets/admin-runtime.css') }}">
+</head>
+<body class="admin-login-page">
+<main class="admin-login-shell">
+    <section class="admin-login-card" aria-labelledby="mfa-title">
+        <div class="admin-login-brand"><img src="/assets/branding/nexora-mark.svg" alt="" width="44" height="44"><span><strong>Nexora Commerce</strong><small>Administration</small></span></div>
+        <h1 id="mfa-title">{{ ui_text('admin.mfa.challenge.title') }}</h1>
+        <p>{{ ui_text('admin.mfa.challenge.help') }}</p>
+        {% if error %}<div class="admin-notice is-error" role="alert">{{ ui_icon('circle-alert', 20) }}<span>{{ ui_text('admin.mfa.challenge.wrong') }}</span></div>{% endif %}
+        <form method="post" action="{{ path('admin_mfa_challenge') }}" autocomplete="off">
+            <label><span>{{ ui_text('admin.mfa.code') }}</span><input type="text" name="code" inputmode="text" autocomplete="one-time-code" maxlength="20" required autofocus data-mfa-code></label>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_mfa_challenge') }}">
+            <button type="submit" class="admin-button is-primary is-lg">{{ ui_icon('shield-check', 20) }}<span>{{ ui_text('admin.mfa.challenge.submit') }}</span></button>
+        </form>
+        <form method="post" action="{{ path('admin_logout') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button type="submit" class="admin-button is-ghost">{{ ui_text('admin_logout') }}</button></form>
+    </section>
+</main>
+</body>
+</html>

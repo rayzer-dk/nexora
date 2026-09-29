@@ -67,6 +67,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'logo' => '',
                 'icon' => '',
                 'favicon' => '',
+                'pwa' => '1',
             ],
             'theme' => [
                 'preset' => 'modern',
@@ -77,6 +78,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'radius' => '18',
                 'shadow' => 'medium',
                 'density' => 'comfortable',
+                'color_scheme' => 'light',
                 'container' => '1408',
                 'font' => 'system',
             ],
@@ -120,6 +122,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         foreach (['logo','icon','favicon'] as $key) {
             $out['brand'][$key] = $this->mediaPath($input['brand'][$key] ?? '');
         }
+        $out['brand']['pwa'] = (string) ($input['brand']['pwa'] ?? $defaults['brand']['pwa']) === '1' ? '1' : '0';
         $preset=(string)($input['theme']['preset']??$defaults['theme']['preset']);
         if(!in_array($preset,$this->presets->codes(),true)){$preset=$defaults['theme']['preset'];}
         $out['theme']['preset']=$preset;
@@ -129,6 +132,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $radius=(int)($input['theme']['radius']??$defaults['theme']['radius']); $out['theme']['radius']=(string)max(4,min(32,$radius));
         $shadow=(string)($input['theme']['shadow']??$defaults['theme']['shadow']); $out['theme']['shadow']=in_array($shadow,['none','soft','medium','strong'],true)?$shadow:$defaults['theme']['shadow'];
         $density=(string)($input['theme']['density']??$defaults['theme']['density']); $out['theme']['density']=in_array($density,['compact','comfortable','spacious'],true)?$density:$defaults['theme']['density'];
+        $scheme=(string)($input['theme']['color_scheme']??$defaults['theme']['color_scheme']); $out['theme']['color_scheme']=in_array($scheme,['light','auto','dark'],true)?$scheme:$defaults['theme']['color_scheme'];
         $container=(int)($input['theme']['container']??$defaults['theme']['container']); $out['theme']['container']=(string)max(960,min(1680,$container));
         $font=(string)($input['theme']['font']??$defaults['theme']['font']); $out['theme']['font']=in_array($font,['system','inter','manrope'],true)?$font:$defaults['theme']['font'];
         $out['header']['search_placeholder'] = $this->text($input['header']['search_placeholder'] ?? '', 160);

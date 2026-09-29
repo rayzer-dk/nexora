@@ -1,13 +1,15 @@
 {% macro start(title, section, feature = null) %}
 {% import _self as nav %}
 <!doctype html>
-<html lang="{{ app.request.attributes.get('_ui_locale', 'uk-UA') }}">
+<html lang="{{ app.request.attributes.get('_ui_locale', 'uk-UA') }}" data-color-scheme="auto">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="robots" content="noindex,nofollow">
     <title>{{ title }} · Nexora Commerce</title>
     <link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
+    <meta name="color-scheme" content="light dark">
+    <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">try{var t=localStorage.getItem('mc_admin_theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}}catch(e){}</script>
     <link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-runtime.css', '/assets/admin-runtime.css') }}">
     <script type="module" src="{{ vite_asset('assets/admin/main.ts', '/assets/admin.js') }}"></script>
     {% if feature in ['builder','media'] %}<link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-builder-media.css', '/assets/admin-builder-media.css') }}">{% endif %}
@@ -49,6 +51,7 @@
             {% if admin_can('admin_users.manage') %}{{ nav.link(section, 'access', '/admin/system/access', 'shield-user', ui_text('admin_admins_permissions')) }}{% endif %}
         </nav>
         <div class="admin-sidebar__footer">
+            {{ nav.link(section, 'security', '/admin/account/security', 'shield-check', ui_text('admin.mfa.nav')) }}
             <form method="post" action="/admin/logout"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button class="admin-nav__link" type="submit">{{ ui_icon('log-out', 20) }}<span>{{ ui_text('admin_logout') }}</span></button></form>
         </div>
     </aside>
@@ -75,6 +78,7 @@
                 <span class="admin-badge" title="{{ ui_text('admin_store_context') }}">{{ context_switcher.current.locale }} · {{ context_switcher.current.currency }}</span>
             </div>
             {% endif %}
+            <button class="admin-icon-button admin-theme-toggle" type="button" data-theme-toggle aria-label="{{ ui_text('admin.theme_toggle') }}" title="{{ ui_text('admin.theme_toggle') }}"><span class="admin-theme-toggle__moon" aria-hidden="true">{{ ui_icon('moon', 20) }}</span><span class="admin-theme-toggle__sun" aria-hidden="true">{{ ui_icon('sun', 20) }}</span></button>
             {% set admin_user = app.user %}
             <span class="admin-user" title="{{ admin_user.displayName|default('') }}">{{ ui_icon('circle-user-round', 24) }}<span class="admin-user__name">{{ admin_user.displayName|default('') }}</span></span>
         </header>

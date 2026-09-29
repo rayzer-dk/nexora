@@ -2,6 +2,7 @@ parameters:
     env(MAIL_FROM_ADDRESS): 'no-reply@localhost'
     env(MAIL_FROM_NAME): 'Nexora Commerce'
     env(TELEGRAM_NOTIFICATIONS_ENABLED): '0'
+    env(ERROR_WEBHOOK_URL): ''
     env(TELEGRAM_BOT_TOKEN): ''
     env(TELEGRAM_DEFAULT_CHAT_ID): ''
     env(SMS_NOTIFICATIONS_ENABLED): '0'
@@ -185,6 +186,18 @@ services:
             $projectDir: '%kernel.project_dir%'
 
     Commerce\Core\Security\SecretVault:
+        arguments:
+            $appSecret: '%kernel.secret%'
+
+    Commerce\Core\Runtime\IncidentWebhookNotifier:
+        arguments:
+            $url: '%env(string:ERROR_WEBHOOK_URL)%'
+
+    Commerce\Modules\Storefront\PwaController:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Admin\Security\AdminMfaService:
         arguments:
             $appSecret: '%kernel.secret%'
 

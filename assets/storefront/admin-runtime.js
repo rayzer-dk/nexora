@@ -1,3 +1,4 @@
+import { initThemeToggle } from '../shared/theme-toggle.js';
 import { lucideIconNode } from '../shared/lucide-icons.js';
 
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
@@ -391,3 +392,5 @@ async function initPageFeatures() {
 }
 
 document.addEventListener('DOMContentLoaded', initPageFeatures, { once: true });
+
+initThemeToggle('mc_admin_theme');

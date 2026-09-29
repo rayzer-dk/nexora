@@ -42,4 +42,5 @@
 {% if not categories and not products and not articles and site_mode in ['content','landing','forum'] %}
 <section class="home-section shell"><div class="admin-safety-note"><strong>{{ store_name }}</strong><span>{{ ui_text('empty_home_admin_note') }}</span></div></section>
 {% endif %}
+{% include '@storefront/components/recently_viewed.html.twig' %}
 {% endblock %}
