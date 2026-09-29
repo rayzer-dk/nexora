@@ -30,12 +30,14 @@ final readonly class CommerceMarketingSubscriber implements DomainEventSubscribe
         if (!$this->ga4Enabled && !$this->metaEnabled && !$this->tiktokEnabled) {
             return;
         }
+        $storeId = isset($event->payload['store_id']) ? (int) $event->payload['store_id'] : null;
         $this->queue->enqueue('marketing', $event->aggregateType, $event->aggregateId, $event->eventName, [
             'event_id' => $event->eventId,
             'event_name' => $event->eventName,
             'event_version' => $event->eventVersion,
+            'store_id' => $storeId,
             'payload' => $event->payload,
             'consent' => is_array($event->payload['consent'] ?? null) ? $event->payload['consent'] : null,
-        ], 'marketing:' . $event->eventId);
+        ], 'marketing:' . $event->eventId, $storeId);
     }
 }
