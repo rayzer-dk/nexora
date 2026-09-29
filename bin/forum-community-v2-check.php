@@ -4,6 +4,7 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__);
+require_once $root . '/src/Core/Platform/PlatformVersion.php';
 $fail = [];
 
 $must = [
@@ -159,8 +160,8 @@ foreach ([
     }
 }
 
-if ((string) ($release['database_schema'] ?? '') !== '50') {
-    $fail[] = 'release schema is not 50';
+if ((string) ($release['database_schema'] ?? '') !== (string) \Commerce\Core\Platform\PlatformVersion::DATABASE_SCHEMA) {
+    $fail[] = 'release schema does not match PlatformVersion::DATABASE_SCHEMA';
 }
 
 if ($fail !== []) {
