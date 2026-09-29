@@ -25,7 +25,7 @@
     "playwright": "1.63.0",
     "axe_core_playwright": "4.13.0"
   },
-  "database_schema": "50",
+  "database_schema": "51",
   "built_at": "2026-09-28",
   "capabilities": [
     "multistore",
@@ -353,10 +353,11 @@
     "design-token-system-v2",
     "configurability-runtime-audit",
     "dummyjson-curated-demo-catalog",
-    "immediate-category-search-reindex"
+    "immediate-category-search-reindex",
+    "store-scoped-media-library"
   ],
   "database": {
-    "schema": "50",
+    "schema": "51",
     "preferred": [
       "mysql-8.4-lts",
       "mariadb-11.4-lts"
@@ -368,7 +369,7 @@
       "mariadb-10.11-lts"
     ]
   },
-  "schema_version": 50,
+  "schema_version": 51,
   "license": "MIT",
   "features": [
     "review-photo-uploads",
