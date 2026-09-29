@@ -6,7 +6,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import { TableKit } from '@tiptap/extension-table';
 import { Placeholder } from '@tiptap/extensions';
-import { Undo2, Redo2 } from '@lucide/vue';
+import { Bold, Italic, Underline, Heading2, List, ListOrdered, Link2, Undo2, Redo2 } from '@lucide/vue';
 
 const props = withDefaults(defineProps<{ modelValue: string; placeholder?: string }>(), { placeholder: t('vue.components.richtexteditor.pochnit_vvodyty_tekst') });
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
@@ -42,15 +42,15 @@ const setLink = () => {
 <template>
   <div class="rich-editor">
     <div class="rich-editor__toolbar" role="toolbar" :aria-label="t('vue.components.richtexteditor.formatuvannia_tekstu')">
-      <button type="button" :title="t('vue.components.richtexteditor.zhyrnyi')" :class="{active: editor.isActive('bold')}" @click="editor.chain().focus().toggleBold().run()"><strong>B</strong></button>
-      <button type="button" :title="t('vue.components.richtexteditor.kursyv')" :class="{active: editor.isActive('italic')}" @click="editor.chain().focus().toggleItalic().run()"><em>I</em></button>
-      <button type="button" :title="t('vue.components.richtexteditor.pidkreslennia')" :class="{active: editor.isActive('underline')}" @click="editor.chain().focus().toggleUnderline().run()"><u>U</u></button>
-      <button type="button" :title="t('vue.components.richtexteditor.zaholovok_h2')" :class="{active: editor.isActive('heading', { level: 2 })}" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()">H2</button>
-      <button type="button" :title="t('vue.components.richtexteditor.markirovanyi_spysok')" @click="editor.chain().focus().toggleBulletList().run()">• List</button>
-      <button type="button" :title="t('vue.components.richtexteditor.numerovanyi_spysok')" @click="editor.chain().focus().toggleOrderedList().run()">1. List</button>
-      <button type="button" :title="t('vue.components.richtexteditor.posylannia')" @click="setLink">Link</button>
-      <button type="button" :title="t('vue.components.richtexteditor.skasuvaty')" :disabled="!editor.can().undo()" @click="editor.chain().focus().undo().run()"><Undo2 :size="16" /></button>
-      <button type="button" :title="t('vue.components.richtexteditor.povtoryty')" :disabled="!editor.can().redo()" @click="editor.chain().focus().redo().run()"><Redo2 :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.zhyrnyi')" :aria-label="t('vue.components.richtexteditor.zhyrnyi')" :class="{active: editor.isActive('bold')}" @click="editor.chain().focus().toggleBold().run()"><Bold :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.kursyv')" :aria-label="t('vue.components.richtexteditor.kursyv')" :class="{active: editor.isActive('italic')}" @click="editor.chain().focus().toggleItalic().run()"><Italic :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.pidkreslennia')" :aria-label="t('vue.components.richtexteditor.pidkreslennia')" :class="{active: editor.isActive('underline')}" @click="editor.chain().focus().toggleUnderline().run()"><Underline :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.zaholovok_h2')" :aria-label="t('vue.components.richtexteditor.zaholovok_h2')" :class="{active: editor.isActive('heading', { level: 2 })}" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"><Heading2 :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.markirovanyi_spysok')" :aria-label="t('vue.components.richtexteditor.markirovanyi_spysok')" @click="editor.chain().focus().toggleBulletList().run()"><List :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.numerovanyi_spysok')" :aria-label="t('vue.components.richtexteditor.numerovanyi_spysok')" @click="editor.chain().focus().toggleOrderedList().run()"><ListOrdered :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.posylannia')" :aria-label="t('vue.components.richtexteditor.posylannia')" @click="setLink"><Link2 :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.skasuvaty')" :aria-label="t('vue.components.richtexteditor.skasuvaty')" :disabled="!editor.can().undo()" @click="editor.chain().focus().undo().run()"><Undo2 :size="16" /></button>
+      <button type="button" :title="t('vue.components.richtexteditor.povtoryty')" :aria-label="t('vue.components.richtexteditor.povtoryty')" :disabled="!editor.can().redo()" @click="editor.chain().focus().redo().run()"><Redo2 :size="16" /></button>
     </div>
     <EditorContent :editor="editor" />
   </div>

@@ -1,12 +1,12 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
 {{ shell.start(ui_text('admin.system.store.dani_mahazynu'),'store') }}
-<header class="admin-runtime__header">
-    <div><small>Store setup · v{{ platform_version }}</small><h1>{{ ui_text('admin.system.store.dani_mahazynu') }}</h1><p>{{ ui_text('admin.system.store.osnovni_rekvizyty_lokal_valiuta_ta_kontakty_kozh') }}</p></div>
+<header class="admin-page-header">
+    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">Store setup · v{{ platform_version }}</span></nav><h1>{{ ui_text('admin.system.store.dani_mahazynu') }}</h1><p>{{ ui_text('admin.system.store.osnovni_rekvizyty_lokal_valiuta_ta_kontakty_kozh') }}</p></div>
 </header>
-{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="store-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
-<form method="post" class="admin-editor-card" data-dirty-guard>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<form method="post" class="admin-panel" data-dirty-guard>
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('store_identity') }}">
-    <div class="admin-card-heading"><div><small>{{ ui_text('admin.system.store.osnovne') }}</small><h2>{{ ui_text('admin.system.store.mahazyn_i_rynok') }}</h2></div><span class="admin-status-pill">{{ ui_text('ui.admin.system.store.atomic_save') }}</span></div>
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.system.store.osnovne') }}</small><h2>{{ ui_text('admin.system.store.mahazyn_i_rynok') }}</h2></div><span class="admin-badge">{{ ui_text('ui.admin.system.store.atomic_save') }}</span></div>
     <div class="admin-form-grid">
         <label><span>{{ ui_text('admin.system.store.nazva_mahazynu') }}</span><input type="text" name="name" value="{{ settings.name }}" maxlength="190" required></label>
         <label><span>{{ ui_text('admin.system.store.kraina') }}</span><input type="text" name="country_code" value="{{ settings.country_code }}" maxlength="2" pattern="[A-Za-z]{2}" required></label>
@@ -15,7 +15,7 @@
         <label class="is-wide"><span>{{ ui_text('admin.system.store.domeny_mahazynu') }}</span><textarea name="domains" rows="3" placeholder="{{ ui_text('ui.admin.system.store.shop_example_com_10_www_shop_example_com')|e('html_attr') }}">{{ settings.domains|default([])|join('\n') }}</textarea><small>{{ ui_text('admin.system.store.pershyi_domen_osnovnyi_kozhen_host_mozhe_nalezha') }}</small></label>
         <label><span>{{ ui_text('admin.system.store.chasovyi_poias') }}</span><select name="timezone">{% set zone_found = false %}{% for zone in timezones %}{% if zone == settings.timezone %}{% set zone_found = true %}{% endif %}<option value="{{ zone }}" {{ zone == settings.timezone ? 'selected' : '' }}>{{ zone }}</option>{% endfor %}{% if not zone_found %}<option value="{{ settings.timezone }}" selected>{{ settings.timezone }}</option>{% endif %}</select></label>
     </div>
-    <div class="admin-card-heading"><div><small>{{ ui_text('admin.system.store.yurydychni_ta_kontaktni_dani') }}</small><h2>{{ ui_text('admin.system.store.rekvizyty') }}</h2></div></div>
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.system.store.yurydychni_ta_kontaktni_dani') }}</small><h2>{{ ui_text('admin.system.store.rekvizyty') }}</h2></div></div>
     <div class="admin-form-grid">
         <label><span>{{ ui_text('admin.system.store.yurydychna_nazva') }}</span><input type="text" name="legal_name" value="{{ settings.legal_name }}" maxlength="255"></label>
         <label><span>{{ ui_text('admin.system.store.yedrpou_reiestratsiinyi_nomer') }}</span><input type="text" name="registration_number" value="{{ settings.registration_number }}" maxlength="128"></label>
@@ -30,12 +30,12 @@
         <label><span>{{ ui_text('admin.system.store.povernennia') }}</span><input type="email" name="return_contact" value="{{ settings.return_contact }}" maxlength="320"></label>
         <label><span>{{ ui_text('admin.system.store.harantiia') }}</span><input type="email" name="warranty_contact" value="{{ settings.warranty_contact }}" maxlength="320"></label>
     </div>
-    <div class="admin-form-actions"><button type="submit">{{ ui_text('admin.system.store.zberehty_dani_mahazynu') }}</button></div>
+    <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.system.store.zberehty_dani_mahazynu') }}</button></div>
 </form>
-<section class="admin-editor-card">
-    <div class="admin-card-heading"><div><small>{{ ui_text('ui.admin.system.store.recovery') }}</small><h2>{{ ui_text('admin.system.store.istoriia_zmin') }}</h2></div><span class="admin-help">{{ ui_text('admin.system.store.vidkat_stvoriuie_novu_reviziiu_i_ne_styraie_isto') }}</span></div>
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><small>{{ ui_text('ui.admin.system.store.recovery') }}</small><h2>{{ ui_text('admin.system.store.istoriia_zmin') }}</h2></div><span class="admin-help">{{ ui_text('admin.system.store.vidkat_stvoriuie_novu_reviziiu_i_ne_styraie_isto') }}</span></div>
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.store.reviziia') }}</th><th>{{ ui_text('admin.system.store.stan') }}</th><th>{{ ui_text('admin.system.store.khto') }}</th><th>{{ ui_text('admin.system.store.chas') }}</th><th class="is-actions">{{ ui_text('admin.system.store.diia') }}</th></tr></thead><tbody>
-    {% for revision in revisions %}<tr><td><strong>#{{ revision.revision_number }}</strong></td><td><span class="admin-status-pill is-{{ revision.status }}">{{ revision.status }}</span></td><td>{{ revision.actor_subject|default('system') }}</td><td>{{ revision.created_at }}</td><td class="is-actions"><form method="post" action="{{ path('admin_system_store_rollback',{revisionId:revision.id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('store_identity_rollback') }}"><button class="admin-icon-button" type="submit" data-confirm="{{ ui_text('admin.system.store.vidnovyty_tsiu_reviziiu_danykh_mahazynu') }}" title="{{ ui_text('admin.system.store.vidnovyty_reviziiu') }}{{ revision.revision_number }}">{{ ui_icon('rotate-ccw', 18) }}</button></form></td></tr>{% else %}<tr><td colspan="5">{{ ui_text('admin.system.store.istoriia_z_iavytsia_pislia_pershoho_zberezhennia') }}</td></tr>{% endfor %}
+    {% for revision in revisions %}<tr><td><strong>#{{ revision.revision_number }}</strong></td><td><span class="admin-badge is-{{ revision.status }}">{{ revision.status }}</span></td><td>{{ revision.actor_subject|default('system') }}</td><td>{{ revision.created_at }}</td><td class="is-actions"><form method="post" action="{{ path('admin_system_store_rollback',{revisionId:revision.id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('store_identity_rollback') }}"><button class="admin-icon-button" type="submit" data-confirm="{{ ui_text('admin.system.store.vidnovyty_tsiu_reviziiu_danykh_mahazynu') }}" title="{{ ui_text('admin.system.store.vidnovyty_reviziiu') }}{{ revision.revision_number }}" aria-label="{{ ui_text('admin.system.store.vidnovyty_reviziiu') }}{{ revision.revision_number }}">{{ ui_icon('rotate-ccw', 18) }}</button></form></td></tr>{% else %}<tr><td colspan="5">{{ ui_text('admin.system.store.istoriia_z_iavytsia_pislia_pershoho_zberezhennia') }}</td></tr>{% endfor %}
     </tbody></table></div>
 </section>
 {{ shell.end() }}

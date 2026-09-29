@@ -40,20 +40,10 @@ final readonly class DemoShowcaseQuery
                 ['title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.realni_vidhuky'),'text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.reitynh_tovariv'),'icon'=>'star'],
                 ['title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.pidtrymka'),'text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.formy_ta_kontakty'),'icon'=>'headset'],
             ],
-            'category_tiles'=>[
-                ['name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.smartfony'),'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.smartfony_ta_hadzhety'),'url'=>'/smartphones','image'=>'/media/demo/smartphone-neo-x1.webp'],
-                ['name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.noutbuky'),'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.robota_ta_navchannia'),'url'=>'/laptops','image'=>'/media/demo/laptop-pro-14.webp'],
-                ['name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.pobutova_tekhnika'),'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.tekhnika_dlia_domu'),'url'=>'/home-appliances','image'=>'/media/demo/coffee-machine-barista.webp'],
-                ['name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.dim_i_interier'),'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.zatyshnyi_prostir'),'url'=>'/home-interior','image'=>'/media/demo/category-home-interior.webp'],
-                ['name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.krasa_i_zdorovia'),'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.dohliad_shchodnia'),'url'=>'/beauty-health','image'=>'/media/demo/category-beauty.webp'],
-                ['name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.sport_i_vidpochynok'),'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.aktyvnyi_styl'),'url'=>'/sport-leisure','image'=>'/media/demo/category-sport.webp'],
-                ['name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.dytiachi_tovary'),'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.dlia_ditei_ta_batkiv'),'url'=>'/kids','image'=>'/media/demo/category-kids.webp'],
-                ['name'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.aksesuary'),'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.korysni_dopovnennia'),'url'=>'/accessories','image'=>'/media/demo/headphones-airbeat.webp'],
-            ],
-            'promos'=>[
-                ['eyebrow'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.dlia_domu'),'title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.komfort_pochynaietsia_z_detalei'),'text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.kavomashyny_tekhnika_ta_rishennia_dlia_zatyshku'),'url'=>'/home-appliances','image'=>'/media/demo/hero-coffee-reference.webp','tone'=>'blue'],
-                ['eyebrow'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.novynky'),'title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.smartfony_dlia_shchodennykh_zadach'),'text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.yaskravyi_ekran_kamera_ta_shvydka_robota'),'url'=>'/smartphones','image'=>'/media/demo/promo-smartphone-reference.webp','tone'=>'orange'],
-                ['eyebrow'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.krasa_i_dohliad'),'title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.turbota_shcho_nadykhaie'),'text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.shchodennyi_dohliad_ta_korysni_nabory'),'url'=>'/beauty-health','image'=>'/media/demo/promo-beauty-reference.webp','tone'=>'green'],
+            'promos'=>$this->promos($context),
+            'counts'=>[
+                'products'=>(int)$this->connection->fetchOne("SELECT COUNT(*) FROM mc_product WHERE status='published'"),
+                'categories'=>(int)$this->connection->fetchOne("SELECT COUNT(*) FROM mc_store_category WHERE store_id=? AND status='active'",[$context->storeId]),
             ],
             'brands'=>array_values(array_map(static fn(mixed $name):string=>(string)$name,$brands)),
             'articles'=>$this->blog->latest($context->storeId,$context->locale,3),
@@ -62,5 +52,40 @@ final readonly class DemoShowcaseQuery
                 'text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.10_na_demo_zamovlennia_vid_2_000'),
             ],
         ];
+    }
+
+    /**
+     * Showcase banners are built from the store's real categories and their product photos,
+     * so every banner links to an existing page and never depends on baked-in artwork.
+     *
+     * @return list<array{eyebrow:string,title:string,text:string,url:string,image:string,tone:string}>
+     */
+    private function promos(StorefrontContext $context): array
+    {
+        $rows=$this->connection->fetchAllAssociative(
+            "SELECT ct.name,ct.description,sr.path,
+                    (SELECT ma.storage_key FROM mc_product_category pcx JOIN mc_product px ON px.id=pcx.product_id AND px.status='published' JOIN mc_product_media pm ON pm.product_id=px.id AND pm.role IN ('primary','gallery') JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pcx.category_id=c.id ORDER BY (pm.role='primary') DESC,pm.sort_order ASC,px.id ASC LIMIT 1) AS image_key
+             FROM mc_category c
+             JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active'
+             JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=?
+             JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id
+             WHERE c.status='active' AND c.parent_id IS NULL
+             ORDER BY sc.sort_order ASC,c.sort_order ASC,c.id ASC LIMIT 3",
+            [$context->storeId,$context->storeId,$context->locale,$context->storeId,$context->locale],
+        );
+        $tones=['blue','violet','graphite'];
+        $promos=[];
+        foreach($rows as $i=>$row){
+            if(!is_string($row['image_key']??null)||$row['image_key']===''){continue;}
+            $promos[]=[
+                'eyebrow'=>'',
+                'title'=>(string)$row['name'],
+                'text'=>(string)($row['description']??''),
+                'url'=>'/'.ltrim((string)$row['path'],'/'),
+                'image'=>'/media/'.ltrim((string)$row['image_key'],'/'),
+                'tone'=>$tones[$i%3],
+            ];
+        }
+        return $promos;
     }
 }

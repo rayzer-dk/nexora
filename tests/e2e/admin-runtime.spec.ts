@@ -21,7 +21,7 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   await loginAdmin(page);
   await page.goto('/admin/system/store', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const storeForm = page.locator('form.admin-editor-card[data-dirty-guard]').first();
+  const storeForm = page.locator('form.admin-panel[data-dirty-guard]').first();
   await expect(storeForm).toBeVisible();
   const storeName = storeForm.locator('input[name="name"]');
   const originalStoreName = await storeName.inputValue();
@@ -34,11 +34,11 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   const saveStoreResponse = await saveStoreResponsePromise;
   expect(saveStoreResponse.status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
   await expect(page.locator('input[name="name"]')).toHaveValue(qaStoreName);
 
   await page.goto('/admin/system/store', { waitUntil: 'domcontentloaded' });
-  const restoredStoreForm = page.locator('form.admin-editor-card[data-dirty-guard]').first();
+  const restoredStoreForm = page.locator('form.admin-panel[data-dirty-guard]').first();
   await restoredStoreForm.locator('input[name="name"]').fill(originalStoreName);
   const restoreStoreResponsePromise = page.waitForResponse((response) =>
     response.url().includes('/admin/system/store') && response.request().method() === 'POST'
@@ -47,12 +47,12 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   const restoreStoreResponse = await restoreStoreResponsePromise;
   expect(restoreStoreResponse.status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
   await expect(page.locator('input[name="name"]')).toHaveValue(originalStoreName);
 
   await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const siteForm = page.locator('form.admin-editor-form[data-dirty-guard]');
+  const siteForm = page.locator('form.admin-form[data-dirty-guard]');
   await expect(siteForm).toBeVisible();
   const originalMode = await siteForm.locator('input[name="mode"]:checked').inputValue();
   const originalFeatures = await siteForm.locator('input[name^="feature_"]').evaluateAll((inputs) =>
@@ -75,7 +75,7 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   const saveSiteResponse = await saveSiteResponsePromise;
   expect(saveSiteResponse.status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
   await expect(page.locator('input[name="mode"][value="content"]')).toBeChecked();
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -90,7 +90,7 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   }
 
   await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
-  const restoreSiteForm = page.locator('form.admin-editor-form[data-dirty-guard]');
+  const restoreSiteForm = page.locator('form.admin-form[data-dirty-guard]');
   await restoreSiteForm.locator(`input[name="mode"][value="${originalMode}"]`).check();
   for (const [name, checked] of Object.entries(originalFeatures)) {
     await restoreSiteForm.locator(`input[name="${name}"]`).setChecked(checked);
@@ -102,12 +102,12 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   const restoreSiteResponse = await restoreSiteResponsePromise;
   expect(restoreSiteResponse.status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
   await expect(page.locator(`input[name="mode"][value="${originalMode}"]`)).toBeChecked();
 
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const appearanceForm = page.locator('form.admin-storefront-form');
+  const appearanceForm = page.locator('form[data-appearance-media]');
   await expect(appearanceForm).toBeVisible();
   const subtitle = appearanceForm.locator('input[name="brand_subtitle"]');
   const originalSubtitle = await subtitle.inputValue();
@@ -137,7 +137,7 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   await expect(page.locator('.reference-brand small')).toHaveText(qaSubtitle);
 
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
-  const restoreAppearance = page.locator('form.admin-storefront-form');
+  const restoreAppearance = page.locator('form[data-appearance-media]');
   await restoreAppearance.locator('input[name="brand_subtitle"]').fill(originalSubtitle);
   await restoreAppearance.locator('input[name="theme_radius"]').evaluate((element, value) => {
     const input = element as HTMLInputElement;
@@ -238,7 +238,7 @@ test('navigation and content edits are reflected by the storefront', async ({ pa
 
   await page.goto('/admin/content/pages/about', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const contentForm = page.locator('form.admin-runtime__panel.admin-form');
+  const contentForm = page.locator('form.admin-panel.admin-form');
   await expect(contentForm).toBeVisible();
   const title = contentForm.locator('input[name="title"]');
   const originalTitle = await title.inputValue();
@@ -256,7 +256,7 @@ test('navigation and content edits are reflected by the storefront', async ({ pa
   await expect(page.locator('h1')).toContainText(qaTitle);
 
   await page.goto('/admin/content/pages/about', { waitUntil: 'domcontentloaded' });
-  const restoreContentForm = page.locator('form.admin-runtime__panel.admin-form');
+  const restoreContentForm = page.locator('form.admin-panel.admin-form');
   await restoreContentForm.locator('input[name="title"]').fill(originalTitle);
   const restoreContent = page.waitForResponse((response) =>
     response.url().includes('/admin/content/pages/about') && response.request().method() === 'POST'

@@ -2,8 +2,8 @@
     <div class="slider-shell__heading">
         {% if title %}<h2>{{ title }}</h2>{% endif %}
         <div class="slider-shell__actions">
-            <button type="button" data-slider-prev aria-label="{{ ui_text('previous') }}">‹</button>
-            <button type="button" data-slider-next aria-label="{{ ui_text('next') }}">›</button>
+            <button class="button button--secondary button--icon" type="button" data-slider-prev aria-label="{{ ui_text('previous') }}">{{ ui_icon('chevron-left', 20) }}</button>
+            <button class="button button--secondary button--icon" type="button" data-slider-next aria-label="{{ ui_text('next') }}">{{ ui_icon('chevron-right', 20) }}</button>
         </div>
     </div>
     <div class="commerce-carousel" data-slider-track>

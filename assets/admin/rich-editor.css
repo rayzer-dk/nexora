@@ -1,12 +1,33 @@
-.rich-editor-mount{display:block}
-.rich-editor{border:1px solid var(--admin-line,#d9dee7);border-radius:12px;overflow:hidden;background:var(--admin-surface,#fff)}
-.rich-editor__toolbar{display:flex;flex-wrap:wrap;gap:4px;padding:8px;border-bottom:1px solid var(--admin-line,#d9dee7);background:#f8fafc}
-.rich-editor__toolbar button{min-width:36px;min-height:36px;border:0;border-radius:7px;background:transparent;color:inherit;cursor:pointer}
-.rich-editor__toolbar button:hover,.rich-editor__toolbar button.active{background:#eaf2ff}
-.rich-editor__toolbar button:disabled{opacity:.45;cursor:not-allowed}
-.rich-editor__content{min-height:224px;padding:16px 18px;outline:0;line-height:1.65}
-.rich-editor__content>:first-child{margin-top:0}
-.rich-editor__content>:last-child{margin-bottom:0}
-.rich-editor__content table{width:100%;border-collapse:collapse}
-.rich-editor__content th,.rich-editor__content td{border:1px solid var(--admin-line,#d9dee7);padding:8px;vertical-align:top}
-.rich-editor__content img{max-width:100%;height:auto}
+/* Rich text editor (TipTap) inside admin forms. Imported by admin-runtime.css, so tokens are already in scope. */
+.rich-editor-mount { display: block; }
+.rich-editor { overflow: hidden; border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-raised); transition: border-color var(--mc-transition), box-shadow var(--mc-transition); }
+.rich-editor:focus-within { border-color: var(--mc-color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-color-primary) 22%, transparent); }
+.rich-editor__toolbar { display: flex; flex-wrap: wrap; gap: var(--mc-space-1); padding: var(--mc-space-2); border-bottom: 1px solid var(--mc-color-border); background: var(--mc-color-surface); }
+.rich-editor__toolbar button {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--mc-control-height-sm);
+  min-height: var(--mc-control-height-sm);
+  padding: 0 var(--mc-space-2);
+  border: 0;
+  border-radius: var(--mc-radius-xs);
+  background: transparent;
+  color: var(--mc-color-text);
+  font: inherit;
+  font-size: var(--mc-font-size-sm);
+  font-weight: var(--mc-font-weight-semibold);
+  cursor: pointer;
+}
+.rich-editor__toolbar button:hover { background: var(--mc-color-surface-subtle); }
+.rich-editor__toolbar button.active { background: var(--mc-color-primary-soft); color: var(--mc-color-primary); }
+.rich-editor__toolbar button:disabled { opacity: 0.45; cursor: not-allowed; }
+.rich-editor__toolbar .ui-icon,
+.rich-editor__toolbar svg { width: var(--mc-icon-size-sm); height: var(--mc-icon-size-sm); }
+.rich-editor__content { min-height: 224px; padding: var(--mc-space-4) var(--mc-space-5); outline: 0; font-size: var(--mc-font-size-sm); line-height: var(--mc-line-height-body); }
+.rich-editor__content > :first-child { margin-top: 0; }
+.rich-editor__content > :last-child { margin-bottom: 0; }
+.rich-editor__content p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; height: 0; color: var(--mc-color-muted); pointer-events: none; }
+.rich-editor__content table { width: 100%; border-collapse: collapse; }
+.rich-editor__content th,
+.rich-editor__content td { padding: var(--mc-space-2); border: 1px solid var(--mc-color-border); vertical-align: top; }
+.rich-editor__content img { max-width: 100%; height: auto; }

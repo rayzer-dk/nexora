@@ -1,22 +1,22 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
 {{ shell.start(ui_text('admin.system.migration.tsentr_mihratsii'),'migration') }}
-<header class="admin-runtime__header">
-  <div><small>{{ ui_text('ui.admin.system.migration.opencart_ocstore_3_x') }}</small><h1>{{ ui_text('admin.system.migration.tsentr_mihratsii') }}</h1><p>{{ ui_text('admin.system.migration.dry_run_idempotentnyi_import_vidnovlennia_pislia') }}</p></div>
+<header class="admin-page-header">
+  <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('ui.admin.system.migration.opencart_ocstore_3_x') }}</span></nav><h1>{{ ui_text('admin.system.migration.tsentr_mihratsii') }}</h1><p>{{ ui_text('admin.system.migration.dry_run_idempotentnyi_import_vidnovlennia_pislia') }}</p></div>
 </header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
 {% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
-<section class="admin-runtime__panel admin-runtime__panel--modern">
+<section class="admin-panel">
   <div><small>{{ ui_text('admin.system.migration.bezpechnyi_zapusk') }}</small><h2>{{ ui_text('admin.system.migration.pidkliuchennia_do_staroho_mahazynu_vykonuietsia_') }}</h2></div>
   <p>{{ ui_text('admin.system.migration.pered_importom_zrobit_povnu_rezervnu_kopiiu_star') }}</p>
   <pre><code>MIGRATION_SOURCE_DB_USER=readonly MIGRATION_SOURCE_DB_PASSWORD='***' php bin/console commerce:migration:opencart --dsn='mysql:host=127.0.0.1;dbname=old_shop;charset=utf8mb4' --source-key='old-shop-production' --store=1 --market=1 --locale=uk-UA --currency=UAH</code></pre>
   <p>{{ ui_text('admin.system.migration.pershyi_zapusk_zavzhdy_dry_run_pislia_perevirky_') }} <code>--apply</code>{{ ui_text('admin.system.migration.dlia_perenesennia_zobrazhen_dodaite') }} <code>--image-root=/path/to/image/catalog</code>.</p>
 </section>
-<section class="admin-runtime__panel">
+<section class="admin-panel">
   <div><small>{{ ui_text('admin.system.migration.istoriia') }}</small><h2>{{ ui_text('admin.system.migration.ostanni_migration_runs') }}</h2></div>
   <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('ui.admin.system.migration.run') }}</th><th>{{ ui_text('admin.system.migration.dzherelo') }}</th><th>{{ ui_text('admin.system.migration.status') }}</th><th>{{ ui_text('admin.system.migration.etap') }}</th><th>{{ ui_text('admin.system.migration.obrobleno') }}</th><th>{{ ui_text('admin.system.migration.problemy') }}</th><th>{{ ui_text('admin.system.migration.onovleno') }}</th><th></th></tr></thead><tbody>
   {% for run in runs %}<tr>
-    <td><code>{{ run.public_id }}</code></td><td>{{ run.source_code }}</td><td><span class="admin-status-pill is-{{ run.status }}">{{ run.status }}</span></td><td>{{ run.entity_type|default('—') }}</td><td>{{ run.processed_count }}{% if run.item_count %} / {{ run.item_count }}{% endif %}</td><td>{{ run.issue_count }}{% if run.error_count %} · errors {{ run.error_count }}{% endif %}</td><td>{{ run.updated_at }}</td>
-    <td class="is-actions">{% if run.status in ['completed','failed'] %}<form method="post" action="{{ path('admin_system_migration_rollback',{runId:run.public_id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('migration_rollback_' ~ run.public_id) }}"><button class="admin-icon-button" type="submit" data-confirm="{{ ui_text('admin.system.migration.vydalyty_lyshe_sutnosti_stvoreni_tsym_migration_') }}" title="{{ ui_text('admin.system.migration.rollback_tsoho_zapusku') }}">{{ ui_icon('rotate-ccw',16) }}</button></form>{% endif %}</td>
+    <td><code>{{ run.public_id }}</code></td><td>{{ run.source_code }}</td><td><span class="admin-badge is-{{ run.status }}">{{ run.status }}</span></td><td>{{ run.entity_type|default('—') }}</td><td>{{ run.processed_count }}{% if run.item_count %} / {{ run.item_count }}{% endif %}</td><td>{{ run.issue_count }}{% if run.error_count %} · errors {{ run.error_count }}{% endif %}</td><td>{{ run.updated_at }}</td>
+    <td class="is-actions">{% if run.status in ['completed','failed'] %}<form method="post" action="{{ path('admin_system_migration_rollback',{runId:run.public_id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('migration_rollback_' ~ run.public_id) }}"><button class="admin-icon-button" type="submit" data-confirm="{{ ui_text('admin.system.migration.vydalyty_lyshe_sutnosti_stvoreni_tsym_migration_') }}" title="{{ ui_text('admin.system.migration.rollback_tsoho_zapusku') }}" aria-label="{{ ui_text('admin.system.migration.rollback_tsoho_zapusku') }}">{{ ui_icon('rotate-ccw',16) }}</button></form>{% endif %}</td>
   </tr>{% else %}<tr><td colspan="8">{{ ui_text('admin.system.migration.zapuskiv_mihratsii_shche_nemaie') }}</td></tr>{% endfor %}
   </tbody></table></div>
 </section>

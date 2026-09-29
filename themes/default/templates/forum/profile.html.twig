@@ -1,8 +1,8 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="forum-shell shell">
-    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ ui_text('forum_profile') }}</span></nav>
-    <header class="forum-hero forum-hero--compact"><div><span class="forum-kicker">{{ ui_text('community') }}</span><h1>{{ ui_text('forum_profile') }}</h1><p>{{ ui_text('forum_profile_privacy') }}</p></div></header>
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><span>{{ ui_text('forum_profile') }}</span></nav>
+    <header class="forum-hero forum-hero--compact"><div><span class="eyebrow">{{ ui_text('community') }}</span><h1>{{ ui_text('forum_profile') }}</h1><p>{{ ui_text('forum_profile_privacy') }}</p></div></header>
     {% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
     {% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}
     <form method="post" class="account-form">
@@ -12,7 +12,7 @@
         <label><input type="checkbox" name="show_email" value="1" {{ profile.show_email ? 'checked' : '' }}> {{ ui_text('forum_show_email') }}</label>
         <label><input type="checkbox" name="show_phone" value="1" {{ profile.show_phone ? 'checked' : '' }}> {{ ui_text('forum_show_phone') }}</label>
         <label><input type="checkbox" name="allow_private_messages" value="1" {{ profile.allow_private_messages ? 'checked' : '' }}> {{ ui_text('forum_allow_private_messages') }}</label>
-        <button class="forum-primary-button" type="submit">{{ ui_text('save_profile') }}</button>
+        <button class="button button--primary" type="submit">{{ ui_text('save_profile') }}</button>
     </form>
 </section>
 {% endblock %}

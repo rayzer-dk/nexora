@@ -69,9 +69,6 @@ final class HomeController extends AbstractController
         try {
             $demoShowcase = $this->demoShowcase->homepage($context);
             if (is_array($demoShowcase)) {
-                if ((bool) ($features['catalog'] ?? true)) {
-                    $categories = $demoShowcase['category_tiles'] ?? $categories;
-                }
                 if ((bool) ($features['blog'] ?? true)) {
                     $articles = $demoShowcase['articles'] ?? $articles;
                 }

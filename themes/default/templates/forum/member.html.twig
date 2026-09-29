@@ -1,7 +1,7 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="forum-shell shell">
-    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ member.nickname }}</span></nav>
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><span>{{ member.nickname }}</span></nav>
     <header class="forum-hero forum-hero--compact">
         <div>
             <span class="forum-avatar" aria-hidden="true">{{ member.nickname|first|upper }}</span>
@@ -20,11 +20,11 @@
 
     {% if can_message %}
         <details class="forum-compose-inline">
-            <summary class="forum-primary-button">{{ ui_text('forum_private_message') }}</summary>
+            <summary class="button button--primary">{{ ui_text('forum_private_message') }}</summary>
             <form method="post" action="{{ path('storefront_forum_message_start',{id:member.customer_id}) }}">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_message_start_' ~ member.customer_id) }}">
                 <textarea name="body" required minlength="2" maxlength="5000" rows="5" placeholder="{{ ui_text('forum_private_message_placeholder') }}"></textarea>
-                <button class="forum-primary-button" type="submit">{{ ui_text('forum_send_private_message') }}</button>
+                <button class="button button--primary" type="submit">{{ ui_text('forum_send_private_message') }}</button>
             </form>
         </details>
     {% endif %}
@@ -32,9 +32,9 @@
     <div class="forum-topic-list">
         {% for item in activity %}
             <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:item.topic_id,slug:item.slug}) }}#post-{{ item.post_id }}">
-                <span class="forum-topic-row__status">{{ item.board_name }}</span>
+                <span class="forum-topic-row__status badge">{{ item.board_name }}</span>
                 <span class="forum-topic-row__body"><strong>{{ item.title }}</strong><small>{{ item.published_at|default(item.created_at) }}</small></span>
-                <span class="forum-topic-row__arrow" aria-hidden="true">→</span>
+                <span class="forum-topic-row__arrow" aria-hidden="true">{{ ui_icon('chevron-right', 20) }}</span>
             </a>
         {% else %}
             <div class="forum-empty"><h2>{{ ui_text('forum_no_activity') }}</h2></div>

@@ -1,19 +1,19 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="forum-shell shell">
-    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><a href="{{ path('storefront_forum_board',{slug:topic.board_slug}) }}">{{ topic.board_name }}</a><span>›</span><span>{{ topic.title }}</span></nav>
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><a href="{{ path('storefront_forum_board',{slug:topic.board_slug}) }}">{{ topic.board_name }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><span>{{ topic.title }}</span></nav>
     <header class="forum-hero forum-hero--compact">
-        <div><span class="forum-kicker">{{ ui_text('discussion') }}</span><h1>{{ topic.title }}</h1><p>{{ ui_text('author_named')|replace({'%name%': topic.author_name}) }} · {{ topic.views_count|default(0) }} {{ ui_text('forum_views') }}</p></div>
-        <div class="forum-hero__actions"><a class="forum-secondary-button" href="{{ path('storefront_forum_rules') }}">{{ ui_text('forum_rules_link') }}</a>
+        <div><span class="eyebrow">{{ ui_text('discussion') }}</span><h1>{{ topic.title }}</h1><p>{{ ui_text('author_named')|replace({'%name%': topic.author_name}) }} · {{ topic.views_count|default(0) }} {{ ui_text('forum_views') }}</p></div>
+        <div class="forum-hero__actions"><a class="button button--secondary" href="{{ path('storefront_forum_rules') }}">{{ ui_text('forum_rules_link') }}</a>
             {% if app.user %}
                 <form method="post" action="{{ path('storefront_forum_subscription',{id:topic.id,slug:topic.slug}) }}">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_subscription_' ~ topic.id) }}">
                     <input type="hidden" name="enabled" value="{{ is_subscribed ? '0' : '1' }}">
-                    <button class="forum-secondary-button" type="submit">{{ is_subscribed ? ui_text('forum_unfollow') : ui_text('forum_follow_topic') }}</button>
+                    <button class="button button--secondary" type="submit">{{ is_subscribed ? ui_text('forum_unfollow') : ui_text('forum_follow_topic') }}</button>
                 </form>
-                {% if not topic.is_locked %}<button class="forum-primary-button" type="button" data-forum-compose-open>{{ ui_text('reply') }}</button>{% endif %}
+                {% if not topic.is_locked %}<button class="button button--primary" type="button" data-forum-compose-open>{{ ui_text('reply') }}</button>{% endif %}
             {% else %}
-                <a class="forum-primary-button" href="{{ path('customer_login') }}">{{ ui_text('forum_sign_in_reply') }}</a>
+                <a class="button button--primary" href="{{ path('customer_login') }}">{{ ui_text('forum_sign_in_reply') }}</a>
             {% endif %}
         </div>
     </header>
@@ -27,28 +27,28 @@
                 <header><span class="forum-avatar" aria-hidden="true">{{ post.author_name|first|upper }}</span><div>{% if post.customer_id %}<a href="{{ path('storefront_forum_member',{id:post.customer_id}) }}"><strong>{{ post.author_name }}</strong></a>{% else %}<strong>{{ post.author_name }}</strong>{% endif %}<small>{{ post.published_at|default(post.created_at) }}{% if post.edited_at %} · {{ ui_text('forum_edited') }}{% endif %}</small></div></header>
                 <div class="forum-post__body">{{ post.body_text|nl2br }}</div>
                 <footer class="forum-post__actions">
-                    <span>{{ post.like_count|default(0) }} {{ ui_text('forum_likes') }}</span>
+                    <span class="forum-post__likes">{{ ui_icon('thumbs-up', 16) }}{{ post.like_count|default(0) }} {{ ui_text('forum_likes') }}</span>
                     {% if app.user %}
-                        {% if not topic.is_locked %}<button type="button" class="forum-secondary-button" data-forum-quote data-forum-quote-author="{{ post.author_name|e('html_attr') }}" data-forum-quote-body="{{ post.body_text|slice(0,1000)|e('html_attr') }}">{{ ui_text('forum_quote') }}</button>{% endif %}
+                        {% if not topic.is_locked %}<button type="button" class="button button--secondary" data-forum-quote data-forum-quote-author="{{ post.author_name|e('html_attr') }}" data-forum-quote-body="{{ post.body_text|slice(0,1000)|e('html_attr') }}">{{ ui_icon('quote', 16) }}{{ ui_text('forum_quote') }}</button>{% endif %}
                         <form method="post" action="{{ path('storefront_forum_post_like',{id:topic.id,slug:topic.slug,postId:post.id}) }}">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_like_' ~ post.id) }}">
-                            <button type="submit" class="forum-secondary-button">{{ ui_text('forum_like') }}</button>
+                            <button type="submit" class="button button--secondary">{{ ui_icon('thumbs-up', 16) }}{{ ui_text('forum_like') }}</button>
                         </form>
                         {% if current_customer_id == post.customer_id %}
-                            <details class="forum-inline-editor"><summary>{{ ui_text('forum_edit') }}</summary>
+                            <details class="forum-inline-editor"><summary class="button button--secondary">{{ ui_icon('pencil', 16) }}{{ ui_text('forum_edit') }}</summary>
                                 <form method="post" action="{{ path('storefront_forum_post_edit',{id:topic.id,slug:topic.slug,postId:post.id}) }}">
                                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_edit_' ~ post.id) }}">
                                     <textarea name="body" required minlength="3" maxlength="20000" rows="6">{{ post.body_text }}</textarea>
-                                    <button type="submit" class="forum-secondary-button">{{ ui_text('forum_save') }}</button>
+                                    <button type="submit" class="button button--secondary">{{ ui_text('forum_save') }}</button>
                                 </form>
                             </details>
                         {% else %}
-                            <details class="forum-report"><summary>{{ ui_text('forum_report') }}</summary>
+                            <details class="forum-report"><summary class="button button--secondary">{{ ui_icon('flag', 16) }}{{ ui_text('forum_report') }}</summary>
                                 <form method="post" action="{{ path('storefront_forum_post_report',{id:topic.id,slug:topic.slug,postId:post.id}) }}">
                                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_report_' ~ post.id) }}">
                                     <select name="reason"><option value="spam">{{ ui_text('forum_report_reason_spam') }}</option><option value="abuse">{{ ui_text('forum_report_reason_abuse') }}</option><option value="offtopic">{{ ui_text('forum_report_reason_offtopic') }}</option><option value="misinformation">{{ ui_text('forum_report_reason_misinformation') }}</option><option value="copyright">{{ ui_text('forum_report_reason_copyright') }}</option><option value="other">{{ ui_text('forum_report_reason_other') }}</option></select>
                                     <input type="text" name="details" maxlength="1000" placeholder="{{ ui_text('forum_report_details') }}">
-                                    <button type="submit" class="forum-secondary-button">{{ ui_text('forum_send_report') }}</button>
+                                    <button type="submit" class="button button--secondary">{{ ui_text('forum_send_report') }}</button>
                                 </form>
                             </details>
                         {% endif %}
@@ -59,24 +59,24 @@
     </div>
     {% if pages > 1 %}
         <nav class="forum-pagination" aria-label="{{ ui_text('pagination') }}">
-            {% if page > 1 %}<a class="forum-secondary-button" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}?page={{ page - 1 }}">{{ ui_text('previous') }}</a>{% endif %}
+            {% if page > 1 %}<a class="button button--secondary" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}?page={{ page - 1 }}">{{ ui_text('previous') }}</a>{% endif %}
             <span>{{ ui_text('page_of')|replace({'%page%': page, '%pages%': pages}) }}</span>
-            {% if page < pages %}<a class="forum-secondary-button" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}?page={{ page + 1 }}">{{ ui_text('next') }}</a>{% endif %}
+            {% if page < pages %}<a class="button button--secondary" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}?page={{ page + 1 }}">{{ ui_text('next') }}</a>{% endif %}
         </nav>
     {% endif %}
 </section>
 
 {% if app.user and not topic.is_locked %}
-<div class="forum-compose" data-forum-compose hidden aria-hidden="true">
-    <div class="forum-compose__backdrop" data-forum-compose-close></div>
-    <section class="forum-compose__dialog" role="dialog" aria-modal="true" aria-labelledby="forum-reply-title">
-        <button class="forum-compose__close" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">{{ ui_icon('x',18) }}</button>
-        <span class="forum-kicker">{{ ui_text('reply_label') }}</span><h2 id="forum-reply-title">{{ ui_text('add_reply') }}</h2><p>{{ ui_text('forum_posting_as')|replace({'%name%': forum_nickname}) }} {{ ui_text('reply_moderation_text') }}</p>
+<div class="modal" data-forum-compose hidden aria-hidden="true">
+    <div class="modal__backdrop" data-forum-compose-close></div>
+    <section class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="forum-reply-title">
+        <button class="modal__close button button--ghost button--icon" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">{{ ui_icon('x', 20) }}</button>
+        <span class="eyebrow">{{ ui_text('reply_label') }}</span><h2 id="forum-reply-title">{{ ui_text('add_reply') }}</h2><p>{{ ui_text('forum_posting_as')|replace({'%name%': forum_nickname}) }} {{ ui_text('reply_moderation_text') }}</p>
         <form method="post" action="{{ path('storefront_forum_reply',{id:topic.id,slug:topic.slug}) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_reply_' ~ topic.id) }}"><input type="hidden" name="rendered_at" value="{{ form_rendered_at }}">
             <label class="forum-honeypot" aria-hidden="true">{{ ui_text('company') }}<input name="company" tabindex="-1" autocomplete="off"></label>
             <label><span>{{ ui_text('message') }}</span><textarea name="body" required minlength="3" maxlength="20000" rows="8"></textarea></label>
-            <div class="forum-compose__actions"><button class="forum-secondary-button" type="button" data-forum-compose-close>{{ ui_text('cancel') }}</button><button class="forum-primary-button" type="submit">{{ ui_text('send_for_moderation') }}</button></div>
+            <div class="modal__actions"><button class="button button--secondary" type="button" data-forum-compose-close>{{ ui_text('cancel') }}</button><button class="button button--primary" type="submit">{{ ui_text('send_for_moderation') }}</button></div>
         </form>
     </section>
 </div>

@@ -2027,4 +2027,9 @@ return [
     'admin.system.stability.runtime_php_fs' => 'PHP / файлова система',
     'admin.system.stability.maintenance_active' => 'Режим обслуговування активний',
     'admin.system.stability.live_protected' => 'Сайт захищений',
+    'admin.nav.marketing' => 'Маркетинг',
+    'admin.nav.content' => 'Вітрина та контент',
+    'admin.nav.breadcrumb' => 'Навігаційний ланцюжок',
+    'js_no_images' => 'Зображень не знайдено',
+    'js_media_unavailable' => 'Медіатека недоступна',
 ];

@@ -1,4 +1,4 @@
-<div class="availability availability--in-stock">
+<div class="availability availability--{{ product.availability|default('') == 'https://schema.org/InStock' ? 'in-stock' : 'out-of-stock' }}">
     <span class="availability__dot" aria-hidden="true"></span>
     <span>{{ product.availability_label }}</span>
 </div>

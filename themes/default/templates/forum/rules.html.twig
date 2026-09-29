@@ -1,9 +1,9 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="forum-shell shell">
-    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ ui_text('forum_rules_title') }}</span></nav>
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><span>{{ ui_text('forum_rules_title') }}</span></nav>
     <header class="forum-hero forum-hero--compact">
-        <div><span class="forum-kicker">{{ ui_text('community') }}</span><h1>{{ ui_text('forum_rules_title') }}</h1><p>{{ ui_text('forum_rules_intro') }}</p></div>
+        <div><span class="eyebrow">{{ ui_text('community') }}</span><h1>{{ ui_text('forum_rules_title') }}</h1><p>{{ ui_text('forum_rules_intro') }}</p></div>
     </header>
     <article class="forum-rules">
         <ol>

@@ -1,0 +1,139 @@
+/*
+ * Nexora design tokens — the single source of truth for admin and storefront.
+ * Components must use these variables; raw px/hex values for spacing, type,
+ * control height, radius, elevation, z-index and icon size are not allowed
+ * (enforced by bin/design-tokens-check.php).
+ *
+ * Breakpoints (media queries cannot read variables, so these are the only
+ * permitted widths): 480 · 640 · 768 · 1024 · 1280 · 1536.
+ */
+:root {
+  color-scheme: light;
+
+  /* Brand colours are overridden per store by ThemeCssVariablesBuilder. */
+  --mc-color-primary: #0b63f6;
+  --mc-color-primary-hover: #084fc5;
+  --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary) 10%, #fff);
+  --mc-color-primary-contrast: #fff;
+  --mc-color-accent: #ff7a1a;
+  --mc-color-success: #0f7a4b;
+  --mc-color-warning: #b7791f;
+  --mc-color-danger: #b42318;
+  --mc-color-success-soft: color-mix(in srgb, var(--mc-color-success) 11%, #fff);
+  --mc-color-warning-soft: color-mix(in srgb, var(--mc-color-warning) 13%, #fff);
+  --mc-color-danger-soft: color-mix(in srgb, var(--mc-color-danger) 10%, #fff);
+
+  --mc-color-background: #fff;
+  --mc-color-surface: #f6f8fb;
+  --mc-color-surface-subtle: #eef1f6;
+  --mc-color-surface-raised: #fff;
+  --mc-color-text: #111827;
+  --mc-color-muted: #5b6474;
+  --mc-color-border: #e2e7ef;
+  --mc-color-border-strong: #c9d1de;
+  --mc-color-ink: #0c1424;
+  --mc-color-focus: color-mix(in srgb, var(--mc-color-primary) 55%, #fff);
+
+  /* Spacing: 4px base scale. */
+  --mc-space-0: 0;
+  --mc-space-1: 4px;
+  --mc-space-2: 8px;
+  --mc-space-3: 12px;
+  --mc-space-4: 16px;
+  --mc-space-5: 20px;
+  --mc-space-6: 24px;
+  --mc-space-8: 32px;
+  --mc-space-10: 40px;
+  --mc-space-12: 48px;
+  --mc-space-16: 64px;
+  --mc-space-20: 80px;
+
+  /* Typography. The family is chosen in Appearance (System UI / Inter / Manrope). */
+  --mc-font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, Arial, sans-serif;
+  --mc-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --mc-font-size-2xs: 11px;
+  --mc-font-size-xs: 12px;
+  --mc-font-size-sm: 14px;
+  --mc-font-size-base: 16px;
+  --mc-font-size-lg: 18px;
+  --mc-font-size-xl: 20px;
+  --mc-font-size-2xl: 24px;
+  --mc-font-size-3xl: 30px;
+  --mc-font-size-4xl: 38px;
+  --mc-font-size-5xl: 48px;
+  --mc-line-height-tight: 1.15;
+  --mc-line-height-snug: 1.3;
+  --mc-line-height-body: 1.55;
+  --mc-font-weight-regular: 400;
+  --mc-font-weight-medium: 500;
+  --mc-font-weight-semibold: 600;
+  --mc-font-weight-bold: 700;
+  --mc-letter-spacing-tight: -0.02em;
+  --mc-letter-spacing-caps: 0.06em;
+
+  /* Controls: every button, input and select uses one of these heights. */
+  --mc-control-height-sm: 32px;
+  --mc-control-height-md: 40px;
+  --mc-control-height-lg: 48px;
+  --mc-control-padding-x: var(--mc-space-4);
+  --mc-icon-size-xs: 14px;
+  --mc-icon-size-sm: 16px;
+  --mc-icon-size-md: 20px;
+  --mc-icon-size-lg: 24px;
+  --mc-icon-size-xl: 32px;
+  --mc-icon-stroke: 1.75;
+
+  /* Radius follows the store's "roundness" setting. */
+  --mc-radius-xs: 4px;
+  --mc-radius-sm: 8px;
+  --mc-radius-md: 12px;
+  --mc-radius-lg: 16px;
+  --mc-radius-xl: 24px;
+  --mc-radius-full: 999px;
+
+  /* Elevation. */
+  --mc-shadow-none: none;
+  --mc-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.06);
+  --mc-shadow-sm: 0 2px 8px rgb(15 23 42 / 0.07);
+  --mc-shadow-md: 0 8px 24px rgb(15 23 42 / 0.09);
+  --mc-shadow-lg: 0 18px 48px rgb(15 23 42 / 0.14);
+  --mc-shadow-card: var(--mc-shadow-sm);
+
+  /* Layers: never use a raw z-index. */
+  --mc-z-base: 0;
+  --mc-z-raised: 1;
+  --mc-z-sticky: 20;
+  --mc-z-dropdown: 40;
+  --mc-z-overlay: 60;
+  --mc-z-modal: 80;
+  --mc-z-toast: 100;
+
+  /* Layout. */
+  --mc-content-max: 1408px;
+  --mc-gutter: var(--mc-space-4);
+  --mc-transition: 140ms cubic-bezier(0.2, 0, 0, 1);
+
+  font-family: var(--mc-font-body);
+  font-size: var(--mc-font-size-base);
+  line-height: var(--mc-line-height-body);
+  font-synthesis: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (min-width: 768px) {
+  :root { --mc-gutter: var(--mc-space-6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --mc-transition: 0ms; }
+}
+
+/* Lucide icons are inlined by ui_icon(); size and stroke come from tokens. */
+.ui-icon {
+  display: inline-block;
+  flex: none;
+  width: var(--mc-icon-size-md);
+  height: var(--mc-icon-size-md);
+  vertical-align: -0.2em;
+  stroke-width: var(--mc-icon-stroke);
+}

@@ -3,6 +3,7 @@
     <ol>
         {% for item in items %}
             <li>
+                {% if not loop.first %}<span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span>{% endif %}
                 {% if item.url is defined and item.url %}<a href="{{ item.url }}">{{ item.name }}</a>{% else %}<span aria-current="page">{{ item.name }}</span>{% endif %}
             </li>
         {% endfor %}

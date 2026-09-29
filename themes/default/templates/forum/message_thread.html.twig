@@ -1,11 +1,11 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="forum-shell shell">
-    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><a href="{{ path('storefront_forum_messages') }}">{{ ui_text('forum_private_messages') }}</a><span>›</span><span>{{ thread.other_nickname }}</span></nav>
-    <header class="forum-hero forum-hero--compact"><div><span class="forum-kicker">{{ ui_text('forum_private_message') }}</span><h1>{{ thread.other_nickname }}</h1></div>
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><a href="{{ path('storefront_forum_messages') }}">{{ ui_text('forum_private_messages') }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><span>{{ thread.other_nickname }}</span></nav>
+    <header class="forum-hero forum-hero--compact"><div><span class="eyebrow">{{ ui_text('forum_private_message') }}</span><h1>{{ thread.other_nickname }}</h1></div>
         <form method="post" action="{{ path('storefront_forum_message_block',{threadId:thread.id,memberId:thread.other_customer_id}) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_block_' ~ thread.other_customer_id) }}">
-            <button class="forum-secondary-button" type="submit">{{ ui_text('forum_block_member') }}</button>
+            <button class="button button--secondary" type="submit">{{ ui_text('forum_block_member') }}</button>
         </form>
     </header>
     {% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
@@ -17,12 +17,12 @@
                 <header><strong>{{ message.sender_nickname }}</strong><small>{{ message.created_at }}</small></header>
                 <div class="forum-post__body">{{ message.body_text|nl2br }}</div>
                 {% if message.sender_customer_id != current_customer_id %}
-                    <details><summary>{{ ui_text('forum_report') }}</summary>
+                    <details><summary class="button button--secondary">{{ ui_icon('flag', 16) }}{{ ui_text('forum_report') }}</summary>
                         <form method="post" action="{{ path('storefront_forum_message_report',{threadId:thread.id,messageId:message.id}) }}">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_dm_report_' ~ message.id) }}">
                             <select name="reason"><option value="spam">{{ ui_text('forum_report_reason_spam') }}</option><option value="abuse">{{ ui_text('forum_report_reason_abuse') }}</option><option value="harassment">{{ ui_text('forum_report_reason_harassment') }}</option><option value="fraud">{{ ui_text('forum_report_reason_fraud') }}</option><option value="other">{{ ui_text('forum_report_reason_other') }}</option></select>
                             <input type="text" name="details" maxlength="1000" placeholder="{{ ui_text('forum_report_details') }}">
-                            <button type="submit" class="forum-secondary-button">{{ ui_text('forum_send_report') }}</button>
+                            <button type="submit" class="button button--secondary">{{ ui_text('forum_send_report') }}</button>
                         </form>
                     </details>
                 {% endif %}
@@ -32,7 +32,7 @@
     <form method="post" action="{{ path('storefront_forum_message_reply',{id:thread.id}) }}" class="forum-compose-inline">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_message_reply_' ~ thread.id) }}">
         <textarea name="body" required minlength="2" maxlength="5000" rows="5" placeholder="{{ ui_text('forum_private_message_placeholder') }}"></textarea>
-        <button class="forum-primary-button" type="submit">{{ ui_text('forum_send_private_message') }}</button>
+        <button class="button button--primary" type="submit">{{ ui_text('forum_send_private_message') }}</button>
     </form>
 </section>
 {% endblock %}

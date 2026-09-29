@@ -3,5 +3,5 @@
 <section class="product-custom-content">
     {% if block.settings.title|default('') %}<h2>{{ block.settings.title }}</h2>{% endif %}
     {% if dynamic %}<p>{{ dynamic }}</p>{% elseif block.settings.text|default('') %}<p>{{ block.settings.text|nl2br }}</p>{% endif %}
-    {% if block.settings.button_url|default('') and block.settings.button_label|default('') %}<a class="button" href="{{ block.settings.button_url }}">{{ block.settings.button_label }}</a>{% endif %}
+    {% if block.settings.button_url|default('') and block.settings.button_label|default('') %}<a class="button button--primary" href="{{ block.settings.button_url }}">{{ block.settings.button_label }}</a>{% endif %}
 </section>

@@ -36,7 +36,7 @@
             <span>{{ ui_text('only_in_stock') }}</span>
         </label>
         <div class="catalog-filter__actions">
-            <button class="button button--primary" type="submit">{{ ui_text('apply') }}</button>
+            <button class="button button--primary" type="submit">{{ ui_icon('sliders-horizontal', 16) }}{{ ui_text('apply') }}</button>
             {% if catalog_filter.isFiltered %}<a class="button button--ghost" href="{{ app.request.pathInfo }}">{{ ui_text('reset') }}</a>{% endif %}
         </div>
     </div>
@@ -46,7 +46,7 @@
             {% for facet in catalog_facets.attributes %}
                 {% set selected_values = catalog_filter.attributeFilters[facet.code]|default([]) %}
                 <details class="catalog-facet"{% if selected_values is not empty %} open{% endif %}>
-                    <summary>{{ facet.name }}{% if facet.unit_label %}, {{ facet.unit_label }}{% endif %}{% if selected_values is not empty %}<span class="catalog-facet__badge">{{ selected_values|length }}</span>{% endif %}</summary>
+                    <summary>{{ facet.name }}{% if facet.unit_label %}, {{ facet.unit_label }}{% endif %}{% if selected_values is not empty %}<span class="catalog-facet__badge">{{ selected_values|length }}</span>{% endif %}{{ ui_icon('chevron-down', 16) }}</summary>
                     <div class="catalog-facet__values">
                         {% for value in facet.values %}
                             <label class="catalog-facet__value">

@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
   plugins: [vue()],
+  base: '/build/', // chunk preloads must resolve to /build/assets, not the static /assets folder
   build: {
     outDir: 'public/build',
     emptyOutDir: true,

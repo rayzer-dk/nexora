@@ -1,6 +1,6 @@
 {% if presentation.home.show_categories and categories %}
-<section class="shell demo-category-section" aria-label="{{ ui_text('product_categories') }}" data-home-builder-block="{{ layout_block.id }}">
-    <div class="reference-section-title reference-section-title--spaced"><div><small class="section-kicker">{{ ui_text('quick_choice') }}</small><h2>{{ layout_block.props.title|default('') ?: ui_text('popular_categories') }}</h2></div><a href="/catalog">{{ ui_text('all_catalog_arrow') }}</a></div>
+<section class="shell" aria-label="{{ ui_text('product_categories') }}" data-home-builder-block="{{ layout_block.id }}">
+    <div class="reference-section-title reference-section-title--spaced"><div><small class="section-kicker">{{ ui_text('quick_choice') }}</small><h2>{{ layout_block.props.title|default('') ?: ui_text('popular_categories') }}</h2></div><a class="section-link" href="/catalog">{{ ui_text('all_catalog_arrow') }}{{ ui_icon('arrow-right', 16) }}</a></div>
     <div class="reference-categories">
     {% for category in categories %}
     <a class="reference-category" href="{{ category.url }}">

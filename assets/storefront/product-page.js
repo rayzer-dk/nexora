@@ -113,7 +113,8 @@ function storefrontToast(message, type = 'success') {
     text.textContent = message;
     const close = document.createElement('button');
     close.type = 'button';
-    close.innerHTML = lucideIcon('x', 20);
+    close.className = 'storefront-toast__close';
+    close.innerHTML = lucideIcon('x', 16);
     close.setAttribute('aria-label', t('js_close'));
     close.addEventListener('click', () => item.remove());
     item.append(text, close);

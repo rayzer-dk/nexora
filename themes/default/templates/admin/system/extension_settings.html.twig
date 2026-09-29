@@ -1,12 +1,12 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
 {{ shell.start(ui_text('admin.system.extension_settings.nalashtuvannia_rozshyrennia'),'extensions') }}
-<header class="admin-runtime__header">
-    <div><small>Extension SDK · v{{ platform_version }}</small><h1>{{ extension.name }}</h1><p>{{ extension.code }} · {{ extension.version }} {{ ui_text('admin.system.extension_settings.deklaratyvni_nalashtuvannia_bez_vykonannia_kodu_') }}</p></div>
-    <a class="admin-preview-link" href="{{ path('admin_system_extensions') }}">{{ ui_text('admin.system.extension_settings.do_rozshyren') }}</a>
+<header class="admin-page-header">
+    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">Extension SDK · v{{ platform_version }}</span></nav><h1>{{ extension.name }}</h1><p>{{ extension.code }} · {{ extension.version }} {{ ui_text('admin.system.extension_settings.deklaratyvni_nalashtuvannia_bez_vykonannia_kodu_') }}</p></div>
+    <a class="admin-button is-primary" href="{{ path('admin_system_extensions') }}">{{ ui_text('admin.system.extension_settings.do_rozshyren') }}</a>
 </header>
-{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="store-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
-<section class="admin-editor-card">
-    <div class="admin-card-heading"><div><small>{{ ui_text('ui.admin.system.extension_settings.schema_driven_ui') }}</small><h2>{{ ui_text('admin.system.extension_settings.nalashtuvannia') }}</h2></div><span class="admin-status-pill is-{{ extension.status }}">{{ extension.status }}</span></div>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><small>{{ ui_text('ui.admin.system.extension_settings.schema_driven_ui') }}</small><h2>{{ ui_text('admin.system.extension_settings.nalashtuvannia') }}</h2></div><span class="admin-badge is-{{ extension.status }}">{{ extension.status }}</span></div>
     {% if fields is empty %}
         <p class="admin-muted">{{ ui_text('admin.system.extension_settings.tse_rozshyrennia_ne_oholoshuie_deklaratyvnykh_na') }}</p>
     {% else %}
@@ -24,7 +24,7 @@
                 {% elseif field.type == 'select' %}
                     <select id="{{ input_id }}" name="settings[{{ field.key }}]" {% if field.required %}required{% endif %}>{% for option in field.options %}<option value="{{ option.value }}" {{ option.value == field.value ? 'selected' : '' }}>{{ option.label }}</option>{% endfor %}</select>
                 {% elseif field.type == 'secret' %}
-                    <span class="admin-secret-input"><input id="{{ input_id }}" type="password" name="settings[{{ field.key }}]" value="" autocomplete="new-password" placeholder="{{ field.has_value ? ui_text('admin.system.extension_settings.zberezhene_znachennia_ne_zminiuietsia_iakshcho_p') : '' }}" {% if field.required and not field.has_value %}required{% endif %}><button class="admin-icon-button" type="button" data-secret-toggle="#{{ input_id }}" aria-pressed="false" title="{{ ui_text('admin.system.extension_settings.pokazaty_znachennia') }}">{{ ui_icon('eye', 18) }}</button></span>
+                    <span class="admin-secret-input"><input id="{{ input_id }}" type="password" name="settings[{{ field.key }}]" value="" autocomplete="new-password" placeholder="{{ field.has_value ? ui_text('admin.system.extension_settings.zberezhene_znachennia_ne_zminiuietsia_iakshcho_p') : '' }}" {% if field.required and not field.has_value %}required{% endif %}><button class="admin-icon-button" type="button" data-secret-toggle="#{{ input_id }}" aria-pressed="false" title="{{ ui_text('admin.system.extension_settings.pokazaty_znachennia') }}" aria-label="{{ ui_text('admin.system.extension_settings.pokazaty_znachennia') }}">{{ ui_icon('eye', 18) }}</button></span>
                     {% if field.has_value %}<small>{{ ui_text('admin.system.extension_settings.sekret_uzhe_zberezheno_u_zashyfrovanomu_vyhliadi') }}</small>{% endif %}
                 {% else %}
                     <input id="{{ input_id }}" type="{{ field.type == 'email' ? 'email' : (field.type == 'url' ? 'url' : (field.type in ['number','integer'] ? 'number' : 'text')) }}" name="settings[{{ field.key }}]" value="{{ field.value }}" {% if field.type == 'integer' %}step="1"{% elseif field.type == 'number' %}step="any"{% endif %}{% if field.min is defined %} min="{{ field.min }}"{% endif %}{% if field.max is defined %} max="{{ field.max }}"{% endif %} {% if field.required %}required{% endif %}>
@@ -33,14 +33,14 @@
             </label>
         {% endfor %}
         </div>
-        <div class="admin-form-actions"><button type="submit">{{ ui_text('admin.system.extension_settings.pereviryty_ta_zberehty') }}</button></div>
+        <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.system.extension_settings.pereviryty_ta_zberehty') }}</button></div>
     </form>
     {% endif %}
 </section>
-<section class="admin-editor-card">
-    <div class="admin-card-heading"><div><small>{{ ui_text('ui.admin.system.extension_settings.recovery') }}</small><h2>{{ ui_text('admin.system.extension_settings.istoriia_nalashtuvan') }}</h2></div><span class="admin-help">{{ ui_text('admin.system.extension_settings.pered_kozhnym_zberezhenniam_poperednii_stan_fiks') }}</span></div>
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><small>{{ ui_text('ui.admin.system.extension_settings.recovery') }}</small><h2>{{ ui_text('admin.system.extension_settings.istoriia_nalashtuvan') }}</h2></div><span class="admin-help">{{ ui_text('admin.system.extension_settings.pered_kozhnym_zberezhenniam_poperednii_stan_fiks') }}</span></div>
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.extension_settings.reviziia') }}</th><th>{{ ui_text('admin.system.extension_settings.khto') }}</th><th>{{ ui_text('admin.system.extension_settings.chas') }}</th><th class="is-actions">{{ ui_text('admin.system.extension_settings.diia') }}</th></tr></thead><tbody>
-    {% for revision in revisions %}<tr><td><strong>#{{ revision.id }}</strong></td><td>{{ revision.actor }}</td><td>{{ revision.created_at }}</td><td class="is-actions"><form method="post" action="{{ path('admin_system_extension_settings_rollback',{id:extension.id,revisionId:revision.id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('extension_settings_rollback_' ~ extension.id) }}"><button class="admin-icon-button" type="submit" data-confirm="{{ ui_text('admin.system.extension_settings.vidnovyty_tsiu_reviziiu_nalashtuvan_potochnyi_st') }}" title="{{ ui_text('admin.system.extension_settings.vidnovyty_reviziiu') }}{{ revision.id }}">{{ ui_icon('rotate-ccw',16) }}</button></form></td></tr>{% else %}<tr><td colspan="4">{{ ui_text('admin.system.extension_settings.istoriia_ziavytsia_pislia_pershoho_zberezhennia') }}</td></tr>{% endfor %}
+    {% for revision in revisions %}<tr><td><strong>#{{ revision.id }}</strong></td><td>{{ revision.actor }}</td><td>{{ revision.created_at }}</td><td class="is-actions"><form method="post" action="{{ path('admin_system_extension_settings_rollback',{id:extension.id,revisionId:revision.id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('extension_settings_rollback_' ~ extension.id) }}"><button class="admin-icon-button" type="submit" data-confirm="{{ ui_text('admin.system.extension_settings.vidnovyty_tsiu_reviziiu_nalashtuvan_potochnyi_st') }}" title="{{ ui_text('admin.system.extension_settings.vidnovyty_reviziiu') }}{{ revision.id }}" aria-label="{{ ui_text('admin.system.extension_settings.vidnovyty_reviziiu') }}{{ revision.id }}">{{ ui_icon('rotate-ccw',16) }}</button></form></td></tr>{% else %}<tr><td colspan="4">{{ ui_text('admin.system.extension_settings.istoriia_ziavytsia_pislia_pershoho_zberezhennia') }}</td></tr>{% endfor %}
     </tbody></table></div>
 </section>
 <section class="admin-safety-note"><strong>{{ ui_text('admin.system.extension_settings.nalashtuvannia_ne_mozhut_vykonuvaty_kod') }}</strong><span>{{ ui_text('admin.system.extension_settings.skhema_paketa_dozvoliaie_lyshe_typizovani_polia_') }}</span></section>

@@ -54,9 +54,9 @@ foreach ($templates as $file) {
 }
 
 $requiredResponsive = [
-    'assets/storefront/storefront.css' => ['@media(max-width:900px)', '@media(max-width:720px)'],
-    'assets/admin/admin-runtime.css' => ['@media(max-width:900px)', '@media(max-width:600px)'],
-    'assets/admin/admin-builder-media.css' => ['@media(max-width:850px)', '@media(max-width:560px)'],
+    'assets/storefront/storefront.css' => ['@media(min-width:768px)', '@media(min-width:1024px)'],
+    'assets/admin/admin-runtime.css' => ['@media(max-width:1024px)', '@media(max-width:768px)'],
+    'assets/admin/admin-builder-media.css' => ['@media(max-width:1024px)', '@media(max-width:768px)'],
 ];
 foreach ($requiredResponsive as $file => $needles) {
     $text = is_file($root . '/' . $file) ? (string) file_get_contents($root . '/' . $file) : '';

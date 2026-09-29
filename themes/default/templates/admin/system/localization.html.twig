@@ -1,24 +1,24 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
 {{ shell.start(ui_text('admin.localization.title'),'localization') }}
-<header class="admin-runtime__header">
-    <div><small>{{ ui_text('admin.localization.eyebrow') }}</small><h1>{{ ui_text('admin.localization.title') }}</h1><p>{{ ui_text('admin.localization.intro') }}</p></div>
-    <a class="admin-ghost-button" href="{{ path('admin_system_store') }}">{{ ui_text('admin.localization.defaults_link') }}</a>
+<header class="admin-page-header">
+    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.localization.eyebrow') }}</span></nav><h1>{{ ui_text('admin.localization.title') }}</h1><p>{{ ui_text('admin.localization.intro') }}</p></div>
+    <a class="admin-button" href="{{ path('admin_system_store') }}">{{ ui_text('admin.localization.defaults_link') }}</a>
 </header>
-{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="store-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 
-<form method="post" action="{{ path('admin_system_localization_locales') }}" class="admin-editor-card" data-dirty-guard>
+<form method="post" action="{{ path('admin_system_localization_locales') }}" class="admin-panel" data-dirty-guard>
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_locales') }}">
-    <div class="admin-card-heading"><div><small>{{ ui_text('admin.localization.locales.eyebrow') }}</small><h2>{{ ui_text('admin.localization.locales.title') }}</h2></div></div>
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.localization.locales.eyebrow') }}</small><h2>{{ ui_text('admin.localization.locales.title') }}</h2></div></div>
     <p class="admin-card-note">{{ ui_text('admin.localization.locales.help') }}</p>
     <div class="admin-table-wrap"><table class="admin-table">
         <thead><tr><th>{{ ui_text('admin.localization.col.language') }}</th><th>{{ ui_text('admin.localization.col.shown') }}</th><th>{{ ui_text('admin.localization.col.order') }}</th><th>{{ ui_text('admin.localization.col.ui_translation') }}</th><th>{{ ui_text('admin.localization.col.content') }}</th></tr></thead>
         <tbody>
         {% for locale in data.locales %}
             <tr>
-                <td><strong>{{ locale.native_name }}</strong> <small>{{ locale.code }} · {{ locale.name }}</small>{% if locale.is_default %} <span class="admin-status-pill is-active">{{ ui_text('admin.localization.default') }}</span>{% endif %}</td>
+                <td><strong>{{ locale.native_name }}</strong> <small>{{ locale.code }} · {{ locale.name }}</small>{% if locale.is_default %} <span class="admin-badge is-active">{{ ui_text('admin.localization.default') }}</span>{% endif %}</td>
                 <td><label class="admin-check-inline"><input type="checkbox" name="locale[{{ locale.code }}][enabled]" value="1" {{ locale.enabled or locale.is_default ? 'checked' }} {{ locale.is_default ? 'disabled' }}><span class="visually-hidden">{{ ui_text('admin.localization.col.shown') }}</span></label>{% if locale.is_default %}<input type="hidden" name="locale[{{ locale.code }}][enabled]" value="1">{% endif %}</td>
                 <td><input type="number" name="locale[{{ locale.code }}][sort_order]" value="{{ locale.sort_order }}" min="0" max="9999" class="admin-input-narrow" aria-label="{{ ui_text('admin.localization.col.order') }}"></td>
-                <td>{% if locale.ui_coverage >= 95 %}<span class="admin-status-pill is-active">{{ locale.ui_coverage }}%</span>{% else %}<span class="admin-status-pill is-warning" title="{{ ui_text('admin.localization.locales.ui_partial')|e('html_attr') }}">{{ locale.ui_coverage }}%</span>{% endif %}</td>
+                <td>{% if locale.ui_coverage >= 95 %}<span class="admin-badge is-active">{{ locale.ui_coverage }}%</span>{% else %}<span class="admin-badge is-warning" title="{{ ui_text('admin.localization.locales.ui_partial')|e('html_attr') }}">{{ locale.ui_coverage }}%</span>{% endif %}</td>
                 <td>{{ ui_text('admin.localization.locales.products_translated', {count: locale.content_count}) }}</td>
             </tr>
         {% endfor %}
@@ -32,12 +32,12 @@
             <label><span>{{ ui_text('admin.localization.locales.native_name') }}</span><input type="text" name="new_native_name" maxlength="190" placeholder="Polski"><small>{{ ui_text('admin.localization.locales.native_help') }}</small></label>
         </div>
     </details>
-    <div class="admin-form-actions"><button type="submit">{{ ui_text('admin.localization.locales.save') }}</button></div>
+    <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.localization.locales.save') }}</button></div>
 </form>
 
-<form method="post" action="{{ path('admin_system_localization_currencies') }}" class="admin-editor-card" data-dirty-guard>
+<form method="post" action="{{ path('admin_system_localization_currencies') }}" class="admin-panel" data-dirty-guard>
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_currencies') }}">
-    <div class="admin-card-heading"><div><small>{{ ui_text('admin.localization.currencies.eyebrow') }}</small><h2>{{ ui_text('admin.localization.currencies.title') }}</h2></div></div>
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.localization.currencies.eyebrow') }}</small><h2>{{ ui_text('admin.localization.currencies.title') }}</h2></div></div>
     <p class="admin-card-note">{{ ui_text('admin.localization.currencies.help', {base: data.default_currency}) }}</p>
     <div class="admin-table-wrap"><table class="admin-table">
         <thead><tr><th>{{ ui_text('admin.localization.col.currency') }}</th><th>{{ ui_text('admin.localization.col.shown') }}</th><th>{{ ui_text('admin.localization.col.prices') }}</th><th>{{ ui_text('admin.localization.col.auto_convert') }}</th><th>{{ ui_text('admin.localization.col.rate_source') }}</th><th>{{ ui_text('admin.localization.col.rounding') }}</th><th>{{ ui_text('admin.localization.col.order') }}</th></tr></thead>
@@ -45,9 +45,9 @@
         {% for currency in data.currencies %}
             {% set prefix = 'currency[' ~ currency.code ~ ']' %}
             <tr>
-                <td><strong>{{ currency.code }}</strong> <small>{{ currency.symbol }} · {{ currency.name }}</small>{% if currency.is_default %} <span class="admin-status-pill is-active">{{ ui_text('admin.localization.base') }}</span>{% endif %}</td>
+                <td><strong>{{ currency.code }}</strong> <small>{{ currency.symbol }} · {{ currency.name }}</small>{% if currency.is_default %} <span class="admin-badge is-active">{{ ui_text('admin.localization.base') }}</span>{% endif %}</td>
                 <td><label class="admin-check-inline"><input type="checkbox" name="{{ prefix }}[enabled]" value="1" {{ currency.enabled or currency.is_default ? 'checked' }} {{ currency.is_default ? 'disabled' }}><span class="visually-hidden">{{ ui_text('admin.localization.col.shown') }}</span></label>{% if currency.is_default %}<input type="hidden" name="{{ prefix }}[enabled]" value="1">{% endif %}</td>
-                <td>{{ currency.price_count }}{% if currency.enabled and not currency.is_default and currency.price_count == 0 %} <span class="admin-status-pill is-warning" title="{{ ui_text('admin.localization.currencies.hidden_no_prices')|e('html_attr') }}">{{ ui_text('admin.localization.currencies.hidden') }}</span>{% endif %}</td>
+                <td>{{ currency.price_count }}{% if currency.enabled and not currency.is_default and currency.price_count == 0 %} <span class="admin-badge is-warning" title="{{ ui_text('admin.localization.currencies.hidden_no_prices')|e('html_attr') }}">{{ ui_text('admin.localization.currencies.hidden') }}</span>{% endif %}</td>
                 <td>{% if currency.is_default %}—{% else %}<label class="admin-check-inline"><input type="checkbox" name="{{ prefix }}[auto_convert]" value="1" {{ currency.auto_convert ? 'checked' }}><span class="visually-hidden">{{ ui_text('admin.localization.col.auto_convert') }}</span></label>{% endif %}</td>
                 <td>{% if currency.is_default %}—<input type="hidden" name="{{ prefix }}[rate_source]" value="nbu">{% else %}<select name="{{ prefix }}[rate_source]" aria-label="{{ ui_text('admin.localization.col.rate_source') }}"><option value="nbu" {{ currency.rate_source != 'manual' ? 'selected' }}>{{ ui_text('admin.localization.rate_source.nbu') }}</option><option value="manual" {{ currency.rate_source == 'manual' ? 'selected' }}>{{ ui_text('admin.localization.rate_source.manual') }}</option></select>{% endif %}</td>
                 <td><select name="{{ prefix }}[rounding_increment_minor]" aria-label="{{ ui_text('admin.localization.col.rounding') }}">{% for step in [1,5,10,50,100] %}<option value="{{ step }}" {{ currency.rounding_increment_minor == step ? 'selected' }}>{{ ui_text('admin.localization.rounding.' ~ step) }}</option>{% endfor %}</select></td>
@@ -65,12 +65,12 @@
             <label><span>{{ ui_text('admin.localization.currencies.minor_units') }}</span><input type="number" name="new_minor_units" value="2" min="0" max="4"><small>{{ ui_text('admin.localization.currencies.minor_units_help') }}</small></label>
         </div>
     </details>
-    <div class="admin-form-actions"><button type="submit">{{ ui_text('admin.localization.currencies.save') }}</button></div>
+    <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.localization.currencies.save') }}</button></div>
 </form>
 
-<section class="admin-editor-card">
-    <div class="admin-card-heading"><div><small>{{ ui_text('admin.localization.rates.eyebrow') }}</small><h2>{{ ui_text('admin.localization.rates.title') }}</h2></div>
-        <form method="post" action="{{ path('admin_system_localization_refresh') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_refresh') }}"><button type="submit" class="admin-ghost-button">{{ ui_text('admin.localization.rates.refresh') }}</button></form>
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.localization.rates.eyebrow') }}</small><h2>{{ ui_text('admin.localization.rates.title') }}</h2></div>
+        <form method="post" action="{{ path('admin_system_localization_refresh') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_refresh') }}"><button type="submit" class="admin-button">{{ ui_text('admin.localization.rates.refresh') }}</button></form>
     </div>
     <p class="admin-card-note">{{ ui_text('admin.localization.rates.help') }}</p>
     <div class="admin-table-wrap"><table class="admin-table">
@@ -79,7 +79,7 @@
         {% for currency in data.currencies|filter(c => c.enabled and c.auto_convert and not c.is_default) %}
             <tr>
                 <td><strong>{{ currency.code }}</strong></td>
-                <td>{% if currency.rate %}1 {{ currency.code }} = {{ currency.rate.per_quote }} {{ data.default_currency }}{% if currency.rate.expired %} <span class="admin-status-pill is-warning">{{ ui_text('admin.localization.rates.expired') }}</span>{% endif %}{% else %}<span class="admin-status-pill is-warning">{{ ui_text('admin.localization.rates.none') }}</span>{% endif %}</td>
+                <td>{% if currency.rate %}1 {{ currency.code }} = {{ currency.rate.per_quote }} {{ data.default_currency }}{% if currency.rate.expired %} <span class="admin-badge is-warning">{{ ui_text('admin.localization.rates.expired') }}</span>{% endif %}{% else %}<span class="admin-badge is-warning">{{ ui_text('admin.localization.rates.none') }}</span>{% endif %}</td>
                 <td>{{ ui_text('admin.localization.rate_source.' ~ (currency.rate_source == 'manual' ? 'manual' : 'nbu')) }}</td>
                 <td>{{ currency.rate ? currency.rate.observed_at : '—' }}</td>
                 <td>{% if currency.rate_source == 'manual' %}

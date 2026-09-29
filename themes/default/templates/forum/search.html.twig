@@ -1,18 +1,18 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="forum-shell shell">
-    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ ui_text('forum_search') }}</span></nav>
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><span>{{ ui_text('forum_search') }}</span></nav>
     <header class="forum-hero forum-hero--compact">
-        <div><span class="forum-kicker">Community</span><h1>{{ ui_text('forum_search') }}</h1><p>{{ ui_text('forum_search_intro') }}</p></div>
-        <form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" value="{{ query }}" minlength="2" required placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button type="submit" class="forum-primary-button">{{ ui_text('search') }}</button></form>
+        <div><span class="eyebrow">Community</span><h1>{{ ui_text('forum_search') }}</h1><p>{{ ui_text('forum_search_intro') }}</p></div>
+        <form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" value="{{ query }}" minlength="2" required placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button type="submit" class="button button--primary">{{ ui_text('search') }}</button></form>
     </header>
     {% if query %}
         <div class="forum-topic-list">
             {% for item in results %}
                 <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:item.id,slug:item.slug}) }}">
-                    <span class="forum-topic-row__status">{{ item.board_name }}</span>
+                    <span class="forum-topic-row__status badge">{{ item.board_name }}</span>
                     <span class="forum-topic-row__body"><strong>{{ item.title }}</strong><small>{{ item.author_name }} · {{ item.last_post_at|default(item.published_at)|default(item.created_at) }}</small></span>
-                    <span class="forum-topic-row__arrow" aria-hidden="true">→</span>
+                    <span class="forum-topic-row__arrow" aria-hidden="true">{{ ui_icon('chevron-right', 20) }}</span>
                 </a>
             {% else %}
                 <div class="forum-empty"><h2>{{ ui_text('forum_no_results') }}</h2><p>{{ ui_text('forum_try_other') }}</p></div>

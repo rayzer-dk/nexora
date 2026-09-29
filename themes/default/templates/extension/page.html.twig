@@ -1,9 +1,9 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
-<main class="shell" style="padding-block:2rem 4rem">
+<section class="shell extension-shell">
   <article class="extension-page" data-extension-page="{{ extension_page.id|e('html_attr') }}">
     <h1>{{ page_title }}</h1>
     {% if extension_content %}<div class="extension-page__content">{{ extension_content|nl2br }}</div>{% endif %}
   </article>
-</main>
+</section>
 {% endblock %}

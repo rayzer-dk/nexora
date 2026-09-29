@@ -2,16 +2,16 @@
 {% block body %}
 <section class="forum-shell shell">
     <header class="forum-hero">
-        <div><span class="forum-kicker">{{ ui_text('community') }}</span><h1>{{ ui_text('forum') }}</h1><p>{{ ui_text('forum_intro') }}</p></div>
-        <div class="forum-hero__actions"><a class="forum-secondary-button" href="{{ path('storefront_forum_rules') }}">{{ ui_text('forum_rules_link') }}</a><form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" minlength="2" placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button type="submit">{{ ui_text('search') }}</button></form>{% if app.user %}<a class="forum-secondary-button" href="{{ path('storefront_forum_following') }}">{{ ui_text('forum_following') }}</a><a class="forum-secondary-button" href="{{ path('storefront_forum_messages') }}">{{ ui_text('forum_private_messages') }}</a><a class="forum-secondary-button" href="{{ path('storefront_forum_profile') }}">{{ ui_text('forum_profile') }}</a>{% endif %}</div>
+        <div><span class="eyebrow">{{ ui_text('community') }}</span><h1>{{ ui_text('forum') }}</h1><p>{{ ui_text('forum_intro') }}</p></div>
+        <div class="forum-hero__actions"><a class="button button--secondary" href="{{ path('storefront_forum_rules') }}">{{ ui_text('forum_rules_link') }}</a><form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" minlength="2" placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button class="button button--primary" type="submit">{{ ui_icon('search', 16) }}{{ ui_text('search') }}</button></form>{% if app.user %}<a class="button button--secondary" href="{{ path('storefront_forum_following') }}">{{ ui_text('forum_following') }}</a><a class="button button--secondary" href="{{ path('storefront_forum_messages') }}">{{ ui_text('forum_private_messages') }}</a><a class="button button--secondary" href="{{ path('storefront_forum_profile') }}">{{ ui_text('forum_profile') }}</a>{% endif %}</div>
     </header>
     <div class="forum-board-list">
         {% for board in boards %}
             <a class="forum-board-card" href="{{ path('storefront_forum_board',{slug:board.slug}) }}">
-                <span class="forum-board-card__icon" aria-hidden="true">#</span>
+                <span class="forum-board-card__icon" aria-hidden="true">{{ ui_icon('message-square', 20) }}</span>
                 <span class="forum-board-card__body"><strong>{{ board.name }}</strong><small>{{ board.description|default(ui_text('community_discussion')) }}</small></span>
                 <span class="forum-board-card__stats"><b>{{ board.topic_count }}</b><small>{{ ui_text('topics_count_label') }}</small><b>{{ board.post_count }}</b><small>{{ ui_text('messages_count_label') }}</small></span>
-                <span class="forum-board-card__arrow" aria-hidden="true">→</span>
+                <span class="forum-board-card__arrow" aria-hidden="true">{{ ui_icon('chevron-right', 20) }}</span>
             </a>
         {% else %}
             <div class="forum-empty"><h2>{{ ui_text('no_forum_sections') }}</h2><p>{{ ui_text('admin_create_forum_sections') }}</p></div>

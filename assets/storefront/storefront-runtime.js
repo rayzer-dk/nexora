@@ -4,10 +4,9 @@ const q = (selector, root = document) => root.querySelector(selector);
 const qa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
 function iconNode(name, size = 20) {
-  const parsed = new DOMParser().parseFromString(lucideIcon(name, size), 'image/svg+xml');
-  const svg = parsed.documentElement;
-  if (!svg || svg.nodeName.toLowerCase() !== 'svg') return document.createTextNode('');
-  return document.importNode(svg, true);
+  const template = document.createElement('template');
+  template.innerHTML = lucideIcon(name, size);
+  return template.content.firstElementChild ?? document.createTextNode('');
 }
 function toast(message, type = 'success', timeout = 4200) {
   if (!message) return;
@@ -25,9 +24,10 @@ function toast(message, type = 'success', timeout = 4200) {
   text.textContent = message;
   const close = document.createElement('button');
   close.type = 'button';
+  close.className = 'storefront-toast__close';
   close.setAttribute('aria-label', t('js_close'));
   close.title = t('js_close');
-  close.replaceChildren(iconNode('x', 20));
+  close.replaceChildren(iconNode('x', 16));
   close.addEventListener('click', () => item.remove());
   item.append(text, close);
   stack.appendChild(item);
@@ -199,13 +199,13 @@ function initMobileNavigation() {
 
   const toggle = document.createElement('button');
   toggle.type = 'button';
-  toggle.className = 'reference-mobile-menu';
+  toggle.className = 'button button--primary reference-mobile-menu';
   toggle.dataset.mobileCatalogToggle = '';
   toggle.setAttribute('aria-expanded', 'false');
   const toggleLabel = document.createElement('span');
   toggleLabel.dataset.mobileMenuLabel = '';
   toggleLabel.textContent = t('js_menu');
-  toggle.replaceChildren(iconNode('menu', 18), toggleLabel);
+  toggle.replaceChildren(iconNode('menu', 16), toggleLabel);
   row.appendChild(toggle);
 
   const drawer = document.createElement('div');
@@ -221,6 +221,7 @@ function initMobileNavigation() {
   title.dataset.mobileCatalogTitle = '';
   const closeButton = document.createElement('button');
   closeButton.type = 'button';
+  closeButton.className = 'button button--ghost button--icon';
   closeButton.dataset.mobileMenuClose = '';
   closeButton.replaceChildren(iconNode('x', 20));
   const drawerNav = document.createElement('nav');

@@ -139,6 +139,7 @@
         if (input) input.checked = Boolean(now[category]);
       });
       banner.hidden = false;
+      banner.querySelector('details')?.setAttribute('open', '');
       banner.querySelector('button, input')?.focus();
     });
   });

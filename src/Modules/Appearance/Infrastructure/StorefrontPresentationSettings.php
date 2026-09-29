@@ -91,27 +91,18 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'show_promos' => true,
                 'show_articles' => true,
             ],
+            // A new store ships without promotional artwork; hero and banners appear once they are configured in Appearance.
             'hero' => [
-                'eyebrow' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.kava_shcho_nadykhaie'),
-                'title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.kava_shcho_nadykhaie'),
-                'subtitle' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.avtomatychni_kavomashyny_dlia_spravzhnikh_tsinyteliv'),
-                'text' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.svizhozmelena_kava_idealnyi_smak_suchasnyi_dyzain_po'),
-                'image' => '/media/demo/hero-coffee-reference.webp',
-                'button_label' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.perehlianuty_kavomashyny'),
-                'button_url' => '/home-appliances',
+                'eyebrow' => '',
+                'title' => '',
+                'subtitle' => '',
+                'text' => '',
+                'image' => '',
+                'button_label' => '',
+                'button_url' => '/catalog',
             ],
-            'promo_left' => [
-                'title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.novyi_smartfon_vzhe_v_naiavnosti'),
-                'text' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.potuzhnist_krasa_intelekt'),
-                'image' => '/media/demo/promo-smartphone-reference.webp',
-                'url' => '/smartphones',
-            ],
-            'promo_right' => [
-                'title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.krasa_u_kozhnii_detali'),
-                'text' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.dohliad_iakyi_nadykhaie'),
-                'image' => '/media/demo/promo-beauty-reference.webp',
-                'url' => '/beauty-health',
-            ],
+            'promo_left' => ['title' => '', 'text' => '', 'image' => '', 'url' => '/catalog'],
+            'promo_right' => ['title' => '', 'text' => '', 'image' => '', 'url' => '/catalog'],
         ];
     }
 

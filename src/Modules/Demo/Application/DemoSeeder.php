@@ -208,9 +208,9 @@ final readonly class DemoSeeder
             }
 
             $articles = [
-                ['title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.yak_obraty_noutbuk_dlia_roboty_ta_navchannia'),'slug'=>'how-to-choose-laptop','excerpt'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.ekran_pamiat_avtonomnist_i_porty_korotkyi_praktychny'),'image'=>'demo/article-laptop.webp','body'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.p_pochnit_iz_stsenariiu_vykorystannia_dlia_brauzera_')],
-                ['title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.5_oznak_spravdi_zruchnoho_smartfona'),'slug'=>'smartphone-selection-guide','excerpt'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.yak_otsinyty_ekran_kameru_avtonomnist_i_pamiat_bez_m'),'image'=>'demo/article-smartphone.webp','body'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.p_zruchnyi_smartfon_tse_balans_ekrana_avtonomnosti_k')],
-                ['title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.rozumnyi_dim_bez_zaivoi_skladnosti'),'slug'=>'smart-home-basics','excerpt'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.z_choho_pochaty_avtomatyzatsiiu_domu_ta_iaki_prystro'),'image'=>'demo/article-smart-home.webp','body'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.p_pochnit_iz_prostykh_rechei_osvitlennia_klimatu_pry')],
+                ['title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.yak_obraty_noutbuk_dlia_roboty_ta_navchannia'),'slug'=>'how-to-choose-laptop','excerpt'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.ekran_pamiat_avtonomnist_i_porty_korotkyi_praktychny'),'body'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.p_pochnit_iz_stsenariiu_vykorystannia_dlia_brauzera_')],
+                ['title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.5_oznak_spravdi_zruchnoho_smartfona'),'slug'=>'smartphone-selection-guide','excerpt'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.yak_otsinyty_ekran_kameru_avtonomnist_i_pamiat_bez_m'),'body'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.p_zruchnyi_smartfon_tse_balans_ekrana_avtonomnosti_k')],
+                ['title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.rozumnyi_dim_bez_zaivoi_skladnosti'),'slug'=>'smart-home-basics','excerpt'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.z_choho_pochaty_avtomatyzatsiiu_domu_ta_iaki_prystro'),'body'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.p_pochnit_iz_prostykh_rechei_osvitlennia_klimatu_pry')],
             ];
             foreach ($articles as $i => $article) {
                 $this->createArticle($db, $ctx['store_id'], $article, $now, $i, $ctx['locale']);
@@ -221,7 +221,7 @@ final readonly class DemoSeeder
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.6.6',
+                'version' => '3.7.0',
                 'catalog_source' => 'DummyJSON',
             ]);
 
@@ -310,8 +310,7 @@ final readonly class DemoSeeder
         $id=(int)$db->lastInsertId();
         $db->insert('mc_content_translation',['content_id'=>$id,'locale'=>$locale,'title'=>$article['title'],'excerpt'=>$article['excerpt'],'body_html'=>$article['body'],'meta_title'=>$article['title'],'meta_description'=>$article['excerpt'],'created_at'=>$now,'updated_at'=>$now]);
         $this->seo->ensureForCreatedEntity($storeId,$locale,SeoEntityType::BlogArticle,$public->toRfc4122(),$article['title'],$article['slug']);
-        $this->tag($db,$storeId,'article',$public->toRfc4122(),'seed',['kind'=>'article','image'=>$article['image'],'sort'=>$sort]);
-        $this->tag($db,$storeId,'article',$public->toRfc4122(),'image',['path'=>$article['image']]);
+        $this->tag($db,$storeId,'article',$public->toRfc4122(),'seed',['kind'=>'article','sort'=>$sort]);
     }
 
     private function seedInformationPagesDemo(Connection $db,int $storeId,string $now,string $locale): void
@@ -435,7 +434,7 @@ final readonly class DemoSeeder
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.6.6',
+            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.7.0',
             CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$data): int {
                 if (strlen($data) + strlen($chunk) > 5 * 1024 * 1024) { return 0; }
                 $data .= $chunk;

@@ -1,12 +1,12 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
 <section class="forum-shell shell">
-    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span>›</span><span>{{ board.name }}</span></nav>
+    <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><span>{{ board.name }}</span></nav>
     <header class="forum-hero forum-hero--compact">
-        <div><span class="forum-kicker">{{ ui_text('forum_section') }}</span><h1>{{ board.name }}</h1>{% if board.description %}<p>{{ board.description }}</p>{% endif %}</div>
-        <div class="forum-hero__actions"><a class="forum-secondary-button" href="{{ path('storefront_forum_rules') }}">{{ ui_text('forum_rules_link') }}</a>
-            <form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" minlength="2" placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button type="submit">{{ ui_text('search') }}</button></form>
-            {% if app.user %}<button class="forum-primary-button" type="button" data-forum-compose-open>{{ ui_text('create_topic') }}</button>{% else %}<a class="forum-primary-button" href="{{ path('customer_login') }}">{{ ui_text('forum_sign_in_post') }}</a>{% endif %}
+        <div><span class="eyebrow">{{ ui_text('forum_section') }}</span><h1>{{ board.name }}</h1>{% if board.description %}<p>{{ board.description }}</p>{% endif %}</div>
+        <div class="forum-hero__actions"><a class="button button--secondary" href="{{ path('storefront_forum_rules') }}">{{ ui_text('forum_rules_link') }}</a>
+            <form method="get" action="{{ path('storefront_forum_search') }}" class="forum-search"><input type="search" name="q" minlength="2" placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button class="button button--primary" type="submit">{{ ui_icon('search', 16) }}{{ ui_text('search') }}</button></form>
+            {% if app.user %}<button class="button button--primary" type="button" data-forum-compose-open>{{ ui_text('create_topic') }}</button>{% else %}<a class="button button--primary" href="{{ path('customer_login') }}">{{ ui_text('forum_sign_in_post') }}</a>{% endif %}
         </div>
     </header>
 
@@ -16,10 +16,10 @@
     <div class="forum-topic-list">
         {% for topic in topics %}
             <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}">
-                <span class="forum-topic-row__status">{{ topic.is_pinned ? ui_text('pinned') : ui_text('topic') }}{% if topic.is_unread %} · {{ ui_text('forum_unread') }}{% endif %}</span>
+                <span class="forum-topic-row__status badge">{{ topic.is_pinned ? ui_text('pinned') : ui_text('topic') }}{% if topic.is_unread %} · {{ ui_text('forum_unread') }}{% endif %}</span>
                 <span class="forum-topic-row__body"><strong>{{ topic.title }}</strong><small>{{ topic.author_name }} · {{ topic.published_at|default(topic.created_at) }}</small></span>
                 <span class="forum-topic-row__count"><b>{{ topic.post_count }}</b><small>{{ ui_text('messages_count_label') }}</small><b>{{ topic.views_count|default(0) }}</b><small>{{ ui_text('forum_views') }}</small></span>
-                {% if topic.is_locked %}<span class="forum-lock" title="{{ ui_text('topic_closed') }}">{{ ui_text('closed') }}</span>{% endif %}
+                {% if topic.is_locked %}<span class="forum-lock badge" title="{{ ui_text('topic_closed') }}">{{ ui_icon('lock', 14) }}{{ ui_text('closed') }}</span>{% endif %}
             </a>
         {% else %}
             <div class="forum-empty"><h2>{{ ui_text('no_topics_yet') }}</h2><p>{{ ui_text('create_first_topic_text') }}</p></div>
@@ -28,11 +28,11 @@
 </section>
 
 {% if app.user %}
-<div class="forum-compose" data-forum-compose hidden aria-hidden="true">
-    <div class="forum-compose__backdrop" data-forum-compose-close></div>
-    <section class="forum-compose__dialog" role="dialog" aria-modal="true" aria-labelledby="forum-compose-title">
-        <button class="forum-compose__close" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">{{ ui_icon('x', 18) }}</button>
-        <span class="forum-kicker">{{ ui_text('new_topic') }}</span>
+<div class="modal" data-forum-compose hidden aria-hidden="true">
+    <div class="modal__backdrop" data-forum-compose-close></div>
+    <section class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="forum-compose-title">
+        <button class="modal__close button button--ghost button--icon" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">{{ ui_icon('x', 20) }}</button>
+        <span class="eyebrow">{{ ui_text('new_topic') }}</span>
         <h2 id="forum-compose-title">{{ ui_text('create_topic_in')|replace({'%board%': board.name}) }}</h2>
         <p>{{ ui_text('forum_posting_as')|replace({'%name%': forum_nickname}) }} {{ ui_text('topic_moderation_text') }}</p>
         <form method="post" action="{{ path('storefront_forum_topic_create',{slug:board.slug}) }}" data-store-async-form>
@@ -41,7 +41,7 @@
             <label class="forum-honeypot" aria-hidden="true">{{ ui_text('company') }}<input name="company" tabindex="-1" autocomplete="off"></label>
             <label><span>{{ ui_text('topic_title') }}</span><input name="title" required maxlength="240"></label>
             <label><span>{{ ui_text('message') }}</span><textarea name="body" required minlength="3" maxlength="20000" rows="8"></textarea></label>
-            <div class="forum-compose__actions"><button class="forum-secondary-button" type="button" data-forum-compose-close>{{ ui_text('cancel') }}</button><button class="forum-primary-button" type="submit">{{ ui_text('send_for_moderation') }}</button></div>
+            <div class="modal__actions"><button class="button button--secondary" type="button" data-forum-compose-close>{{ ui_text('cancel') }}</button><button class="button button--primary" type="submit">{{ ui_text('send_for_moderation') }}</button></div>
         </form>
     </section>
 </div>

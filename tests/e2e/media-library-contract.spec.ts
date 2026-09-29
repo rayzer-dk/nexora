@@ -36,7 +36,7 @@ test('Media Library upload, metadata, search and store removal form one real lif
   await upload.locator('button[type="submit"]').click();
   expect((await uploadResponse).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.admin-flash--error')).toHaveCount(0);
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
 
   const card = page.locator('.media-card').first();
   await expect(card).toBeVisible();
@@ -52,7 +52,7 @@ test('Media Library upload, metadata, search and store removal form one real lif
   const metadataResponse = page.waitForResponse((response) =>
     response.url().endsWith(`/admin/media/${assetId}/metadata`) && response.request().method() === 'POST'
   );
-  await metadataForm.locator('button.admin-primary-button').click();
+  await metadataForm.locator('button.admin-button.is-primary').click();
   expect((await metadataResponse).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
 

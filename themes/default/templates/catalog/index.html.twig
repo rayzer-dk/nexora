@@ -12,7 +12,7 @@
     {% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
     {% if products.items %}
         <div class="product-grid">{% for product in products.items %}{% include '@storefront/components/product_card.html.twig' with {product:product} only %}{% endfor %}</div>
-        {% if products.pages > 1 %}<nav class="pager" aria-label="{{ ui_text('pagination') }}">{% if products.page > 1 %}<a href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page-1 }}">{{ ui_text('previous') }}</a>{% endif %}<span>{{ ui_text('page_of', {page: products.page, pages: products.pages}) }}</span>{% if products.page < products.pages %}<a href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page+1 }}">{{ ui_text('next') }}</a>{% endif %}</nav>{% endif %}
+        {% if products.pages > 1 %}<nav class="pager" aria-label="{{ ui_text('pagination') }}">{% if products.page > 1 %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page-1 }}">{{ ui_icon('chevron-left', 16) }}{{ ui_text('previous') }}</a>{% endif %}<span>{{ ui_text('page_of', {page: products.page, pages: products.pages}) }}</span>{% if products.page < products.pages %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page+1 }}">{{ ui_text('next') }}{{ ui_icon('chevron-right', 16) }}</a>{% endif %}</nav>{% endif %}
     {% else %}<div class="empty-state"><h2>{{ ui_text('no_products_title') }}</h2><p>{{ ui_text('no_products_text') }}</p></div>{% endif %}
 </section>
 {% endblock %}

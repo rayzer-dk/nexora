@@ -22,7 +22,7 @@ test('ROLE_VIEWER is genuinely read-only and store scoped at the server', async 
 
   await page.goto('/admin/system/access', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const createPanel = page.locator('details.admin-editor-card').filter({
+  const createPanel = page.locator('details.admin-panel').filter({
     has: page.locator('form[action="/admin/system/access/user/save"] input[name="display_name"]:not([value])'),
   }).last();
   await expect(createPanel).toBeVisible();
@@ -46,8 +46,8 @@ test('ROLE_VIEWER is genuinely read-only and store scoped at the server', async 
   await create.locator('button[type="submit"]').click();
   expect((await createResponse).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
-  await expect(page.locator('details.admin-editor-card > summary').filter({ hasText: email })).toBeVisible();
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
+  await expect(page.locator('details.admin-panel > summary').filter({ hasText: email })).toBeVisible();
 
   const logout = page.locator('form[action="/admin/logout"]');
   if (await logout.count()) {

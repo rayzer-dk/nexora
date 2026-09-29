@@ -28,7 +28,7 @@ final readonly class DbalBlogQuery
         );
         return array_map(function(array $r):array{
             $meta=is_string($r['image_meta']??null)?json_decode($r['image_meta'],true):null;
-            return ['public_id'=>Uuid::fromBinary((string)$r['public_id'])->toRfc4122(),'title'=>(string)$r['title'],'excerpt'=>(string)($r['excerpt']??''),'url'=>'/'.ltrim((string)$r['path'],'/'),'date'=>$r['published_at']?date('d.m.Y',strtotime((string)$r['published_at'])):'','image'=>is_array($meta)&&isset($meta['path'])?'/media/'.ltrim((string)$meta['path'],'/'):'/assets/product-placeholder.svg'];
+            return ['public_id'=>Uuid::fromBinary((string)$r['public_id'])->toRfc4122(),'title'=>(string)$r['title'],'excerpt'=>(string)($r['excerpt']??''),'url'=>'/'.ltrim((string)$r['path'],'/'),'date'=>$r['published_at']?date('d.m.Y',strtotime((string)$r['published_at'])):'','image'=>is_array($meta)&&isset($meta['path'])?'/media/'.ltrim((string)$meta['path'],'/'):''];
         },$rows);
     }
 
@@ -47,6 +47,6 @@ final readonly class DbalBlogQuery
         );
         if(!is_array($row)){return null;}
         $meta=is_string($row['image_meta']??null)?json_decode($row['image_meta'],true):null;
-        return ['public_id'=>$publicId,'title'=>(string)$row['title'],'excerpt'=>(string)($row['excerpt']??''),'body_html'=>(string)($row['body_html']??''),'meta_title'=>(string)($row['meta_title']?:$row['title']),'meta_description'=>(string)($row['meta_description']?:$row['excerpt']),'url'=>'/'.ltrim((string)$row['path'],'/'),'published_at'=>(string)$row['published_at'],'updated_at'=>(string)$row['updated_at'],'image'=>is_array($meta)&&isset($meta['path'])?'/media/'.ltrim((string)$meta['path'],'/'):'/assets/product-placeholder.svg'];
+        return ['public_id'=>$publicId,'title'=>(string)$row['title'],'excerpt'=>(string)($row['excerpt']??''),'body_html'=>(string)($row['body_html']??''),'meta_title'=>(string)($row['meta_title']?:$row['title']),'meta_description'=>(string)($row['meta_description']?:$row['excerpt']),'url'=>'/'.ltrim((string)$row['path'],'/'),'published_at'=>(string)$row['published_at'],'updated_at'=>(string)$row['updated_at'],'image'=>is_array($meta)&&isset($meta['path'])?'/media/'.ltrim((string)$meta['path'],'/'):''];
     }
 }

@@ -1,3 +1,5 @@
+import { lucideIconNode } from '../shared/lucide-icons.js';
+
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
 const q = (selector, root = document) => root.querySelector(selector);
 const qa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -13,15 +15,18 @@ function toast(message, type = 'info', timeout = 5200) {
   const item = document.createElement('div');
   item.className = `admin-toast is-${type}`;
   item.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  const icons = { success: 'circle-check', warning: 'triangle-alert', error: 'circle-alert', info: 'info' };
+  const icon = lucideIconNode(icons[type] || 'info', 20);
   const text = document.createElement('span');
   text.textContent = message;
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'admin-toast__close';
-  close.textContent = '×';
+  close.replaceChildren(lucideIconNode('x', 16));
   close.setAttribute('aria-label', t('js_close'));
+  close.setAttribute('title', t('js_close'));
   close.addEventListener('click', () => item.remove());
-  item.append(text, close);
+  item.append(icon, text, close);
   stack.appendChild(item);
   requestAnimationFrame(() => item.classList.add('is-visible'));
   if (timeout > 0) {
@@ -33,7 +38,7 @@ function toast(message, type = 'info', timeout = 5200) {
 }
 
 function initFlashToasts() {
-  qa('[data-toast-source], .admin-notice, .store-notice').forEach((source) => {
+  qa('[data-toast-source], .admin-notice').forEach((source) => {
     const message = source.textContent.trim();
     if (!message) return;
     const type = source.classList.contains('is-error') ? 'error' : source.classList.contains('is-warning') ? 'warning' : source.classList.contains('is-success') ? 'success' : 'info';
@@ -46,12 +51,26 @@ function ensureConfirmDialog() {
   let modal = q('[data-admin-confirm]');
   if (modal) return modal;
   modal = document.createElement('div');
-  modal.className = 'admin-confirm';
+  modal.className = 'admin-modal';
   modal.dataset.adminConfirm = '';
   modal.hidden = true;
-  modal.innerHTML = '<div class="admin-confirm__backdrop" data-confirm-cancel></div><section class="admin-confirm__dialog" role="dialog" aria-modal="true" aria-labelledby="admin-confirm-title"><span class="admin-confirm__icon">!</span><h2 id="admin-confirm-title"></h2><p data-confirm-message></p><div class="admin-confirm__actions"><button type="button" class="admin-ghost-button" data-confirm-cancel></button><button type="button" class="admin-danger-button" data-confirm-accept></button></div></section>';
+  const make = (tag, className, attrs = {}) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
+    return node;
+  };
+  const dialog = make('section', 'admin-modal__dialog', { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'admin-confirm-title' });
+  const iconWrap = make('span', 'admin-modal__icon');
+  iconWrap.append(lucideIconNode('triangle-alert', 20));
+  const title = make('h2', '', { id: 'admin-confirm-title' });
+  const message = make('p', '', { 'data-confirm-message': '' });
+  const actions = make('div', 'admin-modal__actions');
+  actions.append(make('button', 'admin-button', { type: 'button', 'data-confirm-cancel': '' }), make('button', 'admin-button is-danger', { type: 'button', 'data-confirm-accept': '' }));
+  dialog.append(iconWrap, title, message, actions);
+  modal.replaceChildren(make('div', 'admin-modal__backdrop', { 'data-confirm-cancel': '' }), dialog);
   q('#admin-confirm-title', modal).textContent = t('js_confirm_title');
-  q('[data-confirm-cancel].admin-ghost-button', modal).textContent = t('js_cancel');
+  q('button[data-confirm-cancel]', modal).textContent = t('js_cancel');
   q('[data-confirm-accept]', modal).textContent = t('js_continue');
   document.body.appendChild(modal);
   return modal;
@@ -154,7 +173,7 @@ function initSidebar() {
     toggle.setAttribute('aria-expanded', String(open));
   });
   document.addEventListener('click', (event) => {
-    if (window.innerWidth > 900 || !sidebar.classList.contains('is-open')) return;
+    if (window.innerWidth > 1024 || !sidebar.classList.contains('is-open')) return;
     if (sidebar.contains(event.target) || toggle.contains(event.target)) return;
     sidebar.classList.remove('is-open');
     toggle.setAttribute('aria-expanded', 'false');

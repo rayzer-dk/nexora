@@ -22,7 +22,7 @@ final readonly class ForumCommunityService
             return [];
         }
         $limit = max(1, min(100, $limit));
-        $needle = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $query) . '%';
+        $needle = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $query) . '%';
 
         return $this->connection->fetchAllAssociative(
             "SELECT DISTINCT t.id,t.title,t.slug,b.slug AS board_slug,b.name AS board_name,
@@ -34,7 +34,7 @@ final readonly class ForumCommunityService
              LEFT JOIN mc_forum_profile fp ON fp.customer_id=t.customer_id AND fp.store_id=b.store_id
              LEFT JOIN mc_forum_post p ON p.topic_id=t.id AND p.status='published'
              WHERE b.store_id=? AND b.status='active' AND t.status='published'
-               AND (t.title LIKE ? ESCAPE '\\' OR p.body_text LIKE ? ESCAPE '\\')
+               AND (t.title LIKE ? ESCAPE '!' OR p.body_text LIKE ? ESCAPE '!')
              ORDER BY COALESCE(t.last_post_at,t.published_at,t.created_at) DESC,t.id DESC
              LIMIT {$limit}",
             [$storeId, $needle, $needle],

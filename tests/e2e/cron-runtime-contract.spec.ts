@@ -29,7 +29,7 @@ test('registered cron task runs and its real state is visible in admin', async (
 
   const row = page.locator('tr[data-task-code="queue_purge"]');
   await expect(row).toBeVisible();
-  await expect(row.locator('.admin-status-pill')).toContainText('success');
+  await expect(row.locator('.admin-badge')).toContainText('success');
   await expect(row.locator('td').nth(2)).not.toContainText('ще не');
   await expect(row.locator('td').nth(4)).not.toContainText('перш');
 });

@@ -33,14 +33,14 @@ test('site capability changes alter the real storefront and can be restored', as
 
   await loginAdmin(page);
   await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
-  const form = page.locator('form.admin-editor-form[data-dirty-guard]');
+  const form = page.locator('form.admin-form[data-dirty-guard]');
   const forum = form.locator('input[name="feature_forum"]');
   await expect(forum).toBeVisible();
   const original = await forum.isChecked();
 
   try {
     if (original) await forum.uncheck(); else await forum.check();
-    await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+    await submitAndWait(page, 'form.admin-form[data-dirty-guard]', '/admin/system/site');
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     const forumLinks = page.locator('a[href="/forum"]');
@@ -55,10 +55,10 @@ test('site capability changes alter the real storefront and can be restored', as
     }
   } finally {
     await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
-    const restoreForm = page.locator('form.admin-editor-form[data-dirty-guard]');
+    const restoreForm = page.locator('form.admin-form[data-dirty-guard]');
     const restoreForum = restoreForm.locator('input[name="feature_forum"]');
     if (original) await restoreForum.check(); else await restoreForum.uncheck();
-    await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+    await submitAndWait(page, 'form.admin-form[data-dirty-guard]', '/admin/system/site');
   }
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -72,7 +72,7 @@ test('appearance settings change computed storefront design tokens and brand sub
 
   await loginAdmin(page);
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
-  const form = page.locator('form.admin-storefront-form');
+  const form = page.locator('form[data-appearance-media]');
   const subtitle = form.locator('input[name="brand_subtitle"]');
   const primary = form.locator('input[name="theme_primary"]');
   const radius = form.locator('input[name="theme_radius"]');
@@ -102,7 +102,7 @@ test('appearance settings change computed storefront design tokens and brand sub
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }, qaRadius);
-    await submitAndWait(page, 'form.admin-storefront-form', '/admin/appearance/storefront');
+    await submitAndWait(page, 'form[data-appearance-media]', '/admin/appearance/storefront');
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('.reference-brand small')).toHaveText(marker);
@@ -120,7 +120,7 @@ test('appearance settings change computed storefront design tokens and brand sub
     expect(tokens.radius).toBe(`${qaRadius}px`);
   } finally {
     await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
-    const restore = page.locator('form.admin-storefront-form');
+    const restore = page.locator('form[data-appearance-media]');
     await restore.locator('input[name="brand_subtitle"]').fill(originalSubtitle);
     await restore.locator('input[name="hero_title"]').fill(originalHeroTitle);
     const restoreProducts = restore.locator('input[name="show_products"]');
@@ -134,7 +134,7 @@ test('appearance settings change computed storefront design tokens and brand sub
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }, originalRadius);
-    await submitAndWait(page, 'form.admin-storefront-form', '/admin/appearance/storefront');
+    await submitAndWait(page, 'form[data-appearance-media]', '/admin/appearance/storefront');
   }
 });
 
@@ -163,7 +163,7 @@ test('rich product description editor saves through the standard form and render
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
   await page.keyboard.type(marker);
   await expect(description).toHaveValue(new RegExp(marker));
-  await submitAndWait(page, 'form.admin-editor-form', editUrl!);
+  await submitAndWait(page, 'form.admin-form', editUrl!);
 
   await page.goto('/' + slug.replace(/^\/+/, ''), { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
@@ -174,7 +174,7 @@ test('rich product description editor saves through the standard form and render
     const textarea = element as HTMLTextAreaElement;
     textarea.value = String(value);
   }, originalDescription);
-  await submitAndWait(page, 'form.admin-editor-form', editUrl!);
+  await submitAndWait(page, 'form.admin-form', editUrl!);
 });
 
 
@@ -249,7 +249,7 @@ test('admin search synonym changes real catalog search and deletion removes the 
   await expect(page.locator('[data-product-card]').filter({ hasText: productName }).first()).toBeVisible();
 
   await page.goto('/admin/catalog/search', { waitUntil: 'domcontentloaded' });
-  const group = page.locator('table.admin-data-table tbody tr').filter({ hasText: label });
+  const group = page.locator('table.admin-table tbody tr').filter({ hasText: label });
   await expect(group).toBeVisible();
   const deleteForm = group.locator('form[action*="/synonyms/"][action$="/delete"]');
   const deleteResponsePromise = page.waitForResponse((response) =>
@@ -290,7 +290,7 @@ test('published Home Builder layout changes SSR storefront and can be restored',
     await page.locator('button[form="builder-form"][name="builder_action"][value="publish"]').click();
     expect((await publishResponsePromise).status()).toBeLessThan(400);
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('.admin-flash--error,.store-notice.is-error')).toHaveCount(0);
+    await expect(page.locator('.admin-notice.is-error,.store-notice.is-error')).toHaveCount(0);
     expect(await page.locator('textarea[data-layout-json]').inputValue()).toContain(marker);
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -316,7 +316,7 @@ test('disabling catalog removes catalog runtime, demo catalog blocks and search 
 
   await loginAdmin(page);
   await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
-  const form = page.locator('form.admin-editor-form[data-dirty-guard]');
+  const form = page.locator('form.admin-form[data-dirty-guard]');
   const originalMode = await form.locator('input[name="mode"]:checked').inputValue();
   const originalFeatures = await form.locator('input[type="checkbox"][name^="feature_"]').evaluateAll((nodes) =>
     Object.fromEntries(nodes.map((node) => {
@@ -328,7 +328,7 @@ test('disabling catalog removes catalog runtime, demo catalog blocks and search 
   const catalog = form.locator('input[name="feature_catalog"]');
   await expect(catalog).toBeChecked();
   await catalog.uncheck();
-  await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+  await submitAndWait(page, 'form.admin-form[data-dirty-guard]', '/admin/system/site');
 
   const catalogResponse = await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   expect(catalogResponse?.status()).toBe(404);
@@ -341,13 +341,13 @@ test('disabling catalog removes catalog runtime, demo catalog blocks and search 
   expect(jsonLd.join('\n')).not.toContain('SearchAction');
 
   await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
-  const restore = page.locator('form.admin-editor-form[data-dirty-guard]');
+  const restore = page.locator('form.admin-form[data-dirty-guard]');
   await restore.locator(`input[name="mode"][value="${originalMode}"]`).check();
   for (const [name, checked] of Object.entries(originalFeatures)) {
     const input = restore.locator(`input[name="${name}"]`);
     if (checked) await input.check(); else await input.uncheck();
   }
-  await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+  await submitAndWait(page, 'form.admin-form[data-dirty-guard]', '/admin/system/site');
 });
 
 
@@ -375,7 +375,7 @@ test('promotion created in admin changes checkout totals and disabling it stops 
   expect((await createResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
-  const promotionRow = page.locator('table.admin-data-table tbody tr').filter({ hasText: name });
+  const promotionRow = page.locator('table.admin-table tbody tr').filter({ hasText: name });
   await expect(promotionRow).toBeVisible();
 
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
@@ -405,7 +405,7 @@ test('promotion created in admin changes checkout totals and disabling it stops 
   await expect(page.locator('[data-coupon-message]')).toHaveAttribute('data-state', 'success');
 
   await page.goto('/admin/commerce/promotions', { waitUntil: 'domcontentloaded' });
-  const activeRow = page.locator('table.admin-data-table tbody tr').filter({ hasText: name });
+  const activeRow = page.locator('table.admin-table tbody tr').filter({ hasText: name });
   const toggle = activeRow.locator('form[action*="/toggle"]');
   const toggleResponsePromise = page.waitForResponse((response) =>
     response.url().includes('/admin/commerce/promotions/') && response.url().endsWith('/toggle') && response.request().method() === 'POST'
@@ -413,7 +413,7 @@ test('promotion created in admin changes checkout totals and disabling it stops 
   await toggle.locator('button[type="submit"]').click();
   expect((await toggleResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('table.admin-data-table tbody tr').filter({ hasText: name })).toContainText('disabled');
+  await expect(page.locator('table.admin-table tbody tr').filter({ hasText: name })).toContainText('disabled');
 
   await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
   await page.locator('[data-coupon-code]').fill(code);
@@ -502,7 +502,7 @@ test('storefront order is fully operable from admin lifecycle actions', async ({
   await paidForm.locator('button[type="submit"]').click();
   expect((await paidResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.admin-runtime__metrics')).toContainText('paid');
+  await expect(page.locator('.admin-stats')).toContainText('paid');
 
   await expect(page.locator(`form[action="/admin/orders/${orderId}/fulfillment"]`)).toBeVisible();
   // The fulfillment state machine forbids skipping "shipped"; a shipment needs a tracking number, later steps keep it.
@@ -516,12 +516,12 @@ test('storefront order is fully operable from admin lifecycle actions', async ({
     await form.locator('button[type="submit"]').click();
     expect((await responsePromise).status()).toBeLessThan(400);
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('.store-notice.is-error,.admin-notice.is-error,.admin-flash--error')).toHaveCount(0);
-    await expect(page.locator('.admin-runtime__metrics')).toContainText(step);
+    await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
+    await expect(page.locator('.admin-stats')).toContainText(step);
   }
 
   // A paid order that reaches "delivered" completes automatically, so the manual completion form disappears.
-  await expect(page.locator('.admin-runtime__metrics')).toContainText('completed');
+  await expect(page.locator('.admin-stats')).toContainText('completed');
   await expect(page.locator(`form[action="/admin/orders/${orderId}/complete"]`)).toHaveCount(0);
 });
 
@@ -534,7 +534,7 @@ test('system information page content and SEO fields render exactly on storefron
   await page.goto('/admin/content/pages/about', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
 
-  const contentForm = page.locator('form.admin-runtime__panel.admin-form');
+  const contentForm = page.locator('form.admin-panel.admin-form');
   const token = await contentForm.locator('input[name="_token"]').inputValue();
   const original = {
     title: await page.locator('input[name="title"]').inputValue(),
@@ -669,7 +669,7 @@ test('disabled commerce and content capabilities remove both routes and misleadi
 
   await loginAdmin(page);
   await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
-  const form = page.locator('form.admin-editor-form[data-dirty-guard]');
+  const form = page.locator('form.admin-form[data-dirty-guard]');
   const originalMode = await form.locator('input[name="mode"]:checked').inputValue();
   const originalFeatures = await form.locator('input[type="checkbox"][name^="feature_"]').evaluateAll((nodes) =>
     Object.fromEntries(nodes.map((node) => {
@@ -680,13 +680,13 @@ test('disabled commerce and content capabilities remove both routes and misleadi
 
   const restore = async () => {
     await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
-    const restoreForm = page.locator('form.admin-editor-form[data-dirty-guard]');
+    const restoreForm = page.locator('form.admin-form[data-dirty-guard]');
     await restoreForm.locator(`input[name="mode"][value="${originalMode}"]`).check();
     for (const [name, checked] of Object.entries(originalFeatures)) {
       const input = restoreForm.locator(`input[name="${name}"]`);
       if (checked) await input.check(); else await input.uncheck();
     }
-    await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+    await submitAndWait(page, 'form.admin-form[data-dirty-guard]', '/admin/system/site');
   };
 
   try {
@@ -695,7 +695,7 @@ test('disabled commerce and content capabilities remove both routes and misleadi
     await form.locator('input[name="feature_checkout"]').uncheck();
     await form.locator('input[name="feature_content"]').uncheck();
     await form.locator('input[name="feature_reviews"]').uncheck();
-    await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+    await submitAndWait(page, 'form.admin-form[data-dirty-guard]', '/admin/system/site');
 
     const cartResponse = await page.goto('/cart', { waitUntil: 'domcontentloaded' });
     expect(cartResponse?.status()).toBe(404);
@@ -739,7 +739,7 @@ test('recovery snapshot can be created, verified, downloaded and deleted from ad
   await page.locator('[data-confirm-accept]').click();
   expect((await createResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
 
   const row = page.locator('table.admin-table tbody tr').filter({ hasText: 'manual-admin-database' }).first();
   await expect(row).toBeVisible();
@@ -756,7 +756,7 @@ test('recovery snapshot can be created, verified, downloaded and deleted from ad
   await verify.locator('button[type="submit"]').click();
   expect((await verifyResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.store-notice.is-success').first()).toBeAttached(); // source node is mirrored into a toast and hidden
+  await expect(page.locator('.admin-notice.is-success').first()).toBeAttached(); // source node is mirrored into a toast and hidden
 
   const verifiedRow = page.locator('table.admin-table tbody tr').filter({ hasText: 'manual-admin-database' }).first();
   const downloadHref = await verifiedRow.locator('a[href$="/download"]').getAttribute('href');
@@ -943,7 +943,7 @@ test('product slug change updates canonical links and creates a direct old-URL r
   const qaSlug = `e2e-seo-${Date.now()}`;
 
   await slugInput.fill(qaSlug);
-  await submitAndWait(page, 'form.admin-editor-form', editUrl!);
+  await submitAndWait(page, 'form.admin-form', editUrl!);
 
   try {
     const current = await page.goto('/' + qaSlug, { waitUntil: 'domcontentloaded' });
@@ -965,7 +965,7 @@ test('product slug change updates canonical links and creates a direct old-URL r
   } finally {
     await page.goto(editUrl!, { waitUntil: 'domcontentloaded' });
     await page.locator('input[name="slug"]').fill(originalSlug);
-    await submitAndWait(page, 'form.admin-editor-form', editUrl!);
+    await submitAndWait(page, 'form.admin-form', editUrl!);
   }
 });
 
@@ -1027,7 +1027,7 @@ test('enabled non-default currency without prices stays hidden from storefront c
 
   for (let i = 0; i < await rows.count(); i++) {
     const row = rows.nth(i);
-    if ((await row.locator('.admin-status-pill.is-active').count()) > 0) continue;
+    if ((await row.locator('.admin-badge.is-active').count()) > 0) continue;
     const priceCount = Number((await row.locator('td').nth(2).innerText()).trim().match(/^\d+/)?.[0] ?? '-1');
     if (priceCount !== 0) continue;
     const toggle = row.locator('input[type="checkbox"][name$="[enabled]"]');

@@ -24,7 +24,7 @@ test('admin catalog create, publish, stock-price update and delete are reflected
 
   await loginAdmin(page);
   await page.goto('/admin/catalog/categories/new', { waitUntil: 'domcontentloaded' });
-  const categoryForm = page.locator('form.admin-editor-form');
+  const categoryForm = page.locator('form.admin-form');
   await categoryForm.locator('input[name="name"]').fill(categoryName);
   await categoryForm.locator('input[name="slug"]').fill(categorySlug);
   const categoryCreate = page.waitForResponse((response) =>
@@ -36,7 +36,7 @@ test('admin catalog create, publish, stock-price update and delete are reflected
   await expect(page.locator('table tbody tr').filter({ hasText: categoryName })).toBeVisible();
 
   await page.goto('/admin/catalog/products/new', { waitUntil: 'domcontentloaded' });
-  const productForm = page.locator('form.admin-editor-form');
+  const productForm = page.locator('form.admin-form');
   await productForm.locator('input[name="name"]').fill(productName);
   await productForm.locator('input[name="sku"]').fill(sku);
   await productForm.locator('input[name="slug"]').fill(productSlug);
@@ -54,18 +54,18 @@ test('admin catalog create, publish, stock-price update and delete are reflected
   const productCreate = page.waitForResponse((response) =>
     response.url().endsWith('/admin/catalog/products/new') && response.request().method() === 'POST'
   );
-  await productForm.locator('.admin-editor-actions button[type="submit"]').click();
+  await productForm.locator('.admin-form-actions button[type="submit"]').click();
   expect((await productCreate).status()).toBeLessThan(400);
   await page.waitForURL(/\/admin\/catalog\/products\/[0-9a-f-]{36}\/edit/);
   const productPublicId = page.url().match(/products\/([0-9a-f-]{36})\/edit/)?.[1] || '';
   expect(productPublicId).not.toBe('');
 
-  const editForm = page.locator('form.admin-editor-form');
+  const editForm = page.locator('form.admin-form');
   await editForm.locator('select[name="status"]').selectOption('published');
   const publishResponse = page.waitForResponse((response) =>
     response.url().includes(`/admin/catalog/products/${productPublicId}/edit`) && response.request().method() === 'POST'
   );
-  await editForm.locator('.admin-editor-actions button[type="submit"]').click();
+  await editForm.locator('.admin-form-actions button[type="submit"]').click();
   expect((await publishResponse).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
 
@@ -77,13 +77,13 @@ test('admin catalog create, publish, stock-price update and delete are reflected
   await expect(page.locator('body')).toContainText('123');
 
   await page.goto(`/admin/catalog/products/${productPublicId}/edit`, { waitUntil: 'domcontentloaded' });
-  const updateForm = page.locator('form.admin-editor-form');
+  const updateForm = page.locator('form.admin-form');
   await updateForm.locator('input[name="price"]').fill('321.45');
   await updateForm.locator('input[name="stock_quantity"]').fill('0');
   const updateResponse = page.waitForResponse((response) =>
     response.url().includes(`/admin/catalog/products/${productPublicId}/edit`) && response.request().method() === 'POST'
   );
-  await updateForm.locator('.admin-editor-actions button[type="submit"]').click();
+  await updateForm.locator('.admin-form-actions button[type="submit"]').click();
   expect((await updateResponse).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
 

@@ -2032,4 +2032,9 @@ return [
     'admin.system.stability.runtime_php_fs' => 'PHP / File system',
     'admin.system.stability.maintenance_active' => 'Maintenance active',
     'admin.system.stability.live_protected' => 'Live protected',
+    'admin.nav.marketing' => 'Marketing',
+    'admin.nav.content' => 'Storefront & content',
+    'admin.nav.breadcrumb' => 'Breadcrumb',
+    'js_no_images' => 'No images found',
+    'js_media_unavailable' => 'Media library unavailable',
 ];
