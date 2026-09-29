@@ -37,6 +37,11 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
   await expect(page.locator('input[name="name"]')).toHaveValue(qaStoreName);
 
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('.reference-brand strong')).toHaveText(qaStoreName);
+
+  await page.goto('/admin/system/store', { waitUntil: 'domcontentloaded' });
   const restoredStoreForm = page.locator('form.admin-editor-card[data-dirty-guard]').first();
   await restoredStoreForm.locator('input[name="name"]').fill(originalStoreName);
   const restoreStoreResponsePromise = page.waitForResponse((response) =>
@@ -54,8 +59,19 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   const siteForm = page.locator('form.admin-editor-form[data-dirty-guard]');
   await expect(siteForm).toBeVisible();
   const originalMode = await siteForm.locator('input[name="mode"]:checked').inputValue();
-  const qaMode = originalMode === 'shop' ? 'hybrid' : 'shop';
-  await siteForm.locator(`input[name="mode"][value="${qaMode}"]`).check();
+  const originalFeatures = await siteForm.locator('input[name^="feature_"]').evaluateAll((inputs) =>
+    Object.fromEntries(inputs.map((node) => {
+      const input = node as HTMLInputElement;
+      return [input.name, input.checked];
+    }))
+  ) as Record<string, boolean>;
+
+  await siteForm.locator('input[name="mode"][value="content"]').check();
+  await expect(siteForm.locator('input[name="feature_catalog"]')).not.toBeChecked();
+  await expect(siteForm.locator('input[name="feature_cart"]')).not.toBeChecked();
+  await expect(siteForm.locator('input[name="feature_checkout"]')).not.toBeChecked();
+  await expect(siteForm.locator('input[name="feature_customer_accounts"]')).not.toBeChecked();
+
   const saveSiteResponsePromise = page.waitForResponse((response) =>
     response.url().includes('/admin/system/site') && response.request().method() === 'POST'
   );
@@ -64,10 +80,25 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   expect(saveSiteResponse.status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
-  await expect(page.locator(`input[name="mode"][value="${qaMode}"]`)).toBeChecked();
+  await expect(page.locator('input[name="mode"][value="content"]')).toBeChecked();
 
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.reference-search')).toHaveCount(0);
+  await expect(page.locator('.reference-cart-link')).toHaveCount(0);
+  await expect(page.locator('.reference-catalog-toggle')).toHaveCount(0);
+  await expect(page.locator('.reference-account-link')).toHaveCount(0);
+
+  for (const disabledPath of ['/catalog', '/cart', '/checkout', '/forum', '/account']) {
+    const response = await page.goto(disabledPath, { waitUntil: 'domcontentloaded' });
+    expect(response?.status(), disabledPath).toBe(404);
+  }
+
+  await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
   const restoreSiteForm = page.locator('form.admin-editor-form[data-dirty-guard]');
   await restoreSiteForm.locator(`input[name="mode"][value="${originalMode}"]`).check();
+  for (const [name, checked] of Object.entries(originalFeatures)) {
+    await restoreSiteForm.locator(`input[name="${name}"]`).setChecked(checked);
+  }
   const restoreSiteResponsePromise = page.waitForResponse((response) =>
     response.url().includes('/admin/system/site') && response.request().method() === 'POST'
   );
@@ -105,6 +136,11 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   await expect(page.locator('input[name="brand_subtitle"]')).toHaveValue(qaSubtitle);
   await expect(page.locator('input[name="theme_radius"]')).toHaveValue(qaRadius);
 
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('.reference-brand small')).toHaveText(qaSubtitle);
+
+  await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
   const restoreAppearance = page.locator('form.admin-storefront-form');
   await restoreAppearance.locator('input[name="brand_subtitle"]').fill(originalSubtitle);
   await restoreAppearance.locator('input[name="theme_radius"]').evaluate((element, value) => {
