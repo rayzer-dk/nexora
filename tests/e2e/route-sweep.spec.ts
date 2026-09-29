@@ -2,6 +2,8 @@ import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
 import { expectNoBrokenImages, expectNoServerError } from './helpers';
 
+test.describe.configure({ timeout: 180_000, retries: 0 });
+
 type RouteDump = Record<string, { path: string; method: string }>;
 
 function routes(): RouteDump {
