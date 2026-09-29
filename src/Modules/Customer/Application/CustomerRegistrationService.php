@@ -21,13 +21,14 @@ final readonly class CustomerRegistrationService
         private Connection $db,
         private PublicIdFactory $ids,
         private UserPasswordHasherInterface $passwords,
+        private CustomerStoreMembershipService $memberships,
         private EventBusInterface $events,
         private DomainEventFactory $eventFactory,
     ) {
     }
 
     /** @return array{id:int,public_id:string,email:string,display_name:string} */
-    public function register(string $email, string $displayName, string $password, string $locale): array
+    public function register(int $storeId, string $email, string $displayName, string $password, string $locale): array
     {
         $email = mb_strtolower(trim($email));
         $displayName = trim($displayName);
@@ -49,7 +50,7 @@ final readonly class CustomerRegistrationService
         $now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
 
         try {
-            $result = $this->db->transactional(function (Connection $db) use ($publicId, $email, $displayName, $locale, $passwordHash, $now): array {
+            $result = $this->db->transactional(function (Connection $db) use ($storeId, $publicId, $email, $displayName, $locale, $passwordHash, $now): array {
                 $db->insert('mc_customer', [
                     'public_id' => $publicId->toBinary(),
                     'email' => $email,
@@ -64,11 +65,12 @@ final readonly class CustomerRegistrationService
                     'last_seen_at' => null,
                 ]);
                 $customerId = (int) $db->lastInsertId();
+                $this->memberships->ensure($storeId, $customerId);
                 $this->events->publish($this->eventFactory->create(
                     EventNames::CUSTOMER_REGISTERED,
                     'customer',
                     $publicId->toRfc4122(),
-                    ['locale' => mb_substr($locale, 0, 16)],
+                    ['store_id' => $storeId, 'locale' => mb_substr($locale, 0, 16)],
                     ['source' => 'customer_account'],
                 ));
                 return [
