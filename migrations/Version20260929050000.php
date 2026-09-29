@@ -11,7 +11,7 @@ final class Version20260929050000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Store-scoped Media Library ownership and metadata while preserving globally deduplicated media files.';
+        return 'Store-scoped Media Library ownership plus store scope for integration and marketing jobs.';
     }
 
     public function up(Schema $schema): void
@@ -67,33 +67,28 @@ final class Version20260929050000 extends AbstractMigration
             LEFT JOIN mc_store_media_asset sma ON sma.asset_id=ma.id
             WHERE sma.asset_id IS NULL");
 
-        $this->addSql('ALTER TABLE mc_integration_sync_queue ADD COLUMN store_id BIGINT UNSIGNED NULL AFTER id, ADD KEY idx_integration_sync_store (store_id,integration_code,status,updated_at), ADD CONSTRAINT fk_integration_sync_store FOREIGN KEY (store_id) REFERENCES mc_store(id) ON DELETE CASCADE');
+        $this->addSql("ALTER TABLE mc_integration_sync_queue
+            ADD COLUMN store_id BIGINT UNSIGNED NULL AFTER id,
+            ADD KEY idx_integration_sync_store (store_id,integration_code,status,updated_at),
+            ADD CONSTRAINT fk_integration_sync_store FOREIGN KEY (store_id) REFERENCES mc_store(id) ON DELETE CASCADE");
+
         $this->addSql("UPDATE mc_integration_sync_queue
             SET store_id=CAST(JSON_UNQUOTE(JSON_EXTRACT(payload,'$.store_id')) AS UNSIGNED)
-            WHERE JSON_UNQUOTE(JSON_EXTRACT(payload,'$.store_id')) REGEXP '^[0-9]+    }
+            WHERE JSON_UNQUOTE(JSON_EXTRACT(payload,'$.store_id')) REGEXP '^[0-9]+$'");
 
-    public function down(Schema $schema): void
-    {
-        $this->addSql('ALTER TABLE mc_marketing_delivery DROP FOREIGN KEY fk_marketing_delivery_store, DROP INDEX idx_marketing_delivery_store, DROP COLUMN store_id');
-        $this->addSql('ALTER TABLE mc_integration_sync_queue DROP FOREIGN KEY fk_integration_sync_store, DROP INDEX idx_integration_sync_store, DROP COLUMN store_id');
-        $this->addSql('DROP TABLE IF EXISTS mc_store_media_asset');
-    }
-}
-");
         $this->addSql("UPDATE mc_integration_sync_queue
             SET store_id=CAST(JSON_UNQUOTE(JSON_EXTRACT(payload,'$.payload.store_id')) AS UNSIGNED)
-            WHERE store_id IS NULL AND JSON_UNQUOTE(JSON_EXTRACT(payload,'$.payload.store_id')) REGEXP '^[0-9]+    }
+            WHERE store_id IS NULL
+              AND JSON_UNQUOTE(JSON_EXTRACT(payload,'$.payload.store_id')) REGEXP '^[0-9]+$'");
 
-    public function down(Schema $schema): void
-    {
-        $this->addSql('DROP TABLE IF EXISTS mc_store_media_asset');
-    }
-}
-");
+        $this->addSql("ALTER TABLE mc_marketing_delivery
+            ADD COLUMN store_id BIGINT UNSIGNED NULL AFTER id,
+            ADD KEY idx_marketing_delivery_store (store_id,provider,status,updated_at),
+            ADD CONSTRAINT fk_marketing_delivery_store FOREIGN KEY (store_id) REFERENCES mc_store(id) ON DELETE CASCADE");
 
-        $this->addSql('ALTER TABLE mc_marketing_delivery ADD COLUMN store_id BIGINT UNSIGNED NULL AFTER id, ADD KEY idx_marketing_delivery_store (store_id,provider,status,updated_at), ADD CONSTRAINT fk_marketing_delivery_store FOREIGN KEY (store_id) REFERENCES mc_store(id) ON DELETE CASCADE');
         $this->addSql("UPDATE mc_marketing_delivery md
-            JOIN mc_integration_sync_queue q ON q.integration_code='marketing'
+            JOIN mc_integration_sync_queue q
+              ON q.integration_code='marketing'
              AND JSON_UNQUOTE(JSON_EXTRACT(q.payload,'$.event_id'))=md.event_id
             SET md.store_id=q.store_id
             WHERE q.store_id IS NOT NULL");
@@ -101,6 +96,16 @@ final class Version20260929050000 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
+        $this->addSql("ALTER TABLE mc_marketing_delivery
+            DROP FOREIGN KEY fk_marketing_delivery_store,
+            DROP INDEX idx_marketing_delivery_store,
+            DROP COLUMN store_id");
+
+        $this->addSql("ALTER TABLE mc_integration_sync_queue
+            DROP FOREIGN KEY fk_integration_sync_store,
+            DROP INDEX idx_integration_sync_store,
+            DROP COLUMN store_id");
+
         $this->addSql('DROP TABLE IF EXISTS mc_store_media_asset');
     }
 }
