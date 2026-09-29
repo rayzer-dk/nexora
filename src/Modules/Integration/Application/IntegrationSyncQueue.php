@@ -14,10 +14,11 @@ final readonly class IntegrationSyncQueue
     }
 
     /** @param array<string,mixed> $payload */
-    public function enqueue(string $integration, string $aggregateType, string $aggregateId, string $operation, array $payload, string $dedupeKey): void
+    public function enqueue(string $integration, string $aggregateType, string $aggregateId, string $operation, array $payload, string $dedupeKey, ?int $storeId = null): void
     {
         try {
             $this->db->insert('mc_integration_sync_queue', [
+                'store_id' => $storeId,
                 'integration_code' => $integration,
                 'aggregate_type' => $aggregateType,
                 'aggregate_id' => $aggregateId,
