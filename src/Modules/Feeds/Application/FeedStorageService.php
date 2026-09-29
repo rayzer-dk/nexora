@@ -19,14 +19,14 @@ final readonly class FeedStorageService
         $path=$dir.'/'.$platform.'.'.$result['extension'];$tmp=$path.'.tmp-'.bin2hex(random_bytes(4));
         if(@file_put_contents($tmp,$result['content'],LOCK_EX)===false)throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.4a9c6d0b2089'));@chmod($tmp,0640);if(!@rename($tmp,$path)){@unlink($tmp);throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.1c4a6cba7aee'));}
         $meta=['platform'=>$platform,'store_code'=>$storeCode,'locale'=>$locale,'currency'=>$currency,'count'=>$result['count'],'skipped'=>$result['skipped'],'warnings'=>$result['warnings'],'generated_at'=>gmdate('c'),'sha256'=>hash_file('sha256',$path),'bytes'=>(int)filesize($path),'content_type'=>$result['content_type'],'extension'=>$result['extension']];
-        $metaPath=$dir.'/'.$platform.'.json';$metaTmp=$metaPath.'.tmp-'.bin2hex(random_bytes(4));file_put_contents($metaTmp,json_encode($meta,JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)."\n",LOCK_EX);@chmod($metaTmp,0640);@rename($metaTmp,$metaPath);
+        $metaPath=$dir.'/'.$platform.'.meta.json';$metaTmp=$metaPath.'.tmp-'.bin2hex(random_bytes(4));file_put_contents($metaTmp,json_encode($meta,JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)."\n",LOCK_EX);@chmod($metaTmp,0640);@rename($metaTmp,$metaPath);
         return ['path'=>$path,'meta'=>$meta];
     }
 
     /** @return array{path:string,meta:array<string,mixed>}|null */
     public function latest(string $storeCode,string $platform,string $locale): ?array
     {
-        $this->assertKey($storeCode);$this->assertKey($platform);$dir=$this->directory($storeCode,$locale);$metaPath=$dir.'/'.$platform.'.json';if(!is_file($metaPath))return null;$raw=@file_get_contents($metaPath);if(!is_string($raw))return null;try{$meta=json_decode($raw,true,64,JSON_THROW_ON_ERROR);}catch(\Throwable){return null;}if(!is_array($meta)||empty($meta['extension']))return null;$path=$dir.'/'.$platform.'.'.$meta['extension'];if(!is_file($path))return null;return ['path'=>$path,'meta'=>$meta];
+        $this->assertKey($storeCode);$this->assertKey($platform);$dir=$this->directory($storeCode,$locale);$metaPath=$dir.'/'.$platform.'.meta.json';if(!is_file($metaPath)){$legacy=$dir.'/'.$platform.'.json';if(!is_file($legacy))return null;$metaPath=$legacy;}$raw=@file_get_contents($metaPath);if(!is_string($raw))return null;try{$meta=json_decode($raw,true,64,JSON_THROW_ON_ERROR);}catch(\Throwable){return null;}if(!is_array($meta)||empty($meta['extension'])||($metaPath!==$dir.'/'.$platform.'.meta.json'&&$meta['extension']==='json'))return null;$path=$dir.'/'.$platform.'.'.$meta['extension'];if(!is_file($path))return null;return ['path'=>$path,'meta'=>$meta];
     }
 
     private function directory(string $storeCode,string $locale): string{return rtrim($this->projectDir,'/\\').'/var/feeds/'.$storeCode.'/'.str_replace('-','_',$locale);}

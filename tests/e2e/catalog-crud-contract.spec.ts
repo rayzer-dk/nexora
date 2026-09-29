@@ -41,7 +41,10 @@ test('admin catalog create, publish, stock-price update and delete are reflected
   await productForm.locator('input[name="sku"]').fill(sku);
   await productForm.locator('input[name="slug"]').fill(productSlug);
   await productForm.locator('textarea[name="short_description"]').fill('E2E storefront catalog contract.');
-  await productForm.locator('textarea[name="description"]').fill('<p>E2E product body.</p>');
+  const descriptionEditor = productForm.locator('textarea[name="description"] + .rich-editor-mount .ProseMirror');
+  await expect(descriptionEditor).toBeVisible();
+  await descriptionEditor.click();
+  await page.keyboard.type('E2E product body.');
   await productForm.locator('input[name="price"]').fill('123.45');
   await productForm.locator('input[name="stock_quantity"]').fill('3');
   const categoryCheckbox = productForm.locator('label').filter({ hasText: categoryName }).locator('input[name="category_ids[]"]');
@@ -84,9 +87,12 @@ test('admin catalog create, publish, stock-price update and delete are reflected
   expect((await updateResponse).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
 
-  await page.goto('/' + productSlug, { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('body')).toContainText('321');
-  await expect(page.locator('form[data-buy-actions]')).toHaveCount(0);
+  // Storefront catalog queries are cached for a few seconds by design; poll until the admin change is visible.
+  await expect(async () => {
+    await page.goto('/' + productSlug, { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('body')).toContainText('321', { timeout: 1000 });
+    await expect(page.locator('form[data-buy-actions]')).toHaveCount(0, { timeout: 1000 });
+  }).toPass({ timeout: 20_000 });
 
   await page.goto('/admin/catalog/products?search=' + encodeURIComponent(sku), { waitUntil: 'domcontentloaded' });
   const productRow = page.locator('table tbody tr').filter({ hasText: sku }).first();

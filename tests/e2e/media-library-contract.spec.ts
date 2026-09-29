@@ -52,7 +52,7 @@ test('Media Library upload, metadata, search and store removal form one real lif
   const metadataResponse = page.waitForResponse((response) =>
     response.url().endsWith(`/admin/media/${assetId}/metadata`) && response.request().method() === 'POST'
   );
-  await metadataForm.locator('button[type="submit"]').click();
+  await metadataForm.locator('button.admin-primary-button').click();
   expect((await metadataResponse).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
 

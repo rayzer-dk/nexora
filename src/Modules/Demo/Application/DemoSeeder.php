@@ -281,6 +281,9 @@ final readonly class DemoSeeder
         $path=$this->projectDir.'/public/media/'.$storageKey;
         if(!is_file($path)){throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.d3aad94b3d8c').$storageKey);}
         $size=getimagesize($path); if($size===false){throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.28f8db879325').$storageKey);}
+        // One asset per storage key: the same demo image may back several products, promos and articles.
+        $existing=$db->fetchOne('SELECT id FROM mc_media_asset WHERE storage_key_hash=?',[hash('sha256',$storageKey,true)]);
+        if($existing!==false){return (int)$existing;}
         $public=$this->publicIds->generate();
         $db->insert('mc_media_asset',['public_id'=>$public->toBinary(),'storage_key'=>$storageKey,'storage_key_hash'=>hash('sha256',$storageKey,true),'mime_type'=>(string)$size['mime'],'bytes'=>(int)filesize($path),'width'=>(int)$size[0],'height'=>(int)$size[1],'checksum_sha256'=>hash_file('sha256',$path,true),'metadata'=>json_encode(array_merge(['demo'=>true],$metadata),JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),'created_at'=>$now]);
         return (int)$db->lastInsertId();

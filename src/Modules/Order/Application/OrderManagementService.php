@@ -63,9 +63,6 @@ final readonly class OrderManagementService
         if (mb_strlen($trackingNumber) > 190) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.nomer_vidpravlennia_zanadto_dovhyi'));
         }
-        if (in_array($status, ['shipped', 'delivered'], true) && $trackingNumber === '') {
-            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.dlia_vidpravlenoho_zamovlennia_vkazhit_nomer_vidprav'));
-        }
 
         $this->db->transactional(function (Connection $db) use ($orderPublicId, $status, $trackingNumber, $actor): void {
             $order = $this->lockOrder($db, $orderPublicId);
@@ -90,6 +87,12 @@ final readonly class OrderManagementService
                 if (!in_array($status, $allowed, true)) {
                     throw new \DomainException(sprintf(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.perekhid_dostavky_s_s_zaboronenyi'), $current, $status));
                 }
+            }
+
+            // A shipment needs a tracking number, but it may already be stored; later steps (delivered, pickup) keep it and never require one.
+            $trackingNumber = $trackingNumber !== '' ? $trackingNumber : trim((string) ($fulfillment['tracking_number'] ?? ''));
+            if ($status === 'shipped' && $trackingNumber === '') {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.dlia_vidpravlenoho_zamovlennia_vkazhit_nomer_vidprav'));
             }
 
             $now = $this->now();

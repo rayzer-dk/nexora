@@ -249,7 +249,7 @@ test('admin search synonym changes real catalog search and deletion removes the 
   await expect(page.locator('[data-product-card]').filter({ hasText: productName }).first()).toBeVisible();
 
   await page.goto('/admin/catalog/search', { waitUntil: 'domcontentloaded' });
-  const group = page.locator('.admin-editor-card').filter({ hasText: label });
+  const group = page.locator('table.admin-data-table tbody tr').filter({ hasText: label });
   await expect(group).toBeVisible();
   const deleteForm = group.locator('form[action*="/synonyms/"][action$="/delete"]');
   const deleteResponsePromise = page.waitForResponse((response) =>
@@ -272,12 +272,12 @@ test('published Home Builder layout changes SSR storefront and can be restored',
   await expect(page.locator('[data-builder-list] .mc-builder-block').first()).toBeVisible();
 
   const layoutField = page.locator('textarea[data-layout-json]');
-  const originalLayout = await layoutField.inputValue();
   const heroRow = page.locator('[data-builder-list] [data-block-id]').filter({ hasText: 'hero' }).first();
   await expect(heroRow).toBeVisible();
   await heroRow.locator('[data-select]').click();
   const titleField = page.locator('[data-inspector] input[data-prop="props.title"]');
   await expect(titleField).toBeVisible();
+  const originalTitle = await titleField.inputValue();
   const marker = `E2E Home Builder ${Date.now()}`;
 
   try {
@@ -298,13 +298,8 @@ test('published Home Builder layout changes SSR storefront and can be restored',
     await expect(page.getByRole('heading', { name: marker })).toBeVisible();
   } finally {
     await page.goto('/admin/appearance/builder/home', { waitUntil: 'domcontentloaded' });
-    const restoreField = page.locator('textarea[data-layout-json]');
-    await restoreField.evaluate((element, value) => {
-      const textarea = element as HTMLTextAreaElement;
-      textarea.value = String(value);
-      textarea.dispatchEvent(new Event('input', { bubbles: true }));
-      textarea.dispatchEvent(new Event('change', { bubbles: true }));
-    }, originalLayout);
+    await page.locator('[data-builder-list] [data-block-id]').filter({ hasText: 'hero' }).first().locator('[data-select]').click();
+    await page.locator('[data-inspector] input[data-prop="props.title"]').fill(originalTitle);
     const restoreResponsePromise = page.waitForResponse((response) =>
       response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
     );
@@ -509,26 +504,25 @@ test('storefront order is fully operable from admin lifecycle actions', async ({
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('.admin-runtime__metrics')).toContainText('paid');
 
-  const fulfillmentForm = page.locator(`form[action="/admin/orders/${orderId}/fulfillment"]`);
-  await expect(fulfillmentForm).toBeVisible();
-  await fulfillmentForm.locator('select[name="status"]').selectOption('delivered');
-  const fulfillmentResponsePromise = page.waitForResponse((response) =>
-    response.url().endsWith(`/admin/orders/${orderId}/fulfillment`) && response.request().method() === 'POST'
-  );
-  await fulfillmentForm.locator('button[type="submit"]').click();
-  expect((await fulfillmentResponsePromise).status()).toBeLessThan(400);
-  await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.admin-runtime__metrics')).toContainText('delivered');
+  await expect(page.locator(`form[action="/admin/orders/${orderId}/fulfillment"]`)).toBeVisible();
+  // The fulfillment state machine forbids skipping "shipped"; a shipment needs a tracking number, later steps keep it.
+  for (const step of ['shipped', 'delivered']) {
+    const form = page.locator(`form[action="/admin/orders/${orderId}/fulfillment"]`);
+    await form.locator('select[name="status"]').selectOption(step);
+    if (step === 'shipped') await form.locator('input[name="tracking_number"]').fill('E2E-TTN-0001');
+    const responsePromise = page.waitForResponse((response) =>
+      response.url().endsWith(`/admin/orders/${orderId}/fulfillment`) && response.request().method() === 'POST'
+    );
+    await form.locator('button[type="submit"]').click();
+    expect((await responsePromise).status()).toBeLessThan(400);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('.store-notice.is-error,.admin-notice.is-error,.admin-flash--error')).toHaveCount(0);
+    await expect(page.locator('.admin-runtime__metrics')).toContainText(step);
+  }
 
-  const completeForm = page.locator(`form[action="/admin/orders/${orderId}/complete"]`);
-  await expect(completeForm).toBeVisible();
-  const completeResponsePromise = page.waitForResponse((response) =>
-    response.url().endsWith(`/admin/orders/${orderId}/complete`) && response.request().method() === 'POST'
-  );
-  await completeForm.locator('button[type="submit"]').click();
-  expect((await completeResponsePromise).status()).toBeLessThan(400);
-  await page.waitForLoadState('domcontentloaded');
+  // A paid order that reaches "delivered" completes automatically, so the manual completion form disappears.
   await expect(page.locator('.admin-runtime__metrics')).toContainText('completed');
+  await expect(page.locator(`form[action="/admin/orders/${orderId}/complete"]`)).toHaveCount(0);
 });
 
 
@@ -577,7 +571,7 @@ test('system information page content and SEO fields render exactly on storefron
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', `${metaMarker} description`);
 
   await page.goto('/admin/content/pages/about', { waitUntil: 'domcontentloaded' });
-  const restoreToken = await page.locator('input[name="_token"]').inputValue();
+  const restoreToken = await contentForm.locator('input[name="_token"]').inputValue();
   const restore = await page.request.post('/admin/content/pages/about', {
     maxRedirects: 0,
     form: { _token: restoreToken, ...original },
@@ -742,6 +736,7 @@ test('recovery snapshot can be created, verified, downloaded and deleted from ad
     response.url().endsWith('/admin/system/recovery/create') && response.request().method() === 'POST'
   );
   await createForm.locator('button').click();
+  await page.locator('[data-confirm-accept]').click();
   expect((await createResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
@@ -761,7 +756,7 @@ test('recovery snapshot can be created, verified, downloaded and deleted from ad
   await verify.locator('button[type="submit"]').click();
   expect((await verifyResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.store-notice.is-success')).toBeVisible();
+  await expect(page.locator('.store-notice.is-success').first()).toBeAttached(); // source node is mirrored into a toast and hidden
 
   const verifiedRow = page.locator('table.admin-table tbody tr').filter({ hasText: 'manual-admin-database' }).first();
   const downloadHref = await verifiedRow.locator('a[href$="/download"]').getAttribute('href');
@@ -776,6 +771,7 @@ test('recovery snapshot can be created, verified, downloaded and deleted from ad
     response.url().includes('/admin/system/recovery/') && response.url().endsWith('/delete') && response.request().method() === 'POST'
   );
   await deleteForm.locator('button').click();
+  await page.locator('[data-confirm-accept]').click();
   expect((await deleteResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('table.admin-table tbody tr').filter({ hasText: 'manual-admin-database' })).toHaveCount(0);
@@ -792,7 +788,7 @@ test('Product Builder publication changes the real product page and restores cle
 
   await loginAdmin(page);
   await page.goto('/admin/appearance/builder/product', { waitUntil: 'domcontentloaded' });
-  const token = await page.locator('input[name="_csrf_token"]').inputValue();
+  const token = await page.locator('#builder-form input[name="_csrf_token"]').inputValue();
   const originalRaw = await page.locator('textarea[name="layout_json"]').inputValue();
   const layout = JSON.parse(originalRaw);
   const description = layout.blocks?.find((row: { component?: string }) => row.component === 'product_description');
@@ -812,7 +808,7 @@ test('Product Builder publication changes the real product page and restores cle
     await expect(page.locator('.product-block--description')).toHaveCount(0);
   } finally {
     await page.goto('/admin/appearance/builder/product', { waitUntil: 'domcontentloaded' });
-    const restoreToken = await page.locator('input[name="_csrf_token"]').inputValue();
+    const restoreToken = await page.locator('#builder-form input[name="_csrf_token"]').inputValue();
     const restore = await page.request.post('/admin/appearance/builder/product', {
       maxRedirects: 0,
       form: { _csrf_token: restoreToken, layout_json: originalRaw, builder_action: 'publish' },
@@ -837,7 +833,7 @@ test('Checkout Builder publication changes the real checkout page and restores c
 
   await loginAdmin(page);
   await page.goto('/admin/appearance/builder/checkout', { waitUntil: 'domcontentloaded' });
-  const token = await page.locator('input[name="_csrf_token"]').inputValue();
+  const token = await page.locator('#builder-form input[name="_csrf_token"]').inputValue();
   const originalRaw = await page.locator('textarea[name="layout_json"]').inputValue();
   const layout = JSON.parse(originalRaw);
   const comment = layout.blocks?.find((row: { component?: string }) => row.component === 'checkout_comment');
@@ -858,7 +854,7 @@ test('Checkout Builder publication changes the real checkout page and restores c
     await expect(page.locator('[data-checkout-block="comment"],textarea[name="customer_comment"]')).toHaveCount(0);
   } finally {
     await page.goto('/admin/appearance/builder/checkout', { waitUntil: 'domcontentloaded' });
-    const restoreToken = await page.locator('input[name="_csrf_token"]').inputValue();
+    const restoreToken = await page.locator('#builder-form input[name="_csrf_token"]').inputValue();
     const restore = await page.request.post('/admin/appearance/builder/checkout', {
       maxRedirects: 0,
       form: { _csrf_token: restoreToken, layout_json: originalRaw, builder_action: 'publish' },
@@ -960,9 +956,12 @@ test('product slug change updates canonical links and creates a direct old-URL r
     expect(old.status()).toBe(301);
     expect(old.headers()['location']).toBe('/' + qaSlug);
 
-    await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
-    const card = page.locator('[data-product-card]').filter({ hasText: name }).first();
-    await expect(card.locator('h2 a')).toHaveAttribute('href', '/' + qaSlug);
+    // The catalog listing cache deliberately bounds staleness to a few seconds; the old link keeps working through the 301 above.
+    await expect(async () => {
+      await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+      const card = page.locator('[data-product-card]').filter({ hasText: name }).first();
+      await expect(card.locator('h2 a')).toHaveAttribute('href', '/' + qaSlug, { timeout: 1000 });
+    }).toPass({ timeout: 20_000 });
   } finally {
     await page.goto(editUrl!, { waitUntil: 'domcontentloaded' });
     await page.locator('input[name="slug"]').fill(originalSlug);

@@ -47,12 +47,12 @@ test('ROLE_VIEWER is genuinely read-only and store scoped at the server', async 
   expect((await createResponse).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
-  await expect(page.getByText(email, { exact: true })).toBeVisible();
+  await expect(page.locator('details.admin-editor-card > summary').filter({ hasText: email })).toBeVisible();
 
   const logout = page.locator('form[action="/admin/logout"]');
   if (await logout.count()) {
     await Promise.all([
-      page.waitForURL(/\/admin\/login/),
+      page.waitForURL((url) => !url.pathname.startsWith('/admin')), // logout returns to the storefront
       logout.evaluate((form: HTMLFormElement) => form.requestSubmit()),
     ]);
   } else {

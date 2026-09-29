@@ -4,6 +4,8 @@ const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? k
  const root=document.querySelector('[data-builder]'); if(!root)return; const builderType=root.dataset.builderType||'';
  const list=root.querySelector('[data-builder-list]'), json=root.querySelector('[data-layout-json]'), inspector=root.querySelector('[data-inspector]'), preview=root.querySelector('[data-preview-canvas]');
  const picker=document.querySelector('[data-media-picker]'); let data=JSON.parse(json.value||'{"schema_version":1,"blocks":[]}'), selected=null, drag=null, mediaTarget=null;
+ // PHP encodes empty maps as [] — treat them as objects so edits to props/style/visibility are not lost by JSON.stringify.
+ const asMap=v=>v&&typeof v==='object'&&!Array.isArray(v)?v:{}; const normalizeBlocks=d=>{d.blocks=(Array.isArray(d.blocks)?d.blocks:[]).map(b=>({...b,props:asMap(b.props),style:asMap(b.style),visibility:asMap(b.visibility)}));return d;}; data=normalizeBlocks(data);
  const localDraftKey='mc.builder.local:'+location.pathname+':'+builderType; let localSaveTimer=null;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
  const idFor=c=>{let i=1;const id=c.replace(/[^a-z0-9]+/g,'_');while(data.blocks.some(b=>b.id===id+'_'+i))i++;return id+'_'+i};
