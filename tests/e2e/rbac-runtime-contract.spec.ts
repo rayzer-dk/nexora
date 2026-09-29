@@ -22,9 +22,14 @@ test('ROLE_VIEWER is genuinely read-only and store scoped at the server', async 
 
   await page.goto('/admin/system/access', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const create = page.locator('form[action="/admin/system/access/user/save"]').filter({
-    has: page.locator('input[name="display_name"]:not([value])'),
+  const createPanel = page.locator('details.admin-editor-card').filter({
+    has: page.locator('form[action="/admin/system/access/user/save"] input[name="display_name"]:not([value])'),
   }).last();
+  await expect(createPanel).toBeVisible();
+  if (!(await createPanel.getAttribute('open'))) {
+    await createPanel.locator('summary').click();
+  }
+  const create = createPanel.locator('form[action="/admin/system/access/user/save"]');
   await expect(create).toBeVisible();
   await create.locator('input[name="display_name"]').fill('E2E Read Only');
   await create.locator('input[name="email"]').fill(email);
