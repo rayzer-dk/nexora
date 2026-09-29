@@ -6,3 +6,6 @@
 /.env.local
 /.env.*.local
 /SHA256SUMS.txt
+/var/*
+!/var/.gitkeep
+/public/media/catalog/
