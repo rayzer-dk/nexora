@@ -275,6 +275,11 @@ test('published Home Builder layout changes SSR storefront and can be restored',
   await expect(titleField).toBeVisible();
   const marker = `E2E Home Builder ${Date.now()}`;
   await titleField.fill(marker);
+  await expect(layoutField).toHaveValue(new RegExp(marker.replace(/[.*+?^$\{\}()|[\]\\]/g, '\\  await titleField.fill(marker);
+
+  const publishResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
+  );')));
 
   const publishResponsePromise = page.waitForResponse((response) =>
     response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
@@ -283,6 +288,10 @@ test('published Home Builder layout changes SSR storefront and can be restored',
   expect((await publishResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('.admin-flash--error,.store-notice.is-error')).toHaveCount(0);
+  await expect(page.locator('textarea[data-layout-json]')).toHaveValue(new RegExp(marker.replace(/[.*+?^$\{\}()|[\]\\]/g, '\\  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-flash--error,.store-notice.is-error')).toHaveCount(0);
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });')));
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
