@@ -59,6 +59,7 @@ final readonly class StorefrontFeatureAccessSubscriber implements EventSubscribe
             '/api/storefront/catalog' => 'catalog',
             '/checkout' => 'checkout',
             '/catalog' => 'catalog',
+            '/product-feedback' => 'reviews',
             '/product/' => 'catalog',
             '/compare' => 'catalog',
             '/cart' => 'cart',
@@ -68,9 +69,24 @@ final readonly class StorefrontFeatureAccessSubscriber implements EventSubscribe
         ];
 
         foreach ($map as $prefix => $feature) {
-            if ($path === $prefix || str_starts_with($path, $prefix . '/') || str_ends_with($prefix, '/') && str_starts_with($path, $prefix)) {
+            if ($path === $prefix || str_starts_with($path, rtrim($prefix, '/') . '/')) {
                 return $feature;
             }
+        }
+
+        if (in_array($path, [
+            '/about-us',
+            '/contact',
+            '/shipping',
+            '/payment',
+            '/returns',
+            '/warranty',
+            '/faq',
+            '/privacy-policy',
+            '/cookie-policy',
+            '/terms-and-conditions',
+        ], true)) {
+            return 'content';
         }
 
         return null;
