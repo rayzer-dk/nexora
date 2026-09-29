@@ -80,7 +80,9 @@ foreach ($requiredExtensions as $extension) {
 }
 
 $vendorReady = is_file($projectDir . '/vendor/autoload_runtime.php');
-$addCheck('Composer vendor', $vendorReady ? it('installer.hotovo') : it('installer.vidsutniy'), $vendorReady);
+$assetsReady = is_file($projectDir . '/public/build/.vite/manifest.json');
+$addCheck(it('installer.composer_dependencies'), $vendorReady ? it('installer.hotovo') : it('installer.vidsutniy'), $vendorReady);
+$addCheck(it('installer.frontend_assets'), $assetsReady ? it('installer.hotovo') : it('installer.vidsutniy'), $assetsReady);
 
 foreach ([
     [it('installer.korin_proyektu'), $projectDir],
@@ -143,7 +145,9 @@ $addCheck('Timezone', $timezone !== '' ? $timezone : it('installer.nevidomo'), $
 
 $cli = phpCliProbe($projectDir);
 $addCheck('PHP CLI', $cli['message'], $cli['passed'], false);
-$addCheck('bin/console', $cli['console_message'], $cli['console_passed'], false);
+if ($cli['passed']) {
+    $addCheck('bin/console', $cli['console_message'], $cli['console_passed'], false);
+}
 
 $symlink = symlinkProbe($projectDir . '/var');
 $addCheck('Symlink', $symlink['message'], $symlink['passed'], false);
@@ -418,7 +422,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'public_url' => $publicUrl,
                 'install_demo' => $installDemo,
                 'site_mode' => $siteMode,
-                'locale' => $installerLocale,
             ];
             $installResult = runApplicationInstall($projectDir, $installPayload, [$dbPassword, $adminPassword]);
             if (($installResult['code'] ?? 1) !== 0 || !is_file($lockFile)) {
@@ -894,7 +897,6 @@ function runApplicationInstall(string $projectDir, array $payload, array $secret
             '--admin-password' => (string) ($payload['admin_password'] ?? ''),
             '--public-url' => (string) ($payload['public_url'] ?? ''),
             '--site-mode' => (string) ($payload['site_mode'] ?? 'shop'),
-            '--locale' => (string) ($payload['locale'] ?? 'uk-UA'),
             '--no-interaction' => true,
         ];
         if ((bool) ($payload['install_demo'] ?? false)) {
@@ -1026,20 +1028,30 @@ function e(string $value): string
 <link rel="shortcut icon" href="assets/branding/nexora-mark.svg">
 <style>
 :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;background:#f5f7fb}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1320px;margin:32px auto;padding:0 24px}.card{background:#fff;border:1px solid #dfe5ef;border-radius:18px;box-shadow:0 18px 50px rgba(29,43,76,.08);padding:28px;margin-bottom:20px}h1{margin:0 0 8px;font-size:30px}h2{font-size:19px;margin:0 0 18px}.muted{color:#667085;margin:0}.setup-brand{display:flex;align-items:center;gap:14px}.setup-brand img{width:68px;height:68px;flex:0 0 68px}.setup-brand h1{margin:0 0 3px}.setup-brand__copy{min-width:0}.setup-head{display:flex;align-items:center;justify-content:space-between;gap:18px}.language-switch{display:flex;flex-direction:row;align-items:center;gap:6px;width:auto;padding:5px;border:1px solid #e1e6ef;border-radius:12px;background:#f8fafc}.language-switch a{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:8px 11px;border:1px solid transparent;border-radius:8px;color:#344054;text-decoration:none;font-size:14px;white-space:nowrap;line-height:1.25}.language-switch a:hover{background:#fff;border-color:#d7dfeb}.language-switch a.active{border-color:#a9c6ff;background:#eef4ff;color:#165dff;font-weight:700}.lang-flag{display:block;width:28px;height:18px;border-radius:3px;box-shadow:0 0 0 1px rgba(15,23,42,.16);flex:0 0 28px;overflow:hidden}.lang-label{display:block;line-height:1.3;padding:1px 0 2px}.checks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.check{position:relative;padding:10px 12px 10px 38px;border:1px solid #e4e7ec;border-radius:10px;font-size:14px}.check:before{position:absolute;left:12px;top:10px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}.ok:before{content:"✓";background:#16a34a;color:#fff}.bad:before{content:"×";background:#dc2626;color:#fff}.warn:before{content:"!";background:#d97706;color:#fff}.ok{border-color:#b7e4c7;background:#f0fff4}.bad{border-color:#f4b9b9;background:#fff5f5}.warn{border-color:#f1d88c;background:#fff9e8}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.full{grid-column:1/-1}.setup-group{grid-column:1/-1;padding:16px;border:1px solid #e4e7ec;border-radius:14px;background:#fbfcfe}.setup-group h3{margin:0 0 4px;font-size:16px}.setup-group p{margin:0;color:#667085;font-size:13px}.password-wrap{position:relative}.password-wrap input{padding-right:48px}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:1px solid #d0d5dd;border-radius:8px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#344054}.password-toggle svg{width:18px;height:18px}.password-toggle .eye-off{display:none}.password-toggle[aria-pressed="true"] .eye{display:none}.password-toggle[aria-pressed="true"] .eye-off{display:block}.field-hint{margin:7px 0 0;color:#667085;font-size:12px}.info-note{margin:10px 0 0;padding:9px 11px;border-left:3px solid #3b82f6;background:#eff6ff;color:#1e4f8f;border-radius:7px;font-size:12px}.info-note[hidden]{display:none}.password-toggle:hover{background:#f2f6ff;border-color:#9bb9ff}label{display:block;font-size:13px;font-weight:650;margin-bottom:6px}input,select{width:100%;padding:12px 13px;border:1px solid #cfd6e4;border-radius:10px;font:inherit;background:#fff}input:focus,select:focus{outline:2px solid #1f6feb33;border-color:#1f6feb}.button{display:inline-flex;border:0;border-radius:10px;padding:13px 18px;background:#165dff;color:#fff;font-weight:700;cursor:pointer}.button:disabled{opacity:.45;cursor:not-allowed}.errors{background:#fff1f1;border:1px solid #f0b6b6;padding:14px;border-radius:10px;margin:0;color:#8a1c1c}.error-card{border-color:#f0b6b6;box-shadow:0 8px 28px rgba(180,35,24,.10)}.checkbox{display:flex;align-items:center;gap:8px}.checkbox input{width:auto}code{background:#f2f4f7;padding:2px 5px;border-radius:5px}@media(max-width:1100px){.checks{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:820px){.checks{grid-template-columns:repeat(2,minmax(0,1fr))}.setup-head{align-items:flex-start;flex-direction:column}.language-switch{width:auto}}@media(max-width:600px){.grid{grid-template-columns:1fr}.checks{grid-template-columns:1fr}.wrap{margin:16px auto;padding:0 12px}.card{padding:18px}.language-switch{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.language-switch a{justify-content:center;padding:8px 6px}.lang-flag{width:24px;height:16px;flex-basis:24px}.lang-label{overflow:hidden;text-overflow:ellipsis}}
+.setup-status{margin:0 0 14px;padding:12px 14px;border-radius:10px;font-size:14px;font-weight:650}.setup-status.ready{color:#166534;background:#f0fff4;border:1px solid #b7e4c7}.setup-status.blocked{color:#9f1d1d;background:#fff5f5;border:1px solid #f4b9b9}.setup-help{margin:0 0 14px;padding:12px 14px;border-radius:10px;color:#344054;background:#eff6ff;border:1px solid #bfdbfe;font-size:14px;line-height:1.5}.checks-issues{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:16px}.setup-details{border-top:1px solid #e4e7ec;padding-top:14px}.setup-details summary{color:#165dff;font-weight:650;cursor:pointer}.setup-details[open] .checks{margin-top:14px}@media(max-width:600px){.checks-issues{grid-template-columns:1fr}}
 </style>
 </head>
 <body><main class="wrap">
-<section class="card"><div class="setup-head"><div class="setup-brand"><img src="assets/branding/nexora-mark.svg" alt="Nexora Commerce" width="68" height="68"><div class="setup-brand__copy"><h1>Nexora Commerce</h1><p class="muted"><?= e(it('installer.intro')) ?></p></div></div><nav class="language-switch" aria-label="Language">
+<section class="card"><div class="setup-head"><div class="setup-brand"><img src="assets/branding/nexora-mark.svg" alt="Nexora Commerce" width="68" height="68"><div class="setup-brand__copy"><h1>Nexora Commerce</h1></div></div><nav class="language-switch" aria-label="Language">
 <a href="?lang=uk-UA" class="<?= $installerLocale === 'uk-UA' ? 'active' : '' ?>" hreflang="uk"><svg class="lang-flag" viewBox="0 0 22 15" preserveAspectRatio="none" aria-hidden="true"><rect width="22" height="7.5" fill="#0057b7"/><rect y="7.5" width="22" height="7.5" fill="#ffd700"/></svg><span class="lang-label"><?= e(it('installer.language_ukrainian')) ?></span></a>
 <a href="?lang=ru-RU" class="<?= $installerLocale === 'ru-RU' ? 'active' : '' ?>" hreflang="ru"><svg class="lang-flag" viewBox="0 0 22 15" preserveAspectRatio="none" aria-hidden="true"><rect width="22" height="5" fill="#fff"/><rect y="5" width="22" height="5" fill="#1f5aa6"/><rect y="10" width="22" height="5" fill="#d52b1e"/></svg><span class="lang-label"><?= e(it('installer.language_russian')) ?></span></a>
 <a href="?lang=en-US" class="<?= $installerLocale === 'en-US' ? 'active' : '' ?>" hreflang="en"><svg class="lang-flag" viewBox="0 0 60 30" preserveAspectRatio="none" aria-hidden="true"><clipPath id="ukFlagClip"><rect width="60" height="30" rx="1.5"/></clipPath><g clip-path="url(#ukFlagClip)"><rect width="60" height="30" fill="#012169"/><path d="M0 0L60 30M60 0L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0L60 30M60 0L0 30" stroke="#C8102E" stroke-width="3.4"/><path d="M30 0V30M0 15H60" stroke="#fff" stroke-width="10"/><path d="M30 0V30M0 15H60" stroke="#C8102E" stroke-width="6"/></g></svg><span class="lang-label"><?= e(it('installer.language_english')) ?></span></a>
 </nav></div></section>
 <?php if ($errors !== []): ?><section class="card error-card" id="install-errors"><div class="errors" role="alert" aria-live="assertive"><?php foreach ($errors as $error): ?><div><?= e($error) ?></div><?php endforeach; ?></div></section><?php endif; ?>
-<section class="card"><h2><?= e(it('installer.server_check')) ?></h2><div class="checks">
+<section class="card"><h2><?= e(it('installer.server_check')) ?></h2>
+<p class="setup-status <?= $runtimeReady ? 'ready' : 'blocked' ?>"><?= e(it($runtimeReady ? 'installer.checks_ready' : 'installer.checks_blocked')) ?></p>
+<?php if (!$vendorReady || !$assetsReady): ?><p class="setup-help"><?= e(it('installer.source_vendor_notice')) ?></p><?php endif; ?>
+<?php $failedChecks = array_values(array_filter($checks, static fn (array $check): bool => !$check['passed'])); ?>
+<?php if ($failedChecks !== []): ?><div class="checks checks-issues">
+<?php foreach ($failedChecks as $check): ?>
+<div class="check <?= $check['required'] ? 'bad' : 'warn' ?>"><strong><?= e((string) $check['label']) ?></strong><br><?= e((string) $check['current']) ?></div>
+<?php endforeach; ?>
+</div><?php endif; ?>
+<details class="setup-details"><summary><?= e(it('installer.all_checks')) ?></summary><div class="checks">
 <?php foreach ($checks as $check): ?>
 <div class="check <?= $check['passed'] ? 'ok' : ($check['required'] ? 'bad' : 'warn') ?>"><strong><?= e((string) $check['label']) ?></strong><br><?= e((string) $check['current']) ?></div>
 <?php endforeach; ?>
-</div><?php if (!$vendorReady): ?><p class="muted" style="margin-top:14px"><?= e(it('installer.source_vendor_notice')) ?></p><?php endif; ?></section>
+</div></details></section>
 <section class="card"><h2><?= e(it('installer.store_install')) ?></h2>
 <form method="post" autocomplete="off"><input type="hidden" name="_lang" value="<?= e($installerLocale) ?>"><input type="hidden" name="_csrf" value="<?= e((string) $_SESSION['mc_setup_csrf']) ?>"><div class="grid">
 <div class="setup-group"><h3><?= e(it('installer.step_database')) ?></h3><p><?= e(it('installer.database_hint')) ?></p></div>
