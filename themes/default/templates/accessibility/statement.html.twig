@@ -1,0 +1,11 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="shell account-auth"><article class="account-card" data-accessibility-statement>
+<div class="account-card__head"><span class="eyebrow">{{ ui_text('a11y_eyebrow') }}</span><h1>{{ ui_text('a11y_title') }}</h1><p>{{ ui_text('a11y_intro') }}</p></div>
+<h2>{{ ui_text('a11y_standard_title') }}</h2><p>{{ ui_text('a11y_standard_text') }}</p>
+<h2>{{ ui_text('a11y_measures_title') }}</h2><p>{{ ui_text('a11y_measures_text') }}</p>
+<h2>{{ ui_text('a11y_limits_title') }}</h2><p>{{ ui_text('a11y_limits_text') }}</p>
+<h2>{{ ui_text('a11y_feedback_title') }}</h2><p>{{ ui_text('a11y_feedback_text') }} <a href="/contact">{{ ui_text('a11y_feedback_link') }}</a></p>
+<h2>{{ ui_text('a11y_enforcement_title') }}</h2><p>{{ ui_text('a11y_enforcement_text') }}</p>
+</article></section>
+{% endblock %}

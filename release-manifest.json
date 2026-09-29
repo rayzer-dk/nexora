@@ -1,10 +1,10 @@
 {
     "product": "Nexora Commerce",
-    "version": "3.8.1",
+    "version": "3.9.0",
     "channel": "production",
     "built_at_utc": "2026-09-28T00:00:00+00:00",
     "php": ">=8.4.0 <8.6.0",
-    "schema": 52,
+    "schema": 53,
     "contains_vendor": true,
     "contains_compiled_assets": true,
     "installer": "public/setup.php",

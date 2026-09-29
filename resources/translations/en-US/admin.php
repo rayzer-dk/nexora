@@ -2044,6 +2044,8 @@ return [
     'js_media_unavailable' => 'Media library unavailable',
     'admin.mfa.nav' => 'Account security',
     'admin.mfa.title' => 'Account security',
+    'admin.mfa.required_notice' => 'Store policy requires two-factor authentication: enable it to continue using the panel.',
+    'admin.mfa.required_cannot_disable' => 'Two-factor authentication is required by store policy (ADMIN_REQUIRE_MFA) and cannot be turned off from the panel.',
     'admin.mfa.lead' => 'Two-factor authentication protects admin sign-in even if the password is exposed.',
     'admin.mfa.status' => 'Two-factor authentication',
     'admin.mfa.on' => 'Enabled',
@@ -2083,4 +2085,8 @@ return [
     'admin.theme_toggle' => 'Toggle light/dark theme',
     'admin.appearance.pwa' => 'Installable app (PWA)',
     'admin.appearance.pwa.help' => 'Lets visitors add the store to their home screen; static files are cached and an offline page is shown without a connection.',
+    'admin.customer_experience.index.withdrawals' => 'Contract withdrawals',
+    'admin.customer_experience.index.withdrawal_scope' => 'Scope',
+    'admin.customer_experience.index.withdrawal_matched' => 'Order matched',
+    'admin.customer_experience.index.withdrawals_empty' => 'No withdrawal notices yet.',
 ];

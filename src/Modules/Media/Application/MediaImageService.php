@@ -307,6 +307,15 @@ final readonly class MediaImageService
     }
 
     /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
+    private function writeJpeg(GdImage $image,string $key,int $quality,int $width,int $height): array
+    {
+        $path=$this->publicMediaPath($key); $this->ensureDirectory(dirname($path));
+        imageinterlace($image,true);
+        if(!@imagejpeg($image,$path,max(1,min(100,$quality)))) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
+        @chmod($path,0644); return ['format'=>'jpeg','width'=>$width,'height'=>$height,'key'=>$key,'mime'=>'image/jpeg','bytes'=>(int)filesize($path)];
+    }
+
+    /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
     private function writePng(GdImage $image,string $key,int $width,int $height): array
     {
         $path=$this->publicMediaPath($key); $this->ensureDirectory(dirname($path));

@@ -24,12 +24,14 @@ final readonly class DeliveryPointCache
      */
     public function remember(string $providerCode, DeliveryPointSearch $search, int $ttlSeconds, callable $loader): array
     {
+        $types = array_map(static fn (\BackedEnum $type): string => (string) $type->value, $search->types);
+        sort($types);
         $key = 'commerce.shipping.points.' . hash('sha256', implode('|', [
             $providerCode,
             $search->countryCode,
             $search->cityId,
             mb_strtolower(trim($search->query), 'UTF-8'),
-            $search->type?->value ?? '*',
+            implode(',', $types) ?: '*',
             (string) $search->limit,
         ]));
 

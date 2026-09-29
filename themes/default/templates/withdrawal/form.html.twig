@@ -1,0 +1,25 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="shell account-auth"><div class="account-card">
+<div class="account-card__head"><span class="eyebrow">{{ ui_text('withdrawal_eyebrow') }}</span><h1>{{ ui_text('withdrawal_title') }}</h1><p>{{ ui_text(step == 'confirm' ? 'withdrawal_confirm_intro' : 'withdrawal_intro') }}</p></div>
+{% if error %}<div class="store-notice is-error" role="alert">{{ ui_text(error) }}</div>{% endif %}
+<form method="post" action="{{ path('storefront_withdrawal') }}" class="account-form" data-withdrawal-form="{{ step }}">
+<input type="hidden" name="_csrf_token" value="{{ csrf_token('withdrawal') }}">
+{% if step == 'confirm' %}
+<input type="hidden" name="stage" value="confirm">
+<input type="hidden" name="name" value="{{ form.name }}"><input type="hidden" name="email" value="{{ form.email }}"><input type="hidden" name="order" value="{{ form.order }}"><input type="hidden" name="scope" value="{{ form.scope }}">
+<dl class="account-summary" data-withdrawal-summary><dt>{{ ui_text('name') }}</dt><dd>{{ form.name }}</dd><dt>Email</dt><dd>{{ form.email }}</dd><dt>{{ ui_text('withdrawal_order') }}</dt><dd>{{ form.order }}</dd>{% if form.scope %}<dt>{{ ui_text('withdrawal_scope') }}</dt><dd>{{ form.scope }}</dd>{% endif %}</dl>
+{% if turnstile_enabled and turnstile_site_key %}<div class="cf-turnstile" data-sitekey="{{ turnstile_site_key|e('html_attr') }}"></div><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
+<button class="button button--primary" type="submit" data-withdrawal-confirm>{{ ui_icon('check', 18) }} {{ ui_text('withdrawal_confirm_button') }}</button>
+{% else %}
+<input type="hidden" name="stage" value="review">
+<label>{{ ui_text('name') }}<input type="text" name="name" value="{{ form.name }}" autocomplete="name" required maxlength="190"></label>
+<label>Email<input type="email" name="email" value="{{ form.email }}" autocomplete="email" required maxlength="320"></label>
+<label>{{ ui_text('withdrawal_order') }}<input type="text" name="order" value="{{ form.order }}" required maxlength="64"></label>
+<label>{{ ui_text('withdrawal_scope') }}<textarea name="scope" rows="3" maxlength="1000">{{ form.scope }}</textarea><small>{{ ui_text('withdrawal_scope_hint') }}</small></label>
+<button class="button button--primary" type="submit" data-withdrawal-start>{{ ui_text('withdrawal_button') }}</button>
+{% endif %}
+</form>
+<p class="account-card__foot">{{ ui_text('withdrawal_legal') }}</p>
+</div></section>
+{% endblock %}

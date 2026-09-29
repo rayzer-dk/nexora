@@ -6,7 +6,17 @@
   "ui_slots": [
     "product.after_price"
   ],
-  "blocks": [],
+  "blocks": [
+    {
+      "id": "extension.nexora_product_trust.badge",
+      "surface": "product",
+      "regions": [
+        "hero_summary"
+      ],
+      "label_key": "extension.nexora_product_trust.badge.label",
+      "allow_multiple": false
+    }
+  ],
   "routes": [],
   "pages": [],
   "slot_contributions": [
@@ -35,7 +45,7 @@
   },
   "code": "nexora.product_trust",
   "name": "Product Trust Badge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "app",
   "execution": "declarative",
   "capabilities": [

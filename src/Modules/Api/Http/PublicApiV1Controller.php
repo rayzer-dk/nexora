@@ -70,7 +70,7 @@ final class PublicApiV1Controller extends AbstractController
     #[Route('/catalog/products/{publicId}', name: 'product', methods: ['GET'], requirements: ['publicId' => '[0-9a-fA-F-]{36}'])]
     public function product(string $publicId,Request $request,StorefrontContextResolver $contexts,DbalStorefrontCatalogQuery $catalog):JsonResponse
     {
-        try{$context=$contexts->resolve($request);$this->access->require($request,'catalog:read',$context->storeId);$product=$catalog->productByPublicId($context,$publicId);}catch(ApiAccessException $e){return $this->problem($e->apiCode,$e->getMessage(),$e->status);}catch(\Throwable){$product=null;}
+        try{$context=$contexts->resolve($request);$this->access->require($request,'catalog:read',$context->storeId);$product=$catalog->productByPublicId($context,$publicId);}catch(ApiAccessException $e){return $this->problem($e->apiCode,$e->getMessage(),$e->status);}catch(\Throwable){return $this->problem('not_found',CanonicalUiText::get('api.error.product_not_found'),404);}
         if(!is_array($product))return $this->problem('not_found',CanonicalUiText::get('api.error.product_not_found'),404);unset($product['internal_id']);return $this->json(['data'=>$product,'meta'=>['locale'=>$context->locale,'currency'=>$context->currency]]);
     }
 

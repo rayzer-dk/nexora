@@ -18,7 +18,7 @@ final class AdminMfaController extends AbstractController
 {
     private const MAX_ATTEMPTS = 5;
 
-    public function __construct(private readonly AdminMfaService $mfa)
+    public function __construct(private readonly AdminMfaService $mfa, private readonly bool $required = false)
     {
     }
 
@@ -61,7 +61,7 @@ final class AdminMfaController extends AbstractController
         $enabled = $this->mfa->isEnabled($user->id);
         $secret = null;
         $uri = null;
-        if (!$enabled && $request->query->getBoolean('setup')) {
+        if (!$enabled && ($this->required || $request->query->getBoolean('setup'))) {
             $secret = $this->mfa->pendingSecret($user->id);
             $uri = Totp::provisioningUri($secret, $user->getUserIdentifier(), 'Nexora');
         }
@@ -70,6 +70,7 @@ final class AdminMfaController extends AbstractController
         $session->remove('admin_mfa_new_codes');
         return $this->render('@storefront/admin/account_security.html.twig', [
             'enabled' => $enabled,
+            'mfa_required' => $this->required,
             'secret' => $secret,
             'provisioning_uri' => $uri,
             'secret_groups' => $secret === null ? [] : str_split($secret, 4),
@@ -129,6 +130,10 @@ final class AdminMfaController extends AbstractController
     public function disable(Request $request): Response
     {
         $user = $this->admin();
+        if ($this->required) {
+            $this->addFlash('error', $this->t('admin.mfa.required_cannot_disable'));
+            return $this->redirectToRoute('admin_account_security');
+        }
         if (!$this->isCsrfTokenValid('admin_mfa_disable', (string) $request->request->get('_csrf_token'))) {
             $this->addFlash('error', $this->t('admin.mfa.flash.csrf'));
         } elseif ($this->mfa->disable($user->id, (string) $request->request->get('code', ''))) {

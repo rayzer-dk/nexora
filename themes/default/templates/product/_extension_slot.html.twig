@@ -1,5 +1,8 @@
 {% for contribution in extension_slot(slot) %}
-  {% set ext_block = {type: contribution.component, settings: {}} %}
+  {% set ext_settings = {} %}
+  {% if contribution.title_key %}{% set ext_settings = ext_settings|merge({title: ui_text(contribution.title_key)}) %}{% endif %}
+  {% if contribution.content_key %}{% set ext_settings = ext_settings|merge({text: ui_text(contribution.content_key)}) %}{% endif %}
+  {% set ext_block = {type: contribution.component, settings: ext_settings} %}
   <div class="product-block product-block--extension-slot" data-extension-slot="{{ slot|e('html_attr') }}" data-extension-code="{{ contribution.extension_code|e('html_attr') }}">
     {% include '@storefront/product/blocks/extension_component.html.twig' with {product: product, block: ext_block} only %}
   </div>

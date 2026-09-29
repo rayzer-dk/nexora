@@ -110,6 +110,7 @@
         "audit:commerce-operations": "php bin/commerce-operations-check.php",
         "audit:backup-feed-seo": "php bin/backup-feed-seo-check.php",
         "audit:xss": "php bin/xss-hardening-check.php",
+        "analyse": "php phpstan.phar analyse --memory-limit=2G --no-progress",
         "audit:ui": "php bin/icons-check.php && php bin/css-coverage-check.php && php bin/design-tokens-check.php",
         "audit:ux-modernization": "php bin/ux-modernization-check.php",
         "audit:i18n-critical": "php bin/i18n-critical-journey-check.php",

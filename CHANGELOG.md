@@ -2,6 +2,23 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.9.0 — 2026-09-30
+
+Schema 53, Extension API 2.0, production channel.
+
+### Added
+- **EU withdrawal function** (Directive (EU) 2023/2673): public `/withdrawal` page linked from every footer, two steps ("Withdraw from contract here" → "Confirm withdrawal here"), acknowledgement email with reference and date/time, notices listed in Admin → Customer experience. Works for guests; the notice is stored even when the order is not matched. Migration adds `mc_withdrawal_notice`.
+- **Accessibility statement** (`/accessibility`, European Accessibility Act) in six locales, linked from the footer.
+- **Mandatory administrator 2FA policy**: `ADMIN_REQUIRE_MFA=1` forces enrolment before any admin page opens and forbids disabling 2FA.
+- **PHPStan level 3** in CI (`composer analyse`, pinned phar, no baseline).
+- Automatic text colour on brand-coloured surfaces (`contrast_color`) so custom brand colours keep WCAG AA contrast.
+- Playwright: axe colour-contrast scan of storefront and admin in light and dark schemes, bonus themes/extensions, withdrawal flow and 2FA policy.
+
+### Fixed
+- Colour contrast in light and dark schemes: filled primary/accent buttons and badges, danger badge, warning text, admin navigation labels.
+- Product Trust Badge bonus extension (1.0.1): manifest block and empty slot rendering on the product page.
+- Phpstan findings: missing `MediaImageService::writeJpeg()`, delivery point cache key, public API catch of non-exception errors.
+
 ## 3.8.1 — 2026-09-29
 
 Schema 52, Extension API 2.0, production channel.

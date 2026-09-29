@@ -2039,6 +2039,8 @@ return [
     'js_media_unavailable' => 'Медіатека недоступна',
     'admin.mfa.nav' => 'Безпека акаунта',
     'admin.mfa.title' => 'Безпека акаунта',
+    'admin.mfa.required_notice' => 'Політика магазину вимагає двофакторну автентифікацію: увімкніть її, щоб продовжити роботу в панелі.',
+    'admin.mfa.required_cannot_disable' => 'Двофакторну автентифікацію вимагає політика магазину (ADMIN_REQUIRE_MFA); вимкнути її з панелі не можна.',
     'admin.mfa.lead' => 'Двофакторна автентифікація захищає вхід в адмінку навіть якщо пароль став відомим стороннім.',
     'admin.mfa.status' => 'Двофакторна автентифікація',
     'admin.mfa.on' => 'Увімкнено',
@@ -2078,4 +2080,8 @@ return [
     'admin.theme_toggle' => 'Змінити тему (світла/темна)',
     'admin.appearance.pwa' => 'Встановлення як застосунок (PWA)',
     'admin.appearance.pwa.help' => 'Дозволяє додати вітрину на головний екран телефона; статичні файли кешуються, а без мережі показується сторінка «Немає зʼєднання».',
+    'admin.customer_experience.index.withdrawals' => 'Відкликання договорів',
+    'admin.customer_experience.index.withdrawal_scope' => 'Що відкликається',
+    'admin.customer_experience.index.withdrawal_matched' => 'Замовлення знайдено',
+    'admin.customer_experience.index.withdrawals_empty' => 'Заяв про відкликання ще немає.',
 ];

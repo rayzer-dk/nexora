@@ -45,7 +45,7 @@ test('admin two-factor: enrolment, challenge gate, replay protection, recovery c
     // A wrong code never enables 2FA.
     await page.locator('form[action$="/security/confirm"] input[name="code"]').fill('000000');
     await page.locator('form[action$="/security/confirm"] button[type="submit"]').click();
-    await expect(page.locator('.admin-notice.is-error')).toBeVisible();
+    await expect(page.locator('.admin-notice.is-error')).toHaveCount(1); // the flash is mirrored into a toast, so it may already be visually hidden
     await page.goto('/admin/account/security?setup=1', { waitUntil: 'domcontentloaded' });
     expect((await page.locator('[data-mfa-secret] code').innerText()).replace(/\s+/g, '')).toBe(secret);
 
@@ -65,12 +65,12 @@ test('admin two-factor: enrolment, challenge gate, replay protection, recovery c
     // Wrong code is rejected.
     await page.locator('input[name="code"]').fill('000000');
     await page.locator('button[type="submit"]').first().click();
-    await expect(page.locator('.admin-notice.is-error')).toBeVisible();
+    await expect(page.locator('.admin-notice.is-error')).toHaveCount(1); // the flash is mirrored into a toast, so it may already be visually hidden
 
     // The code that enabled 2FA cannot be replayed.
     await page.locator('input[name="code"]').fill(totp(secret, step));
     await page.locator('button[type="submit"]').first().click();
-    await expect(page.locator('.admin-notice.is-error')).toBeVisible();
+    await expect(page.locator('.admin-notice.is-error')).toHaveCount(1); // the flash is mirrored into a toast, so it may already be visually hidden
 
     // The next time step is accepted and returns to the requested page.
     await page.locator('input[name="code"]').fill(totp(secret, step + 1));
@@ -92,7 +92,7 @@ test('admin two-factor: enrolment, challenge gate, replay protection, recovery c
     await page.waitForURL(/\/admin\/2fa$/);
     await page.locator('input[name="code"]').fill(recovery[0]);
     await page.locator('button[type="submit"]').first().click();
-    await expect(page.locator('.admin-notice.is-error')).toBeVisible();
+    await expect(page.locator('.admin-notice.is-error')).toHaveCount(1); // the flash is mirrored into a toast, so it may already be visually hidden
 
     // Disable with another recovery code; sign-in goes straight to the dashboard afterwards.
     await page.locator('input[name="code"]').fill(recovery[1]);

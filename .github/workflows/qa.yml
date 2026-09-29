@@ -30,6 +30,11 @@ jobs:
           cache: npm
       - run: composer validate --strict
       - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: PHPStan (level 3, no baseline)
+        run: |
+          curl -fsSL -o /tmp/phpstan.phar https://github.com/phpstan/phpstan/releases/download/2.1.17/phpstan.phar
+          echo "767edc1d6a596308c9bdd1fa7e42bf27c88ce3772b8e527cba87dc1c19bd1c3b  /tmp/phpstan.phar" | sha256sum -c -
+          php /tmp/phpstan.phar analyse --memory-limit=2G --no-progress
       - run: vendor/bin/phpunit --configuration phpunit.xml.dist
       - run: php bin/twig-syntax-check.php themes/default/templates
       - run: php bin/i18n-template-check.php

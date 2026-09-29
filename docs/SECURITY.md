@@ -19,3 +19,11 @@ Incoming webhooks use HMAC-SHA256 over `timestamp.raw_body`, constant-time compa
 
 ## Bot protection availability
 Turnstile is an optional step-up layer. Local rate limits, honeypots, form-age checks and payload limits remain active independently. A Turnstile transport/5xx outage is therefore fail-open for availability, while an explicit invalid token remains rejected.
+
+## Administrator two-factor policy
+
+Every administrator can enable TOTP two-factor authentication under Admin → My security. Set `ADMIN_REQUIRE_MFA=1` to make it mandatory: until an administrator enrols, every admin page redirects to the enrolment screen, and disabling 2FA is refused. Recovery codes are shown once after enrolment.
+
+## Consumer rights (EU)
+
+`/withdrawal` implements the electronic withdrawal function: the consumer states the withdrawal in two steps and receives an acknowledgement email with reference and time of receipt; notices are visible in Admin → Customer experience. `/accessibility` publishes the European Accessibility Act statement; review its texts against your own conformance audit before going live.

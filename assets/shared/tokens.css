@@ -14,12 +14,18 @@
   --mc-color-primary-base: #0b63f6;
   --mc-color-primary: var(--mc-color-primary-base);
   --mc-color-primary-hover: color-mix(in srgb, var(--mc-color-primary) 82%, #000);
-  --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary) 10%, var(--mc-color-background));
+  --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary) 8%, var(--mc-color-background));
+  /* Filled controls use the un-lightened brand colour in every scheme; text on it is chosen for WCAG contrast. */
+  --mc-color-primary-fill: var(--mc-color-primary-base);
+  --mc-color-primary-fill-hover: color-mix(in srgb, var(--mc-color-primary-base) 82%, #000);
   --mc-color-primary-contrast: #fff;
+  --mc-color-accent-contrast: #fff;
   --mc-color-accent-base: #ff7a1a;
   --mc-color-accent: var(--mc-color-accent-base);
+  --mc-color-accent-fill: var(--mc-color-accent-base);
+  --mc-color-danger-fill: #c9251b; /* filled danger badges keep white text at >= 4.5:1 in both schemes */
   --mc-color-success: #0f7a4b;
-  --mc-color-warning: #b7791f;
+  --mc-color-warning: #8f5a0c;
   --mc-color-danger: #b42318;
   --mc-color-success-soft: color-mix(in srgb, var(--mc-color-success) 11%, var(--mc-color-background));
   --mc-color-warning-soft: color-mix(in srgb, var(--mc-color-warning) 13%, var(--mc-color-background));

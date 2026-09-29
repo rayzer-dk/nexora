@@ -1,0 +1,8 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="shell account-auth"><div class="account-card" data-withdrawal-done>
+<div class="account-card__head"><span class="eyebrow">{{ ui_text('withdrawal_eyebrow') }}</span><h1>{{ ui_text('withdrawal_done_title') }}</h1><p>{{ ui_text('withdrawal_done_text') }} <strong>{{ email }}</strong></p></div>
+<dl class="account-summary"><dt>{{ ui_text('withdrawal_reference') }}</dt><dd data-withdrawal-reference>{{ reference }}</dd><dt>{{ ui_text('withdrawal_received_at') }}</dt><dd>{{ received_at }}</dd></dl>
+<p class="account-card__foot"><a href="{{ path('storefront_home') }}">{{ ui_text('withdrawal_back') }}</a></p>
+</div></section>
+{% endblock %}

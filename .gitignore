@@ -10,3 +10,4 @@
 !/var/.gitkeep
 /public/media/catalog/
 pw.local.config.ts
+/phpstan.phar

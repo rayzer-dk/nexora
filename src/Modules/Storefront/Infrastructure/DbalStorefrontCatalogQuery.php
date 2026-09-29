@@ -527,7 +527,7 @@ final readonly class DbalStorefrontCatalogQuery
         }, $rows);
     }
 
-    /** @return array{variant_id:int,variant_public_id:string,name:string,sku:string,price_minor:int,currency:string,unit_code:string,quantity_step:string,min_quantity:string,max_quantity:?string,available_quantity:string}|null */
+    /** @return array{variant_id:int,variant_public_id:string,product_type:string,name:string,sku:string,price_minor:int,currency:string,unit_code:string,quantity_step:string,min_quantity:string,max_quantity:?string,available_quantity:string,allow_backorder?:bool}|null */
     public function purchasableVariant(StorefrontContext $context, string $variantPublicId): ?array
     {
         $row = $this->connection->fetchAssociative(

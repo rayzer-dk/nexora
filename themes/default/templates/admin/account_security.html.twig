@@ -25,11 +25,11 @@
                 <label><span>{{ ui_text('admin.mfa.code_from_app') }}</span><input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" required></label>
                 <button class="admin-button" type="submit">{{ ui_icon('refresh-cw', 16) }}<span>{{ ui_text('admin.mfa.recovery.regenerate') }}</span></button>
             </form>
-            <form method="post" action="{{ path('admin_account_security_disable') }}" class="admin-card-form" data-confirm="{{ ui_text('admin.mfa.disable_confirm') }}">
+            {% if mfa_required %}<p class="admin-help">{{ ui_text('admin.mfa.required_cannot_disable') }}</p>{% else %}<form method="post" action="{{ path('admin_account_security_disable') }}" class="admin-card-form" data-confirm="{{ ui_text('admin.mfa.disable_confirm') }}">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_mfa_disable') }}">
                 <label><span>{{ ui_text('admin.mfa.code') }}</span><input type="text" name="code" autocomplete="one-time-code" required></label>
                 <button class="admin-button is-danger" type="submit">{{ ui_icon('shield-off', 16) }}<span>{{ ui_text('admin.mfa.disable') }}</span></button>
-            </form>
+            </form>{% endif %}
         </div>
     {% elseif secret %}
         <ol class="admin-steps">

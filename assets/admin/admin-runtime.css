@@ -140,11 +140,11 @@
   text-decoration: none;
 }
 .admin-button.is-primary {
-  background: var(--mc-color-primary);
+  background: var(--mc-color-primary-fill);
   border-color: var(--mc-color-primary);
   color: var(--mc-color-primary-contrast);
 }
-.admin-button.is-primary:hover { background: var(--mc-color-primary-hover); border-color: var(--mc-color-primary-hover); }
+.admin-button.is-primary:hover { background: var(--mc-color-primary-fill-hover); border-color: var(--mc-color-primary-fill-hover); }
 .admin-button.is-danger {
   background: var(--mc-color-danger-soft);
   border-color: color-mix(in srgb, var(--mc-color-danger) 35%, var(--mc-color-background));
@@ -306,7 +306,7 @@
   box-shadow: var(--mc-shadow-xs);
   transition: transform var(--mc-transition);
 }
-.admin-switch > input:checked { background: var(--mc-color-primary); }
+.admin-switch > input:checked { background: var(--mc-color-primary-fill); }
 .admin-switch > input:checked::after { transform: translateX(var(--mc-space-4)); }
 
 /* ---------------------------------------------------------------- 3 shell */
@@ -353,7 +353,7 @@
 }
 .admin-nav__label {
   margin: var(--mc-space-4) var(--mc-space-3) var(--mc-space-1);
-  color: color-mix(in srgb, #fff 42%, var(--mc-color-ink));
+  color: color-mix(in srgb, #fff 64%, var(--mc-color-ink));
   font-size: var(--mc-font-size-2xs);
   font-weight: var(--mc-font-weight-bold);
   letter-spacing: var(--mc-letter-spacing-caps);
@@ -679,7 +679,7 @@ div.admin-empty { border: 1px dashed var(--mc-color-border-strong); border-radiu
 .admin-pagination > span:not(:only-child) { display: inline-grid; place-items: center; min-width: var(--mc-control-height-sm); height: var(--mc-control-height-sm); padding: 0 var(--mc-space-2); border-radius: var(--mc-radius-sm); }
 .admin-pagination a:not(.admin-button) { border: 1px solid var(--mc-color-border); background: var(--mc-color-surface-raised); color: var(--mc-color-text); }
 .admin-pagination a:not(.admin-button):hover { background: var(--mc-color-surface-subtle); text-decoration: none; }
-.admin-pagination a.is-active { border-color: var(--mc-color-primary); background: var(--mc-color-primary); color: var(--mc-color-primary-contrast); }
+.admin-pagination a.is-active { border-color: var(--mc-color-primary); background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); }
 
 /* Badges & chips: one pill. Tone comes from a modifier or a status word. */
 .admin-badge {

@@ -3,6 +3,7 @@ parameters:
     env(MAIL_FROM_NAME): 'Nexora Commerce'
     env(TELEGRAM_NOTIFICATIONS_ENABLED): '0'
     env(ERROR_WEBHOOK_URL): ''
+    env(ADMIN_REQUIRE_MFA): '0'
     env(TELEGRAM_BOT_TOKEN): ''
     env(TELEGRAM_DEFAULT_CHAT_ID): ''
     env(SMS_NOTIFICATIONS_ENABLED): '0'
@@ -196,6 +197,14 @@ services:
     Commerce\Modules\Storefront\PwaController:
         arguments:
             $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Admin\Security\AdminMfaGateSubscriber:
+        arguments:
+            $required: '%env(bool:ADMIN_REQUIRE_MFA)%'
+
+    Commerce\Modules\Admin\Http\AdminMfaController:
+        arguments:
+            $required: '%env(bool:ADMIN_REQUIRE_MFA)%'
 
     Commerce\Modules\Admin\Security\AdminMfaService:
         arguments:
@@ -417,6 +426,10 @@ services:
             $smsEnabled: '%commerce.sms.enabled%'
 
     Commerce\Modules\Customer\Http\CustomerAccountController:
+        arguments:
+            $turnstileSiteKey: '%commerce.turnstile.site_key%'
+
+    Commerce\Modules\ConsumerRights\Http\WithdrawalController:
         arguments:
             $turnstileSiteKey: '%commerce.turnstile.site_key%'
 

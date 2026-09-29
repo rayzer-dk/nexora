@@ -1,0 +1,9 @@
+parameters:
+    level: 3
+    paths:
+        - src
+    excludePaths:
+        - src/Kernel.php
+    tmpDir: var/phpstan
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
