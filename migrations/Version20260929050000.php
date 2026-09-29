@@ -92,6 +92,43 @@ final class Version20260929050000 extends AbstractMigration
              AND JSON_UNQUOTE(JSON_EXTRACT(q.payload,'$.event_id'))=md.event_id
             SET md.store_id=q.store_id
             WHERE q.store_id IS NOT NULL");
+
+        $this->addSql("CREATE TABLE mc_store_customer (
+            store_id BIGINT UNSIGNED NOT NULL,
+            customer_id BIGINT UNSIGNED NOT NULL,
+            customer_group_code VARCHAR(64) NOT NULL DEFAULT 'default',
+            created_at DATETIME(6) NOT NULL,
+            updated_at DATETIME(6) NOT NULL,
+            PRIMARY KEY (store_id,customer_id),
+            KEY idx_store_customer_customer (customer_id,store_id),
+            KEY idx_store_customer_group (store_id,customer_group_code,customer_id),
+            CONSTRAINT fk_store_customer_store FOREIGN KEY (store_id) REFERENCES mc_store(id) ON DELETE CASCADE,
+            CONSTRAINT fk_store_customer_customer FOREIGN KEY (customer_id) REFERENCES mc_customer(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $this->addSql("INSERT IGNORE INTO mc_store_customer
+            (store_id,customer_id,customer_group_code,created_at,updated_at)
+            SELECT DISTINCT o.store_id,c.id,c.customer_group_code,
+                LEAST(c.created_at,MIN(o.created_at)),GREATEST(c.updated_at,MAX(o.updated_at))
+            FROM mc_customer c
+            JOIN mc_sales_order o ON o.customer_id=c.id
+            GROUP BY o.store_id,c.id,c.customer_group_code,c.created_at,c.updated_at");
+
+        $this->addSql("INSERT IGNORE INTO mc_store_customer
+            (store_id,customer_id,customer_group_code,created_at,updated_at)
+            SELECT DISTINCT ca.store_id,c.id,c.customer_group_code,
+                LEAST(c.created_at,MIN(ca.created_at)),GREATEST(c.updated_at,MAX(ca.updated_at))
+            FROM mc_customer c
+            JOIN mc_cart ca ON ca.customer_id=c.id
+            GROUP BY ca.store_id,c.id,c.customer_group_code,c.created_at,c.updated_at");
+
+        $this->addSql("INSERT IGNORE INTO mc_store_customer
+            (store_id,customer_id,customer_group_code,created_at,updated_at)
+            SELECT s.id,c.id,c.customer_group_code,c.created_at,c.updated_at
+            FROM mc_customer c
+            JOIN (SELECT id FROM mc_store WHERE status='active' ORDER BY id LIMIT 1) s
+            LEFT JOIN mc_store_customer sc ON sc.customer_id=c.id
+            WHERE sc.customer_id IS NULL");
     }
 
     public function down(Schema $schema): void
@@ -106,6 +143,7 @@ final class Version20260929050000 extends AbstractMigration
             DROP INDEX idx_integration_sync_store,
             DROP COLUMN store_id");
 
+        $this->addSql('DROP TABLE IF EXISTS mc_store_customer');
         $this->addSql('DROP TABLE IF EXISTS mc_store_media_asset');
     }
 }
