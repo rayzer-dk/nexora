@@ -7,6 +7,7 @@ namespace Commerce\Modules\Cart\Application;
 use Commerce\Core\Id\PublicIdFactory;
 use Commerce\Modules\Catalog\Measurement\Quantity;
 use Commerce\Modules\B2B\Application\B2bCommerceService;
+use Commerce\Modules\Customer\Application\CustomerStoreMembershipService;
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
 use Commerce\Modules\Storefront\Infrastructure\DbalStorefrontCatalogQuery;
 use DateTimeImmutable;
@@ -20,6 +21,7 @@ final readonly class CartMutationService
         private PublicIdFactory $publicIds,
         private DbalStorefrontCatalogQuery $catalog,
         private B2bCommerceService $b2b,
+        private CustomerStoreMembershipService $memberships,
     ) {
     }
 
@@ -119,6 +121,7 @@ final readonly class CartMutationService
 
     public function bindCustomer(int $cartId, int $storeId, int $customerId): void
     {
+        $this->memberships->ensure($storeId, $customerId);
         $this->connection->executeStatement("UPDATE mc_cart SET customer_id=?,updated_at=? WHERE id=? AND store_id=? AND status='active'",[$customerId,$this->now(),$cartId,$storeId]);
     }
 
