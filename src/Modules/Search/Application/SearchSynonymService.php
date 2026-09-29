@@ -32,7 +32,7 @@ final readonly class SearchSynonymService
             $alternatives = [$term => true];
             try {
                 $rows = $this->db->fetchFirstColumn(
-                    "SELECT DISTINCT t2.term
+                    "SELECT t2.term
                      FROM mc_search_synonym_term t1
                      JOIN mc_search_synonym_group g ON g.id=t1.group_id AND g.store_id=? AND g.locale=? AND g.status='active'
                      JOIN mc_search_synonym_term t2 ON t2.group_id=g.id
