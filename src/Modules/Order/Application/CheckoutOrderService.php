@@ -17,6 +17,7 @@ use Commerce\Modules\Checkout\Application\CheckoutLayoutService;
 use Commerce\Modules\Promotion\Application\PromotionEngine;
 use Commerce\Modules\Promotion\Application\PromotionRedemptionRecorder;
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
+use Commerce\Modules\Customer\Application\CustomerStoreMembershipService;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\DBAL\Connection;
@@ -36,6 +37,7 @@ final readonly class CheckoutOrderService
         private B2bCommerceService $b2b,
         private GiftCardService $giftCards,
         private LoyaltyService $loyalty,
+        private CustomerStoreMembershipService $memberships,
     ) {}
 
     /** @return array{public_id:string,order_number:string,total_minor:int,currency:string} */
@@ -74,6 +76,7 @@ final readonly class CheckoutOrderService
                 if ((int) $activeCustomer !== $customerId) {
                     throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.oblikovyi_zapys_pokuptsia_bilshe_ne_aktyvnyi'));
                 }
+                $this->memberships->ensure($context->storeId, $customerId);
             }
             $cart = $db->fetchAssociative("SELECT id,store_id,currency,status FROM mc_cart WHERE id=? AND store_id=? FOR UPDATE", [$cartId,$context->storeId]);
             if (!is_array($cart) || $cart['status'] !== 'active') throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.koshyk_bilshe_ne_aktyvnyi'));
