@@ -41,7 +41,7 @@ $must = [
         'mc_forum_subscription',
         "'pin', 'unpin'",
     ],
-    'src/Core/Site/SiteCapabilityAccessSubscriber.php' => [
+    'src/Modules/Storefront/Http/StorefrontCapabilitySubscriber.php' => [
         "str_starts_with(\$route, 'storefront_forum')",
         "return 'forum'",
     ],
