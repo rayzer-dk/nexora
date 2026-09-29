@@ -204,7 +204,7 @@ test('custom header navigation created in admin appears on storefront and can be
   const deleteResponsePromise = page.waitForResponse((response) =>
     response.url().includes('/admin/appearance/navigation/') && response.url().endsWith('/delete') && response.request().method() === 'POST'
   );
-  await deleteForm.locator('button[type="submit"]').click();
+  await deleteForm.locator('button').click();
   expect((await deleteResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
 
@@ -250,7 +250,7 @@ test('admin search synonym changes real catalog search and deletion removes the 
   const deleteResponsePromise = page.waitForResponse((response) =>
     response.url().includes('/admin/catalog/search/synonyms/') && response.url().endsWith('/delete') && response.request().method() === 'POST'
   );
-  await deleteForm.locator('button[type="submit"]').click();
+  await deleteForm.locator('button').click();
   expect((await deleteResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.getByText(label, { exact: true })).toHaveCount(0);
@@ -729,7 +729,7 @@ test('recovery snapshot can be created, verified, downloaded and deleted from ad
   const createResponsePromise = page.waitForResponse((response) =>
     response.url().endsWith('/admin/system/recovery/create') && response.request().method() === 'POST'
   );
-  await createForm.locator('button[type="submit"]').click();
+  await createForm.locator('button').click();
   expect((await createResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
@@ -763,7 +763,7 @@ test('recovery snapshot can be created, verified, downloaded and deleted from ad
   const deleteResponsePromise = page.waitForResponse((response) =>
     response.url().includes('/admin/system/recovery/') && response.url().endsWith('/delete') && response.request().method() === 'POST'
   );
-  await deleteForm.locator('button[type="submit"]').click();
+  await deleteForm.locator('button').click();
   expect((await deleteResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('table.admin-table tbody tr').filter({ hasText: 'manual-admin-database' })).toHaveCount(0);
