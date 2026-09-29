@@ -48,7 +48,7 @@ final class MediaLibraryAdminController extends AbstractController
     {
         $ctx=$this->contexts->resolve($request); $this->csrf($request,'media_upload'); $files=$request->files->all('files'); if (!is_array($files)) $files=[];
         $folder=$this->optionalInt($request->request->get('folder_id')); $count=0;
-        try { foreach($files as $file){ if(!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) continue; $mime=strtolower((string)$file->getMimeType()); $saved=str_starts_with($mime,'video/')?$this->videos->upload($file):$this->images->upload($file,$ctx->storeId); $this->metadata->save($saved->assetId,new MediaMetadata($folder)); $count++; } $this->addFlash('success',$count.\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.fail_iv_zavantazheno_zobrazhennia_optymizovano_video')); }
+        try { foreach($files as $file){ if(!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) continue; $mime=strtolower((string)$file->getMimeType()); $saved=str_starts_with($mime,'video/')?$this->videos->upload($file):$this->images->upload($file,$ctx->storeId); $this->metadata->save($ctx->storeId,$saved->assetId,new MediaMetadata($folder)); $count++; } $this->addFlash('success',$count.\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.fail_iv_zavantazheno_zobrazhennia_optymizovano_video')); }
         catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.zavantazhennia_zupyneno').\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         return $this->redirectToRoute('admin_media_library',$folder?['folder'=>$folder]:[]);
     }
@@ -83,17 +83,17 @@ final class MediaLibraryAdminController extends AbstractController
     #[Route('/admin/media/{assetId}/metadata', name:'admin_media_metadata', methods:['POST'], requirements:['assetId'=>'\\d+'])]
     public function metadata(Request $request,int $assetId): Response
     {
-        $this->contexts->resolve($request); $this->csrf($request,'media_metadata_'.$assetId);
+        $ctx=$this->contexts->resolve($request); $this->csrf($request,'media_metadata_'.$assetId);
         $tags=array_values(array_filter(array_map('trim',explode(',',(string)$request->request->get('tags','')))));
-        try{$this->metadata->save($assetId,new MediaMetadata($this->optionalInt($request->request->get('folder_id')),(string)$request->request->get('alt_text',''),(string)$request->request->get('title',''),(float)$request->request->get('focal_x',50),(float)$request->request->get('focal_y',50),$tags));$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.metadani_zberezheno'));}catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
+        try{$this->metadata->save($ctx->storeId,$assetId,new MediaMetadata($this->optionalInt($request->request->get('folder_id')),(string)$request->request->get('alt_text',''),(string)$request->request->get('title',''),(float)$request->request->get('focal_x',50),(float)$request->request->get('focal_y',50),$tags));$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.metadani_zberezheno'));}catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         return $this->redirectToRoute('admin_media_library');
     }
 
     #[Route('/admin/media/{assetId}/delete', name:'admin_media_delete', methods:['POST'], requirements:['assetId'=>'\\d+'])]
     public function delete(Request $request,int $assetId): Response
     {
-        $this->contexts->resolve($request); $this->csrf($request,'media_delete_'.$assetId);
-        try{$this->library->delete($assetId);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.fail_vydaleno_z_biblioteky'));}catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
+        $ctx=$this->contexts->resolve($request); $this->csrf($request,'media_delete_'.$assetId);
+        try{$this->library->delete($ctx->storeId,$assetId);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.fail_vydaleno_z_biblioteky'));}catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         return $this->redirectToRoute('admin_media_library');
     }
 
