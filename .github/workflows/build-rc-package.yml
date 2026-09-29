@@ -33,6 +33,11 @@ jobs:
 
       - run: composer validate --strict
       - run: composer install --no-dev --classmap-authoritative --no-interaction --prefer-dist --no-progress
+      - name: Check browser installer before packaging
+        run: |
+          php tests/installer-render-smoke.php uk-UA
+          php tests/installer-render-smoke.php ru-RU
+          php tests/installer-render-smoke.php en-US
       - run: npm install --ignore-scripts --no-audit --no-fund
       - run: npm run build:production
 
