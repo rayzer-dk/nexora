@@ -28,9 +28,6 @@
     </section>
     <div class="admin-editor-actions"><button type="submit">{{ ui_text('admin.system.site.zberehty_profil') }}</button></div>
 </form>
-<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">
-(()=>{const form=document.querySelector('[data-site-mode-profiles]');if(!form)return;let profiles={};try{profiles=JSON.parse(form.dataset.siteModeProfiles||'{}')}catch(_){return}form.querySelectorAll('input[name="mode"]').forEach(radio=>radio.addEventListener('change',()=>{if(!radio.checked)return;const features=profiles[radio.value]?.features||{};Object.entries(features).forEach(([feature,enabled])=>{const field=form.querySelector('input[name="feature_'+feature+'"]');if(field)field.checked=Boolean(enabled)})}))})();
-</script>
 <section class="admin-editor-card">
     <div class="admin-card-heading"><div><small>{{ ui_text('ui.admin.system.site.recovery') }}</small><h2>{{ ui_text('admin.system.site.istoriia_konfihuratsii') }}</h2></div><span class="admin-help">{{ ui_text('admin.system.site.kozhne_zberezhennia_stvoriuie_reviziiu') }}</span></div>
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.site.reviziia') }}</th><th>{{ ui_text('admin.system.site.status') }}</th><th>{{ ui_text('admin.system.site.khto') }}</th><th>{{ ui_text('admin.system.site.chas') }}</th><th class="is-actions">{{ ui_text('admin.system.site.diia') }}</th></tr></thead><tbody>
