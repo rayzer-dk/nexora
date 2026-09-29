@@ -279,42 +279,39 @@ test('published Home Builder layout changes SSR storefront and can be restored',
   const titleField = page.locator('[data-inspector] input[data-prop="props.title"]');
   await expect(titleField).toBeVisible();
   const marker = `E2E Home Builder ${Date.now()}`;
-  await titleField.fill(marker);
-  await expect(layoutField).toHaveValue(new RegExp(marker.replace(/[.*+?^$\{\}()|[\]\\]/g, '\\  await titleField.fill(marker);
 
-  const publishResponsePromise = page.waitForResponse((response) =>
-    response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
-  );')));
+  try {
+    await titleField.fill(marker);
+    expect(await layoutField.inputValue()).toContain(marker);
 
-  const publishResponsePromise = page.waitForResponse((response) =>
-    response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
-  );
-  await page.locator('button[form="builder-form"][name="builder_action"][value="publish"]').click();
-  expect((await publishResponsePromise).status()).toBeLessThan(400);
-  await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.admin-flash--error,.store-notice.is-error')).toHaveCount(0);
-  await expect(page.locator('textarea[data-layout-json]')).toHaveValue(new RegExp(marker.replace(/[.*+?^$\{\}()|[\]\\]/g, '\\  await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.admin-flash--error,.store-notice.is-error')).toHaveCount(0);
+    const publishResponsePromise = page.waitForResponse((response) =>
+      response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
+    );
+    await page.locator('button[form="builder-form"][name="builder_action"][value="publish"]').click();
+    expect((await publishResponsePromise).status()).toBeLessThan(400);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('.admin-flash--error,.store-notice.is-error')).toHaveCount(0);
+    expect(await page.locator('textarea[data-layout-json]').inputValue()).toContain(marker);
 
-  await page.goto('/', { waitUntil: 'domcontentloaded' });')));
-
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expectNoServerError(page);
-  await expect(page.getByRole('heading', { name: marker })).toBeVisible();
-
-  await page.goto('/admin/appearance/builder/home', { waitUntil: 'domcontentloaded' });
-  const restoreField = page.locator('textarea[data-layout-json]');
-  await restoreField.evaluate((element, value) => {
-    const textarea = element as HTMLTextAreaElement;
-    textarea.value = String(value);
-    textarea.dispatchEvent(new Event('input', { bubbles: true }));
-  }, originalLayout);
-  const restoreResponsePromise = page.waitForResponse((response) =>
-    response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
-  );
-  await page.locator('button[form="builder-form"][name="builder_action"][value="publish"]').click();
-  expect((await restoreResponsePromise).status()).toBeLessThan(400);
-  await page.waitForLoadState('domcontentloaded');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expectNoServerError(page);
+    await expect(page.getByRole('heading', { name: marker })).toBeVisible();
+  } finally {
+    await page.goto('/admin/appearance/builder/home', { waitUntil: 'domcontentloaded' });
+    const restoreField = page.locator('textarea[data-layout-json]');
+    await restoreField.evaluate((element, value) => {
+      const textarea = element as HTMLTextAreaElement;
+      textarea.value = String(value);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      textarea.dispatchEvent(new Event('change', { bubbles: true }));
+    }, originalLayout);
+    const restoreResponsePromise = page.waitForResponse((response) =>
+      response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
+    );
+    await page.locator('button[form="builder-form"][name="builder_action"][value="publish"]').click();
+    expect((await restoreResponsePromise).status()).toBeLessThan(400);
+    await page.waitForLoadState('domcontentloaded');
+  }
 });
 
 
