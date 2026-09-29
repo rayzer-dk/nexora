@@ -837,4 +837,13 @@ return [
     'a11y_feedback_link' => 'Contact the store',
     'a11y_enforcement_title' => 'Complaints procedure',
     'a11y_enforcement_text' => 'If our answer is unsatisfactory, you may contact the national accessibility enforcement body in your country.',
+    'badge_new' => 'New',
+    'badge_bestseller' => 'Bestseller',
+    'checkout_country_blocked' => 'Sorry, we do not deliver to your country at the moment.',
+    'doc_type_document' => 'Document',
+    'doc_type_manual' => 'Manual',
+    'doc_type_certificate' => 'Certificate',
+    'doc_type_sds' => 'Safety data sheet (SDS)',
+    'doc_type_datasheet' => 'Datasheet',
+    'doc_type_warranty' => 'Warranty',
 ];

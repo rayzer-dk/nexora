@@ -55,13 +55,13 @@ final readonly class DependencyLicenseAuditor
         $violations = [];
         $checked = 0;
         foreach ($packages as $name => $package) {
-            if ($name === '' || !is_array($package)) {
-                continue;
+            if ($name === '' || !is_array($package) || !empty($package['dev'])) {
+                continue; // development-only tooling is not redistributed
             }
             ++$checked;
             $license = trim((string) ($package['license'] ?? ''));
             if (!$this->policy->isAllowed($license)) {
-                $violations[] = ['name' => ltrim((string) $name, 'node_modules/'), 'license' => $license !== '' ? $license : 'UNKNOWN'];
+                $violations[] = ['name' => (string) preg_replace('#^.*node_modules/#', '', (string) $name), 'license' => $license !== '' ? $license : 'UNKNOWN'];
             }
         }
         return ['ok' => $violations === [], 'checked' => $checked, 'violations' => $violations];

@@ -8,17 +8,17 @@ ZIP="$ROOT/build/Nexora_Commerce_v${VERSION}_RC.zip"
 
 php bin/dependency-integrity-check.php
 php bin/release-check.php
-php bin/release-contract-check.php --release-candidate
+php bin/release-contract-check.php --production
 php bin/system-completeness-check.php
 php bin/full-release-static-check.php
 php bin/i18n-critical-journey-check.php
 php bin/i18n-runtime-hardcode-audit.php --strict
 php bin/twig-syntax-check.php themes/default/templates
 php bin/admin-access-check.php
+php bin/admin-confirm-check.php
 php bin/commerce-analytics-check.php
 php bin/license-audit.php
 php bin/catalog-scale-audit.php
-php bin/beta-readiness-check.php
 php bin/production-critical-check.php
 php bin/security-audit.php
 php bin/security-regression-check.php

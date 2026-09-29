@@ -1936,4 +1936,8 @@ return [
     'runtime.exception.theme_presets_empty' => 'Конфігурація теми не містить придатних пресетів.',
     'runtime.exception.demo_snapshot_missing' => 'Файл демонстраційного каталогу відсутній.',
     'runtime.exception.demo_snapshot_invalid' => 'Файл демонстраційного каталогу некоректний.',
+    'runtime.exception.keygen_id_invalid' => 'Ідентифікатор ключа: 3–64 символи, малі літери, цифри, крапка, дефіс або підкреслення.',
+    'runtime.exception.keygen_exists' => 'Файл ключа вже існує, перезапис заборонено: %s',
+    'runtime.exception.keygen_write_failed' => 'Не вдалося записати файл секретного ключа: %s',
+    'runtime.exception.mfa_already_enabled' => 'Двофакторну автентифікацію вже ввімкнено.',
 ];

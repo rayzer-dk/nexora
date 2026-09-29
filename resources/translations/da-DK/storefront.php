@@ -697,4 +697,13 @@ return [
     'a11y_feedback_link' => 'Kontakt butikken',
     'a11y_enforcement_title' => 'Klageprocedure',
     'a11y_enforcement_text' => 'Er du ikke tilfreds med svaret, kan du kontakte den nationale tilsynsmyndighed for tilgængelighed.',
+    'badge_new' => 'Nyhed',
+    'badge_bestseller' => 'Bestseller',
+    'checkout_country_blocked' => 'Vi leverer desværre ikke til dit land i øjeblikket.',
+    'doc_type_document' => 'Dokument',
+    'doc_type_manual' => 'Vejledning',
+    'doc_type_certificate' => 'Certifikat',
+    'doc_type_sds' => 'Sikkerhedsdatablad (SDS)',
+    'doc_type_datasheet' => 'Datablad',
+    'doc_type_warranty' => 'Garanti',
 ];

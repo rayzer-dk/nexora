@@ -628,4 +628,13 @@ return [
     'a11y_feedback_link' => 'Skontaktuj się ze sklepem',
     'a11y_enforcement_title' => 'Procedura skargowa',
     'a11y_enforcement_text' => 'Jeśli odpowiedź nie jest satysfakcjonująca, możesz zwrócić się do krajowego organu nadzoru dostępności.',
+    'badge_new' => 'Nowość',
+    'badge_bestseller' => 'Bestseller',
+    'checkout_country_blocked' => 'Niestety obecnie nie dostarczamy do Twojego kraju.',
+    'doc_type_document' => 'Dokument',
+    'doc_type_manual' => 'Instrukcja',
+    'doc_type_certificate' => 'Certyfikat',
+    'doc_type_sds' => 'Karta charakterystyki (SDS)',
+    'doc_type_datasheet' => 'Karta katalogowa',
+    'doc_type_warranty' => 'Gwarancja',
 ];

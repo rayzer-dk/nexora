@@ -1934,4 +1934,8 @@ return [
     'runtime.exception.theme_presets_empty' => 'Theme configuration contains no usable presets.',
     'runtime.exception.demo_snapshot_missing' => 'Demo catalog snapshot file is missing.',
     'runtime.exception.demo_snapshot_invalid' => 'Demo catalog snapshot file is invalid.',
+    'runtime.exception.keygen_id_invalid' => 'Key id must be 3-64 characters: lowercase letters, digits, dot, dash or underscore.',
+    'runtime.exception.keygen_exists' => 'Refusing to overwrite an existing key file: %s',
+    'runtime.exception.keygen_write_failed' => 'Cannot write the secret key file: %s',
+    'runtime.exception.mfa_already_enabled' => 'Two-factor authentication is already enabled.',
 ];

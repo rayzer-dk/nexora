@@ -837,4 +837,13 @@ return [
     'a11y_feedback_link' => 'Звʼязатися з магазином',
     'a11y_enforcement_title' => 'Процедура розгляду скарг',
     'a11y_enforcement_text' => 'Якщо відповідь вас не влаштувала, ви можете звернутися до національного органу нагляду за доступністю у вашій країні.',
+    'badge_new' => 'Новинка',
+    'badge_bestseller' => 'Хіт продажів',
+    'checkout_country_blocked' => 'На жаль, доставка у вашу країну наразі недоступна.',
+    'doc_type_document' => 'Документ',
+    'doc_type_manual' => 'Інструкція',
+    'doc_type_certificate' => 'Сертифікат',
+    'doc_type_sds' => 'Паспорт безпеки (SDS)',
+    'doc_type_datasheet' => 'Технічний паспорт',
+    'doc_type_warranty' => 'Гарантія',
 ];

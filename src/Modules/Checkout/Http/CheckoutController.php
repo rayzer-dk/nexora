@@ -27,6 +27,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class CheckoutController extends AbstractController
 {
     public function __construct(
+        private readonly \Commerce\Modules\Shipping\Application\ShippingCountryService $shippingCountries,
         private readonly StorefrontContextResolver $contexts,
         private readonly CartMutationService $carts,
         private readonly DbalCartQuery $cartQuery,
@@ -48,6 +49,7 @@ final class CheckoutController extends AbstractController
         $cart = $this->carts->find($context, $request->cookies->get('mc_cart'));
         if ($cart === null) return $this->redirectToRoute('storefront_cart');
         $context = $this->carts->contextFor($context, $cart);
+        if (!$this->shippingCountries->allows($context->storeId, $context->countryCode)) $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('checkout_country_blocked'));
         $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id());
         $summary = $this->cartQuery->summary($cart['id'], $context);
         if ($summary['items'] === []) return $this->redirectToRoute('storefront_cart');
@@ -92,6 +94,7 @@ final class CheckoutController extends AbstractController
     {
         if (!$this->isCsrfTokenValid('checkout_place', (string)$request->request->get('_token'))) throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
+        if (!$this->shippingCountries->allows($context->storeId, $context->countryCode)) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('checkout_country_blocked')); return $this->redirectToRoute('storefront_checkout'); }
         $key=(string)$request->request->get('checkout_key');
         if ($key==='' || !hash_equals((string)$request->getSession()->get('checkout.idempotency_key',''),$key)) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_oformlennia_zastarila_onovit_storinku'));
         try { $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id()); $order=$this->orders->place($context,$cart['id'],$request->request->all(),$key,$customer instanceof CustomerUser ? $customer->id() : null); $this->attribution->attachOrder($order['public_id'],$request->getSession()); }

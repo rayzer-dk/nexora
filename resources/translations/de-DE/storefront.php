@@ -628,4 +628,13 @@ return [
     'a11y_feedback_link' => 'Shop kontaktieren',
     'a11y_enforcement_title' => 'Beschwerdeverfahren',
     'a11y_enforcement_text' => 'Sind Sie mit unserer Antwort nicht zufrieden, können Sie sich an die zuständige nationale Durchsetzungsstelle wenden.',
+    'badge_new' => 'Neu',
+    'badge_bestseller' => 'Bestseller',
+    'checkout_country_blocked' => 'Leider liefern wir derzeit nicht in Ihr Land.',
+    'doc_type_document' => 'Dokument',
+    'doc_type_manual' => 'Anleitung',
+    'doc_type_certificate' => 'Zertifikat',
+    'doc_type_sds' => 'Sicherheitsdatenblatt (SDS)',
+    'doc_type_datasheet' => 'Datenblatt',
+    'doc_type_warranty' => 'Garantie',
 ];

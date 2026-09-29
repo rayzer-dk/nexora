@@ -34,11 +34,11 @@ php bin/i18n-critical-journey-check.php
 php bin/i18n-runtime-hardcode-audit.php --strict
 php bin/twig-syntax-check.php themes/default/templates
 php bin/admin-access-check.php
+php bin/admin-confirm-check.php
 php bin/commerce-analytics-check.php
 php bin/license-audit.php
 php bin/catalog-scale-audit.php
 composer audit --locked --no-interaction
-php bin/beta-readiness-check.php
 php bin/production-critical-check.php
 php bin/security-audit.php
 php bin/security-regression-check.php

@@ -26,11 +26,11 @@ final class ExtensionKeygenCommand extends Command
     {
         $keyId = (string) $input->getArgument('key-id');
         if (preg_match('/^[a-z0-9][a-z0-9._-]{2,63}$/D', $keyId) !== 1) {
-            throw new RuntimeException('Key id must be 3-64 characters: lowercase letters, digits, dot, dash or underscore.');
+            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.keygen_id_invalid'));
         }
         $out = (string) ($input->getOption('out') ?: $keyId . '.secret.key');
         if (file_exists($out)) {
-            throw new RuntimeException('Refusing to overwrite an existing key file: ' . $out);
+            throw new RuntimeException(sprintf(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.keygen_exists'), $out));
         }
         $pair = sodium_crypto_sign_keypair();
         $secret = base64_encode(sodium_crypto_sign_secretkey($pair));
@@ -38,7 +38,7 @@ final class ExtensionKeygenCommand extends Command
         $old = umask(0177);
         try {
             if (file_put_contents($out, $secret . "\n") === false) {
-                throw new RuntimeException('Cannot write the secret key file: ' . $out);
+                throw new RuntimeException(sprintf(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.keygen_write_failed'), $out));
             }
         } finally {
             umask($old);

@@ -14,6 +14,7 @@ command -v pa11y >/dev/null || { echo 'ERROR: pa11y is required for browser acce
 php bin/console lint:container
 php bin/console lint:twig themes/default/templates
 php bin/admin-access-check.php
+php bin/admin-confirm-check.php
 php bin/license-audit.php
 php bin/console doctrine:migrations:migrate --no-interaction
 vendor/bin/phpunit --configuration phpunit.xml.dist

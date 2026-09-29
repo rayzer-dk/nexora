@@ -628,4 +628,13 @@ return [
     'a11y_feedback_link' => 'Связаться с магазином',
     'a11y_enforcement_title' => 'Порядок рассмотрения жалоб',
     'a11y_enforcement_text' => 'Если ответ вас не устроил, вы можете обратиться в национальный орган надзора за доступностью в вашей стране.',
+    'badge_new' => 'Новинка',
+    'badge_bestseller' => 'Хит продаж',
+    'checkout_country_blocked' => 'К сожалению, доставка в вашу страну сейчас недоступна.',
+    'doc_type_document' => 'Документ',
+    'doc_type_manual' => 'Инструкция',
+    'doc_type_certificate' => 'Сертификат',
+    'doc_type_sds' => 'Паспорт безопасности (SDS)',
+    'doc_type_datasheet' => 'Технический паспорт',
+    'doc_type_warranty' => 'Гарантия',
 ];

@@ -31,3 +31,14 @@
 .rich-editor__content th,
 .rich-editor__content td { padding: var(--mc-space-2); border: 1px solid var(--mc-color-border); vertical-align: top; }
 .rich-editor__content img { max-width: 100%; height: auto; }
+
+.rich-editor__toolbar button:disabled { opacity: .45; cursor: not-allowed; }
+.rich-editor__toolbar .rich-editor__source-toggle { width: auto; gap: var(--mc-space-1); display: inline-flex; align-items: center; margin-inline-start: auto; padding-inline: var(--mc-space-2); font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-bold); }
+.rich-editor__source {
+  display: block; width: 100%; min-height: 240px; padding: var(--mc-space-3); border: 0; resize: vertical;
+  background: var(--mc-color-surface); color: var(--mc-color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--mc-font-size-sm); line-height: 1.5;
+}
+.rich-editor__content table { border-collapse: collapse; width: 100%; }
+.rich-editor__content th, .rich-editor__content td { border: 1px solid var(--mc-color-border); padding: var(--mc-space-2); }
+.rich-editor__content blockquote { margin-inline: 0; padding-inline-start: var(--mc-space-3); border-inline-start: 3px solid var(--mc-color-border); color: var(--mc-color-muted); }

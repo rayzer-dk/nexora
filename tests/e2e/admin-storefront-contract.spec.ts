@@ -210,6 +210,7 @@ test('custom header navigation created in admin appears on storefront and can be
     response.url().includes('/admin/appearance/navigation/') && response.url().endsWith('/delete') && response.request().method() === 'POST'
   );
   await deleteForm.locator('button').click();
+  await page.locator('[data-admin-confirm] [data-confirm-accept]').click();
   expect((await deleteResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
 
@@ -256,6 +257,7 @@ test('admin search synonym changes real catalog search and deletion removes the 
     response.url().includes('/admin/catalog/search/synonyms/') && response.url().endsWith('/delete') && response.request().method() === 'POST'
   );
   await deleteForm.locator('button').click();
+  await page.locator('[data-admin-confirm] [data-confirm-accept]').click();
   expect((await deleteResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.getByText(label, { exact: true })).toHaveCount(0);

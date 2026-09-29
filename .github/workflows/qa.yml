@@ -39,6 +39,7 @@ jobs:
       - run: php bin/twig-syntax-check.php themes/default/templates
       - run: php bin/i18n-template-check.php
       - run: php bin/admin-access-check.php
+      - run: php bin/admin-confirm-check.php
       - run: php bin/license-audit.php
       - run: php bin/commerce-analytics-check.php
       - run: php bin/full-release-static-check.php

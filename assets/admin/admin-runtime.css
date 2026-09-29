@@ -1226,3 +1226,6 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 .admin-theme-toggle { display: inline-flex; align-items: center; justify-content: center; }
 .admin-extension-uninstall { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: var(--mc-space-2); white-space: nowrap; }
 .admin-extension-uninstall .admin-check-inline { font-size: var(--mc-font-size-sm); }
+
+.admin-checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--mc-space-2) var(--mc-space-4); max-height: 420px; overflow: auto; padding: var(--mc-space-2); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); }
+.admin-form-wide { grid-column: 1 / -1; }

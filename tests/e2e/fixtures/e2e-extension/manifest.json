@@ -3,7 +3,7 @@
   "name": "Nexora E2E QA Module",
   "version": "1.0.0",
   "type": "app",
-  "core": "3.9.0",
+  "core": "3.10.0",
   "extension_api": "2.0",
   "permissions": [],
   "execution": "declarative",

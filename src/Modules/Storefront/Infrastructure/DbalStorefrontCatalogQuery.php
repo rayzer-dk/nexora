@@ -18,6 +18,7 @@ final readonly class DbalStorefrontCatalogQuery
         private StorefrontMoneyFormatter $money,
         private SearchSynonymService $synonyms,
         private SearchCandidateProviderInterface $searchCandidates,
+        private \Commerce\Modules\Catalog\Application\ProductBadgeService $badges,
     ) {
     }
 
@@ -245,7 +246,7 @@ final readonly class DbalStorefrontCatalogQuery
             ...$orderParams,
         ];
         $rows = $this->connection->fetchAllAssociative($sql, $queryParams);
-        $items = array_map(fn(array $r): array => $this->productCardRow($r, $context), $rows);
+        $items = $this->badges->decorate(array_map(fn(array $r): array => $this->productCardRow($r, $context), $rows), $context->storeId, $context->locale);
         return ['items'=>$items,'total'=>$count,'page'=>$page,'pages'=>max(1,(int)ceil($count/$limit))];
     }
 
@@ -304,7 +305,7 @@ final readonly class DbalStorefrontCatalogQuery
         if ($hasMore) {
             array_pop($rows);
         }
-        $items = array_map(fn(array $r): array => $this->productCardRow($r, $context), $rows);
+        $items = $this->badges->decorate(array_map(fn(array $r): array => $this->productCardRow($r, $context), $rows), $context->storeId, $context->locale);
         $next = $hasMore && $rows !== [] ? (int)$rows[array_key_last($rows)]['id'] : null;
         return ['items'=>$items,'next_cursor'=>$next];
     }
@@ -473,7 +474,7 @@ final readonly class DbalStorefrontCatalogQuery
         );
         if (!is_array($row) || $row['amount_minor'] === null) { return null; }
 
-        $product = $this->productCardRow($row, $context);
+        $product = $this->badges->decorate([$this->productCardRow($row, $context)], $context->storeId, $context->locale)[0];
         $product['description'] = (string) ($row['description'] ?? '');
         $product['short_description'] = (string) ($row['short_description'] ?? '');
         $product['gtin'] = $row['gtin'] ?: null; $product['mpn'] = $row['mpn'] ?: null;
@@ -823,8 +824,8 @@ final readonly class DbalStorefrontCatalogQuery
     /** @return list<array{name:string,url:string}> */
     private function productDocuments(int $productId,string $locale):array
     {
-        $rows=$this->connection->fetchAllAssociative("SELECT pd.title,ma.storage_key FROM mc_product_document pd JOIN mc_media_asset ma ON ma.id=pd.media_id WHERE pd.product_id=? AND pd.visible=1 AND (pd.locale=? OR pd.locale IS NULL) ORDER BY pd.sort_order,pd.id",[$productId,$locale]);
-        return array_map(fn(array $r):array=>['name'=>(string)($r['title']?:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.dokument')),'url'=>$this->mediaUrl($r['storage_key'])],$rows);
+        $rows=$this->connection->fetchAllAssociative("SELECT pd.title,pd.document_type,ma.storage_key FROM mc_product_document pd JOIN mc_media_asset ma ON ma.id=pd.media_id WHERE pd.product_id=? AND pd.visible=1 AND (pd.locale=? OR pd.locale IS NULL) ORDER BY pd.sort_order,pd.id",[$productId,$locale]);
+        return array_map(fn(array $r):array=>['name'=>(string)($r['title']?:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.dokument')),'url'=>$this->mediaUrl($r['storage_key']),'type'=>(string)($r['document_type']??'document')],$rows);
     }
 
     /** @return array{value:float,count:int} */

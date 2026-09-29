@@ -47,6 +47,7 @@ async function storefrontRoutes(page: Page): Promise<string[]> {
 
 async function adminRoutes(page: Page): Promise<string[]> {
   await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+  await page.locator('aside a[href^="/admin"]').first().waitFor({ timeout: 20_000 });
   const links = await page.locator('aside a[href^="/admin"]').evaluateAll((els) =>
     [...new Set(els.map((el) => (el as HTMLAnchorElement).getAttribute('href') ?? ''))]);
   return [...new Set(['/admin', '/admin/appearance/storefront', '/admin/system/extensions', '/admin/account/security', ...links])].slice(0, 60);
@@ -61,13 +62,18 @@ for (const scheme of ['light', 'dark'] as const) {
     const findings: string[] = [];
     scanned = [];
     const context = await (browser as Browser).newContext({ colorScheme: scheme, baseURL: testInfo.project.use.baseURL });
+    let adminContext: Awaited<ReturnType<Browser['newContext']>> | null = null;
     try {
       const shop = await context.newPage();
       for (const route of await storefrontRoutes(shop)) await scan(shop, route, findings);
-      const admin = await context.newPage();
+      await shop.close();
+      // The admin session lives in its own browser context so the storefront cookies never interfere with it.
+      adminContext = await (browser as Browser).newContext({ colorScheme: scheme, baseURL: testInfo.project.use.baseURL });
+      const admin = await adminContext.newPage();
       await loginAdmin(admin);
       for (const route of await adminRoutes(admin)) await scan(admin, route, findings);
     } finally {
+      await adminContext?.close();
       await context.close();
       await setScheme(page, 'light');
     }

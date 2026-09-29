@@ -108,6 +108,8 @@ function initConfirmations() {
   document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-confirm]');
     if (!trigger) return;
+    // A confirmation on a whole <form> guards its submit buttons only; typing in fields must not open the dialog.
+    if (trigger.tagName === 'FORM' && !event.target.closest('button:not([type="button"]), input[type="submit"]')) return;
     const form = trigger.form || trigger.closest('form');
     if (form?.dataset.confirmedSubmit === '1') {
       delete form.dataset.confirmedSubmit;

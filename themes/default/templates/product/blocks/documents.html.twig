@@ -1,9 +1,10 @@
 {% if product.documents %}
+{% set type_labels = {document: ui_text('doc_type_document'), manual: ui_text('doc_type_manual'), certificate: ui_text('doc_type_certificate'), sds: ui_text('doc_type_sds'), datasheet: ui_text('doc_type_datasheet'), warranty: ui_text('doc_type_warranty')} %}
 <section class="detail-card">
     <h2>{{ ui_text('documents') }}</h2>
     <div class="document-list">
         {% for document in product.documents %}
-            <a href="{{ document.url }}">{{ document.name }}</a>
+            <a href="{{ document.url }}" data-document-type="{{ document.type|default('document') }}">{{ ui_icon(document.type|default('document') == 'certificate' ? 'circle-check' : 'file-text', 16) }} <span>{{ document.name }}</span> <small>{{ type_labels[document.type|default('document')]|default('') }}</small></a>
         {% endfor %}
     </div>
 </section>

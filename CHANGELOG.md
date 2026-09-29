@@ -2,6 +2,21 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.10.0 — 2026-09-30
+
+Schema 54, Extension API 2.0, production channel.
+
+### Added
+- **Product badges** (Admin → Catalog → Product badges): automatic "Sale", "New" and "Bestseller" rules (period and sales threshold configurable), custom badges assigned by SKU, colour tones, per-locale text, priority; up to three badges per card and on the product page.
+- **Delivery countries and regions** (Admin → Shipments → Delivery countries): enable only the countries you deliver to (checkout is blocked for others once a list is saved) and enable/disable/add regions per country with one-click default regions for UA, PL and DK.
+- **Rich text editor**: HTML source mode, strikethrough, H3, quote, horizontal rule, tables, image by URL, clear formatting.
+- **Admin dashboard alerts**: cron not running, failed cron tasks, new returns, new withdrawal notices (with "processed" action), items awaiting moderation.
+- Product documents show their type (certificate, manual, SDS, datasheet, warranty).
+- Gates: `bin/admin-confirm-check.php` (every destructive admin form must ask for confirmation); `bin/license-audit.php` now audits only redistributed dependencies and accepts permissive licences (MIT-0, CC0, BlueOak, Python-2.0).
+
+### Fixed
+- Ten destructive admin actions (delete synonyms/boosts/relations/saved views/menu items/snippets, layout rollback, forum bans) had no confirmation dialog.
+
 ## 3.9.0 — 2026-09-30
 
 Schema 53, Extension API 2.0, production channel.

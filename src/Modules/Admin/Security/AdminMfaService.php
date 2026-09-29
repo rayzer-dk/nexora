@@ -29,7 +29,7 @@ final class AdminMfaService
             return $this->decrypt($adminId, (string) $row['secret_encrypted']);
         }
         if ($row !== null) {
-            throw new \LogicException('Two-factor authentication is already enabled.');
+            throw new \LogicException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.mfa_already_enabled'));
         }
         $secret = Totp::generateSecret();
         $now = $this->now();
