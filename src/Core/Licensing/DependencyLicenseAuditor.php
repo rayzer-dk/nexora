@@ -19,7 +19,8 @@ final readonly class DependencyLicenseAuditor
             return ['ok' => true, 'checked' => 0, 'violations' => []];
         }
         $data = json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR);
-        $packages = array_merge((array) ($data['packages'] ?? []), (array) ($data['packages-dev'] ?? []));
+        // The production archive installs Composer with --no-dev.
+        $packages = (array) ($data['packages'] ?? []);
         $violations = [];
         foreach ($packages as $package) {
             if (!is_array($package)) {

@@ -113,6 +113,9 @@ test('every static public HTML route renders with no runtime failure', async ({ 
     '/setup.php',
     '/install',
     '/install/finish',
+    // Guarded JSON endpoints intentionally return 404 without a token or feature flag.
+    '/__health/core-update',
+    '/.well-known/ucp',
   ]);
   const failures: string[] = [];
   let runtimeErrors: string[] = [];

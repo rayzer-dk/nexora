@@ -4,7 +4,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 VERSION="$(php -r "require 'src/Core/Platform/PlatformVersion.php'; echo Commerce\\Core\\Platform\\PlatformVersion::VERSION;")"
 OUT_DIR="$ROOT/build/production-$VERSION"
-ZIP="$ROOT/build/Nexora_Commerce_v${VERSION}_RC.zip"
+ZIP="$ROOT/build/Nexora_Commerce_v${VERSION}_PRODUCTION.zip"
 
 php bin/dependency-integrity-check.php
 php bin/release-check.php

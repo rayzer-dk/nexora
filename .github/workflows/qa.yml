@@ -30,6 +30,11 @@ jobs:
           cache: npm
       - run: composer validate --strict
       - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Render uninstalled browser installer in every supported language
+        run: |
+          php tests/installer-render-smoke.php uk-UA
+          php tests/installer-render-smoke.php ru-RU
+          php tests/installer-render-smoke.php en-US
       - name: PHPStan (level 3, no baseline)
         run: |
           curl -fsSL -o /tmp/phpstan.phar https://github.com/phpstan/phpstan/releases/download/2.1.17/phpstan.phar
