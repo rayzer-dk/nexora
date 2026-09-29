@@ -3,6 +3,8 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/src/Core/Platform/PlatformVersion.php';
+
 $url = getenv('DATABASE_URL') ?: '';
 $parts = parse_url($url);
 if ($url === '' || !is_array($parts) || !isset($parts['host'], $parts['path'])) {
@@ -122,4 +124,4 @@ if ($errors !== []) {
 }
 
 echo "Forum schema runtime check: PASSED\n";
-echo "tables=" . count($requiredTables) . " foreign_keys=" . count($requiredForeignKeys) . " schema=50\n";
+echo "tables=" . count($requiredTables) . " foreign_keys=" . count($requiredForeignKeys) . " schema=" . \Commerce\Core\Platform\PlatformVersion::DATABASE_SCHEMA . "\n";
