@@ -19,7 +19,8 @@ final readonly class DependencyLicenseAuditor
             return ['ok' => true, 'checked' => 0, 'violations' => []];
         }
         $data = json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR);
-        $packages = array_merge((array) ($data['packages'] ?? []), (array) ($data['packages-dev'] ?? []));
+        // The production archive installs Composer with --no-dev.
+        $packages = (array) ($data['packages'] ?? []);
         $violations = [];
         foreach ($packages as $package) {
             if (!is_array($package)) {
@@ -58,10 +59,16 @@ final readonly class DependencyLicenseAuditor
             if ($name === '' || !is_array($package)) {
                 continue;
             }
+            // npm packages are build inputs; dev-only tools are not distributed
+            // in the production archive. Runtime packages remain subject to policy.
+            if (($package['dev'] ?? false) === true) {
+                continue;
+            }
             ++$checked;
             $license = trim((string) ($package['license'] ?? ''));
             if (!$this->policy->isAllowed($license)) {
-                $violations[] = ['name' => ltrim((string) $name, 'node_modules/'), 'license' => $license !== '' ? $license : 'UNKNOWN'];
+                $displayName = str_starts_with((string) $name, 'node_modules/') ? substr((string) $name, strlen('node_modules/')) : (string) $name;
+                $violations[] = ['name' => $displayName, 'license' => $license !== '' ? $license : 'UNKNOWN'];
             }
         }
         return ['ok' => $violations === [], 'checked' => $checked, 'violations' => $violations];
