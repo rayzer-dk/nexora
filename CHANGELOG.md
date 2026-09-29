@@ -2,6 +2,13 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.11.1 — 2026-09-29
+
+Schema 55, production channel.
+
+### Added
+- **Demo blog showcase**: six long-form articles (what Nexora is, advantages, built-in SEO, storefront management without a developer, security, launch checklist) in uk/ru/en with covers, three categories, tags, author, reading time and a featured article. Installed with `--demo`, removed with the demo data.
+
 ## 3.11.0 — 2026-09-29
 
 Schema 55, production channel.

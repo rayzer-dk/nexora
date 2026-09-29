@@ -1,0 +1,248 @@
+{
+ "categories": {
+  "platform": {
+   "uk-UA": "Про платформу",
+   "en-US": "About the platform",
+   "ru-RU": "О платформе"
+  },
+  "seo": {
+   "uk-UA": "SEO та маркетинг",
+   "en-US": "SEO and marketing",
+   "ru-RU": "SEO и маркетинг"
+  },
+  "guides": {
+   "uk-UA": "Гайди",
+   "en-US": "Guides",
+   "ru-RU": "Гайды"
+  }
+ },
+ "authors": {
+  "uk-UA": "Команда Nexora",
+  "en-US": "Nexora Team",
+  "ru-RU": "Команда Nexora"
+ },
+ "articles": [
+  {
+   "slug": "what-is-nexora-commerce",
+   "category": "platform",
+   "featured": true,
+   "days_ago": 1,
+   "cover": "/media/demo/blog/blog-overview.svg",
+   "translations": {
+    "uk-UA": {
+     "title": "Nexora Commerce: що це за платформа і кому вона підходить",
+     "excerpt": "Сучасна платформа інтернет-комерції: вітрина, кошик, замовлення, блог і SEO в одній системі, яку можна налаштувати без програміста.",
+     "body": "<h2>Одна система замість набору плагінів</h2><p>Nexora Commerce — це готова платформа для інтернет-магазину: каталог, кошик і оформлення замовлення, особистий кабінет, акції, відгуки, блог, форум та інформаційні сторінки працюють разом і мають єдиний дизайн.</p><p>Вітрина рендериться на сервері, тому сторінки швидко відкриваються і добре індексуються пошуковими системами.</p><h2>Кому підходить</h2><p>Платформа розрахована на власників магазинів, які хочуть швидко запуститися та самостійно керувати вітриною, і на команди, яким потрібна основа для власних розширень.</p><ul><li>Невеликі та середні магазини електроніки, дому, одягу, аксесуарів.</li><li>Мультимовні магазини з кількома валютами та ринками.</li><li>B2B-продажі з окремими умовами для компаній.</li><li>Проєкти, де потрібні розширення з підписаною установкою модулів.</li></ul><h2>Що всередині</h2><p>Адмінпанель охоплює товари, категорії, бренди, атрибути, замовлення, доставку, промо, контент, SEO, інтеграції та системні налаштування.</p><ul><li>Конструктор головної сторінки, картки товару та оформлення замовлення.</li><li>Світла і темна тема з перевіреним контрастом.</li><li>Резервні копії, журнал дій, керування ролями та двофакторна автентифікація.</li><li>PWA, мобільна адаптація, лічильники та feed для Google Merchant.</li></ul><h2>З чого почати</h2><p>Встановіть систему через браузерний інсталятор, увімкніть демо-каталог, перегляньте адмінпанель і замініть демо-дані власними.</p>",
+     "tags": [
+      "платформа",
+      "огляд"
+     ]
+    },
+    "en-US": {
+     "title": "Nexora Commerce: what the platform is and who it is for",
+     "excerpt": "A modern commerce platform: storefront, cart, orders, blog and SEO in one system you can configure without a developer.",
+     "body": "<h2>One system instead of a pile of plugins</h2><p>Nexora Commerce is a complete online store platform: catalogue, cart and checkout, customer accounts, promotions, reviews, blog, forum and information pages work together and share one design.</p><p>The storefront is rendered on the server, so pages open fast and are easy for search engines to index.</p><h2>Who it is for</h2><p>The platform is built for store owners who want to launch quickly and manage the storefront themselves, and for teams that need a foundation for their own extensions.</p><ul><li>Small and mid-size stores: electronics, home, fashion, accessories.</li><li>Multilingual stores with several currencies and markets.</li><li>B2B sales with separate terms for companies.</li><li>Projects that need extensions installed as signed modules.</li></ul><h2>What is inside</h2><p>The admin panel covers products, categories, brands, attributes, orders, shipping, promotions, content, SEO, integrations and system settings.</p><ul><li>Builders for the home page, product page and checkout.</li><li>Light and dark themes with verified colour contrast.</li><li>Backups, an activity log, role management and two-factor authentication.</li><li>PWA, mobile-first layout, analytics counters and a Google Merchant feed.</li></ul><h2>Where to start</h2><p>Install the system with the browser installer, enable the demo catalogue, explore the admin panel and replace the demo data with your own.</p>",
+     "tags": [
+      "platform",
+      "overview"
+     ]
+    },
+    "ru-RU": {
+     "title": "Nexora Commerce: что это за платформа и кому она подходит",
+     "excerpt": "Современная платформа интернет-торговли: витрина, корзина, заказы, блог и SEO в одной системе, которую можно настроить без программиста.",
+     "body": "<h2>Одна система вместо набора плагинов</h2><p>Nexora Commerce — готовая платформа для интернет-магазина: каталог, корзина и оформление заказа, личный кабинет, акции, отзывы, блог, форум и информационные страницы работают вместе и имеют единый дизайн.</p><p>Витрина рендерится на сервере, поэтому страницы быстро открываются и хорошо индексируются поисковыми системами.</p><h2>Кому подходит</h2><p>Платформа рассчитана на владельцев магазинов, которые хотят быстро запуститься и самостоятельно управлять витриной, и на команды, которым нужна основа для собственных расширений.</p><ul><li>Небольшие и средние магазины электроники, дома, одежды, аксессуаров.</li><li>Мультиязычные магазины с несколькими валютами и рынками.</li><li>B2B-продажи с отдельными условиями для компаний.</li><li>Проекты, где нужны расширения с подписанной установкой модулей.</li></ul><h2>Что внутри</h2><p>Админпанель охватывает товары, категории, бренды, атрибуты, заказы, доставку, промо, контент, SEO, интеграции и системные настройки.</p><ul><li>Конструкторы главной страницы, карточки товара и оформления заказа.</li><li>Светлая и тёмная темы с проверенным контрастом.</li><li>Резервные копии, журнал действий, управление ролями и двухфакторная аутентификация.</li><li>PWA, мобильная адаптация, счётчики и фид для Google Merchant.</li></ul><h2>С чего начать</h2><p>Установите систему через браузерный инсталлятор, включите демо-каталог, изучите админпанель и замените демо-данные своими.</p>",
+     "tags": [
+      "платформа",
+      "обзор"
+     ]
+    }
+   }
+  },
+  {
+   "slug": "nexora-advantages",
+   "category": "platform",
+   "featured": false,
+   "days_ago": 2,
+   "cover": "/media/demo/blog/blog-advantages.svg",
+   "translations": {
+    "uk-UA": {
+     "title": "8 переваг Nexora Commerce для власника магазину",
+     "excerpt": "Швидкість, керованість, безпека та SEO без зайвих плагінів: коротко про те, що отримує бізнес.",
+     "body": "<h2>Швидкість і стабільність</h2><p>Серверний рендеринг, кеш каталогу та оптимізовані зображення (WebP/AVIF) дають швидке завантаження без складного налаштування.</p><h2>Керування без програміста</h2><p>Вітрину, навігацію, бейджі товарів, країни доставки, акції та сторінки можна змінювати в адмінпанелі.</p><ul><li>Візуальні конструктори головної, картки товару та чекауту.</li><li>Налаштовувані бейджі «Новинка», «Акція», «Топ продажів».</li><li>Редактор тексту з режимом HTML.</li></ul><h2>SEO з коробки</h2><p>Мікророзмітка, canonical, hreflang, sitemap, редиректи при зміні адрес і feed для Google Merchant вже входять до системи.</p><h2>Безпека</h2><p>Двофакторна автентифікація, ролі та права, підтвердження небезпечних дій, журнал змін і резервні копії захищають дані магазину.</p><h2>Мови, валюти, ринки</h2><p>Кілька мов і валют, окремі ринки та локалізована адмінпанель.</p><h2>Контроль стану</h2><p>На головній сторінці адмінки видно, що потребує уваги: cron, помилки, нові повернення, модерація.</p><h2>Розширюваність</h2><p>Розширення встановлюються як підписані пакети, а MIT-ліцензія дозволяє створювати комерційні модулі.</p><h2>Сучасний вигляд</h2><p>Світла і темна теми, мобільна адаптація, PWA та доступність за вимогами WCAG.</p>",
+     "tags": [
+      "переваги",
+      "платформа"
+     ]
+    },
+    "en-US": {
+     "title": "8 advantages of Nexora Commerce for a store owner",
+     "excerpt": "Speed, control, security and SEO without extra plugins: a short overview of what your business gets.",
+     "body": "<h2>Speed and stability</h2><p>Server-side rendering, catalogue caching and optimised images (WebP/AVIF) give fast pages without complicated tuning.</p><h2>Control without a developer</h2><p>The storefront, navigation, product badges, delivery countries, promotions and pages can all be changed in the admin panel.</p><ul><li>Visual builders for the home page, product page and checkout.</li><li>Configurable \"New\", \"Sale\" and \"Bestseller\" badges.</li><li>A text editor with an HTML mode.</li></ul><h2>SEO out of the box</h2><p>Structured data, canonical URLs, hreflang, sitemap, redirects when URLs change and a Google Merchant feed are part of the system.</p><h2>Security</h2><p>Two-factor authentication, roles and permissions, confirmation of risky actions, an activity log and backups protect the store data.</p><h2>Languages, currencies, markets</h2><p>Several languages and currencies, separate markets and a localised admin panel.</p><h2>Health at a glance</h2><p>The admin dashboard shows what needs attention: cron, errors, new returns and moderation.</p><h2>Extensibility</h2><p>Extensions are installed as signed packages, and the MIT licence allows you to build commercial modules.</p><h2>A modern look</h2><p>Light and dark themes, mobile-first layout, PWA and WCAG-oriented accessibility.</p>",
+     "tags": [
+      "benefits",
+      "platform"
+     ]
+    },
+    "ru-RU": {
+     "title": "8 преимуществ Nexora Commerce для владельца магазина",
+     "excerpt": "Скорость, управляемость, безопасность и SEO без лишних плагинов: коротко о том, что получает бизнес.",
+     "body": "<h2>Скорость и стабильность</h2><p>Серверный рендеринг, кэш каталога и оптимизированные изображения (WebP/AVIF) дают быструю загрузку без сложной настройки.</p><h2>Управление без программиста</h2><p>Витрину, навигацию, бейджи товаров, страны доставки, акции и страницы можно менять в админпанели.</p><ul><li>Визуальные конструкторы главной, карточки товара и чекаута.</li><li>Настраиваемые бейджи «Новинка», «Акция», «Топ продаж».</li><li>Текстовый редактор с режимом HTML.</li></ul><h2>SEO из коробки</h2><p>Микроразметка, canonical, hreflang, sitemap, редиректы при смене адресов и фид для Google Merchant уже входят в систему.</p><h2>Безопасность</h2><p>Двухфакторная аутентификация, роли и права, подтверждение опасных действий, журнал изменений и резервные копии защищают данные магазина.</p><h2>Языки, валюты, рынки</h2><p>Несколько языков и валют, отдельные рынки и локализованная админпанель.</p><h2>Контроль состояния</h2><p>На главной странице админки видно, что требует внимания: cron, ошибки, новые возвраты, модерация.</p><h2>Расширяемость</h2><p>Расширения устанавливаются как подписанные пакеты, а лицензия MIT позволяет создавать коммерческие модули.</p><h2>Современный вид</h2><p>Светлая и тёмная темы, мобильная адаптация, PWA и доступность по требованиям WCAG.</p>",
+     "tags": [
+      "преимущества",
+      "платформа"
+     ]
+    }
+   }
+  },
+  {
+   "slug": "seo-out-of-the-box",
+   "category": "seo",
+   "featured": false,
+   "days_ago": 3,
+   "cover": "/media/demo/blog/blog-seo.svg",
+   "translations": {
+    "uk-UA": {
+     "title": "SEO «з коробки»: що вже налаштовано в Nexora",
+     "excerpt": "Розмітка Schema.org, hreflang, sitemap, редиректи та feed для Google: перелік того, що працює автоматично.",
+     "body": "<h2>Технічна основа</h2><p>Сторінки віддаються сервером з коректними title, description, canonical та robots. Дублі фільтрів закриваються від індексації.</p><h2>Мікророзмітка</h2><p>Товари, категорії, статті блогу, хлібні крихти, організація та сайт мають розмітку JSON-LD, зокрема ціни, наявність, бренд і відгуки.</p><h2>Мультимовність</h2><p>Для кожної мови створюється окрема адреса, а hreflang вказує пошуковикам на всі опубліковані переклади.</p><h2>Sitemap і редиректи</h2><p>Sitemap містить лише опубліковані сторінки. При зміні адреси старий URL автоматично отримує редирект 301.</p><h2>Google Merchant</h2><p>Товарний feed готується в адмінпанелі, а політики повернення та доставки передаються в розмітці.</p><h2>Блог для трафіку</h2><p>Категорії, теги, RSS, зміст статті, схожі матеріали та перелінковка допомагають залучати органічний трафік.</p><ul><li>Мета-теги з попереднім переглядом сніпета.</li><li>Відкладена публікація.</li><li>Canonical та noindex для окремих статей.</li></ul>",
+     "tags": [
+      "seo",
+      "розмітка",
+      "google"
+     ]
+    },
+    "en-US": {
+     "title": "SEO out of the box: what Nexora already configures",
+     "excerpt": "Schema.org markup, hreflang, sitemap, redirects and a Google feed: a list of what works automatically.",
+     "body": "<h2>Technical foundation</h2><p>Pages are served by the server with correct title, description, canonical and robots. Duplicate filter pages are kept out of the index.</p><h2>Structured data</h2><p>Products, categories, blog articles, breadcrumbs, the organisation and the website carry JSON-LD markup, including prices, availability, brand and reviews.</p><h2>Multilingual</h2><p>Each language gets its own URL, and hreflang points search engines to every published translation.</p><h2>Sitemap and redirects</h2><p>The sitemap lists only published pages. When a URL changes, the old one automatically gets a 301 redirect.</p><h2>Google Merchant</h2><p>The product feed is prepared in the admin panel, and return and shipping policies are exposed in the markup.</p><h2>A blog for traffic</h2><p>Categories, tags, RSS, a table of contents, related posts and internal linking help attract organic traffic.</p><ul><li>Meta tags with a snippet preview.</li><li>Scheduled publishing.</li><li>Canonical and noindex per article.</li></ul>",
+     "tags": [
+      "seo",
+      "structured-data",
+      "google"
+     ]
+    },
+    "ru-RU": {
+     "title": "SEO «из коробки»: что уже настроено в Nexora",
+     "excerpt": "Разметка Schema.org, hreflang, sitemap, редиректы и фид для Google: перечень того, что работает автоматически.",
+     "body": "<h2>Техническая основа</h2><p>Страницы отдаются сервером с корректными title, description, canonical и robots. Дубли фильтров закрываются от индексации.</p><h2>Микроразметка</h2><p>Товары, категории, статьи блога, хлебные крошки, организация и сайт имеют разметку JSON-LD, включая цены, наличие, бренд и отзывы.</p><h2>Мультиязычность</h2><p>Для каждого языка создаётся отдельный адрес, а hreflang указывает поисковикам на все опубликованные переводы.</p><h2>Sitemap и редиректы</h2><p>Sitemap содержит только опубликованные страницы. При смене адреса старый URL автоматически получает редирект 301.</p><h2>Google Merchant</h2><p>Товарный фид готовится в админпанели, а политики возврата и доставки передаются в разметке.</p><h2>Блог для трафика</h2><p>Категории, теги, RSS, оглавление статьи, похожие материалы и перелинковка помогают привлекать органический трафик.</p><ul><li>Мета-теги с предпросмотром сниппета.</li><li>Отложенная публикация.</li><li>Canonical и noindex для отдельных статей.</li></ul>",
+     "tags": [
+      "seo",
+      "разметка",
+      "google"
+     ]
+    }
+   }
+  },
+  {
+   "slug": "manage-storefront-without-developer",
+   "category": "guides",
+   "featured": false,
+   "days_ago": 4,
+   "cover": "/media/demo/blog/blog-manage.svg",
+   "translations": {
+    "uk-UA": {
+     "title": "Як керувати вітриною без програміста",
+     "excerpt": "Конструктор головної, теми, бейджі, навігація та сторінки: що можна змінити самостійно за кілька хвилин.",
+     "body": "<h2>Вигляд і бренд</h2><p>У розділі «Вітрина» задаються логотип, кольори, шрифт та схема світла/темна/авто. Зміни одразу видно на сайті.</p><h2>Головна, картка товару, чекаут</h2><p>Візуальні конструктори дозволяють міняти порядок і склад блоків та публікувати чернетку, а за потреби повернути попередню версію.</p><h2>Навігація та сторінки</h2><p>Меню шапки та футера створюються в адмінпанелі, а інформаційні сторінки редагуються в текстовому редакторі з режимом HTML.</p><h2>Бейджі та акції</h2><p>Бейджі «Новинка», «Акція» й «Топ продаж» присвоюються автоматично за правилами, а власні бейджі можна призначити за артикулом.</p><h2>Доставка і країни</h2><p>Увімкніть лише країни, до яких ви доставляєте, — оформлення замовлення для інших буде заблоковано.</p><h2>Безпечні зміни</h2><p>Кожна небезпечна дія вимагає підтвердження, а журнал дій показує, хто і що змінив.</p>",
+     "tags": [
+      "адмінпанель",
+      "вітрина",
+      "налаштування"
+     ]
+    },
+    "en-US": {
+     "title": "How to manage your storefront without a developer",
+     "excerpt": "Home builder, themes, badges, navigation and pages: what you can change yourself in minutes.",
+     "body": "<h2>Look and brand</h2><p>In the Storefront section you set the logo, colours, font and the light/dark/auto scheme. Changes are visible on the site immediately.</p><h2>Home, product page, checkout</h2><p>Visual builders let you change the order and set of blocks, publish a draft and, if needed, restore the previous version.</p><h2>Navigation and pages</h2><p>Header and footer menus are created in the admin panel, and information pages are edited in the text editor with an HTML mode.</p><h2>Badges and promotions</h2><p>\"New\", \"Sale\" and \"Bestseller\" badges are assigned automatically by rules, and custom badges can be assigned by SKU.</p><h2>Delivery and countries</h2><p>Enable only the countries you ship to — checkout is blocked for the others.</p><h2>Safe changes</h2><p>Every risky action asks for confirmation, and the activity log shows who changed what.</p>",
+     "tags": [
+      "admin",
+      "storefront",
+      "settings"
+     ]
+    },
+    "ru-RU": {
+     "title": "Как управлять витриной без программиста",
+     "excerpt": "Конструктор главной, темы, бейджи, навигация и страницы: что можно изменить самостоятельно за несколько минут.",
+     "body": "<h2>Внешний вид и бренд</h2><p>В разделе «Витрина» задаются логотип, цвета, шрифт и схема светлая/тёмная/авто. Изменения сразу видны на сайте.</p><h2>Главная, карточка товара, чекаут</h2><p>Визуальные конструкторы позволяют менять порядок и состав блоков, публиковать черновик и при необходимости вернуть предыдущую версию.</p><h2>Навигация и страницы</h2><p>Меню шапки и футера создаются в админпанели, а информационные страницы редактируются в текстовом редакторе с режимом HTML.</p><h2>Бейджи и акции</h2><p>Бейджи «Новинка», «Акция» и «Топ продаж» присваиваются автоматически по правилам, а собственные бейджи можно назначить по артикулу.</p><h2>Доставка и страны</h2><p>Включите только страны, в которые вы доставляете, — оформление заказа для остальных будет заблокировано.</p><h2>Безопасные изменения</h2><p>Каждое опасное действие требует подтверждения, а журнал действий показывает, кто и что изменил.</p>",
+     "tags": [
+      "админпанель",
+      "витрина",
+      "настройки"
+     ]
+    }
+   }
+  },
+  {
+   "slug": "security-and-reliability",
+   "category": "platform",
+   "featured": false,
+   "days_ago": 5,
+   "cover": "/media/demo/blog/blog-security.svg",
+   "translations": {
+    "uk-UA": {
+     "title": "Безпека та надійність: як Nexora захищає ваш магазин",
+     "excerpt": "Двофакторний вхід, права доступу, резервні копії, контроль cron і підтвердження небезпечних дій.",
+     "body": "<h2>Захист входу</h2><p>Для адміністраторів доступна двофакторна автентифікація (TOTP), а обов’язковий режим можна ввімкнути політикою. Спроби входу обмежуються за частотою.</p><h2>Ролі та права</h2><p>Кожному співробітнику видаються лише потрібні права: каталог, замовлення, контент, SEO, системні налаштування.</p><h2>Захист від помилок</h2><p>Видалення та вимкнення потребують підтвердження. Для критичних змін є чернетки, резервні копії та відкат.</p><h2>Контроль автоматизації</h2><p>Панель показує застарілий cron, задачі з помилками, невиконані відправлення та проблеми інтеграцій.</p><h2>Безпека даних</h2><p>HTML з редакторів очищується на сервері, форми захищені CSRF-токенами, заголовки безпеки та CSP обмежують ризики.</p>",
+     "tags": [
+      "безпека",
+      "надійність"
+     ]
+    },
+    "en-US": {
+     "title": "Security and reliability: how Nexora protects your store",
+     "excerpt": "Two-factor sign-in, permissions, backups, cron monitoring and confirmation of risky actions.",
+     "body": "<h2>Sign-in protection</h2><p>Administrators can use two-factor authentication (TOTP), and a mandatory mode can be enabled by policy. Sign-in attempts are rate limited.</p><h2>Roles and permissions</h2><p>Each team member gets only the permissions they need: catalogue, orders, content, SEO, system settings.</p><h2>Protection from mistakes</h2><p>Deleting and disabling require confirmation. Critical changes have drafts, backups and rollback.</p><h2>Automation monitoring</h2><p>The dashboard shows stale cron, failed tasks, unprocessed dispatches and integration problems.</p><h2>Data safety</h2><p>Editor HTML is sanitised on the server, forms are protected by CSRF tokens, and security headers plus CSP reduce risk.</p>",
+     "tags": [
+      "security",
+      "reliability"
+     ]
+    },
+    "ru-RU": {
+     "title": "Безопасность и надёжность: как Nexora защищает ваш магазин",
+     "excerpt": "Двухфакторный вход, права доступа, резервные копии, контроль cron и подтверждение опасных действий.",
+     "body": "<h2>Защита входа</h2><p>Для администраторов доступна двухфакторная аутентификация (TOTP), а обязательный режим можно включить политикой. Попытки входа ограничиваются по частоте.</p><h2>Роли и права</h2><p>Каждому сотруднику выдаются только нужные права: каталог, заказы, контент, SEO, системные настройки.</p><h2>Защита от ошибок</h2><p>Удаление и отключение требуют подтверждения. Для критичных изменений есть черновики, резервные копии и откат.</p><h2>Контроль автоматизации</h2><p>Панель показывает устаревший cron, задачи с ошибками, необработанные отправки и проблемы интеграций.</p><h2>Безопасность данных</h2><p>HTML из редакторов очищается на сервере, формы защищены CSRF-токенами, заголовки безопасности и CSP снижают риски.</p>",
+     "tags": [
+      "безопасность",
+      "надёжность"
+     ]
+    }
+   }
+  },
+  {
+   "slug": "launch-checklist",
+   "category": "guides",
+   "featured": false,
+   "days_ago": 6,
+   "cover": "/media/demo/blog/blog-launch.svg",
+   "translations": {
+    "uk-UA": {
+     "title": "Чек-ліст запуску магазину за один день",
+     "excerpt": "Від встановлення до першого замовлення: покроковий план для нового магазину на Nexora.",
+     "body": "<h2>1. Встановлення</h2><p>Розгорніть архів на хостингу з PHP 8.4, вкажіть базу даних та адміністратора у браузерному інсталяторі.</p><h2>2. Магазин і бренд</h2><p>Заповніть дані магазину, завантажте логотип, оберіть кольори та тему, налаштуйте мови й валюти.</p><h2>3. Каталог</h2><p>Імпортуйте товари або додайте їх вручну, задайте категорії, бренди, атрибути й зображення.</p><h2>4. Доставка та оплата</h2><p>Увімкніть країни доставки, способи доставки й оплати, перевірте податки.</p><h2>5. Сторінки та SEO</h2><p>Заповніть інформаційні сторінки, мета-теги, перегляньте sitemap та підключіть Google Search Console.</p><h2>6. Безпека й перевірка</h2><p>Увімкніть 2FA, налаштуйте cron, створіть резервну копію та оформіть тестове замовлення.</p>",
+     "tags": [
+      "запуск",
+      "чек-ліст"
+     ]
+    },
+    "en-US": {
+     "title": "A one-day store launch checklist",
+     "excerpt": "From installation to the first order: a step-by-step plan for a new Nexora store.",
+     "body": "<h2>1. Installation</h2><p>Deploy the archive on hosting with PHP 8.4 and enter the database and administrator in the browser installer.</p><h2>2. Store and brand</h2><p>Fill in the store details, upload the logo, choose colours and theme, and configure languages and currencies.</p><h2>3. Catalogue</h2><p>Import products or add them manually, then set categories, brands, attributes and images.</p><h2>4. Shipping and payment</h2><p>Enable delivery countries, shipping and payment methods, and check taxes.</p><h2>5. Pages and SEO</h2><p>Complete the information pages and meta tags, review the sitemap and connect Google Search Console.</p><h2>6. Security and testing</h2><p>Enable 2FA, configure cron, create a backup and place a test order.</p>",
+     "tags": [
+      "launch",
+      "checklist"
+     ]
+    },
+    "ru-RU": {
+     "title": "Чек-лист запуска магазина за один день",
+     "excerpt": "От установки до первого заказа: пошаговый план для нового магазина на Nexora.",
+     "body": "<h2>1. Установка</h2><p>Разверните архив на хостинге с PHP 8.4, укажите базу данных и администратора в браузерном инсталляторе.</p><h2>2. Магазин и бренд</h2><p>Заполните данные магазина, загрузите логотип, выберите цвета и тему, настройте языки и валюты.</p><h2>3. Каталог</h2><p>Импортируйте товары или добавьте их вручную, задайте категории, бренды, атрибуты и изображения.</p><h2>4. Доставка и оплата</h2><p>Включите страны доставки, способы доставки и оплаты, проверьте налоги.</p><h2>5. Страницы и SEO</h2><p>Заполните информационные страницы, мета-теги, проверьте sitemap и подключите Google Search Console.</p><h2>6. Безопасность и проверка</h2><p>Включите 2FA, настройте cron, создайте резервную копию и оформите тестовый заказ.</p>",
+     "tags": [
+      "запуск",
+      "чек-лист"
+     ]
+    }
+   }
+  }
+ ]
+}

@@ -11,6 +11,7 @@ use Commerce\Modules\Catalog\Application\Command\CreateProductCommand;
 use Commerce\Modules\Catalog\Application\Command\UpdateProductCommand;
 use Commerce\Modules\Catalog\Application\ProductWriter;
 use Commerce\Modules\Appearance\Application\StorefrontPresentationWriterInterface;
+use Commerce\Modules\Content\Application\BlogService;
 use Commerce\Modules\Seo\Application\SeoUrlManager;
 use Commerce\Modules\Seo\Domain\SeoEntityType;
 use DateTimeImmutable;
@@ -27,6 +28,7 @@ final readonly class DemoSeeder
         private ProductWriter $products,
         private SeoUrlManager $seo,
         private StorefrontPresentationWriterInterface $presentation,
+        private BlogService $blog,
         private string $projectDir,
     ) {
     }
@@ -215,17 +217,18 @@ final readonly class DemoSeeder
             foreach ($articles as $i => $article) {
                 $this->createArticle($db, $ctx['store_id'], $article, $now, $i, $ctx['locale']);
             }
+            $showcase = $this->seedBlogShowcase($db, $ctx['store_id'], $now, $ctx['locale']);
             $this->seedInformationPagesDemo($db, $ctx['store_id'], $now, $ctx['locale']);
             $this->seedPromotionDemo($db, $ctx['store_id'], $now);
             $this->seedForumDemo($db, $ctx['store_id'], $now);
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.11.0',
+                'version' => '3.11.1',
                 'catalog_source' => 'DummyJSON',
             ]);
 
-            return ['categories' => count($categoryDefs), 'products' => count($catalog['products']), 'articles' => count($articles), 'reviews' => $reviewCount];
+            return ['categories' => count($categoryDefs), 'products' => count($catalog['products']), 'articles' => count($articles) + $showcase, 'reviews' => $reviewCount];
         });
     }
 
@@ -246,6 +249,10 @@ final readonly class DemoSeeder
             $db->executeStatement("UPDATE mc_content_entry ce JOIN mc_content_translation ct ON ct.content_id=ce.id SET ce.status='draft',ce.author_subject='system:installer',ce.published_at=NULL,ct.body_html=NULL,ct.excerpt=NULL WHERE ce.store_id=? AND ce.content_type='page' AND ce.author_subject='demo:seed'",[$ctx['store_id']]);
             if ($db->createSchemaManager()->tablesExist(['mc_promotion'])) { $db->executeStatement("DELETE FROM mc_promotion WHERE store_id=? AND code='DEMO10'",[$ctx['store_id']]); }
             if ($db->createSchemaManager()->tablesExist(['mc_forum_topic','mc_forum_board'])) { $db->executeStatement("DELETE t FROM mc_forum_topic t JOIN mc_forum_board b ON b.id=t.board_id WHERE b.store_id=? AND t.slug='welcome-demo'",[$ctx['store_id']]); }
+            foreach($db->fetchFirstColumn("SELECT value_json FROM mc_entity_metadata WHERE namespace=? AND meta_key='seed_blog_category'",[$namespace]) as $json){
+                $catId=(int)((json_decode((string)$json,true)['id'] ?? 0));
+                if($catId>0){$db->delete('mc_blog_category',['id'=>$catId,'store_id'=>$ctx['store_id']]);}
+            }
             $db->executeStatement("DELETE FROM mc_entity_metadata WHERE namespace=?",[$namespace]);
             $media=$db->fetchAllAssociative("SELECT id,storage_key FROM mc_media_asset WHERE storage_key LIKE 'demo/%'");
             foreach($media as $m){ if((int)$db->fetchOne('SELECT COUNT(*) FROM mc_product_media WHERE media_asset_id=?',[(int)$m['id']])===0){$db->delete('mc_media_asset',['id'=>(int)$m['id']]);}}
@@ -311,6 +318,49 @@ final readonly class DemoSeeder
         $db->insert('mc_content_translation',['content_id'=>$id,'locale'=>$locale,'title'=>$article['title'],'excerpt'=>$article['excerpt'],'body_html'=>$article['body'],'meta_title'=>$article['title'],'meta_description'=>$article['excerpt'],'created_at'=>$now,'updated_at'=>$now]);
         $this->seo->ensureForCreatedEntity($storeId,$locale,SeoEntityType::BlogArticle,$public->toRfc4122(),$article['title'],$article['slug']);
         $this->tag($db,$storeId,'article',$public->toRfc4122(),'seed',['kind'=>'article','sort'=>$sort]);
+    }
+
+    /** Editorial showcase: categories, covers, tags and long-form articles from resources/demo/blog-articles.json. */
+    private function seedBlogShowcase(Connection $db,int $storeId,string $now,string $locale): int
+    {
+        $file=$this->projectDir.'/resources/demo/blog-articles.json';
+        $data=is_file($file)?json_decode((string)file_get_contents($file),true):null;
+        if(!is_array($data)||!is_array($data['articles']??null)){return 0;}
+        $categoryIds=[];
+        $sort=0;
+        foreach((array)($data['categories']??[]) as $key=>$names){
+            $sort+=10;
+            $id=$this->blog->saveCategory($storeId,$locale,null,['name'=>$this->localized($names,$locale),'slug'=>'demo-'.$key,'sort_order'=>$sort,'status'=>'active']);
+            $categoryIds[(string)$key]=$id;
+            $this->tag($db,$storeId,'blog_category',Uuid::v4()->toRfc4122(),'seed_blog_category',['id'=>$id]);
+        }
+        $author=$this->localized($data['authors']??'',$locale);
+        $count=0;
+        foreach($data['articles'] as $i=>$article){
+            $tr=$this->pickTranslation((array)($article['translations']??[]),$locale);
+            if($tr===null){continue;}
+            $published=(new DateTimeImmutable('now',new DateTimeZone('UTC')))->modify('-'.(int)($article['days_ago']??($i+1)).' days')->format('Y-m-d H:i:s');
+            $id=$this->blog->save($storeId,$locale,null,[
+                'title'=>(string)$tr['title'],'slug'=>(string)$article['slug'],'excerpt'=>(string)$tr['excerpt'],'body_html'=>(string)$tr['body'],
+                'status'=>'published','published_at'=>$published,'category_id'=>$categoryIds[(string)($article['category']??'')]??0,
+                'cover_url'=>(string)($article['cover']??''),'cover_alt'=>(string)$tr['title'],'author_name'=>$author,
+                'featured'=>!empty($article['featured']),'tags'=>implode(', ',(array)($tr['tags']??[])),
+            ],'demo:editorial');
+            $public=(string)$db->fetchOne('SELECT public_id FROM mc_content_entry WHERE id=?',[$id]);
+            $this->tag($db,$storeId,'article',Uuid::fromBinary($public)->toRfc4122(),'seed',['kind'=>'article','showcase'=>true]);
+            $count++;
+        }
+        return $count;
+    }
+
+    /** @param array<string,array<string,mixed>> $translations */
+    private function pickTranslation(array $translations,string $locale): ?array
+    {
+        $language=strtolower(substr($locale,0,2));
+        foreach([$locale,$language==='uk'?'uk-UA':null,$language==='ru'?'ru-RU':null,'en-US','uk-UA'] as $key){
+            if($key!==null&&isset($translations[$key])&&is_array($translations[$key])){return $translations[$key];}
+        }
+        return null;
     }
 
     private function seedInformationPagesDemo(Connection $db,int $storeId,string $now,string $locale): void
@@ -442,7 +492,7 @@ final readonly class DemoSeeder
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.11.0',
+            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.11.1',
             CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$data): int {
                 if (strlen($data) + strlen($chunk) > 5 * 1024 * 1024) { return 0; }
                 $data .= $chunk;
