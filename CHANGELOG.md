@@ -2,6 +2,14 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.10.1 — 2026-09-29
+
+Schema 54, no database changes.
+
+### Fixed
+- **Production archive contained build-machine data**: `var/install/installed.lock`, test extensions and caches were packaged, so the installer could report "already installed". The packager now ships only empty `var/` skeleton directories and fails if anything else (or `installed.lock`) is present.
+- `var/.gitkeep` is tracked, so a fresh clone of `main` has the `var/` directory.
+
 ## 3.10.0 — 2026-09-30
 
 Schema 54, Extension API 2.0, production channel.

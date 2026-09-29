@@ -31,9 +31,11 @@ rm -rf "$OUT_DIR" "$ZIP"
 mkdir -p "$OUT_DIR"
 rsync -a ./ "$OUT_DIR/" \
   --exclude '/.git/' --exclude '/.build-tools/' --exclude '/node_modules/' --exclude '/build/' --exclude '/tests/' \
-  --exclude '/phpunit.xml.dist' --exclude '/.github/' --exclude '/var/cache/*' --exclude '/var/log/*'
+  --exclude '/phpunit.xml.dist' --exclude '/.github/' --exclude '/var/*' --exclude '/pw.local.config.ts' --exclude '/public/media/demo/dummyjson/' --exclude '/.env' --exclude '/.env.local'
 
-mkdir -p "$OUT_DIR/var/cache" "$OUT_DIR/var/log" "$OUT_DIR/var/install" "$OUT_DIR/public/media"
+mkdir -p "$OUT_DIR/var/cache" "$OUT_DIR/var/log" "$OUT_DIR/var/install" "$OUT_DIR/var/extensions" "$OUT_DIR/var/feeds" "$OUT_DIR/var/recovery" "$OUT_DIR/public/media"
+for d in cache log install extensions feeds recovery; do : > "$OUT_DIR/var/$d/.gitkeep"; done
+: > "$OUT_DIR/var/.gitkeep"
 find "$OUT_DIR/var/cache" -mindepth 1 -delete || true
 find "$OUT_DIR/var/log" -mindepth 1 -delete || true
 
@@ -45,6 +47,8 @@ rm -f "$OUT_DIR/.env" "$OUT_DIR/.env.local"
 [ -f "$OUT_DIR/vendor/autoload_runtime.php" ] || { echo 'ERROR: vendor missing from production stage.' >&2; exit 30; }
 [ -f "$OUT_DIR/public/build/.vite/manifest.json" ] || { echo 'ERROR: Vite manifest missing from production stage.' >&2; exit 31; }
 [ ! -d "$OUT_DIR/node_modules" ] || { echo 'ERROR: node_modules leaked into production stage.' >&2; exit 32; }
+[ ! -e "$OUT_DIR/var/install/installed.lock" ] || { echo 'ERROR: installed.lock leaked into package (installer would refuse to run).' >&2; exit 35; }
+[ -z "$(find "$OUT_DIR/var" -type f ! -name .gitkeep -print -quit)" ] || { echo 'ERROR: runtime data leaked into var/.' >&2; exit 36; }
 [ ! -e "$OUT_DIR/.env" ] || { echo 'ERROR: .env leaked into production stage.' >&2; exit 33; }
 [ ! -e "$OUT_DIR/.env.local" ] || { echo 'ERROR: .env.local leaked into production stage.' >&2; exit 34; }
 php tools/create-release-manifest.php "$OUT_DIR"

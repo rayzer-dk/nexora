@@ -47,11 +47,11 @@ jobs:
       - name: Validate one-upload runtime package
         run: php bin/release-check.php
 
-      - name: Build production and 3.9.0 update archives
+      - name: Build production and 3.10.0 update archives
         shell: bash
         run: |
           set -euo pipefail
-          BASE_PREV='d09bc41f5432a48ee2a9c9b828500615d6a6cd18'
+          BASE_PREV='d6c0c1df352e01558c4997cae4d6c170cecaf4a0'
           rm -rf package-root update-root
           mkdir -p package-root update-root
 
@@ -61,10 +61,10 @@ jobs:
             --exclude 'node_modules/' \
             --exclude 'package-root/' \
             --exclude 'update-root/' \
-            --exclude 'Nexora_Commerce_v3.10.0_Production_CI.zip' \
-            --exclude 'Nexora_v3.9.0_to_v3.10.0_Update.zip'
+            --exclude 'Nexora_Commerce_v3.10.1_Production_CI.zip' \
+            --exclude 'Nexora_v3.10.0_to_v3.10.1_Update.zip'
 
-          git diff --name-status "$BASE_PREV"..HEAD > CHANGES_FROM_3.9.0.txt
+          git diff --name-status "$BASE_PREV"..HEAD > CHANGES_FROM_3.10.0.txt
           git diff --name-only --diff-filter=ACMRT "$BASE_PREV"..HEAD > CHANGED_FILES.txt
           git diff --name-only --diff-filter=D "$BASE_PREV"..HEAD > DELETED_FILES.txt
 
@@ -79,14 +79,14 @@ jobs:
           mkdir -p update-root/public
           cp -a public/build update-root/public/build
           cp -a composer.lock package-lock.json update-root/
-          cp -a CHANGES_FROM_3.9.0.txt CHANGED_FILES.txt DELETED_FILES.txt update-root/
+          cp -a CHANGES_FROM_3.10.0.txt CHANGED_FILES.txt DELETED_FILES.txt update-root/
 
           php tools/create-release-manifest.php package-root
           php tools/create-release-manifest.php update-root
           php tools/verify-packaged-release.php package-root
 
           printf '%s\n' \
-            'Nexora Commerce update 3.9.0 -> 3.10.0' \
+            'Nexora Commerce update 3.10.0 -> 3.10.1' \
             '' \
             '1. Make a full backup of files and database.' \
             '2. Copy this archive over the existing installation.' \
@@ -96,35 +96,35 @@ jobs:
             '6. Verify storefront, admin login, cart, checkout and scheduled tasks.' \
             '' \
             'This package includes the complete vendor directory and compiled public/build assets' \
-            'so runtime dependencies match Nexora Commerce 3.10.0.' \
-            > update-root/UPDATE_FROM_3.9.0.txt
+            'so runtime dependencies match Nexora Commerce 3.10.1.' \
+            > update-root/UPDATE_FROM_3.10.0.txt
 
           (
             cd package-root
-            zip -qr ../Nexora_Commerce_v3.10.0_Production_CI.zip .
+            zip -qr ../Nexora_Commerce_v3.10.1_Production_CI.zip .
           )
           (
             cd update-root
-            zip -qr ../Nexora_v3.9.0_to_v3.10.0_Update.zip .
+            zip -qr ../Nexora_v3.10.0_to_v3.10.1_Update.zip .
           )
 
-          sha256sum Nexora_Commerce_v3.10.0_Production_CI.zip > Nexora_Commerce_v3.10.0_Production_CI.zip.sha256
-          sha256sum Nexora_v3.9.0_to_v3.10.0_Update.zip > Nexora_v3.9.0_to_v3.10.0_Update.zip.sha256
+          sha256sum Nexora_Commerce_v3.10.1_Production_CI.zip > Nexora_Commerce_v3.10.1_Production_CI.zip.sha256
+          sha256sum Nexora_v3.10.0_to_v3.10.1_Update.zip > Nexora_v3.10.0_to_v3.10.1_Update.zip.sha256
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Nexora_Commerce_v3.10.0_Production_CI
+          name: Nexora_Commerce_v3.10.1_Production_CI
           path: |
-            Nexora_Commerce_v3.10.0_Production_CI.zip
-            Nexora_Commerce_v3.10.0_Production_CI.zip.sha256
+            Nexora_Commerce_v3.10.1_Production_CI.zip
+            Nexora_Commerce_v3.10.1_Production_CI.zip.sha256
           if-no-files-found: error
           retention-days: 7
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Nexora_v3.9.0_to_v3.10.0_Update
+          name: Nexora_v3.10.0_to_v3.10.1_Update
           path: |
-            Nexora_v3.9.0_to_v3.10.0_Update.zip
-            Nexora_v3.9.0_to_v3.10.0_Update.zip.sha256
+            Nexora_v3.10.0_to_v3.10.1_Update.zip
+            Nexora_v3.10.0_to_v3.10.1_Update.zip.sha256
           if-no-files-found: error
           retention-days: 7
