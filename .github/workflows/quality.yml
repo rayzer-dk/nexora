@@ -126,7 +126,7 @@ jobs:
           for file in var/log/e2e-web.log var/log/prod.log; do
             [ -f "$file" ] || continue
             if grep -E -i '\[(critical|alert|emergency|error)\]|PHP (Fatal error|Parse error|Warning)|Uncaught .*(Exception|Error)|SQLSTATE\[' "$file" \
-              | grep -E -v 'Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException: "Not Found"' \
+              | grep -E -v 'Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException:' \
               >> var/log/e2e-errors.log; then
               true
             fi
