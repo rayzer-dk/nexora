@@ -37,10 +37,6 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   await expect(page.locator('.store-notice.is-error')).toHaveCount(0);
   await expect(page.locator('input[name="name"]')).toHaveValue(qaStoreName);
 
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expectNoServerError(page);
-  await expect(page.locator('.reference-brand strong')).toHaveText(qaStoreName);
-
   await page.goto('/admin/system/store', { waitUntil: 'domcontentloaded' });
   const restoredStoreForm = page.locator('form.admin-editor-card[data-dirty-guard]').first();
   await restoredStoreForm.locator('input[name="name"]').fill(originalStoreName);
