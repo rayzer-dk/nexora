@@ -31,6 +31,13 @@ final class StoreLocalizationSettings
              WHERE l.enabled=1 ORDER BY COALESCE(sl.sort_order,100),l.code',
             [$storeId],
         );
+        foreach ($locales as &$localeRow) {
+            $localeRow['code'] = $this->scalarText($localeRow['code'] ?? '');
+            $localeRow['name'] = $this->localizedText($localeRow['name'] ?? '', $localeRow['code'], 'en');
+            $localeRow['native_name'] = $this->localizedText($localeRow['native_name'] ?? '', $localeRow['code'], $localeRow['code']);
+        }
+        unset($localeRow);
+
         // Languages shipped with storefront translations but not registered yet are offered with one checkbox.
         $registered = array_column($locales, 'code');
         foreach ($this->bundledLocales() as $code) {
@@ -198,6 +205,39 @@ final class StoreLocalizationSettings
         }
 
         return $codes;
+    }
+
+    private function scalarText(mixed $value): string
+    {
+        if (is_scalar($value) || $value instanceof \Stringable) {
+            return trim((string) $value);
+        }
+
+        return '';
+    }
+
+    private function localizedText(mixed $value, string $code, string $fallbackLocale): string
+    {
+        if (is_array($value)) {
+            foreach ([$code, str_replace('-', '_', $code), $fallbackLocale, 'en', 'uk-UA', 'uk_UA'] as $key) {
+                if (array_key_exists($key, $value)) {
+                    $text = $this->scalarText($value[$key]);
+                    if ($text !== '') {
+                        return $text;
+                    }
+                }
+            }
+            foreach ($value as $candidate) {
+                $text = $this->scalarText($candidate);
+                if ($text !== '') {
+                    return $text;
+                }
+            }
+            return $this->displayName($code, $fallbackLocale);
+        }
+
+        $text = $this->scalarText($value);
+        return $text !== '' ? $text : $this->displayName($code, $fallbackLocale);
     }
 
     private function displayName(string $code, string $inLocale): string
