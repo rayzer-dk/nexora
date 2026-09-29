@@ -38,26 +38,28 @@ test('site capability changes alter the real storefront and can be restored', as
   await expect(forum).toBeVisible();
   const original = await forum.isChecked();
 
-  if (original) await forum.uncheck(); else await forum.check();
-  await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
+  try {
+    if (original) await forum.uncheck(); else await forum.check();
+    await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
 
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  const forumLinks = page.locator('a[href="/forum"]');
-  if (original) {
-    await expect(forumLinks).toHaveCount(0);
-    const disabledForum = await page.goto('/forum', { waitUntil: 'domcontentloaded' });
-    expect(disabledForum?.status()).toBe(404);
-  } else {
-    await expect(forumLinks.first()).toBeVisible();
-    const enabledForum = await page.goto('/forum', { waitUntil: 'domcontentloaded' });
-    expect(enabledForum?.status()).toBeLessThan(400);
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    const forumLinks = page.locator('a[href="/forum"]');
+    if (original) {
+      await expect(forumLinks).toHaveCount(0);
+      const disabledForum = await page.goto('/forum', { waitUntil: 'domcontentloaded' });
+      expect(disabledForum?.status()).toBe(404);
+    } else {
+      await expect(forumLinks.first()).toBeVisible();
+      const enabledForum = await page.goto('/forum', { waitUntil: 'domcontentloaded' });
+      expect(enabledForum?.status()).toBeLessThan(400);
+    }
+  } finally {
+    await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
+    const restoreForm = page.locator('form.admin-editor-form[data-dirty-guard]');
+    const restoreForum = restoreForm.locator('input[name="feature_forum"]');
+    if (original) await restoreForum.check(); else await restoreForum.uncheck();
+    await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
   }
-
-  await page.goto('/admin/system/site', { waitUntil: 'domcontentloaded' });
-  const restoreForm = page.locator('form.admin-editor-form[data-dirty-guard]');
-  const restoreForum = restoreForm.locator('input[name="feature_forum"]');
-  if (original) await restoreForum.check(); else await restoreForum.uncheck();
-  await submitAndWait(page, 'form.admin-editor-form[data-dirty-guard]', '/admin/system/site');
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   if (original) await expect(page.locator('a[href="/forum"]').first()).toBeVisible();
@@ -87,50 +89,53 @@ test('appearance settings change computed storefront design tokens and brand sub
   const marker = `E2E storefront contract ${Date.now()}`;
   const qaPrimary = originalPrimary.toUpperCase() === '#123456' ? '#654321' : '#123456';
   const qaRadius = originalRadius === '23' ? '22' : '23';
-  await subtitle.fill(marker);
-  await heroTitle.fill(marker);
-  await showProducts.uncheck();
-  await showPromos.uncheck();
-  await primary.fill(qaPrimary);
-  await radius.evaluate((element, value) => {
-    const input = element as HTMLInputElement;
-    input.value = String(value);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-  }, qaRadius);
-  await submitAndWait(page, 'form.admin-storefront-form', '/admin/appearance/storefront');
 
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('.reference-brand small')).toHaveText(marker);
-  await expect(page.locator('.demo-hero-card h1,.reference-hero h1,.home-hero h1').first()).toHaveText(marker);
-  await expect(page.locator('.product-grid.demo-product-grid')).toHaveCount(0);
-  await expect(page.locator('.demo-promo-grid,.reference-products-layout')).toHaveCount(0);
-  const tokens = await page.evaluate(() => {
-    const style = getComputedStyle(document.documentElement);
-    return {
-      primary: style.getPropertyValue('--mc-color-primary').trim().toUpperCase(),
-      radius: style.getPropertyValue('--mc-radius-lg').trim(),
-    };
-  });
-  expect(tokens.primary).toBe(qaPrimary.toUpperCase());
-  expect(tokens.radius).toBe(`${qaRadius}px`);
+  try {
+    await subtitle.fill(marker);
+    await heroTitle.fill(marker);
+    await showProducts.uncheck();
+    await showPromos.uncheck();
+    await primary.fill(qaPrimary);
+    await radius.evaluate((element, value) => {
+      const input = element as HTMLInputElement;
+      input.value = String(value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }, qaRadius);
+    await submitAndWait(page, 'form.admin-storefront-form', '/admin/appearance/storefront');
 
-  await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
-  const restore = page.locator('form.admin-storefront-form');
-  await restore.locator('input[name="brand_subtitle"]').fill(originalSubtitle);
-  await restore.locator('input[name="hero_title"]').fill(originalHeroTitle);
-  const restoreProducts = restore.locator('input[name="show_products"]');
-  const restorePromos = restore.locator('input[name="show_promos"]');
-  if (originalShowProducts) await restoreProducts.check(); else await restoreProducts.uncheck();
-  if (originalShowPromos) await restorePromos.check(); else await restorePromos.uncheck();
-  await restore.locator('input[name="theme_primary"]').fill(originalPrimary);
-  await restore.locator('input[name="theme_radius"]').evaluate((element, value) => {
-    const input = element as HTMLInputElement;
-    input.value = String(value);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-  }, originalRadius);
-  await submitAndWait(page, 'form.admin-storefront-form', '/admin/appearance/storefront');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('.reference-brand small')).toHaveText(marker);
+    await expect(page.locator('.demo-hero-card h1,.reference-hero h1,.home-hero h1').first()).toHaveText(marker);
+    await expect(page.locator('.product-grid.demo-product-grid')).toHaveCount(0);
+    await expect(page.locator('.demo-promo-grid,.reference-products-layout')).toHaveCount(0);
+    const tokens = await page.evaluate(() => {
+      const style = getComputedStyle(document.documentElement);
+      return {
+        primary: style.getPropertyValue('--mc-color-primary').trim().toUpperCase(),
+        radius: style.getPropertyValue('--mc-radius-lg').trim(),
+      };
+    });
+    expect(tokens.primary).toBe(qaPrimary.toUpperCase());
+    expect(tokens.radius).toBe(`${qaRadius}px`);
+  } finally {
+    await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
+    const restore = page.locator('form.admin-storefront-form');
+    await restore.locator('input[name="brand_subtitle"]').fill(originalSubtitle);
+    await restore.locator('input[name="hero_title"]').fill(originalHeroTitle);
+    const restoreProducts = restore.locator('input[name="show_products"]');
+    const restorePromos = restore.locator('input[name="show_promos"]');
+    if (originalShowProducts) await restoreProducts.check(); else await restoreProducts.uncheck();
+    if (originalShowPromos) await restorePromos.check(); else await restorePromos.uncheck();
+    await restore.locator('input[name="theme_primary"]').fill(originalPrimary);
+    await restore.locator('input[name="theme_radius"]').evaluate((element, value) => {
+      const input = element as HTMLInputElement;
+      input.value = String(value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }, originalRadius);
+    await submitAndWait(page, 'form.admin-storefront-form', '/admin/appearance/storefront');
+  }
 });
 
 test('rich product description editor saves through the standard form and renders on storefront', async ({ page }, testInfo) => {
