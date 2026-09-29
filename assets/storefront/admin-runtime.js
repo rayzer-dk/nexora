@@ -270,20 +270,21 @@ function initHealthCheck() {
 }
 
 function initSiteProfilePreset() {
-  const presets = {
-    shop: { catalog: 1, search: 1, cart: 1, checkout: 1, content: 1, blog: 1, forum: 0, reviews: 1, customer_accounts: 1 },
-    catalog: { catalog: 1, search: 1, cart: 0, checkout: 0, content: 1, blog: 1, forum: 0, reviews: 1, customer_accounts: 0 },
-    content: { catalog: 0, search: 0, cart: 0, checkout: 0, content: 1, blog: 1, forum: 0, reviews: 0, customer_accounts: 0 },
-    landing: { catalog: 0, search: 0, cart: 0, checkout: 0, content: 1, blog: 0, forum: 0, reviews: 0, customer_accounts: 0 },
-    forum: { catalog: 0, search: 0, cart: 0, checkout: 0, content: 1, blog: 1, forum: 1, reviews: 0, customer_accounts: 1 },
-    hybrid: { catalog: 1, search: 1, cart: 1, checkout: 1, content: 1, blog: 1, forum: 1, reviews: 1, customer_accounts: 1 },
-  };
-  qa('input[name="mode"]').forEach((radio) => {
+  const form = q('[data-site-mode-profiles]');
+  if (!form) return;
+  let profiles = {};
+  try {
+    profiles = JSON.parse(form.dataset.siteModeProfiles || '{}');
+  } catch (_) {
+    return;
+  }
+  qa('input[name="mode"]', form).forEach((radio) => {
     radio.addEventListener('change', () => {
-      if (!radio.checked || !presets[radio.value]) return;
-      Object.entries(presets[radio.value]).forEach(([feature, value]) => {
-        const box = q(`input[name="feature_${feature}"]`);
-        if (box) box.checked = Boolean(value);
+      if (!radio.checked) return;
+      const features = profiles?.[radio.value]?.features || {};
+      Object.entries(features).forEach(([feature, enabled]) => {
+        const box = q(`input[name="feature_${feature}"]`, form);
+        if (box) box.checked = Boolean(enabled);
       });
     });
   });
