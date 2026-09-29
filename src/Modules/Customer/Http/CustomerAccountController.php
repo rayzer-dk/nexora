@@ -92,6 +92,7 @@ final class CustomerAccountController extends AbstractController
             }
             try {
                 $created = $this->registration->register(
+                    $context->storeId,
                     (string) $request->request->get('email', ''),
                     (string) $request->request->get('display_name', ''),
                     (string) $request->request->get('password', ''),
