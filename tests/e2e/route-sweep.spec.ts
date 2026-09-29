@@ -6,20 +6,32 @@ test.describe.configure({ timeout: 180_000, retries: 0 });
 
 type RouteDump = Record<string, { path: string; method: string }>;
 
-function routePatterns(): Array<{ name: string; path: string; methods: Set<string>; regex: RegExp }> {
-  return Object.entries(routes()).map(([name, route]) => {
-    const path = route.path.replaceAll('\\/', '/');
-    const methods = new Set((route.method || '').split('|').filter(Boolean));
-    const escaped = path
-      .replace(/[.*+?^$()|[\]\\]/g, '\\type RouteDump = Record<string, { path: string; method: string }>;')
-      .replace(/\\\{[^}]+\\\}/g, '[^/]+');
-    return { name, path, methods, regex: new RegExp('^' + escaped + '
-
 function routes(): RouteDump {
   return JSON.parse(execFileSync('php', ['bin/console', 'debug:router', '--format=json'], {
     encoding: 'utf8',
     env: process.env,
   })) as RouteDump;
+}
+
+function escapeRegex(value: string): string {
+  const special = '\\.^$*+?()[]{}|';
+  let result = '';
+  for (const char of value) {
+    result += special.includes(char) ? '\\' + char : char;
+  }
+  return result;
+}
+
+function routePatterns(): Array<{ name: string; path: string; methods: Set<string>; regex: RegExp }> {
+  return Object.entries(routes()).map(([name, route]) => {
+    const path = route.path.replaceAll('\\/', '/');
+    const methods = new Set((route.method || '').split('|').filter(Boolean));
+    const pattern = path
+      .split('/')
+      .map((segment) => segment.includes('{') ? '[^/]+' : escapeRegex(segment))
+      .join('/');
+    return { name, path, methods, regex: new RegExp('^' + pattern + '$') };
+  });
 }
 
 function staticHtmlRoutes(prefix: string): Array<{ name: string; path: string }> {
@@ -64,7 +76,7 @@ test('every static admin HTML route renders after authentication', async ({ page
     const response = await page.goto(route.path, { waitUntil: 'domcontentloaded' });
     const status = response?.status() ?? 0;
     if (status >= 500 || status === 0) {
-      failures.push(`${route.name} ${route.path}: HTTP ${status}`);
+      failures.push(route.name + ' ' + route.path + ': HTTP ' + status);
       continue;
     }
     try {
@@ -76,11 +88,11 @@ test('every static admin HTML route renders after authentication', async ({ page
         await expect(page.locator('body')).not.toContainText('SQLSTATE[');
         await expectNoBrokenImages(page);
         if (runtimeErrors.length > 0) {
-          failures.push(`${route.name} ${route.path}: JS ${runtimeErrors.join(' | ')}`);
+          failures.push(route.name + ' ' + route.path + ': JS ' + runtimeErrors.join(' | '));
         }
       }
     } catch (error) {
-      failures.push(`${route.name} ${route.path}: ${error instanceof Error ? error.message : String(error)}`);
+      failures.push(route.name + ' ' + route.path + ': ' + (error instanceof Error ? error.message : String(error)));
     }
   }
 
@@ -111,7 +123,7 @@ test('every static public HTML route renders with no runtime failure', async ({ 
     const response = await page.goto(route.path, { waitUntil: 'domcontentloaded' });
     const status = response?.status() ?? 0;
     if (status >= 500 || status === 0) {
-      failures.push(`${route.name} ${route.path}: HTTP ${status}`);
+      failures.push(route.name + ' ' + route.path + ': HTTP ' + status);
       continue;
     }
     try {
@@ -123,19 +135,18 @@ test('every static public HTML route renders with no runtime failure', async ({ 
         await expect(page.locator('body')).not.toContainText('SQLSTATE[');
         await expectNoBrokenImages(page);
         if (runtimeErrors.length > 0) {
-          failures.push(`${route.name} ${route.path}: JS ${runtimeErrors.join(' | ')}`);
+          failures.push(route.name + ' ' + route.path + ': JS ' + runtimeErrors.join(' | '));
         }
       }
     } catch (error) {
-      failures.push(`${route.name} ${route.path}: ${error instanceof Error ? error.message : String(error)}`);
+      failures.push(route.name + ' ' + route.path + ': ' + (error instanceof Error ? error.message : String(error)));
     }
   }
 
   expect(failures, failures.join('\n')).toEqual([]);
 });
 
-
-test('rendered admin links and form actions resolve instead of pointing to dead routes', async ({ page }, testInfo) => {
+test('rendered admin links and form actions resolve to declared router contracts', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Admin interaction route contract runs once per CI database.');
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
 
@@ -166,11 +177,10 @@ test('rendered admin links and form actions resolve instead of pointing to dead 
         (candidate.methods.size === 0 || candidate.methods.has(item.method) || (item.method === 'GET' && candidate.methods.has('HEAD')))
       );
       if (matches.length === 0) {
-        failures.push(`${route.path} renders ${item.method} ${url.pathname}, but no router entry accepts it`);
+        failures.push(route.path + ' renders ' + item.method + ' ' + url.pathname + ', but no router entry accepts it');
       }
     }
   }
 
   expect(failures, failures.join('\n')).toEqual([]);
 });
-
