@@ -32,11 +32,12 @@ final readonly class CatalogGoogleSyncSubscriber implements DomainEventSubscribe
         if ($productId === '') {
             return;
         }
+        $storeId = isset($event->payload['store_id']) ? (int) $event->payload['store_id'] : null;
         $this->queue->enqueue('google_merchant', 'product', $productId, 'upsert', [
             'event_id' => $event->eventId,
             'event_version' => $event->eventVersion,
-            'store_id' => isset($event->payload['store_id']) ? (int) $event->payload['store_id'] : null,
+            'store_id' => $storeId,
             'market_id' => isset($event->payload['market_id']) ? (int) $event->payload['market_id'] : null,
-        ], 'google:product:' . $productId . ':' . $event->eventId);
+        ], 'google:product:' . $productId . ':' . $event->eventId, $storeId);
     }
 }
