@@ -33,7 +33,7 @@ final class Version20260929050000 extends AbstractMigration
             CONSTRAINT fk_store_media_store FOREIGN KEY (store_id) REFERENCES mc_store(id) ON DELETE CASCADE,
             CONSTRAINT fk_store_media_asset FOREIGN KEY (asset_id) REFERENCES mc_media_asset(id) ON DELETE CASCADE,
             CONSTRAINT fk_store_media_folder FOREIGN KEY (folder_id) REFERENCES mc_media_folder(id) ON DELETE SET NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
         $this->addSql("INSERT IGNORE INTO mc_store_media_asset
             (store_id,asset_id,folder_id,alt_text,title,focal_x,focal_y,tags_json,created_at,updated_at)
