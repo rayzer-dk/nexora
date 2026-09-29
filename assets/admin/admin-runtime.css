@@ -1224,3 +1224,5 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
   :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .admin-theme-toggle__sun { display: inline-flex; }
 }
 .admin-theme-toggle { display: inline-flex; align-items: center; justify-content: center; }
+.admin-extension-uninstall { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: var(--mc-space-2); white-space: nowrap; }
+.admin-extension-uninstall .admin-check-inline { font-size: var(--mc-font-size-sm); }

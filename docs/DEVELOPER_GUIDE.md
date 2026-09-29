@@ -210,3 +210,11 @@ return [
 ```
 
 Trusted migrations are required to be reversible before package activation.
+
+## Signing trusted modules
+
+    php bin/console commerce:extension:keygen acme.2026 --out=acme.2026.key
+    php bin/console commerce:extension:pack path/to/module --output=module.zip
+    php bin/console commerce:extension:sign module.zip acme.2026.key
+
+`keygen` prints the manifest `publisher`/`signature` fragment and the public key to add to `config/extensions/trusted-publishers.json`. Product blocks must declare regions from: `hero_media`, `hero_summary`, `below_primary`, `below_secondary`, `mobile_sticky`.

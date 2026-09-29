@@ -1878,6 +1878,8 @@ return [
     'extension.sdk.product_block_label' => 'Product block',
     'extension.runtime.reversible_migration_required' => 'A trusted extension migration must return reversible up and down callables: ',
     'extension.runtime.rollback_action_required' => 'Downgrading the version must be done through the rollback action to safely revert database migrations.',
+    'extension.runtime.uninstall_active' => 'An active version cannot be uninstalled: disable the module first.',
+    'extension.runtime.product_region_invalid' => 'The product block declares an unknown page region: ',
     'extension.runtime.activation_compensation_failed' => 'Extension activation failed, and the compensating migration rollback also failed: ',
     'extension.runtime.rollback_manifest_invalid' => 'The active extension\'s manifest is corrupted; rollback was not performed.',
     'extension.runtime.rollback_restore_failed' => 'Rollback failed, and the active extension\'s migration state could not be restored: ',

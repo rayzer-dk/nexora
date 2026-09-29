@@ -80,13 +80,16 @@ final class ExtensionPackCommand extends Command
         $zip->close();
 
         try {
-            $inspection = $this->validator->inspect($target);
+            $inspection = $this->validator->inspect($target, false);
         } catch (\Throwable $e) {
             @unlink($target);
             $output->writeln('<error>PACKED ZIP FAILED VALIDATION: ' . $e->getMessage() . '</error>');
             return Command::FAILURE;
         }
         $output->writeln('<info>Package created and validated: ' . $target . '</info>');
+        foreach ($inspection->warnings as $warning) {
+            $output->writeln('<comment>' . $warning . '</comment>');
+        }
         if ($inspection->quarantined) {
             $output->writeln('<comment>Note: trusted executable package is not activatable until its publisher signature is trusted.</comment>');
         }

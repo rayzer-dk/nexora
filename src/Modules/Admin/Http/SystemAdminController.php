@@ -218,6 +218,22 @@ final class SystemAdminController extends AbstractController
         return $this->redirectToRoute('admin_system_extensions');
     }
 
+    #[Route('/admin/system/extensions/{id}/uninstall', name: 'admin_system_extension_uninstall', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function uninstallExtension(Request $request, int $id): Response
+    {
+        if (!$this->isCsrfTokenValid('extension_state_' . $id, (string) $request->request->get('_csrf_token'))) {
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.systemadmincontroller.nediisnyi_token_bezpeky_stan_ne_zmineno'));
+            return $this->redirectToRoute('admin_system_extensions');
+        }
+        try {
+            $result = $this->extensions->uninstall($id, $request->request->getBoolean('purge_data'));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.system.extensions.uninstalled') . ' ' . $result['code'] . ' ' . $result['version']);
+        } catch (Throwable $e) {
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('admin.system.extensions.uninstall_failed') . ' ' . $this->safeMessage($e));
+        }
+        return $this->redirectToRoute('admin_system_extensions');
+    }
+
     #[Route('/admin/system/extensions/{id}/rollback', name: 'admin_system_extension_rollback', methods: ['POST'], requirements: ['id' => '\\d+'])]
     public function rollbackExtension(Request $request, int $id): Response
     {

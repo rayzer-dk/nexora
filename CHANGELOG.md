@@ -2,6 +2,22 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.8.1 — 2026-09-29
+
+Schema 52, Extension API 2.0, production channel.
+
+### Added
+- **Module uninstall** (Admin → System → Extensions): removes a non-active version with its files, published assets and settings; optional "with module data" runs the package's `down` migrations. Recorded in the lifecycle audit trail.
+- `commerce:extension:keygen` creates an Ed25519 publisher key pair and prints the manifest and `trusted-publishers.json` fragments.
+- `public/.htaccess`: Brotli/Gzip precompressed asset delivery, on-the-fly compression for HTML/JSON/XML and cache headers (immutable for hashed build assets) for Apache hosting, matching the nginx example.
+- Playwright `extension-authoring` covers the whole module life cycle for declarative and signed PHP modules.
+
+### Fixed
+- Rolling an extension back to its previous version always failed because the rollback called activation, which forbids downgrades. Rollback now activates the older version explicitly.
+- The `product-block` scaffold and the docs example declared regions `main`/`sidebar` that the product page does not render, so the block was accepted but never shown. Scaffold and example use real regions and the validator rejects unknown product regions.
+- `commerce:extension:scaffold` generated a broken `Entrypoint.php` for trusted modules (`TrustedExtensionContext \)` plus a PHP warning); the `trusted-route` preset now generates a working route and handler.
+- `commerce:extension:pack` failed on any trusted module because the placeholder signature was validated before signing; pack now validates structure and reminds to sign.
+
 ## 3.8.0 — 2026-09-29
 
 Schema 52, Extension API 2.0, production channel.

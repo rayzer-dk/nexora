@@ -19,8 +19,8 @@
       "id": "extension.example_product_badge.badge",
       "surface": "product",
       "regions": [
-        "main",
-        "sidebar"
+        "below_primary",
+        "hero_summary"
       ],
       "label_key": "extension.example_product_badge.badge.label",
       "settings_schema": "blocks/badge.schema.json",

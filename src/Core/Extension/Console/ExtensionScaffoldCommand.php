@@ -100,10 +100,19 @@ final class ExtensionScaffoldCommand extends Command
             $manifest['blocks'] = [[
                 'id' => $blockId,
                 'surface' => 'product',
-                'regions' => ['main', 'sidebar'],
+                'regions' => ['below_primary', 'hero_summary'],
                 'label_key' => $namespace . 'product_panel.label',
                 'settings_schema' => 'blocks/product_panel.schema.json',
                 'allow_multiple' => false,
+            ]];
+        }
+
+        if ($preset === 'trusted-route') {
+            $manifest['routes'] = [[
+                'name' => $namespace . 'hello',
+                'path' => '/' . trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower($code)), '-') . '/hello',
+                'methods' => ['GET'],
+                'mode' => 'trusted_handler',
             ]];
         }
 
@@ -163,7 +172,13 @@ final class ExtensionScaffoldCommand extends Command
             @mkdir($dir . '/src', 0750, true);
             @mkdir($dir . '/migrations', 0750, true);
             @mkdir($dir . '/assets', 0750, true);
-            file_put_contents($dir . '/src/Entrypoint.php', "<?php\n\ndeclare(strict_types=1);\n\nnamespace {$phpNamespace};\n\nuse Commerce\\Core\\Extension\\TrustedExtensionContext;\nuse Commerce\\Core\\Extension\\TrustedExtensionEntrypointInterface;\n\nfinal class Entrypoint implements TrustedExtensionEntrypointInterface\n{\n    public function boot(TrustedExtensionContext \\$context): void\n    {\n        // Register only routes/events declared in manifest.json.\n    }\n}\n");
+            $body = "        // Register only routes/events declared in manifest.json.\n";
+            if ($preset === 'trusted-route') {
+                $body = "        \$context->route('" . $namespace . "hello', static fn (Request \$request, array \$route): Response => new Response('Hello from " . addslashes($name) . "', 200, ['Content-Type' => 'text/plain; charset=UTF-8']));\n";
+            }
+            $uses = "use Commerce\\Core\\Extension\\TrustedExtensionContext;\nuse Commerce\\Core\\Extension\\TrustedExtensionEntrypointInterface;\n"
+                . ($preset === 'trusted-route' ? "use Symfony\\Component\\HttpFoundation\\Request;\nuse Symfony\\Component\\HttpFoundation\\Response;\n" : '');
+            file_put_contents($dir . '/src/Entrypoint.php', "<?php\n\ndeclare(strict_types=1);\n\nnamespace {$phpNamespace};\n\n" . $uses . "\nfinal class Entrypoint implements TrustedExtensionEntrypointInterface\n{\n    public function boot(TrustedExtensionContext \$context): void\n    {\n" . $body . "    }\n}\n");
             file_put_contents($dir . '/SIGNATURE.ed25519', "SIGN THIS PACKAGE WITH YOUR TRUSTED ED25519 PUBLISHER KEY\n");
         }
         if ($preset === 'theme') {

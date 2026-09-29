@@ -1,6 +1,28 @@
 DirectoryIndex index.php
+
+# --- Compression -------------------------------------------------------------
+# Precompressed Brotli/Gzip files produced by `npm run build:production` are served as-is;
+# dynamic HTML/JSON/XML is compressed on the fly.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript application/javascript application/json application/manifest+json application/xml application/xhtml+xml application/rss+xml image/svg+xml
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Serve <file>.br / <file>.gz next to hashed build assets when the browser accepts it.
+    RewriteCond %{HTTP:Accept-Encoding} \bbr\b
+    RewriteCond %{REQUEST_FILENAME}.br -f
+    RewriteRule ^(build|assets)/.+\.(js|css|svg|json|mjs)$ %{REQUEST_URI}.br [L]
+    RewriteCond %{HTTP:Accept-Encoding} \bgzip\b
+    RewriteCond %{REQUEST_FILENAME}.gz -f
+    RewriteRule ^(build|assets)/.+\.(js|css|svg|json|mjs)$ %{REQUEST_URI}.gz [L]
+
+    RewriteRule \.js\.(br|gz)$ - [T=application/javascript,E=no-gzip:1]
+    RewriteRule \.mjs\.(br|gz)$ - [T=application/javascript,E=no-gzip:1]
+    RewriteRule \.css\.(br|gz)$ - [T=text/css,E=no-gzip:1]
+    RewriteRule \.svg\.(br|gz)$ - [T=image/svg+xml,E=no-gzip:1]
+    RewriteRule \.json\.(br|gz)$ - [T=application/json,E=no-gzip:1]
 
     # Existing public files (assets, media, setup.php) are served directly.
     RewriteCond %{REQUEST_FILENAME} -f [OR]
@@ -13,4 +35,27 @@ DirectoryIndex index.php
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    <FilesMatch "\.(js|mjs|css|svg|json)\.br$">
+        Header set Content-Encoding br
+        Header append Vary Accept-Encoding
+    </FilesMatch>
+    <FilesMatch "\.(js|mjs|css|svg|json)\.gz$">
+        Header set Content-Encoding gzip
+        Header append Vary Accept-Encoding
+    </FilesMatch>
+
+    # --- Caching -------------------------------------------------------------
+    # Vite output is content-hashed: safe to cache for a year.
+    <If "%{REQUEST_URI} =~ m#^/build/assets/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+    # Stable, unhashed compatibility assets can change on update: revalidate hourly.
+    <ElseIf "%{REQUEST_URI} =~ m#^/assets/#">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+    </ElseIf>
+    # Uploaded media files are versioned by name.
+    <ElseIf "%{REQUEST_URI} =~ m#^/media/#">
+        Header set Cache-Control "public, max-age=604800"
+    </ElseIf>
 </IfModule>

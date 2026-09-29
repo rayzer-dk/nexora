@@ -1891,6 +1891,8 @@ return [
     'extension.sdk.product_block_label' => 'Блок товару',
     'extension.runtime.reversible_migration_required' => 'Міграція trusted-розширення має повертати оборотні callable up і down: ',
     'extension.runtime.rollback_action_required' => 'Пониження версії потрібно виконувати через дію rollback, щоб безпечно відкотити міграції бази даних.',
+    'extension.runtime.uninstall_active' => 'Активну версію неможливо видалити: спочатку вимкніть модуль.',
+    'extension.runtime.product_region_invalid' => 'Блок товару оголошує невідомий регіон сторінки: ',
     'extension.runtime.activation_compensation_failed' => 'Активація розширення не вдалася, а компенсаційний відкат міграцій також завершився помилкою: ',
     'extension.runtime.rollback_manifest_invalid' => 'Manifest активного розширення пошкоджений; rollback не виконано.',
     'extension.runtime.rollback_restore_failed' => 'Rollback не вдався, а стан міграцій активного розширення не вдалося відновити: ',

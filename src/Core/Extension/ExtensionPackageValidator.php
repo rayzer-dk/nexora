@@ -13,6 +13,9 @@ use ZipArchive;
 
 final class ExtensionPackageValidator
 {
+    /** Regions rendered by the product page; a block declared for any other region would never be shown. */
+    public const PRODUCT_REGIONS = ['hero_media', 'hero_summary', 'below_primary', 'below_secondary', 'mobile_sticky'];
+
     public function __construct(
         private readonly ExtensionSettingsSchemaValidator $settingsSchemas,
         private readonly OutboundUrlPolicy $outboundUrls,
@@ -31,7 +34,8 @@ final class ExtensionPackageValidator
     /** @var list<string> */
     private const FORBIDDEN_EXTENSIONS = ['phar','sh','bash','exe','dll','so','dylib','bat','cmd','ps1','jar','py','pl','rb'];
 
-    public function inspect(string $archivePath): ExtensionPackageInspection
+    /** @param bool $verifySignature false is used only by the pack command, which builds the archive before it can be signed */
+    public function inspect(string $archivePath, bool $verifySignature = true): ExtensionPackageInspection
     {
         if (!is_file($archivePath)) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.f79cfe9d29c3'));
@@ -147,8 +151,10 @@ final class ExtensionPackageValidator
             $this->validateContributions($manifest, $files);
 
             $trustedExecutable = $hasExecutable && (string) ($manifest['execution'] ?? '') === 'trusted_release' && in_array((string) ($manifest['type'] ?? ''), ['trusted-module','theme'], true);
-            if ($trustedExecutable) {
+            if ($trustedExecutable && $verifySignature) {
                 $this->trustedSignatures->verify($zip, $manifest);
+            } elseif ($trustedExecutable) {
+                $warnings[] = 'Trusted package is not signed yet: run commerce:extension:sign before installing it.';
             }
 
             $quarantineReason = '';
@@ -414,6 +420,13 @@ final class ExtensionPackageValidator
             $regions = $block['regions'] ?? [];
             if (!is_array($regions) || $regions === [] || count($regions) > 32) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.3b02c5512b48'));
+            }
+            if ($surface === 'product') {
+                foreach ($regions as $region) {
+                    if (!is_string($region) || !in_array($region, self::PRODUCT_REGIONS, true)) {
+                        throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.product_region_invalid') . (is_string($region) ? $region : '?') . ' (' . implode(', ', self::PRODUCT_REGIONS) . ')');
+                    }
+                }
             }
             if (isset($block['settings_schema'])) {
                 $schemaPath = str_replace('\\', '/', (string) $block['settings_schema']);

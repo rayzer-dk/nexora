@@ -91,7 +91,7 @@ final readonly class ExtensionPackageManager
         return ['id' => $id, 'code' => $code, 'version' => $version, 'status' => $status, 'quarantined' => $inspection->quarantined, 'warnings' => $inspection->warnings];
     }
 
-    public function activate(int $id): void
+    public function activate(int $id, bool $allowDowngrade = false): void
     {
         $row = $this->connection->fetchAssociative('SELECT * FROM mc_extension_installation WHERE id=? LIMIT 1', [$id]);
         if (!is_array($row)) {
@@ -118,7 +118,7 @@ final readonly class ExtensionPackageManager
         } catch (\Throwable) {
             $previousActive = null;
         }
-        if (is_array($previousActive) && version_compare((string) $row['version'], (string) $previousActive['version'], '<')) {
+        if (!$allowDowngrade && is_array($previousActive) && version_compare((string) $row['version'], (string) $previousActive['version'], '<')) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.rollback_action_required'));
         }
 
@@ -185,6 +185,57 @@ final readonly class ExtensionPackageManager
     }
 
     /**
+     * Removes one installed version that is not active. Files, published assets, settings and history links of that
+     * version are deleted. With $purgeData the package's reversible `down` migrations are executed first, otherwise
+     * tables created by the module are retained (module migrations must therefore be idempotent on reinstall).
+     *
+     * @return array{code:string,version:string,purged:bool}
+     */
+    public function uninstall(int $id, bool $purgeData = false): array
+    {
+        $row = $this->connection->fetchAssociative('SELECT * FROM mc_extension_installation WHERE id=? LIMIT 1', [$id]);
+        if (!is_array($row)) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.3bec61aaafaa'));
+        }
+        $status = (string) $row['status'];
+        if ($status === 'active') {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.uninstall_active'));
+        }
+        $code = (string) $row['code'];
+        $version = (string) $row['version'];
+        $manifest = json_decode((string) ($row['manifest_json'] ?? '{}'), true) ?: [];
+        $installPath = (string) $row['install_path'];
+
+        if ($purgeData && $status !== 'quarantined' && is_dir($installPath)) {
+            $this->extensionMigrations->rollbackInstallation($id, $installPath, is_array($manifest) ? $manifest : []);
+        }
+
+        $this->connection->transactional(function (Connection $db) use ($id): void {
+            $db->executeStatement('DELETE FROM mc_extension_installation WHERE id=?', [$id]);
+        });
+
+        $root = realpath(rtrim($this->projectDir, '/\\') . '/var/extensions');
+        $real = realpath($installPath);
+        if ($root !== false && $real !== false && str_starts_with($real, $root . DIRECTORY_SEPARATOR)) {
+            $this->removeTree($real);
+            $parent = dirname($real);
+            if ($parent !== $root && count(glob($parent . '/*') ?: []) === 0) {
+                @rmdir($parent);
+            }
+        }
+        $assets = rtrim($this->projectDir, '/\\') . '/public/media/extensions/' . $code;
+        if (preg_match('/^[a-z0-9_.-]+$/i', $code) === 1 && preg_match('/^[a-z0-9_.+-]+$/i', $version) === 1) {
+            $this->removeTree($assets . '/' . $version);
+            if (is_dir($assets) && count(glob($assets . '/*') ?: []) === 0) {
+                @rmdir($assets);
+            }
+        }
+        $this->recordLifecycle(null, $code, $version, 'uninstall', $status, null, 'success', $purgeData ? 'Module data purged.' : 'Module data retained.');
+
+        return ['code' => $code, 'version' => $version, 'purged' => $purgeData];
+    }
+
+    /**
      * Atomically returns an active optional extension to the newest previously installed safe version.
      * For themes the previous theme may have a different code; the built-in storefront remains the final fallback.
      *
@@ -227,7 +278,7 @@ final readonly class ExtensionPackageManager
         // re-apply the current delta before returning the error so the active pointer and DB stay aligned.
         $this->extensionMigrations->rollbackInstallation((int) $current['id'], (string) $current['install_path'], $currentManifest);
         try {
-            $this->activate((int) $candidate['id']);
+            $this->activate((int) $candidate['id'], true);
         } catch (\Throwable $e) {
             try {
                 $this->extensionMigrations->apply((int) $current['id'], (string) $current['install_path'], $currentManifest);

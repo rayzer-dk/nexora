@@ -49,11 +49,20 @@ Remote app не повинна підключатися безпосереднь
     php bin/console commerce:extension:test module.zip
     php bin/console commerce:extension:pack path/to/module --output=dist/module.zip
 
-Trusted package підписується після фінальної збірки:
+Trusted package підписується після фінальної збірки. Ключ видавця створюється один раз:
 
-    php bin/console commerce:extension:sign module.zip publisher-secret.key
+    php bin/console commerce:extension:keygen acme.2026 --out=acme.2026.key
+
+Команда друкує фрагменти для `manifest.json` (`publisher`/`signature`) та запис публічного ключа для `config/extensions/trusted-publishers.json` кожного магазину, де модуль має працювати. Секретний ключ не зберігайте в репозиторії. Далі:
+
+    php bin/console commerce:extension:pack path/to/module --output=module.zip   # для trusted покаже, що підпису ще немає
+    php bin/console commerce:extension:sign module.zip acme.2026.key
 
 Після підпису знову запустіть validate і test.
+
+## Регіони блоку товару
+
+Блок з `surface: product` повинен оголошувати регіони сторінки товару: `hero_media`, `hero_summary`, `below_primary`, `below_secondary`, `mobile_sticky`. Інші назви валідатор відхиляє. Розмістити блок на сторінці товару можна в Оформлення → Конструктор → Товар.
 
 ## Життєвий цикл
 
@@ -90,3 +99,7 @@ Nexora підтримує безпечні декларативні теми т�
 ## Commercial and hosted extensions
 
 Use `commercial.model` = `free`, `one_time`, `subscription` or `external`. A `remote_app` installs a connector manifest/settings package; it does not execute code fetched from the developer server. Authentication uses API/OAuth credentials configured after installation. Signed `trusted_release` packages carry their executable code inside the ZIP. See `docs/COMMERCIAL_EXTENSIONS.md`.
+
+## Видалення
+
+Активну версію видалити не можна: спочатку вимкніть модуль. У розділі Система → Розширення кнопка «Видалити» прибирає файли, ресурси та налаштування вибраної версії. Позначка «З даними модуля» додатково виконує `down`-міграції; без неї таблиці модуля залишаються, тому міграції мають бути ідемпотентними при повторному встановленні. Збережений блок видаленого модуля у макетах безпечно пропускається на вітрині, а Конструктор показує попередження.

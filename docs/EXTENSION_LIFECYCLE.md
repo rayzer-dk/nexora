@@ -9,3 +9,5 @@ The lifecycle audit records install, activation, disabling, rollback, automatic 
 Core update preflight reads the target signed update manifest and checks each active extension's `core` constraint and `extension_api`. An incompatible active package blocks the Core update before maintenance/snapshot/switching starts.
 
 Trusted runtime failures are isolated to the failing package. Built-in Core remains active.
+
+Uninstall removes one non-active version (files, published assets, settings). With the `purge_data` option its `down` migrations run first; otherwise module tables are retained and migrations must be idempotent on reinstall. The action is recorded as `uninstall` in the lifecycle audit trail.
