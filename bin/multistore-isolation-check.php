@@ -6,7 +6,7 @@ $root=dirname(__DIR__);$errors=[];
 $context=(string)file_get_contents($root.'/src/Modules/Storefront/Infrastructure/StorefrontContextResolver.php');
 $query=(string)file_get_contents($root.'/src/Modules/Api/Infrastructure/DbalPublicApiQuery.php');
 $access=(string)file_get_contents($root.'/src/Modules/Api/Application/ApiAccessService.php');
-foreach(['mc_store_domain','d.store_id','m.store_id=?','mc_store_locale WHERE store_id=?','mc_store_currency WHERE store_id=?'] as $token)if(!str_contains($context,$token))$errors[]='Storefront context missing isolation token: '.$token;
+foreach(['mc_store_domain','d.store_id','m.store_id=?','mc_store_locale WHERE store_id=?','sc.store_id=? AND sc.currency_code=?'] as $token)if(!str_contains($context,$token))$errors[]='Storefront context missing isolation token: '.$token;
 foreach(['tokenStoreId !== null && $tokenStoreId !== $storeId','api.error.store_forbidden'] as $token)if(!str_contains($access,$token))$errors[]='API token store binding missing: '.$token;
 foreach(['so.store_id=?','c.store_id=?','store_id=? AND public_id=?','EXISTS (SELECT 1 FROM mc_sales_order so WHERE so.customer_id=c.id AND so.store_id=?)'] as $token)if(!str_contains($query,$token))$errors[]='API query missing store constraint: '.$token;
 if(str_contains($context,'No active storefront is mapped to host')||str_contains($context,'No active market is configured for the storefront'))$errors[]='Hardcoded storefront context error remains';

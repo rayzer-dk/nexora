@@ -43,12 +43,12 @@ final readonly class StorefrontCapabilitySubscriber implements EventSubscriberIn
 
         $context = $this->contexts->resolve($request);
         if (!$this->capabilities->enabled($context->storeId, $feature)) {
-            throw new NotFoundHttpException('Not Found');
+            throw new NotFoundHttpException(\Commerce\Core\I18n\CanonicalUiText::get('http.error.not_found'));
         }
 
         if ($route === 'storefront_catalog' && trim((string) $request->query->get('q', '')) !== ''
             && !$this->capabilities->enabled($context->storeId, 'search')) {
-            throw new NotFoundHttpException('Not Found');
+            throw new NotFoundHttpException(\Commerce\Core\I18n\CanonicalUiText::get('http.error.not_found'));
         }
     }
 

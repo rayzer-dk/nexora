@@ -575,4 +575,5 @@ return [
     'account_verification.channel' => 'Kanał',
     'account_verification.code' => 'Kod 6-cyfrowy',
     'account_verification.submit' => 'Potwierdź',
+    'email' => 'E-mail',
 ];

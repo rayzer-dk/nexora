@@ -56,6 +56,9 @@ $allowedCyrillic = [
     realpath($root . '/src/Modules/Seo/Application/UkrainianTransliterator.php') ?: '',
     realpath($root . '/src/Core/Install/InstallationSeeder.php') ?: '',
     realpath($root . '/src/Modules/Demo/Application/DemoSeeder.php') ?: '',
+    // Linguistic data, not interface copy: stemmer suffix tables and native language names.
+    realpath($root . '/src/Modules/Search/Application/SqlSearchIndex.php') ?: '',
+    realpath($root . '/src/Core/I18n/AdminInterfaceLocale.php') ?: '',
 ];
 
 foreach ($runtimeFiles as $path) {
@@ -86,6 +89,7 @@ if (preg_match_all('/\$emergencyText\(\s*[\'"]([^\'"]+)[\'"]/', $emergencySource
 }
 
 foreach (array_keys($used) as $key) {
+    if (str_ends_with($key, '.')) continue; // dynamic key prefix, e.g. 'admin.localization.rounding.' ~ $step
     if (!array_key_exists($key, $canonical) || trim($canonical[$key]) === '') {
         $errors[] = 'Missing/empty uk-UA UI key: ' . $key;
     }

@@ -5,3 +5,4 @@
 /public/build/
 /.env.local
 /.env.*.local
+/SHA256SUMS.txt

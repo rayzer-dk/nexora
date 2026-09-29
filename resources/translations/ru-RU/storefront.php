@@ -575,4 +575,5 @@ return [
     'ui.product.show.product_details' => 'Детали товара',
     'ui.product.show.additional_product_information' => 'Дополнительная информация о товаре',
     'document_vat' => 'НДС',
+    'email' => 'Электронная почта',
 ];

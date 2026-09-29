@@ -644,4 +644,5 @@ return [
     'ui.checkout.blocks.shipping.delivery' => 'Levering',
     'attribute.boolean.yes' => 'Ja',
     'attribute.boolean.no' => 'Nej',
+    'email' => 'E-mail',
 ];

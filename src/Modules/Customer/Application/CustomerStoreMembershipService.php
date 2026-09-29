@@ -15,7 +15,7 @@ final readonly class CustomerStoreMembershipService
     public function ensure(int $storeId, int $customerId): void
     {
         if ($storeId < 1 || $customerId < 1) {
-            throw new \InvalidArgumentException('Invalid store/customer membership identifiers.');
+            throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.store_membership_invalid'));
         }
 
         $exists = (bool) $this->db->fetchOne(

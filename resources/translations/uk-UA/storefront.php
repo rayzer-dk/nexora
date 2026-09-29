@@ -784,4 +784,5 @@ return [
     'status.payment_method.monobank' => 'monobank',
     'attribute.boolean.yes' => 'Так',
     'attribute.boolean.no' => 'Ні',
+    'email' => 'Електронна пошта',
 ];

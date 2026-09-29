@@ -80,4 +80,6 @@ Product: %product%',
     'seo.system_page.terms.title' => 'Terms and conditions',
     'seo.system_page.warranty.title' => 'Warranty',
     'seo.system_page.wishlist.title' => 'Wishlist',
+    'runtime.exception.store_membership_invalid' => 'Invalid store or customer identifiers.',
+    'http.error.not_found' => 'Page not found.',
 ];
