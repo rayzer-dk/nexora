@@ -6,6 +6,15 @@ test.describe.configure({ timeout: 180_000, retries: 0 });
 
 type RouteDump = Record<string, { path: string; method: string }>;
 
+function routePatterns(): Array<{ name: string; path: string; methods: Set<string>; regex: RegExp }> {
+  return Object.entries(routes()).map(([name, route]) => {
+    const path = route.path.replaceAll('\\/', '/');
+    const methods = new Set((route.method || '').split('|').filter(Boolean));
+    const escaped = path
+      .replace(/[.*+?^$()|[\]\\]/g, '\\type RouteDump = Record<string, { path: string; method: string }>;')
+      .replace(/\\\{[^}]+\\\}/g, '[^/]+');
+    return { name, path, methods, regex: new RegExp('^' + escaped + '
+
 function routes(): RouteDump {
   return JSON.parse(execFileSync('php', ['bin/console', 'debug:router', '--format=json'], {
     encoding: 'utf8',
@@ -132,7 +141,8 @@ test('rendered admin links and form actions resolve instead of pointing to dead 
 
   await loginAdmin(page);
   const pages = staticHtmlRoutes('/admin');
-  const targets = new Map<string, Set<string>>();
+  const patterns = routePatterns();
+  const failures: string[] = [];
 
   for (const route of pages) {
     const response = await page.goto(route.path, { waitUntil: 'domcontentloaded' });
@@ -150,21 +160,17 @@ test('rendered admin links and form actions resolve instead of pointing to dead 
       let url: URL;
       try { url = new URL(item.raw, page.url()); } catch { continue; }
       if (url.origin !== new URL(page.url()).origin || !url.pathname.startsWith('/admin')) continue;
-      const key = url.pathname + url.search;
-      if (!targets.has(key)) targets.set(key, new Set());
-      targets.get(key)!.add(item.method);
-    }
-  }
 
-  const failures: string[] = [];
-  for (const [target, methods] of targets) {
-    // GET against a POST-only action should return 405, which proves that the route exists without mutating data.
-    const response = await page.request.get(target, { maxRedirects: 0 });
-    const status = response.status();
-    if (status === 404 || status >= 500) {
-      failures.push(`${target} [rendered methods: ${[...methods].join(',')}]: HTTP ${status}`);
+      const matches = patterns.filter((candidate) =>
+        candidate.regex.test(url.pathname) &&
+        (candidate.methods.size === 0 || candidate.methods.has(item.method) || (item.method === 'GET' && candidate.methods.has('HEAD')))
+      );
+      if (matches.length === 0) {
+        failures.push(`${route.path} renders ${item.method} ${url.pathname}, but no router entry accepts it`);
+      }
     }
   }
 
   expect(failures, failures.join('\n')).toEqual([]);
 });
+
