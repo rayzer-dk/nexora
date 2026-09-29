@@ -930,7 +930,7 @@ test('product slug change updates canonical links and creates a direct old-URL r
 
   const name = await page.locator('input[name="name"]').inputValue();
   const slugInput = page.locator('input[name="slug"]');
-  const originalSlug = (await slugInput.inputValue()).replace(/^\\/+|\\/+$/g, '');
+  const originalSlug = (await slugInput.inputValue()).replace(/^\/+|\/+$/g, '');
   expect(originalSlug).not.toBe('');
   const qaSlug = `e2e-seo-${Date.now()}`;
 
