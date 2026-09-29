@@ -14,7 +14,7 @@
         <div class="admin-login-brand"><img src="/assets/branding/nexora-mark.svg" alt="" width="44" height="44"><span><strong>Nexora Commerce</strong><small>Administration</small></span></div>
         <h1 id="login-title">{{ ui_text('admin.login.vkhid_do_keruvannia') }}</h1>
         <p>{{ ui_text('admin.login.vykorystovuite_oblikovyi_zapys_administratora_ma') }}</p>
-        {% if error %}<div class="admin-notice is-error" role="alert">{{ ui_icon('circle-alert', 20) }}<span>{{ ui_text('admin.login.nevirna_elektronna_adresa_abo_parol') }}</span></div>{% endif %}
+        {% if error %}<div class="admin-notice is-error" role="alert">{{ ui_icon('circle-alert', 20) }}<span>{% if error_code == 'throttled' %}{{ ui_text('admin.login.error_throttled') }}{% elseif error_code == 'csrf' %}{{ ui_text('admin.login.error_csrf') }}{% else %}{{ ui_text('admin.login.nevirna_elektronna_adresa_abo_parol') }}{% endif %}</span></div>{% endif %}
         <form method="post" action="{{ path('admin_login') }}" autocomplete="on">
             <label><span>Email</span><input type="email" name="_username" value="{{ last_username }}" autocomplete="username" required autofocus></label>
             <label><span>{{ ui_text('admin.login.parol') }}</span><input type="password" name="_password" autocomplete="current-password" required></label>

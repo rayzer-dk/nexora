@@ -1,4 +1,4 @@
-# Nexora Commerce 3.10.1
+# Nexora Commerce 3.11.0
 
 Modern modular e-commerce platform for Ukraine and Europe. One canonical source: the `main` branch.
 

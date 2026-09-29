@@ -361,6 +361,39 @@ function initFileLabels() {
   });
 }
 
+function initSeoAuthoring() {
+  qa('[data-char-counter]').forEach((counter) => {
+    const input = document.getElementById(counter.dataset.charCounter || '');
+    if (!input) return;
+    const min = Number(counter.dataset.min || 0);
+    const max = Number(counter.dataset.max || 0);
+    const update = () => {
+      const length = input.value.trim().length;
+      counter.textContent = `${length} / ${max}`;
+      counter.classList.toggle('is-good', length >= min && length <= max);
+      counter.classList.toggle('is-warn', length > 0 && (length < min || length > max));
+    };
+    input.addEventListener('input', update);
+    update();
+  });
+  const preview = q('[data-serp-preview]');
+  if (!preview) return;
+  const form = preview.closest('form');
+  const field = (name) => (form ? form.querySelector(`[data-serp-source="${name}"]`) : null);
+  const value = (name) => (field(name)?.value || '').trim();
+  const clip = (text, max) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
+  const render = () => {
+    const title = value('meta_title') || value('title');
+    const description = value('meta_description') || value('excerpt');
+    const slug = value('slug');
+    q('[data-serp-title]', preview).textContent = clip(title, 60);
+    q('[data-serp-desc]', preview).textContent = clip(description, 160);
+    q('[data-serp-url]', preview).textContent = `${location.host} › blog${slug ? ` › ${slug}` : ''}`;
+  };
+  qa('[data-serp-source]', form || document).forEach((input) => input.addEventListener('input', render));
+  render();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initFlashToasts();
   initConfirmations();
@@ -375,6 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSecretToggles();
   initFileLabels();
   initQuickPreview();
+  initSeoAuthoring();
 });
 
 async function initPageFeatures() {

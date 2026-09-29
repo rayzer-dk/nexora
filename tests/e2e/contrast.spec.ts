@@ -42,7 +42,9 @@ async function storefrontRoutes(page: Page): Promise<string[]> {
   const product = await page.locator('[data-product-card] a.catalog-card__media').first().getAttribute('href');
   const links = await page.locator('footer a[href^="/"], header a[href^="/"]').evaluateAll((els) =>
     [...new Set(els.map((el) => (el as HTMLAnchorElement).getAttribute('href') ?? ''))].filter((h) => !h.startsWith('/admin') && !h.includes('#')).slice(0, 25));
-  return [...new Set(['/', '/catalog', '/cart', '/compare', '/account/login', '/checkout', '/withdrawal', '/accessibility', product ?? '/', ...links])];
+  await page.goto('/blog', { waitUntil: 'domcontentloaded' });
+  const article = await page.locator('[data-blog-card] h3 a, [data-blog-card] h2 a').first().getAttribute('href').catch(() => null);
+  return [...new Set(['/', '/catalog', '/blog', ...(article ? [article] : []), '/cart', '/compare', '/account/login', '/checkout', '/withdrawal', '/accessibility', product ?? '/', ...links])];
 }
 
 async function adminRoutes(page: Page): Promise<string[]> {
@@ -50,7 +52,7 @@ async function adminRoutes(page: Page): Promise<string[]> {
   await page.locator('aside a[href^="/admin"]').first().waitFor({ timeout: 20_000 });
   const links = await page.locator('aside a[href^="/admin"]').evaluateAll((els) =>
     [...new Set(els.map((el) => (el as HTMLAnchorElement).getAttribute('href') ?? ''))]);
-  return [...new Set(['/admin', '/admin/appearance/storefront', '/admin/system/extensions', '/admin/account/security', ...links])].slice(0, 60);
+  return [...new Set(['/admin', '/admin/appearance/storefront', '/admin/system/extensions', '/admin/account/security', '/admin/content/blog/new', '/admin/content/blog/categories', ...links])].slice(0, 60);
 }
 
 for (const scheme of ['light', 'dark'] as const) {

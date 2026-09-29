@@ -2,6 +2,19 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.11.0 — 2026-09-29
+
+Schema 55, production channel.
+
+### Added
+- **Blog** (Admin → Content → Blog): article editor with the rich text editor and HTML mode, per-language translations, categories, tags, cover image with alt text, author, reading time, featured article, scheduled publishing, per-article canonical/noindex, live Google snippet preview with length counters, sanitised HTML.
+- **Blog storefront**: featured hero card, category pages, tag archives (noindex), search, pagination, article table of contents with heading anchors, related articles, previous/next, share links, RSS feed (`/blog/feed.xml`) with autodiscovery.
+- **Blog SEO**: BlogPosting + BreadcrumbList JSON-LD (author, image, keywords, wordCount, section), Blog collection JSON-LD, hreflang alternates for every published translation, canonical override, Open Graph URL/site name and Twitter card on all pages, categories in the sitemap.
+
+### Fixed
+- Sitemap advertised draft and scheduled articles; only published, indexable articles are listed now.
+- **Admin sign-in hardening**: sessions are stored in `var/sessions` (shared hosts with an unwritable system session path made every sign-in bounce back to the form), `/admin`, `/account`, `/checkout`, `/cart` and the installer are sent with `Cache-Control: no-store` (a cached sign-in form carries a stale CSRF token), and the sign-in page now distinguishes too many attempts / expired session from wrong credentials.
+
 ## 3.10.1 — 2026-09-29
 
 Schema 54, no database changes.

@@ -1,3 +1,52 @@
 {% extends '@storefront/base.html.twig' %}
-{% block head %}<script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>{% endblock %}
-{% block body %}<article class="shell article-page">{% include '@storefront/components/breadcrumbs.html.twig' with {items: breadcrumbs} only %}<header class="content-hero"><p class="eyebrow">{{ ui_text('blog') }}</p><h1>{{ article.title }}</h1><p>{{ article.excerpt }}</p></header>{% if article.image %}<div class="article-page__media"><img src="{{ article.image }}" alt="" width="1440" height="810"></div>{% endif %}<div class="article-body">{{ article.body_html|raw }}</div></article>{% endblock %}
+{% block head %}<link rel="alternate" type="application/rss+xml" title="{{ ui_text('blog_rss')|e('html_attr') }}" href="/blog/feed.xml"><script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>{% endblock %}
+{% block body %}
+<article class="shell article-page" data-article>
+  {% include '@storefront/components/breadcrumbs.html.twig' with {items: breadcrumbs} only %}
+  <header class="article-header">
+    <p class="article-header__kicker">{% if article.category %}<a class="blog-chip" href="/blog/category/{{ article.category.slug }}">{{ article.category.name }}</a>{% else %}<span class="eyebrow">{{ ui_text('blog') }}</span>{% endif %}</p>
+    <h1>{{ article.title }}</h1>
+    {% if article.excerpt %}<p class="article-header__lead">{{ article.excerpt }}</p>{% endif %}
+    <p class="article-header__meta">
+      {% if article.author %}<span>{{ ui_icon('user', 16) }}{{ ui_text('blog_by') }} {{ article.author }}</span>{% endif %}
+      <span>{{ ui_icon('calendar', 16) }}<time datetime="{{ article.published_iso }}">{{ article.date }}</time></span>
+      <span>{{ ui_icon('clock', 16) }}{{ ui_text('blog_min_read')|replace({'%min%': article.reading_minutes}) }}</span>
+    </p>
+  </header>
+  {% if article.image %}<figure class="article-page__media"><img src="{{ article.image }}" alt="{{ article.image_alt }}" width="1440" height="810" fetchpriority="high" decoding="async"></figure>{% endif %}
+
+  <div class="article-layout{% if article.toc %} has-toc{% endif %}">
+    {% if article.toc %}
+    <nav class="article-toc" aria-labelledby="article-toc-title">
+      <h2 id="article-toc-title">{{ ui_icon('list-tree', 16) }}{{ ui_text('blog_toc') }}</h2>
+      <ol>{% for item in article.toc %}<li class="{{ item.level == 3 ? 'article-toc__l3' : 'article-toc__l2' }}"><a href="#{{ item.id }}">{{ item.text }}</a></li>{% endfor %}</ol>
+    </nav>
+    {% endif %}
+    <div class="article-main">
+      <div class="article-body">{{ article.body_html|raw }}</div>
+      {% if article.tags %}<ul class="article-tags" aria-label="{{ ui_text('blog_tags_label')|e('html_attr') }}">{% for tag in article.tags %}<li><a class="blog-chip" href="/blog/tag/{{ tag.slug }}">{{ ui_icon('tag', 14) }}{{ tag.name }}</a></li>{% endfor %}</ul>{% endif %}
+      <div class="article-share">
+        <strong>{{ ui_text('blog_share') }}</strong>
+        <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|url_encode }}">Facebook{{ ui_icon('external-link', 14) }}</a>
+        <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://t.me/share/url?url={{ share_url|url_encode }}&amp;text={{ article.title|url_encode }}">Telegram{{ ui_icon('external-link', 14) }}</a>
+        <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://twitter.com/intent/tweet?url={{ share_url|url_encode }}&amp;text={{ article.title|url_encode }}">X{{ ui_icon('external-link', 14) }}</a>
+        <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url|url_encode }}">LinkedIn{{ ui_icon('external-link', 14) }}</a>
+      </div>
+    </div>
+  </div>
+
+  {% if neighbors.prev or neighbors.next %}
+  <nav class="article-neighbors" aria-label="{{ ui_text('pagination') }}">
+    {% if neighbors.prev %}<a class="article-neighbors__link" rel="prev" href="{{ neighbors.prev.url }}"><small>{{ ui_icon('arrow-left', 14) }}{{ ui_text('blog_prev') }}</small><span>{{ neighbors.prev.title }}</span></a>{% else %}<span></span>{% endif %}
+    {% if neighbors.next %}<a class="article-neighbors__link is-next" rel="next" href="{{ neighbors.next.url }}"><small>{{ ui_text('blog_next') }}{{ ui_icon('arrow-right', 14) }}</small><span>{{ neighbors.next.title }}</span></a>{% endif %}
+  </nav>
+  {% endif %}
+
+  {% if related %}
+  <section class="article-related" aria-labelledby="article-related-title">
+    <h2 id="article-related-title">{{ ui_text('blog_related') }}</h2>
+    <div class="article-grid">{% for item in related %}{% include '@storefront/components/blog_card.html.twig' with {article: item} only %}{% endfor %}</div>
+  </section>
+  {% endif %}
+</article>
+{% endblock %}

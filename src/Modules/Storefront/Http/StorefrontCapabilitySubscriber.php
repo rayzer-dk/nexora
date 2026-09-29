@@ -75,7 +75,7 @@ final readonly class StorefrontCapabilitySubscriber implements EventSubscriberIn
         if ($route === 'storefront_information_page') {
             return 'content';
         }
-        if ($route === 'storefront_blog') {
+        if (str_starts_with($route, 'storefront_blog')) {
             return 'blog';
         }
         if (str_starts_with($route, 'product_review') || str_starts_with($route, 'product_question')) {

@@ -222,42 +222,67 @@ final class StorefrontCatalogController extends AbstractController
             throw $this->createNotFoundException();
         }
         $baseUrl = $request->getSchemeAndHttpHost();
-        $canonical = $baseUrl . $article['url'];
-        $breadcrumbs = [
-            ['name' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.holovna'), 'url' => $baseUrl . '/'],
-            ['name' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.content.http.blogcontroller.bloh'), 'url' => $baseUrl . '/blog'],
-            ['name' => $article['title']],
-        ];
+        $ownUrl = $baseUrl . $article['url'];
+        $canonical = (string) $article['canonical_url'] !== '' ? (string) $article['canonical_url'] : $ownUrl;
+        $blogLabel = \Commerce\Core\I18n\CanonicalUiText::get('php.modules.content.http.blogcontroller.bloh');
+        $breadcrumbs = [['name' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.holovna'), 'url' => $baseUrl . '/'], ['name' => $blogLabel, 'url' => $baseUrl . '/blog']];
+        if (is_array($article['category'])) {
+            $breadcrumbs[] = ['name' => (string) $article['category']['name'], 'url' => $baseUrl . '/blog/category/' . $article['category']['slug']];
+        }
+        $breadcrumbs[] = ['name' => $article['title']];
+        $image = (string) $article['image'] !== '' ? (str_starts_with((string) $article['image'], 'http') ? (string) $article['image'] : $baseUrl . $article['image']) : '';
         $schema = [
             'title' => $article['title'],
-            'url' => $canonical,
-            'published_at' => $article['published_at'],
-            'modified_at' => $article['updated_at'],
-            'author' => $context->storeName,
-            'description' => $article['excerpt'],
-            'image' => $baseUrl . $article['image'],
+            'url' => $ownUrl,
+            'published_at' => $article['published_iso'],
+            'modified_at' => $article['updated_iso'],
+            'author' => (string) $article['author'] !== '' ? $article['author'] : $context->storeName,
+            'description' => $article['meta_description'],
+            'image' => $image !== '' ? [$image] : [],
         ];
+        $articleNode = $this->articleSchema->build($schema);
+        $articleNode['mainEntityOfPage'] = ['@type' => 'WebPage', '@id' => $ownUrl];
+        $articleNode['inLanguage'] = $context->locale;
+        $articleNode['wordCount'] = (int) preg_match_all('/[\p{L}\p{N}]+/u', \Commerce\Modules\Content\Application\BlogContentProcessor::plainText((string) $article['body_html']));
+        if (is_array($article['category'])) {
+            $articleNode['articleSection'] = (string) $article['category']['name'];
+        }
+        if ($article['tags'] !== []) {
+            $articleNode['keywords'] = implode(', ', array_map(static fn (array $t): string => (string) $t['name'], $article['tags']));
+        }
         try {
             $structuredDataJson = json_encode(
-                $this->graph->build($this->articleSchema->build($schema), $this->breadcrumbsSchema->build($breadcrumbs)),
+                $this->graph->build($articleNode, $this->breadcrumbsSchema->build($breadcrumbs)),
                 JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR,
             );
         } catch (JsonException) {
             $structuredDataJson = '{}';
+        }
+        $hreflang = [];
+        if (!$article['noindex']) {
+            foreach ($this->blog->alternates($context->storeId, $publicId) as $locale => $path) {
+                $hreflang[$locale] = $baseUrl . $path;
+            }
+            $hreflang = $hreflang === [] ? [$context->locale => $ownUrl] : $hreflang;
+            $hreflang['x-default'] = $hreflang[$context->locale] ?? $ownUrl;
         }
         return $this->render('@storefront/blog/article.html.twig', [
             'page_title' => (string) ($article['meta_title'] ?? '') !== '' ? (string) $article['meta_title'] : (string) ($article['title'] ?? ''),
             'store_name' => $context->storeName,
             'article' => $article,
             'breadcrumbs' => $breadcrumbs,
+            'related' => $this->blog->related($context->storeId, $context->locale, (int) $article['id'], (int) $article['category_id'], 3),
+            'neighbors' => $this->blog->neighbors($context->storeId, $context->locale, (int) $article['id'], (string) $article['published_at']),
+            'share_url' => $ownUrl,
             'structured_data_json' => $structuredDataJson,
             'seo_head' => [
-                'description' => (string) ($article['meta_description'] ?? '') !== '' ? (string) $article['meta_description'] : (string) ($article['excerpt'] ?? ''),
-                'image' => (string) ($article['image'] ?? '') !== '' ? $baseUrl . $article['image'] : '',
+                'title' => (string) $article['meta_title'],
+                'description' => (string) $article['meta_description'],
+                'image' => $image,
                 'type' => 'article',
                 'canonical' => $canonical,
-                'robots' => 'index,follow,max-image-preview:large',
-                'hreflang' => [$context->locale => $canonical, 'x-default' => $canonical],
+                'robots' => $article['noindex'] ? 'noindex,follow' : 'index,follow,max-image-preview:large',
+                'hreflang' => $hreflang,
             ],
         ]);
     }

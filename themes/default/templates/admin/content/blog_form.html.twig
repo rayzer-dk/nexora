@@ -1,0 +1,48 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(article_id ? ui_text('admin.blog.edit_article') : ui_text('admin.blog.new'),'blog') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="{{ path('admin_content_blog') }}">{{ ui_text('admin.blog.title') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ article.title ?: ui_text('admin.blog.new') }}</span></nav><h1>{{ article_id ? ui_text('admin.blog.edit_article') : ui_text('admin.blog.new') }}</h1>
+{% if article.path and stored_status == 'published' %}<p>{{ ui_text('admin.blog.public_url') }} <a href="{{ article.path }}" target="_blank" rel="noopener"><code>{{ article.path }}</code></a></p>{% endif %}</div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+{% if article_id %}<div class="admin-panel admin-blog-langs"><strong>{{ ui_text('admin.blog.languages') }}:</strong>{% for code in locales %}<a class="admin-badge {{ code == locale ? 'is-primary' : (code in translated ? 'is-success' : 'is-muted') }}" href="{{ path('admin_content_blog_edit', {id: article_id, locale: code}) }}">{{ code }}{% if code not in translated %} · {{ ui_text('admin.blog.lang_missing') }}{% endif %}</a>{% endfor %}</div>
+{% if not article.has_translation %}<div class="admin-notice is-info">{{ ui_text('admin.blog.translation_new')|replace({'%locale%': locale}) }}</div>{% endif %}{% endif %}
+<form method="post" action="{{ path('admin_content_blog_save') }}" enctype="multipart/form-data" class="admin-blog-editor" data-blog-form>
+<input type="hidden" name="_token" value="{{ csrf_token('admin_content_blog') }}"><input type="hidden" name="id" value="{{ article_id }}">
+<div class="admin-blog-editor__main">
+ <section class="admin-panel admin-form">
+  <label>{{ ui_text('admin.blog.field_title') }}<input type="text" name="title" id="blog-title" value="{{ article.title }}" required maxlength="255" data-serp-source="title"></label>
+  <label>{{ ui_text('admin.blog.slug') }}<input type="text" name="slug" id="blog-slug" value="{{ article.slug }}" maxlength="255" placeholder="{{ ui_text('admin.blog.slug_auto') }}" data-serp-source="slug"><small>{{ ui_text('admin.blog.slug_hint') }}</small></label>
+  <label>{{ ui_text('admin.blog.excerpt') }}<textarea name="excerpt" rows="3" maxlength="1000" data-serp-source="excerpt">{{ article.excerpt }}</textarea><small>{{ ui_text('admin.blog.excerpt_hint') }}</small></label>
+  <label>{{ ui_text('admin.blog.body') }}<textarea name="body_html" rows="22" data-rich-editor>{{ article.body_html }}</textarea><small>{{ ui_text('admin.blog.body_hint') }}</small></label>
+ </section>
+ <section class="admin-panel admin-form">
+  <div class="admin-panel__header"><h2>{{ ui_text('admin.blog.seo') }}</h2></div>
+  <div class="serp-preview" data-serp-preview aria-label="{{ ui_text('admin.blog.serp_preview')|e('html_attr') }}"><span class="serp-preview__url" data-serp-url></span><strong class="serp-preview__title" data-serp-title></strong><span class="serp-preview__desc" data-serp-desc></span></div>
+  <label>{{ ui_text('admin.blog.meta_title') }}<input type="text" name="meta_title" id="blog-meta-title" value="{{ article.meta_title }}" maxlength="255" data-serp-source="meta_title"><small class="admin-counter" data-char-counter="blog-meta-title" data-min="30" data-max="60"></small></label>
+  <label>{{ ui_text('admin.blog.meta_description') }}<textarea name="meta_description" id="blog-meta-description" rows="3" maxlength="500" data-serp-source="meta_description">{{ article.meta_description }}</textarea><small class="admin-counter" data-char-counter="blog-meta-description" data-min="70" data-max="160"></small></label>
+  <label>{{ ui_text('admin.blog.canonical') }}<input type="url" name="canonical_url" value="{{ article.canonical_url }}" maxlength="500" placeholder="https://"><small>{{ ui_text('admin.blog.canonical_hint') }}</small></label>
+  <label class="admin-check"><input type="checkbox" name="noindex" value="1"{{ article.noindex ? ' checked' : '' }}> {{ ui_text('admin.blog.noindex') }}</label>
+ </section>
+</div>
+<aside class="admin-blog-editor__side">
+ <section class="admin-panel admin-form">
+  <div class="admin-panel__header"><h2>{{ ui_text('admin.blog.publishing') }}</h2></div>
+  <label>{{ ui_text('admin.blog.status') }}<select name="status"><option value="draft"{{ article.status == 'draft' ? ' selected' : '' }}>{{ ui_text('admin.blog.state_draft') }}</option><option value="published"{{ article.status == 'published' ? ' selected' : '' }}>{{ ui_text('admin.blog.state_published') }}</option></select></label>
+  <label>{{ ui_text('admin.blog.publish_at') }}<input type="datetime-local" name="published_at" value="{{ article.published_at|replace({' ': 'T'}) }}"><small>{{ ui_text('admin.blog.publish_at_hint') }}</small></label>
+  <label class="admin-check"><input type="checkbox" name="featured" value="1"{{ article.featured ? ' checked' : '' }}> {{ ui_text('admin.blog.featured_flag') }}</label>
+  <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div>
+ </section>
+ <section class="admin-panel admin-form">
+  <div class="admin-panel__header"><h2>{{ ui_text('admin.blog.organize') }}</h2></div>
+  <label>{{ ui_text('admin.blog.category') }}<select name="category_id"><option value="0">{{ ui_text('admin.blog.no_category') }}</option>{% for c in categories %}<option value="{{ c.id }}"{{ article.category_id == c.id ? ' selected' : '' }}>{{ c.name }}</option>{% endfor %}</select></label>
+  <label>{{ ui_text('admin.blog.tags') }}<input type="text" name="tags" value="{{ article.tags }}" maxlength="600"><small>{{ ui_text('admin.blog.tags_hint') }}</small></label>
+  <label>{{ ui_text('admin.blog.author') }}<input type="text" name="author_name" value="{{ article.author_name }}" maxlength="190"></label>
+ </section>
+ <section class="admin-panel admin-form">
+  <div class="admin-panel__header"><h2>{{ ui_text('admin.blog.cover') }}</h2></div>
+  {% if article.cover_url %}<img class="admin-blog-cover" src="{{ article.cover_url }}" alt="" width="320" height="180" loading="lazy"><label class="admin-check"><input type="checkbox" name="cover_remove" value="1"> {{ ui_text('admin.blog.cover_remove') }}</label>{% endif %}
+  <label>{{ ui_text('admin.blog.cover_upload') }}<input type="file" name="cover" accept="image/jpeg,image/png,image/webp,image/avif"><small>{{ ui_text('admin.blog.cover_hint') }}</small></label>
+  <label>{{ ui_text('admin.blog.cover_alt') }}<input type="text" name="cover_alt" value="{{ article.cover_alt }}" maxlength="255"></label>
+ </section>
+</aside>
+</form>
+{% if article_id %}<form method="post" action="{{ path('admin_content_blog_delete', {id: article_id}) }}" data-confirm="{{ ui_text('admin.confirm.delete') }}" class="admin-blog-delete"><input type="hidden" name="_token" value="{{ csrf_token('admin_content_blog') }}"><button class="admin-button is-danger" type="submit">{{ ui_icon('trash-2', 18) }} {{ ui_text('admin.blog.delete') }}</button></form>{% endif %}
+{{ shell.end() }}

@@ -1,0 +1,27 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.blog.title'),'blog') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.blog.title') }}</span></nav><h1>{{ ui_text('admin.blog.title') }}</h1><p>{{ ui_text('admin.blog.intro') }}</p></div>
+<div class="admin-page-actions"><a class="admin-button" href="{{ path('admin_content_blog_categories') }}">{{ ui_icon('folder', 18) }} {{ ui_text('admin.blog.categories') }}</a><a class="admin-button is-primary" href="{{ path('admin_content_blog_new') }}">{{ ui_icon('plus', 18) }} {{ ui_text('admin.blog.new') }}</a></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+{% set state_labels = {draft: ui_text('admin.blog.state_draft'), published: ui_text('admin.blog.state_published'), scheduled: ui_text('admin.blog.state_scheduled')} %}
+<section class="admin-toolbar"><form class="admin-filters" method="get">
+  <label class="admin-filters__search"><span>{{ ui_text('admin.blog.search') }}</span><input type="search" name="q" value="{{ filters.q }}" placeholder="{{ ui_text('admin.blog.search_placeholder') }}"></label>
+  <label><span>{{ ui_text('admin.blog.status') }}</span><select name="status"><option value="">{{ ui_text('admin.blog.all') }}</option>{% for key, label in state_labels %}<option value="{{ key }}"{{ filters.status == key ? ' selected' : '' }}>{{ label }}</option>{% endfor %}</select></label>
+  <label><span>{{ ui_text('admin.blog.category') }}</span><select name="category"><option value="0">{{ ui_text('admin.blog.all') }}</option>{% for c in categories %}<option value="{{ c.id }}"{{ filters.category == c.id ? ' selected' : '' }}>{{ c.name }}</option>{% endfor %}</select></label>
+  <button type="submit">{{ ui_text('admin.blog.apply') }}</button>
+</form></section>
+<div class="admin-panel"><div class="admin-table-wrap"><table class="admin-table" data-blog-table>
+<thead><tr><th>{{ ui_text('admin.blog.article') }}</th><th>{{ ui_text('admin.blog.category') }}</th><th>{{ ui_text('admin.blog.status') }}</th><th>{{ ui_text('admin.blog.date') }}</th><th>{{ ui_text('admin.blog.languages') }}</th><th></th></tr></thead><tbody>
+{% for item in list.items %}<tr data-blog-row="{{ item.id }}">
+<td><a href="{{ path('admin_content_blog_edit', {id: item.id}) }}"><strong>{{ item.title }}</strong></a>{% if item.featured %} <span class="admin-badge is-info">{{ ui_icon('star', 14) }}{{ ui_text('admin.blog.featured') }}</span>{% endif %}{% if not item.has_locale %}<br><small class="admin-muted">{{ ui_text('admin.blog.no_translation') }}</small>{% endif %}</td>
+<td>{% for c in categories %}{% if c.id == item.category_id %}{{ c.name }}{% endif %}{% endfor %}</td>
+<td><span class="admin-badge is-{{ item.state }}">{{ state_labels[item.state] }}</span></td>
+<td>{{ item.published_at ? item.published_at|slice(0, 16) : '—' }}</td>
+<td><code>{{ item.locales }}</code></td>
+<td><span class="admin-row-actions">
+<a class="admin-icon-button is-sm" href="{{ path('admin_content_blog_edit', {id: item.id}) }}" title="{{ ui_text('admin.blog.edit') }}" aria-label="{{ ui_text('admin.blog.edit') }}">{{ ui_icon('pencil', 16) }}</a>
+<form method="post" action="{{ path('admin_content_blog_delete', {id: item.id}) }}" data-confirm="{{ ui_text('admin.confirm.delete') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_content_blog') }}"><button class="admin-icon-button is-sm is-danger" type="submit" title="{{ ui_text('admin.blog.delete') }}" aria-label="{{ ui_text('admin.blog.delete') }}">{{ ui_icon('trash-2', 16) }}</button></form>
+</span></td></tr>
+{% else %}<tr><td colspan="6">{{ ui_text('admin.blog.empty') }}</td></tr>{% endfor %}
+</tbody></table></div></div>
+{% if list.pages > 1 %}{% set q = '&q=' ~ filters.q|url_encode ~ '&status=' ~ filters.status ~ '&category=' ~ filters.category %}<div class="admin-pagination"><div>{% if list.page > 1 %}<a href="?page={{ list.page - 1 }}{{ q }}">{{ ui_text('admin.blog.prev') }}</a>{% endif %}</div><span>{{ list.page }} / {{ list.pages }}</span><div>{% if list.page < list.pages %}<a href="?page={{ list.page + 1 }}{{ q }}">{{ ui_text('admin.blog.next') }}</a>{% endif %}</div></div>{% endif %}
+{{ shell.end() }}

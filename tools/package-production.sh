@@ -33,8 +33,8 @@ rsync -a ./ "$OUT_DIR/" \
   --exclude '/.git/' --exclude '/.build-tools/' --exclude '/node_modules/' --exclude '/build/' --exclude '/tests/' \
   --exclude '/phpunit.xml.dist' --exclude '/.github/' --exclude '/var/*' --exclude '/pw.local.config.ts' --exclude '/public/media/demo/dummyjson/' --exclude '/.env' --exclude '/.env.local'
 
-mkdir -p "$OUT_DIR/var/cache" "$OUT_DIR/var/log" "$OUT_DIR/var/install" "$OUT_DIR/var/extensions" "$OUT_DIR/var/feeds" "$OUT_DIR/var/recovery" "$OUT_DIR/public/media"
-for d in cache log install extensions feeds recovery; do : > "$OUT_DIR/var/$d/.gitkeep"; done
+mkdir -p "$OUT_DIR/var/cache" "$OUT_DIR/var/log" "$OUT_DIR/var/install" "$OUT_DIR/var/extensions" "$OUT_DIR/var/feeds" "$OUT_DIR/var/recovery" "$OUT_DIR/var/sessions" "$OUT_DIR/public/media"
+for d in cache log install extensions feeds recovery sessions; do : > "$OUT_DIR/var/$d/.gitkeep"; done
 : > "$OUT_DIR/var/.gitkeep"
 find "$OUT_DIR/var/cache" -mindepth 1 -delete || true
 find "$OUT_DIR/var/log" -mindepth 1 -delete || true

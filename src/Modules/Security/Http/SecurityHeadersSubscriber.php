@@ -54,6 +54,17 @@ final class SecurityHeadersSubscriber
         $headers->set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
         $headers->set('Cross-Origin-Resource-Policy', 'same-site');
 
+        // Pages that carry a session, CSRF token or CSP nonce must never be stored by a shared cache
+        // (reverse proxy, LiteSpeed, CDN); a cached login form makes every sign-in fail with a stale token.
+        $path = $request->getPathInfo();
+        foreach (['/admin', '/account', '/checkout', '/cart', '/setup.php', '/install'] as $prefix) {
+            if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
+                $headers->set('Cache-Control', 'no-store, private');
+                $headers->set('X-LiteSpeed-Cache-Control', 'no-cache');
+                break;
+            }
+        }
+
         if ($request->isSecure()) {
             $headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }

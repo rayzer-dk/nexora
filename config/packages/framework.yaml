@@ -8,6 +8,12 @@ framework:
         cookie_samesite: lax
         cookie_httponly: true
         metadata_update_threshold: 60
+        # Sessions live inside the project (var/sessions): shared hosts often have an unwritable or
+        # purged system session directory, which makes every login bounce back to the form.
+        save_path: '%kernel.project_dir%/var/sessions'
+        gc_probability: 1
+        gc_divisor: 100
+        gc_maxlifetime: 14400
     php_errors:
         log: true
     trusted_proxies: '%env(default::SYMFONY_TRUSTED_PROXIES)%'

@@ -18,6 +18,8 @@
     {% if seo_head is defined and seo_head.description|default('') %}<meta property="og:description" content="{{ seo_head.description }}">{% endif %}
     {% if seo_head is defined and seo_head.type|default('') %}<meta property="og:type" content="{{ seo_head.type }}">{% endif %}
     {% if seo_head is defined and seo_head.image|default('') %}<meta property="og:image" content="{{ seo_head.image }}">{% endif %}
+    {% if seo_head is defined and seo_head.canonical|default('') %}<meta property="og:url" content="{{ seo_head.canonical }}">{% endif %}
+    {% if seo_head is defined and (seo_head.title|default('') or seo_head.description|default('')) %}<meta property="og:site_name" content="{{ storefront_brand_name }}"><meta name="twitter:card" content="{{ seo_head.image|default('') ? 'summary_large_image' : 'summary' }}">{% endif %}
     {% if presentation.brand.pwa|default('1') == '1' %}<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="{{ presentation.theme.primary }}">{% endif %}
     {% if presentation.brand.favicon %}<link rel="icon" href="{{ presentation.brand.favicon }}"><link rel="shortcut icon" href="{{ presentation.brand.favicon }}">{% endif %}
     {% if seo_head is defined and seo_head.canonical is defined %}<link rel="canonical" href="{{ seo_head.canonical }}">{% endif %}

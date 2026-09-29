@@ -1,5 +1,48 @@
 {% extends '@storefront/base.html.twig' %}
+{% block head %}<link rel="alternate" type="application/rss+xml" title="{{ ui_text('blog_rss')|e('html_attr') }}" href="/blog/feed.xml">{% endblock %}
 {% block body %}
-<section class="shell content-list"><header class="content-hero"><p class="eyebrow">{{ ui_text('useful_materials') }}</p><h1>{{ ui_text('blog') }}</h1><p>{{ ui_text('blog_intro') }}</p></header>
-{% if articles %}<div class="article-grid">{% for article in articles %}<article class="article-card"><a class="article-card__image{% if not article.image %} is-placeholder{% endif %}" href="{{ article.url }}" aria-label="{{ article.title|e('html_attr') }}">{% if article.image %}<img src="{{ article.image }}" alt="" width="960" height="540" loading="lazy" decoding="async">{% else %}{{ ui_icon('file-text', 32) }}{% endif %}</a><div class="article-card__body"><time>{{ article.date }}</time><h2><a href="{{ article.url }}">{{ article.title }}</a></h2><p>{{ article.excerpt }}</p><a class="article-card__more" href="{{ article.url }}">{{ ui_text('read_arrow') }}{{ ui_icon('arrow-right', 16) }}</a></div></article>{% endfor %}</div>{% else %}<div class="empty-state"><h2>{{ ui_text('no_articles') }}</h2><p>{{ ui_text('no_articles_text') }}</p></div>{% endif %}</section>
+<section class="shell content-list blog-page">
+  <header class="content-hero blog-hero">
+    <p class="eyebrow">{{ ui_text('useful_materials') }}</p>
+    <h1>{{ heading }}</h1>
+    <p>{% if category and category.description %}{{ category.description }}{% else %}{{ ui_text('blog_intro') }}{% endif %}</p>
+  </header>
+
+  <div class="blog-toolbar">
+    <nav class="blog-chips" aria-label="{{ ui_text('blog_categories_label')|e('html_attr') }}">
+      <a class="blog-chip blog-chip--filter" href="/blog"{% if not active_category and not active_tag and not search %} aria-current="page"{% endif %}>{{ ui_text('blog_all') }}</a>
+      {% for item in categories %}<a class="blog-chip blog-chip--filter" href="/blog/category/{{ item.slug }}"{% if active_category == item.slug %} aria-current="page"{% endif %}>{{ item.name }}<span class="blog-chip__count">{{ item.articles }}</span></a>{% endfor %}
+    </nav>
+    <form class="blog-search" method="get" action="/blog" role="search">
+      <label class="sr-only" for="blog-search-input">{{ ui_text('blog_search_label') }}</label>
+      <input id="blog-search-input" type="search" name="q" value="{{ search }}" maxlength="100" placeholder="{{ ui_text('blog_search_placeholder')|e('html_attr') }}" autocomplete="off">
+      <button class="button button--secondary" type="submit">{{ ui_icon('search', 16) }}<span>{{ ui_text('blog_search_submit') }}</span></button>
+    </form>
+  </div>
+
+  {% if featured %}<div class="blog-featured">{% include '@storefront/components/blog_card.html.twig' with {article: featured, large: true} only %}</div>{% endif %}
+
+  {% if articles %}
+    <div class="article-grid">{% for article in articles %}{% include '@storefront/components/blog_card.html.twig' with {article: article} only %}{% endfor %}</div>
+  {% elseif not featured %}
+    <div class="empty-state"><h2>{{ search or category or tag_name ? ui_text('blog_no_results') : ui_text('no_articles') }}</h2><p>{{ search or category or tag_name ? ui_text('blog_no_results_text') : ui_text('no_articles_text') }}</p></div>
+  {% endif %}
+
+  {% if pagination.pages > 1 %}
+  <nav class="pager" aria-label="{{ ui_text('pagination') }}">
+    {% if pagination.page > 1 %}<a class="button button--secondary" rel="prev" href="{{ pagination.path }}{{ pagination.page > 2 ? '?page=' ~ (pagination.page - 1) : '' }}">{{ ui_icon('chevron-left', 16) }}{{ ui_text('back') }}</a>{% endif %}
+    <span>{{ ui_text('page_of')|replace({'%page%': pagination.page, '%pages%': pagination.pages}) }}</span>
+    {% if pagination.page < pagination.pages %}<a class="button button--secondary" rel="next" href="{{ pagination.path }}?page={{ pagination.page + 1 }}">{{ ui_text('next') }}{{ ui_icon('chevron-right', 16) }}</a>{% endif %}
+  </nav>
+  {% endif %}
+
+  {% if tags and not active_tag %}
+  <aside class="blog-tags" aria-labelledby="blog-tags-title">
+    <h2 id="blog-tags-title">{{ ui_text('blog_popular_tags') }}</h2>
+    <ul>{% for item in tags %}<li><a class="blog-chip" href="/blog/tag/{{ item.slug }}">#{{ item.name }}</a></li>{% endfor %}</ul>
+  </aside>
+  {% endif %}
+
+  <p class="blog-rss"><a href="/blog/feed.xml">{{ ui_icon('rss', 16) }}<span>{{ ui_text('blog_rss') }}</span></a></p>
+</section>
 {% endblock %}

@@ -1,0 +1,16 @@
+{# Blog article card. Variables: article, [large] #}
+<article class="article-card{% if large|default(false) %} article-card--featured{% endif %}" data-blog-card>
+  <a class="article-card__image{% if not article.image %} is-placeholder{% endif %}" href="{{ article.url }}" tabindex="-1" aria-hidden="true">
+    {% if article.image %}<img src="{{ article.image }}" alt="" width="960" height="540" loading="{{ large|default(false) ? 'eager' : 'lazy' }}" decoding="async"{% if large|default(false) %} fetchpriority="high"{% endif %}>{% else %}{{ ui_icon('file-text', 32) }}{% endif %}
+  </a>
+  <div class="article-card__body">
+    <p class="article-card__meta">
+      {% if article.category %}<a class="blog-chip" href="/blog/category/{{ article.category.slug }}">{{ article.category.name }}</a>{% endif %}
+      {% if article.date %}<time datetime="{{ article.iso }}">{{ article.date }}</time>{% endif %}
+      <span class="article-card__read">{{ ui_icon('clock', 14) }}{{ ui_text('blog_min_read')|replace({'%min%': article.reading_minutes}) }}</span>
+    </p>
+    <h{{ large|default(false) ? 2 : 3 }}><a href="{{ article.url }}">{{ article.title }}</a></h{{ large|default(false) ? 2 : 3 }}>
+    <p class="article-card__excerpt">{{ article.excerpt }}</p>
+    <a class="article-card__more" href="{{ article.url }}" aria-label="{{ ui_text('read_arrow') }}: {{ article.title|e('html_attr') }}">{{ ui_text('read_arrow') }}{{ ui_icon('arrow-right', 16) }}</a>
+  </div>
+</article>
