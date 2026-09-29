@@ -529,7 +529,8 @@ test('system information page content and SEO fields render exactly on storefron
   await page.goto('/admin/content/pages/about', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
 
-  const token = await page.locator('input[name="_token"]').inputValue();
+  const contentForm = page.locator('form.admin-runtime__panel.admin-form');
+  const token = await contentForm.locator('input[name="_token"]').inputValue();
   const original = {
     title: await page.locator('input[name="title"]').inputValue(),
     excerpt: await page.locator('textarea[name="excerpt"]').inputValue(),
