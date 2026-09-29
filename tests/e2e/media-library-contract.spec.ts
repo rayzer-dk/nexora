@@ -25,7 +25,7 @@ test('Media Library upload, metadata, search and store removal form one real lif
     name: 'e2e-media.png',
     mimeType: 'image/png',
     buffer: Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6dQAAAABJRU5ErkJggg==',
+      'iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGPkqrjDAANMDEgANwcARI4BZoWJLsMAAAAASUVORK5CYII=',
       'base64',
     ),
   });
