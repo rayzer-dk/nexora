@@ -215,7 +215,7 @@ test('product info blocks render on the product page and articles link to produc
   await form.locator('select[name="status"]').selectOption('published');
   const toggle = page.locator('.rich-editor__source-toggle').first();
   await toggle.click();
-  await page.locator('.rich-editor__source').first().fill('<h2>One</h2><p>Body text of the linked article.</p>');
+  await page.locator('.rich-editor__code .cm-content').first().fill('<h2>One</h2><p>Body text of the linked article.</p>');
   await toggle.click();
   await Promise.all([
     page.waitForURL(/\/admin\/content\/blog\/\d+\/edit/),

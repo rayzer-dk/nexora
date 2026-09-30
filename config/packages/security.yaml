@@ -56,7 +56,8 @@ security:
                 csrf_token_id: customer_logout
 
     access_control:
-        - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
+        - { path: '^/admin/(login|forgot)$', roles: PUBLIC_ACCESS }
+        - { path: '^/admin/reset/', roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/account/login$, roles: PUBLIC_ACCESS }
         - { path: ^/account/login/google, roles: PUBLIC_ACCESS }

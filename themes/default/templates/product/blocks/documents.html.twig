@@ -4,7 +4,7 @@
     <h2>{{ ui_text('documents') }}</h2>
     <div class="document-list">
         {% for document in product.documents %}
-            <a href="{{ document.url }}" data-document-type="{{ document.type|default('document') }}">{{ ui_icon(document.type|default('document') == 'certificate' ? 'circle-check' : 'file-text', 16) }} <span>{{ document.name }}</span> <small>{{ type_labels[document.type|default('document')]|default('') }}</small></a>
+            <a href="{{ document.url }}" data-document-type="{{ document.type|default('document') }}">{{ ui_icon(document.type|default('document') == 'certificate' ? 'circle-check' : 'file-text', 16) }} <span>{{ document.name }}</span> <small>{{ type_labels[document.type|default('document')]|default(document.type|default('')) }}</small></a>
         {% endfor %}
     </div>
 </section>

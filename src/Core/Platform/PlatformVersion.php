@@ -6,10 +6,10 @@ namespace Commerce\Core\Platform;
 
 final class PlatformVersion
 {
-    public const VERSION = '3.20.4';
+    public const VERSION = '3.21.0';
     public const CHANNEL = 'production';
     public const EXTENSION_API = '2.0';
-    public const DATABASE_SCHEMA = 64;
+    public const DATABASE_SCHEMA = 65;
     public const MIN_PHP = '8.4.0';
     public const MAX_PHP_EXCLUSIVE = '9.0.0';
     public const MIN_MYSQL = '8.4.0';

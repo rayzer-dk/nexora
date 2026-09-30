@@ -71,8 +71,12 @@ final readonly class AdminContextResolver
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.10fff149cbbd'));
         }
 
-        $request->setLocale($locale);
-        \Commerce\Core\I18n\CanonicalUiText::useLocale($locale);
+        // The content language being edited must never replace the interface language of the back office:
+        // AdminInterfaceLocaleSubscriber owns request locale + UI catalog for every /admin request.
+        if (!$request->attributes->has(\Commerce\Core\I18n\AdminInterfaceLocale::REQUEST_ATTRIBUTE)) {
+            $request->setLocale($locale);
+            \Commerce\Core\I18n\CanonicalUiText::useLocale($locale);
+        }
 
         if ($session !== null) {
             $session->set('admin_context.store_id', $storeId);

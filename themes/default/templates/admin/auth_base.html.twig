@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="{{ app.request.locale|default('uk-UA') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex,nofollow">
+    <title>{% block title %}{{ ui_text('admin.login.vkhid_do_keruvannia_modern_commerce') }}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
+    <link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-runtime.css', '/assets/admin-runtime.css') }}">
+</head>
+<body class="admin-login-page">
+<main class="admin-login-shell">
+    <section class="admin-login-card" aria-labelledby="login-title">
+        <div class="admin-login-brand"><img src="/assets/branding/nexora-mark.svg" alt="" width="44" height="44"><span><strong>Nexora Commerce</strong><small>Administration</small></span></div>
+        {% block card %}{% endblock %}
+    </section>
+</main>
+<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">
+document.querySelectorAll('[data-password-toggle]').forEach(function (button) {
+    button.addEventListener('click', function () {
+        var input = button.closest('.admin-password-field').querySelector('input');
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        button.setAttribute('aria-pressed', show ? 'true' : 'false');
+        button.classList.toggle('is-visible', show);
+    });
+});
+</script>
+</body>
+</html>

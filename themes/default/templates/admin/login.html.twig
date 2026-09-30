@@ -1,27 +1,14 @@
-<!doctype html>
-<html lang="uk-UA">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="robots" content="noindex,nofollow">
-    <title>{{ ui_text('admin.login.vkhid_do_keruvannia_modern_commerce') }}</title>
-    <link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
-    <link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-runtime.css', '/assets/admin-runtime.css') }}">
-</head>
-<body class="admin-login-page">
-<main class="admin-login-shell">
-    <section class="admin-login-card" aria-labelledby="login-title">
-        <div class="admin-login-brand"><img src="/assets/branding/nexora-mark.svg" alt="" width="44" height="44"><span><strong>Nexora Commerce</strong><small>Administration</small></span></div>
+{% extends '@storefront/admin/auth_base.html.twig' %}
+{% block card %}
         <h1 id="login-title">{{ ui_text('admin.login.vkhid_do_keruvannia') }}</h1>
         <p>{{ ui_text('admin.login.vykorystovuite_oblikovyi_zapys_administratora_ma') }}</p>
+        {% for message in app.flashes('success') %}<div class="admin-notice is-success" role="status">{{ ui_icon('check', 20) }}<span>{{ message }}</span></div>{% endfor %}
         {% if error %}<div class="admin-notice is-error" role="alert">{{ ui_icon('circle-alert', 20) }}<span>{% if error_code == 'throttled' %}{{ ui_text('admin.login.error_throttled') }}{% elseif error_code == 'csrf' %}{{ ui_text('admin.login.error_csrf') }}{% else %}{{ ui_text('admin.login.nevirna_elektronna_adresa_abo_parol') }}{% endif %}</span></div>{% endif %}
         <form method="post" action="{{ path('admin_login') }}" autocomplete="on">
             <label><span>Email</span><input type="email" name="_username" value="{{ last_username }}" autocomplete="username" required autofocus></label>
-            <label><span>{{ ui_text('admin.login.parol') }}</span><input type="password" name="_password" autocomplete="current-password" required></label>
+            <label><span>{{ ui_text('admin.login.parol') }}</span>{% include '@storefront/admin/_password_field.html.twig' with {name: '_password', autocomplete: 'current-password'} only %}</label>
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
             <button type="submit" class="admin-button is-primary is-lg">{{ ui_text('admin.login.uviity') }}</button>
         </form>
-    </section>
-</main>
-</body>
-</html>
+        <p class="admin-login-links"><a href="{{ path('admin_login_forgot') }}">{{ ui_text('admin.login.forgot') }}</a></p>
+{% endblock %}

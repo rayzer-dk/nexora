@@ -23,7 +23,7 @@ foreach ($it as $file) {
 $ref = new ReflectionClass(AdminPermissionSubscriber::class);
 $subscriber = $ref->newInstanceWithoutConstructor();
 $method = $ref->getMethod('permissionForRoute');
-$allowedUnmapped = ['admin_login','admin_logout','admin_extension_dynamic'];
+$allowedUnmapped = ['admin_login','admin_logout','admin_login_forgot','admin_login_recover','admin_extension_dynamic'];
 foreach (array_keys($routeNames) as $route) {
     if (!str_starts_with($route, 'admin_') || in_array($route, $allowedUnmapped, true)) continue;
     foreach (['GET','POST'] as $verb) {

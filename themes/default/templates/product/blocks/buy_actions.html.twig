@@ -10,7 +10,7 @@
     <commerce-quantity class="quantity">
         <button class="quantity__btn" type="button" data-qty-minus aria-label="{{ ui_text('decrease') }}">{{ ui_icon('minus', 16) }}</button>
         <input name="quantity" data-qty-input type="number" min="{{ quantity.min }}" step="{{ quantity.step }}" value="{{ quantity.min }}"{% if quantity.max %} max="{{ quantity.max }}"{% endif %} inputmode="decimal" aria-label="{{ ui_text('quantity') }}">
-        <span class="quantity__unit" aria-hidden="true">{{ unit_labels[quantity.unit_code]|default(quantity.unit_label) }}</span>
+        <span class="quantity__unit" aria-hidden="true">{{ unit_labels[quantity.unit_code]|default(measurement_unit_label(quantity.unit_code)) }}</span>
         <button class="quantity__btn" type="button" data-qty-plus aria-label="{{ ui_text('increase') }}">{{ ui_icon('plus', 16) }}</button>
     </commerce-quantity>
     <button class="button button--primary button--lg" type="submit" data-primary-buy>{{ ui_icon('shopping-cart', 20) }}<span>{{ product.purchase_button_label|default(ui_text('add_cart')) }}</span></button>

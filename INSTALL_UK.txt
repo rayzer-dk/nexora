@@ -1,4 +1,4 @@
-NEXORA COMMERCE 3.20.4 — КОРОТКА ІНСТРУКЦІЯ ВСТАНОВЛЕННЯ
+NEXORA COMMERCE 3.21.0 — КОРОТКА ІНСТРУКЦІЯ ВСТАНОВЛЕННЯ
 
 1. Сервер: PHP 8.4 або 8.5, MySQL 8.4+ або MariaDB 10.11+ LTS (рекомендовано MariaDB 11.4 LTS), InnoDB, utf8mb4, HTTPS.
 2. PHP extensions: ctype, curl, dom, fileinfo, gd, iconv, intl, json, mbstring, openssl, pcre, PDO, pdo_mysql, session, simplexml, sodium, tokenizer, zip.
@@ -50,3 +50,7 @@ npm ping
 bash tools/bootstrap-production-online.sh
 
 Скрипт створить справжні composer.lock і package-lock.json, встановить vendor, виконає npm ci, typecheck, dependency audit, Vite build, перевірку assets і сформує production ZIP. Якщо будь-який dependency/build крок не пройде, production-архів створюватися не повинен.
+
+ВІДНОВЛЕННЯ ПАРОЛЯ АДМІНІСТРАТОРА
+На сторінці входу є посилання «Забули пароль?» (лист із посиланням, чинним 30 хвилин). Якщо пошта ще не налаштована, задайте новий пароль командою:
+php bin/console commerce:admin:reset-password admin@example.com

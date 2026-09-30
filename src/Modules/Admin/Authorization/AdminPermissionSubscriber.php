@@ -21,7 +21,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
     public function onController(ControllerEvent $event): void
     {
         $request=$event->getRequest(); $route=(string)$request->attributes->get('_route','');
-        if ($route==='' || in_array($route,['admin_login','admin_logout'],true) || !str_starts_with($route,'admin_')) return;
+        if ($route==='' || in_array($route,['admin_login','admin_logout','admin_login_forgot','admin_login_recover'],true) || !str_starts_with($route,'admin_')) return;
         if ($route==='admin_extension_dynamic') return; // Dynamic extension controller enforces its own declared permission.
         $user=$this->security->getUser();
         if (!$user instanceof AdminUser) throw new AccessDeniedHttpException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.028a7bba4242'));
@@ -40,7 +40,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
     private function permissionForRoute(string $route, Request $request): ?string
     {
         $get=$request->isMethod('GET');
-        if ($route==='admin_dashboard'||$route==='admin_onboarding'||$route==='admin_api_session'||$route==='admin_api_quick_search'||$route==='admin_interface_language'||$route==='admin_undo'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account_security')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
+        if ($route==='admin_dashboard'||$route==='admin_onboarding'||$route==='admin_api_session'||$route==='admin_api_quick_search'||$route==='admin_api_slug'||$route==='admin_interface_language'||$route==='admin_undo'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account_security')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
         if (str_starts_with($route,'admin_system_tax')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if ($route==='admin_analytics') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic') return AdminPermissionCatalog::ANALYTICS_VIEW;

@@ -27,7 +27,8 @@ final readonly class DbalStorefrontCatalogQuery
     {
         $rows = $this->connection->fetchAllAssociative(
             "SELECT c.id,c.public_id,ct.name,ct.description,sr.path,
-                    (SELECT ma.storage_key FROM mc_product_category pcx JOIN mc_product px ON px.id=pcx.product_id AND px.status='published' JOIN mc_product_media pm ON pm.product_id=px.id AND pm.role IN ('primary','gallery') JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pcx.category_id=c.id ORDER BY (pm.role='primary') DESC,pm.sort_order ASC,px.id ASC LIMIT 1) AS image_key
+                    COALESCE((SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id),
+                    (SELECT ma.storage_key FROM mc_product_category pcx JOIN mc_product px ON px.id=pcx.product_id AND px.status='published' JOIN mc_product_media pm ON pm.product_id=px.id AND pm.role IN ('primary','gallery') JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pcx.category_id=c.id ORDER BY (pm.role='primary') DESC,pm.sort_order ASC,px.id ASC LIMIT 1)) AS image_key
              FROM mc_category c
              JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active'
              JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active'
@@ -440,7 +441,7 @@ final readonly class DbalStorefrontCatalogQuery
     public function categoryByPublicId(StorefrontContext $context, string $publicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT c.id,c.public_id,c.parent_id,ct.name,ct.description,ct.description_bottom,ct.meta_title,ct.meta_description,sr.path FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active' JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? AND c.status='active' LIMIT 1",
+            "SELECT c.id,c.public_id,c.parent_id,ct.name,ct.description,ct.description_bottom,ct.meta_title,ct.meta_description,sr.path,cma.storage_key AS cover_key,ci.alt_text AS cover_alt FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active' JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id LEFT JOIN mc_category_image ci ON ci.category_id=c.id LEFT JOIN mc_media_asset cma ON cma.id=ci.asset_id WHERE c.public_id=? AND c.status='active' LIMIT 1",
             [$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,Uuid::fromString($publicId)->toBinary()],
         );
         return is_array($row) ? $this->categoryRow($row) : null;
@@ -661,7 +662,7 @@ final readonly class DbalStorefrontCatalogQuery
 
     private function categoryRow(array $row): array
     {
-        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'description'=>(string)($row['description']??''),'description_bottom'=>(string)($row['description_bottom']??''),'meta_title'=>(string)($row['meta_title']??''),'meta_description'=>(string)($row['meta_description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null)];
+        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'description'=>(string)($row['description']??''),'description_bottom'=>(string)($row['description_bottom']??''),'meta_title'=>(string)($row['meta_title']??''),'meta_description'=>(string)($row['meta_description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null),'cover'=>isset($row['cover_key'])&&is_string($row['cover_key'])&&$row['cover_key']!==''?$this->mediaUrl($row['cover_key']):null,'cover_alt'=>(string)($row['cover_alt']??'')];
     }
 
     /** @return list<array<string,mixed>> */

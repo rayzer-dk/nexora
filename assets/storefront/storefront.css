@@ -1344,3 +1344,11 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 .custom-form__group { padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); }
 .custom-form__check { display: flex; align-items: center; gap: var(--mc-space-2); font-weight: var(--mc-font-weight-regular); }
 .custom-form abbr { color: var(--mc-color-danger); text-decoration: none; }
+
+.category-cover { display: block; width: 100%; max-width: 960px; height: auto; aspect-ratio: 3 / 1; margin-top: var(--mc-space-3); object-fit: cover; border-radius: var(--mc-radius-md); }
+
+.category-description [align="center"], .product-description [align="center"], .rich-content [align="center"] { text-align: center; }
+.category-description [align="right"], .product-description [align="right"], .rich-content [align="right"] { text-align: right; }
+.category-description [align="justify"], .product-description [align="justify"], .rich-content [align="justify"] { text-align: justify; }
+.category-description img, .product-description img, .rich-content img { max-width: 100%; height: auto; }
+.category-description mark, .product-description mark, .rich-content mark { background: #fff3a3; color: #1b1b1b; }

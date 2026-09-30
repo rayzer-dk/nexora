@@ -45,6 +45,7 @@ final class CatalogAdminPageController extends AbstractController
         private readonly \Commerce\Modules\Catalog\Application\CatalogTranslationService $translations,
         private readonly \Commerce\Modules\Localization\Application\ContentPolicyService $contentPolicy,
         private readonly \Commerce\Modules\Tax\Application\TaxSettingsService $taxSettings,
+        private readonly \Commerce\Modules\Catalog\Application\CategoryImageService $categoryImages,
     ) {
     }
 
@@ -101,6 +102,9 @@ final class CatalogAdminPageController extends AbstractController
                         (int) $request->request->get('sort_order', 0),
                     ));
                     $this->categoryTexts->save((int) $created['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), (string) $request->request->get('description_bottom', ''));
+                    if (($imageId = $this->categoryImages->imageFromRequest($request)) !== false) {
+                        $this->categoryImages->set((int) $created['id'], $context->storeId, $imageId, (string) $request->request->get('name', ''));
+                    }
                     $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.katehoriiu_stvoreno'));
                     return $this->redirectToRoute('admin_catalog_categories');
                 } catch (\Throwable $e) {
@@ -172,6 +176,9 @@ final class CatalogAdminPageController extends AbstractController
                         status: (string) $request->request->get('status', 'active'),
                     ));
                     $this->categoryTexts->save((int) $category['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), (string) $request->request->get('description_bottom', ''));
+                    if (($imageId = $this->categoryImages->imageFromRequest($request)) !== false) {
+                        $this->categoryImages->set((int) $category['id'], $context->storeId, $imageId, (string) $request->request->get('name', ''));
+                    }
                     $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.katehoriiu_onovleno'));
                     return $this->redirectToRoute('admin_catalog_categories');
                 } catch (\Throwable $e) {
@@ -188,6 +195,7 @@ final class CatalogAdminPageController extends AbstractController
                 'description_bottom' => (string) $request->request->get('description_bottom', ''),
             ]);
         }
+        $category['image'] = $this->categoryImages->forCategory((int) $category['id']);
         $choices = array_values(array_filter(
             $this->query->categories($context->storeId, $context->locale, 1, 100, '')['items'],
             static fn (array $item): bool => (int) $item['id'] !== (int) $category['id'],
@@ -445,7 +453,7 @@ final class CatalogAdminPageController extends AbstractController
             $locale = (string) $request->request->get('document_locale', '');
             $this->documents->uploadAndAttach(
                 (int) $product['id'], $file, (string) $request->request->get('document_title', ''),
-                $locale === '' ? null : $locale, (string) $request->request->get('document_type', 'document'),
+                $locale === '' ? null : $locale, $this->documentTypeFromRequest($request),
                 (int) $request->request->get('document_sort', 100),
             );
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.dokument_perevireno_ta_dodano_do_tovaru'));
@@ -601,13 +609,31 @@ final class CatalogAdminPageController extends AbstractController
     private function attachUploadedImages(Request $request, int $storeId, int $productId, string $productName): array
     {
         $files = $request->files->all('images');
-        if (!is_array($files) || $files === []) {
+        $files = is_array($files) ? $files : [];
+        $chosen = array_values(array_unique(array_filter(array_map('intval', $request->request->all('existing_media')), static fn (int $id): bool => $id > 0)));
+        if ($files === [] && $chosen === []) {
             return [];
         }
         $errors = [];
         $existing = $this->media->productImages($productId);
         $sort = count($existing) * 10;
         $hasPrimary = array_filter($existing, static fn (array $image): bool => ($image['role'] ?? '') === 'primary') !== [];
+        $attached = array_map(static fn (array $image): int => (int) ($image['id'] ?? 0), $existing);
+        foreach (array_slice($chosen, 0, 50) as $assetId) {
+            if (in_array($assetId, $attached, true)) {
+                continue;
+            }
+            try {
+                if ((int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_store_media_asset WHERE store_id=? AND asset_id=?', [$storeId, $assetId]) !== 1) {
+                    continue;
+                }
+                $this->media->attachToProduct($productId, $assetId, $hasPrimary ? 'gallery' : 'primary', $sort, $productName);
+                $hasPrimary = true;
+                $sort += 10;
+            } catch (\Throwable) {
+                $errors[] = \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.odne_iz_zobrazhen_ne_vdalosia_obrobyty_tovar_zberezh');
+            }
+        }
         foreach ($files as $file) {
             if (!$file instanceof UploadedFile || $file->getError() === UPLOAD_ERR_NO_FILE) {
                 continue;
@@ -673,5 +699,12 @@ final class CatalogAdminPageController extends AbstractController
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.rozmir_maie_buty_tsilym_chyslom_u_milimetrakh'));
         }
         return (int) $raw;
+    }
+
+    private function documentTypeFromRequest(Request $request): string
+    {
+        $type = (string) $request->request->get('document_type', 'document');
+
+        return $type === '__custom' ? (string) $request->request->get('document_type_custom', '') : $type;
     }
 }

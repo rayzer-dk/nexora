@@ -22,13 +22,32 @@ final readonly class TaxSettingsService
     /** @return list<array{id:int,code:string,name:string,kind:string}> */
     public function classes(): array
     {
-        return array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'code' => (string) $r['code'], 'name' => (string) $r['name'], 'kind' => (string) $r['kind']], $this->db->fetchAllAssociative('SELECT id,code,name,kind FROM mc_tax_class WHERE enabled=1 ORDER BY id'));
+        return array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'code' => (string) $r['code'], 'name' => self::className((string) $r['code'], (string) $r['name']), 'kind' => (string) $r['kind']], $this->db->fetchAllAssociative('SELECT id,code,name,kind FROM mc_tax_class WHERE enabled=1 ORDER BY id'));
+    }
+
+    /** Built-in classes keep their seeded English name in the DB; the UI shows the admin language unless the merchant renamed it. */
+    public static function className(string $code, string $stored): string
+    {
+        $seeded = ['standard' => 'Standard VAT', 'reduced' => 'Reduced VAT', 'zero' => 'Zero rate', 'exempt' => 'Tax exempt'];
+        if (($seeded[$code] ?? null) !== $stored) {
+            return $stored;
+        }
+        $key = 'admin.tax.class.' . $code;
+        $label = \Commerce\Core\I18n\CanonicalUiText::get($key);
+
+        return $label !== $key ? $label : $stored;
     }
 
     /** @return list<array<string,mixed>> */
     public function rates(): array
     {
-        return $this->db->fetchAllAssociative('SELECT r.id,r.country_code,r.region_code,r.name,r.rate_bps,r.priority,r.enabled,c.code AS class_code,c.name AS class_name FROM mc_tax_rate r JOIN mc_tax_class c ON c.id=r.tax_class_id ORDER BY r.country_code,c.id,r.priority,r.id');
+        $rows = $this->db->fetchAllAssociative('SELECT r.id,r.country_code,r.region_code,r.name,r.rate_bps,r.priority,r.enabled,c.code AS class_code,c.name AS class_name FROM mc_tax_rate r JOIN mc_tax_class c ON c.id=r.tax_class_id ORDER BY r.country_code,c.id,r.priority,r.id');
+        foreach ($rows as &$row) {
+            $row['class_name'] = self::className((string) $row['class_code'], (string) $row['class_name']);
+        }
+        unset($row);
+
+        return $rows;
     }
 
     public function addRate(int $classId, string $country, string $name, string $percent): void

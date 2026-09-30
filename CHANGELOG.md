@@ -2,6 +2,27 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.21.0 — 2026-09-30
+
+Schema 65. Administration usability, editor, media picker, units.
+
+### Added
+- **Administrator sign-in**: "show password" eye on the form and password recovery (`/admin/forgot`, e-mail link valid 30 minutes, single-use, hashed tokens, throttled, no account enumeration). Without working mail: `php bin/console commerce:admin:reset-password <email>`.
+- **Rich text editor**: link dialog (URL, text, new tab, nofollow) instead of a browser prompt, paragraph styles H1–H4/code block, subscript/superscript/highlight, alignment, table row/column tools, image insert from the media library or by URL with ALT, fullscreen, word count, and an **HTML source view with syntax highlighting (CodeMirror, Monokai)**. The sanitizer now keeps relative `/media/...` images and internal links (previously an inserted image lost its `src` on save).
+- **Choose already uploaded images** (media-library picker) for product images, category cover and editor images; a **category cover image** (shown on the category page and category tiles).
+- **Units of measure** management (`Catalog → Units`): add your own units (bottle, box…), disable built-ins; product/variant forms and the storefront read the list from the database.
+- **Custom product document types** (free text next to the built-in ones).
+- **SEO URL generate icon** on every slug field (transliterated from the name); the URL is still created automatically on save when the field is empty.
+- Default storefront favicon (SVG/PNG/ICO + `/favicon.ico`) when no favicon is configured.
+- Category text blocks labelled "before the products" / "after the products" and edited with the rich editor.
+- Product form: Save button in the header and a sticky save bar, Enter no longer triggers the first secondary action, explanation of the editing language, warning before switching store/market/content language with unsaved changes.
+- `tools/hosting-compat-check.sh`: installs and serves the app under `open_basedir`, empty `sql_mode`, MyISAM default and a `utf8mb3` database.
+
+### Fixed
+- **Admin interface language could not be switched back** (the content-language selector overwrote the interface language on every request).
+- Tax class names (Standard VAT, Reduced VAT…) follow the interface language.
+- × close button on the confirmation dialog and quick-search palette.
+
 ## 3.20.4 — 2026-09-30
 
 Schema 64. Hosting with `open_basedir`.

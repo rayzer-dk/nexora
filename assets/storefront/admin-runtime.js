@@ -69,7 +69,9 @@ function ensureConfirmDialog() {
   const message = make('p', '', { 'data-confirm-message': '' });
   const actions = make('div', 'admin-modal__actions');
   actions.append(make('button', 'admin-button', { type: 'button', 'data-confirm-cancel': '' }), make('button', 'admin-button is-danger', { type: 'button', 'data-confirm-accept': '' }));
-  dialog.append(iconWrap, title, message, actions);
+  const closeButton = make('button', 'admin-modal__close', { type: 'button', 'data-confirm-cancel': '', 'aria-label': t('js_close'), title: t('js_close') });
+  closeButton.append(lucideIconNode('x', 18));
+  dialog.append(closeButton, iconWrap, title, message, actions);
   modal.replaceChildren(make('div', 'admin-modal__backdrop', { 'data-confirm-cancel': '' }), dialog);
   q('#admin-confirm-title', modal).textContent = t('js_confirm_title');
   q('button[data-confirm-cancel]', modal).textContent = t('js_cancel');
@@ -132,12 +134,12 @@ function initConfirmations() {
 function initDirtyGuard() {
   qa('form[data-dirty-guard]').forEach((form) => {
     let dirty = false;
-    const mark = () => { dirty = true; };
+    const mark = () => { dirty = true; form.classList.add('is-dirty'); };
     form.addEventListener('input', mark, { passive: true });
     form.addEventListener('change', mark, { passive: true });
-    form.addEventListener('submit', () => { dirty = false; });
+    form.addEventListener('submit', () => { dirty = false; form.classList.remove('is-dirty'); });
     window.addEventListener('beforeunload', (event) => {
-      if (!dirty) return;
+      if (!dirty || form.dataset.guardOff === '1') return;
       event.preventDefault();
       event.returnValue = '';
     });
@@ -298,11 +300,120 @@ function initHotkeys() {
   });
 }
 
+function initDefaultSubmit() {
+  // Enter inside a text field must save the form, not run the first secondary formaction button.
+  qa('form[data-default-submit]').forEach((form) => {
+    form.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' || event.defaultPrevented) return;
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement) || target.form !== form || !['text', 'number', 'email', 'url', 'search', 'tel', 'password', 'date'].includes(target.type)) return;
+      const main = q(form.dataset.defaultSubmit || '', form);
+      if (!main) return;
+      event.preventDefault();
+      form.requestSubmit(main);
+    });
+  });
+}
+
+function initCustomSelects() {
+  qa('select[data-custom-select]').forEach((select) => {
+    const target = q(select.dataset.customSelect);
+    if (!target) return;
+    const sync = () => { target.hidden = select.value !== '__custom'; };
+    select.addEventListener('change', sync);
+    sync();
+  });
+}
+
+function initMediaPickers() {
+  qa('[data-media-pick]').forEach((button) => {
+    const box = q(button.dataset.mediaTarget || '');
+    if (!box) return;
+    const inputName = box.dataset.inputName || 'existing_media[]';
+    const single = button.dataset.mediaPick !== 'multiple';
+    const addFigure = (item) => {
+      if (box.querySelector(`input[value="${CSS.escape(String(item.id))}"]`)) return;
+      const figure = document.createElement('figure');
+      const img = document.createElement('img');
+      img.src = item.url;
+      img.alt = item.alt || '';
+      img.loading = 'lazy';
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = inputName;
+      input.value = String(item.id);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.setAttribute('aria-label', t('js_media_pick_remove'));
+      remove.title = t('js_media_pick_remove');
+      remove.append(lucideIconNode('x', 12));
+      remove.addEventListener('click', () => { figure.remove(); box.closest('form')?.dispatchEvent(new Event('change', { bubbles: true })); });
+      figure.append(img, input, remove);
+      box.append(figure);
+    };
+    button.addEventListener('click', async () => {
+      try {
+        const { pickMedia } = await import('../admin/features/media-picker.ts');
+        const picked = await pickMedia({ multiple: !single });
+        if (picked.length === 0) return;
+        if (single) box.replaceChildren();
+        picked.forEach(addFigure);
+        box.closest('form')?.dispatchEvent(new Event('change', { bubbles: true }));
+      } catch (error) {
+        console.error('Media picker failed', error);
+        toast(t('js_media_unavailable'), 'error', 5000);
+      }
+    });
+    qa('[data-media-picked-remove]', box).forEach((remove) => remove.addEventListener('click', () => { remove.closest('figure')?.remove(); box.closest('form')?.dispatchEvent(new Event('change', { bubbles: true })); }));
+  });
+}
+
+function initSlugGenerators() {
+  const sources = ['name', 'title', 'label', 'h1'];
+  qa('input[name="slug"], input[name$="[slug]"]').forEach((input) => {
+    if (input.closest('.admin-slug-field') || input.type === 'hidden') return;
+    const scope = input.closest('form') || document;
+    const source = () => sources.map((name) => scope.querySelector(`[name="${name}"], [name$="[${name}]"]`)).find((node) => node && node.value.trim() !== '');
+    const wrap = document.createElement('span');
+    wrap.className = 'admin-slug-field';
+    input.replaceWith(wrap);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'admin-slug-generate';
+    button.title = t('js_slug_generate');
+    button.setAttribute('aria-label', t('js_slug_generate'));
+    button.append(lucideIconNode('wand-sparkles', 16));
+    wrap.append(input, button);
+    button.addEventListener('click', async () => {
+      const from = source();
+      if (!from) { toast(t('js_slug_need_name'), 'warning', 3500); return; }
+      const locale = q('.admin-context select[name="locale"]')?.value || 'uk-UA';
+      try {
+        const response = await fetch(`/admin/api/slug?text=${encodeURIComponent(from.value)}&locale=${encodeURIComponent(locale)}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+        const data = await response.json();
+        if (!response.ok || !data.slug) throw new Error('slug');
+        input.value = data.slug;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      } catch (_) { toast(t('js_slug_failed'), 'error', 4000); }
+    });
+  });
+}
+
 function initAutoSubmit() {
   qa('[data-autosubmit]').forEach((control) => {
     control.addEventListener('change', () => {
       const form = control.closest('form');
-      if (form) form.requestSubmit();
+      if (!form) return;
+      // Switching store/market/content language reloads the page: warn instead of silently dropping edits.
+      if (control.closest('.admin-context') && document.querySelector('form[data-dirty-guard].is-dirty')) {
+        if (!window.confirm(t('js_unsaved_switch'))) {
+          control.value = Array.from(control.options).find((option) => option.defaultSelected)?.value ?? control.value;
+          return;
+        }
+        document.querySelectorAll('form[data-dirty-guard]').forEach((f) => { f.classList.remove('is-dirty'); f.dataset.guardOff = '1'; });
+      }
+      form.requestSubmit();
     });
   });
 }
@@ -495,6 +606,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initHotkeys();
   initCommandPalette();
   initAutoSubmit();
+  initCustomSelects();
+  initDefaultSubmit();
+  initMediaPickers();
+  initSlugGenerators();
   initCopyControls();
   initHealthCheck();
   initSiteProfilePreset();

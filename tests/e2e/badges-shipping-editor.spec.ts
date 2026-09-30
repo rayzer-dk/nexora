@@ -116,7 +116,7 @@ test('rich text editor has an HTML source mode', async ({ page }) => {
   const toggle = page.locator('.rich-editor__source-toggle').first();
   await expect(toggle).toBeVisible();
   await toggle.click();
-  const source = page.locator('.rich-editor__source').first();
+  const source = page.locator('.rich-editor__code .cm-content').first();
   await expect(source).toBeVisible();
   await source.fill('<p>HTML <strong>mode</strong></p><table><tbody><tr><td>x</td></tr></tbody></table>');
   await toggle.click();

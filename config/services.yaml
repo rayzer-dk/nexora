@@ -466,6 +466,10 @@ services:
         arguments:
             $appSecret: '%kernel.secret%'
 
+    Commerce\Modules\Admin\Security\AdminPasswordResetService:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
     Commerce\Modules\Customer\Application\CustomerAccountSecurityService:
         arguments:
             $publicBaseUrl: '%commerce.app_public_url%'

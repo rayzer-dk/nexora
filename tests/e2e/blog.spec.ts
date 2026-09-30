@@ -46,7 +46,7 @@ async function fillArticle(page: Page, opts: { title: string; slug: string; stat
   if (opts.publishAt) await form.locator('input[name="published_at"]').fill(opts.publishAt);
   const toggle = page.locator('.rich-editor__source-toggle').first();
   await toggle.click();
-  await page.locator('.rich-editor__source').first().fill(body);
+  await page.locator('.rich-editor__code .cm-content').first().fill(body);
   await toggle.click();
   await expect(page.locator('textarea[name="body_html"]')).toHaveValue(/First section/);
   await Promise.all([page.waitForURL(/\/admin\/content\/blog\/\d+\/edit/), form.locator('button[type="submit"]').first().click()]);

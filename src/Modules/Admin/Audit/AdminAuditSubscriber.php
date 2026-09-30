@@ -25,7 +25,7 @@ final readonly class AdminAuditSubscriber implements EventSubscriberInterface
     {
         $request = $event->getRequest();
         $route = (string) $request->attributes->get('_route', '');
-        if ($route === '' || !str_starts_with($route, 'admin_') || in_array($route, ['admin_login', 'admin_logout'], true)) {
+        if ($route === '' || !str_starts_with($route, 'admin_') || in_array($route, ['admin_login', 'admin_logout', 'admin_login_forgot', 'admin_login_recover'], true)) {
             return;
         }
         if (!in_array($request->getMethod(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {

@@ -53,8 +53,10 @@ final readonly class ProductDocumentService
                 throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.catalog.application.productdocumentservice.nekorektna_mova_dokumenta'));
             }
         }
-        $documentType = trim($documentType);
-        if (!in_array($documentType, ['document', 'manual', 'certificate', 'sds', 'datasheet', 'warranty'], true)) {
+        $documentType = trim(strip_tags($documentType));
+        // Built-in codes plus merchant-defined types (a short human-readable label).
+        $builtin = in_array($documentType, ['document', 'manual', 'certificate', 'sds', 'datasheet', 'warranty'], true);
+        if (!$builtin && preg_match('/^[\p{L}\p{N}][\p{L}\p{N} ._\/()&+-]{0,31}$/u', $documentType) !== 1) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.nevidomyi_typ_dokumenta'));
         }
         $sortOrder = max(0, min(65535, $sortOrder));

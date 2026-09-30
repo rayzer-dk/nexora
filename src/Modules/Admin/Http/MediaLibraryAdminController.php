@@ -39,7 +39,7 @@ final class MediaLibraryAdminController extends AbstractController
     #[Route('/admin/media.json', name:'admin_media_library_json', methods:['GET'])]
     public function libraryJson(Request $request): JsonResponse
     {
-        $ctx=$this->contexts->resolve($request); $result=$this->library->search($ctx->storeId,(string)$request->query->get('q',''),$this->optionalInt($request->query->get('folder')),1,72);
+        $ctx=$this->contexts->resolve($request); $result=$this->library->search($ctx->storeId,(string)$request->query->get('q',''),$this->optionalInt($request->query->get('folder')),max(1,(int)$request->query->get('page',1)),72);
         return $this->json($result);
     }
 
