@@ -38,6 +38,8 @@ final readonly class CheckoutOrderService
         private GiftCardService $giftCards,
         private LoyaltyService $loyalty,
         private CustomerStoreMembershipService $memberships,
+        private \Commerce\Modules\Fraud\Application\FraudService $fraud,
+        private \Symfony\Component\HttpFoundation\RequestStack $requests,
     ) {}
 
     /**
@@ -71,6 +73,11 @@ final readonly class CheckoutOrderService
         if (strlen($idempotencyKey) < 16 || strlen($idempotencyKey) > 190) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.nekorektnyi_kliuch_oformlennia'));
         $purchaseOrderNumber=mb_substr(trim((string)($input['purchase_order_number']??'')),0,128);
 
+        $request = $this->requests->getMainRequest();
+        $clientIp = ($request !== null && !str_starts_with($request->getPathInfo(), '/admin')) ? $request->getClientIp() : null;
+        if ($request !== null && !str_starts_with($request->getPathInfo(), '/admin')) {
+            $this->fraud->preflight($context->storeId, $email, $phone, $clientIp);
+        }
         $result = $this->db->transactional(function(Connection $db) use($context,$cartId,$input,$idempotencyKey,$name,$phone,$email,$providerCode,$payment,$customerId,$companyName,$companyTaxId,$customerComment,$purchaseOrderNumber,$unitPriceOverrides): array {
             $existing = $db->fetchAssociative("SELECT public_id,order_number,total_minor,currency FROM mc_sales_order WHERE checkout_idempotency_key=? AND store_id=? LIMIT 1", [$idempotencyKey, $context->storeId]);
             if (is_array($existing)) return ['public_id'=>Uuid::fromBinary((string)$existing['public_id'])->toRfc4122(),'order_number'=>(string)$existing['order_number'],'total_minor'=>(int)$existing['total_minor'],'currency'=>(string)$existing['currency']];
@@ -185,6 +192,9 @@ final readonly class CheckoutOrderService
             $db->update('mc_cart',['status'=>'converted','updated_at'=>$now],['id'=>$cartId]);
             return ['public_id'=>$public->toRfc4122(),'order_number'=>$orderNumber,'total_minor'=>$total,'currency'=>$context->currency];
         });
+        if ($request !== null && !str_starts_with($request->getPathInfo(), '/admin')) {
+            try { $this->fraud->assess($context->storeId, (string)$result['public_id'], $clientIp); } catch (\Throwable) { /* scoring is advisory and must never fail a placed order */ }
+        }
         return $result;
     }
 

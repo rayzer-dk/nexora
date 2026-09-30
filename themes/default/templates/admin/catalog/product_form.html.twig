@@ -87,5 +87,15 @@
 <form method="post" action="{{ path('admin_catalog_product_fields_save', {publicId: product.public_id}) }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_product_fields_' ~ product.public_id) }}">
 {% for d in custom_definitions %}<label><span>{{ d.label }}</span><input type="{{ d.field_type == 'number' ? 'text' : (d.field_type == 'date' ? 'date' : (d.field_type == 'url' ? 'url' : 'text')) }}" name="field[{{ d.id }}]" maxlength="2000" value="{{ custom_values[d.id]|default('') }}"></label>{% endfor %}
 <div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.fields.save_values') }}</button></div></form></section>{% endif %}
+{% if editing %}<section class="admin-panel" id="info-blocks"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.infoblocks.title') }}</h2><small>{{ ui_text('admin.infoblocks.hint') }}</small></div>{{ ui_icon('table', 20) }}</div>
+<form method="post" action="{{ path('admin_catalog_product_info_save', {publicId: product.public_id}) }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_product_info_' ~ product.public_id) }}">
+{% set rows = info_blocks|default([])|merge([{type:'info',title:'',locale:'',text:''},{type:'list',title:'',locale:'',text:''},{type:'table',title:'',locale:'',text:''}]) %}
+{% for b in rows %}<fieldset class="admin-form-wide admin-info-block"><legend>{{ loop.index }}</legend>
+<label><span>{{ ui_text('admin.infoblocks.type') }}</span><select name="block[{{ loop.index0 }}][type]">{% for t in ['info','list','table'] %}<option value="{{ t }}" {{ b.type == t ? 'selected' : '' }}>{{ ui_text('admin.infoblocks.type.' ~ t) }}</option>{% endfor %}</select></label>
+<label><span>{{ ui_text('admin.infoblocks.block_title') }}</span><input type="text" name="block[{{ loop.index0 }}][title]" maxlength="190" value="{{ b.title }}"></label>
+<label><span>{{ ui_text('admin.infoblocks.locale') }}</span><select name="block[{{ loop.index0 }}][locale]"><option value="">{{ ui_text('admin.infoblocks.all_locales') }}</option>{% for l in locales|default([]) %}<option value="{{ l.code }}" {{ b.locale == l.code ? 'selected' : '' }}>{{ l.code }}</option>{% endfor %}</select></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.infoblocks.content') }}</span><textarea name="block[{{ loop.index0 }}][text]" rows="5" maxlength="100000">{{ b.text }}</textarea></label></fieldset>{% endfor %}
+<p class="admin-form-wide"><small>{{ ui_text('admin.infoblocks.format_help') }}</small></p>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.infoblocks.save') }}</button></div></form></section>{% endif %}
 {% include '@storefront/admin/extension/slot.html.twig' with {slot:'admin.product.after_main'} only %}
 {{ shell.end() }}

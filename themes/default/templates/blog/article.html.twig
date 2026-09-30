@@ -36,6 +36,14 @@
   </nav>
   {% endif %}
 
+  {% set linked_products = article_products(article.id) %}
+  {% if linked_products %}
+  <section class="article-products" aria-labelledby="article-products-title">
+    <h2 id="article-products-title">{{ ui_text('blog_products') }}</h2>
+    <ul class="article-products__list">{% for p in linked_products %}<li class="article-products__item"><a href="{{ p.path }}">{{ p.name }}</a></li>{% endfor %}</ul>
+  </section>
+  {% endif %}
+
   {% if related %}
   <section class="article-related" aria-labelledby="article-related-title">
     <h2 id="article-related-title">{{ ui_text('blog_related') }}</h2>

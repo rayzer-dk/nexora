@@ -62,6 +62,8 @@
         </section>
         {% set custom_fields = product_custom_fields(product.internal_id) %}
         {% if custom_fields %}<section class="product-custom-fields" aria-label="{{ ui_text('product_custom_fields')|e('html_attr') }}"><h2>{{ ui_text('product_custom_fields') }}</h2><dl class="product-custom-fields__list">{% for f in custom_fields %}<div class="product-custom-fields__row"><dt>{{ f.label }}</dt><dd>{% if f.type == 'url' %}<a href="{{ f.value }}" rel="noopener nofollow" target="_blank">{{ f.value }}</a>{% else %}{{ f.value }}{% endif %}</dd></div>{% endfor %}</dl></section>{% endif %}
+        {% for b in product_info_blocks(product.internal_id) %}<section class="product-info-block product-info-block--{{ b.type }}">{% if b.title %}<h2>{{ b.title }}</h2>{% endif %}{% if b.type == 'info' %}<div class="product-info-block__body">{{ b.html|raw }}</div>{% elseif b.type == 'list' %}<ul class="product-info-block__list">{% for item in b.items %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<div class="product-info-block__table"><table><thead><tr>{% for c in b.columns %}<th scope="col">{{ c }}</th>{% endfor %}</tr></thead><tbody>{% for row in b.rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% endif %}</section>{% endfor %}
+        {% set product_articles_list = product_articles(product.internal_id) %}{% if product_articles_list %}<section class="product-articles"><h2>{{ ui_text('product_articles') }}</h2><ul class="product-articles__list">{% for a in product_articles_list %}<li><a href="{{ a.path }}">{{ a.title }}</a></li>{% endfor %}</ul></section>{% endif %}
     </div>
 
     {% for block in regions.mobile_sticky|default([]) %}

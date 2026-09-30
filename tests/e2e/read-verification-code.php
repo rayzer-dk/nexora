@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 $email = mb_strtolower(trim((string) ($argv[1] ?? '')));
+$type = ($argv[2] ?? 'customer_verification_code') === 'customer_device_code' ? 'customer_device_code' : 'customer_verification_code';
 $url = parse_url((string) getenv('DATABASE_URL'));
 if ($email === '' || !is_array($url) || ($url['scheme'] ?? '') !== 'mysql') {
     fwrite(STDERR, "Invalid E2E verification lookup configuration.\n");
@@ -15,8 +16,8 @@ $pdo = new PDO(
     rawurldecode((string) ($url['pass'] ?? '')),
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
 );
-$stmt = $pdo->prepare("SELECT payload FROM mc_notification_outbox WHERE recipient=? AND notification_type='customer_verification_code' ORDER BY id DESC LIMIT 1");
-$stmt->execute([$email]);
+$stmt = $pdo->prepare("SELECT payload FROM mc_notification_outbox WHERE recipient=? AND notification_type=? ORDER BY id DESC LIMIT 1");
+$stmt->execute([$email, $type]);
 $payload = $stmt->fetchColumn();
 if (!is_string($payload) || $payload === '') {
     fwrite(STDERR, "Verification notification not found.\n");

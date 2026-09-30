@@ -35,6 +35,7 @@
   <div class="admin-panel__header"><h2>{{ ui_text('admin.blog.organize') }}</h2></div>
   <label>{{ ui_text('admin.blog.category') }}<select name="category_id"><option value="0">{{ ui_text('admin.blog.no_category') }}</option>{% for c in categories %}<option value="{{ c.id }}"{{ article.category_id == c.id ? ' selected' : '' }}>{{ c.name }}</option>{% endfor %}</select></label>
   <label>{{ ui_text('admin.blog.tags') }}<input type="text" name="tags" value="{{ article.tags }}" maxlength="600"><small>{{ ui_text('admin.blog.tags_hint') }}</small></label>
+  <label>{{ ui_text('admin.blog.product_skus') }}<input type="text" name="product_skus" value="{{ article.product_skus|default('') }}" maxlength="900"><small>{{ ui_text('admin.blog.product_skus_hint') }}</small></label>
   <label>{{ ui_text('admin.blog.author') }}<input type="text" name="author_name" value="{{ article.author_name }}" maxlength="190"></label>
  </section>
  <section class="admin-panel admin-form">

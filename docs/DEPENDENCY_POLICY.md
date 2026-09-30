@@ -34,3 +34,7 @@ bash tools/bootstrap-production-online.sh
 The command verifies the Composer installer signature when Composer is not already installed, resolves and audits `composer.lock` and `package-lock.json`, installs production PHP dependencies, runs `npm ci`, typechecks and builds Vite assets, removes `node_modules`, validates `vendor/` plus the complete Vite manifest, executes the production release gates and finally creates the one-upload ZIP.
 
 `tools/package-production.sh` is deliberately network-independent and refuses to package a release unless real lock files, `vendor/autoload_runtime.php` and every required Vite manifest entry already exist.
+
+## PHP 8.6 readiness
+
+`php tools/check-php86-readiness.php` statically scans `src/`, `bin/`, `tools/` and `public/` for constructs removed or deprecated in the upcoming PHP release line (0 findings as of 3.17.0). This is a scan, not certification: PHP 8.6 stays blocked in `composer.json`, `PlatformVersion`, `public/setup.php` and `release.json` until the full test and e2e suite has run on an 8.6 build and the vendor packages declare support.

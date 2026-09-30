@@ -2,6 +2,23 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.17.0 — 2026-09-30
+
+Schema 61, production channel. Google sign-in, LiqPay and WayForPay, order fraud scoring, new-device confirmation, product info blocks, article ↔ product links.
+
+### Added
+- **Google sign-in** on the customer login page (authorization-code flow, state + nonce, ID-token claims checked). An existing account is linked only when its e-mail was already verified; otherwise a new verified customer is created. Configured through `GOOGLE_LOGIN_*` in `.env`; hidden until enabled.
+- **LiqPay** and **WayForPay** payment providers (hosted checkout, signed callbacks, refunds / cancel where the API allows, replay guard, amount and currency check). Configured through `LIQPAY_*` / `WAYFORPAY_*` in `.env`.
+- **Order fraud scoring** (Admin → System → Order fraud): advisory score with reason codes (IP and e-mail velocity, failed payments, one phone many e-mails, disposable e-mail, high value, guest COD), a blocklist (e-mail, domain, phone, IP), review / clear decisions and a `fraud.flagged` order event. Off by default per store.
+- **New-device confirmation** for customers: a 6-digit code sent by e-mail when signing in from an unknown browser; trusted for 180 days. Off by default per store; fails open on errors.
+- **Product info blocks** (size tables, lists, rich text, per locale) edited on the product form, shown on the product page.
+- **Article ↔ product links**: attach products to a blog article by SKU; the article lists them and the product page lists its articles.
+- `tools/check-php86-readiness.php`: static scan for PHP 8.6 incompatibilities (0 findings). PHP 8.6 stays outside the supported range until the platform is certified on it.
+
+### Fixed
+- Content-Security-Policy `form-action` now allows the hosted payment page hosts, otherwise browsers block the checkout redirect to an external payment provider.
+- The payment webhook URL is built from the provider code instead of being fixed to Monobank.
+
 ## 3.16.0 — 2026-09-30
 
 Schema 60, production channel. AI assistant, first-party visit analytics, data retention.

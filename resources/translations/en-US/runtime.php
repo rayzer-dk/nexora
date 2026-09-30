@@ -1938,4 +1938,6 @@ return [
     'runtime.exception.keygen_exists' => 'Refusing to overwrite an existing key file: %s',
     'runtime.exception.keygen_write_failed' => 'Cannot write the secret key file: %s',
     'runtime.exception.mfa_already_enabled' => 'Two-factor authentication is already enabled.',
+    'payment.method.liqpay' => 'Card via LiqPay',
+    'payment.method.wayforpay' => 'Card via WayForPay',
 ];

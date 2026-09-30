@@ -42,6 +42,7 @@ final class CustomerAccountController extends AbstractController
         private readonly ReturnRequestService $returns,
         private readonly DigitalDownloadService $downloads,
         private readonly OrderDocumentService $documents,
+        private readonly \Commerce\Modules\Identity\Google\GoogleIdentityProvider $google,
     ) {
     }
 
@@ -60,6 +61,7 @@ final class CustomerAccountController extends AbstractController
             'store_name' => $context->storeName,
             'last_username' => $authentication->getLastUsername(),
             'login_error' => $authentication->getLastAuthenticationError(),
+            'google_login' => $this->google->enabled(),
             'seo_head' => ['robots' => 'noindex,nofollow'],
         ]);
     }

@@ -63,7 +63,7 @@ final readonly class PaymentFlowService
             amountMinor: (int)$row['total_minor'],
             currency: (string)$row['currency'],
             returnUrl: $base.'/payment/return/'.$orderPublicId,
-            webhookUrl: $base.'/webhooks/payments/monobank',
+            webhookUrl: $base.'/webhooks/payments/'.$code,
         ));
 
         $now = $this->now();

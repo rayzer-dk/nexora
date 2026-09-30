@@ -1229,6 +1229,7 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 
 .admin-checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--mc-space-2) var(--mc-space-4); max-height: 420px; overflow: auto; padding: var(--mc-space-2); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); }
 .admin-form-wide { grid-column: 1 / -1; }
+.admin-info-block { border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); padding: var(--mc-space-3); display: grid; gap: var(--mc-space-3); }
 
 /* Blog editor */
 .admin-blog-editor { display: grid; gap: var(--mc-space-4); align-items: start; }

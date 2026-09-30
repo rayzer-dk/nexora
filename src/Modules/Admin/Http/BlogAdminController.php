@@ -171,7 +171,7 @@ final class BlogAdminController extends AbstractController
      */
     private function merge(array $base, array $in): array
     {
-        foreach (['title', 'slug', 'excerpt', 'body_html', 'meta_title', 'meta_description', 'status', 'published_at', 'cover_alt', 'author_name', 'canonical_url', 'tags'] as $key) {
+        foreach (['title', 'slug', 'excerpt', 'body_html', 'meta_title', 'meta_description', 'status', 'published_at', 'cover_alt', 'author_name', 'canonical_url', 'tags', 'product_skus'] as $key) {
             if (array_key_exists($key, $in)) {
                 $base[$key] = (string) $in[$key];
             }
@@ -188,7 +188,7 @@ final class BlogAdminController extends AbstractController
         return [
             'id' => null, 'public_id' => '', 'status' => 'draft', 'published_at' => '', 'has_translation' => false, 'title' => '', 'excerpt' => '',
             'body_html' => '', 'meta_title' => '', 'meta_description' => '', 'slug' => '', 'path' => '', 'category_id' => 0, 'cover_url' => '',
-            'cover_alt' => '', 'author_name' => '', 'featured' => false, 'noindex' => false, 'canonical_url' => '', 'tags' => '',
+            'cover_alt' => '', 'author_name' => '', 'featured' => false, 'noindex' => false, 'canonical_url' => '', 'tags' => '', 'product_skus' => '',
         ];
     }
 }

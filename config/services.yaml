@@ -51,6 +51,17 @@ parameters:
     env(MONOBANK_ACQUIRING_ENABLED): '0'
     env(MONOBANK_ACQUIRING_API_BASE): 'https://api.monobank.ua'
     env(MONOBANK_ACQUIRING_TOKEN): ''
+    env(GOOGLE_LOGIN_ENABLED): '0'
+    env(GOOGLE_LOGIN_CLIENT_ID): ''
+    env(GOOGLE_LOGIN_CLIENT_SECRET): ''
+    env(LIQPAY_ENABLED): '0'
+    env(LIQPAY_PUBLIC_KEY): ''
+    env(LIQPAY_PRIVATE_KEY): ''
+    env(LIQPAY_SANDBOX): '0'
+    env(WAYFORPAY_ENABLED): '0'
+    env(WAYFORPAY_MERCHANT_ACCOUNT): ''
+    env(WAYFORPAY_SECRET_KEY): ''
+    env(WAYFORPAY_DOMAIN): ''
     env(NOVA_POST_API_BASE): 'https://api.novaposhta.ua/v2.0/json/'
     env(NOVA_POST_API_KEY): ''
     env(NOVA_POST_SENDER_REF): ''
@@ -381,6 +392,26 @@ services:
             $isEnabled: '%commerce.monobank.enabled%'
             $token: '%commerce.monobank.token%'
 
+    Commerce\Modules\Payment\Provider\LiqPay\LiqPayClient:
+        arguments:
+            $publicKey: '%env(LIQPAY_PUBLIC_KEY)%'
+            $privateKey: '%env(LIQPAY_PRIVATE_KEY)%'
+            $sandbox: '%env(bool:LIQPAY_SANDBOX)%'
+
+    Commerce\Modules\Payment\Provider\LiqPay\LiqPayPaymentProvider:
+        arguments:
+            $isEnabled: '%env(bool:LIQPAY_ENABLED)%'
+
+    Commerce\Modules\Payment\Provider\WayForPay\WayForPayClient:
+        arguments:
+            $merchantAccount: '%env(WAYFORPAY_MERCHANT_ACCOUNT)%'
+            $secretKey: '%env(WAYFORPAY_SECRET_KEY)%'
+            $domain: '%env(WAYFORPAY_DOMAIN)%'
+
+    Commerce\Modules\Payment\Provider\WayForPay\WayForPayPaymentProvider:
+        arguments:
+            $isEnabled: '%env(bool:WAYFORPAY_ENABLED)%'
+
     Commerce\Modules\Payment\Provider\Monobank\MonobankWebhookVerifier:
         arguments:
             $cache: '@cache.app'
@@ -443,6 +474,20 @@ services:
         arguments:
             $appSecret: '%kernel.secret%'
             $smsEnabled: '%commerce.sms.enabled%'
+
+    Commerce\Modules\Customer\Device\DeviceTrustService:
+        arguments:
+            $appSecret: '%kernel.secret%'
+
+    Commerce\Modules\Identity\Google\GoogleIdentityProvider:
+        arguments:
+            $enabled: '%env(bool:GOOGLE_LOGIN_ENABLED)%'
+            $clientId: '%env(GOOGLE_LOGIN_CLIENT_ID)%'
+            $clientSecret: '%env(GOOGLE_LOGIN_CLIENT_SECRET)%'
+
+    Commerce\Modules\Identity\Http\GoogleLoginController:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
 
     Commerce\Modules\Content\System\InformationPageCatalog:
         arguments:

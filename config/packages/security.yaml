@@ -59,6 +59,7 @@ security:
         - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/account/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/account/login/google, roles: PUBLIC_ACCESS }
         - { path: ^/account/register$, roles: PUBLIC_ACCESS }
         - { path: ^/account/password/forgot$, roles: PUBLIC_ACCESS }
         - { path: ^/account/password/reset/, roles: PUBLIC_ACCESS }

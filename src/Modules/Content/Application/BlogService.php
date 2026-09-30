@@ -30,6 +30,7 @@ final class BlogService
         private readonly SeoUrlRepositoryInterface $routes,
         private readonly SlugGenerator $slugs,
         private readonly HtmlSanitizerInterface $richTextSanitizer,
+        private readonly ArticleProductLinkService $links,
     ) {
     }
 
@@ -121,6 +122,7 @@ final class BlogService
             'noindex' => (int) ($meta['noindex'] ?? 0) === 1,
             'canonical_url' => (string) ($meta['canonical_url'] ?? ''),
             'tags' => implode(', ', array_map('strval', $tags)),
+            'product_skus' => $this->links->skusFor($id),
         ];
     }
 
@@ -218,6 +220,9 @@ final class BlogService
             $db->delete('mc_blog_article_tag', ['content_id' => $entryId]);
             foreach ($this->parseTags((string) ($in['tags'] ?? ''), $locale) as $slug => $name) {
                 $db->insert('mc_blog_article_tag', ['content_id' => $entryId, 'tag_slug' => $slug, 'tag_name' => $name]);
+            }
+            if (array_key_exists('product_skus', $in)) {
+                $this->links->replace($db, $storeId, $entryId, (string) $in['product_skus']);
             }
             return $entryId;
         });

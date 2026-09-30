@@ -42,7 +42,8 @@ final class SecurityHeadersSubscriber
             "base-uri 'self'",
             "object-src 'none'",
             "frame-ancestors 'self'",
-            "form-action 'self'",
+            // Checkout POST is answered with a redirect to the hosted payment page; Chrome applies form-action to that redirect too.
+            $with("form-action 'self' https://www.liqpay.ua https://secure.wayforpay.com https://pay.monobank.ua https://api.monobank.ua https://accounts.google.com", 'form'),
             $with("script-src 'self' 'nonce-{$nonce}' https://accounts.google.com https://challenges.cloudflare.com", 'script'),
             $with("style-src 'self' 'unsafe-inline' https://accounts.google.com", 'style'),
             "img-src 'self' data: blob: https:",

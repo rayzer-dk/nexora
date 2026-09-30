@@ -1940,4 +1940,6 @@ return [
     'runtime.exception.keygen_exists' => 'Файл ключа вже існує, перезапис заборонено: %s',
     'runtime.exception.keygen_write_failed' => 'Не вдалося записати файл секретного ключа: %s',
     'runtime.exception.mfa_already_enabled' => 'Двофакторну автентифікацію вже ввімкнено.',
+    'payment.method.liqpay' => 'Картка через LiqPay',
+    'payment.method.wayforpay' => 'Картка через WayForPay',
 ];
