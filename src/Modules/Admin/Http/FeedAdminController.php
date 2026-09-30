@@ -49,7 +49,8 @@ final class FeedAdminController extends AbstractController
         }
         $categories=$this->db->fetchAllAssociative('SELECT c.id,ct.name FROM mc_category c JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? WHERE c.status=? ORDER BY ct.name',[$context->storeId,$context->locale,'active']);
         $mappings=$this->db->fetchAllAssociative('SELECT m.platform,m.category_id,m.external_category_id,m.external_category_name,ct.name category_name FROM mc_feed_category_mapping m JOIN mc_category_translation ct ON ct.category_id=m.category_id AND ct.store_id=m.store_id AND ct.locale=? WHERE m.store_id=? ORDER BY m.platform,ct.name',[$context->locale,$context->storeId]);
-        return $this->render('@storefront/admin/commerce/feeds.html.twig',['rows'=>$rows,'store'=>$store,'locale'=>$context->locale,'categories'=>$categories,'mappings'=>$mappings]);
+        $storeLocales=array_map('strval',$this->db->fetchFirstColumn('SELECT locale_code FROM mc_store_locale WHERE store_id=? AND enabled=1 ORDER BY locale_code',[$context->storeId]));
+        return $this->render('@storefront/admin/commerce/feeds.html.twig',['store_locales'=>$storeLocales,'rows'=>$rows,'store'=>$store,'locale'=>$context->locale,'categories'=>$categories,'mappings'=>$mappings]);
     }
 
     #[Route('/admin/commerce/feeds/{platform}/generate', name:'admin_commerce_feed_generate', methods:['POST'], requirements:['platform'=>'google|meta|pinterest|tiktok|rozetka|prom|csv|json|agentic'])]

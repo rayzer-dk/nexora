@@ -54,7 +54,7 @@ export interface HtmlCodeEditor {
   destroy(): void;
 }
 
-export function createHtmlCodeEditor(parent: HTMLElement, value: string, onChange: (value: string) => void, label: string): HtmlCodeEditor {
+export function createHtmlCodeEditor(parent: HTMLElement, value: string, onChange: (value: string) => void, label: string, readOnly = false): HtmlCodeEditor {
   const view = new EditorView({
     parent,
     state: EditorState.create({
@@ -72,6 +72,7 @@ export function createHtmlCodeEditor(parent: HTMLElement, value: string, onChang
         syntaxHighlighting(highlight),
         theme,
         EditorView.lineWrapping,
+        ...(readOnly ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : []),
         EditorView.contentAttributes.of({ 'aria-label': label, spellcheck: 'false' }),
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         EditorView.updateListener.of((update) => {
@@ -86,4 +87,18 @@ export function createHtmlCodeEditor(parent: HTMLElement, value: string, onChang
     focus: () => view.focus(),
     destroy: () => view.destroy(),
   };
+}
+
+const readers = new WeakMap<HTMLElement, HtmlCodeEditor>();
+
+/** Shows highlighted, read-only HTML inside a container (used by the e-mail template preview). */
+export function highlightHtml(host: HTMLElement, code: string): void {
+  const existing = readers.get(host);
+  if (existing) {
+    existing.setValue(code);
+    return;
+  }
+  host.textContent = '';
+  host.classList.add('rich-editor__code');
+  readers.set(host, createHtmlCodeEditor(host, code, () => {}, 'HTML', true));
 }

@@ -76,6 +76,17 @@ final class ProductBadgeService
         }
     }
 
+    /** Readable text colour (black/white) for a #rrggbb background. */
+    public static function contrastOn(string $hex): string
+    {
+        $r = hexdec(substr($hex, 1, 2)); $g = hexdec(substr($hex, 3, 2)); $b = hexdec(substr($hex, 5, 2));
+        $lin = static fn (int $c): float => ($c /= 255) <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+        $l = 0.2126 * $lin((int) $r) + 0.7152 * $lin((int) $g) + 0.0722 * $lin((int) $b);
+
+        // Pick whichever of black/white gives the higher WCAG contrast ratio.
+        return (1.05 / ($l + 0.05)) > (($l + 0.05) / 0.05) ? '#ffffff' : '#111111';
+    }
+
     /** @param array<string,mixed> $d */
     public function save(int $storeId, ?int $id, array $d): int
     {
@@ -94,7 +105,7 @@ final class ProductBadgeService
         }
         $now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
         $row = [
-            'kind' => $kind, 'tone' => in_array($tone, self::TONES, true) ? $tone : 'primary',
+            'kind' => $kind, 'tone' => in_array($tone, self::TONES, true) ? $tone : (preg_match('/^#[0-9a-fA-F]{6}$/', $tone) === 1 ? strtolower($tone) : 'primary'),
             'labels_json' => json_encode($labels, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
             'window_days' => max(0, min(3650, (int) ($d['window_days'] ?? 30))), 'min_sold' => max(0, min(1000000, (int) ($d['min_sold'] ?? 5))),
             'priority' => max(-1000, min(1000, (int) ($d['priority'] ?? 100))), 'enabled' => !empty($d['enabled']) ? 1 : 0, 'updated_at' => $now,
@@ -162,7 +173,7 @@ final class ProductBadgeService
                     default => isset($set[$id]),
                 };
                 if ($match && count($item['badges']) < 3) {
-                    $item['badges'][] = ['code' => $rule['code'], 'tone' => $rule['tone'], 'label' => $this->label($rule, $locale)];
+                    $item['badges'][] = ['code' => $rule['code'], 'tone' => str_starts_with((string) $rule['tone'], '#') ? 'custom' : $rule['tone'], 'color' => str_starts_with((string) $rule['tone'], '#') ? (string) $rule['tone'] : '', 'fg' => str_starts_with((string) $rule['tone'], '#') ? self::contrastOn((string) $rule['tone']) : '', 'label' => $this->label($rule, $locale)];
                 }
             }
             unset($item);

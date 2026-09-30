@@ -174,7 +174,13 @@
     "wifi-off",
     "workflow",
     "x",
-    "zap"
+    "zap",
+    "folder-plus",
+    "mail-open",
+    "file-code",
+    "list-filter",
+    "message-circle-question-mark",
+    "type"
   ],
   "aliases": {
     "check-circle": "circle-check",
@@ -184,6 +190,7 @@
     "card": "credit-card",
     "star-filled": "star",
     "star-empty": "star",
-    "shield": "shield-check"
+    "shield": "shield-check",
+    "message-circle-question": "message-circle-question-mark"
   }
 }

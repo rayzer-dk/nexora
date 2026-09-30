@@ -180,7 +180,7 @@ test('progressive admin features initialize on their real pages', async ({ page 
   const choose = page.locator('[data-media-choose]').first();
   await expect(choose).toBeVisible();
   await choose.click();
-  await expect(page.locator('[data-appearance-media-picker]')).toHaveJSProperty('open', true);
+  await expect(page.locator('dialog.mc-picker')).toBeVisible();
 
   await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
   const edit = page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first();

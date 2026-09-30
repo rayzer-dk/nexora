@@ -22,7 +22,9 @@ final readonly class MediaLibraryService
         $where = ['sma.store_id=?'];
         $params = [$storeId];
 
-        if ($folderId !== null) {
+        if ($folderId === 0) {
+            $where[] = 'sma.folder_id IS NULL';
+        } elseif ($folderId !== null) {
             if (!(bool) $this->db->fetchOne('SELECT 1 FROM mc_media_folder WHERE id=? AND store_id=?', [$folderId, $storeId])) {
                 return ['items' => [], 'total' => 0, 'page' => $page, 'limit' => $limit];
             }
@@ -89,6 +91,63 @@ final readonly class MediaLibraryService
             'SELECT id,parent_id,name,slug FROM mc_media_folder WHERE store_id=? ORDER BY COALESCE(parent_id,0),name,id',
             [$storeId],
         );
+    }
+
+    /** @return array{all:int,unfiled:int,folders:array<int,int>} */
+    public function folderCounts(int $storeId): array
+    {
+        $all = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_store_media_asset WHERE store_id=?', [$storeId]);
+        $unfiled = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_store_media_asset WHERE store_id=? AND folder_id IS NULL', [$storeId]);
+        $per = [];
+        foreach ($this->db->fetchAllAssociative('SELECT folder_id, COUNT(*) AS c FROM mc_store_media_asset WHERE store_id=? AND folder_id IS NOT NULL GROUP BY folder_id', [$storeId]) as $row) {
+            $per[(int) $row['folder_id']] = (int) $row['c'];
+        }
+        return ['all' => $all, 'unfiled' => $unfiled, 'folders' => $per];
+    }
+
+    public function deleteFolder(int $storeId, int $folderId): void
+    {
+        $this->db->executeStatement('UPDATE mc_media_folder SET parent_id=NULL WHERE store_id=? AND parent_id=?', [$storeId, $folderId]);
+        $this->db->delete('mc_media_folder', ['id' => $folderId, 'store_id' => $storeId]);
+    }
+
+    /** @param list<int> $assetIds */
+    public function moveMany(int $storeId, array $assetIds, ?int $folderId): int
+    {
+        $assetIds = array_values(array_unique(array_filter(array_map('intval', $assetIds), static fn (int $id): bool => $id > 0)));
+        if ($assetIds === []) {
+            return 0;
+        }
+        if ($folderId !== null && !(bool) $this->db->fetchOne('SELECT 1 FROM mc_media_folder WHERE id=? AND store_id=?', [$folderId, $storeId])) {
+            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.medialibraryservice.batkivsku_papku_ne_znaideno'));
+        }
+        return (int) $this->db->executeStatement(
+            'UPDATE mc_store_media_asset SET folder_id=?, updated_at=? WHERE store_id=? AND asset_id IN (' . implode(',', $assetIds) . ')',
+            [$folderId, gmdate('Y-m-d H:i:s.u'), $storeId],
+        );
+    }
+
+    /**
+     * Deletes every unused asset in the list; returns [deleted, skipped-because-in-use].
+     * @param list<int> $assetIds
+     * @return array{0:int,1:int}
+     */
+    public function deleteMany(int $storeId, array $assetIds): array
+    {
+        $deleted = 0;
+        $busy = 0;
+        foreach (array_unique(array_map('intval', $assetIds)) as $id) {
+            if ($id <= 0 || !$this->owns($storeId, $id)) {
+                continue;
+            }
+            if ($this->usageCount($storeId, $id) > 0) {
+                ++$busy;
+                continue;
+            }
+            $this->db->delete('mc_store_media_asset', ['store_id' => $storeId, 'asset_id' => $id]);
+            ++$deleted;
+        }
+        return [$deleted, $busy];
     }
 
     public function createFolder(int $storeId, string $name, ?int $parentId = null): int

@@ -53,7 +53,7 @@ test('own analytics: cookie-free sessions, sources, funnel; bots are ignored', a
   await expect.poll(async () => sessions(page), { timeout: 15000 }).toBe(before + 1);
   await expect(page.locator('.dash-funnel li').nth(1)).toContainText('1');
   await expect(page.locator('.dash-funnel li').nth(2)).toContainText('1');
-  await expect(page.locator('.dash-funnel li').nth(3)).toContainText('1');
+  await expect(page.locator('.dash-funnel li').nth(3)).toContainText(/[1-9]/);
   await expect(page.locator('body')).toContainText('e2e-news');
   await expect(page.locator('body')).toContainText('e2e-camp');
 

@@ -29,11 +29,12 @@ final readonly class DemoSeeder
         private SeoUrlManager $seo,
         private StorefrontPresentationWriterInterface $presentation,
         private BlogService $blog,
+        private DemoCommerceSeeder $commerce,
         private string $projectDir,
     ) {
     }
 
-    /** @return array{categories:int,products:int,articles:int,reviews:int} */
+    /** @return array{categories:int,products:int,articles:int,reviews:int,commerce:array<string,int>} */
     public function install(): array
     {
         $ctx = $this->context();
@@ -222,14 +223,15 @@ final readonly class DemoSeeder
             $this->seedInformationPagesDemo($db, $ctx['store_id'], $now, $ctx['locale']);
             $this->seedPromotionDemo($db, $ctx['store_id'], $now);
             $this->seedForumDemo($db, $ctx['store_id'], $now);
+            $commerce = $this->commerce->install($db, $ctx, $productIds);
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.21.0',
+                'version' => '3.22.0',
                 'catalog_source' => 'DummyJSON',
             ]);
 
-            return ['categories' => count($categoryDefs), 'products' => count($catalog['products']), 'articles' => count($articles) + $showcase, 'reviews' => $reviewCount];
+            return ['categories' => count($categoryDefs), 'products' => count($catalog['products']), 'articles' => count($articles) + $showcase, 'reviews' => $reviewCount, 'commerce' => $commerce];
         });
     }
 
@@ -237,6 +239,7 @@ final readonly class DemoSeeder
     {
         $ctx=$this->context();
         $this->connection->transactional(function(Connection $db) use($ctx):void{
+            $this->commerce->remove($db,$ctx['store_id']);
             $namespace=$this->namespace($ctx['store_id']);
             $rows=$db->fetchAllAssociative("SELECT entity_type,entity_public_id FROM mc_entity_metadata WHERE namespace=? AND meta_key='seed'",[$namespace]);
             foreach($rows as $row){
@@ -254,10 +257,11 @@ final readonly class DemoSeeder
                 $catId=(int)((json_decode((string)$json,true)['id'] ?? 0));
                 if($catId>0){$db->delete('mc_blog_category',['id'=>$catId,'store_id'=>$ctx['store_id']]);}
             }
+            $db->executeStatement("DELETE i FROM mc_inventory_item i LEFT JOIN mc_variant_inventory_item vii ON vii.inventory_item_id=i.id LEFT JOIN mc_inventory_reservation rsv ON rsv.inventory_item_id=i.id WHERE i.sku LIKE 'DEMO-%' AND vii.inventory_item_id IS NULL AND rsv.id IS NULL");
             $db->executeStatement("DELETE FROM mc_entity_metadata WHERE namespace=?",[$namespace]);
             $media=$db->fetchAllAssociative("SELECT id,storage_key FROM mc_media_asset WHERE storage_key LIKE 'demo/%'");
             foreach($media as $m){ if((int)$db->fetchOne('SELECT COUNT(*) FROM mc_product_media WHERE media_asset_id=?',[(int)$m['id']])===0){$db->delete('mc_media_asset',['id'=>(int)$m['id']]);}}
-            $db->executeStatement("DELETE ad FROM mc_attribute_definition ad LEFT JOIN mc_product_attribute_value av ON av.attribute_id=ad.id WHERE ad.code LIKE 'demo\_%' ESCAPE '\\' AND av.attribute_id IS NULL");
+            $db->executeStatement("DELETE ad FROM mc_attribute_definition ad LEFT JOIN mc_product_attribute_value av ON av.attribute_id=ad.id WHERE ad.code LIKE 'demo\_%' AND av.attribute_id IS NULL");
         });
     }
 
@@ -291,10 +295,21 @@ final readonly class DemoSeeder
         $size=getimagesize($path); if($size===false){throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.28f8db879325').$storageKey);}
         // One asset per storage key: the same demo image may back several products, promos and articles.
         $existing=$db->fetchOne('SELECT id FROM mc_media_asset WHERE storage_key_hash=?',[hash('sha256',$storageKey,true)]);
-        if($existing!==false){return (int)$existing;}
+        if($existing!==false){$this->linkMediaToStore($db,(int)$existing,$now);return (int)$existing;}
         $public=$this->publicIds->generate();
         $db->insert('mc_media_asset',['public_id'=>$public->toBinary(),'storage_key'=>$storageKey,'storage_key_hash'=>hash('sha256',$storageKey,true),'mime_type'=>(string)$size['mime'],'bytes'=>(int)filesize($path),'width'=>(int)$size[0],'height'=>(int)$size[1],'checksum_sha256'=>hash_file('sha256',$path,true),'metadata'=>json_encode(array_merge(['demo'=>true],$metadata),JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR),'created_at'=>$now]);
-        return (int)$db->lastInsertId();
+        $assetId=(int)$db->lastInsertId();
+        $this->linkMediaToStore($db,$assetId,$now);
+        return $assetId;
+    }
+
+    /** Registers a demo asset in the store media library (folder "Demo"), so it is visible and pickable in the admin. */
+    private function linkMediaToStore(Connection $db,int $assetId,string $now): void
+    {
+        $storeId=(int)$db->fetchOne('SELECT MIN(id) FROM mc_store'); if($storeId<=0){return;}
+        $folderId=$db->fetchOne("SELECT id FROM mc_media_folder WHERE store_id=? AND slug='demo' AND parent_id IS NULL",[$storeId]);
+        if($folderId===false){$db->insert('mc_media_folder',['store_id'=>$storeId,'parent_id'=>null,'name'=>'Demo','slug'=>'demo','created_at'=>$now]);$folderId=$db->lastInsertId();}
+        $db->executeStatement("INSERT IGNORE INTO mc_store_media_asset (store_id,asset_id,folder_id,tags_json,created_at,updated_at) VALUES (?,?,?,'[\"demo\"]',?,?)",[$storeId,$assetId,(int)$folderId,$now,$now]);
     }
 
     private function addAttribute(Connection $db,int $productId,string $name,string $value,int $sort,string $now,string $locale): void
@@ -494,7 +509,7 @@ final readonly class DemoSeeder
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.21.0',
+            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.22.0',
             CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$data): int {
                 if (strlen($data) + strlen($chunk) > 5 * 1024 * 1024) { return 0; }
                 $data .= $chunk;

@@ -9,6 +9,7 @@
     <title>{{ title }} · Nexora Commerce</title>
     <link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
     <meta name="color-scheme" content="light dark">
+    <meta name="mc-media-csrf" content="{{ csrf_token('media_upload') }}">
     <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">try{var t=localStorage.getItem('mc_admin_theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}if(localStorage.getItem('mc_admin_sidebar')==='collapsed'){document.documentElement.dataset.sidebar='collapsed';}}catch(e){}</script>
     <link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-runtime.css', '/assets/admin-runtime.css') }}">
     <script type="module" src="{{ vite_asset('assets/admin/main.ts', '/assets/admin.js') }}"></script>
@@ -66,11 +67,14 @@
     <div class="admin-scrim" data-sidebar-scrim></div>
     <div class="admin-main">
         {% set context_switcher = admin_context_switcher() %}
+        {% set context_sections = ['products','categories','metadata','fields','units','search','merchandising','badges','import_export','feeds','notification_templates','content','blog','forms','downloads','navigation','builder_home','builder_product','builder_checkout','appearance','editor','seo_redirects','indexnow','promotions','campaigns'] %}
+        {% set show_context = section in context_sections %}
         <header class="admin-topbar">
             <button class="admin-icon-button admin-topbar__menu" type="button" data-sidebar-toggle aria-controls="admin-sidebar" aria-expanded="false" aria-label="{{ ui_text('admin_open_menu') }}" title="{{ ui_text('admin_open_menu') }}">{{ ui_icon('menu', 20) }}</button>
             <button class="admin-search-trigger" type="button" data-command-open title="{{ ui_text('admin_quick_jump') }}">{{ ui_icon('search', 16) }}<span>{{ ui_text('admin_jump_placeholder') }}</span><kbd>Ctrl K</kbd></button>
             {% if context_switcher.current %}
             <div class="admin-context" role="group" aria-label="{{ ui_text('admin_store_context') }}">
+                {% if show_context %}
                 {% if context_switcher.stores|length > 1 %}
                 <form method="get" action="{{ app.request.pathInfo }}">
                     <label>{{ ui_text('admin_store') }}<select name="store_id" data-autosubmit>{% for store in context_switcher.stores %}<option value="{{ store.id }}"{{ store.id == context_switcher.current.store_id ? ' selected' : '' }}>{{ store.name }}{% if store.code %} · {{ store.code }}{% endif %}</option>{% endfor %}</select></label>
@@ -81,9 +85,10 @@
                     {% if context_switcher.locales|length > 1 %}<label title="{{ ui_text('admin.context.content_language_help') }}">{{ ui_text('admin.context.content_language') }}<select name="locale" data-autosubmit>{% for locale in context_switcher.locales %}<option value="{{ locale.locale_code }}"{{ locale.locale_code == context_switcher.current.locale ? ' selected' : '' }}>{{ locale.locale_code }}</option>{% endfor %}</select></label>{% endif %}
                     {% if context_switcher.currencies|length > 1 %}<label>{{ ui_text('admin_currency') }}<select name="currency" data-autosubmit>{% for currency in context_switcher.currencies %}<option value="{{ currency.currency_code }}"{{ currency.currency_code == context_switcher.current.currency ? ' selected' : '' }}>{{ currency.currency_code }}</option>{% endfor %}</select></label>{% endif %}
                 </form>
+                {% endif %}
                 {% set ui_languages = admin_interface_languages() %}
                 {% if ui_languages.available|length > 1 %}<form method="post" action="/admin/interface-language"><input type="hidden" name="_token" value="{{ csrf_token('admin_interface_language') }}"><input type="hidden" name="back" value="{{ app.request.requestUri }}"><label title="{{ ui_text('admin.context.interface_language_help') }}">{{ ui_icon('languages', 16) }}<span class="visually-hidden">{{ ui_text('admin.context.interface_language') }}</span><select name="ui_locale" data-autosubmit aria-label="{{ ui_text('admin.context.interface_language') }}">{% for code, name in ui_languages.available %}<option value="{{ code }}"{{ code == ui_languages.current ? ' selected' : '' }}>{{ name }}</option>{% endfor %}</select></label></form>{% endif %}
-                <span class="admin-badge" title="{{ ui_text('admin_store_context') }}">{{ context_switcher.current.locale }} · {{ context_switcher.current.currency }}</span>
+                {% if show_context %}<span class="admin-badge" title="{{ ui_text('admin_store_context') }}">{{ context_switcher.current.locale }} · {{ context_switcher.current.currency }}</span>{% endif %}
             </div>
             {% endif %}
             <button class="admin-icon-button admin-theme-toggle" type="button" data-theme-toggle aria-label="{{ ui_text('admin.theme_toggle') }}" title="{{ ui_text('admin.theme_toggle') }}"><span class="admin-theme-toggle__moon" aria-hidden="true">{{ ui_icon('moon', 20) }}</span><span class="admin-theme-toggle__sun" aria-hidden="true">{{ ui_icon('sun', 20) }}</span></button>

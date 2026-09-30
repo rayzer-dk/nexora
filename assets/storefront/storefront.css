@@ -1352,3 +1352,4 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 .category-description [align="justify"], .product-description [align="justify"], .rich-content [align="justify"] { text-align: justify; }
 .category-description img, .product-description img, .rich-content img { max-width: 100%; height: auto; }
 .category-description mark, .product-description mark, .rich-content mark { background: #fff3a3; color: #1b1b1b; }
+.product-badge--custom { border: 0; }

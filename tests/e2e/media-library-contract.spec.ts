@@ -21,6 +21,9 @@ test('Media Library upload, metadata, search and store removal form one real lif
 
   const marker = `E2E media ${Date.now()}`;
   const upload = page.locator('form[action="/admin/media/upload"]');
+  const uploadResponse = page.waitForResponse((response) =>
+    response.url().endsWith('/admin/media/upload') && response.request().method() === 'POST'
+  );
   await upload.locator('input[type="file"]').setInputFiles({
     name: 'e2e-media.png',
     mimeType: 'image/png',
@@ -30,10 +33,6 @@ test('Media Library upload, metadata, search and store removal form one real lif
     ),
   });
 
-  const uploadResponse = page.waitForResponse((response) =>
-    response.url().endsWith('/admin/media/upload') && response.request().method() === 'POST'
-  );
-  await upload.locator('button[type="submit"]').click();
   expect((await uploadResponse).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);

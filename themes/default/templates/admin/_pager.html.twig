@@ -1,0 +1,18 @@
+{% macro render(page, total, limit) %}
+{% set pages = max(1, (total / max(1, limit))|round(0, 'ceil')) %}
+{% set page = min(max(1, page), pages) %}
+{% set query = app.request.query.all %}
+{% set first = max(1, page - 1) %}{% set last = min(pages, page + 1) %}
+<nav class="admin-pagination" aria-label="{{ ui_text('admin.pager.label') }}">
+    <span>{{ ui_text('admin.pager.summary', {page: page, pages: pages, total: total}) }}</span>
+    {% if pages > 1 %}
+    <div class="admin-pager__nav">
+        {% if page > 1 %}<a class="admin-button is-sm" href="?{{ query|merge({page: 1})|url_encode }}" title="{{ ui_text('admin.pager.first') }}" aria-label="{{ ui_text('admin.pager.first') }}">«</a><a class="admin-button is-sm" href="?{{ query|merge({page: page - 1})|url_encode }}" title="{{ ui_text('admin.pager.prev') }}" aria-label="{{ ui_text('admin.pager.prev') }}">‹</a>{% else %}<span class="admin-button is-sm is-disabled" aria-hidden="true">«</span><span class="admin-button is-sm is-disabled" aria-hidden="true">‹</span>{% endif %}
+        {% if first > 1 %}<a class="admin-button is-sm" href="?{{ query|merge({page: 1})|url_encode }}">1</a>{% if first > 2 %}<span>…</span>{% endif %}{% endif %}
+        {% for n in first..last %}<a class="admin-button is-sm{{ n == page ? ' is-primary' : '' }}" href="?{{ query|merge({page: n})|url_encode }}"{{ n == page ? ' aria-current="page"' : '' }}>{{ n }}</a>{% endfor %}
+        {% if last < pages %}{% if last < pages - 1 %}<span>…</span>{% endif %}<a class="admin-button is-sm" href="?{{ query|merge({page: pages})|url_encode }}">{{ pages }}</a>{% endif %}
+        {% if page < pages %}<a class="admin-button is-sm" href="?{{ query|merge({page: page + 1})|url_encode }}" title="{{ ui_text('admin.pager.next') }}" aria-label="{{ ui_text('admin.pager.next') }}">›</a><a class="admin-button is-sm" href="?{{ query|merge({page: pages})|url_encode }}" title="{{ ui_text('admin.pager.last') }}" aria-label="{{ ui_text('admin.pager.last') }}">»</a>{% else %}<span class="admin-button is-sm is-disabled" aria-hidden="true">›</span><span class="admin-button is-sm is-disabled" aria-hidden="true">»</span>{% endif %}
+    </div>
+    {% endif %}
+</nav>
+{% endmacro %}

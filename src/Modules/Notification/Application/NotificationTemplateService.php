@@ -25,8 +25,34 @@ final class NotificationTemplateService
     /** @var array{id:int,name:string,locale:string}|null */
     private ?array $primary = null;
 
-    public function __construct(private readonly Connection $db)
+    public function __construct(private readonly Connection $db, private readonly \Commerce\Core\I18n\StorefrontUiTranslator $translator)
     {
+    }
+
+    /**
+     * The built-in text (with %placeholders%) that is sent while no override is stored, so the editor never opens empty.
+     *
+     * @return array{subject:string,body:string}
+     */
+    public function defaults(string $code, string $locale): array
+    {
+        $t = fn (string $key, array $r = []): string => $this->translator->translate($key, $locale, $r);
+        return match ($code) {
+            'order.created' => ['subject' => $t('order_number', ['number' => '%order_number%']), 'body' => $t('order_received_plain')],
+            'order.status_updated' => [
+                'subject' => $t('order_update_subject', ['number' => '%order_number%']),
+                'body' => implode(' ', [$t('plain_order_status', ['status' => '%status%']), $t('plain_payment_status', ['status' => '%payment_status%']), $t('plain_delivery_status', ['status' => '%fulfillment_status%']), $t('plain_tracking_number', ['number' => '%tracking_number%'])]),
+            ],
+            'inquiry_received' => ['subject' => CanonicalUiText::get('customer.inquiry.received_subject'), 'body' => CanonicalUiText::get('customer.inquiry.received_text')],
+            'newsletter.confirm' => ['subject' => CanonicalUiText::get('php.modules.marketing.http.newslettercontroller.pidtverdit_pidpysku'), 'body' => CanonicalUiText::get('php.modules.marketing.http.newslettercontroller.pidtverdit_email_shchob_otrymuvaty_novyny_ta_propozy')],
+            default => ['subject' => '', 'body' => ''],
+        };
+    }
+
+    /** Sample values for the live preview. @return array<string,string> */
+    public function sampleVariables(string $storeName): array
+    {
+        return ['store_name' => $storeName, 'order_number' => 'A-10025', 'customer_name' => 'Iryna Kovalenko', 'total' => '1 249,00 UAH', 'status' => 'shipped', 'payment_status' => 'paid', 'fulfillment_status' => 'shipped', 'tracking_number' => '20450123456789'];
     }
 
     /** @return array<string,array{subject:string,body:string,enabled:bool}> code => stored override */

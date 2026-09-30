@@ -57,7 +57,7 @@
 .rich-editor--fullscreen .rich-editor__content { min-height: 0; }
 .rich-editor--fullscreen .ProseMirror, .rich-editor--fullscreen .rich-editor__code { flex: 1 1 auto; overflow: auto; }
 .rich-editor--fullscreen .rich-editor__code .cm-scroller { max-height: none; height: 100%; }
-.rich-editor__modal { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; padding: var(--mc-space-4); background: color-mix(in srgb, var(--mc-color-ink) 45%, transparent); }
+.rich-editor__modal { position: absolute; inset: 0; z-index: var(--mc-z-raised); display: grid; place-items: center; padding: var(--mc-space-4); background: color-mix(in srgb, var(--mc-color-ink) 45%, transparent); }
 .rich-editor__dialog { position: relative; display: grid; gap: var(--mc-space-3); width: min(100%, 440px); padding: var(--mc-space-5); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-lg); background: var(--mc-color-surface-raised); box-shadow: var(--mc-shadow-lg); }
 .rich-editor__dialog h3 { margin: 0; padding-right: 36px; }
 .rich-editor__dialog label { display: grid; gap: var(--mc-space-1); font-weight: var(--mc-font-weight-semibold); }

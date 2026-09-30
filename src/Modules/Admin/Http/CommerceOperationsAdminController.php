@@ -79,7 +79,7 @@ final class CommerceOperationsAdminController extends AbstractController
             $group=strtolower(trim((string)$request->request->get('customer_group_code','default')));if(preg_match('/^[a-z0-9_-]{1,64}$/D',$group)!==1)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.nekorektnyi_kod_hrupy'));
             $this->db->update('mc_customer',['customer_group_code'=>$group,'updated_at'=>$this->now()],['id'=>$id]);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.hrupu_pokuptsia_onovleno'));return $this->redirectToRoute('admin_commerce_customers');
         }
-        $rows=$this->db->fetchAllAssociative('SELECT id,display_name,email,status,customer_group_code,created_at FROM mc_customer ORDER BY id DESC LIMIT 500');
+        $rows=$this->db->fetchAllAssociative('SELECT id,display_name,email,status,customer_group_code,created_at FROM mc_customer ORDER BY id DESC LIMIT 2000');
         return $this->render('@storefront/admin/commerce/customers.html.twig',['rows'=>$rows]);
     }
 
@@ -94,7 +94,7 @@ final class CommerceOperationsAdminController extends AbstractController
             $this->db->update('mc_customer_inquiry',['status'=>$status,'admin_note'=>mb_substr(trim((string)$request->request->get('admin_note')),0,4000),'updated_at'=>$this->now()],['id'=>$id,'store_id'=>$context->storeId]);
             $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.zvernennia_onovleno'));return $this->redirectToRoute('admin_commerce_inquiries');
         }
-        $rows=$this->db->fetchAllAssociative('SELECT i.*,i.customer_name AS name,pt.name product_name FROM mc_customer_inquiry i LEFT JOIN mc_product_translation pt ON pt.product_id=i.product_id AND pt.store_id=i.store_id AND pt.locale=? WHERE i.store_id=? ORDER BY FIELD(i.status,\'new\',\'in_progress\',\'resolved\',\'closed\'),i.id DESC LIMIT 250',[$context->locale,$context->storeId]);
+        $rows=$this->db->fetchAllAssociative('SELECT i.*,i.customer_name AS name,pt.name product_name FROM mc_customer_inquiry i LEFT JOIN mc_product_translation pt ON pt.product_id=i.product_id AND pt.store_id=i.store_id AND pt.locale=? WHERE i.store_id=? ORDER BY FIELD(i.status,\'new\',\'in_progress\',\'resolved\',\'closed\'),i.id DESC LIMIT 1000',[$context->locale,$context->storeId]);
         return $this->render('@storefront/admin/commerce/inquiries.html.twig',['rows'=>$rows]);
     }
 
@@ -167,7 +167,7 @@ final class CommerceOperationsAdminController extends AbstractController
             catch(\Throwable $e){$this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kampaniiu_ne_vdalosia_stvoryty'));}
             return $this->redirectToRoute('admin_commerce_campaigns');
         }
-        $rows=$this->db->fetchAllAssociative('SELECT id,subject,segment_code,status,recipient_count,created_at,enqueued_at FROM mc_marketing_campaign WHERE store_id=? ORDER BY id DESC LIMIT 100',[$context->storeId]);
+        $rows=$this->db->fetchAllAssociative('SELECT id,subject,segment_code,status,recipient_count,created_at,enqueued_at FROM mc_marketing_campaign WHERE store_id=? ORDER BY id DESC LIMIT 500',[$context->storeId]);
         $subscribers=(int)$this->db->fetchOne("SELECT COUNT(*) FROM mc_marketing_subscriber WHERE store_id=? AND status='active'",[$context->storeId]);
         return $this->render('@storefront/admin/commerce/campaigns.html.twig',['rows'=>$rows,'subscribers'=>$subscribers,'segments'=>$this->segments->labels()]);
     }
@@ -181,7 +181,7 @@ final class CommerceOperationsAdminController extends AbstractController
             try{$channel=NotificationChannel::from((string)$request->request->get('channel'));$recipient=trim((string)$request->request->get('recipient'));$message=new NotificationMessage('admin.test',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.testove_povidomlennia'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kanal_spovishchen_nalashtovano_tse_testove_povidomle'),[],'generic');$this->notifications->enqueue($channel,$message,$recipient);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.testove_povidomlennia_dodano_v_cherhu_rezultat_ziavy'));}catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
             return $this->redirectToRoute('admin_commerce_notifications');
         }
-        $rows=$this->db->fetchAllAssociative('SELECT id,channel,notification_type,recipient,status,attempts,last_error,created_at,sent_at FROM mc_notification_outbox ORDER BY id DESC LIMIT 100');
+        $rows=$this->db->fetchAllAssociative('SELECT id,channel,notification_type,recipient,status,attempts,last_error,created_at,sent_at FROM mc_notification_outbox ORDER BY id DESC LIMIT 500');
         $counts=$this->db->fetchAllKeyValue('SELECT status,COUNT(*) FROM mc_notification_outbox GROUP BY status');
         return $this->render('@storefront/admin/commerce/notifications.html.twig',['rows'=>$rows,'counts'=>$counts]);
     }

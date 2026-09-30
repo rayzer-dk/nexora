@@ -1,3 +1,4 @@
+{% import '@storefront/admin/_pager.html.twig' as pager %}
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.blog.title'),'blog') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.blog.title') }}</span></nav><h1>{{ ui_text('admin.blog.title') }}</h1><p>{{ ui_text('admin.blog.intro') }}</p></div>
 <div class="admin-page-actions"><a class="admin-button" href="{{ path('admin_content_blog_categories') }}">{{ ui_icon('folder', 18) }} {{ ui_text('admin.blog.categories') }}</a><a class="admin-button is-primary" href="{{ path('admin_content_blog_new') }}">{{ ui_icon('plus', 18) }} {{ ui_text('admin.blog.new') }}</a></div></header>
@@ -23,5 +24,5 @@
 </span></td></tr>
 {% else %}<tr><td colspan="6">{{ ui_text('admin.blog.empty') }}</td></tr>{% endfor %}
 </tbody></table></div></div>
-{% if list.pages > 1 %}{% set q = '&q=' ~ filters.q|url_encode ~ '&status=' ~ filters.status ~ '&category=' ~ filters.category %}<div class="admin-pagination"><div>{% if list.page > 1 %}<a href="?page={{ list.page - 1 }}{{ q }}">{{ ui_text('admin.blog.prev') }}</a>{% endif %}</div><span>{{ list.page }} / {{ list.pages }}</span><div>{% if list.page < list.pages %}<a href="?page={{ list.page + 1 }}{{ q }}">{{ ui_text('admin.blog.next') }}</a>{% endif %}</div></div>{% endif %}
+{{ pager.render(list.page, list.total, list.total > 0 ? ((list.total / list.pages)|round(0, 'ceil')) : 20) }}
 {{ shell.end() }}

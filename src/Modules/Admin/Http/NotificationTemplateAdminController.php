@@ -29,15 +29,45 @@ final class NotificationTemplateAdminController extends AbstractController
         $codes = array_column($locales, 'code');
         $locale = (string) $request->query->get('locale', '');
         if (!in_array($locale, $codes, true)) {
-            $locale = (string) ($codes[0] ?? $context->locale ?? 'en-US');
+            $locale = in_array($context->locale, $codes, true) ? $context->locale : (string) ($codes[0] ?? 'en-US');
         }
         $stored = $this->templates->forLocale($context->storeId, $locale);
         $items = [];
         foreach (NotificationTemplateService::CATALOG as $code => $placeholders) {
-            $items[] = ['code' => $code, 'placeholders' => $placeholders, 'stored' => $stored[$code] ?? null];
+            $items[] = ['code' => $code, 'placeholders' => $placeholders, 'stored' => $stored[$code] ?? null, 'default' => $this->templates->defaults($code, $locale)];
         }
 
         return $this->render('@storefront/admin/commerce/notification_templates.html.twig', ['locales' => $locales, 'locale' => $locale, 'items' => $items]);
+    }
+
+    private const LAYOUTS = ['order.created' => 'order_created', 'order.status_updated' => 'order_status', 'inquiry_received' => 'generic', 'newsletter.confirm' => 'generic'];
+
+    /** Renders the e-mail exactly as customers get it, with sample data, for the live preview and the HTML tab. */
+    #[Route('/admin/commerce/notification-templates/preview', name: 'admin_commerce_notification_templates_preview', methods: ['POST'])]
+    public function preview(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('admin_notification_templates', (string) $request->request->get('_token'))) {
+            return $this->json(['ok' => false], 403);
+        }
+        $code = (string) $request->request->get('code', '');
+        $layout = self::LAYOUTS[$code] ?? null;
+        if ($layout === null) {
+            return $this->json(['ok' => false], 404);
+        }
+        $storeName = (string) ($this->db->fetchOne('SELECT name FROM mc_store WHERE id=?', [$context->storeId]) ?: 'Nexora');
+        $vars = $this->templates->sampleVariables($storeName);
+        $subject = $this->templates->render(mb_substr((string) $request->request->get('subject', ''), 0, 255), $vars);
+        $body = $this->templates->render(mb_substr(strip_tags((string) $request->request->get('body', '')), 0, 8000), $vars);
+        $html = $this->renderView('@storefront/email/' . $layout . '.html.twig', [
+            'notification_subject' => $subject, 'notification_text' => $body, 'custom_body' => $body,
+            'store_name' => $storeName, 'locale' => (string) $request->request->get('locale', 'en-US'),
+            'order_number' => $vars['order_number'], 'customer_name' => $vars['customer_name'], 'total' => $vars['total'],
+            'items' => [['name' => 'Sample product', 'sku' => 'DEMO-001', 'quantity' => 1, 'unit_code' => 'pcs', 'line_total_minor' => 124900]],
+            'total_minor' => 124900, 'currency' => 'UAH', 'action_url' => '#', 'footer_text' => '', 'unsubscribe_url' => '#',
+        ]);
+
+        return $this->json(['ok' => true, 'subject' => $subject, 'html' => $html]);
     }
 
     #[Route('/admin/commerce/notification-templates/save', name: 'admin_commerce_notification_templates_save', methods: ['POST'])]

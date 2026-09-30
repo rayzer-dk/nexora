@@ -120,6 +120,12 @@ final readonly class MediaImageService
                 'created_at' => $now,
             ]);
             $assetId = (int) $this->connection->lastInsertId();
+            if ($storeId !== null) {
+                $this->connection->executeStatement(
+                    "INSERT IGNORE INTO mc_store_media_asset (store_id,asset_id,folder_id,tags_json,created_at,updated_at) VALUES (?,?,NULL,'[]',?,?)",
+                    [$storeId, $assetId, $now, $now],
+                );
+            }
             return new ImageUploadResult(
                 $assetId,
                 $uuid->toRfc4122(),

@@ -125,13 +125,16 @@ test('a product picks an already uploaded image and a category gets a cover imag
   await loginAdmin(page);
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
   const upload = page.locator('form[action="/admin/media/upload"]');
+  const picked = page.waitForResponse((r) => r.url().endsWith('/admin/media/upload') && r.request().method() === 'POST');
   await upload.locator('input[type="file"]').setInputFiles({
     name: 'e2e-pick.png',
     mimeType: 'image/png',
     buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGPkqrjDAANMDEgANwcARI4BZoWJLsMAAAAASUVORK5CYII=', 'base64'),
   });
-  await upload.locator('button[type="submit"]').click();
-  await page.waitForLoadState('domcontentloaded');
+  await picked;
+  await page.waitForURL(/\/admin\/media/);
+  await expect(page.locator('.media-card').first()).toBeVisible();
+  await page.waitForLoadState('load');
 
   // Category: choose the cover from the library and keep it after saving.
   await page.goto('/admin/catalog/categories/new', { waitUntil: 'domcontentloaded' });

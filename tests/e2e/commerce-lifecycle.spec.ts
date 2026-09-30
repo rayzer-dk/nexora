@@ -150,6 +150,7 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
     ]);
 
     await page.goto('/admin/forum', { waitUntil: 'domcontentloaded' });
+    await page.locator('.admin-tabs .admin-tab').nth(1).click();
     const pending = page.locator('table.admin-table tbody tr').filter({ hasText: forumTopicTitle }).first();
     await expect(pending).toBeVisible();
     const approve = pending.locator('form[action$="/approve"]');
@@ -166,6 +167,7 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
     await expect(publicTopic.locator('.forum-lock')).toHaveCount(0);
 
     await page.goto('/admin/forum', { waitUntil: 'domcontentloaded' });
+    await page.locator('.admin-tabs .admin-tab').nth(3).click();
     const published = page.locator('table.admin-table tbody tr').filter({ hasText: forumTopicTitle }).last();
     await expect(published).toBeVisible();
     const lock = published.locator('form[action$="/lock"]');

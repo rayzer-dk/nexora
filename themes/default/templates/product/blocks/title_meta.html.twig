@@ -1,6 +1,6 @@
 <div class="product-title">
     {% if product.brand %}<a class="product-brand" href="/catalog?brand={{ product.brand_id|default(0) }}">{{ product.brand }}</a>{% endif %}
-    {% if product.badges|default([]) %}<div class="product-badges">{% for badge in product.badges %}<span class="product-badge product-badge--{{ badge.tone }}" data-badge="{{ badge.code }}">{{ badge.label }}</span>{% endfor %}</div>{% endif %}
+    {% if product.badges|default([]) %}<div class="product-badges">{% for badge in product.badges %}<span class="product-badge product-badge--{{ badge.tone }}"{% if badge.color|default('') %} style="background:{{ badge.color }};color:{{ badge.fg }}"{% endif %} data-badge="{{ badge.code }}">{{ badge.label }}</span>{% endfor %}</div>{% endif %}
     <h1>{{ product.name }}</h1>
     <div class="product-meta">
         <span>SKU {{ product.sku }}</span>

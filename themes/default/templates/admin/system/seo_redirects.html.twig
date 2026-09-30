@@ -1,3 +1,4 @@
+{% import '@storefront/admin/_pager.html.twig' as pager %}
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.system.seo_redirects.title'),'seo_redirects') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.system.seo_redirects.section') }}</span></nav><h1>{{ ui_text('admin.system.seo_redirects.title') }}</h1><p>{{ ui_text('admin.system.seo_redirects.help') }}</p></div></header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
@@ -16,5 +17,5 @@
 </tbody></table></div>
 {% if rows %}<div class="admin-bulk-actions"><button class="is-danger" type="submit">{{ ui_text('admin.system.seo_redirects.delete_selected') }}</button></div>{% endif %}
 </form>
-<div class="admin-pagination"><div>{% if page > 1 %}<a href="?page={{ page-1 }}&search={{ search|url_encode }}&locale={{ locale|url_encode }}&entity_type={{ entity_type|url_encode }}">{{ ui_text('admin.system.seo_redirects.previous') }}</a>{% endif %}</div><span>{{ ui_text('admin.system.seo_redirects.page') }} {{ page }} / {{ pages }} · {{ count }}</span><div>{% if page < pages %}<a href="?page={{ page+1 }}&search={{ search|url_encode }}&locale={{ locale|url_encode }}&entity_type={{ entity_type|url_encode }}">{{ ui_text('admin.system.seo_redirects.next') }}</a>{% endif %}</div></div>
+{{ pager.render(page, count, 50) }}
 </section>{{ shell.end() }}

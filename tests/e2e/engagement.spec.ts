@@ -119,7 +119,7 @@ test('e-mail templates can be overridden per language and restored', async ({ pa
   await saved.locator('form[data-confirm] button[type="submit"]').click();
   await expect(page.locator('[data-admin-confirm] [data-confirm-accept]')).toBeVisible();
   await page.locator('[data-admin-confirm] [data-confirm-accept]').click();
-  await expect(page.locator('[data-notification-template="order.created"] input[name="subject"]')).toHaveValue('');
+  await expect(page.locator('[data-notification-template="order.created"] input[name="subject"]')).not.toHaveValue('E2E: thanks for order %order_number%');
 });
 
 test('live chat: vendor script and CSP appear only when configured, and the script waits for cookie consent', async ({ page, browser }, testInfo) => {

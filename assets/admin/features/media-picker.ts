@@ -55,7 +55,15 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
     const close = el('button', 'admin-modal__close', { type: 'button', 'aria-label': t('js_close'), title: t('js_close') });
     close.append(closeIcon());
     header.append(title, close);
+    const bar = el('div', 'mc-picker__bar');
     const search = el('input', '', { type: 'search', placeholder: t('js_media_pick_search'), 'aria-label': t('js_media_pick_search') });
+    const folderSelect = el('select', '', { 'aria-label': t('js_media_pick_folder') });
+    const upload = el('button', 'admin-button', { type: 'button' });
+    upload.textContent = t('js_media_pick_upload');
+    const fileInput = el('input', '', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif', multiple: multiple ? 'multiple' : '', hidden: '' });
+    if (!multiple) fileInput.removeAttribute('multiple');
+    const status = el('small', 'mc-picker__status');
+    bar.append(search, folderSelect, upload, fileInput);
     const grid = el('div', 'media-picker-grid');
     const footer = el('footer', 'mc-picker__foot');
     const count = el('span', 'mc-picker__count');
@@ -66,7 +74,7 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
     confirm.textContent = t('js_media_pick_confirm');
     confirm.disabled = true;
     footer.append(count, more, confirm);
-    form.append(header, search, grid, footer);
+    form.append(header, bar, status, grid, footer);
     dialog.append(form);
     document.body.append(dialog);
 
@@ -76,6 +84,8 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
     let loaded = 0;
     let done = false;
     let requestId = 0;
+    const known = new Map<number, PickedMedia>();
+    let foldersReady = false;
 
     const finish = (result: PickedMedia[]) => {
       if (done) return;
@@ -103,6 +113,7 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
         width: Number(item.width ?? 0),
         height: Number(item.height ?? 0),
       };
+      known.set(picked.id, picked);
       const button = el('button', 'mc-picker__tile', { type: 'button', 'aria-pressed': 'false' });
       const img = el('img', '', { loading: 'lazy', alt: picked.alt });
       img.src = picked.url;
@@ -133,10 +144,15 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
         note(t('js_loading'));
       }
       try {
-        const response = await fetch(`/admin/media.json?q=${encodeURIComponent(search.value)}&page=${page}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+        const response = await fetch(`/admin/media.json?q=${encodeURIComponent(search.value)}&folder=${encodeURIComponent(folderSelect.value)}&page=${page}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
         if (!response.ok) throw new Error('media');
-        const data = (await response.json()) as { items?: LibraryItem[]; total?: number };
+        const data = (await response.json()) as { items?: LibraryItem[]; total?: number; folders?: { id: number; name: string }[]; counts?: { all: number; unfiled: number; folders: Record<string, number> } };
         if (mine !== requestId) return;
+        if (!foldersReady) {
+          foldersReady = true;
+          const options: [string, string][] = [['', t('js_media_pick_all')], ['none', t('js_media_pick_unfiled')], ...(data.folders ?? []).map((f): [string, string] => [String(f.id), `${f.name} (${data.counts?.folders?.[String(f.id)] ?? 0})`])];
+          folderSelect.replaceChildren(...options.map(([value, label]) => { const o = el('option'); o.value = value; o.textContent = label; return o; }));
+        }
         const items = data.items ?? [];
         total = Number(data.total ?? items.length);
         const images = items.filter((item) => String(item.mime_type ?? '').startsWith('image/'));
@@ -159,6 +175,40 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
       page += 1;
       void load(false);
     });
+    folderSelect.addEventListener('change', () => void load(true));
+    upload.addEventListener('click', () => fileInput.click());
+    const sendFiles = async (files: FileList | File[]) => {
+      const list = Array.from(files);
+      if (list.length === 0) return;
+      const token = document.querySelector<HTMLMetaElement>('meta[name="mc-media-csrf"]')?.content ?? '';
+      const body = new FormData();
+      body.set('_csrf_token', token);
+      if (/^\d+$/.test(folderSelect.value)) body.set('folder_id', folderSelect.value);
+      for (const file of list) body.append('files[]', file);
+      status.textContent = t('js_loading');
+      upload.disabled = true;
+      try {
+        const response = await fetch('/admin/media/upload.json', { method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' } });
+        const data = (await response.json()) as { uploaded?: number[]; failed?: number };
+        status.textContent = data.failed ? t('js_upload_error') : '';
+        await load(true);
+        const fresh = (data.uploaded ?? []).map((id) => known.get(id)).filter((p): p is PickedMedia => Boolean(p));
+        if (!multiple && fresh[0]) finish([fresh[0]]);
+        else if (multiple) {
+          for (const p of fresh) selected.set(p.id, p);
+          grid.querySelectorAll<HTMLButtonElement>('.mc-picker__tile').forEach((b) => { const img = b.querySelector('img'); if (img && fresh.some((p) => p.url === img.getAttribute('src'))) b.setAttribute('aria-pressed', 'true'); });
+          refresh();
+        }
+      } catch {
+        status.textContent = t('js_upload_error');
+      } finally {
+        upload.disabled = false;
+        fileInput.value = '';
+      }
+    };
+    fileInput.addEventListener('change', () => void sendFiles(fileInput.files ?? []));
+    dialog.addEventListener('dragover', (event) => event.preventDefault());
+    dialog.addEventListener('drop', (event) => { event.preventDefault(); if (event.dataTransfer?.files?.length) void sendFiles(event.dataTransfer.files); });
     confirm.addEventListener('click', () => finish([...selected.values()]));
     close.addEventListener('click', () => finish([]));
     dialog.addEventListener('cancel', (event) => {

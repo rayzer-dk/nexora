@@ -85,13 +85,16 @@ final class OrderAdminController extends AbstractController
             $offset = ($page - 1) * $limit;
         }
 
+        $sortColumns = ['order' => 'o.order_number', 'customer' => 'o.customer_name', 'payment' => 'o.payment_status', 'fulfillment' => 'o.fulfillment_status', 'total' => 'o.total_minor', 'date' => 'o.created_at'];
+        $sortKey = (string) $request->query->get('sort', '');
+        $orderBy = isset($sortColumns[$sortKey]) ? $sortColumns[$sortKey] . ' ' . (strtolower((string) $request->query->get('dir', 'desc')) === 'asc' ? 'ASC' : 'DESC') . ',o.id DESC' : 'o.id DESC';
         $rows = $this->db->fetchAllAssociative(
             'SELECT o.id,o.public_id,o.order_number,o.status,o.payment_status,o.fulfillment_status,o.total_minor,o.currency,
                     o.customer_name,o.customer_phone,o.customer_email,o.created_at,
                     (SELECT p.provider_code FROM mc_payment p WHERE p.order_id=o.id ORDER BY p.id DESC LIMIT 1) provider_code
              FROM mc_sales_order o
              WHERE ' . $sqlWhere . '
-             ORDER BY o.id DESC
+             ORDER BY ' . $orderBy . '
              LIMIT ' . $limit . ' OFFSET ' . $offset,
             $params,
         );

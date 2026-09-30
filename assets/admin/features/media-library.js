@@ -18,3 +18,14 @@ const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? k
    xhr.send(new FormData(form));
  });
 })();
+
+(()=>{
+ const checks=()=>Array.from(document.querySelectorAll('[data-media-check]'));
+ const all=document.querySelector('[data-media-check-all]'), label=document.querySelector('[data-media-selected]'), btns=document.querySelectorAll('[data-media-bulk-btn]');
+ const sync=()=>{const n=checks().filter(c=>c.checked).length;if(label)label.textContent=n?t('js_media_selected',{count:n}):t('js_media_none_selected');btns.forEach(b=>{b.disabled=!n});if(all){all.checked=n>0&&n===checks().length;all.indeterminate=n>0&&n<checks().length;}document.querySelectorAll('.media-card').forEach(c=>c.classList.toggle('is-selected',Boolean(c.querySelector('[data-media-check]:checked'))));};
+ all?.addEventListener('change',()=>{checks().forEach(c=>{c.checked=all.checked});sync();});
+ document.addEventListener('change',e=>{if(e.target.matches?.('[data-media-check]'))sync();});
+ const file=document.querySelector('[data-media-autosubmit]');
+ file?.addEventListener('change',()=>{if(file.files?.length)file.form?.requestSubmit();});
+ sync();
+})();

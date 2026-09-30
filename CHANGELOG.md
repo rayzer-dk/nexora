@@ -2,6 +2,31 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.22.0 — 2026-09-30
+
+Schema 66. Lists, navigation, media library, e-mail templates, demo data.
+
+### Added
+- **Every table**: sort by clicking a column header (products and orders sort on the server across all pages), search in the table, client pagination with first/last/page numbers and page size; server-paginated lists (products, orders, categories, blog, activity, redirects, media, quality) share one pager with **first / previous / numbers / next / last**.
+- **Left menu as an accordion**: only the section containing the current page is open; opening another one collapses the previous.
+- **Tabs on long pages** (returns & feedback, gift cards & loyalty, B2B, forum, integrations, developer, automation, e-mail templates) with counters, deep links and remembered tab.
+- **Reviews**: star rating, date column, sortable/searchable; questions get a date column.
+- **HEX colour input** next to every colour picker and a "custom colour" for product badges (`#rrggbb`, storefront renders it with a readable text colour).
+- **Media library**: folder sidebar with counters (all / no folder / folders), create and delete folders, upload from the computer (auto-submit and drag & drop), select several files and move or delete them in bulk, pager; the picker dialog can switch folders and upload files itself. Demo images now appear in the library (folder "Demo").
+- **E-mail templates**: built-in text is shown in the editor instead of empty fields, clickable placeholders, live **preview** and **HTML** tab (highlighted source) per template.
+- **Feed Center / sitemap**: language switcher and per-language sitemap links.
+- **Demo data — full cycle**: customers, orders with payments, shipments and tracking, returns, withdrawals, reviews, product questions, inquiries, subscribers, campaigns, promotions, gift cards, loyalty, B2B, carts, 30 days of analytics and traffic.
+
+### Changed
+- The store/market/content-language/currency selectors in the top bar are shown only on pages where they matter; the interface-language switch stays everywhere.
+- "Typography" is now called "Fonts". Orders filter bar is a symmetric grid; "save view" is collapsed. Plain forms in panels get spacing before their buttons.
+
+### Fixed
+- **Media library was empty** for images uploaded from product forms (assets were never linked to the store); migration 66 backfills them and uploads link automatically.
+- Closing any modal no longer scrolls the page to the top.
+- Highlighted text (`mark`) was unreadable in the dark scheme.
+- Demo removal left inventory items behind, so a second demo install failed.
+
 ## 3.21.0 — 2026-09-30
 
 Schema 65. Administration usability, editor, media picker, units.

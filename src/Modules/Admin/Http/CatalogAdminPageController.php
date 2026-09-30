@@ -53,7 +53,7 @@ final class CatalogAdminPageController extends AbstractController
     public function products(Request $request): Response
     {
         $context = $this->context->resolve($request);
-        $result = $this->query->products($context->storeId, $context->marketId, $context->locale, (int) $request->query->get('page', 1), 25, (string) $request->query->get('search', ''));
+        $result = $this->query->products($context->storeId, $context->marketId, $context->locale, (int) $request->query->get('page', 1), 25, (string) $request->query->get('search', ''), (string) $request->query->get('sort', ''), (string) $request->query->get('dir', 'desc'));
         foreach ($result['items'] as &$item) {
             $item['price_display'] = $item['amount_minor'] === null ? '—' : number_format(((int) $item['amount_minor']) / 100, 2, ',', ' ') . ' ' . ($item['currency'] ?? $context->currency);
         }

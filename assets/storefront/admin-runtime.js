@@ -6,6 +6,24 @@ const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? k
 const q = (selector, root = document) => root.querySelector(selector);
 const qa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
+// Closing a modal must not scroll the page: remember the position at open time and restore it afterwards.
+(() => {
+  const proto = window.HTMLDialogElement?.prototype;
+  if (!proto || proto.__mcScrollKeeper) return;
+  const original = proto.showModal;
+  proto.showModal = function showModalKeepingScroll(...args) {
+    const x = window.scrollX;
+    const y = window.scrollY;
+    this.addEventListener('close', () => {
+      const restore = () => window.scrollTo(x, y);
+      restore();
+      requestAnimationFrame(restore);
+    }, { once: true });
+    return original.apply(this, args);
+  };
+  proto.__mcScrollKeeper = true;
+})();
+
 function toast(message, type = 'info', timeout = 5200) {
   let stack = q('[data-admin-toast-stack]');
   if (!stack) {
@@ -183,6 +201,351 @@ function initSidebar() {
     if (sidebar.contains(event.target) || toggle.contains(event.target)) return;
     sidebar.classList.remove('is-open');
     toggle.setAttribute('aria-expanded', 'false');
+  });
+}
+
+
+const collator = new Intl.Collator(document.documentElement.lang || undefined, { numeric: true, sensitivity: 'base' });
+
+function tableCellValue(cell) {
+  if (!cell) return { text: '', num: NaN };
+  const explicit = cell.dataset.sort;
+  const raw = (explicit ?? cell.textContent ?? '').replace(/\s+/g, ' ').trim();
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if (iso) return { text: raw, num: Date.UTC(+iso[1], +iso[2] - 1, +iso[3], +(iso[4] || 0), +(iso[5] || 0)) };
+  const eu = raw.match(/^(\d{2})\.(\d{2})\.(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+  if (eu) return { text: raw, num: Date.UTC(+eu[3], +eu[2] - 1, +eu[1], +(eu[4] || 0), +(eu[5] || 0)) };
+  const numeric = raw.replace(/\s/g, '').replace(/,(?=\d{1,2}$)/, '.').replace(/[^0-9.-]/g, '');
+  const looksNumeric = /^-?\d+(\.\d+)?$/.test(numeric) && /^[^\p{L}]*\d[^\p{L}]*[A-Z₴€$%]{0,4}$/u.test(raw.replace(/\s/g, ''));
+  return { text: raw, num: looksNumeric ? Number(numeric) : NaN };
+}
+
+function enhanceTable(table) {
+  const body = table.tBodies[0];
+  const headRow = table.tHead?.rows[0];
+  if (!body || !headRow || table.closest('td, [data-no-table-tools]') || table.hasAttribute('data-no-table-tools')) return;
+  const rows = Array.from(body.rows);
+  const span = (row) => Array.from(row.cells).reduce((n, c) => n + (c.colSpan || 1), 0);
+  if (rows.some((row) => span(row) !== span(headRow) && row.querySelector('td[colspan]'))) return;
+  if (rows.length < 2) return;
+  const wrap = table.closest('.admin-table-wrap') || table.parentElement;
+  const serverPagers = qa('.admin-pagination:not(.admin-table-pager)');
+  const tables = qa('table.admin-table');
+  const serverPaged = wrap.hasAttribute('data-server-paged') || serverPagers.some((pager) => {
+    if (!(table.compareDocumentPosition(pager) & Node.DOCUMENT_POSITION_FOLLOWING)) return false;
+    return !tables.some((other) => other !== table && (table.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING) && (other.compareDocumentPosition(pager) & Node.DOCUMENT_POSITION_FOLLOWING));
+  });
+  const state = { col: -1, dir: 1, page: 1, size: Number(table.dataset.pageSize || 25) };
+  const original = rows.slice();
+  const headers = Array.from(headRow.cells);
+
+  const sortable = (th, index) => !th.matches('[data-no-sort], .is-actions, .is-select') && th.textContent.trim() !== '' && !th.querySelector('input[type=checkbox]') && rows.some((row) => tableCellValue(row.cells[index]).text !== '');
+  const link = headers.map((th) => th.querySelector('a[href*="sort="]'));
+  const params = new URLSearchParams(location.search);
+  headers.forEach((th) => {
+    const key = th.dataset.sortKey;
+    if (!key) return;
+    th.classList.add('is-sortable');
+    th.tabIndex = 0;
+    th.title = t('js_table_sort');
+    th.setAttribute('aria-sort', params.get('sort') === key ? (params.get('dir') === 'asc' ? 'ascending' : 'descending') : 'none');
+    const go = () => {
+      const next = new URLSearchParams(location.search);
+      next.set('sort', key);
+      next.set('dir', params.get('sort') === key && params.get('dir') !== 'asc' ? 'asc' : (params.get('sort') === key ? 'desc' : 'asc'));
+      next.delete('page');
+      location.assign(`${location.pathname}?${next.toString()}`);
+    };
+    th.addEventListener('click', (event) => { if (!event.target.closest('a, button, input, select, label')) go(); });
+    th.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); go(); } });
+  });
+  headers.forEach((th, index) => {
+    if (th.dataset.sortKey || link[index] || !sortable(th, index)) return;
+    th.classList.add('is-sortable');
+    th.tabIndex = 0;
+    th.setAttribute('role', 'columnheader');
+    th.setAttribute('aria-sort', 'none');
+    th.title = serverPaged ? t('js_table_sort_page') : t('js_table_sort');
+    const go = () => {
+      state.dir = state.col === index ? -state.dir : 1;
+      state.col = index;
+      state.page = 1;
+      headers.forEach((h, i) => h.setAttribute('aria-sort', i === index ? (state.dir === 1 ? 'ascending' : 'descending') : (h.classList.contains('is-sortable') ? 'none' : h.getAttribute('aria-sort') || 'none')));
+      render();
+    };
+    th.addEventListener('click', (event) => { if (!event.target.closest('a, button, input, select, label')) go(); });
+    th.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); go(); } });
+  });
+
+  let query = '';
+  let searchBox = null;
+  if (!serverPaged && rows.length > 10 && !table.hasAttribute('data-no-search')) {
+    searchBox = document.createElement('input');
+    searchBox.type = 'search';
+    searchBox.className = 'admin-table-search';
+    searchBox.placeholder = t('js_table_search');
+    searchBox.setAttribute('aria-label', t('js_table_search'));
+    wrap.before(searchBox);
+    searchBox.addEventListener('input', () => { query = searchBox.value.trim().toLowerCase(); state.page = 1; render(); });
+  }
+  const haystack = new WeakMap(original.map((row) => [row, row.textContent.replace(/\s+/g, ' ').toLowerCase()]));
+
+  let pager = null;
+  const pageable = !serverPaged && !table.hasAttribute('data-no-paging');
+  if (pageable && rows.length > 10) {
+    pager = document.createElement('div');
+    pager.className = 'admin-pagination admin-table-pager';
+    wrap.after(pager);
+  }
+
+  function ordered() {
+    const source = query ? original.filter((row) => haystack.get(row).includes(query)) : original;
+    if (state.col < 0) return source.slice();
+    const keyed = source.map((row, i) => ({ row, i, v: tableCellValue(row.cells[state.col]) }));
+    keyed.sort((a, b) => {
+      const an = Number.isNaN(a.v.num), bn = Number.isNaN(b.v.num);
+      let r;
+      if (!an && !bn) r = a.v.num - b.v.num;
+      else if (a.v.text === '' || b.v.text === '') r = (a.v.text === '') - (b.v.text === '') || 0;
+      else r = collator.compare(a.v.text, b.v.text);
+      return r * state.dir || a.i - b.i;
+    });
+    return keyed.map((k) => k.row);
+  }
+
+  function pageButton(label, page, extra = {}) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'admin-button is-sm' + (extra.active ? ' is-primary' : '');
+    b.textContent = label;
+    if (extra.title) { b.title = extra.title; b.setAttribute('aria-label', extra.title); }
+    if (extra.disabled) b.disabled = true;
+    if (extra.active) b.setAttribute('aria-current', 'page');
+    b.addEventListener('click', () => { state.page = page; render(); wrap.scrollIntoView({ block: 'nearest' }); });
+    return b;
+  }
+
+  function render() {
+    const list = ordered();
+    const total = list.length;
+    const size = pager ? state.size : total;
+    const pages = Math.max(1, Math.ceil(total / size));
+    state.page = Math.min(state.page, pages);
+    const from = (state.page - 1) * size;
+    const frag = document.createDocumentFragment();
+    list.forEach((row, i) => { row.hidden = i < from || i >= from + size; frag.appendChild(row); });
+    original.forEach((row) => { if (!list.includes(row)) { row.hidden = true; frag.appendChild(row); } });
+    body.appendChild(frag);
+    if (!pager) return;
+    pager.replaceChildren();
+    const info = document.createElement('span');
+    info.textContent = t('js_table_range', { from: total ? from + 1 : 0, to: Math.min(total, from + size), total });
+    const nav = document.createElement('nav');
+    nav.setAttribute('aria-label', t('js_table_pages'));
+    nav.append(pageButton('«', 1, { disabled: state.page === 1, title: t('js_table_first') }), pageButton('‹', state.page - 1, { disabled: state.page === 1, title: t('js_table_prev') }));
+    const window_ = new Set([1, pages, state.page - 1, state.page, state.page + 1]);
+    let last = 0;
+    Array.from(window_).filter((n) => n >= 1 && n <= pages).sort((a, b) => a - b).forEach((n) => {
+      if (n - last > 1) { const gap = document.createElement('span'); gap.textContent = '…'; nav.appendChild(gap); }
+      nav.appendChild(pageButton(String(n), n, { active: n === state.page }));
+      last = n;
+    });
+    nav.append(pageButton('›', state.page + 1, { disabled: state.page === pages, title: t('js_table_next') }), pageButton('»', pages, { disabled: state.page === pages, title: t('js_table_last') }));
+    const sizeLabel = document.createElement('label');
+    sizeLabel.className = 'admin-table-pager__size';
+    const select = document.createElement('select');
+    [10, 25, 50, 100].forEach((n) => { const o = document.createElement('option'); o.value = String(n); o.textContent = String(n); o.selected = n === state.size; select.appendChild(o); });
+    select.addEventListener('change', () => { state.size = Number(select.value); state.page = 1; render(); });
+    sizeLabel.append(t('js_table_per_page') + ' ', select);
+    pager.append(info, nav, sizeLabel);
+  }
+  render();
+}
+
+function initDataTables() {
+  qa('table.admin-table').forEach(enhanceTable);
+}
+
+function initNavAccordion() {
+  const nav = q('.admin-nav');
+  if (!nav) return;
+  const children = Array.from(nav.children);
+  const groups = [];
+  let current = null;
+  children.forEach((el) => {
+    if (el.classList.contains('admin-nav__label')) {
+      current = { label: el, items: [] };
+      groups.push(current);
+    } else if (current) current.items.push(el);
+  });
+  if (!groups.length) return;
+  const stored = (() => { try { return localStorage.getItem('mc_admin_nav_group'); } catch { return null; } })();
+  const activeGroup = groups.find((g) => g.items.some((el) => el.classList?.contains('is-active')));
+  const open = (group, save) => {
+    groups.forEach((g) => {
+      const on = g === group;
+      g.label.setAttribute('aria-expanded', String(on));
+      g.label.classList.toggle('is-open', on);
+      g.items.forEach((el) => { el.hidden = !on; });
+    });
+    if (save && group) { try { localStorage.setItem('mc_admin_nav_group', group.label.dataset.group); } catch { /* per-page only */ } }
+  };
+  groups.forEach((g, i) => {
+    const text = g.label.textContent.trim();
+    g.label.dataset.group = String(i);
+    g.label.setAttribute('role', 'button');
+    g.label.tabIndex = 0;
+    g.label.replaceChildren(document.createTextNode(text), lucideIconNode('chevron-down', 14));
+    const toggle = () => open(g.label.classList.contains('is-open') ? null : g, true);
+    g.label.addEventListener('click', toggle);
+    g.label.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  });
+  open(activeGroup || groups[Number(stored)] || groups[0], false);
+  nav.classList.add('is-accordion');
+}
+
+function initColorFields() {
+  qa('[data-color-field]').forEach((field) => {
+    const preset = q('[data-color-preset]', field);
+    const box = q('[data-color-custom]', field);
+    const picker = q('[data-color-picker]', field);
+    const hex = q('[data-color-hex]', field);
+    if (!preset || !box || !picker || !hex) return;
+    const valid = (v) => /^#[0-9a-fA-F]{6}$/.test(v);
+    const sync = () => { box.hidden = preset.value !== 'custom'; hex.required = preset.value === 'custom'; };
+    preset.addEventListener('change', sync);
+    picker.addEventListener('input', () => { hex.value = picker.value; hex.setCustomValidity(''); });
+    hex.addEventListener('input', () => {
+      let v = hex.value.trim();
+      if (v && !v.startsWith('#')) v = `#${v}`;
+      hex.value = v;
+      const ok = valid(v);
+      hex.setCustomValidity(ok || v === '' ? '' : t('js_color_invalid'));
+      if (ok) picker.value = v.toLowerCase();
+    });
+    sync();
+  });
+}
+
+/** Every plain colour input gets a HEX text box next to it (type or paste #ffffff). */
+function initColorHexInputs() {
+  qa('input[type="color"]:not([data-color-picker])').forEach((picker) => {
+    if (picker.dataset.hexReady) return;
+    picker.dataset.hexReady = '1';
+    const hex = document.createElement('input');
+    hex.type = 'text';
+    hex.className = 'admin-color-hex';
+    hex.value = picker.value;
+    hex.maxLength = 7;
+    hex.spellcheck = false;
+    hex.autocomplete = 'off';
+    hex.placeholder = '#ffffff';
+    hex.setAttribute('aria-label', t('js_color_hex'));
+    hex.disabled = picker.disabled;
+    picker.after(hex);
+    picker.addEventListener('input', () => { hex.value = picker.value; hex.setCustomValidity(''); });
+    hex.addEventListener('input', () => {
+      let v = hex.value.trim();
+      if (v && !v.startsWith('#')) v = `#${v}`;
+      hex.value = v;
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        hex.setCustomValidity('');
+        picker.value = v.toLowerCase();
+        picker.dispatchEvent(new Event('input', { bubbles: true }));
+        picker.dispatchEvent(new Event('change', { bubbles: true }));
+      } else hex.setCustomValidity(v === '' ? '' : t('js_color_invalid'));
+    });
+  });
+}
+
+function initTabs() {
+  qa('[data-tabs]').forEach((root) => {
+    const panels = Array.from(root.children).filter((el) => el.matches('[data-tab]'));
+    if (panels.length < 2) return;
+    const key = `mc_tab_${location.pathname}_${root.dataset.tabs}`;
+    const list = document.createElement('div');
+    list.className = 'admin-tabs';
+    list.setAttribute('role', 'tablist');
+    const buttons = panels.map((panel) => {
+      const id = panel.dataset.tab;
+      const heading = q('h2, h3', panel);
+      const countEl = q('.admin-panel__header > span', panel);
+      const count = panel.dataset.tabCount ?? (countEl && /^\d+$/.test(countEl.textContent.trim()) ? countEl.textContent.trim() : '');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'admin-tab';
+      b.setAttribute('role', 'tab');
+      b.dataset.tabTarget = id;
+      if (panel.dataset.tabIcon) b.appendChild(lucideIconNode(panel.dataset.tabIcon, 16));
+      const label = document.createElement('span');
+      label.textContent = panel.dataset.tabLabel || heading?.textContent.trim() || id;
+      b.appendChild(label);
+      if (count !== '') { const c = document.createElement('em'); c.textContent = count; b.appendChild(c); }
+      panel.setAttribute('role', 'tabpanel');
+      return b;
+    });
+    list.append(...buttons);
+    panels[0].before(list);
+    const activate = (id, save = true) => {
+      const target = panels.find((p) => p.dataset.tab === id) || panels[0];
+      panels.forEach((p) => { p.hidden = p !== target; });
+      buttons.forEach((b) => { const on = b.dataset.tabTarget === target.dataset.tab; b.classList.toggle('is-active', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+      if (save) { try { sessionStorage.setItem(key, target.dataset.tab); } catch { /* per-page only */ } }
+    };
+    buttons.forEach((b, i) => {
+      b.addEventListener('click', () => { activate(b.dataset.tabTarget); history.replaceState(null, '', `#${b.dataset.tabTarget}`); });
+      b.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        const n = buttons[(i + (e.key === 'ArrowRight' ? 1 : buttons.length - 1)) % buttons.length];
+        n.focus();
+        n.click();
+      });
+    });
+    let initial = location.hash.slice(1);
+    if (!panels.some((p) => p.dataset.tab === initial)) { try { initial = sessionStorage.getItem(key) || ''; } catch { initial = ''; } }
+    activate(initial, false);
+  });
+}
+
+function initTemplateEditors() {
+  qa('[data-notification-template]').forEach((card) => {
+    const form = q('[data-tpl-form]', card);
+    if (!form) return;
+    const frame = q('[data-tpl-preview]', card);
+    const source = q('[data-tpl-html]', card);
+    const subject = q('input[name="subject"]', form);
+    const body = q('textarea[name="body"]', form);
+    qa('[data-insert-placeholder]', form).forEach((button) => button.addEventListener('click', () => {
+      const text = button.dataset.insertPlaceholder || '';
+      const target = document.activeElement === subject ? subject : body;
+      const start = target.selectionStart ?? target.value.length;
+      const end = target.selectionEnd ?? start;
+      target.setRangeText(text, start, end, 'end');
+      target.focus();
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+    }));
+    let last = '';
+    const render = async () => {
+      const data = new FormData(form);
+      const key = `${data.get('subject')}\u0000${data.get('body')}`;
+      if (key === last) return;
+      last = key;
+      try {
+        const response = await fetch(form.dataset.previewUrl, { method: 'POST', body: data, credentials: 'same-origin', headers: { Accept: 'application/json' } });
+        const json = await response.json();
+        if (!json.ok) throw new Error('preview');
+        if (frame) frame.srcdoc = json.html;
+        if (source) {
+          source.textContent = json.html;
+          import('../admin/features/html-code-editor.ts').then(({ highlightHtml }) => highlightHtml?.(source, json.html)).catch(() => {});
+        }
+      } catch {
+        last = '';
+        if (frame) frame.srcdoc = `<p style="font:14px sans-serif;padding:16px">${t('js_preview_failed')}</p>`;
+      }
+    };
+    qa('[data-tab-target="preview"], [data-tab-target="html"]', card).forEach((b) => b.addEventListener('click', render));
   });
 }
 
@@ -603,9 +966,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initImagePreviews();
   initSidebar();
   initSidebarCollapse();
+  initNavAccordion();
   initHotkeys();
   initCommandPalette();
   initAutoSubmit();
+  initTabs();
+  initTemplateEditors();
+  initDataTables();
+  initColorFields();
+  initColorHexInputs();
   initCustomSelects();
   initDefaultSubmit();
   initMediaPickers();
