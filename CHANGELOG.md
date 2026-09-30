@@ -2,6 +2,13 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.18.1 — 2026-09-30
+
+- PHP: the upper bound `<8.6` is lifted (`>=8.4 <9.0` in `composer.json`, `PlatformVersion`, installer, `release.json`, manifest). All locked vendor packages already accept PHP 8.6. There is no released 8.6 build yet, so the platform was verified on 8.4.21 (full suite) and on PHP 8.5.8 (unit suite with `E_ALL`, lint of all PHP files); 8.6 itself is covered by the static readiness scan only.
+- Fixed a PHP 8.5 deprecation: `openssl_pkey_derive()` no longer receives the deprecated `$key_length` argument (Web Push ECDH).
+- "Similar products" no longer pads the list with unrelated products: automatic mode now returns only products that share a category, brand or attribute values.
+- E2E extension fixture follows the release version.
+
 ## 3.18.0 — 2026-09-30
 
 Schema 62, production channel. International store setup, form builder, quality monitor, collapsible colour admin.

@@ -733,6 +733,7 @@ final readonly class DbalStorefrontCatalogQuery
                     JOIN mc_store_product sp2 ON sp2.product_id=p2.id AND sp2.store_id=? AND sp2.status='active'
                     JOIN mc_market_product mp2 ON mp2.product_id=p2.id AND mp2.market_id=? AND mp2.status='active'
                     WHERE p1.id=?
+                    HAVING score>0
                     ORDER BY score DESC,p2.id DESC LIMIT {$limit}";
             $params = [...$excluded,$context->storeId,$context->marketId,$productId];
             $ids = array_map('intval', $this->connection->fetchFirstColumn($sql, $params));

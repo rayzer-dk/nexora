@@ -1,12 +1,12 @@
 {
   "platform": "Nexora Commerce",
-  "version": "3.18.0",
+  "version": "3.18.1",
   "channel": "production",
   "region_profile": "EU-UA",
   "extension_api": "2.0",
   "php": {
     "min": "8.4.0",
-    "max_exclusive": "8.6.0",
+    "max_exclusive": "9.0.0",
     "certification_policy": "stable-only-after-platform-QA"
   },
   "backend": {

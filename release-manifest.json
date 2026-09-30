@@ -1,9 +1,9 @@
 {
     "product": "Nexora Commerce",
-    "version": "3.18.0",
+    "version": "3.18.1",
     "channel": "production",
     "built_at_utc": "2026-09-28T00:00:00+00:00",
-    "php": ">=8.4.0 <8.6.0",
+    "php": ">=8.4.0 <9.0.0",
     "schema": 62,
     "contains_vendor": false,
     "contains_compiled_assets": false,

@@ -10,7 +10,7 @@ A library may be removed when the platform can implement the same capability wit
 
 ## 0.8.0 baseline (2026-09-16)
 
-- PHP runtime: 8.5.x only. PHP 8.6 remains blocked until a platform release certifies it.
+- PHP runtime: `>=8.4 <9.0`. Verified on 8.4 (full suite) and 8.5 (unit suite, lint); PHP 8.6 is allowed but not yet run for real because no 8.6 build exists.
 - Symfony: 8.1 stable train.
 - Vue: 3.5.42.
 - Vite: 8.3.0.
@@ -37,4 +37,4 @@ The command verifies the Composer installer signature when Composer is not alrea
 
 ## PHP 8.6 readiness
 
-`php tools/check-php86-readiness.php` statically scans `src/`, `bin/`, `tools/` and `public/` for constructs removed or deprecated in the upcoming PHP release line (0 findings as of 3.17.0). This is a scan, not certification: PHP 8.6 stays blocked in `composer.json`, `PlatformVersion`, `public/setup.php` and `release.json` until the full test and e2e suite has run on an 8.6 build and the vendor packages declare support.
+`php tools/check-php86-readiness.php` statically scans `src/`, `bin/`, `tools/` and `public/` for constructs removed or deprecated in the PHP 8.6 line (0 findings as of 3.18.1). The upper bound is `<9.0`; when an 8.6 build is released, run the full unit and e2e suites on it and record the result here.

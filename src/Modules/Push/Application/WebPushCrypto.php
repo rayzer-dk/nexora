@@ -94,7 +94,7 @@ final class WebPushCrypto
         if ($peer === false) {
             throw new \InvalidArgumentException('webpush_invalid_subscription_public_key');
         }
-        $shared = openssl_pkey_derive($peer, $ephemeral, 32);
+        $shared = openssl_pkey_derive($peer, $ephemeral);
         if ($shared === false) {
             throw new \RuntimeException('webpush_ecdh_failed');
         }

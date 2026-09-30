@@ -18,7 +18,7 @@ if ($schema === '') {
     exit(3);
 }
 $phpMin = (string) ($release['php']['min'] ?? '8.4.0');
-$phpMax = (string) ($release['php']['max_exclusive'] ?? '8.6.0');
+$phpMax = (string) ($release['php']['max_exclusive'] ?? '9.0.0');
 
 $manifest = [
     'product' => 'Nexora Commerce',

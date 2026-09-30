@@ -34,7 +34,7 @@ return [
     'installer.potriben_mysql_8_4_abo_novishyy_vyyavleno' => 'Потрібен MySQL 8.4 або новіший. Виявлено: ',
     'installer.potriben_strict_sql_mode_strict_trans_tables_abo_strict_' => 'Потрібен strict SQL mode: STRICT_TRANS_TABLES або STRICT_ALL_TABLES.',
     'installer.potribna_mariadb_11_4_abo_novisha_vyyavleno' => 'Потрібна MariaDB 10.11 LTS або новіша (рекомендовано 11.4 LTS). Виявлено: ',
-    'installer.potribno_8_4_8_6' => ' · потрібно >=8.4 <8.6',
+    'installer.potribno_8_4_8_6' => ' · потрібно >=8.4 <9.0',
     'installer.rekomendovano_1_gb' => ' · рекомендовано >=1 GB',
     'installer.rekomendovano_256m' => ' · рекомендовано >=256M',
     'installer.server_ne_vidpovidaye_obovyazkovym_vymoham' => 'Сервер не відповідає обов’язковим вимогам.',

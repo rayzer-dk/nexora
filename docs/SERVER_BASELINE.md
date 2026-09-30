@@ -1,6 +1,6 @@
 # Server baseline
 
-Certified PHP range for 2.5.0: 8.4.x–8.5.x. Symfony 8.1 requires PHP 8.4 or higher. PHP branches newer than the certified range are blocked until a platform QA update expands the range.
+Supported PHP range: >=8.4 <9.0 (Symfony 8.1 requires PHP 8.4 or higher). Verified on 8.4 and 8.5.
 
 Required PHP extensions: ctype, curl, DOM, fileinfo, GD, iconv, intl, json, mbstring, openssl, pcre, PDO, pdo_mysql, session, SimpleXML, sodium, tokenizer and ZIP. OPcache is strongly recommended. Redis and Imagick/libvips are optional accelerators.
 

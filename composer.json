@@ -28,7 +28,7 @@
         "ext-tokenizer": "*",
         "ext-zip": "*",
         "google/auth": "^1.54",
-        "php": ">=8.4.0 <8.6",
+        "php": ">=8.4.0 <9.0",
         "symfony/cache": "8.1.*",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",

@@ -34,7 +34,7 @@ return [
     'installer.potriben_mysql_8_4_abo_novishyy_vyyavleno' => 'MySQL 8.4 or newer is required. Detected: ',
     'installer.potriben_strict_sql_mode_strict_trans_tables_abo_strict_' => 'Strict SQL mode is required: STRICT_TRANS_TABLES or STRICT_ALL_TABLES.',
     'installer.potribna_mariadb_11_4_abo_novisha_vyyavleno' => 'MariaDB 10.11 LTS or newer is required (11.4 LTS recommended). Detected: ',
-    'installer.potribno_8_4_8_6' => ' · requires >=8.4 <8.6',
+    'installer.potribno_8_4_8_6' => ' · requires >=8.4 <9.0',
     'installer.rekomendovano_1_gb' => ' · recommended >=1 GB',
     'installer.rekomendovano_256m' => ' · recommended >=256M',
     'installer.server_ne_vidpovidaye_obovyazkovym_vymoham' => 'The server does not meet the required requirements.',

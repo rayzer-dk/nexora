@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 const MC_REQUIRED_PHP = '8.4.0';
-const MC_MAX_PHP = '8.6.0';
+const MC_MAX_PHP = '9.0.0';
 const MC_MIN_MEMORY_BYTES = 268435456; // 256 MiB
 const MC_RECOMMENDED_DISK_BYTES = 1073741824; // 1 GiB
 const MC_MIN_MYSQL = '8.4.0';
