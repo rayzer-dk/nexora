@@ -1,0 +1,23 @@
+{% set cw = contact_widget() %}
+{% if cw %}
+<div class="cw" data-contact-widget data-position="{{ cw.position }}">
+  <ul class="cw__list" id="cw-list" hidden>
+    {% if cw.callback %}<li><button class="cw__action" type="button" data-cw-callback>{{ ui_icon('phone-call', 20) }}<span>{{ ui_text('cw_callback') }}</span></button></li>{% endif %}
+    {% for a in cw.actions %}<li><a class="cw__action" href="{{ a.href }}"{% if a.external %} target="_blank" rel="noopener noreferrer"{% endif %} data-cw-action="{{ a.code }}">{% if a.code == 'write' %}{{ ui_icon('mail', 20) }}{% elseif a.code == 'call' %}{{ ui_icon('phone', 20) }}{% elseif a.code == 'telegram' %}{{ ui_icon('send', 20) }}{% elseif a.code == 'messenger' %}{{ ui_icon('messages-square', 20) }}{% else %}{{ ui_icon('message-circle', 20) }}{% endif %}<span>{% if a.code == 'write' %}{{ ui_text('cw_write') }}{% elseif a.code == 'call' %}{{ ui_text('cw_call') }}{% elseif a.code == 'viber' %}Viber{% elseif a.code == 'messenger' %}Messenger{% else %}Telegram{% endif %}</span></a></li>{% endfor %}
+  </ul>
+  <button class="cw__toggle" type="button" aria-expanded="false" aria-controls="cw-list" aria-label="{{ ui_text('cw_open') }}" data-cw-toggle><span class="cw__toggle-open">{{ ui_icon('headset', 24) }}</span><span class="cw__toggle-close">{{ ui_icon('x', 24) }}</span></button>
+  {% if cw.callback %}
+  <dialog class="cw-dialog" data-cw-dialog aria-labelledby="cw-dialog-title">
+    <form method="post" action="/contact/send" data-cw-form>
+      <div class="cw-dialog__head"><h2 id="cw-dialog-title">{{ ui_text('cw_callback_title') }}</h2><button class="cw-dialog__close" type="button" data-cw-dialog-close aria-label="{{ ui_text('cw_close') }}">{{ ui_icon('x', 20) }}</button></div>
+      <p>{{ ui_text('cw_callback_text') }}</p>
+      <input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}"><input type="hidden" name="inquiry_type" value="callback"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
+      <label><span>{{ ui_text('name_required') }}</span><input name="name" required maxlength="190" autocomplete="name"></label>
+      <label><span>{{ ui_text('phone') }} *</span><input name="phone" type="tel" required maxlength="32" autocomplete="tel"></label>
+      <p class="cw-dialog__error" role="alert" hidden data-cw-error></p>
+      <button class="button button--primary" type="submit">{{ ui_icon('phone-call', 16) }} {{ ui_text('cw_callback') }}</button>
+    </form>
+  </dialog>
+  {% endif %}
+</div>
+{% endif %}

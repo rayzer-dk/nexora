@@ -32,6 +32,7 @@
                 {% if block.type == 'price' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_price', product:product} only %}{% endif %}
                 {% if block.type == 'buy_actions' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_buy', product:product} only %}{% endif %}
             {% endfor %}
+            {% include '@storefront/components/share_links.html.twig' with {share_url: seo_head.canonical|default(app.request.uri), share_title: product.name} only %}
         </section>
     </div>
 

@@ -1,0 +1,136 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Commerce\Modules\Notification\Application;
+
+use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Modules\Notification\Domain\NotificationMessage;
+use Doctrine\DBAL\Connection;
+
+/**
+ * Merchant-editable subject and text for the main transactional e-mails. Templates use %placeholders%; when no
+ * override is stored (or it is switched off) the built-in localized text is sent unchanged.
+ */
+final class NotificationTemplateService
+{
+    /** @var array<string,list<string>> code => allowed placeholders */
+    public const CATALOG = [
+        'order.created' => ['order_number', 'customer_name', 'total', 'store_name'],
+        'order.status_updated' => ['order_number', 'customer_name', 'status', 'payment_status', 'fulfillment_status', 'tracking_number', 'total', 'store_name'],
+        'inquiry_received' => ['store_name'],
+        'newsletter.confirm' => ['store_name'],
+    ];
+
+    /** @var array{id:int,name:string,locale:string}|null */
+    private ?array $primary = null;
+
+    public function __construct(private readonly Connection $db)
+    {
+    }
+
+    /** @return array<string,array{subject:string,body:string,enabled:bool}> code => stored override */
+    public function forLocale(int $storeId, string $locale): array
+    {
+        $out = [];
+        try {
+            $rows = $this->db->fetchAllAssociative('SELECT template_code,subject,body,enabled FROM mc_notification_template WHERE store_id=? AND locale=?', [$storeId, $locale]);
+        } catch (\Throwable) {
+            return [];
+        }
+        foreach ($rows as $row) {
+            $out[(string) $row['template_code']] = ['subject' => (string) $row['subject'], 'body' => (string) $row['body'], 'enabled' => (bool) $row['enabled']];
+        }
+
+        return $out;
+    }
+
+    public function save(int $storeId, string $code, string $locale, string $subject, string $body, bool $enabled): void
+    {
+        if (!isset(self::CATALOG[$code])) {
+            throw new \InvalidArgumentException(CanonicalUiText::get('admin.tpl.error.code'));
+        }
+        $subject = trim(preg_replace('/[\r\n]+/', ' ', strip_tags($subject)) ?? '');
+        $body = trim(str_replace("\r\n", "\n", strip_tags($body)));
+        if ($subject === '' || mb_strlen($subject, 'UTF-8') > 255) {
+            throw new \InvalidArgumentException(CanonicalUiText::get('admin.tpl.error.subject'));
+        }
+        if ($body === '' || mb_strlen($body, 'UTF-8') > 8000) {
+            throw new \InvalidArgumentException(CanonicalUiText::get('admin.tpl.error.body'));
+        }
+        if (preg_match('/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/', $locale) !== 1) {
+            throw new \InvalidArgumentException(CanonicalUiText::get('admin.tpl.error.locale'));
+        }
+        $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
+        $this->db->executeStatement(
+            'INSERT INTO mc_notification_template (store_id,template_code,locale,subject,body,enabled,updated_at) VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE subject=VALUES(subject),body=VALUES(body),enabled=VALUES(enabled),updated_at=VALUES(updated_at)',
+            [$storeId, $code, $locale, $subject, $body, $enabled ? 1 : 0, $now],
+        );
+    }
+
+    public function reset(int $storeId, string $code, string $locale): void
+    {
+        $this->db->delete('mc_notification_template', ['store_id' => $storeId, 'template_code' => $code, 'locale' => $locale]);
+    }
+
+    /**
+     * Rendered override for an outgoing e-mail, or null to keep the built-in text.
+     *
+     * @return array{subject:string,body:string}|null
+     */
+    public function resolve(NotificationMessage $message): ?array
+    {
+        if (!isset(self::CATALOG[$message->type])) {
+            return null;
+        }
+        try {
+            $store = $this->primary();
+            if ($store === null) {
+                return null;
+            }
+            $locale = trim((string) ($message->context['locale'] ?? '')) ?: $store['locale'];
+            $row = $this->db->fetchAssociative('SELECT subject,body FROM mc_notification_template WHERE store_id=? AND template_code=? AND locale=? AND enabled=1', [$store['id'], $message->type, $locale]);
+        } catch (\Throwable) {
+            return null;
+        }
+        if (!is_array($row)) {
+            return null;
+        }
+        $vars = $this->variables($message, $store['name']);
+
+        return ['subject' => $this->render((string) $row['subject'], $vars), 'body' => $this->render((string) $row['body'], $vars)];
+    }
+
+    /** @param array<string,string> $vars */
+    public function render(string $template, array $vars): string
+    {
+        return preg_replace_callback('/%([a-z_]+)%/', static fn (array $m): string => $vars[$m[1]] ?? $m[0], $template) ?? $template;
+    }
+
+    /** @return array<string,string> */
+    private function variables(NotificationMessage $message, string $storeName): array
+    {
+        $c = $message->context;
+        $vars = ['store_name' => $storeName];
+        foreach (['order_number', 'customer_name', 'status', 'payment_status', 'fulfillment_status', 'tracking_number'] as $key) {
+            $vars[$key] = trim((string) ($c[$key] ?? ''));
+        }
+        $vars['total'] = isset($c['total_minor'], $c['currency']) ? number_format(((int) $c['total_minor']) / 100, 2, ',', ' ') . ' ' . (string) $c['currency'] : '';
+
+        return $vars;
+    }
+
+    /** @return array{id:int,name:string,locale:string}|null */
+    private function primary(): ?array
+    {
+        if ($this->primary === null) {
+            $row = $this->db->fetchAssociative("SELECT id,name,default_locale FROM mc_store WHERE status='active' ORDER BY id LIMIT 1");
+            if (!is_array($row)) {
+                return null;
+            }
+            $this->primary = ['id' => (int) $row['id'], 'name' => (string) $row['name'], 'locale' => (string) $row['default_locale']];
+        }
+
+        return $this->primary;
+    }
+}

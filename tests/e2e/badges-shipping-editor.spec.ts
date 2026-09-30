@@ -69,6 +69,42 @@ test('delivery countries and regions can be activated selectively', async ({ pag
   await page.locator('[data-shipping-regions] input[name="enabled[]"]').first().uncheck();
   await page.locator('[data-shipping-regions] form:has(input[value="save"]) button[type="submit"]').last().click();
   await expect(page.locator('[data-shipping-regions] input[name="enabled[]"]').first()).not.toBeChecked();
+
+  // Checkout now asks for one of the enabled regions and refuses an order without it.
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const productUrl = await page.locator('[data-product-card]').filter({ has: page.locator('form[data-card-add-to-cart]') }).first().locator('h2 a').getAttribute('href');
+  await page.goto(productUrl!, { waitUntil: 'domcontentloaded' });
+  const added = page.waitForResponse((r) => r.url().endsWith('/cart/add') && r.request().method() === 'POST');
+  await page.locator('form[data-buy-actions] [data-primary-buy]').click();
+  expect((await added).status()).toBeLessThan(500);
+  await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+  const region = page.locator('select[name="delivery_region"]');
+  await expect(region).toBeVisible();
+  expect(await region.locator('option').count()).toBe(26); // 25 enabled regions + placeholder
+  await page.locator('[name="name"]').fill('E2E Region Customer');
+  await page.locator('[name="phone"]').fill('+380501234567');
+  await page.locator('[data-delivery-city]').fill('Київ');
+  await page.locator('[data-delivery-manual]').evaluate((el) => { (el as HTMLInputElement).value = 'Region test branch 1'; });
+  const cod = page.locator('input[name="payment_method"][value="cash_on_delivery"]');
+  if (await cod.count()) await cod.check();
+  await region.evaluate((el) => { el.removeAttribute('required'); });
+  await page.locator('button.place-order').click();
+  await expect(page.locator('.store-notice.is-error, [role="alert"]').first()).toBeVisible();
+  await expect(page).toHaveURL(/\/checkout$/);
+  await page.locator('select[name="delivery_region"]').selectOption({ index: 1 });
+  await page.locator('[name="name"]').fill('E2E Region Customer');
+  await page.locator('[name="phone"]').fill('+380501234567');
+  await page.locator('[data-delivery-city]').fill('Київ');
+  await page.locator('[data-delivery-manual]').evaluate((el) => { (el as HTMLInputElement).value = 'Region test branch 1'; });
+  const cod2 = page.locator('input[name="payment_method"][value="cash_on_delivery"]');
+  if (await cod2.count()) await cod2.check();
+  await Promise.all([page.waitForURL(/\/checkout\/success\//, { timeout: 20_000 }), page.locator('button.place-order').click()]);
+
+  // Leave the shared database unrestricted again so parallel checkout tests are unaffected.
+  await page.goto('/admin/shipments/countries?country=UA', { waitUntil: 'domcontentloaded' });
+  for (const box of await page.locator('[data-shipping-regions] input[name="enabled[]"]').all()) await box.uncheck();
+  await page.locator('[data-shipping-regions] form:has(input[value="save"]) button[type="submit"]').last().click();
+  await expect(page.locator('[data-shipping-regions] input[name="enabled[]"]:checked')).toHaveCount(0);
 });
 
 test('rich text editor has an HTML source mode', async ({ page }) => {

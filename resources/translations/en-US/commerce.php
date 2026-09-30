@@ -82,4 +82,6 @@ Product: %product%',
     'seo.system_page.wishlist.title' => 'Wishlist',
     'runtime.exception.store_membership_invalid' => 'Invalid store or customer identifiers.',
     'http.error.not_found' => 'Page not found.',
+    'scheduler.label.indexnow' => 'IndexNow',
+    'scheduler.description.indexnow' => 'Every 30 minutes tells Bing, Yandex and other search engines about new and changed pages (only for stores with IndexNow enabled).',
 ];

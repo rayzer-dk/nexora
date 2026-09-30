@@ -86,6 +86,18 @@ final class ShippingCountryService
         return $this->db->fetchAllAssociative('SELECT id,code,name,enabled FROM mc_shipping_region WHERE store_id=? AND country_code=? ORDER BY sort_order,name', [$storeId, strtoupper($country)]);
     }
 
+    /** @return list<array{code:string,name:string}> regions a customer may pick at checkout (empty = no restriction) */
+    public function enabledRegions(int $storeId, string $country): array
+    {
+        try {
+            $rows = $this->db->fetchAllAssociative('SELECT code,name FROM mc_shipping_region WHERE store_id=? AND country_code=? AND enabled=1 ORDER BY sort_order,name', [$storeId, strtoupper($country)]);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        return array_map(static fn (array $r): array => ['code' => (string) $r['code'], 'name' => (string) $r['name']], $rows);
+    }
+
     public function importDefaultRegions(int $storeId, string $country): int
     {
         $country = strtoupper($country);

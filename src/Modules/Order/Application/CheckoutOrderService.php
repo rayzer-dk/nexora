@@ -149,7 +149,16 @@ final readonly class CheckoutOrderService
                     $db->insert('mc_inventory_reservation',['public_id'=>$this->ids->binary(),'inventory_item_id'=>(int)$r['inventory_item_id'],'location_id'=>(int)$r['location_id'],'cart_id'=>$cartId,'order_id'=>$orderId,'idempotency_key'=>'order:'.$orderId.':'.(int)$r['inventory_item_id'],'quantity'=>$reserve->toDatabase(),'status'=>'active','expires_at'=>(new DateTimeImmutable($payment->code==='monobank'?'+65 minutes':($payment->code==='b2b_invoice'?'+7 days':'+2 days'),new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'),'created_at'=>$now,'released_at'=>null,'committed_at'=>null]);
                 }
             }
-            $destination=['country'=>$context->countryCode,'provider'=>$providerCode,'city_id'=>(string)($input['city_id']??''),'city'=>(string)($input['city_name']??''),'point_id'=>(string)($input['point_id']??''),'point'=>(string)($input['point_name']??''),'manual'=>(string)($input['delivery_manual']??'')];
+            $regionName='';
+            if ($requiresShipping) {
+                $regions=$db->fetchAllKeyValue('SELECT code,name FROM mc_shipping_region WHERE store_id=? AND country_code=? AND enabled=1',[$context->storeId,strtoupper($context->countryCode)]);
+                if ($regions!==[]) {
+                    $regionCode=trim((string)($input['delivery_region']??''));
+                    if ($regionCode==='' || !isset($regions[$regionCode])) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout_region_required'));
+                    $regionName=(string)$regions[$regionCode];
+                }
+            }
+            $destination=['country'=>$context->countryCode,'region'=>$regionName,'provider'=>$providerCode,'city_id'=>(string)($input['city_id']??''),'city'=>(string)($input['city_name']??''),'point_id'=>(string)($input['point_id']??''),'point'=>(string)($input['point_name']??''),'manual'=>(string)($input['delivery_manual']??'')];
             if ($requiresShipping) { $db->insert('mc_fulfillment',['public_id'=>$this->ids->binary(),'order_id'=>$orderId,'provider_code'=>$providerCode,'service_type'=>(string)($input['service_type']??'pickup_point'),'status'=>'pending','tracking_number'=>null,'destination_snapshot'=>json_encode($destination,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'provider_snapshot'=>null,'created_at'=>$now,'updated_at'=>$now]); } else { $db->update('mc_sales_order',['fulfillment_status'=>'not_required'],['id'=>$orderId]); }
             $db->insert('mc_payment',['public_id'=>$this->ids->binary(),'order_id'=>$orderId,'provider_code'=>$payment->code,'provider_reference'=>null,'status'=>'pending','amount_minor'=>$total,'currency'=>$context->currency,'idempotency_key'=>'payment:'.$idempotencyKey,'metadata'=>json_encode(['online'=>$payment->online],JSON_THROW_ON_ERROR),'created_at'=>$now,'updated_at'=>$now]);
             $this->promotionRedemptions->record($orderId,$promotionResult,$customerId,$email);

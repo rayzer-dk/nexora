@@ -6,6 +6,7 @@ namespace Commerce\Modules\Appearance\Twig;
 
 use Commerce\Core\Extension\ExtensionPackageManager;
 use Commerce\Core\Site\SiteCapabilitySettings;
+use Commerce\Modules\Appearance\Infrastructure\ContactWidgetSettings;
 use Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Commerce\Modules\Navigation\Application\NavigationManager;
@@ -24,6 +25,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
         private readonly StorefrontContextResolver $contexts,
         private readonly RequestStack $requests,
         private readonly NavigationManager $navigationManager,
+        private readonly ContactWidgetSettings $contactWidget,
     ) {
     }
 
@@ -35,9 +37,22 @@ final class StorefrontPresentationExtension extends AbstractExtension
             new TwigFunction('site_capabilities', [$this, 'siteCapabilities']),
             new TwigFunction('active_theme_stylesheet', [$this, 'activeThemeStylesheet']),
             new TwigFunction('storefront_identity', [$this, 'identity']),
+            new TwigFunction('contact_widget', [$this, 'contactWidget']),
             new TwigFunction('storefront_locales', [$this, 'locales']),
             new TwigFunction('storefront_currencies', [$this, 'currencies']),
         ];
+    }
+
+    /** @return array<string,mixed>|null */
+    public function contactWidget(): ?array
+    {
+        try {
+            $ctx = $this->context();
+
+            return $ctx === null ? null : $this->contactWidget->storefront($ctx->storeId);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /** @return list<array{name:string,url:string}> */

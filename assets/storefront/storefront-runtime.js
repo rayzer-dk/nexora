@@ -347,6 +347,53 @@ function initRecentlyViewed() {
 }
 initRecentlyViewed();
 initThemeToggle('mc_theme');
+function initContactWidget() {
+  const root = q('[data-contact-widget]');
+  if (!root) return;
+  const toggle = q('[data-cw-toggle]', root);
+  const list = q('.cw__list', root);
+  const dialog = q('[data-cw-dialog]', root);
+  const setOpen = (open) => { toggle.setAttribute('aria-expanded', open ? 'true' : 'false'); list.hidden = !open; };
+  toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setOpen(false); });
+  document.addEventListener('click', (event) => { if (!root.contains(event.target)) setOpen(false); });
+  // The cookie banner sits in the same corner; lift the buttons above it while it is on screen.
+  const lift = () => {
+    const banner = q('.mc-consent');
+    const overlaps = banner && !banner.hidden && (() => { const a = banner.getBoundingClientRect(); const b = root.getBoundingClientRect(); return a.width > 0 && a.left < b.right && a.right > b.left; })();
+    root.style.setProperty('--cw-offset', overlaps ? `${Math.ceil(banner.getBoundingClientRect().height + 12)}px` : '0px');
+  };
+  lift();
+  new MutationObserver(lift).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+  window.addEventListener('resize', lift);
+  if (!dialog) return;
+  q('[data-cw-callback]', root)?.addEventListener('click', () => { setOpen(false); if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', ''); });
+  q('[data-cw-dialog-close]', dialog)?.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+  const form = q('[data-cw-form]', dialog);
+  form?.addEventListener('submit', async (event) => {
+    if (!window.fetch || !window.FormData) return;
+    event.preventDefault();
+    const button = q('button[type="submit"]', form);
+    const errorBox = q('[data-cw-error]', form);
+    if (errorBox) errorBox.hidden = true;
+    if (button) button.disabled = true;
+    try {
+      const response = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || t('js_send_failed'));
+      toast(data.message || t('js_sent'));
+      form.reset();
+      dialog.close();
+    } catch (error) {
+      if (errorBox) { errorBox.textContent = error instanceof Error ? error.message : t('js_send_failed'); errorBox.hidden = false; }
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+}
+initContactWidget();
+
 
 if ('serviceWorker' in navigator) {
   if (document.documentElement.dataset.pwa === '1') {
@@ -355,3 +402,19 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((list) => list.forEach((registration) => registration.unregister())).catch(() => undefined);
   }
 }
+
+function initCopyLink() {
+  document.addEventListener('click', async (event) => {
+    const button = event.target instanceof Element ? event.target.closest('[data-copy-link]') : null;
+    if (!button) return;
+    const url = button.getAttribute('data-copy-link') || window.location.href;
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+      else { const field = document.createElement('input'); field.value = url; document.body.appendChild(field); field.select(); document.execCommand('copy'); field.remove(); }
+      toast(t('js_link_copied'));
+    } catch {
+      toast(t('js_send_failed'), 'error');
+    }
+  });
+}
+initCopyLink();

@@ -224,7 +224,7 @@ final readonly class DemoSeeder
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.11.1',
+                'version' => '3.12.0',
                 'catalog_source' => 'DummyJSON',
             ]);
 
@@ -492,7 +492,7 @@ final readonly class DemoSeeder
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.11.1',
+            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.12.0',
             CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$data): int {
                 if (strlen($data) + strlen($chunk) > 5 * 1024 * 1024) { return 0; }
                 $data .= $chunk;

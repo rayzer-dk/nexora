@@ -1,0 +1,9 @@
+{# Share links for articles and products. Expects share_url and share_title. #}
+<div class="article-share share-links" data-share-links>
+  <strong>{{ ui_text('blog_share') }}</strong>
+  <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|url_encode }}">Facebook{{ ui_icon('external-link', 14) }}</a>
+  <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://t.me/share/url?url={{ share_url|url_encode }}&amp;text={{ share_title|url_encode }}">Telegram{{ ui_icon('external-link', 14) }}</a>
+  <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://twitter.com/intent/tweet?url={{ share_url|url_encode }}&amp;text={{ share_title|url_encode }}">X{{ ui_icon('external-link', 14) }}</a>
+  <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url|url_encode }}">LinkedIn{{ ui_icon('external-link', 14) }}</a>
+  <button class="button button--secondary button--sm" type="button" data-copy-link="{{ share_url|e('html_attr') }}">{{ ui_icon('link', 14) }}<span>{{ ui_text('share_copy_link') }}</span></button>
+</div>

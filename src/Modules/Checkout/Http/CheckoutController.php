@@ -62,7 +62,7 @@ final class CheckoutController extends AbstractController
         $loyaltyConfig=$this->loyalty->config($context->storeId);
         $methods=array_values(array_filter($this->payments->enabledMethods(),static fn($m):bool=>$m->code!=='b2b_invoice'||$b2b!==null));
         $response = $this->render('@storefront/checkout/show.html.twig', [
-            'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.oformlennia_zamovlennia'),'store_name'=>$context->storeName,'cart'=>$summary,'country_code'=>$context->countryCode,'checkout_layout'=>$layout,
+            'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.oformlennia_zamovlennia'),'store_name'=>$context->storeName,'cart'=>$summary,'country_code'=>$context->countryCode,'delivery_regions'=>$this->shippingCountries->enabledRegions($context->storeId,$context->countryCode),'checkout_layout'=>$layout,
             'payment_methods'=>$methods,'checkout_key'=>$key,'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
             'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/checkout','robots'=>'noindex,nofollow'],
         ]);

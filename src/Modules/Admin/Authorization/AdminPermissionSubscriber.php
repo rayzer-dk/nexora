@@ -70,11 +70,11 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_forum')) return $get?AdminPermissionCatalog::FORUM_VIEW:AdminPermissionCatalog::FORUM_MANAGE;
         if (in_array($route,['admin_commerce_promotions','admin_commerce_campaigns','admin_commerce_marketing_automation'],true)||str_contains($route,'promotion_toggle')) return $get?AdminPermissionCatalog::MARKETING_VIEW:AdminPermissionCatalog::MARKETING_MANAGE;
         if (str_starts_with($route,'admin_commerce_feed')) return $get?AdminPermissionCatalog::FEEDS_VIEW:AdminPermissionCatalog::FEEDS_MANAGE;
-        if (in_array($route,['admin_commerce_notifications','admin_email_preview','admin_email_preview_render'],true)) return $get?AdminPermissionCatalog::NOTIFICATIONS_VIEW:AdminPermissionCatalog::NOTIFICATIONS_MANAGE;
+        if (in_array($route,['admin_commerce_notifications','admin_commerce_notification_templates','admin_commerce_notification_templates_save','admin_email_preview','admin_email_preview_render'],true)) return $get?AdminPermissionCatalog::NOTIFICATIONS_VIEW:AdminPermissionCatalog::NOTIFICATIONS_MANAGE;
         if ($route==='admin_commerce_inquiries') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if ($route==='admin_commerce_import_export') return $get?AdminPermissionCatalog::CATALOG_VIEW:AdminPermissionCatalog::CATALOG_MANAGE;
         if (str_starts_with($route,'admin_nova_post_')) return $get?AdminPermissionCatalog::ORDERS_VIEW:AdminPermissionCatalog::ORDERS_MANAGE;
-        if (str_starts_with($route,'admin_system_seo_redirect')) return $get?AdminPermissionCatalog::SYSTEM_SETTINGS:AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if (str_starts_with($route,'admin_system_seo_')) return $get?AdminPermissionCatalog::SYSTEM_SETTINGS:AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_contains($route,'extension')) return AdminPermissionCatalog::EXTENSIONS_MANAGE;
         if (str_contains($route,'recovery')) return AdminPermissionCatalog::SYSTEM_RECOVERY;
         if (str_contains($route,'update')) return AdminPermissionCatalog::SYSTEM_UPDATE;

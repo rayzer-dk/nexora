@@ -25,13 +25,7 @@
     <div class="article-main">
       <div class="article-body">{{ article.body_html|raw }}</div>
       {% if article.tags %}<ul class="article-tags" aria-label="{{ ui_text('blog_tags_label')|e('html_attr') }}">{% for tag in article.tags %}<li><a class="blog-chip" href="/blog/tag/{{ tag.slug }}">{{ ui_icon('tag', 14) }}{{ tag.name }}</a></li>{% endfor %}</ul>{% endif %}
-      <div class="article-share">
-        <strong>{{ ui_text('blog_share') }}</strong>
-        <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|url_encode }}">Facebook{{ ui_icon('external-link', 14) }}</a>
-        <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://t.me/share/url?url={{ share_url|url_encode }}&amp;text={{ article.title|url_encode }}">Telegram{{ ui_icon('external-link', 14) }}</a>
-        <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://twitter.com/intent/tweet?url={{ share_url|url_encode }}&amp;text={{ article.title|url_encode }}">X{{ ui_icon('external-link', 14) }}</a>
-        <a class="button button--secondary button--sm" rel="noopener noreferrer" target="_blank" href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url|url_encode }}">LinkedIn{{ ui_icon('external-link', 14) }}</a>
-      </div>
+      {% include '@storefront/components/share_links.html.twig' with {share_url: share_url, share_title: article.title} only %}
     </div>
   </div>
 

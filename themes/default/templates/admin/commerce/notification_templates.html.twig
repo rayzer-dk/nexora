@@ -1,0 +1,18 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.tpl.title'),'notification_templates') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="{{ path('admin_commerce_notifications') }}">{{ ui_text('admin_notifications') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.tpl.title') }}</span></nav><h1>{{ ui_text('admin.tpl.title') }}</h1><p>{{ ui_text('admin.tpl.intro') }}</p></div><div class="admin-page-actions"><a class="admin-button" href="{{ path('admin_email_preview') }}">{{ ui_icon('external-link', 18) }} {{ ui_text('admin.tpl.preview') }}</a></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<nav class="admin-view-chips" aria-label="{{ ui_text('admin.tpl.language') }}">{% for l in locales %}<a href="{{ path('admin_commerce_notification_templates', {locale: l.code}) }}"{{ l.code == locale ? ' aria-current="page"' : '' }}>{{ l.native_name }}</a>{% endfor %}</nav>
+{% set titles = {'order.created': ui_text('admin.tpl.type.order_created'), 'order.status_updated': ui_text('admin.tpl.type.order_status_updated'), 'inquiry_received': ui_text('admin.tpl.type.inquiry_received'), 'newsletter.confirm': ui_text('admin.tpl.type.newsletter_confirm')} %}
+{% for item in items %}
+<section class="admin-panel" data-notification-template="{{ item.code }}"><div class="admin-panel__header"><h2>{{ titles[item.code] }}</h2><span class="admin-badge is-{{ item.stored and item.stored.enabled ? 'active' : 'disabled' }}">{{ item.stored and item.stored.enabled ? ui_text('admin.tpl.custom') : ui_text('admin.tpl.default') }}</span></div>
+<form method="post" action="{{ path('admin_commerce_notification_templates_save') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_notification_templates') }}"><input type="hidden" name="code" value="{{ item.code }}"><input type="hidden" name="locale" value="{{ locale }}">
+<label class="admin-form-wide">{{ ui_text('admin.tpl.subject') }}<input type="text" name="subject" maxlength="255" required value="{{ item.stored ? item.stored.subject : '' }}"></label>
+<label class="admin-form-wide">{{ ui_text('admin.tpl.body') }}<textarea name="body" rows="5" maxlength="8000" required>{{ item.stored ? item.stored.body : '' }}</textarea></label>
+<div class="admin-form-wide"><small>{{ ui_text('admin.tpl.placeholders') }}: {% for p in item.placeholders %}<code>%{{ p }}%</code> {% endfor %}</small></div>
+<label class="admin-check"><input type="checkbox" name="enabled" value="1"{{ item.stored is null or item.stored.enabled ? ' checked' : '' }}> {{ ui_text('admin.tpl.enabled') }}</label>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div></form>
+{% if item.stored %}<form method="post" action="{{ path('admin_commerce_notification_templates_save') }}" data-confirm="{{ ui_text('admin.tpl.confirm_reset') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_notification_templates') }}"><input type="hidden" name="code" value="{{ item.code }}"><input type="hidden" name="locale" value="{{ locale }}"><input type="hidden" name="action" value="reset"><button class="admin-button is-danger" type="submit">{{ ui_icon('rotate-ccw', 18) }} {{ ui_text('admin.tpl.reset') }}</button></form>{% endif %}
+</section>
+{% endfor %}
+{{ shell.end() }}

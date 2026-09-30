@@ -306,6 +306,11 @@ services:
         arguments:
             $publicBaseUrl: '%commerce.app_public_url%'
 
+    Commerce\Modules\Seo\Application\IndexNowService:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+            $secret: '%kernel.secret%'
+
     Commerce\Modules\Seo\Http\SitemapController:
         arguments:
             $publicBaseUrl: '%commerce.app_public_url%'

@@ -2,6 +2,21 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.12.0 — 2026-09-30
+
+Schema 56, production channel.
+
+### Added
+- **Floating contact buttons** (Admin → Appearance): request a call (stored as an inquiry), write, call, Viber, Messenger, Telegram; position left/right, dark-theme safe, lifts above the cookie banner and the mobile buy bar.
+- **Delivery regions in checkout**: the region list from Admin → Shipping is now a required checkout field; the server enforces it and saves the region with the shipment destination.
+- **IndexNow** (Admin → System): key file, automatic 30-minute cron submission of changed URLs, "submit all" action, `commerce:indexnow:submit`.
+- **Share links on product pages** and *Copy link* for products and articles (shared component).
+- **E-mail templates** (Admin → Notifications): editable subject and text per language for order received, order status, inquiry received and subscription confirmation, with placeholders and restore-to-default.
+- Contrast audit now also covers detail/edit pages of every admin section, forum and account pages, the open contact widget and its dialog, in both colour schemes.
+
+### Changed
+- Sitemap visibility rule is shared with IndexNow (`SitemapController::VISIBLE_ARTICLE`).
+
 ## 3.11.1 — 2026-09-29
 
 Schema 55, production channel.

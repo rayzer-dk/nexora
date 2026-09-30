@@ -44,7 +44,7 @@ async function storefrontRoutes(page: Page): Promise<string[]> {
     [...new Set(els.map((el) => (el as HTMLAnchorElement).getAttribute('href') ?? ''))].filter((h) => !h.startsWith('/admin') && !h.includes('#')).slice(0, 25));
   await page.goto('/blog', { waitUntil: 'domcontentloaded' });
   const article = await page.locator('[data-blog-card] h3 a, [data-blog-card] h2 a').first().getAttribute('href').catch(() => null);
-  return [...new Set(['/', '/catalog', '/blog', ...(article ? [article] : []), '/cart', '/compare', '/account/login', '/checkout', '/withdrawal', '/accessibility', product ?? '/', ...links])];
+  return [...new Set(['/', '/catalog', '/blog', ...(article ? [article] : []), '/forum', '/forum/general', '/contact', '/account/register', '/account/forgot-password', '/search?q=a', '/cart', '/compare', '/account/login', '/checkout', '/withdrawal', '/accessibility', product ?? '/', ...links])];
 }
 
 async function adminRoutes(page: Page): Promise<string[]> {
@@ -52,7 +52,48 @@ async function adminRoutes(page: Page): Promise<string[]> {
   await page.locator('aside a[href^="/admin"]').first().waitFor({ timeout: 20_000 });
   const links = await page.locator('aside a[href^="/admin"]').evaluateAll((els) =>
     [...new Set(els.map((el) => (el as HTMLAnchorElement).getAttribute('href') ?? ''))]);
-  return [...new Set(['/admin', '/admin/appearance/storefront', '/admin/system/extensions', '/admin/account/security', '/admin/content/blog/new', '/admin/content/blog/categories', ...links])].slice(0, 60);
+  const base = [...new Set(['/admin', '/admin/appearance/storefront', '/admin/system/extensions', '/admin/account/security', '/admin/content/blog/new', '/admin/content/blog/categories', ...links])].slice(0, 100);
+  // One detail/edit page per section (module forms are where most custom styling lives).
+  const details: string[] = [];
+  for (const route of base.filter((r) => r !== '/admin').slice(0, 45)) {
+    const response = await page.goto(route, { waitUntil: 'domcontentloaded' });
+    if (!response || response.status() >= 400) continue;
+    const href = await page.locator('main a[href^="/admin/"]').evaluateAll((els) => {
+      const found = els.map((el) => (el as HTMLAnchorElement).getAttribute('href') ?? '').find((h) => /\/(edit|view|show)$|\/admin\/(orders|b2b|forum|rewards)\/[A-Za-z0-9-]+$/.test(h) && !h.includes('delete') && !h.includes('logout'));
+      return found ?? '';
+    });
+    if (href) details.push(href);
+  }
+  return [...new Set([...base, ...details])];
+}
+
+async function scanOpenWidget(page: Page, out: string[]): Promise<void> {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const widget = page.locator('[data-contact-widget]');
+  if (!(await widget.count())) return;
+  await widget.locator('[data-cw-toggle]').click();
+  scanned.push('/ (contact widget open)');
+  let results = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze();
+  for (const v of results.violations) for (const n of v.nodes) out.push(`widget | ${n.target.join(' ')}`);
+  await widget.locator('[data-cw-callback]').click();
+  scanned.push('/ (call-back dialog)');
+  results = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze();
+  for (const v of results.violations) for (const n of v.nodes) out.push(`callback dialog | ${n.target.join(' ')}`);
+}
+
+async function setContactWidget(page: Page, enabled: boolean): Promise<void> {
+  await page.goto('/admin/appearance/contact-widget', { waitUntil: 'domcontentloaded' });
+  const form = page.locator('[data-contact-widget-form]');
+  if (enabled) {
+    await form.locator('input[name="phone"]').fill('+380441234567');
+    await form.locator('input[name="viber"]').fill('380501234567');
+    await form.locator('input[name="messenger"]').fill('nexora.page');
+    await form.locator('input[name="telegram"]').fill('nexora_shop');
+    await form.locator('input[name="enabled"]').check();
+  } else {
+    await form.locator('input[name="enabled"]').uncheck();
+  }
+  await Promise.all([page.waitForLoadState('domcontentloaded'), form.locator('button[type="submit"]').click()]);
 }
 
 for (const scheme of ['light', 'dark'] as const) {
@@ -61,6 +102,7 @@ for (const scheme of ['light', 'dark'] as const) {
     test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin E2E credentials are required.');
     await loginAdmin(page);
     await setScheme(page, scheme);
+    await setContactWidget(page, true);
     const findings: string[] = [];
     scanned = [];
     const context = await (browser as Browser).newContext({ colorScheme: scheme, baseURL: testInfo.project.use.baseURL });
@@ -68,6 +110,7 @@ for (const scheme of ['light', 'dark'] as const) {
     try {
       const shop = await context.newPage();
       for (const route of await storefrontRoutes(shop)) await scan(shop, route, findings);
+      await scanOpenWidget(shop, findings);
       await shop.close();
       // The admin session lives in its own browser context so the storefront cookies never interfere with it.
       adminContext = await (browser as Browser).newContext({ colorScheme: scheme, baseURL: testInfo.project.use.baseURL });
@@ -78,10 +121,11 @@ for (const scheme of ['light', 'dark'] as const) {
       await adminContext?.close();
       await context.close();
       await setScheme(page, 'light');
+      await setContactWidget(page, false);
     }
     writeFileSync(`/tmp/contrast-${scheme}.txt`, findings.join('\n'));
     writeFileSync(`/tmp/contrast-${scheme}-routes.txt`, scanned.join('\n'));
-    expect(scanned.filter((r) => r.startsWith('/admin')).length, 'admin pages scanned').toBeGreaterThan(20);
+    expect(scanned.filter((r) => r.startsWith('/admin')).length, 'admin pages scanned').toBeGreaterThan(30);
     expect(scanned.filter((r) => !r.startsWith('/admin')).length, 'storefront pages scanned').toBeGreaterThan(12);
     expect(findings, findings.slice(0, 40).join('\n')).toEqual([]);
   });

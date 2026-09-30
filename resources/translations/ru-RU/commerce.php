@@ -35,4 +35,6 @@ return [
     'seo.catalog.description' => 'Каталог товаров %store%: актуальные цены, наличие, фильтры по бренду и характеристикам, быстрое оформление заказа.',
     'seo.blog.description' => 'Блог %store%: обзоры, советы по выбору товаров и новости магазина.',
     'checkout.error.item_price_unavailable' => 'Товар «%name%» сейчас недоступен для заказа в валюте %currency%. Удалите его из корзины или выберите другую валюту.',
+    'scheduler.label.indexnow' => 'IndexNow',
+    'scheduler.description.indexnow' => 'Раз в 30 минут сообщает Bing, Yandex и другим поисковым системам о новых и изменённых страницах (только для магазинов с включённым IndexNow).',
 ];

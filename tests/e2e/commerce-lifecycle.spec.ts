@@ -105,6 +105,9 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
     }
   }
 
+  const deliveryRegion = page.locator('select[name="delivery_region"]');
+  if (await deliveryRegion.count()) await deliveryRegion.selectOption({ index: 1 });
+
   const cod = page.locator('input[name="payment_method"][value="cash_on_delivery"]');
   const bank = page.locator('input[name="payment_method"][value="bank_transfer"]');
   if (await cod.count()) await cod.check();
