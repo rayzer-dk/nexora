@@ -1,0 +1,30 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.manual_order.title'),'orders') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_orders') }}">{{ ui_text('admin.orders.index.zamovlennia') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.manual_order.title') }}</span></nav><h1>{{ ui_text('admin.manual_order.title') }}</h1><p>{{ ui_text('admin.manual_order.intro') }}</p></div></header>
+{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<form method="post" class="admin-form" data-dirty-guard>
+  <input type="hidden" name="_token" value="{{ csrf_token('admin_manual_order') }}"><input type="hidden" name="inquiry_id" value="{{ form.inquiry_id }}">
+  <section class="admin-panel"><h2>{{ ui_text('admin.manual_order.customer') }}</h2>
+    <div class="admin-form-grid">
+      <label><span>{{ ui_text('admin.manual_order.name') }}</span><input type="text" name="name" maxlength="190" value="{{ form.name }}" required></label>
+      <label><span>{{ ui_text('admin.manual_order.phone') }}</span><input type="tel" name="phone" maxlength="32" value="{{ form.phone }}"></label>
+      <label><span>Email</span><input type="email" name="email" maxlength="320" value="{{ form.email }}"></label>
+    </div>
+  </section>
+  <section class="admin-panel"><h2>{{ ui_text('admin.manual_order.items') }}</h2>
+    <p class="admin-help">{{ ui_text('admin.manual_order.items_hint') }} ({{ currency }})</p>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>SKU</th><th>{{ ui_text('admin.manual_order.qty') }}</th><th>{{ ui_text('admin.manual_order.price') }}</th></tr></thead><tbody>
+    {% for line in form.lines %}<tr><td><input type="text" name="sku[]" value="{{ line.sku }}" maxlength="64"></td><td><input type="text" inputmode="decimal" name="qty[]" value="{{ line.quantity }}" maxlength="10"></td><td><input type="text" inputmode="decimal" name="price[]" value="{{ line.price }}" maxlength="14" placeholder="{{ ui_text('admin.manual_order.price_auto')|e('html_attr') }}"></td></tr>{% endfor %}
+    {% for i in range(1, 4) %}<tr><td><input type="text" name="sku[]" maxlength="64"></td><td><input type="text" inputmode="decimal" name="qty[]" value="1" maxlength="10"></td><td><input type="text" inputmode="decimal" name="price[]" maxlength="14" placeholder="{{ ui_text('admin.manual_order.price_auto')|e('html_attr') }}"></td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <section class="admin-panel"><h2>{{ ui_text('admin.manual_order.delivery_payment') }}</h2>
+    <div class="admin-form-grid">
+      <label><span>{{ ui_text('admin.manual_order.delivery') }}</span><input type="text" name="delivery" maxlength="500" value="{{ form.delivery }}"></label>
+      <label><span>{{ ui_text('admin.manual_order.payment') }}</span><select name="payment_method">{% for m in methods %}<option value="{{ m.code }}"{{ form.payment_method == m.code ? ' selected' : '' }}>{{ m.name }}</option>{% endfor %}</select></label>
+      <label><span>{{ ui_text('admin.manual_order.coupon') }}</span><input type="text" name="coupon" maxlength="64" value="{{ form.coupon }}"></label>
+    </div>
+    <label class="admin-form-wide"><span>{{ ui_text('admin.manual_order.comment') }}</span><textarea name="comment" rows="3" maxlength="2000">{{ form.comment }}</textarea></label>
+  </section>
+  <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.manual_order.create') }}</button></div>
+</form>
+{{ shell.end() }}

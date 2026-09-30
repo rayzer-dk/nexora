@@ -24,7 +24,7 @@ final class ReturnRequestService
         'cancelled' => [],
     ];
 
-    public function __construct(private readonly Connection $db, private readonly PublicIdFactory $ids) {}
+    public function __construct(private readonly Connection $db, private readonly PublicIdFactory $ids, private readonly ?\Commerce\Modules\Automation\Application\AutomationEngine $automation = null) {}
 
     /** @param array<int,string> $quantities */
     public function create(int $storeId, int $customerId, string $orderPublicId, array $quantities, string $reason, string $note): string
@@ -53,7 +53,7 @@ final class ReturnRequestService
         }
         if ($valid===[]) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.return.application.returnrequestservice.oberit_khocha_b_odyn_tovar_dlia_povernennia'));
 
-        return $this->db->transactional(function(Connection $db) use ($storeId,$customerId,$order,$valid,$reason,$note): string {
+        $publicId = $this->db->transactional(function(Connection $db) use ($storeId,$customerId,$order,$valid,$reason,$note): string {
             $uuid=$this->ids->generate(); $now=gmdate('Y-m-d H:i:s.u');
             $db->insert('mc_return_request',['public_id'=>$uuid->toBinary(),'store_id'=>$storeId,'order_id'=>(int)$order['id'],'customer_id'=>$customerId,'status'=>'requested','reason_code'=>$reason,'customer_note'=>$note!==''?$note:null,'created_at'=>$now,'updated_at'=>$now]);
             $returnId=(int)$db->lastInsertId();
@@ -61,6 +61,8 @@ final class ReturnRequestService
             $db->insert('mc_return_event',['return_id'=>$returnId,'event_type'=>'requested','actor_type'=>'customer','actor_id'=>$customerId,'payload'=>json_encode(['reason'=>$reason],JSON_THROW_ON_ERROR),'created_at'=>$now]);
             return $uuid->toRfc4122();
         });
+        try { $this->automation?->fire($storeId, 'return_requested', 'return:' . $publicId, ['text' => $reason . ' · ' . $publicId, 'url' => '/admin/customer-experience']); } catch (\Throwable) {}
+        return $publicId;
     }
 
     public function updateStatus(int $storeId, string $publicId, string $status, ?int $adminId, string $note='', string $resolution='', string $trackingNumber=''): void

@@ -1,0 +1,22 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.push.title'),'push') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.push.title') }}</span></nav><h1>{{ ui_text('admin.push.title') }}</h1><p>{{ ui_text('admin.push.intro') }}</p></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<section class="admin-panel"><form method="post" action="{{ path('admin_system_push') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_push') }}">
+<label class="admin-check"><input type="checkbox" name="enabled" value="1"{{ s.enabled ? ' checked' : '' }}> {{ ui_text('admin.push.enabled') }}</label>
+<label>{{ ui_text('admin.push.subject') }}<input type="text" name="subject" value="{{ s.subject }}" maxlength="190" placeholder="mailto:shop@example.com" required><small>{{ ui_text('admin.push.subject_hint') }}</small></label>
+<label class="admin-form-wide">{{ ui_text('admin.push.public_key') }}<input type="text" value="{{ s.public }}" readonly><small>{{ ui_text('admin.push.public_key_hint') }}</small></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.push.save') }}</button></div></form>
+<form method="post" action="{{ path('admin_system_push_keys') }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_push') }}"><button class="admin-button" type="submit" data-confirm="{{ ui_text('admin.push.keys_confirm') }}">{{ ui_icon('refresh-cw', 16) }}{{ ui_text('admin.push.keys_regenerate') }}</button></form></section>
+{% if s.enabled %}
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.push.devices_hint') }}</small><h2>{{ ui_text('admin.push.devices') }}</h2></div><span class="admin-badge">{{ ui_text('admin.push.admin_devices') }}: {{ counts.admin }}</span></div>
+<div class="admin-inline-actions" data-push-enable data-push-key="{{ s.public }}" data-push-url="{{ path('admin_system_push_subscribe') }}" data-push-token="{{ csrf_token('admin_push') }}"><button class="admin-button is-primary" type="button">{{ ui_icon('bell', 16) }}{{ ui_text('admin.push.enable_here') }}</button><span data-push-status role="status"></span></div>
+<form method="post" action="{{ path('admin_system_push_test') }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_push') }}"><button class="admin-button" type="submit">{{ ui_icon('send', 16) }}{{ ui_text('admin.push.test') }}</button></form></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.push.broadcast_hint') }}</small><h2>{{ ui_text('admin.push.broadcast') }}</h2></div><span class="admin-badge">{{ ui_text('admin.push.storefront_devices') }}: {{ counts.storefront }}</span></div>
+<form method="post" action="{{ path('admin_system_push_broadcast') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_push') }}">
+<label>{{ ui_text('admin.push.msg_title') }}<input type="text" name="title" maxlength="80" required></label>
+<label>{{ ui_text('admin.push.msg_url') }}<input type="text" name="url" value="/" maxlength="500"></label>
+<label class="admin-form-wide">{{ ui_text('admin.push.msg_body') }}<textarea name="body" rows="2" maxlength="240" required></textarea></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit" data-confirm="{{ ui_text('admin.push.broadcast_confirm') }}">{{ ui_icon('send', 16) }}{{ ui_text('admin.push.broadcast_send') }}</button></div></form></section>
+{% endif %}
+{{ shell.end() }}

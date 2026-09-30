@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Review\Application;
 
 use Commerce\Core\Id\PublicIdFactory;
+use Commerce\Modules\Automation\Application\AutomationEngine;
 use Commerce\Modules\Media\Application\MediaImageService;
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
 use Doctrine\DBAL\Connection;
@@ -18,6 +19,7 @@ final class ProductFeedbackService
         private readonly Connection $db,
         private readonly PublicIdFactory $ids,
         private readonly MediaImageService $media,
+        private readonly ?AutomationEngine $automation = null,
     ) {}
 
     /** @param list<UploadedFile> $images */
@@ -42,6 +44,7 @@ final class ProductFeedbackService
             foreach($validImages as $sort=>$image){$asset=$this->media->upload($image,$ctx->storeId);$this->db->insert('mc_review_media',['review_id'=>$reviewId,'media_id'=>$asset->assetId,'sort_order'=>$sort]);}
             $this->db->commit();
         }catch(\Throwable $e){if($this->db->isTransactionActive())$this->db->rollBack();throw $e;}
+        try{$this->automation?->fire($ctx->storeId,'review_created','review:'.$reviewId,['name'=>$author,'text'=>$author.' · '.$rating.'/5'.($title!==''?' · '.$title:''),'url'=>'/admin/customer-experience']);}catch(\Throwable){}
     }
 
     public function submitQuestion(StorefrontContext $ctx,int $customerId,string $productPublicId,string $author,string $question):void

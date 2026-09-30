@@ -394,6 +394,29 @@ function initSeoAuthoring() {
   render();
 }
 
+/** Enables Web Push on this device for the admin audience; the browser shows its own permission prompt. */
+function initAdminPush() {
+  const box = q('[data-push-enable]');
+  if (!box) return;
+  const button = q('button', box);
+  const status = q('[data-push-status]', box);
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) { button.disabled = true; status.textContent = t('js_push_unsupported'); return; }
+  const key = (b64) => { const pad = '='.repeat((4 - (b64.length % 4)) % 4); const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
+  button.addEventListener('click', async () => {
+    try {
+      if ((await Notification.requestPermission()) !== 'granted') { status.textContent = t('js_push_denied'); return; }
+      const registration = await navigator.serviceWorker.register('/nexora-push-sw.js');
+      await navigator.serviceWorker.ready;
+      const subscription = (await registration.pushManager.getSubscription()) || (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(box.dataset.pushKey) }));
+      const json = subscription.toJSON();
+      const response = await fetch(box.dataset.pushUrl, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': box.dataset.pushToken }, body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }) });
+      status.textContent = response.ok ? t('js_push_enabled') : t('js_push_failed');
+    } catch (error) {
+      status.textContent = t('js_push_failed');
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initFlashToasts();
   initConfirmations();
@@ -409,6 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFileLabels();
   initQuickPreview();
   initSeoAuthoring();
+  initAdminPush();
 });
 
 async function initPageFeatures() {

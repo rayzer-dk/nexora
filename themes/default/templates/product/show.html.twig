@@ -60,6 +60,8 @@
                 {% if block.type == 'reviews' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_reviews', product:product} only %}{% endif %}
             {% endfor %}
         </section>
+        {% set custom_fields = product_custom_fields(product.internal_id) %}
+        {% if custom_fields %}<section class="product-custom-fields" aria-label="{{ ui_text('product_custom_fields')|e('html_attr') }}"><h2>{{ ui_text('product_custom_fields') }}</h2><dl class="product-custom-fields__list">{% for f in custom_fields %}<div class="product-custom-fields__row"><dt>{{ f.label }}</dt><dd>{% if f.type == 'url' %}<a href="{{ f.value }}" rel="noopener nofollow" target="_blank">{{ f.value }}</a>{% else %}{{ f.value }}{% endif %}</dd></div>{% endfor %}</dl></section>{% endif %}
     </div>
 
     {% for block in regions.mobile_sticky|default([]) %}

@@ -189,7 +189,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     public function categoryForEdit(int $storeId, string $locale, string $publicId): array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name,sr.slug FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? LIMIT 1",
+            "SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name,ct.description,ct.description_bottom,sr.slug FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? LIMIT 1",
             [$storeId, $storeId, $locale, $storeId, $locale, Uuid::fromString($publicId)->toBinary()],
         );
         if (!is_array($row)) {

@@ -1,0 +1,13 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="shell downloads">
+  <header class="downloads__head"><span class="eyebrow">{{ ui_text('downloads_eyebrow') }}</span><h1>{{ ui_text('downloads_title') }}</h1><p>{{ ui_text('downloads_intro') }}</p>
+    <form class="downloads__search" method="get" action="{{ path('storefront_downloads') }}" role="search"><label class="sr-only" for="downloads-q">{{ ui_text('downloads_search') }}</label><input id="downloads-q" type="search" name="q" value="{{ q }}" maxlength="80" placeholder="{{ ui_text('downloads_search')|e('html_attr') }}"><button class="button button--primary" type="submit">{{ ui_icon('search', 16) }}<span>{{ ui_text('search') }}</span></button></form></header>
+  {% for g in groups %}
+  <section class="downloads__group"><h2>{{ g.group == '@products' ? ui_text('downloads_product_docs') : (g.group ?: ui_text('downloads_general')) }}</h2>
+    <ul class="downloads__list">{% for item in g.items %}
+      <li><a class="downloads__item" href="{{ item.url }}" rel="nofollow">{{ ui_icon('download', 18) }}<span class="downloads__title">{{ item.title }}{% if item.description %}<small>{{ item.description }}</small>{% endif %}{% if item.product and item.product.name %}<small>{{ item.product.name }}</small>{% endif %}</span><span class="downloads__meta">{{ item.ext|upper }}{% if item.size > 0 %} · {{ item.size >= 1048576 ? (item.size / 1048576)|number_format(1) ~ ' MB' : (item.size / 1024)|round ~ ' KB' }}{% endif %}</span></a></li>{% endfor %}
+    </ul></section>
+  {% else %}<p class="downloads__empty">{{ ui_text('downloads_empty') }}</p>{% endfor %}
+</section>
+{% endblock %}

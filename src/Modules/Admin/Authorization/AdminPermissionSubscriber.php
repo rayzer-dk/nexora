@@ -74,6 +74,11 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if ($route==='admin_commerce_inquiries') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if ($route==='admin_commerce_import_export') return $get?AdminPermissionCatalog::CATALOG_VIEW:AdminPermissionCatalog::CATALOG_MANAGE;
         if (str_starts_with($route,'admin_nova_post_')) return $get?AdminPermissionCatalog::ORDERS_VIEW:AdminPermissionCatalog::ORDERS_MANAGE;
+        if (str_starts_with($route,'admin_dashboard_')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if (str_starts_with($route,'admin_automation')) return $get?AdminPermissionCatalog::MARKETING_VIEW:AdminPermissionCatalog::MARKETING_MANAGE;
+        if (str_starts_with($route,'admin_downloads')) return $get?AdminPermissionCatalog::CONTENT_VIEW:AdminPermissionCatalog::CONTENT_MANAGE;
+        if (str_starts_with($route,'admin_custom_fields')) return $get?AdminPermissionCatalog::CATALOG_VIEW:AdminPermissionCatalog::CATALOG_MANAGE;
+        if (str_starts_with($route,'admin_system_push')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if ($route==='admin_system_captcha'||$route==='admin_system_tracking') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_seo_')) return $get?AdminPermissionCatalog::SYSTEM_SETTINGS:AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_contains($route,'extension')) return AdminPermissionCatalog::EXTENSIONS_MANAGE;

@@ -438,7 +438,7 @@ final readonly class DbalStorefrontCatalogQuery
     public function categoryByPublicId(StorefrontContext $context, string $publicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT c.id,c.public_id,c.parent_id,ct.name,ct.description,ct.meta_title,ct.meta_description,sr.path FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active' JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? AND c.status='active' LIMIT 1",
+            "SELECT c.id,c.public_id,c.parent_id,ct.name,ct.description,ct.description_bottom,ct.meta_title,ct.meta_description,sr.path FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active' JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? AND c.status='active' LIMIT 1",
             [$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,Uuid::fromString($publicId)->toBinary()],
         );
         return is_array($row) ? $this->categoryRow($row) : null;
@@ -641,7 +641,7 @@ final readonly class DbalStorefrontCatalogQuery
 
     private function categoryRow(array $row): array
     {
-        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'description'=>(string)($row['description']??''),'meta_title'=>(string)($row['meta_title']??''),'meta_description'=>(string)($row['meta_description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null)];
+        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'description'=>(string)($row['description']??''),'description_bottom'=>(string)($row['description_bottom']??''),'meta_title'=>(string)($row['meta_title']??''),'meta_description'=>(string)($row['meta_description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null)];
     }
 
     /** @return list<array<string,mixed>> */

@@ -49,6 +49,7 @@ final readonly class PromotionEngine
                 AND (usage_limit IS NULL OR usage_count < usage_limit)
                 ORDER BY priority ASC,id ASC" . ($forUpdate ? ' FOR UPDATE' : '');
         $promotions = $this->db->fetchAllAssociative($sql, $params);
+        $cartCurrency = (string) $this->db->fetchOne('SELECT currency FROM mc_cart WHERE id=? LIMIT 1', [$cartId]);
         $discount = 0; $applied = []; $couponMatched = false;
         $customerGroup = $customerId !== null ? (string)($this->db->fetchOne('SELECT customer_group_code FROM mc_customer WHERE id=? LIMIT 1',[$customerId]) ?: 'default') : 'guest';
         $emailNormalized = $email !== null && trim($email) !== '' ? mb_strtolower(trim($email)) : null;
@@ -63,7 +64,7 @@ final readonly class PromotionEngine
                 continue;
             }
             if ($subtotal < (int) $promotion['min_subtotal_minor']) continue;
-            if (!$this->conditionsMatch($promotion['conditions_json'] ?? null, array_keys($productIds), array_keys($categoryIds), $customerGroup)) continue;
+            if (!$this->conditionsMatch($promotion['conditions_json'] ?? null, array_keys($productIds), array_keys($categoryIds), $customerGroup, $cartCurrency, $storeId)) continue;
             if (!$this->withinCustomerLimit((int) $promotion['id'], $promotion['per_customer_limit'], $customerId, $emailNormalized)) continue;
 
             $base = max(0, $subtotal - $discount);
@@ -88,7 +89,7 @@ final readonly class PromotionEngine
     }
 
     /** @param list<int> $productIds @param list<int> $categoryIds */
-    private function conditionsMatch(mixed $json, array $productIds, array $categoryIds, string $customerGroup): bool
+    private function conditionsMatch(mixed $json, array $productIds, array $categoryIds, string $customerGroup, string $cartCurrency = '', int $storeId = 0): bool
     {
         if ($json === null || $json === '') return true;
         try { $conditions = is_array($json) ? $json : json_decode((string) $json, true, 32, JSON_THROW_ON_ERROR); }
@@ -100,6 +101,12 @@ final readonly class PromotionEngine
         if ($requiredCategories !== [] && array_intersect($requiredCategories, $categoryIds) === []) return false;
         $groups = array_values(array_filter(array_map(static fn($v): string => strtolower(trim((string)$v)), is_array($conditions['customer_groups'] ?? null) ? $conditions['customer_groups'] : [])));
         if ($groups !== [] && !in_array(strtolower($customerGroup), $groups, true)) return false;
+        $marketIds = array_values(array_filter(array_map('intval', is_array($conditions['market_ids'] ?? null) ? $conditions['market_ids'] : [])));
+        if ($marketIds !== []) {
+            // A cart is priced in the currency of its market, so a market condition matches by that currency.
+            $currencies = $this->db->fetchFirstColumn('SELECT default_currency FROM mc_market WHERE store_id=? AND id IN (?)', [$storeId, $marketIds], [\Doctrine\DBAL\ParameterType::INTEGER, \Doctrine\DBAL\ArrayParameterType::INTEGER]);
+            if (!in_array($cartCurrency, array_map('strval', $currencies), true)) return false;
+        }
         return true;
     }
 

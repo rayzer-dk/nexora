@@ -31,6 +31,8 @@ final class CatalogAdminPageController extends AbstractController
         private readonly AdminContextResolver $context,
         private readonly DbalCatalogAdminQuery $query,
         private readonly CategoryWriter $categories,
+        private readonly \Commerce\Modules\Catalog\Application\CategoryTextService $categoryTexts,
+        private readonly \Commerce\Modules\CustomField\Application\CustomFieldService $customFields,
         private readonly ProductWriter $products,
         private readonly CatalogMaintenanceService $maintenance,
         private readonly MediaImageService $media,
@@ -87,13 +89,14 @@ final class CatalogAdminPageController extends AbstractController
                 $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.sesiiu_formy_vtracheno_povtorit_diiu'));
             } else {
                 try {
-                    $this->categories->create(new CreateCategoryCommand(
+                    $created = $this->categories->create(new CreateCategoryCommand(
                         $context->storeId, $context->marketId, $context->locale,
                         (string) $request->request->get('name', ''),
                         ($parent = (int) $request->request->get('parent_id', 0)) > 0 ? $parent : null,
                         trim((string) $request->request->get('slug', '')) ?: null,
                         (int) $request->request->get('sort_order', 0),
                     ));
+                    $this->categoryTexts->save((int) $created['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), (string) $request->request->get('description_bottom', ''));
                     $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.katehoriiu_stvoreno'));
                     return $this->redirectToRoute('admin_catalog_categories');
                 } catch (\Throwable $e) {
@@ -164,6 +167,7 @@ final class CatalogAdminPageController extends AbstractController
                         sortOrder: (int) $request->request->get('sort_order', 0),
                         status: (string) $request->request->get('status', 'active'),
                     ));
+                    $this->categoryTexts->save((int) $category['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), (string) $request->request->get('description_bottom', ''));
                     $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.katehoriiu_onovleno'));
                     return $this->redirectToRoute('admin_catalog_categories');
                 } catch (\Throwable $e) {
@@ -176,6 +180,8 @@ final class CatalogAdminPageController extends AbstractController
                 'slug' => (string) $request->request->get('slug', $category['slug'] ?? ''),
                 'sort_order' => (int) $request->request->get('sort_order', $category['sort_order']),
                 'status' => (string) $request->request->get('status', $category['status']),
+                'description' => (string) $request->request->get('description', ''),
+                'description_bottom' => (string) $request->request->get('description_bottom', ''),
             ]);
         }
         $choices = array_values(array_filter(
@@ -255,6 +261,8 @@ final class CatalogAdminPageController extends AbstractController
             'variants' => $this->query->variantsForEdit((int) $product['id'], $context->storeId, $context->marketId),
             'attributes' => $this->query->productAttributesForEdit((int) $product['id'], $context->locale),
             'documents' => $this->query->productDocumentsForEdit((int) $product['id']),
+            'custom_definitions' => $this->customFields->definitions($context->storeId),
+            'custom_values' => $this->customFields->values($context->storeId, (int) $product['id']),
             'digital_assets' => $product['product_type'] === 'digital' ? $this->digitalAssets->forProduct((int) $product['id']) : [],
             'locales' => $this->query->storeLocales($context->storeId),
             'currency' => $context->currency,

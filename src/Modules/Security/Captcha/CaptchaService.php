@@ -99,7 +99,7 @@ final class CaptchaService implements CaptchaVerifier
             $reply = $this->http->request('POST', self::VERIFY_URL[$c['provider']], ['body' => $body, 'timeout' => 4.0]);
             $status = $reply->getStatusCode();
             if ($status >= 500) {
-                return true; // provider outage must not stop orders; honeypot, timing and rate limit remain active
+                return $c['fail_mode'] !== 'closed'; // outage policy is chosen in the admin; honeypot, timing and rate limit stay active either way
             }
             if ($status >= 300) {
                 return false;
@@ -114,7 +114,7 @@ final class CaptchaService implements CaptchaVerifier
 
             return true;
         } catch (\Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface) {
-            return true;
+            return $c['fail_mode'] !== 'closed';
         } catch (\Throwable) {
             return false;
         }

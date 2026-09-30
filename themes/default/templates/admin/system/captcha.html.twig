@@ -8,6 +8,7 @@
 <label>{{ ui_text('admin.captcha.site_key') }}<input type="text" name="site_key" value="{{ s.site_key }}" maxlength="255" autocomplete="off" spellcheck="false"><small>{{ ui_text('admin.captcha.site_key_hint') }}</small></label>
 <label>{{ ui_text('admin.captcha.secret') }}<input type="password" name="secret" value="" maxlength="255" autocomplete="new-password" placeholder="{{ s.has_secret ? ui_text('admin.captcha.secret_saved') : '' }}"><small>{{ ui_text('admin.captcha.secret_hint') }}</small></label>
 <label>{{ ui_text('admin.captcha.score') }}<input type="number" name="score" min="1" max="99" value="{{ s.score }}"><small>{{ ui_text('admin.captcha.score_hint') }}</small></label>
+<label>{{ ui_text('admin.captcha.fail_mode') }}<select name="fail_mode"><option value="open"{{ s.fail_mode == 'open' ? ' selected' : '' }}>{{ ui_text('admin.captcha.fail_open') }}</option><option value="closed"{{ s.fail_mode == 'closed' ? ' selected' : '' }}>{{ ui_text('admin.captcha.fail_closed') }}</option></select><small>{{ ui_text('admin.captcha.fail_mode_hint') }}</small></label>
 <fieldset class="admin-form-wide admin-fieldset"><legend>{{ ui_text('admin.captcha.forms') }}</legend><p>{{ ui_text('admin.captcha.forms_hint') }}</p>
 <div class="admin-check-grid">{% for key, label in form_labels %}<label class="admin-check"><input type="checkbox" name="forms[]" value="{{ key }}"{{ key in s.forms ? ' checked' : '' }}> {{ label }}</label>{% endfor %}</div></fieldset>
 <div class="admin-form-wide"><small>{{ ui_text('admin.captcha.privacy_note') }}</small></div>

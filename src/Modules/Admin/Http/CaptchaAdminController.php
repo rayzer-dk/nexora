@@ -53,6 +53,7 @@ final class CaptchaAdminController extends AbstractController
                 'question' => CanonicalUiText::get('admin.captcha.form.question'),
                 'forum' => CanonicalUiText::get('admin.captcha.form.forum'),
                 'withdrawal' => CanonicalUiText::get('admin.captcha.form.withdrawal'),
+                'login' => CanonicalUiText::get('admin.captcha.form.login'),
             ],
             'provider_labels' => [
                 'none' => CanonicalUiText::get('admin.captcha.provider.none'),

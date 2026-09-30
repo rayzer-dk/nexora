@@ -9,6 +9,7 @@
 /var/*
 !/var/.gitkeep
 /public/media/catalog/
+/public/media/downloads/
 pw.local.config.ts
 /phpstan.phar
 /build/

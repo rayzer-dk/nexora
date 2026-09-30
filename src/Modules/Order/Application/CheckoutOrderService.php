@@ -40,8 +40,12 @@ final readonly class CheckoutOrderService
         private CustomerStoreMembershipService $memberships,
     ) {}
 
-    /** @return array{public_id:string,order_number:string,total_minor:int,currency:string} */
-    public function place(StorefrontContext $context, int $cartId, array $input, string $idempotencyKey, ?int $customerId = null): array
+    /**
+     * @param array<int,int> $unitPriceOverrides variant id => unit price in minor units. Only trusted callers
+     *        (the admin manual-order service) pass this; the public checkout never does.
+     * @return array{public_id:string,order_number:string,total_minor:int,currency:string}
+     */
+    public function place(StorefrontContext $context, int $cartId, array $input, string $idempotencyKey, ?int $customerId = null, array $unitPriceOverrides = []): array
     {
         $layout = $this->checkoutLayout->active($context->storeId);
         $requirements = $layout['requirements'];
@@ -67,7 +71,7 @@ final readonly class CheckoutOrderService
         if (strlen($idempotencyKey) < 16 || strlen($idempotencyKey) > 190) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.nekorektnyi_kliuch_oformlennia'));
         $purchaseOrderNumber=mb_substr(trim((string)($input['purchase_order_number']??'')),0,128);
 
-        $result = $this->db->transactional(function(Connection $db) use($context,$cartId,$input,$idempotencyKey,$name,$phone,$email,$providerCode,$payment,$customerId,$companyName,$companyTaxId,$customerComment,$purchaseOrderNumber): array {
+        $result = $this->db->transactional(function(Connection $db) use($context,$cartId,$input,$idempotencyKey,$name,$phone,$email,$providerCode,$payment,$customerId,$companyName,$companyTaxId,$customerComment,$purchaseOrderNumber,$unitPriceOverrides): array {
             $existing = $db->fetchAssociative("SELECT public_id,order_number,total_minor,currency FROM mc_sales_order WHERE checkout_idempotency_key=? AND store_id=? LIMIT 1", [$idempotencyKey, $context->storeId]);
             if (is_array($existing)) return ['public_id'=>Uuid::fromBinary((string)$existing['public_id'])->toRfc4122(),'order_number'=>(string)$existing['order_number'],'total_minor'=>(int)$existing['total_minor'],'currency'=>(string)$existing['currency']];
 
@@ -83,6 +87,8 @@ final readonly class CheckoutOrderService
             $rows = $db->fetchAllAssociative("SELECT ci.id cart_item_id,ci.variant_id,ci.quantity,ci.unit_code,ci.unit_price_minor,v.sku,v.product_id,COALESCE(pt.name,ptd.name,v.sku) AS name,p.product_type,v.allow_backorder,COALESCE(ppp.mode,'auto') AS purchase_mode,vii.inventory_item_id,vii.required_quantity,sl.location_id,sl.stocked_quantity,sl.reserved_quantity,sl.safety_stock FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id JOIN mc_product p ON p.id=v.product_id JOIN mc_store st ON st.id=? LEFT JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=st.id AND pt.locale=? LEFT JOIN mc_product_translation ptd ON ptd.product_id=p.id AND ptd.store_id=st.id AND ptd.locale=st.default_locale LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id LEFT JOIN mc_variant_inventory_item vii ON vii.variant_id=v.id LEFT JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id WHERE ci.cart_id=? ORDER BY ci.id ASC FOR UPDATE", [$context->storeId,$context->locale,$cartId]);
             if ($rows === []) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.koshyk_porozhnii'));
             foreach($rows as &$priceRow){
+                $override=$unitPriceOverrides[(int)$priceRow['variant_id']] ?? null;
+                if($override!==null){$priceRow['unit_price_minor']=(int)$override; $db->update('mc_cart_item',['unit_price_minor'=>(int)$override,'updated_at'=>$this->now()],['id'=>(int)$priceRow['cart_item_id'],'cart_id'=>$cartId]); continue;}
                 $retail=$db->fetchOne("SELECT px.amount_minor FROM mc_price px WHERE px.variant_id=? AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=? AND (px.max_quantity IS NULL OR px.max_quantity>=?) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1",[(int)$priceRow['variant_id'],$context->storeId,$context->marketId,$context->currency,(string)$priceRow['quantity'],(string)$priceRow['quantity']]);
                 if($retail===false){throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout.error.item_price_unavailable',['name'=>(string)$priceRow['name'],'currency'=>$context->currency]));} $base=(int)$retail; // never charge a stored price that may belong to another currency or an expired price
                 $resolved=$this->b2b->priceFor($context->storeId,$customerId,(int)$priceRow['variant_id'],(string)$priceRow['quantity'],$base,$context->currency);

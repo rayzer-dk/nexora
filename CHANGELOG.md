@@ -2,6 +2,28 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.15.0 — 2026-09-30
+
+Schema 59, production channel. New dashboard, automation, web push, downloads, custom fields, manual orders.
+
+### Added
+- **Dashboard** rebuilt around what needs action: KPI cards with change against the previous period (7 / 30 / 90 days), a revenue chart with your own notes, month goals with a projection, an order pipeline, a sales funnel, attention items grouped into orders / customers / catalog / system, top products, restock hints (stock cover under 14 days), order sources, searches without results, recent orders and customer inquiries.
+- **Manual orders** (Admin → Orders → Manual order): phone / chat orders through the normal checkout pipeline (stock, taxes, numbering, events); a quick-order inquiry converts into an order in one click.
+- **Automation rules** (Admin → Marketing → Automation): "when → then" for order placed / completed / cancelled, new customer, inquiry, review, return; actions are email, Telegram, push to admins and a webhook (public https only). Each event fires once per rule.
+- **Web push** (Admin → System → Push): own VAPID + RFC 8291 implementation without extra libraries, verified against the RFC test vector; storefront subscribe toggle, admin devices, test and broadcast.
+- **Downloads centre** (`/downloads`, Admin → Content → Downloads): catalogues, manuals and price lists next to product documents; type whitelist by real content, content-addressed storage, download counter.
+- **Category texts**: an introduction above and an SEO text below the product grid, sanitised on save and on output.
+- **Custom product fields** (metafields): text / number / link / date, optional display on the product page.
+- **Customer login captcha** and a **captcha outage mode**: Google / Turnstile on a network failure or a 5xx reply either let the form through (default) or block it; the rate limit and honeypot stay active in both modes. Admin login is deliberately excluded (it already has throttling and MFA, and a captcha outage must not lock out the operator).
+- **Promotions**: a market condition (matched by the currency of the cart market) and a clear note on how priority and "stop processing" combine discounts.
+
+### Changed
+- `CaptchaVerifier` gained `required()`; `CheckoutOrderService::place()` accepts trusted per-line price overrides (used only by manual orders).
+- The icons gate now allows inline `<svg data-chart>` for data charts; every other inline svg is still rejected.
+
+### Notes
+- A quick order is an inquiry, not a cart: it is not counted as an abandoned cart. The dashboard funnel shows it on its own line.
+
 ## 3.14.0 — 2026-09-30
 
 Schema 58, production channel. Captcha, product display variants, analytics tags, conversion tools.

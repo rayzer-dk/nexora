@@ -21,6 +21,11 @@ final class PublicFormProtectionTest extends TestCase
             {
             }
 
+            public function required(Request $request, string $form): bool
+            {
+                return true;
+            }
+
             public function verify(Request $request, string $form): bool
             {
                 return $this->ok;

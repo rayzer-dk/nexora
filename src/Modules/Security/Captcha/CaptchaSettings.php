@@ -17,7 +17,7 @@ final readonly class CaptchaSettings
     public const PROVIDERS = ['builtin', 'recaptcha_v2', 'recaptcha_v3', 'turnstile'];
 
     /** Forms that can be protected; keys are used in templates, controllers and the admin UI. */
-    public const FORMS = ['register', 'password_recovery', 'contact', 'callback', 'price_request', 'quick_order', 'newsletter', 'stock_notify', 'review', 'question', 'forum', 'withdrawal'];
+    public const FORMS = ['register', 'password_recovery', 'contact', 'callback', 'price_request', 'quick_order', 'newsletter', 'stock_notify', 'review', 'question', 'forum', 'withdrawal', 'login'];
 
     private const CONTEXT = 'captcha.secret';
 
@@ -30,11 +30,11 @@ final readonly class CaptchaSettings
     ) {
     }
 
-    /** @return array{provider:string,site_key:string,secret:string,score:int,forms:list<string>,has_secret:bool,source:string} */
+    /** @return array{provider:string,site_key:string,secret:string,score:int,forms:list<string>,has_secret:bool,source:string,fail_mode:string} */
     public function get(int $storeId): array
     {
         try {
-            $row = $this->db->fetchAssociative('SELECT provider,site_key,secret_enc,score_threshold,forms FROM mc_captcha_settings WHERE store_id=?', [$storeId]);
+            $row = $this->db->fetchAssociative('SELECT provider,site_key,secret_enc,score_threshold,forms,fail_mode FROM mc_captcha_settings WHERE store_id=?', [$storeId]);
         } catch (\Throwable) {
             $row = false;
         }
@@ -58,13 +58,14 @@ final readonly class CaptchaSettings
                 'forms' => is_array($forms) ? array_values(array_intersect(self::FORMS, array_map('strval', $forms))) : [],
                 'has_secret' => $secret !== '',
                 'source' => 'admin',
+                'fail_mode' => (string) ($row['fail_mode'] ?? 'open') === 'closed' ? 'closed' : 'open',
             ];
         }
         if ($this->envTurnstileEnabled && $this->envTurnstileSecret !== '' && $this->envTurnstileSiteKey !== '') {
-            return ['provider' => 'turnstile', 'site_key' => $this->envTurnstileSiteKey, 'secret' => $this->envTurnstileSecret, 'score' => 50, 'forms' => ['register', 'withdrawal'], 'has_secret' => true, 'source' => 'env'];
+            return ['provider' => 'turnstile', 'site_key' => $this->envTurnstileSiteKey, 'secret' => $this->envTurnstileSecret, 'score' => 50, 'forms' => ['register', 'withdrawal'], 'has_secret' => true, 'source' => 'env', 'fail_mode' => 'open'];
         }
 
-        return ['provider' => 'none', 'site_key' => '', 'secret' => '', 'score' => 50, 'forms' => [], 'has_secret' => false, 'source' => 'none'];
+        return ['provider' => 'none', 'site_key' => '', 'secret' => '', 'score' => 50, 'forms' => [], 'has_secret' => false, 'source' => 'none', 'fail_mode' => 'open'];
     }
 
     /** @param array<string,mixed> $input */
@@ -94,6 +95,7 @@ final readonly class CaptchaSettings
             $siteKey = '';
         }
         $score = max(1, min(99, (int) ($input['score'] ?? 50)));
+        $failMode = (string) ($input['fail_mode'] ?? 'open') === 'closed' ? 'closed' : 'open';
         $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
         $secretEnc = null;
         if ($external) {
@@ -101,9 +103,9 @@ final readonly class CaptchaSettings
             $secretEnc = $this->vault->encrypt($plain, self::CONTEXT);
         }
         $this->db->executeStatement(
-            'INSERT INTO mc_captcha_settings (store_id,provider,site_key,secret_enc,score_threshold,forms,updated_at) VALUES (?,?,?,?,?,?,?)
-             ON DUPLICATE KEY UPDATE provider=VALUES(provider),site_key=VALUES(site_key),secret_enc=VALUES(secret_enc),score_threshold=VALUES(score_threshold),forms=VALUES(forms),updated_at=VALUES(updated_at)',
-            [$storeId, $provider, $siteKey, $secretEnc, $score, json_encode($forms, JSON_THROW_ON_ERROR), $now],
+            'INSERT INTO mc_captcha_settings (store_id,provider,site_key,secret_enc,score_threshold,forms,fail_mode,updated_at) VALUES (?,?,?,?,?,?,?,?)
+             ON DUPLICATE KEY UPDATE provider=VALUES(provider),site_key=VALUES(site_key),secret_enc=VALUES(secret_enc),score_threshold=VALUES(score_threshold),forms=VALUES(forms),fail_mode=VALUES(fail_mode),updated_at=VALUES(updated_at)',
+            [$storeId, $provider, $siteKey, $secretEnc, $score, json_encode($forms, JSON_THROW_ON_ERROR), $failMode, $now],
         );
     }
 }

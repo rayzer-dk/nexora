@@ -619,6 +619,42 @@ function initCaptcha() {
     });
   };
 }
+/** Opt-in Web Push: nothing is requested until the visitor clicks the button. */
+function initPush() {
+  const button = document.querySelector('[data-push-subscribe]');
+  if (!button || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+  const label = button.querySelector('span');
+  const key = (b64) => { const pad = '='.repeat((4 - (b64.length % 4)) % 4); const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
+  const setState = (subscribed) => { button.dataset.state = subscribed ? 'on' : 'off'; label.textContent = t(subscribed ? 'push_unsubscribe' : 'push_subscribe'); };
+  const post = (path, body) => fetch(path, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  button.hidden = false;
+  navigator.serviceWorker.getRegistration('/nexora-push-sw.js').then((registration) => registration?.pushManager.getSubscription()).then((subscription) => setState(Boolean(subscription))).catch(() => setState(false));
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    try {
+      const registration = await navigator.serviceWorker.register('/nexora-push-sw.js');
+      await navigator.serviceWorker.ready;
+      const existing = await registration.pushManager.getSubscription();
+      if (existing) {
+        await post('/push/unsubscribe', { endpoint: existing.endpoint });
+        await existing.unsubscribe();
+        setState(false);
+      } else if ((await Notification.requestPermission()) === 'granted') {
+        const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(button.dataset.pushKey) });
+        const json = subscription.toJSON();
+        const response = await post('/push/subscribe', { endpoint: json.endpoint, keys: json.keys });
+        if (!response.ok) { await subscription.unsubscribe(); throw new Error('push subscribe failed'); }
+        setState(true);
+      }
+    } catch (error) {
+      setState(false);
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
+
+initPush();
 initCaptcha();
 
 /* ---------- Ecommerce events (consent-gated tags pick them up from gtag/fbq) ---------- */

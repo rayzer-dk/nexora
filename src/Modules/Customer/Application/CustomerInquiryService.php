@@ -9,11 +9,12 @@ use Commerce\Modules\Notification\Application\NotificationOutbox;
 use Commerce\Modules\Notification\Domain\NotificationChannel;
 use Commerce\Modules\Notification\Domain\NotificationMessage;
 use Doctrine\DBAL\Connection;
+use Commerce\Modules\Automation\Application\AutomationEngine;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class CustomerInquiryService
 {
-    public function __construct(private Connection $db,private PublicIdFactory $ids,private NotificationOutbox $notifications) {}
+    public function __construct(private Connection $db,private PublicIdFactory $ids,private NotificationOutbox $notifications,private ?AutomationEngine $automation=null) {}
 
     /** @param array<string,mixed> $input */
     public function create(int $storeId,array $input,?string $productPublicId=null): string
@@ -34,6 +35,7 @@ final readonly class CustomerInquiryService
         $manager=(string)$this->db->fetchOne('SELECT COALESCE(NULLIF(email,\'\'),NULLIF(privacy_contact,\'\')) FROM mc_store_profile WHERE store_id=? LIMIT 1',[$storeId]);
         if($manager!==''&&filter_var($manager,FILTER_VALIDATE_EMAIL)!==false){$subject=$type==='price_request'?\Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerinquiryservice.zapyt_tsiny').($productName?' — '.$productName:''):\Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerinquiryservice.nove_zvernennia_pokuptsia');$productLine=$productName!==null&&$productName!==''?\Commerce\Core\I18n\CanonicalUiText::get('customer.inquiry.product_line',['product'=>$productName]):'';$text=\Commerce\Core\I18n\CanonicalUiText::get('customer.inquiry.manager_text',['name'=>$name,'phone'=>$phone?:'—','email'=>$email?:'—','product'=>$productLine,'message'=>$message]);$this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('customer_inquiry',$subject,$text,[],'generic'),$manager,null,'inquiry-manager:'.$public->toRfc4122());}
         if($email!==''){$this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('inquiry_received',\Commerce\Core\I18n\CanonicalUiText::get('customer.inquiry.received_subject'),\Commerce\Core\I18n\CanonicalUiText::get('customer.inquiry.received_text'),[],'generic'),$email,null,'inquiry-customer:'.$public->toRfc4122());}
+        try{$this->automation?->fire($storeId,'inquiry_created','inquiry:'.$public->toRfc4122(),['name'=>$name,'text'=>$name.($phone!==''?' · '.$phone:'').' · '.$type.($message!==''?' · '.mb_substr($message,0,120):''),'url'=>'/admin/commerce/inquiries']);}catch(\Throwable){}
         return $public->toRfc4122();
     }
 }

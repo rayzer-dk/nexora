@@ -1,15 +1,126 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin_manage'),'dashboard') }}
-<header class="admin-page-header"><div><small>{{ store.name|default(ui_text('admin_store')) }} · Nexora Commerce v{{ platform_version }}</small><h1>{{ ui_text('admin_dashboard_title') }}</h1><p>{{ ui_text('admin_dashboard_intro') }}</p></div></header>
+{% set cur = report.currency %}
 {% set tones = {blue:'info', orange:'warning', yellow:'warning', red:'danger'} %}
-<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin_attention') }}</small><h2>{{ ui_text('admin_do_now') }}</h2></div>{% if backup_age_days is null %}<span class="admin-badge is-danger">{{ ui_icon('triangle-alert', 14) }}{{ ui_text('admin_backup_missing') }}</span>{% elseif backup_age_days > 7 %}<span class="admin-badge is-warning">{{ ui_icon('triangle-alert', 14) }}{{ ui_text('admin_backup_days_ago', {'days': backup_age_days}) }}</span>{% else %}<span class="admin-badge is-ok">{{ ui_icon('circle-check', 14) }}{{ ui_text('admin_backup_current') }}</span>{% endif %}</div><div class="admin-attention-grid">{% for item in attention %}<a class="admin-attention-card is-{{ tones[item.tone]|default('info') }}" href="{{ item.url }}"><span>{{ item.label }}</span><strong>{{ item.count }}</strong><small>{{ item.hint }}</small></a>{% endfor %}</div></section>
+{% set kpi_labels = {revenue: ui_text('admin.dashboard.kpi_revenue'), orders: ui_text('admin.dashboard.kpi_orders'), aov: ui_text('admin.dashboard.kpi_aov'), conversion: ui_text('admin.dashboard.kpi_conversion'), new_customers: ui_text('admin.dashboard.kpi_new_customers'), refunds: ui_text('admin.dashboard.kpi_refunds')} %}
+{% set kpi_icons = {revenue: 'wallet', orders: 'shopping-bag', aov: 'receipt', conversion: 'funnel', new_customers: 'users', refunds: 'rotate-ccw'} %}
+{% set group_titles = {orders: ui_text('admin.dashboard.group_orders'), customers: ui_text('admin.dashboard.group_customers'), catalog: ui_text('admin.dashboard.group_catalog'), system: ui_text('admin.dashboard.group_system')} %}
+{% set inquiry_types = {contact: ui_text('admin.dashboard.inquiry_contact'), callback: ui_text('admin.dashboard.inquiry_callback'), price_request: ui_text('admin.dashboard.inquiry_price'), quick_order: ui_text('admin.dashboard.inquiry_quick')} %}
+<header class="admin-page-header dash-head">
+  <div><small>{{ store.name|default(ui_text('admin_store')) }} · Nexora Commerce v{{ platform_version }}</small><h1>{{ ui_text('admin_dashboard_title') }}</h1><p>{{ ui_text('admin_dashboard_intro') }}</p></div>
+  <div class="dash-head__actions">
+    <nav class="dash-period" aria-label="{{ ui_text('admin.analytics.index.period') }}">{% for d in [7,30,90] %}<a href="{{ path('admin_dashboard',{days:d}) }}"{% if report.days == d %} class="is-active" aria-current="page"{% endif %}>{{ d }} {{ ui_text('admin.analytics.index.dniv') }}</a>{% endfor %}</nav>
+    <a class="admin-button is-primary" href="{{ path('admin_orders_manual') }}">{{ ui_icon('plus', 16) }}{{ ui_text('admin.dashboard.manual_order') }}</a>
+  </div>
+</header>
+
+<section class="dash-kpis" aria-label="{{ ui_text('admin.dashboard.kpi_title') }}">
+{% for k in report.kpis %}
+  <article class="dash-kpi">
+    <span class="dash-kpi__label">{{ ui_icon(kpi_icons[k.key], 16) }}{{ kpi_labels[k.key] }}</span>
+    <strong class="dash-kpi__value">{% if k.kind == 'money' %}{{ (k.value / 100)|number_format(2,'.',' ') }} <small>{{ cur }}</small>{% elseif k.kind == 'pct' %}{{ k.value }}%{% else %}{{ k.value }}{% endif %}</strong>
+    {% if k.delta is null %}<span class="dash-delta is-flat">{{ ui_text('admin.dashboard.no_previous') }}</span>
+    {% elseif k.key == 'refunds' ? k.delta <= 0 : k.delta >= 0 %}<span class="dash-delta is-up">{{ ui_icon(k.delta >= 0 ? 'trending-up' : 'trending-down', 14) }}{{ k.delta > 0 ? '+' : '' }}{{ k.delta }}% <small>{{ ui_text('admin.dashboard.vs_previous') }}</small></span>
+    {% else %}<span class="dash-delta is-down">{{ ui_icon(k.delta >= 0 ? 'trending-up' : 'trending-down', 14) }}{{ k.delta > 0 ? '+' : '' }}{{ k.delta }}% <small>{{ ui_text('admin.dashboard.vs_previous') }}</small></span>{% endif %}
+  </article>
+{% endfor %}
+</section>
+
+<div class="dash-grid dash-grid--main">
+  <section class="admin-panel dash-chart-panel">
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.dashboard.chart_hint') }}</small><h2>{{ ui_text('admin.dashboard.chart_title') }}</h2></div><span class="admin-badge">{{ report.timezone }}</span></div>
+    {% if chart.has_data %}
+    <figure class="dash-chart">
+      <svg data-chart viewBox="0 0 {{ chart.w }} {{ chart.h }}" role="img" aria-label="{{ ui_text('admin.dashboard.chart_title') }}" preserveAspectRatio="none">
+        {% for g in chart.grid %}<line class="dash-chart__grid" x1="0" x2="{{ chart.w }}" y1="{{ g.y }}" y2="{{ g.y }}"/>{% endfor %}
+        <path class="dash-chart__area" d="{{ chart.area }}"/>
+        <path class="dash-chart__line" d="{{ chart.line }}"/>
+        {% for m in chart.marks %}<line class="dash-chart__mark" x1="{{ m.x }}" x2="{{ m.x }}" y1="{{ chart.top }}" y2="{{ chart.baseline }}"><title>{{ m.day }}: {{ m.note }}</title></line>{% endfor %}
+        {% for p in chart.points %}<circle class="dash-chart__dot" cx="{{ p.x }}" cy="{{ p.y }}" r="2.5"><title>{{ p.day }}: {{ (p.revenue_minor / 100)|number_format(2,'.',' ') }} {{ cur }} · {{ p.orders }}</title></circle>{% endfor %}
+      </svg>
+      <figcaption class="dash-chart__axis"><span>{{ chart.labels|first.day }}</span><span>{{ (chart.max_minor / 100)|number_format(0,'.',' ') }} {{ cur }}</span><span>{{ chart.labels|last.day }}</span></figcaption>
+    </figure>
+    {% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.chart_empty') }}</p>{% endif %}
+    <details class="dash-notes">
+      <summary>{{ ui_icon('flag', 16) }}{{ ui_text('admin.dashboard.annotations_title') }} <span class="admin-badge">{{ report.annotations|length }}</span></summary>
+      {% if report.annotations %}<ul class="dash-notes__list">{% for a in report.annotations %}<li><time datetime="{{ a.day }}">{{ a.day }}</time><span>{{ a.note }}</span><form method="post" action="{{ path('admin_dashboard_annotation_delete',{id:a.id}) }}" data-confirm="{{ ui_text('admin.dashboard.annotation_delete')|e('html_attr') }}?"><input type="hidden" name="_token" value="{{ csrf_token('admin_dashboard_annotation') }}"><button class="admin-icon-button" type="submit" title="{{ ui_text('admin.dashboard.annotation_delete') }}" aria-label="{{ ui_text('admin.dashboard.annotation_delete') }}">{{ ui_icon('trash-2', 16) }}</button></form></li>{% endfor %}</ul>{% endif %}
+      <form method="post" action="{{ path('admin_dashboard_annotation_add') }}" class="dash-notes__form"><input type="hidden" name="_token" value="{{ csrf_token('admin_dashboard_annotation') }}"><label><span>{{ ui_text('admin.dashboard.annotation_day') }}</span><input type="date" name="day" value="{{ 'now'|date('Y-m-d') }}" required></label><label><span>{{ ui_text('admin.dashboard.annotation_note') }}</span><input type="text" name="note" maxlength="190" required placeholder="{{ ui_text('admin.dashboard.annotation_placeholder')|e('html_attr') }}"></label><button class="admin-button" type="submit">{{ ui_icon('plus', 16) }}{{ ui_text('admin.dashboard.annotation_add') }}</button></form>
+    </details>
+  </section>
+
+  <section class="admin-panel dash-goals">
+    <div class="admin-panel__header"><div><small>{{ report.goals.month }}</small><h2>{{ ui_text('admin.dashboard.goals_title') }}</h2></div>{{ ui_icon('target', 20) }}</div>
+    {% set gi = report.goals.items %}
+    <div class="dash-goal"><div class="dash-goal__head"><span>{{ ui_text('admin.dashboard.goal_revenue') }}</span>{% if gi.revenue.target > 0 %}<strong>{{ gi.revenue.percent }}%</strong>{% endif %}</div>
+      {% if gi.revenue.target > 0 %}<div class="dash-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ gi.revenue.percent }}"><i style="width:{{ gi.revenue.percent }}%"></i></div><small>{{ (gi.revenue.actual / 100)|number_format(0,'.',' ') }} / {{ (gi.revenue.target / 100)|number_format(0,'.',' ') }} {{ cur }} · {{ ui_text('admin.dashboard.goal_pace') }}: {{ (gi.revenue.projected / 100)|number_format(0,'.',' ') }} {{ cur }}</small>{% else %}<small>{{ ui_text('admin.dashboard.goal_not_set') }}</small>{% endif %}</div>
+    <div class="dash-goal"><div class="dash-goal__head"><span>{{ ui_text('admin.dashboard.goal_orders') }}</span>{% if gi.orders.target > 0 %}<strong>{{ gi.orders.percent }}%</strong>{% endif %}</div>
+      {% if gi.orders.target > 0 %}<div class="dash-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ gi.orders.percent }}"><i style="width:{{ gi.orders.percent }}%"></i></div><small>{{ gi.orders.actual }} / {{ gi.orders.target }} · {{ ui_text('admin.dashboard.goal_pace') }}: {{ gi.orders.projected }}</small>{% else %}<small>{{ ui_text('admin.dashboard.goal_not_set') }}</small>{% endif %}</div>
+    <details class="dash-notes"><summary>{{ ui_icon('pencil', 16) }}{{ ui_text('admin.dashboard.goals_edit') }}</summary>
+      <form method="post" action="{{ path('admin_dashboard_goals_save') }}" class="dash-notes__form"><input type="hidden" name="_token" value="{{ csrf_token('admin_dashboard_goals') }}"><label><span>{{ ui_text('admin.dashboard.goal_revenue') }}, {{ cur }}</span><input type="text" inputmode="decimal" name="goal_revenue" value="{{ gi.revenue.target > 0 ? gi.revenue.target / 100 : '' }}"></label><label><span>{{ ui_text('admin.dashboard.goal_orders') }}</span><input type="text" inputmode="numeric" name="goal_orders" value="{{ gi.orders.target > 0 ? gi.orders.target : '' }}"></label><small>{{ ui_text('admin.dashboard.goals_hint') }}</small><button class="admin-button is-primary" type="submit">{{ ui_text('admin.dashboard.goals_save') }}</button></form>
+    </details>
+  </section>
+</div>
+
+<div class="dash-grid dash-grid--two">
+  <section class="admin-panel">
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.dashboard.pipeline_hint') }}</small><h2>{{ ui_text('admin.dashboard.pipeline_title') }}</h2></div></div>
+    <div class="dash-pipeline">
+      <a href="{{ path('admin_orders') }}"><strong>{{ report.pipeline.to_process }}</strong><span>{{ ui_text('admin.dashboard.pipeline_process') }}</span></a>
+      <a href="{{ path('admin_orders') }}"><strong>{{ report.pipeline.awaiting_payment }}</strong><span>{{ ui_text('admin.dashboard.pipeline_payment') }}</span></a>
+      <a href="{{ path('admin_orders') }}"><strong>{{ report.pipeline.to_ship }}</strong><span>{{ ui_text('admin.dashboard.pipeline_ship') }}</span></a>
+      <a href="{{ path('admin_orders') }}"><strong>{{ report.pipeline.b2b_approval }}</strong><span>{{ ui_text('admin.dashboard.pipeline_b2b') }}</span></a>
+    </div>
+  </section>
+  <section class="admin-panel">
+    <div class="admin-panel__header"><div><small>{{ report.days }} {{ ui_text('admin.analytics.index.dniv') }}</small><h2>{{ ui_text('admin.dashboard.funnel_title') }}</h2></div></div>
+    {% set f = report.funnel %}{% set fmax = max(f.carts, f.orders, 1) %}
+    <ul class="dash-funnel">
+      <li><span>{{ ui_text('admin.dashboard.funnel_carts') }}</span><div class="dash-bar"><i style="width:{{ (f.carts / fmax * 100)|round }}%"></i></div><strong>{{ f.carts }}</strong></li>
+      <li><span>{{ ui_text('admin.dashboard.funnel_orders') }}</span><div class="dash-bar"><i style="width:{{ (f.orders / fmax * 100)|round }}%"></i></div><strong>{{ f.orders }}</strong></li>
+      <li><span>{{ ui_text('admin.dashboard.funnel_paid') }}</span><div class="dash-bar is-ok"><i style="width:{{ (f.paid / fmax * 100)|round }}%"></i></div><strong>{{ f.paid }}</strong></li>
+      <li><span>{{ ui_text('admin.dashboard.funnel_abandoned') }}</span><div class="dash-bar is-warn"><i style="width:{{ (f.abandoned / fmax * 100)|round }}%"></i></div><strong>{{ f.abandoned }}</strong></li>
+      <li><span>{{ ui_text('admin.dashboard.funnel_quick') }}</span><div class="dash-bar is-info"><i style="width:{{ (f.quick_orders / fmax * 100)|round }}%"></i></div><strong>{{ f.quick_orders }}</strong></li>
+    </ul>
+  </section>
+</div>
+
+<section class="admin-panel">
+  <div class="admin-panel__header"><div><small>{{ ui_text('admin_attention') }}</small><h2>{{ ui_text('admin_do_now') }}</h2></div>{% if backup_age_days is null %}<span class="admin-badge is-danger">{{ ui_icon('triangle-alert', 14) }}{{ ui_text('admin_backup_missing') }}</span>{% elseif backup_age_days > 7 %}<span class="admin-badge is-warning">{{ ui_icon('triangle-alert', 14) }}{{ ui_text('admin_backup_days_ago', {'days': backup_age_days}) }}</span>{% else %}<span class="admin-badge is-ok">{{ ui_icon('circle-check', 14) }}{{ ui_text('admin_backup_current') }}</span>{% endif %}</div>
+  <div class="dash-groups">
+  {% for key, group in groups %}
+    <section class="dash-group"><h3>{{ ui_icon(group.icon, 16) }}{{ group_titles[key] }}</h3>
+      <ul>{% for item in group.items %}<li><a class="dash-todo{{ item.count > 0 ? ' is-' ~ (tones[item.tone]|default('info')) : ' is-ok' }}" href="{{ item.url }}" title="{{ item.hint }}"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></a></li>{% endfor %}</ul>
+    </section>
+  {% endfor %}
+  </div>
+</section>
 {% include '@storefront/admin/extension/slot.html.twig' with {slot:'admin.dashboard'} only %}
-<section class="admin-stats"><article><span>{{ ui_text('admin_products') }}</span><strong>{{ counts.products }}</strong><small>{{ ui_text('admin_catalog') }}</small></article><article><span>{{ ui_text('admin_categories') }}</span><strong>{{ counts.categories }}</strong><small>{{ ui_text('admin_structure') }}</small></article><article><span>{{ ui_text('admin_orders') }}</span><strong>{{ counts.orders }}</strong><small>{{ ui_text('admin_sales') }}</small></article><article><span>{{ ui_text('admin_store') }}</span><strong>{{ store.default_currency|default('UAH') }}</strong><small>{{ store.default_locale|default('uk-UA') }} · {{ store.timezone|default('Europe/Kyiv') }}</small></article></section>
+
+<div class="dash-grid dash-grid--three">
+  <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ report.days }} {{ ui_text('admin.analytics.index.dniv') }}</small><h2>{{ ui_text('admin.dashboard.top_products_title') }}</h2></div></div>
+    {% if report.top_products %}<ol class="dash-rank">{% for row in report.top_products %}<li><span>{{ row.name }}<small>{{ row.sku }} · {{ row.quantity|number_format(0,'.',' ') }}</small></span><strong>{{ (row.revenue_minor / 100)|number_format(0,'.',' ') }} {{ cur }}</strong></li>{% endfor %}</ol>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.no_sales') }}</p>{% endif %}</section>
+  <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.dashboard.reorder_hint') }}</small><h2>{{ ui_text('admin.dashboard.reorder_title') }}</h2></div></div>
+    {% if report.reorder %}<ol class="dash-rank">{% for row in report.reorder %}<li><span>{{ row.name }}<small>{{ row.sku }} · {{ row.available|number_format(0,'.',' ') }} {{ ui_text('admin.dashboard.in_stock') }}</small></span><strong class="{{ row.cover_days < 4 ? 'is-danger' : 'is-warning' }}">{{ row.cover_days }} {{ ui_text('admin.dashboard.days_short') }}</strong></li>{% endfor %}</ol>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.reorder_empty') }}</p>{% endif %}</section>
+  <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ report.days }} {{ ui_text('admin.analytics.index.dniv') }}</small><h2>{{ ui_text('admin.dashboard.sources_title') }}</h2></div></div>
+    {% if report.sources %}<ol class="dash-rank">{% for row in report.sources %}<li><span>{{ row.source }}<small>{{ row.orders }} {{ ui_text('admin.dashboard.orders_short') }}</small></span><strong>{{ (row.revenue_minor / 100)|number_format(0,'.',' ') }} {{ cur }}</strong></li>{% endfor %}</ol>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.sources_empty') }}</p>{% endif %}
+    {% if report.zero_searches %}<h3 class="dash-sub">{{ ui_icon('search', 14) }}{{ ui_text('admin.dashboard.zero_searches_title') }}</h3><p class="dash-chips">{% for q in report.zero_searches %}<span class="admin-badge">{{ q.query_text }} · {{ q.searches }}</span>{% endfor %}</p>{% endif %}</section>
+</div>
+
+<div class="dash-grid dash-grid--two">
+  <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.dashboard.recent_hint') }}</small><h2>{{ ui_text('admin.dashboard.recent_orders_title') }}</h2></div><a class="admin-button" href="{{ path('admin_orders') }}">{{ ui_text('admin.dashboard.all_orders') }}</a></div>
+    {% if report.recent_orders %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>№</th><th>{{ ui_text('admin.dashboard.customer') }}</th><th>{{ ui_text('admin.dashboard.total') }}</th><th>{{ ui_text('admin.dashboard.status') }}</th></tr></thead><tbody>{% for o in report.recent_orders %}<tr><td>{{ o.order_number }}<small class="dash-time">{{ o.created_at|slice(0,16) }}</small></td><td>{{ o.customer_name|default('—') }}</td><td>{{ (o.total_minor / 100)|number_format(2,'.',' ') }} {{ o.currency }}</td><td><span class="admin-badge">{{ o.status }}</span> <span class="admin-badge {{ o.payment_status in ['paid','partially_refunded','refunded'] ? 'is-ok' : '' }}">{{ o.payment_status }}</span></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.no_orders_yet') }}</p>{% endif %}</section>
+  <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.dashboard.inquiries_hint') }}</small><h2>{{ ui_text('admin.dashboard.inquiries_title') }}</h2></div><a class="admin-button" href="/admin/commerce/inquiries">{{ ui_text('admin.dashboard.all_inquiries') }}</a></div>
+    {% if report.inquiries %}<ul class="dash-rank">{% for q in report.inquiries %}<li><span>{{ q.customer_name }}<small>{{ inquiry_types[q.inquiry_type]|default(q.inquiry_type) }}{% if q.phone %} · {{ q.phone }}{% endif %} · {{ q.created_at|slice(0,16) }}</small></span>{% if q.inquiry_type == 'quick_order' %}<a class="admin-button" href="{{ path('admin_orders_manual',{inquiry:q.id}) }}">{{ ui_text('admin.dashboard.to_order') }}</a>{% endif %}</li>{% endfor %}</ul>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.no_inquiries') }}</p>{% endif %}</section>
+</div>
+
 <section class="admin-quick-grid">
 <a class="admin-quick-card" href="/admin/catalog/products/new"><span class="admin-quick-icon">{{ ui_icon('plus', 20) }}</span><strong>{{ ui_text('admin_new_product') }}</strong><small>{{ ui_text('admin_create_product') }}</small></a>
 <a class="admin-quick-card" href="/admin/catalog/merchandising"><span class="admin-quick-icon">{{ ui_icon('arrow-up-down', 20) }}</span><strong>{{ ui_text('admin_merchandising') }}</strong><small>{{ ui_text('admin_product_ordering') }}</small></a>
 <a class="admin-quick-card" href="/admin/appearance/editor"><span class="admin-quick-icon">{{ ui_icon('monitor', 20) }}</span><strong>{{ ui_text('ui.admin.dashboard.visual_store_editor') }}</strong><small>{{ ui_text('admin_visual_editor_hint') }}</small></a>
+<a class="admin-quick-card" href="{{ path('admin_automation') }}"><span class="admin-quick-icon">{{ ui_icon('zap', 20) }}</span><strong>{{ ui_text('admin.automation.title') }}</strong><small>{{ ui_text('admin.dashboard.automation_hint') }}</small></a>
 <a class="admin-quick-card" href="/admin/system/cron"><span class="admin-quick-icon">{{ ui_icon('clock', 20) }}</span><strong>{{ ui_text('ui.admin.dashboard.cron') }}</strong><small>{{ ui_text('admin_cron_state') }}</small></a>
 <a class="admin-quick-card" href="/admin/system/stability"><span class="admin-quick-icon">{{ ui_icon('heart-pulse', 20) }}</span><strong>{{ ui_text('admin_stability') }}</strong><small>{{ ui_text('admin_backup_health_recovery') }}</small></a>
 </section>
+{% if counts.products < 1 or counts.orders < 1 %}
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin_first_run') }}</small><h2>{{ ui_text('admin_short_checklist') }}</h2></div></div><div class="admin-onboarding-grid"><a href="/admin/system/store">{{ ui_text('admin_check_company') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/admin/appearance/editor">{{ ui_text('admin_check_storefront') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/admin/catalog/products">{{ ui_text('admin_check_products') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/admin/commerce/notifications">{{ ui_text('admin_check_notifications') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/admin/commerce/feeds">{{ ui_text('admin_check_feeds') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/" target="_blank" rel="noopener">{{ ui_text('admin_check_store') }}{{ ui_icon('external-link', 16) }}</a></div></section>
+{% endif %}
 {{ shell.end() }}
