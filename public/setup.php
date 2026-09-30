@@ -353,7 +353,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'STORE_DEFAULT_TIMEZONE' => $storeTimezone !== '' ? $storeTimezone : \Commerce\Core\Install\RegionCatalog::preset($storeCountry)['timezone'],
                 'DATABASE_URL' => $databaseUrl,
                 'DATABASE_SERVER_VERSION' => $doctrineServerVersion,
-                'LOCK_DSN' => 'flock',
+                'LOCK_DSN' => 'flock://' . $projectDir . '/var/lock',
                 'REDIS_DSN' => 'redis://127.0.0.1:6379',
                 'VALKEY_DSN' => 'valkey://127.0.0.1:6379',
                 'VALKEY_SESSION_DSN' => 'redis://127.0.0.1:6379',
@@ -931,12 +931,14 @@ function runApplicationInstall(string $projectDir, array $payload, array $secret
         $kernel = new \Commerce\Kernel($environment, false);
         $application = new \Symfony\Bundle\FrameworkBundle\Console\Application($kernel);
         $application->setAutoExit(false);
+        // The password travels in the environment, never on the command line: a failed command is logged with
+        // its full input, and the web-server error log must not contain credentials.
+        putenv('NEXORA_INSTALL_ADMIN_PASSWORD=' . (string) ($payload['admin_password'] ?? ''));
         $arguments = [
             'command' => 'commerce:install',
             '--store-name' => (string) ($payload['store_name'] ?? ''),
             '--admin-name' => (string) ($payload['admin_name'] ?? ''),
             '--admin-email' => (string) ($payload['admin_email'] ?? ''),
-            '--admin-password' => (string) ($payload['admin_password'] ?? ''),
             '--public-url' => (string) ($payload['public_url'] ?? ''),
             '--site-mode' => (string) ($payload['site_mode'] ?? 'shop'),
             '--country' => (string) ($payload['country'] ?? 'UA'),

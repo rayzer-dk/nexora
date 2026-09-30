@@ -73,12 +73,14 @@ final class WebInstallController extends AbstractController
         $application = new Application($this->kernel);
         $application->setAutoExit(false);
         $output = new BufferedOutput();
+        // The password travels in the environment, never on the command line: a failed command is logged with
+        // its full input, and the web-server error log must not contain credentials.
+        putenv('NEXORA_INSTALL_ADMIN_PASSWORD=' . (string) ($payload['admin_password'] ?? ''));
         $arguments = [
             'command' => 'commerce:install',
             '--store-name' => (string) ($payload['store_name'] ?? ''),
             '--admin-name' => (string) ($payload['admin_name'] ?? ''),
             '--admin-email' => (string) ($payload['admin_email'] ?? ''),
-            '--admin-password' => (string) ($payload['admin_password'] ?? ''),
             '--public-url' => (string) ($payload['public_url'] ?? ''),
             '--site-mode' => (string) ($payload['site_mode'] ?? 'shop'),
             '--country' => (string) ($payload['country'] ?? 'UA'),

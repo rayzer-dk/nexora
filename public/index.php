@@ -15,6 +15,7 @@ if (!is_file($installedLock) && PHP_SAPI !== 'cli' && !$installHandover) {
     exit;
 }
 
+require_once $projectDir . '/bootstrap/tmpdir.php';
 require_once $projectDir . '/bootstrap/emergency.php';
 
 if (!is_file($projectDir . '/.env')) {

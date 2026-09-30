@@ -47,11 +47,11 @@ jobs:
       - name: Validate one-upload runtime package
         run: php bin/release-check.php
 
-      - name: Build production and 3.20.3 update archives
+      - name: Build production and 3.20.4 update archives
         shell: bash
         run: |
           set -euo pipefail
-          BASE_PREV='e66aec33fbd97bc9b9650418ce63c0dffb6344d0'
+          BASE_PREV='e0832d5273ebae4fc582b485c6ac81feec89300c'
           rm -rf package-root update-root
           mkdir -p package-root update-root
 
@@ -61,10 +61,10 @@ jobs:
             --exclude 'node_modules/' \
             --exclude 'package-root/' \
             --exclude 'update-root/' \
-            --exclude 'Nexora_Commerce_v3.20.3_Production_CI.zip' \
-            --exclude 'Nexora_v3.20.3_to_v3.20.3_Update.zip'
+            --exclude 'Nexora_Commerce_v3.20.4_Production_CI.zip' \
+            --exclude 'Nexora_v3.20.4_to_v3.20.4_Update.zip'
 
-          git diff --name-status "$BASE_PREV"..HEAD > CHANGES_FROM_3.20.3.txt
+          git diff --name-status "$BASE_PREV"..HEAD > CHANGES_FROM_3.20.4.txt
           git diff --name-only --diff-filter=ACMRT "$BASE_PREV"..HEAD > CHANGED_FILES.txt
           git diff --name-only --diff-filter=D "$BASE_PREV"..HEAD > DELETED_FILES.txt
 
@@ -79,7 +79,7 @@ jobs:
           mkdir -p update-root/public
           cp -a public/build update-root/public/build
           cp -a composer.lock package-lock.json update-root/
-          cp -a CHANGES_FROM_3.20.3.txt CHANGED_FILES.txt DELETED_FILES.txt update-root/
+          cp -a CHANGES_FROM_3.20.4.txt CHANGED_FILES.txt DELETED_FILES.txt update-root/
 
           php tools/create-release-manifest.php package-root
           php tools/create-release-manifest.php update-root
@@ -96,35 +96,35 @@ jobs:
             '6. Verify storefront, admin login, cart, checkout and scheduled tasks.' \
             '' \
             'This package includes the complete vendor directory and compiled public/build assets' \
-            'so runtime dependencies match Nexora Commerce 3.20.3.' \
+            'so runtime dependencies match Nexora Commerce 3.20.4.' \
             > update-root/UPDATE_FROM_3.16.0.txt
 
           (
             cd package-root
-            zip -qr ../Nexora_Commerce_v3.20.3_Production_CI.zip .
+            zip -qr ../Nexora_Commerce_v3.20.4_Production_CI.zip .
           )
           (
             cd update-root
-            zip -qr ../Nexora_v3.20.3_to_v3.20.3_Update.zip .
+            zip -qr ../Nexora_v3.20.4_to_v3.20.4_Update.zip .
           )
 
-          sha256sum Nexora_Commerce_v3.20.3_Production_CI.zip > Nexora_Commerce_v3.20.3_Production_CI.zip.sha256
-          sha256sum Nexora_v3.20.3_to_v3.20.3_Update.zip > Nexora_v3.20.3_to_v3.20.3_Update.zip.sha256
+          sha256sum Nexora_Commerce_v3.20.4_Production_CI.zip > Nexora_Commerce_v3.20.4_Production_CI.zip.sha256
+          sha256sum Nexora_v3.20.4_to_v3.20.4_Update.zip > Nexora_v3.20.4_to_v3.20.4_Update.zip.sha256
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Nexora_Commerce_v3.20.3_Production_CI
+          name: Nexora_Commerce_v3.20.4_Production_CI
           path: |
-            Nexora_Commerce_v3.20.3_Production_CI.zip
-            Nexora_Commerce_v3.20.3_Production_CI.zip.sha256
+            Nexora_Commerce_v3.20.4_Production_CI.zip
+            Nexora_Commerce_v3.20.4_Production_CI.zip.sha256
           if-no-files-found: error
           retention-days: 7
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Nexora_v3.20.3_to_v3.20.3_Update
+          name: Nexora_v3.20.4_to_v3.20.4_Update
           path: |
-            Nexora_v3.20.3_to_v3.20.3_Update.zip
-            Nexora_v3.20.3_to_v3.20.3_Update.zip.sha256
+            Nexora_v3.20.4_to_v3.20.4_Update.zip
+            Nexora_v3.20.4_to_v3.20.4_Update.zip.sha256
           if-no-files-found: error
           retention-days: 7

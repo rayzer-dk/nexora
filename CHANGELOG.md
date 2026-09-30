@@ -2,6 +2,14 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.20.4 — 2026-09-30
+
+Schema 64. Hosting with `open_basedir`.
+
+### Fixed
+- **Every page returned 500 on hosts with `open_basedir` limited to the account directory**: the lock store (and every other `sys_get_temp_dir()` user: uploads, import, update inspector) tried to use `/tmp`. The browser installer now writes `LOCK_DSN=flock://<project>/var/lock`, and `bootstrap/tmpdir.php` (loaded by `public/index.php` and `bin/console`) switches the temporary directory to `var/tmp` when `/tmp` is not reachable, which also repairs installations that already have `LOCK_DSN=flock`. Verified with PHP `open_basedir` restricted to the project: install, storefront, catalog and admin login answer 200.
+- **The administrator password was written to the web-server error log** when the install command failed (it was passed as a command-line option, and failed commands are logged with their full input). It now travels in the process environment only.
+
 ## 3.20.3 — 2026-09-30
 
 Schema 64. Installation on shared hosting.

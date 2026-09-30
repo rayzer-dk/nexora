@@ -70,7 +70,8 @@ final class InstallCommand extends Command
         $storeName = (string) ($input->getOption('store-name') ?: ($input->isInteractive() ? $io->ask(\Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.nazva_mahazynu'), \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.mii_mahazyn')) : \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.mii_mahazyn')));
         $adminName = (string) ($input->getOption('admin-name') ?: ($input->isInteractive() ? $io->ask(\Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.imia_administratora'), \Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')) : \Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')));
         $adminEmail = (string) ($input->getOption('admin-email') ?: ($input->isInteractive() ? $io->ask(\Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.email_administratora')) : ''));
-        $adminPassword = (string) ($input->getOption('admin-password') ?: ($input->isInteractive() ? $io->askHidden(\Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.parol_administratora_shchonaimenshe_12_symvoliv')) : ''));
+        $adminPassword = (string) ($input->getOption('admin-password') ?: (getenv('NEXORA_INSTALL_ADMIN_PASSWORD') ?: ($input->isInteractive() ? $io->askHidden(\Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.parol_administratora_shchonaimenshe_12_symvoliv')) : '')));
+        putenv('NEXORA_INSTALL_ADMIN_PASSWORD');
         $publicUrl = (string) $input->getOption('public-url');
         $siteMode = (string) $input->getOption('site-mode');
 
