@@ -13,4 +13,12 @@
 <label>Messenger<input type="text" name="messenger" maxlength="190" value="{{ s.messenger }}" placeholder="your.page"><small>{{ ui_text('admin.cw.messenger_hint') }}</small></label>
 <label>Telegram<input type="text" name="telegram" maxlength="64" value="{{ s.telegram }}" placeholder="username"><small>{{ ui_text('admin.cw.telegram_hint') }}</small></label>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div></form></section>
+<section class="admin-panel" data-chat-settings><div class="admin-panel__header"><h2>{{ ui_text('admin.chat.title') }}</h2></div>
+<p>{{ ui_text('admin.chat.intro') }}</p>
+<form method="post" action="{{ path('admin_appearance_chat_widget_save') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_chat_widget') }}">
+<label>{{ ui_text('admin.chat.provider') }}<select name="provider"><option value="none"{{ chat.provider == 'none' ? ' selected' : '' }}>{{ ui_text('admin.chat.none') }}</option>{% for p in chat_providers %}<option value="{{ p }}"{{ chat.provider == p ? ' selected' : '' }}>{{ {tawk: 'Tawk.to', jivo: 'Jivo', crisp: 'Crisp', chatwoot: 'Chatwoot'}[p] }}</option>{% endfor %}</select></label>
+<label class="admin-form-wide">{{ ui_text('admin.chat.embed') }}<textarea name="embed" rows="4" spellcheck="false" placeholder="{{ chat.widget_id ?: ui_text('admin.chat.embed_placeholder') }}"></textarea><small>{{ chat.provider != 'none' ? ui_text('admin.chat.current') ~ ': ' ~ chat.widget_id : ui_text('admin.chat.embed_hint') }}</small></label>
+<label class="admin-form-wide">{{ ui_text('admin.chat.base_url') }}<input type="url" name="base_url" value="{{ chat.base_url }}" placeholder="https://chat.example.com"><small>{{ ui_text('admin.chat.base_url_hint') }}</small></label>
+<div class="admin-form-wide"><small>{{ ui_text('admin.chat.consent_note') }}</small></div>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div></form></section>
 {{ shell.end() }}

@@ -30,18 +30,25 @@ final class SecurityHeadersSubscriber
         $request = $event->getRequest();
         $response = $event->getResponse();
         $nonce = (string) $request->attributes->get('_csp_nonce', '');
+        $extra = $request->attributes->get('_csp_extra');
+        $extra = is_array($extra) ? $extra : [];
+        $with = static function (string $base, string $directive) use ($extra): string {
+            $hosts = array_filter(array_map('strval', (array) ($extra[$directive] ?? [])), static fn (string $h): bool => preg_match('~^(https|wss)://[A-Za-z0-9*.:-]+$~', $h) === 1);
+
+            return $hosts === [] ? $base : $base . ' ' . implode(' ', array_unique($hosts));
+        };
         $csp = implode('; ', [
             "default-src 'self'",
             "base-uri 'self'",
             "object-src 'none'",
             "frame-ancestors 'self'",
             "form-action 'self'",
-            "script-src 'self' 'nonce-{$nonce}' https://accounts.google.com https://challenges.cloudflare.com",
-            "style-src 'self' 'unsafe-inline' https://accounts.google.com",
+            $with("script-src 'self' 'nonce-{$nonce}' https://accounts.google.com https://challenges.cloudflare.com", 'script'),
+            $with("style-src 'self' 'unsafe-inline' https://accounts.google.com", 'style'),
             "img-src 'self' data: blob: https:",
-            "font-src 'self' data:",
-            "connect-src 'self' https://accounts.google.com https://challenges.cloudflare.com",
-            "frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com",
+            $with("font-src 'self' data:", 'font'),
+            $with("connect-src 'self' https://accounts.google.com https://challenges.cloudflare.com", 'connect'),
+            $with("frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com", 'frame'),
             "worker-src 'self' blob:",
         ]);
 

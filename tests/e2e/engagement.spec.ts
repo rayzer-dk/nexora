@@ -121,3 +121,45 @@ test('e-mail templates can be overridden per language and restored', async ({ pa
   await page.locator('[data-admin-confirm] [data-confirm-accept]').click();
   await expect(page.locator('[data-notification-template="order.created"] input[name="subject"]')).toHaveValue('');
 });
+
+test('live chat: vendor script and CSP appear only when configured, and the script waits for cookie consent', async ({ page, browser }, testInfo) => {
+  await loginAdmin(page);
+  await page.goto('/admin/appearance/contact-widget', { waitUntil: 'domcontentloaded' });
+  const chat = page.locator('[data-chat-settings] form');
+
+  await chat.locator('select[name="provider"]').selectOption('tawk');
+  await chat.locator('textarea[name="embed"]').fill('<script>alert(1)</script>');
+  await chat.locator('button[type="submit"]').click();
+  await expect(page.locator('.admin-notice.is-error')).toHaveCount(1); // garbage is rejected
+
+  await page.locator('[data-chat-settings] select[name="provider"]').selectOption('tawk');
+  await page.locator('[data-chat-settings] textarea[name="embed"]').fill("s1.src='https://embed.tawk.to/5f8a1b2c3d4e5f6a7b8c9d0e/1hab2cdef';");
+  await page.locator('[data-chat-settings] button[type="submit"]').click();
+  await expect(page.locator('.admin-notice.is-success')).toHaveCount(1);
+
+  const guest = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
+  const shop = await guest.newPage();
+  const vendorRequests: string[] = [];
+  await shop.route('https://embed.tawk.to/**', (route) => { vendorRequests.push(route.request().url()); return route.fulfill({ status: 200, contentType: 'application/javascript', body: '/* stub */' }); });
+  try {
+    const response = await shop.goto('/', { waitUntil: 'domcontentloaded' });
+    expect(response?.headers()['content-security-policy']).toContain('https://embed.tawk.to');
+    await expect(shop.locator('[data-chat-widget]')).toHaveCount(1);
+    await shop.waitForTimeout(800);
+    expect(vendorRequests, 'no vendor request before consent').toEqual([]);
+    await shop.locator('[data-consent-accept-all]').click();
+    await expect.poll(() => vendorRequests.length, { timeout: 5_000 }).toBe(1);
+    expect(vendorRequests[0]).toBe('https://embed.tawk.to/5f8a1b2c3d4e5f6a7b8c9d0e/1hab2cdef');
+  } finally {
+    await guest.close();
+  }
+
+  // switching the chat off removes the container and the CSP extension
+  await page.goto('/admin/appearance/contact-widget', { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-chat-settings] select[name="provider"]').selectOption('none');
+  await page.locator('[data-chat-settings] button[type="submit"]').click();
+  await expect(page.locator('.admin-notice.is-success')).toHaveCount(1);
+  const off = await page.request.get('/');
+  expect(off.headers()['content-security-policy']).not.toContain('tawk.to');
+  expect(await off.text()).not.toContain('data-chat-widget');
+});

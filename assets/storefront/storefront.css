@@ -1203,3 +1203,4 @@ commerce-slider, .slider-shell { display: block; min-width: 0; }
 .share-links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-2); margin-top: var(--mc-space-5); }
 .share-links strong { margin-right: var(--mc-space-1); font-size: var(--mc-font-size-sm); }
 @media (max-width: 768px) { body:has(.mobile-buy-bar) .cw { bottom: calc(var(--mc-space-4) + 72px + var(--cw-offset, 0px)); } }
+.cw[data-chat-loaded="1"] { bottom: calc(var(--mc-space-5) + 76px + var(--cw-offset, 0px)); }

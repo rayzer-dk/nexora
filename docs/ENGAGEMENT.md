@@ -1,4 +1,4 @@
-# Engagement tools (3.12.0)
+# Engagement tools (3.13.0)
 
 ## Floating contact buttons — Admin → Appearance → Contact buttons
 One round button in the corner of every storefront page. It expands into the channels you filled in:
@@ -30,3 +30,11 @@ Articles and product pages have Facebook, Telegram, X, LinkedIn and *Copy link* 
 
 ## E-mail templates — Admin → Notifications → E-mail templates
 Per-language subject and text for: order received, order status changed, inquiry received, subscription confirmation. Placeholders such as `%order_number%`, `%customer_name%`, `%total%`, `%store_name%` are replaced when the e-mail is sent; the order table and the layout are unchanged. A missing or disabled template sends the built-in text. Templates apply to the store's primary language settings and to the recipient's order language when known.
+
+## Live chat — Admin → Appearance → Contact buttons → Live chat
+Supported services: Tawk.to, Jivo, Crisp, Chatwoot (self-hosted, https). Paste the embed code from the service dashboard or only the identifier (Tawk.to `propertyId/widgetId`, Jivo widget ID, Crisp Website ID, Chatwoot `websiteToken` + server address).
+
+- No arbitrary scripts: the storefront builds the vendor URL itself from the validated ID.
+- GDPR: the vendor script is requested only after the visitor allowed "Preferences" cookies in the cookie banner.
+- CSP: `script/connect/frame/style/font-src` gain only the chosen service's domains, and only on pages that render the chat.
+- The chat button in the contact list opens the chat; before consent it opens the cookie settings. When the chat is loaded the contact buttons move up so they do not overlap the vendor's launcher.

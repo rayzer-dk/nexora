@@ -1,7 +1,10 @@
 {% set cw = contact_widget() %}
+{% set chat = chat_widget() %}
+{% if chat %}<div hidden data-chat-widget data-provider="{{ chat.provider }}" data-id="{{ chat.id }}" data-base="{{ chat.base }}"></div>{% endif %}
 {% if cw %}
 <div class="cw" data-contact-widget data-position="{{ cw.position }}">
   <ul class="cw__list" id="cw-list" hidden>
+    {% if chat %}<li><button class="cw__action" type="button" data-cw-chat>{{ ui_icon('message-square', 20) }}<span>{{ ui_text('cw_chat') }}</span></button></li>{% endif %}
     {% if cw.callback %}<li><button class="cw__action" type="button" data-cw-callback>{{ ui_icon('phone-call', 20) }}<span>{{ ui_text('cw_callback') }}</span></button></li>{% endif %}
     {% for a in cw.actions %}<li><a class="cw__action" href="{{ a.href }}"{% if a.external %} target="_blank" rel="noopener noreferrer"{% endif %} data-cw-action="{{ a.code }}">{% if a.code == 'write' %}{{ ui_icon('mail', 20) }}{% elseif a.code == 'call' %}{{ ui_icon('phone', 20) }}{% elseif a.code == 'telegram' %}{{ ui_icon('send', 20) }}{% elseif a.code == 'messenger' %}{{ ui_icon('messages-square', 20) }}{% else %}{{ ui_icon('message-circle', 20) }}{% endif %}<span>{% if a.code == 'write' %}{{ ui_text('cw_write') }}{% elseif a.code == 'call' %}{{ ui_text('cw_call') }}{% elseif a.code == 'viber' %}Viber{% elseif a.code == 'messenger' %}Messenger{% else %}Telegram{% endif %}</span></a></li>{% endfor %}
   </ul>

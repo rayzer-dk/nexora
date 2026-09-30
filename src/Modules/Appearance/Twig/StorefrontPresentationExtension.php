@@ -6,6 +6,7 @@ namespace Commerce\Modules\Appearance\Twig;
 
 use Commerce\Core\Extension\ExtensionPackageManager;
 use Commerce\Core\Site\SiteCapabilitySettings;
+use Commerce\Modules\Appearance\Infrastructure\ChatWidgetSettings;
 use Commerce\Modules\Appearance\Infrastructure\ContactWidgetSettings;
 use Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
@@ -26,6 +27,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
         private readonly RequestStack $requests,
         private readonly NavigationManager $navigationManager,
         private readonly ContactWidgetSettings $contactWidget,
+        private readonly ChatWidgetSettings $chatWidget,
     ) {
     }
 
@@ -38,6 +40,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
             new TwigFunction('active_theme_stylesheet', [$this, 'activeThemeStylesheet']),
             new TwigFunction('storefront_identity', [$this, 'identity']),
             new TwigFunction('contact_widget', [$this, 'contactWidget']),
+            new TwigFunction('chat_widget', [$this, 'chatWidget']),
             new TwigFunction('storefront_locales', [$this, 'locales']),
             new TwigFunction('storefront_currencies', [$this, 'currencies']),
         ];
@@ -50,6 +53,24 @@ final class StorefrontPresentationExtension extends AbstractExtension
             $ctx = $this->context();
 
             return $ctx === null ? null : $this->contactWidget->storefront($ctx->storeId);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /** @return array{provider:string,id:string,base:string}|null */
+    public function chatWidget(): ?array
+    {
+        try {
+            $ctx = $this->context();
+            $chat = $ctx === null ? null : $this->chatWidget->storefront($ctx->storeId);
+            if ($chat === null) {
+                return null;
+            }
+            // The security-headers subscriber extends the CSP with this vendor's hosts (and only this vendor's).
+            $this->requests->getCurrentRequest()?->attributes->set('_csp_extra', $chat['csp']);
+
+            return ['provider' => $chat['provider'], 'id' => $chat['id'], 'base' => $chat['base']];
         } catch (\Throwable) {
             return null;
         }

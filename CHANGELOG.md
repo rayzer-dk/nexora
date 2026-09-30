@@ -2,6 +2,14 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.13.0 — 2026-09-30
+
+Schema 57, production channel.
+
+### Added
+- **Live chat setting** (Admin → Appearance → Contact buttons): Tawk.to, Jivo, Crisp or Chatwoot. Paste the vendor's embed code (or just the ID); only the vetted loader of the chosen service runs, never arbitrary scripts.
+- The chat loads only after the visitor allows "Preferences" cookies; the page Content-Security-Policy is extended with the chosen service's domains only. With contact buttons on, a "Live chat" entry opens the chat (or the cookie settings before consent).
+
 ## 3.12.0 — 2026-09-30
 
 Schema 56, production channel.

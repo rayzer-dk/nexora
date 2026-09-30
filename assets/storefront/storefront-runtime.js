@@ -418,3 +418,48 @@ function initCopyLink() {
   });
 }
 initCopyLink();
+
+function initChatWidget() {
+  const holder = q('[data-chat-widget]');
+  if (!holder) return;
+  const { provider, id, base } = holder.dataset;
+  const root = () => q('[data-contact-widget]');
+  const allowed = () => {
+    try { return Boolean(JSON.parse(localStorage.getItem('mc_consent_v1') || 'null')?.preferences); } catch { return false; }
+  };
+  const add = (src, attrs = {}) => {
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = src;
+    for (const [name, value] of Object.entries(attrs)) script.setAttribute(name, value);
+    document.head.appendChild(script);
+    return script;
+  };
+  let loaded = false;
+  const load = () => {
+    if (loaded || !allowed()) return;
+    loaded = true;
+    if (provider === 'tawk') { window.Tawk_API = window.Tawk_API || {}; window.Tawk_LoadStart = new Date(); add(`https://embed.tawk.to/${id}`, { crossorigin: '*' }); }
+    else if (provider === 'jivo') add(`https://code.jivosite.com/widget/${id}`);
+    else if (provider === 'crisp') { window.$crisp = []; window.CRISP_WEBSITE_ID = id; add('https://client.crisp.chat/l.js'); }
+    else if (provider === 'chatwoot') add(`${base}/packs/js/sdk.js`).onload = () => window.chatwootSDK?.run({ websiteToken: id, baseUrl: base });
+    root()?.setAttribute('data-chat-loaded', '1');
+  };
+  const api = () => ({
+    tawk: () => window.Tawk_API?.maximize && (window.Tawk_API.maximize(), true),
+    jivo: () => window.jivo_api?.open && (window.jivo_api.open(), true),
+    crisp: () => Array.isArray(window.$crisp) ? false : (window.$crisp.push(['do', 'chat:open']), true),
+    chatwoot: () => window.$chatwoot?.toggle && (window.$chatwoot.toggle('open'), true),
+  })[provider]?.() ?? false;
+  const open = (attempt = 0) => { if (!api() && attempt < 20) setTimeout(() => open(attempt + 1), 500); }; // the vendor script may still be loading
+  load();
+  window.addEventListener('commerce:consent-changed', load);
+  document.addEventListener('click', (event) => {
+    const button = event.target instanceof Element ? event.target.closest('[data-cw-chat]') : null;
+    if (!button) return;
+    if (!allowed()) { q('[data-consent-open]')?.click(); return; } // the vendor is loaded only after the visitor allows it
+    load();
+    open();
+  });
+}
+initChatWidget();

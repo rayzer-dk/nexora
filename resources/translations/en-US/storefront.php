@@ -875,4 +875,5 @@ return [
     'cw_callback_text' => 'Leave your number and we will call you back shortly.',
     'share_copy_link' => 'Copy link',
     'js_link_copied' => 'Link copied.',
+    'cw_chat' => 'Live chat',
 ];

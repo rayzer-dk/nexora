@@ -666,4 +666,5 @@ return [
     'cw_callback_text' => 'Zostaw numer, a wkrótce oddzwonimy.',
     'share_copy_link' => 'Kopiuj link',
     'js_link_copied' => 'Skopiowano link.',
+    'cw_chat' => 'Czat na żywo',
 ];

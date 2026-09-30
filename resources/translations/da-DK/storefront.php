@@ -735,4 +735,5 @@ return [
     'cw_callback_text' => 'Efterlad dit nummer, så ringer vi snarest tilbage.',
     'share_copy_link' => 'Kopiér link',
     'js_link_copied' => 'Link kopieret.',
+    'cw_chat' => 'Livechat',
 ];

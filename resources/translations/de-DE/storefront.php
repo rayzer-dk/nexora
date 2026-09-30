@@ -666,4 +666,5 @@ return [
     'cw_callback_text' => 'Hinterlassen Sie Ihre Nummer, wir rufen Sie bald zurück.',
     'share_copy_link' => 'Link kopieren',
     'js_link_copied' => 'Link kopiert.',
+    'cw_chat' => 'Live-Chat',
 ];
