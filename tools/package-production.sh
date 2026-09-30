@@ -33,6 +33,11 @@ rsync -a ./ "$OUT_DIR/" \
   --exclude '/.git/' --exclude '/.build-tools/' --exclude '/node_modules/' --exclude '/build/' --exclude '/tests/' \
   --exclude '/phpunit.xml.dist' --exclude '/.github/' --exclude '/var/*' --exclude '/pw.local.config.ts' --exclude '/public/media/demo/dummyjson/' --exclude '/.env' --exclude '/.env.local'
 
+# The shipped vendor/ uses an authoritative class map (no filesystem lookups at runtime), so the map MUST be
+# rebuilt from the files that are actually in this package; a map copied from an older build silently lacks
+# every class added since ("Expected to find class ... but it was not found" during installation).
+(cd "$OUT_DIR" && COMPOSER_ALLOW_SUPERUSER=1 composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scripts --no-interaction) >/dev/null
+
 mkdir -p "$OUT_DIR/var/cache" "$OUT_DIR/var/log" "$OUT_DIR/var/install" "$OUT_DIR/var/extensions" "$OUT_DIR/var/feeds" "$OUT_DIR/var/recovery" "$OUT_DIR/var/sessions" "$OUT_DIR/public/media"
 for d in cache log install extensions feeds recovery sessions; do : > "$OUT_DIR/var/$d/.gitkeep"; done
 : > "$OUT_DIR/var/.gitkeep"

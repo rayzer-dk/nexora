@@ -2,6 +2,13 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.20.1 — 2026-09-30
+
+Schema 64. Packaging fix.
+
+### Fixed
+- **Installation failed with "Expected to find class … but it was not found"**: the archive shipped a Composer class map (authoritative, no filesystem lookups) built from an older tree, so about a hundred classes added since were unknown at runtime. The package build now regenerates the class map from the packaged files, and `verify-packaged-release` fails the build if any class under `src/` is missing from it.
+
 ## 3.20.0 — 2026-09-30
 
 Schema 64. Translations in the admin, publish policy, catalogue quality, VAT per product class with display modes, undo.

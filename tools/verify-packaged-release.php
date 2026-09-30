@@ -34,6 +34,22 @@ if (!is_file($dir . '/composer.lock')) $errors[] = 'composer.lock is missing.';
 if (!is_file($dir . '/package-lock.json')) $errors[] = 'package-lock.json is missing.';
 if (!is_file($dir . '/vendor/autoload_runtime.php')) $errors[] = 'vendor runtime is missing.';
 if (!is_file($dir . '/public/build/.vite/manifest.json')) $errors[] = 'compiled Vite manifest is missing.';
+// Every class under src/ must be resolvable by the shipped (authoritative) class map.
+$classmapFile = $dir . '/vendor/composer/autoload_classmap.php';
+if (is_file($classmapFile)) {
+    $classmap = (string) file_get_contents($classmapFile);
+    $missing = [];
+    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir . '/src', FilesystemIterator::SKIP_DOTS));
+    foreach ($it as $file) {
+        if (!$file->isFile() || $file->getExtension() !== 'php') continue;
+        $relative = substr($file->getPathname(), strlen($dir . '/src/'), -4);
+        $class = 'Commerce\\\\' . str_replace('/', '\\\\', $relative);
+        if (!str_contains($classmap, "'" . $class . "'")) $missing[] = $relative;
+    }
+    if ($missing !== []) $errors[] = 'class map is stale, ' . count($missing) . ' classes missing, e.g. ' . implode(', ', array_slice($missing, 0, 3)) . '.';
+} else {
+    $errors[] = 'vendor/composer/autoload_classmap.php is missing.';
+}
 if (is_dir($dir . '/node_modules')) $errors[] = 'node_modules must not be shipped.';
 if (is_file($dir . '/.env')) $errors[] = '.env must not be shipped; installer must create .env.local.';
 if (is_file($dir . '/.env.local')) $errors[] = '.env.local must not be shipped.';
