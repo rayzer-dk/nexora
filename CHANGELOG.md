@@ -2,6 +2,21 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.13.1 — 2026-09-30
+
+Schema 57, production channel. Cookie consent and anti-spam audit fixes.
+
+### Security
+- Anonymous storefront forms — contact, "Request a call", price request, newsletter, back-in-stock — were protected by CSRF only. They now share one gate (`PublicFormProtection`): hidden honeypot, render-time check and a per-client rate limit (8 requests/minute per form type).
+
+### Privacy
+- The cookie banner links to the Cookie policy and the Privacy policy.
+- "Recently viewed" now stores data on the device only after "Preferences" consent, and removes it when consent is withdrawn.
+- The reopened cookie settings panel closes on Escape (the first-visit banner still requires a choice).
+
+### Tests
+- New e2e `consent-and-spam.spec.ts` (before choice / reject / granular / accept / withdraw, policy links, honeypot, timestamp) and unit `PublicFormProtectionTest`.
+
 ## 3.13.0 — 2026-09-30
 
 Schema 57, production channel.

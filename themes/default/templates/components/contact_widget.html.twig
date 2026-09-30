@@ -14,7 +14,7 @@
     <form method="post" action="/contact/send" data-cw-form>
       <div class="cw-dialog__head"><h2 id="cw-dialog-title">{{ ui_text('cw_callback_title') }}</h2><button class="cw-dialog__close" type="button" data-cw-dialog-close aria-label="{{ ui_text('cw_close') }}">{{ ui_icon('x', 20) }}</button></div>
       <p>{{ ui_text('cw_callback_text') }}</p>
-      <input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}"><input type="hidden" name="inquiry_type" value="callback"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
+      <input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="callback"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
       <label><span>{{ ui_text('name_required') }}</span><input name="name" required maxlength="190" autocomplete="name"></label>
       <label><span>{{ ui_text('phone') }} *</span><input name="phone" type="tel" required maxlength="32" autocomplete="tel"></label>
       <p class="cw-dialog__error" role="alert" hidden data-cw-error></p>

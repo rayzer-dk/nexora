@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class CustomerInquiryController extends AbstractController
 {
-    public function __construct(private readonly StorefrontContextResolver $contexts,private readonly CustomerInquiryService $service) {}
+    public function __construct(private readonly StorefrontContextResolver $contexts,private readonly CustomerInquiryService $service,private readonly \Commerce\Modules\Security\Spam\PublicFormProtection $protection) {}
     #[Route('/contact/send',name:'storefront_contact_send',methods:['POST'],priority:950)]
     public function contact(Request $request): Response { return $this->handle($request,null,'contact_form'); }
     #[Route('/product/{product}/inquiry',name:'storefront_product_inquiry',methods:['POST'],priority:100)]

@@ -304,8 +304,18 @@ function initProductCardCartActions() {
     });
   });
 }
+let recentlyViewedDone = false;
 function initRecentlyViewed() {
+  // "Recently viewed" is a personalisation feature: it stores data on the device only after "preferences" consent.
   const KEY = 'mc_recent';
+  let allowed = false;
+  try { allowed = Boolean(JSON.parse(localStorage.getItem('mc_consent_v1') || 'null')?.preferences); } catch { allowed = false; }
+  if (!allowed) {
+    try { localStorage.removeItem(KEY); } catch { /* storage unavailable */ }
+    return;
+  }
+  if (recentlyViewedDone) return;
+  recentlyViewedDone = true;
   let items;
   try { items = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { items = []; }
   if (!Array.isArray(items)) items = [];
@@ -346,6 +356,7 @@ function initRecentlyViewed() {
   box.hidden = false;
 }
 initRecentlyViewed();
+document.addEventListener('commerce:consent-changed', initRecentlyViewed);
 initThemeToggle('mc_theme');
 function initContactWidget() {
   const root = q('[data-contact-widget]');

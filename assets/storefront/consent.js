@@ -143,4 +143,9 @@
       banner.querySelector('button, input')?.focus();
     });
   });
+
+  // A reopened settings panel (choice already saved) closes on Escape; the first-visit banner does not.
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !banner.hidden && current().saved) banner.hidden = true;
+  });
 })();

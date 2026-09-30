@@ -1,4 +1,4 @@
-# Engagement tools (3.13.0)
+# Engagement tools (3.13.1)
 
 ## Floating contact buttons — Admin → Appearance → Contact buttons
 One round button in the corner of every storefront page. It expands into the channels you filled in:

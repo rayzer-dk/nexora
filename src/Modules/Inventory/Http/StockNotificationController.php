@@ -14,13 +14,14 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class StockNotificationController extends AbstractController
 {
-    public function __construct(private readonly StorefrontContextResolver $contexts,private readonly StockNotificationService $notifications) {}
+    public function __construct(private readonly StorefrontContextResolver $contexts,private readonly StockNotificationService $notifications,private readonly \Commerce\Modules\Security\Spam\PublicFormProtection $protection) {}
 
     #[Route('/product/{product}/stock-notify',name:'storefront_stock_notify',methods:['POST'],priority:100)]
     public function request(Request $request,string $product): Response
     {
         if(!$this->isCsrfTokenValid('stock_notify_'.$product,(string)$request->request->get('_token'))) throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
         $context=$this->contexts->resolve($request);
+        if(!$this->protection->allow($request,'stock')){$message=\Commerce\Core\I18n\CanonicalUiText::get('php.modules.review.http.productfeedbackcontroller.formu_ne_pryiniato_onovit_storinku_ta_sprobuite_shch');if($request->headers->get('X-Requested-With')==='XMLHttpRequest'||str_contains((string)$request->headers->get('Accept'),'application/json'))return new JsonResponse(['ok'=>false,'message'=>$message],429);$this->addFlash('error',$message);return $this->redirect($request->headers->get('referer') ?: '/catalog');}
         try{$this->notifications->request($context->storeId,$product,(string)$request->request->get('variant_id'),(string)$request->request->get('email'),$context->locale);$ok=true;$message=\Commerce\Core\I18n\CanonicalUiText::get('php.modules.inventory.http.stocknotificationcontroller.perevirte_email_i_pidtverdit_spovishchennia');}
         catch(\DomainException $e){$ok=false;$message=$e->getMessage();}
         if($request->headers->get('X-Requested-With')==='XMLHttpRequest'||str_contains((string)$request->headers->get('Accept'),'application/json')) return new JsonResponse(['ok'=>$ok,'message'=>$message],$ok?200:422);

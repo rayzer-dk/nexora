@@ -19,14 +19,14 @@
 <div class="purchase-unavailable"><strong>{{ product.availability_label }}</strong></div>
 {% elseif product.notify_available %}
 <form class="stock-notify-form" data-stock-notify-form method="post" action="/product/{{ product.id }}/stock-notify">
-    <input type="hidden" name="_token" value="{{ csrf_token('stock_notify_' ~ product.id) }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('stock_notify_' ~ product.id) }}">{% include '@storefront/components/spam_fields.html.twig' %}
     <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
     <label><span>{{ ui_text('notify_when_available') }}</span><div class="inline-action"><input type="email" name="email" required autocomplete="email" placeholder="{{ ui_text('your_email') }}"><button class="button button--primary" type="submit">{{ ui_text('notify') }}</button></div></label>
     <small>{{ ui_text('stock_notification_note') }}</small>
 </form>
 {% elseif product.price_request %}
 <form class="product-inquiry-form" data-inquiry-form method="post" action="/product/{{ product.id }}/inquiry">
-    <input type="hidden" name="_token" value="{{ csrf_token('product_inquiry_' ~ product.id) }}"><input type="hidden" name="inquiry_type" value="price_request"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('product_inquiry_' ~ product.id) }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="price_request"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
     <h3>{{ ui_text('ask_price') }}</h3><div class="delivery-fields"><label><span>{{ ui_text('name') }}</span><input name="name" required maxlength="190"></label><label><span>{{ ui_text('phone_or_email') }}</span><input name="phone" maxlength="32" placeholder="+380..."></label><label><span>Email</span><input name="email" type="email" maxlength="320"></label></div><label><span>{{ ui_text('message') }}</span><textarea name="message" maxlength="4000" rows="3">{{ ui_text('price_request_default') }}</textarea></label><button class="button button--primary button--lg" type="submit">{{ ui_text('send_request') }}</button>
 </form>
 {% else %}
