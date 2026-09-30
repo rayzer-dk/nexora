@@ -45,6 +45,9 @@ parameters:
     env(AI_GEMINI_ENABLED): '0'
     env(AI_GEMINI_API_KEY): ''
     env(AI_GEMINI_MODEL): 'gemini-3.6-flash'
+    env(AI_ANTHROPIC_ENABLED): '0'
+    env(AI_ANTHROPIC_API_KEY): ''
+    env(AI_ANTHROPIC_MODEL): 'claude-sonnet-5-5'
     env(MONOBANK_ACQUIRING_ENABLED): '0'
     env(MONOBANK_ACQUIRING_API_BASE): 'https://api.monobank.ua'
     env(MONOBANK_ACQUIRING_TOKEN): ''
@@ -132,6 +135,9 @@ parameters:
     commerce.ai.gemini.enabled: '%env(bool:AI_GEMINI_ENABLED)%'
     commerce.ai.gemini.api_key: '%env(AI_GEMINI_API_KEY)%'
     commerce.ai.gemini.model: '%env(AI_GEMINI_MODEL)%'
+    commerce.ai.anthropic.enabled: '%env(bool:AI_ANTHROPIC_ENABLED)%'
+    commerce.ai.anthropic.api_key: '%env(AI_ANTHROPIC_API_KEY)%'
+    commerce.ai.anthropic.model: '%env(AI_ANTHROPIC_MODEL)%'
 
 services:
     _defaults:
@@ -612,6 +618,19 @@ services:
             $isEnabled: '%commerce.ai.gemini.enabled%'
             $apiKey: '%commerce.ai.gemini.api_key%'
             $model: '%commerce.ai.gemini.model%'
+
+    Commerce\Modules\Ai\Provider\AnthropicMessagesProvider:
+        arguments:
+            $isEnabled: '%commerce.ai.anthropic.enabled%'
+            $apiKey: '%commerce.ai.anthropic.api_key%'
+            $model: '%commerce.ai.anthropic.model%'
+
+    Commerce\Modules\Ai\Application\AiSettings:
+        arguments:
+            $env:
+                openai: { enabled: '%commerce.ai.openai.enabled%', key: '%commerce.ai.openai.api_key%', model: '%commerce.ai.openai.model%' }
+                gemini: { enabled: '%commerce.ai.gemini.enabled%', key: '%commerce.ai.gemini.api_key%', model: '%commerce.ai.gemini.model%' }
+                anthropic: { enabled: '%commerce.ai.anthropic.enabled%', key: '%commerce.ai.anthropic.api_key%', model: '%commerce.ai.anthropic.model%' }
 
     Commerce\Modules\Ai\Application\AiProviderRegistry:
         arguments:

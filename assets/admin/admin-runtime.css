@@ -1344,3 +1344,15 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 .dash-sub { display: flex; align-items: center; gap: var(--mc-space-2); margin: var(--mc-space-4) 0 var(--mc-space-2); font-size: var(--mc-font-size-sm); color: var(--mc-color-muted); }
 .dash-chips { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); margin: 0; }
 @media (max-width: 640px) { .dash-funnel li { grid-template-columns: minmax(0, 1fr) 3rem; } .dash-funnel .dash-bar { grid-column: 1 / -1; grid-row: 2; } }
+
+/* Traffic analytics (3.16) */
+.dash-funnel--wide li { grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) 7.5rem; }
+.traffic-bars { display: flex; align-items: flex-end; gap: 2px; height: 140px; padding-top: var(--mc-space-2); }
+.traffic-bars__col { flex: 1 1 0; min-width: 2px; height: 100%; display: flex; align-items: flex-end; }
+.traffic-bars__col i { display: block; width: 100%; min-height: 0; background: var(--mc-color-primary); border-radius: var(--mc-radius-sm) var(--mc-radius-sm) 0 0; opacity: .85; }
+.traffic-bars__col:hover i { opacity: 1; }
+
+/* AI settings (3.16) */
+.ai-providers { display: grid; gap: var(--mc-space-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+.ai-provider { display: grid; gap: var(--mc-space-3); align-content: start; padding: var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); }
+.ai-provider h3 { display: flex; align-items: center; gap: var(--mc-space-2); margin: 0; font-size: var(--mc-font-size-md); }

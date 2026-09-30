@@ -1,0 +1,39 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.ai.title'),'ai') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.ai.title') }}</span></nav><h1>{{ ui_text('admin.ai.title') }}</h1><p>{{ ui_text('admin.ai.intro') }}</p></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai.providers_hint') }}</small><h2>{{ ui_text('admin.ai.providers') }}</h2></div>{{ ui_icon('sparkles', 20) }}</div>
+<div class="ai-providers">
+{% for code, p in providers %}
+<article class="ai-provider">
+  <form method="post" action="{{ path('admin_system_ai_save') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_ai_settings') }}"><input type="hidden" name="provider" value="{{ code }}">
+    <h3>{{ p.label }} <span class="admin-badge {{ p.enabled and p.key_set ? 'is-ok' : '' }}">{{ p.enabled and p.key_set ? ui_text('admin.ai.active') : ui_text('admin.ai.inactive') }}</span></h3>
+    <label class="admin-check"><input type="checkbox" name="enabled" value="1"{{ p.enabled ? ' checked' : '' }}><span>{{ ui_text('admin.ai.enabled') }}</span></label>
+    <label><span>{{ ui_text('admin.ai.model') }}</span><input type="text" name="model" maxlength="80" value="{{ p.model }}"></label>
+    <label><span>{{ ui_text('admin.ai.api_key') }}</span><input type="password" name="api_key" maxlength="300" autocomplete="new-password" placeholder="{{ (p.key_set ? ui_text('admin.ai.key_saved') : ui_text('admin.ai.key_empty'))|e('html_attr') }}"><small>{{ p.source == 'env' and p.key_set ? ui_text('admin.ai.key_from_env') : ui_text('admin.ai.key_hint') }}</small></label>
+    <div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.push.save') }}</button></div>
+  </form>
+  {% if p.key_set %}<div class="admin-inline-actions">
+    <form method="post" action="{{ path('admin_system_ai_test') }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_ai_settings') }}"><input type="hidden" name="provider" value="{{ code }}"><button class="admin-button" type="submit">{{ ui_icon('activity', 16) }}<span>{{ ui_text('admin.ai.test') }}</span></button></form>
+    {% if p.source == 'admin' %}<form method="post" action="{{ path('admin_system_ai_key_delete') }}" class="admin-inline-form" data-confirm="{{ ui_text('admin.ai.key_delete_confirm')|e('html_attr') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_ai_settings') }}"><input type="hidden" name="provider" value="{{ code }}"><button class="admin-button is-danger" type="submit">{{ ui_icon('trash-2', 16) }}<span>{{ ui_text('admin.ai.key_delete') }}</span></button></form>{% endif %}
+  </div>{% endif %}
+</article>
+{% endfor %}
+</div></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai.limit_hint') }}</small><h2>{{ ui_text('admin.ai.limit') }}</h2></div><span class="admin-badge">{{ ui_text('admin.ai.used_today') }}: {{ used }} / {{ limit }}</span></div>
+<form method="post" action="{{ path('admin_system_ai_save') }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_ai_settings') }}"><label><span>{{ ui_text('admin.ai.daily_limit') }}</span><input type="number" name="daily_limit" min="0" max="100000" value="{{ limit }}"></label><button class="admin-button is-primary" type="submit">{{ ui_text('admin.push.save') }}</button></form></section>
+<section class="admin-panel" data-ai-playground data-ai-token="{{ csrf_token('admin_ai') }}"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai.playground_hint') }}</small><h2>{{ ui_text('admin.ai.playground') }}</h2></div>{{ ui_icon('wand-sparkles', 20) }}</div>
+{% if ai_providers() %}
+<div class="admin-form-grid">
+  <label><span>{{ ui_text('admin.ai.task') }}</span><select data-ai-play-task><option value="reply">{{ ui_text('admin.ai.task_reply') }}</option><option value="translate">{{ ui_text('admin.ai.task_translate') }}</option><option value="seo_meta">{{ ui_text('admin.ai.task_seo_meta') }}</option></select></label>
+  <label><span>{{ ui_text('admin.ai.provider') }}</span><select data-ai-provider>{% for pr in ai_providers() %}<option value="{{ pr.code }}">{{ pr.label }}</option>{% endfor %}</select></label>
+  <label><span>{{ ui_text('admin.ai.target_language') }}</span><select data-ai-play-target><option value="uk">Ukrainian</option><option value="en">English</option><option value="ru">Russian</option><option value="da">Danish</option><option value="de">German</option><option value="pl">Polish</option></select></label>
+  <label class="admin-form-wide"><span>{{ ui_text('admin.ai.input_text') }}</span><textarea rows="5" maxlength="6000" data-ai-play-input></textarea></label>
+  <div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="button" data-ai-play-run>{{ ui_icon('sparkles', 16) }}<span>{{ ui_text('admin.ai.run') }}</span></button><span data-ai-status role="status"></span></div>
+  <label class="admin-form-wide"><span>{{ ui_text('admin.ai.result') }}</span><textarea rows="6" readonly data-ai-play-output></textarea></label>
+</div>
+{% else %}<p class="admin-empty">{{ ui_text('admin.ai.no_provider') }}</p>{% endif %}</section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.ai.usage') }}</h2></div></div>
+{% if usage %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.automation.time') }}</th><th>{{ ui_text('admin.ai.task') }}</th><th>{{ ui_text('admin.ai.provider') }}</th><th>{{ ui_text('admin.ai.chars') }}</th><th>{{ ui_text('admin.dashboard.status') }}</th></tr></thead><tbody>
+{% for u in usage %}<tr><td>{{ u.created_at|local_datetime }}</td><td>{{ u.task }}<small>{{ u.admin_subject }}</small></td><td>{{ u.provider }}<small>{{ u.model }}</small></td><td>{{ u.input_chars }} / {{ u.output_chars }}</td><td><span class="admin-badge {{ u.status == 'ok' ? 'is-ok' : 'is-danger' }}">{{ u.status }}</span></td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p class="admin-empty">{{ ui_text('admin.ai.usage_empty') }}</p>{% endif %}</section>
+{{ shell.end() }}

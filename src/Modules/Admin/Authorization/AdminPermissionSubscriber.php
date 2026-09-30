@@ -42,6 +42,9 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         $get=$request->isMethod('GET');
         if ($route==='admin_dashboard'||$route==='admin_api_session'||$route==='admin_interface_language'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account_security')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
         if ($route==='admin_analytics') return AdminPermissionCatalog::ANALYTICS_VIEW;
+        if ($route==='admin_analytics_traffic') return AdminPermissionCatalog::ANALYTICS_VIEW;
+        if ($route==='admin_analytics_traffic_settings') return AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if (str_starts_with($route,'admin_system_ai')||str_starts_with($route,'admin_system_data')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_b2b')) return $get?AdminPermissionCatalog::B2B_VIEW:AdminPermissionCatalog::B2B_MANAGE;
         if (str_starts_with($route,'admin_rewards')) return $get?AdminPermissionCatalog::REWARDS_VIEW:AdminPermissionCatalog::REWARDS_MANAGE;
         if (str_starts_with($route,'admin_access_')) return AdminPermissionCatalog::ADMIN_USERS_MANAGE;
@@ -89,7 +92,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (in_array($route,['admin_system_site','admin_system_site_rollback','admin_system_store','admin_system_store_rollback','admin_system_localization','admin_system_localization_locales','admin_system_localization_currencies','admin_system_localization_rate','admin_system_localization_refresh'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (in_array($route,['admin_system_stability','admin_system_components','admin_api_system_health'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_migration')) return AdminPermissionCatalog::SYSTEM_UPDATE;
-        if ($route==='admin_ai_product_draft') return AdminPermissionCatalog::CATALOG_MANAGE;
+        if ($route==='admin_ai_product_draft'||$route==='admin_ai_task') return AdminPermissionCatalog::CATALOG_MANAGE;
         return null;
     }
 

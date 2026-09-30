@@ -1,0 +1,42 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.traffic.title'),'traffic') }}
+{% set t = report.totals %}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.traffic.title') }}</span></nav><h1>{{ ui_text('admin.traffic.title') }}</h1><p>{{ ui_text('admin.traffic.intro') }}</p></div>
+<nav class="dash-period" aria-label="{{ ui_text('admin.traffic.period') }}">{% for d in [7, 30, 90] %}<a href="?days={{ d }}"{{ report.days == d ? ' aria-current="true" class="is-active"' : '' }}>{{ d }} {{ ui_text('admin.dashboard.days_short') }}</a>{% endfor %}</nav></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
+{% if not settings.enabled %}<div class="admin-notice is-warning">{{ ui_text('admin.traffic.disabled') }}</div>{% endif %}
+<section class="dash-kpis" aria-label="{{ ui_text('admin.dashboard.kpi_title') }}">
+  {% set cards = [
+    {label: ui_text('admin.traffic.sessions'), value: t.sessions|number_format(0,'.',' '), delta: report.delta.sessions},
+    {label: ui_text('admin.traffic.visitors'), value: t.visitors|number_format(0,'.',' '), delta: report.delta.visitors},
+    {label: ui_text('admin.traffic.pageviews'), value: t.pageviews|number_format(0,'.',' '), delta: report.delta.pageviews},
+    {label: ui_text('admin.traffic.pages_per_session'), value: t.pages_per_session, delta: null},
+    {label: ui_text('admin.traffic.bounce'), value: t.bounce_rate ~ '%', delta: null},
+    {label: ui_text('admin.traffic.conversion'), value: t.conversion ~ '%', delta: report.delta.ordered}
+  ] %}
+  {% for c in cards %}<article class="dash-kpi"><span class="dash-kpi__label">{{ c.label }}</span><strong class="dash-kpi__value">{{ c.value }}</strong>{% if c.delta is not null %}<span class="dash-delta {{ c.delta >= 0 ? 'is-up' : 'is-down' }}">{{ c.delta > 0 ? '+' : '' }}{{ c.delta }}% <small>{{ ui_text('admin.dashboard.vs_previous') }}</small></span>{% else %}<span class="dash-delta is-flat">&nbsp;</span>{% endif %}</article>{% endfor %}
+</section>
+{% if report.has_data %}
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ report.timezone }}</small><h2>{{ ui_text('admin.traffic.sessions_by_day') }}</h2></div>{{ ui_icon('trending-up', 20) }}</div>
+  <div class="traffic-bars" role="img" aria-label="{{ ui_text('admin.traffic.sessions_by_day') }}">{% for p in report.series %}<span class="traffic-bars__col" title="{{ p.day }}: {{ p.sessions }} / {{ p.pageviews }}"><i style="height:{{ p.height }}%"></i></span>{% endfor %}</div>
+  <div class="dash-chart__axis"><span>{{ report.series|first.day }}</span><span>{{ report.series|last.day }}</span></div></section>
+<div class="dash-grid">
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.traffic.funnel_hint') }}</small><h2>{{ ui_text('admin.traffic.funnel') }}</h2></div>{{ ui_icon('funnel', 20) }}</div>
+  <ol class="dash-funnel dash-funnel--wide">{% for f in report.funnel %}<li><span>{{ {sessions: ui_text('admin.traffic.f_sessions'), product: ui_text('admin.traffic.f_product'), cart: ui_text('admin.traffic.f_cart'), checkout: ui_text('admin.traffic.f_checkout'), order: ui_text('admin.traffic.f_order')}[f.key] }}</span><div class="dash-bar"><i style="width:{{ f.percent }}%"></i></div><strong>{{ f.count }} · {{ f.percent }}%</strong></li>{% endfor %}</ol></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.traffic.sources') }}</h2></div></div>
+  <ol class="dash-rank">{% for s in report.sources %}<li><span>{{ s.source }}<small>{{ s.medium }}</small></span><strong>{{ s.sessions }} · {{ s.orders }} {{ ui_text('admin.dashboard.orders_short') }}</strong></li>{% endfor %}</ol></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.traffic.top_pages') }}</h2></div></div>
+  <ol class="dash-rank">{% for p in report.top_pages %}<li><span>{{ p.path }}</span><strong>{{ p.views }}</strong></li>{% endfor %}</ol></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.traffic.landing') }}</h2></div></div>
+  <ol class="dash-rank">{% for p in report.landing %}<li><span>{{ p.path }}<small>{{ p.bounced }} {{ ui_text('admin.traffic.bounced') }}</small></span><strong>{{ p.sessions }}</strong></li>{% endfor %}</ol></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.traffic.devices') }}</h2></div></div>
+  <ol class="dash-rank">{% for d in report.devices %}<li><span>{{ {desktop: ui_text('admin.traffic.d_desktop'), mobile: ui_text('admin.traffic.d_mobile'), tablet: ui_text('admin.traffic.d_tablet')}[d.device]|default(d.device) }}</span><strong>{{ d.sessions }}</strong></li>{% endfor %}</ol></section>
+{% if report.campaigns %}<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.traffic.campaigns') }}</h2></div></div>
+  <ol class="dash-rank">{% for c in report.campaigns %}<li><span>{{ c.campaign }}<small>{{ c.source }}</small></span><strong>{{ c.sessions }} · {{ c.orders }} {{ ui_text('admin.dashboard.orders_short') }}</strong></li>{% endfor %}</ol></section>{% endif %}
+</div>
+{% else %}<section class="admin-panel"><p class="admin-empty">{{ ui_text('admin.traffic.empty') }}</p></section>{% endif %}
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.traffic.privacy') }}</small><h2>{{ ui_text('admin.traffic.settings') }}</h2></div>{{ ui_icon('shield', 20) }}</div>
+<form method="post" action="{{ path('admin_analytics_traffic_settings') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_traffic') }}">
+<label class="admin-check"><input type="checkbox" name="enabled" value="1"{{ settings.enabled ? ' checked' : '' }}><span>{{ ui_text('admin.traffic.enabled') }}</span></label>
+<label><span>{{ ui_text('admin.traffic.retention') }}</span><input type="number" name="retention_days" min="30" max="1095" value="{{ settings.retention_days }}"><small>{{ ui_text('admin.traffic.retention_hint') }}</small></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.push.save') }}</button></div></form></section>
+{{ shell.end() }}

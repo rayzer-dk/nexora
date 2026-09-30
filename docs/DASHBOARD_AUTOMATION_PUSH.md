@@ -19,3 +19,14 @@ Events come from the domain-event outbox (orders, customers) and from direct hoo
 
 ## Downloads and custom fields
 Uploads are checked by extension, real MIME and magic bytes, then stored by content hash under `public/media/downloads`. Custom fields live in `mc_custom_field_definition` / `mc_custom_field_value`; number, link and date values are validated and invalid values are dropped.
+
+# AI assistant, visit analytics, retention (3.16.0)
+
+## AI assistant
+`AiSettings` keeps per-store provider switches, model names and API keys (`SecretVault`, context `ai.key`); the environment stays a fallback. `AiTaskService` runs five tasks (`product_draft`, `category_text`, `seo_meta`, `translate`, `reply`). Every call counts against `mc_ai_settings.daily_limit` (0 blocks the assistant) and is written to `mc_ai_usage` (kept 90 days). Task data goes inside `<data>` tags with the closing tag escaped; the model must answer one JSON object; outputs are length-capped and stripped of `script/style/iframe/object/embed`. Saving still goes through the normal sanitising writers. Extension providers (`commerce.ai_text_provider`) keep working through `AiProviderRegistry`.
+
+## Visit analytics
+`VisitTrackingSubscriber` runs on `kernel.terminate`. `VisitTracker::countable()` accepts human GET pages answering 200 with HTML, plus `POST /cart/add`. A session is a row in `mc_analytics_session` (30 minutes of silence ends it) with four funnel flags; page views are counters in `mc_analytics_page_daily`. The visitor hash is `HMAC(day | IP | User-Agent)` truncated to 16 bytes and rotates daily. Because no personal data is stored and no cookie is set, no consent is required; the storefront privacy text should still mention statistics.
+
+## Retention
+`commerce:maintenance:retention` (daily in the scheduler) removes technical rows in batches; see the command options for every window. Orders, customers, catalogue and anything pending or failed are never touched. `commerce:queues:purge` handles finished queue rows.

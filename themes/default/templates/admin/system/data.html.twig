@@ -1,0 +1,12 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.data.title'),'data') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.data.title') }}</span></nav><h1>{{ ui_text('admin.data.title') }}</h1><p>{{ ui_text('admin.data.intro') }}</p></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.data.rules_title') }}</small><h2>{{ ui_text('admin.data.cleanup') }}</h2></div>{{ ui_icon('database', 20) }}</div>
+<p>{{ ui_text('admin.data.rules') }}</p>
+<p><strong>{{ ui_text('admin.data.pending') }}: {{ pending_total }}</strong>{% if pending %} — {% for rule, count in pending %}{{ rule }}: {{ count }}{{ not loop.last ? ', ' : '' }}{% endfor %}{% endif %}</p>
+<form method="post" action="{{ path('admin_system_data_run') }}" class="admin-inline-form" data-confirm="{{ ui_text('admin.data.run_confirm')|e('html_attr') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_data') }}"><button class="admin-button is-primary" type="submit">{{ ui_icon('trash-2', 16) }}<span>{{ ui_text('admin.data.run') }}</span></button></form></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.data.total') }}: {{ (total_bytes / 1048576)|number_format(1,'.',' ') }} MB</small><h2>{{ ui_text('admin.data.largest') }}</h2></div></div>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.data.table') }}</th><th>{{ ui_text('admin.data.rows') }}</th><th>MB</th></tr></thead><tbody>
+{% for t in tables %}<tr><td><code>{{ t.name }}</code></td><td>{{ t.row_count|number_format(0,'.',' ') }}</td><td>{{ (t.bytes / 1048576)|number_format(2,'.',' ') }}</td></tr>{% endfor %}
+</tbody></table></div></section>
+{{ shell.end() }}

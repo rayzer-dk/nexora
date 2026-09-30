@@ -57,6 +57,7 @@ final readonly class DashboardService
             'annotations' => $annotations,
             'goals' => $this->goals($storeId, $tz),
             'funnel' => $this->funnel($storeId, $since, $until, $current),
+            'traffic' => (new \Commerce\Modules\Analytics\Visit\VisitReport($this->db))->totals($storeId, $since, $until),
             'pipeline' => $this->pipeline($storeId),
             'top_products' => $this->topProducts($storeId, $since, $until),
             'reorder' => $this->reorder($storeId),

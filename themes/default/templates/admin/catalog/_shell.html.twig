@@ -21,6 +21,7 @@
         <nav class="admin-nav" aria-label="{{ ui_text('admin_manage') }}" data-command-source>
             {% if admin_can('dashboard.view') %}{{ nav.link(section, 'dashboard', '/admin', 'layout-dashboard', ui_text('admin_overview')) }}{% endif %}
             {% if admin_can('analytics.view') %}{{ nav.link(section, 'analytics', '/admin/analytics', 'chart-column', ui_text('admin_analytics')) }}{% endif %}
+            {% if admin_can('analytics.view') %}{{ nav.link(section, 'traffic', '/admin/analytics/traffic', 'trending-up', ui_text('admin.traffic.title')) }}{% endif %}
             {% if admin_can('catalog.view') or admin_can('search.view') %}<span class="admin-nav__label">{{ ui_text('admin_catalog') }}</span>{% endif %}
             {% if admin_can('catalog.view') %}{{ nav.link(section, 'products', '/admin/catalog/products', 'package', ui_text('admin_products')) }}{{ nav.link(section, 'categories', '/admin/catalog/categories', 'folder-tree', ui_text('admin_categories')) }}{{ nav.link(section, 'metadata', '/admin/catalog/metadata', 'tags', ui_text('admin_brands_attributes')) }}{% endif %}
             {% if admin_can('catalog.view') %}{{ nav.link(section, 'fields', '/admin/catalog/fields', 'sliders-horizontal', ui_text('admin.fields.title')) }}{% endif %}
@@ -47,6 +48,8 @@
             {% if admin_can('integrations.manage') %}{{ nav.link(section, 'integrations', '/admin/system/integrations', 'plug', ui_text('admin_integrations')) }}{% endif %}
             {% if admin_can('system.update') %}{{ nav.link(section, 'migration', '/admin/system/migration', 'database-zap', ui_text('admin_migration')) }}{% endif %}
             {% if admin_can('system.settings') %}{{ nav.link(section, 'seo_redirects', '/admin/system/seo-redirects', 'git-branch', ui_text('admin.system.seo_redirects.nav')) }}{{ nav.link(section, 'indexnow', '/admin/system/seo-indexnow', 'refresh-cw', ui_text('admin.indexnow.title')) }}{{ nav.link(section, 'captcha', '/admin/system/captcha', 'shield-check', ui_text('admin.captcha.title')) }}{{ nav.link(section, 'push', '/admin/system/push', 'smartphone', ui_text('admin.push.title')) }}{{ nav.link(section, 'tracking', '/admin/system/tracking', 'chart-column', ui_text('admin.tracking.title')) }}{{ nav.link(section, 'stability', '/admin/system/stability', 'heart-pulse', ui_text('admin_stability')) }}{% endif %}
+            {% if admin_can('system.settings') %}{{ nav.link(section, 'data', '/admin/system/data', 'database', ui_text('admin.data.title')) }}{% endif %}
+            {% if admin_can('system.settings') %}{{ nav.link(section, 'ai', '/admin/system/ai', 'sparkles', ui_text('admin.ai.title')) }}{% endif %}
             {% if admin_can('system.cron.view') %}{{ nav.link(section, 'cron', '/admin/system/cron', 'clock', ui_text('admin_cron_automation')) }}{% endif %}
             {% if admin_can('system.audit.view') %}{{ nav.link(section, 'activity', '/admin/system/activity', 'scroll-text', ui_text('admin_activity_log')) }}{% endif %}
             {% if admin_can('developer_tools.view') %}{{ nav.link(section, 'developer', '/admin/system/developer', 'terminal', ui_text('ui.admin.catalog._shell.developer_tools')) }}{% endif %}

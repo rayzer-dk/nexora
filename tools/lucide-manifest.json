@@ -1,5 +1,6 @@
 {
  "icons": [
+  "activity",
   "archive",
   "arrow-left",
   "arrow-left-right",
@@ -34,6 +35,7 @@
   "copy",
   "corner-down-right",
   "credit-card",
+  "database",
   "database-zap",
   "download",
   "ellipsis",
@@ -137,9 +139,9 @@
   "ticket",
   "timer",
   "trash-2",
-  "triangle-alert",
   "trending-down",
   "trending-up",
+  "triangle-alert",
   "truck",
   "underline",
   "undo-2",
@@ -148,6 +150,7 @@
   "user",
   "users",
   "wallet",
+  "wand-sparkles",
   "wifi-off",
   "workflow",
   "x",

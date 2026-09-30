@@ -2,6 +2,19 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.16.0 — 2026-09-30
+
+Schema 60, production channel. AI assistant, first-party visit analytics, data retention.
+
+### Added
+- **AI assistant** rebuilt (Admin → System → AI assistant): providers OpenAI, Gemini and Claude with keys stored encrypted (never shown again; `.env` values remain as a fallback), model per provider, key test, a daily request limit per store and a usage log. Tasks: product description, category texts, SEO title / description, translation and a reply to a customer. Helpers appear on the category, blog and page forms and only when a provider is active. Results are drafts: nothing is saved or published without a person. Customer text is passed as quoted data, the answer must be one JSON object, lengths are capped and script-like tags are stripped.
+- **Visit analytics** (Admin → Analytics → Traffic): sessions, visitors, page views, pages per session, bounce rate, sources (search / social / referral / UTM / ad click ids), devices, landing pages, top pages and a visit funnel (session → product → cart → checkout → order). Cookie-free: a visitor is a daily rotating keyed hash, IP and User-Agent are never stored, bots, prefetch, the admin area, account pages and non-page responses are not counted, and recording happens after the response is sent. No per-page-view rows exist: page views are counters per day and path (capped at 3000 paths per day). The dashboard funnel links to it.
+- **Data and storage** page (Admin → System): the largest tables, what the cleanup would remove right now and a run button.
+
+### Changed
+- Retention now also removes closed customer inquiries (365 days, they hold contact data), AI and automation logs (90 days), push subscriptions without a successful delivery for 270 days, marketing automation deliveries and extension events (365 days), closed price history rows (730 days) and raw visit sessions / daily page counters (per store, default 400 days).
+- The product form no longer offers a provider that is not configured; the old `/admin/api/ai/product-draft` endpoint is kept and now goes through the same limits and log.
+
 ## 3.15.0 — 2026-09-30
 
 Schema 59, production channel. New dashboard, automation, web push, downloads, custom fields, manual orders.

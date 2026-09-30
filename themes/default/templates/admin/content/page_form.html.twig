@@ -4,7 +4,8 @@
 <label>{{ ui_text('admin.content.page_form.nazva') }}<input type="text" name="title" value="{{ page.title }}" required maxlength="255"></label>
 <label>{{ ui_text('admin.content.page_form.korotkyi_vstup') }}<textarea name="excerpt" rows="3">{{ page.excerpt }}</textarea></label>
 <label>{{ ui_text('admin.content.page_form.zmist') }}<textarea name="body_html" rows="16" data-rich-editor>{{ page.body_html }}</textarea><small>{{ ui_text('admin.content.page_form.html_ochyshchaietsia_na_serveri_pered_zberezhenn') }}</small></label>
-<label>{{ ui_text('ui.admin.content.page_form.meta_title') }}<input type="text" name="meta_title" value="{{ page.meta_title }}" maxlength="255"></label>
+{% include '@storefront/admin/_ai_box.html.twig' with {task:'seo_meta', label: ui_text('admin.ai.generate_meta'), inputs:{title:'[name=title]', body:'[name=body_html]'}, outputs:{meta_title:'[name=meta_title]', meta_description:'[name=meta_description]'}} only %}
+  <label>{{ ui_text('ui.admin.content.page_form.meta_title') }}<input type="text" name="meta_title" value="{{ page.meta_title }}" maxlength="255"></label>
 <label>{{ ui_text('ui.admin.content.page_form.meta_description') }}<textarea name="meta_description" rows="3" maxlength="500">{{ page.meta_description }}</textarea></label>
 <label>{{ ui_text('admin.content.page_form.status') }}<select name="status"><option value="draft" {{ page.status == 'draft' ? 'selected' : '' }}>{{ ui_text('admin.content.page_form.chernetka') }}</option><option value="published" {{ page.status == 'published' ? 'selected' : '' }}>{{ ui_text('admin.content.page_form.opublikovano') }}</option></select></label>
 <div class="admin-form-actions"><a class="admin-button" href="/admin/content/pages">{{ ui_text('admin.content.page_form.nazad') }}</a><button class="admin-button is-primary" type="submit">{{ ui_text('admin.content.page_form.zberehty') }}</button></div></form>{{ shell.end() }}

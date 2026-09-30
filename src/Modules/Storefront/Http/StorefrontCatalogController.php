@@ -170,6 +170,8 @@ final class StorefrontCatalogController extends AbstractController
             throw $this->createNotFoundException();
         }
 
+        $request->attributes->set('_analytics_page', strtolower($resolved->route->entityType->name));
+
         return match ($resolved->route->entityType) {
             SeoEntityType::Product => $this->product($request, $context, $resolved->route->entityPublicId),
             SeoEntityType::Category => $this->category($request, $context, $resolved->route->entityPublicId),

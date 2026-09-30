@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Ai\Http;
 
-use Commerce\Modules\Ai\Application\AiProviderRegistry;
+use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Modules\Admin\Http\AdminContextResolver;
+use Commerce\Modules\Ai\Application\AiTaskService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,16 +14,50 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AiAdminController extends AbstractController
 {
-    public function __construct(private readonly AiProviderRegistry $providers){}
-
-    #[Route('/admin/api/ai/product-draft',name:'admin_ai_product_draft',methods:['POST'])]
-    public function productDraft(Request $request):JsonResponse
+    public function __construct(private readonly AiTaskService $tasks, private readonly AdminContextResolver $contexts)
     {
-        if(!$this->isCsrfTokenValid('admin_ai_product',(string)$request->request->get('_token')))return $this->json(['ok'=>false,'message'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.ai.http.aiadmincontroller.nediisnyi_token_bezpeky')],403);
-        try{$provider=$this->providers->require((string)$request->request->get('provider'));$name=trim((string)$request->request->get('name'));$sku=trim((string)$request->request->get('sku'));$current=trim((string)$request->request->get('description'));if($name==='')throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.ai.http.aiadmincontroller.spochatku_vkazhit_nazvu_tovaru'));
-            $prompt=\Commerce\Core\I18n\CanonicalUiText::get('ai.product_draft.prompt',['name'=>$name,'sku'=>$sku,'current'=>$current]);
-            $raw=$provider->generate($prompt,\Commerce\Core\I18n\CanonicalUiText::get('ai.product_draft.system'));$raw=trim(preg_replace('/^```(?:json)?\s*|\s*```$/u','',$raw)??$raw);$data=json_decode($raw,true,32,JSON_THROW_ON_ERROR);if(!is_array($data)||!is_string($data['short_description']??null)||!is_string($data['description']??null))throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.ccaa8cd0be5e'));
-            return $this->json(['ok'=>true,'short_description'=>mb_substr(trim($data['short_description']),0,2000),'description'=>trim($data['description'])]);
-        }catch(\Throwable $e){return $this->json(['ok'=>false,'message'=>$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('ai.product_draft.failed')],422);}
+    }
+
+    /** Generic assistant endpoint: the result is only returned to the form, never saved. */
+    #[Route('/admin/api/ai/task', name: 'admin_ai_task', methods: ['POST'])]
+    public function task(Request $request): JsonResponse
+    {
+        if (!$this->isCsrfTokenValid('admin_ai', (string) $request->request->get('_token'))) {
+            return $this->json(['ok' => false, 'message' => CanonicalUiText::get('common.security.invalid_csrf')], 403);
+        }
+        $fields = $request->request->all('fields');
+
+        return $this->execute($request, (string) $request->request->get('task', ''), $fields);
+    }
+
+    /** Kept for the product form of earlier versions. */
+    #[Route('/admin/api/ai/product-draft', name: 'admin_ai_product_draft', methods: ['POST'])]
+    public function productDraft(Request $request): JsonResponse
+    {
+        if (!$this->isCsrfTokenValid('admin_ai_product', (string) $request->request->get('_token'))) {
+            return $this->json(['ok' => false, 'message' => CanonicalUiText::get('common.security.invalid_csrf')], 403);
+        }
+        $r = $request->request;
+        $response = $this->execute($request, 'product_draft', ['name' => (string) $r->get('name', ''), 'sku' => (string) $r->get('sku', ''), 'current' => (string) $r->get('description', '')]);
+        $data = json_decode((string) $response->getContent(), true);
+        if (is_array($data) && ($data['ok'] ?? false) === true) {
+            return $this->json(['ok' => true, 'short_description' => $data['fields']['short_description'] ?? '', 'description' => $data['fields']['description'] ?? '']);
+        }
+
+        return $response;
+    }
+
+    /** @param array<string,mixed> $fields */
+    private function execute(Request $request, string $task, array $fields): JsonResponse
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->getUser();
+        try {
+            $result = $this->tasks->run($context->storeId, $user?->getUserIdentifier() ?? 'admin', $task, (string) $request->request->get('provider', ''), $fields, $context->locale);
+
+            return $this->json(['ok' => true] + $result);
+        } catch (\DomainException $e) {
+            return $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 }

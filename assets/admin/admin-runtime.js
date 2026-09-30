@@ -32,3 +32,63 @@ if (aiDraftButton) {
     }
   });
 }
+
+// Generic AI assistant buttons: read the mapped inputs, ask the server, put the draft into the mapped fields. Nothing is saved automatically.
+document.querySelectorAll('[data-ai-task]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const box = button.closest('[data-ai-box]');
+    const status = box?.querySelector('[data-ai-status]');
+    const provider = box?.querySelector('[data-ai-provider]');
+    if (!box || !status || !provider) return;
+    let inputs = {}; let outputs = {};
+    try { inputs = JSON.parse(button.dataset.aiIn || '{}'); outputs = JSON.parse(button.dataset.aiOut || '{}'); } catch { return; }
+    const body = new URLSearchParams({ _token: box.dataset.aiToken || '', task: button.dataset.aiTask || '', provider: provider.value });
+    for (const [name, selector] of Object.entries(inputs)) body.append(`fields[${name}]`, document.querySelector(selector)?.value || '');
+    button.disabled = true;
+    status.textContent = t('admin.ai.generating');
+    try {
+      const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
+      for (const [name, selector] of Object.entries(outputs)) {
+        const field = document.querySelector(selector);
+        if (field && typeof data.fields?.[name] === 'string') { field.value = data.fields[name]; field.dispatchEvent(new Event('input', { bubbles: true })); }
+      }
+      status.textContent = t('admin.ai.draft_inserted');
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+    } finally {
+      button.disabled = false;
+    }
+  });
+});
+
+// Free-form assistant on the AI settings page (reply drafts, translation, SEO text).
+const aiPlayground = document.querySelector('[data-ai-playground]');
+if (aiPlayground) {
+  const run = aiPlayground.querySelector('[data-ai-play-run]');
+  run?.addEventListener('click', async () => {
+    const task = aiPlayground.querySelector('[data-ai-play-task]')?.value || 'reply';
+    const text = aiPlayground.querySelector('[data-ai-play-input]')?.value || '';
+    const target = aiPlayground.querySelector('[data-ai-play-target]')?.value || 'en';
+    const status = aiPlayground.querySelector('[data-ai-status]');
+    const output = aiPlayground.querySelector('[data-ai-play-output]');
+    const body = new URLSearchParams({ _token: aiPlayground.dataset.aiToken || '', task, provider: aiPlayground.querySelector('[data-ai-provider]')?.value || '' });
+    if (task === 'reply') body.append('fields[message]', text);
+    else if (task === 'translate') { body.append('fields[text]', text); body.append('fields[target]', target); }
+    else { body.append('fields[title]', text.split('\n')[0].slice(0, 200)); body.append('fields[body]', text); }
+    run.disabled = true;
+    if (status) status.textContent = t('admin.ai.generating');
+    try {
+      const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
+      if (output) output.value = Object.values(data.fields || {}).join('\n\n');
+      if (status) status.textContent = t('admin.ai.draft_inserted');
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+    } finally {
+      run.disabled = false;
+    }
+  });
+}

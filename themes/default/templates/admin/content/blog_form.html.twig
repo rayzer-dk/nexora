@@ -16,6 +16,7 @@
  <section class="admin-panel admin-form">
   <div class="admin-panel__header"><h2>{{ ui_text('admin.blog.seo') }}</h2></div>
   <div class="serp-preview" data-serp-preview aria-label="{{ ui_text('admin.blog.serp_preview')|e('html_attr') }}"><span class="serp-preview__url" data-serp-url></span><strong class="serp-preview__title" data-serp-title></strong><span class="serp-preview__desc" data-serp-desc></span></div>
+  {% include '@storefront/admin/_ai_box.html.twig' with {task:'seo_meta', label: ui_text('admin.ai.generate_meta'), inputs:{title:'[name=title]', body:'[name=body_html]'}, outputs:{meta_title:'[name=meta_title]', meta_description:'[name=meta_description]'}} only %}
   <label>{{ ui_text('admin.blog.meta_title') }}<input type="text" name="meta_title" id="blog-meta-title" value="{{ article.meta_title }}" maxlength="255" data-serp-source="meta_title"><small class="admin-counter" data-char-counter="blog-meta-title" data-min="30" data-max="60"></small></label>
   <label>{{ ui_text('admin.blog.meta_description') }}<textarea name="meta_description" id="blog-meta-description" rows="3" maxlength="500" data-serp-source="meta_description">{{ article.meta_description }}</textarea><small class="admin-counter" data-char-counter="blog-meta-description" data-min="70" data-max="160"></small></label>
   <label>{{ ui_text('admin.blog.canonical') }}<input type="url" name="canonical_url" value="{{ article.canonical_url }}" maxlength="500" placeholder="https://"><small>{{ ui_text('admin.blog.canonical_hint') }}</small></label>

@@ -52,6 +52,10 @@ final class DataRetentionCommand extends Command
             ->addOption('security-days', null, InputOption::VALUE_REQUIRED, 'Security event history', '180')
             ->addOption('incident-days', null, InputOption::VALUE_REQUIRED, 'Runtime incident history', '90')
             ->addOption('delivery-days', null, InputOption::VALUE_REQUIRED, 'Finished webhook/marketing deliveries', '30')
+            ->addOption('inquiry-days', null, InputOption::VALUE_REQUIRED, 'Closed customer inquiries (contain contact data)', '365')
+            ->addOption('ai-log-days', null, InputOption::VALUE_REQUIRED, 'AI assistant usage log', '90')
+            ->addOption('automation-log-days', null, InputOption::VALUE_REQUIRED, 'Automation rule run log', '90')
+            ->addOption('price-history-days', null, InputOption::VALUE_REQUIRED, 'Closed price history rows', '730')
             ->addOption('keep-auto-snapshots', null, InputOption::VALUE_REQUIRED, 'Automatic pre-update snapshots to keep', '3')
             ->addOption('log-days', null, InputOption::VALUE_REQUIRED, 'Rotated log files and update leftovers', '14');
     }
@@ -88,6 +92,16 @@ final class DataRetentionCommand extends Command
         $report['marketing_deliveries'] = $this->purge('mc_marketing_delivery', "status = 'sent' AND updated_at < ?", [$delivery]);
         $report['webhook_replay'] = $this->purge('mc_webhook_replay', 'received_at < ?', [$this->cutoff(7)]);
         $report['api_rate_window'] = $this->count('mc_api_rate_window', 'window_started_at < ?', [$this->cutoff(1)], static fn (Connection $db, array $p): int => $db->executeStatement('DELETE FROM mc_api_rate_window WHERE window_started_at < ?', $p));
+
+        // Privacy and growth: closed inquiries hold names, phones and e-mails; the rest are plain logs.
+        $report['inquiries_closed'] = $this->purge('mc_customer_inquiry', "status IN ('resolved','closed') AND updated_at < ?", [$this->cutoff($days('inquiry-days', 30, 3650))]);
+        $report['ai_usage'] = $this->purge('mc_ai_usage', 'created_at < ?', [$this->cutoff($days('ai-log-days', 30, 3650))]);
+        $report['automation_runs'] = $this->purge('mc_automation_run', 'created_at < ?', [$this->cutoff($days('automation-log-days', 30, 3650))]);
+        $report['push_stale'] = $this->purge('mc_push_subscription', 'COALESCE(last_success_at, created_at) < ?', [$this->cutoff(270)]);
+        $report['marketing_automation_deliveries'] = $this->purge('mc_marketing_automation_delivery', "status <> 'pending' AND created_at < ?", [$this->cutoff(365)]);
+        $report['extension_events'] = $this->purge('mc_extension_lifecycle_event', 'created_at < ?', [$this->cutoff(365)]);
+        $report['price_history'] = $this->purge('mc_price_history', 'valid_to IS NOT NULL AND valid_to < ?', [$this->cutoff($days('price-history-days', 90, 3650))]);
+        $report['analytics_sessions'] = $this->purgeAnalytics();
 
         // Exchange rates: keep 90 days of history and always the newest observation of every pair.
         $report['exchange_rates'] = $this->purge(
@@ -313,6 +327,28 @@ final class DataRetentionCommand extends Command
         } catch (Throwable) {
             return 0;
         }
+    }
+
+    /** Raw visit sessions and daily page counters are kept for the per-store retention setting (default 400 days). */
+    private function purgeAnalytics(): int
+    {
+        if (!$this->tableExists('mc_analytics_session')) {
+            return 0;
+        }
+        $settings = $this->tableExists('mc_analytics_settings') ? $this->db->fetchAllKeyValue('SELECT store_id,retention_days FROM mc_analytics_settings') : [];
+        $total = 0;
+        foreach ($this->db->fetchFirstColumn('SELECT id FROM mc_store') as $storeId) {
+            $days = max(30, min(1095, (int) ($settings[$storeId] ?? 400)));
+            $total += $this->purge('mc_analytics_session', 'store_id = ' . (int) $storeId . ' AND started_at < ?', [$this->cutoff($days)]);
+            $cut = gmdate('Y-m-d', time() - $days * 86400);
+            if ($this->tableExists('mc_analytics_page_daily')) {
+                $total += $this->dryRun
+                    ? (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_analytics_page_daily WHERE store_id=? AND day < ?', [$storeId, $cut])
+                    : $this->db->executeStatement('DELETE FROM mc_analytics_page_daily WHERE store_id=? AND day < ? LIMIT 100000', [$storeId, $cut]);
+            }
+        }
+
+        return $total;
     }
 
     private function cutoff(int $days): string

@@ -80,6 +80,7 @@
       <li><span>{{ ui_text('admin.dashboard.funnel_abandoned') }}</span><div class="dash-bar is-warn"><i style="width:{{ (f.abandoned / fmax * 100)|round }}%"></i></div><strong>{{ f.abandoned }}</strong></li>
       <li><span>{{ ui_text('admin.dashboard.funnel_quick') }}</span><div class="dash-bar is-info"><i style="width:{{ (f.quick_orders / fmax * 100)|round }}%"></i></div><strong>{{ f.quick_orders }}</strong></li>
     </ul>
+    <p class="dash-sub"><a href="/admin/analytics/traffic">{{ ui_text('admin.dashboard.funnel_sessions') }}: {{ report.traffic.sessions }} · {{ ui_text('admin.dashboard.funnel_traffic_link') }}</a></p>
   </section>
 </div>
 
