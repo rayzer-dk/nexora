@@ -2,6 +2,13 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.20.2 — 2026-09-30
+
+Schema 64. Installation on shared hosting.
+
+### Fixed
+- **Installer refused to run on hosts whose MySQL defaults are MyISAM and an empty `sql_mode`** (typical for shared hosting). Every database connection now sets strict `sql_mode` and InnoDB as the default engine for the session, so the server defaults no longer matter; all tables are created as InnoDB (verified on a server with global MyISAM and empty sql_mode).
+
 ## 3.20.1 — 2026-09-30
 
 Schema 64. Packaging fix.

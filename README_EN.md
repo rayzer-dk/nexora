@@ -1,4 +1,4 @@
-# Nexora Commerce 3.20.1
+# Nexora Commerce 3.20.2
 
 Modern modular e-commerce platform for Ukraine and Europe. One canonical source: the `main` branch.
 
