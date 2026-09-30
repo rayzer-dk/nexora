@@ -1,0 +1,5 @@
+<section class="custom-form custom-form--embedded" data-custom-form="{{ form.slug }}" aria-label="{{ form.name|e('html_attr') }}">
+    <h2 class="custom-form__title">{{ form.name }}</h2>
+    {% if form.intro %}<p class="custom-form__intro">{{ form.intro }}</p>{% endif %}
+    {% include '@storefront/forms/_form.html.twig' %}
+</section>

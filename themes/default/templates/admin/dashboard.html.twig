@@ -13,6 +13,7 @@
   </div>
 </header>
 
+{% if onboarding.done < onboarding.total %}<a class="onboarding-card" href="{{ path('admin_onboarding') }}"><span class="onboarding-card__text"><strong>{{ ui_text('admin.onboarding.card') }}</strong><small>{{ onboarding.done }} / {{ onboarding.total }}</small></span><progress class="onboarding-bar" max="{{ onboarding.total }}" value="{{ onboarding.done }}"></progress>{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
 <section class="dash-kpis" aria-label="{{ ui_text('admin.dashboard.kpi_title') }}">
 {% for k in report.kpis %}
   <article class="dash-kpi">

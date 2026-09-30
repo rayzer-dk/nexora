@@ -38,7 +38,20 @@ final readonly class MediaImageService
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.zobrazhennia_maie_buty_ne_bilshe_20_mb'));
         }
         $path = $file->getPathname();
-        $info = @getimagesize($path);
+        $heic = new HeicDecoder();
+        $fromHeic = false;
+        $heicJpeg = null;
+        if ($heic->isHeicFile($path)) {
+            try {
+                $heicJpeg = $heic->toJpeg($path);
+            } catch (RuntimeException $exception) {
+                throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get($exception->getMessage() === 'heic_decoder_missing' ? 'media.heic_decoder_missing' : 'media.heic_decode_failed'));
+            }
+            $fromHeic = true;
+            $info = @getimagesizefromstring($heicJpeg);
+        } else {
+            $info = @getimagesize($path);
+        }
         if (!is_array($info) || !isset($info[0], $info[1], $info['mime'])) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.fail_ne_ie_pidtrymuvanym_rastrovym_zobrazhenniam'));
         }
@@ -51,7 +64,7 @@ final readonly class MediaImageService
         if ($width < 1 || $height < 1 || $width > self::MAX_DIMENSION || $height > self::MAX_DIMENSION || ($width * $height) > self::MAX_PIXELS) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.rozdilna_zdatnist_zobrazhennia_perevyshchuie_bezpech'));
         }
-        $raw = @file_get_contents($path);
+        $raw = $heicJpeg ?? @file_get_contents($path);
         if (!is_string($raw) || $raw === '') {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.ne_vdalosia_prochytaty_zavantazhene_zobrazhennia'));
         }
@@ -64,6 +77,9 @@ final readonly class MediaImageService
             $checksum = hash('sha256', $raw);
             $relativeBase = 'catalog/' . gmdate('Y/m') . '/' . substr($checksum, 0, 2) . '/' . $checksum;
             $profile = $storeId !== null ? $this->processingProfile($storeId) : ['format'=>'original','widths'=>[640,960,1280],'include_original'=>true,'quality'=>85];
+            if ($fromHeic && in_array($profile['format'], ['original', 'jpeg', 'png'], true)) {
+                $profile['format'] = 'webp'; // HEIC is not browser-friendly: it is always converted to WebP (or AVIF when the store chose it)
+            }
             $derivatives = $this->generateDerivatives($source, $width, $height, $relativeBase, $mime, $profile);
             if ($derivatives === []) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.ne_vdalosia_stvoryty_optymizovani_kopii_zobrazhennia'));
@@ -83,7 +99,7 @@ final readonly class MediaImageService
                 );
             }
             $metadata = [
-                'source_mime' => $mime,
+                'source_mime' => $fromHeic ? 'image/heic' : $mime,
                 'source_checksum' => $checksum,
                 'focal_point' => ['x' => 0.5, 'y' => 0.5],
                 'derivatives' => $derivatives,

@@ -94,14 +94,14 @@ test('a form is built, published, answered by a visitor and the answer is read, 
   await page.locator('select[name="fields[2][type]"]').selectOption('textarea');
   await Promise.all([
     page.waitForURL(/\/admin\/content\/forms\/\d+$/),
-    page.locator('[data-form-editor] button[type="submit"]').click(),
+    page.locator('[data-form-editor] button[type="submit"]').first().click(),
   ]);
   await expect(page.locator('.admin-notice.is-success').first()).toContainText('Форму збережено');
 
   // invalid: a select without options is refused, nothing is lost
   await page.locator('input[name="fields[3][label]"]').fill('Broken');
   await page.locator('select[name="fields[3][type]"]').selectOption('radio');
-  await page.locator('[data-form-editor] button[type="submit"]').click();
+  await page.locator('[data-form-editor] button[type="submit"]').first().click();
   await expect(page.locator('.admin-notice.is-error').first()).toContainText('варіанти');
 
   const visitor = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
@@ -113,6 +113,8 @@ test('a form is built, published, answered by a visitor and the answer is read, 
   await shop.locator('input[name="f1"]').fill('=HYPERLINK("http://x")');
   await shop.locator('select[name="f2"]').selectOption('Support');
   await shop.locator('textarea[name="f3"]').fill('Hello from e2e');
+  // the anti-spam guard rejects answers sent within a second of rendering the form
+  await shop.waitForTimeout(1300);
   await shop.locator('[data-custom-form] button[type="submit"]').click();
   // the AJAX submit resets the form on success; the answer itself is verified in the admin below
   await expect(shop.locator('input[name="f1"]')).toHaveValue('', { timeout: 15000 });

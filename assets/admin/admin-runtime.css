@@ -1425,3 +1425,21 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 .admin-form-stack { display: grid; gap: var(--mc-space-5); }
 .admin-table__actions { display: flex; justify-content: flex-end; gap: var(--mc-space-2); }
 .quality-group { min-width: 0; }
+
+.form-translation { border-left: 3px solid var(--mc-color-violet); }
+.quality-history__chart { display: block; width: 100%; height: 96px; color: var(--mc-color-primary); }
+.quality-history__meta { display: flex; justify-content: space-between; margin: var(--mc-space-2) 0 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); }
+.admin-command__hint { margin: 0; padding: var(--mc-space-2) var(--mc-space-4); border-top: 1px solid var(--mc-color-border); color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); }
+.onboarding-card { display: flex; align-items: center; gap: var(--mc-space-4); margin: 0 0 var(--mc-space-4); padding: var(--mc-space-3) var(--mc-space-4); border: 1px solid var(--mc-color-border); border-left: 4px solid var(--mc-color-primary); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); color: var(--mc-color-text); text-decoration: none; }
+.onboarding-card__text { display: flex; flex-direction: column; min-width: 8rem; }
+.onboarding-card__text small { color: var(--mc-color-muted); }
+.onboarding-bar { flex: 1; height: 0.5rem; accent-color: var(--mc-color-primary); }
+.onboarding__progress { display: flex; align-items: center; gap: var(--mc-space-3); margin-bottom: var(--mc-space-4); }
+.onboarding__steps { display: grid; gap: var(--mc-space-3); margin: 0; padding: 0; list-style: none; }
+.onboarding__step { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--mc-space-3); padding: var(--mc-space-3) var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); }
+.onboarding__step h2 { margin: 0; font-size: var(--mc-font-size-md); }
+.onboarding__step p { margin: 0; color: var(--mc-color-muted); }
+.onboarding__icon { display: inline-flex; padding: var(--mc-space-2); border-radius: 50%; background: var(--mc-color-surface-subtle); }
+.onboarding__step.is-done .onboarding__icon { background: var(--mc-color-success-soft); color: var(--mc-color-success); }
+.onboarding { display: grid; gap: var(--mc-space-3); }
+.quality-history { display: grid; gap: var(--mc-space-2); }

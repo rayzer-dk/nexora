@@ -37,6 +37,7 @@ final readonly class DemoSeeder
     public function install(): array
     {
         $ctx = $this->context();
+        \Commerce\Core\I18n\CanonicalUiText::useLocale(in_array(substr($ctx['locale'], 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US');
         if ($this->isInstalled($ctx['store_id'], $ctx['store_public_id'])) {
             $this->remove();
             $ctx = $this->context();
@@ -224,7 +225,7 @@ final readonly class DemoSeeder
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.18.1',
+                'version' => '3.19.0',
                 'catalog_source' => 'DummyJSON',
             ]);
 
@@ -378,12 +379,13 @@ final readonly class DemoSeeder
             'terms'=>[\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.umovy_ta_polozhennia'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.demonstratsiini_umovy_vykorystannia_mahazynu'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.p_zaminit_tsei_tekst_iurydychnymy_umovamy_vashoi_kom')],
         ];
         $templates=new \Commerce\Modules\Content\System\InformationPageTemplates($this->projectDir);
-        $profile=$db->fetchAssociative('SELECT sp.legal_name,sp.registration_number,sp.registration_address,sp.email,sp.phone,sp.privacy_contact,sp.return_contact,sp.warranty_contact,s.name AS store_name FROM mc_store s LEFT JOIN mc_store_profile sp ON sp.store_id=s.id WHERE s.id=?',[$storeId]) ?: [];
+        $profile=$db->fetchAssociative('SELECT sp.country_code,sp.legal_name,sp.registration_number,sp.registration_address,sp.email,sp.phone,sp.privacy_contact,sp.return_contact,sp.warranty_contact,s.name AS store_name FROM mc_store s LEFT JOIN mc_store_profile sp ON sp.store_id=s.id WHERE s.id=?',[$storeId]) ?: [];
         foreach($pages as $key=>$page){
             $row=$db->fetchAssociative("SELECT ce.id,ce.status,ct.body_html FROM mc_content_entry ce JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=? WHERE ce.store_id=? AND ce.content_type='page' AND ce.system_key=? LIMIT 1",[$locale,$storeId,$key]);
             if(!is_array($row) || ((string)($row['status']??'')==='published' && trim((string)($row['body_html']??''))!=='')){continue;}
             $db->update('mc_content_entry',['status'=>'published','author_subject'=>'demo:seed','published_at'=>$now,'updated_at'=>$now],['id'=>(int)$row['id']]);
-            $body=$templates->body((string)$key,$locale,$profile) ?? $page[2];
+            $body=$templates->body((string)$key,$locale,$profile,(string)($profile['country_code']??'')) ?? $page[2];
+            $page[0]=$templates->title((string)$key,$locale) ?? $page[0];
             $db->update('mc_content_translation',['title'=>$page[0],'excerpt'=>$page[1],'body_html'=>$body,'meta_title'=>$page[0],'meta_description'=>$page[1],'updated_at'=>$now],['content_id'=>(int)$row['id'],'locale'=>$locale]);
         }
     }
@@ -492,7 +494,7 @@ final readonly class DemoSeeder
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.18.1',
+            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.19.0',
             CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$data): int {
                 if (strlen($data) + strlen($chunk) > 5 * 1024 * 1024) { return 0; }
                 $data .= $chunk;
@@ -525,15 +527,10 @@ final readonly class DemoSeeder
 
     private function demoPriceMinor(float $usd, string $currency): int
     {
-        $rate = match (strtoupper($currency)) {
-            'UAH' => 41.0,
-            'EUR' => 0.92,
-            'DKK' => 6.40,
-            'PLN' => 4.00,
-            'GBP' => 0.79,
-            default => 1.0,
-        };
-        return max(0, (int) round($usd * $rate * 100));
+        $rate = \Commerce\Core\Install\RegionCatalog::demoRatePerUsd($currency);
+        $digits = \Commerce\Core\Install\RegionCatalog::minorUnits($currency);
+
+        return max(0, (int) round($usd * $rate * (10 ** $digits)));
     }
 
     private function formatNumber(mixed $value): string

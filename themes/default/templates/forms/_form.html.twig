@@ -1,0 +1,26 @@
+        {% for message in app.flashes('form_success') %}<div class="store-notice is-success" role="status">{{ message }}</div>{% endfor %}
+        {% for message in app.flashes('form_error') %}<div class="store-notice is-error" role="alert">{{ message }}</div>{% endfor %}
+        <form method="post" action="/forms/{{ form.slug }}/submit" class="custom-form__body" data-inquiry-form enctype="multipart/form-data">
+            <input type="hidden" name="_token" value="{{ csrf_token('form_' ~ form.slug) }}">
+            {% if form_back|default('') %}<input type="hidden" name="_back" value="{{ form_back }}">{% endif %}
+            {% include '@storefront/components/spam_fields.html.twig' %}
+            {% for field in form.fields %}
+            {% set id = 'cf-' ~ form.slug ~ '-' ~ field.key %}
+            {% if field.type == 'checkbox' %}
+            <label class="custom-form__check"><input type="checkbox" name="{{ field.key }}" value="1" {{ field.required ? 'required' : '' }}><span>{{ field.label }}{% if field.required %} <abbr title="{{ ui_text('required') }}">*</abbr>{% endif %}</span></label>
+            {% elseif field.type == 'radio' %}
+            <fieldset class="custom-form__group"><legend>{{ field.label }}{% if field.required %} <abbr title="{{ ui_text('required') }}">*</abbr>{% endif %}</legend>
+                {% for option in field.options %}<label class="custom-form__check"><input type="radio" name="{{ field.key }}" value="{{ option }}" {{ field.required and loop.first ? 'required' : '' }}><span>{{ field.option_labels[option]|default(option) }}</span></label>{% endfor %}
+            </fieldset>
+            {% else %}
+            <label for="{{ id }}"><span>{{ field.label }}{% if field.required %} <abbr title="{{ ui_text('required') }}">*</abbr>{% endif %}</span>
+                {% if field.type == 'textarea' %}<textarea id="{{ id }}" name="{{ field.key }}" rows="5" maxlength="4000" placeholder="{{ field.placeholder }}" {{ field.required ? 'required' : '' }}></textarea>
+                {% elseif field.type == 'select' %}<select id="{{ id }}" name="{{ field.key }}" {{ field.required ? 'required' : '' }}><option value="">—</option>{% for option in field.options %}<option value="{{ option }}">{{ field.option_labels[option]|default(option) }}</option>{% endfor %}</select>
+                {% elseif field.type == 'file' %}<input id="{{ id }}" type="file" name="{{ field.key }}" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.csv,.docx,.xlsx" {{ field.required ? 'required' : '' }}><small>{{ ui_text('forms.file_hint') }}</small>
+                {% else %}<input id="{{ id }}" type="{{ field.type == 'number' ? 'number' : (field.type in ['email','tel','date'] ? field.type : 'text') }}" name="{{ field.key }}" maxlength="500" {{ field.type == 'number' ? 'step="any"' : '' }} placeholder="{{ field.placeholder }}" {{ field.required ? 'required' : '' }}>{% endif %}
+            </label>
+            {% endif %}
+            {% endfor %}
+            {% include '@storefront/components/captcha.html.twig' with {form:'custom_form'} only %}
+            <button class="button button--primary" type="submit">{{ form.submit_label ?: ui_text('send') }}</button>
+        </form>

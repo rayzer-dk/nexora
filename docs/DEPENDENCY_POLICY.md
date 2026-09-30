@@ -37,4 +37,4 @@ The command verifies the Composer installer signature when Composer is not alrea
 
 ## PHP 8.6 readiness
 
-`php tools/check-php86-readiness.php` statically scans `src/`, `bin/`, `tools/` and `public/` for constructs removed or deprecated in the PHP 8.6 line (0 findings as of 3.18.1). The upper bound is `<9.0`; when an 8.6 build is released, run the full unit and e2e suites on it and record the result here.
+`php tools/check-php86-readiness.php` statically scans `src/`, `bin/`, `tools/` and `public/` for constructs removed or deprecated in the PHP 8.6 line (0 findings as of 3.18.1). The upper bound is `<9.0`; when an 8.6 build is released, run the full unit and e2e suites on it and record the result here. The weekly `PHP next` workflow (`.github/workflows/php-next.yml`) already runs the unit suite on PHP 8.5 and on PHP nightly (future 8.6) without blocking releases.

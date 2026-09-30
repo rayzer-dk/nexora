@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AdminDashboardController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly DashboardService $dashboard)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly DashboardService $dashboard, private readonly OnboardingAdminController $onboarding)
     {
     }
 
@@ -59,7 +59,9 @@ final class AdminDashboardController extends AbstractController
             if(is_string($created)&&$created!=='')$backupAge=max(0,(int)floor((time()-strtotime($created))/86400));
         } catch(\Throwable) {}
         $user=$this->getUser();
-        return $this->render('@storefront/admin/dashboard.html.twig',['platform_version'=>PlatformVersion::VERSION,'store'=>$store,'counts'=>$counts,'groups'=>$groups,'report'=>$report,'chart'=>DashboardChart::layout($report['series'],$report['annotations']),'backup_age_days'=>$backupAge,'admin_name'=>$user instanceof AdminUser?$user->displayName:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')]);
+        $steps=$this->onboarding->steps($context->storeId,$user instanceof AdminUser?$user->id:0);
+        $onboarding=['done'=>count(array_filter($steps,static fn(array $s):bool=>$s['done'])),'total'=>count($steps)];
+        return $this->render('@storefront/admin/dashboard.html.twig',['onboarding'=>$onboarding,'platform_version'=>PlatformVersion::VERSION,'store'=>$store,'counts'=>$counts,'groups'=>$groups,'report'=>$report,'chart'=>DashboardChart::layout($report['series'],$report['annotations']),'backup_age_days'=>$backupAge,'admin_name'=>$user instanceof AdminUser?$user->displayName:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')]);
     }
 
     /** 1 when the scheduler has not completed any task for over 15 minutes (or never), else 0. */

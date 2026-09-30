@@ -71,8 +71,8 @@ return [
     'php.core.install.installationhealthverifier.pisliainstaliatsiina_perevirka_bd' => 'Post-install database check',
     'php.core.install.installationhealthverifier.stan_vstanovlennia' => 'Installation status',
     'php.core.install.installationhealthverifier.standartnyi_podatkovyi_klas' => 'Default tax class',
-    'php.core.install.installationhealthverifier.ukrainska_lokal' => 'Ukrainian locale',
-    'php.core.install.installationhealthverifier.valiuta_uah' => 'UAH currency',
+    'php.core.install.installationhealthverifier.ukrainska_lokal' => 'Default language',
+    'php.core.install.installationhealthverifier.valiuta_uah' => 'Default currency',
     'php.core.install.installationseeder.ne_vdalosia_vyznachyty_korektnyi_domen_mahazynu_z_pu' => 'Failed to determine a valid store domain from the public address.',
     'php.core.install.installationseeder.novyny_saitu_pidkazky_ta_dopomoha_korystuvacham' => 'Site news, tips, and help for users.',
     'php.core.install.installationseeder.novyny_ta_dopomoha' => 'News and help',
@@ -1941,4 +1941,6 @@ return [
     'payment.method.liqpay' => 'Card via LiqPay',
     'payment.method.wayforpay' => 'Card via WayForPay',
     'php.core.install.installationseeder.standard_tax' => 'Standard tax',
+    'media.heic_decoder_missing' => 'HEIC needs the PHP Imagick extension built with libheif on the server. Save the photo as JPEG or enable HEIC support.',
+    'media.heic_decode_failed' => 'The HEIC image could not be converted. Try saving it as JPEG.',
 ];

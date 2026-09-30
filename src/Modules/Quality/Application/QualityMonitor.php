@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace Commerce\Modules\Quality\Application;
 
 use Commerce\Core\Store\StoreLocalizationSettings;
+use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Modules\Media\Application\HeicDecoder;
+use Commerce\Modules\Notification\Application\NotificationOutbox;
+use Commerce\Modules\Notification\Domain\NotificationChannel;
+use Commerce\Modules\Notification\Domain\NotificationMessage;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -19,6 +24,7 @@ final class QualityMonitor
     public function __construct(
         private readonly Connection $db,
         private readonly StoreLocalizationSettings $localization,
+        private readonly NotificationOutbox $notifications,
         #[Autowire('%kernel.debug%')] private readonly bool $debug,
         #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
         #[Autowire('%commerce.app_public_url%')] private readonly string $publicUrl = '',
@@ -60,6 +66,72 @@ final class QualityMonitor
         return ['score' => $score, 'level' => $counts['fail'] > 0 || $score < 60 ? 'bad' : ($score < 90 ? 'fair' : 'good'), 'counts' => $counts, 'groups' => $checks];
     }
 
+    /**
+     * Stores the current result as a history point. From the admin page at most one point per hour is kept;
+     * the scheduled run always stores one and reports a real degradation to the store e-mail.
+     *
+     * @param array<string,mixed> $report a result of {@see run()}
+     */
+    public function record(int $storeId, array $report, string $source = 'view'): void
+    {
+        $failing = [];
+        foreach ($report['groups'] as $list) {
+            foreach ($list as $check) {
+                if ($check['status'] === 'fail') {
+                    $failing[] = $check['id'];
+                }
+            }
+        }
+        $previous = $this->db->fetchAssociative('SELECT score,failing,created_at FROM mc_quality_snapshot WHERE store_id=? ORDER BY id DESC LIMIT 1', [$storeId]);
+        if ($source === 'view' && is_array($previous) && strtotime((string) $previous['created_at'] . ' UTC') > time() - 3600) {
+            return;
+        }
+        $this->db->insert('mc_quality_snapshot', [
+            'store_id' => $storeId, 'score' => (int) $report['score'], 'level' => (string) $report['level'],
+            'ok_count' => (int) $report['counts']['ok'], 'warn_count' => (int) $report['counts']['warn'], 'fail_count' => (int) $report['counts']['fail'],
+            'failing' => json_encode($failing, JSON_THROW_ON_ERROR), 'source' => $source, 'created_at' => gmdate('Y-m-d H:i:s.u'),
+        ]);
+        $this->db->executeStatement('DELETE FROM mc_quality_snapshot WHERE store_id=? AND created_at < (UTC_TIMESTAMP() - INTERVAL 180 DAY)', [$storeId]);
+        if ($source === 'cron' && is_array($previous)) {
+            $before = json_decode((string) ($previous['failing'] ?? '[]'), true) ?: [];
+            $new = array_values(array_diff($failing, $before));
+            if ($new !== [] || (int) $previous['score'] - (int) $report['score'] >= 10) {
+                $this->alert($storeId, $report, $new, (int) $previous['score']);
+            }
+        }
+    }
+
+    /** @return list<array{score:int,level:string,fail:int,warn:int,at:string}> oldest first */
+    public function history(int $storeId, int $limit = 60): array
+    {
+        $rows = $this->db->fetchAllAssociative('SELECT score,level,fail_count,warn_count,created_at FROM mc_quality_snapshot WHERE store_id=? ORDER BY id DESC LIMIT ' . max(1, min(365, $limit)), [$storeId]);
+        $out = [];
+        foreach (array_reverse($rows) as $row) {
+            $out[] = ['score' => (int) $row['score'], 'level' => (string) $row['level'], 'fail' => (int) $row['fail_count'], 'warn' => (int) $row['warn_count'], 'at' => substr((string) $row['created_at'], 0, 16)];
+        }
+
+        return $out;
+    }
+
+    /** @param array<string,mixed> $report @param list<string> $newFailures */
+    private function alert(int $storeId, array $report, array $newFailures, int $previousScore): void
+    {
+        try {
+            $to = (string) $this->db->fetchOne("SELECT COALESCE(NULLIF(email,''),NULLIF(privacy_contact,'')) FROM mc_store_profile WHERE store_id=? LIMIT 1", [$storeId]);
+            if ($to === '' || filter_var($to, FILTER_VALIDATE_EMAIL) === false) {
+                return;
+            }
+            $lines = [CanonicalUiText::get('admin.quality.alert.score', ['from' => (string) $previousScore, 'to' => (string) $report['score']])];
+            foreach ($newFailures as $id) {
+                $lines[] = '• ' . CanonicalUiText::get('admin.quality.check.' . $id);
+            }
+            $lines[] = rtrim($this->publicUrl, '/') . '/admin/system/quality';
+            $this->notifications->enqueue(NotificationChannel::Email, new NotificationMessage('quality_alert', CanonicalUiText::get('admin.quality.alert.subject'), implode("\n", $lines), [], 'generic'), $to, null, 'quality-alert:' . $storeId . ':' . gmdate('Y-m-d-H'));
+        } catch (\Throwable) {
+            // an alert must never break the check itself
+        }
+    }
+
     /** @return array{id:string,status:string,n:int,link:string} */
     private static function check(string $id, string $status, int $n = 0, string $link = ''): array
     {
@@ -74,7 +146,8 @@ final class QualityMonitor
         $out[] = self::check('https', $https ? 'ok' : 'warn', 0, '/admin/system/site');
         $noMfa = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_admin_user u LEFT JOIN mc_admin_mfa m ON m.admin_id=u.id AND m.enabled_at IS NOT NULL WHERE u.status='active' AND m.admin_id IS NULL");
         $out[] = self::check('admin_mfa', $noMfa === 0 ? 'ok' : 'warn', $noMfa, '/admin/account/security');
-        $fraud = (int) $this->db->fetchOne('SELECT fraud_enabled FROM mc_store_security_settings WHERE store_id=?', [$storeId]);
+        $fraudValue = $this->db->fetchOne('SELECT fraud_enabled FROM mc_store_security_settings WHERE store_id=?', [$storeId]);
+        $fraud = $fraudValue === false ? 1 : (int) $fraudValue; // no row yet means the default, which is on
         $out[] = self::check('fraud_enabled', $fraud === 1 ? 'ok' : 'warn', 0, '/admin/system/fraud');
         $captcha = (string) $this->db->fetchOne('SELECT provider FROM mc_captcha_settings WHERE store_id=?', [$storeId]);
         $out[] = self::check('captcha', $captcha !== '' && $captcha !== 'none' ? 'ok' : 'warn', 0, '/admin/system/captcha');
@@ -116,6 +189,7 @@ final class QualityMonitor
         return [
             self::check('opcache', $opcache || PHP_SAPI === 'cli' ? 'ok' : 'warn', 0, '/admin/system/stability'),
             self::check('php_memory', $bytes >= 256 * 1024 * 1024 ? 'ok' : 'warn', (int) ($bytes === PHP_INT_MAX ? 0 : $bytes / 1048576), '/admin/system/stability'),
+            self::check('heic_decoder', (new HeicDecoder())->available() ? 'ok' : 'warn', 0, '/admin/system/stability'),
             self::check('db_size', $dbBytes > 5 * 1073741824 ? 'warn' : 'ok', (int) ($dbBytes / 1048576), '/admin/system/data'),
         ];
     }

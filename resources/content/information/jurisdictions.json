@@ -1,0 +1,172 @@
+{
+  "eu": {
+    "privacy_law": {
+      "en": "the EU General Data Protection Regulation (GDPR)",
+      "uk": "Загальний регламент ЄС про захист даних (GDPR)",
+      "ru": "Общий регламент ЕС по защите данных (GDPR)",
+      "pl": "ogólne rozporządzenie UE o ochronie danych (RODO)",
+      "de": "die EU-Datenschutz-Grundverordnung (DSGVO)",
+      "da": "EU’s generelle forordning om databeskyttelse (GDPR)"
+    },
+    "privacy_authority": {
+      "en": "the data protection supervisory authority of your EU/EEA country",
+      "uk": "наглядового органу із захисту даних вашої країни ЄС/ЄЕЗ",
+      "ru": "надзорному органу по защите данных вашей страны ЕС/ЕЭП",
+      "pl": "organu nadzorczego ds. ochrony danych w Twoim kraju UE/EOG",
+      "de": "die Datenschutzaufsichtsbehörde Ihres EU/EWR-Landes",
+      "da": "databeskyttelsestilsynet i dit EU/EØS-land"
+    },
+    "consumer_law": {
+      "en": "the EU consumer rights rules (Directive 2011/83/EU) and national consumer law",
+      "uk": "норми ЄС про права споживачів (Директива 2011/83/EU) і національне споживче законодавство",
+      "ru": "нормы ЕС о правах потребителей (Директива 2011/83/EU) и национальное потребительское законодательство",
+      "pl": "unijne przepisy o prawach konsumentów (dyrektywa 2011/83/UE) i krajowe prawo konsumenckie",
+      "de": "die EU-Verbraucherrechte-Richtlinie (2011/83/EU) und das nationale Verbraucherrecht",
+      "da": "EU’s forbrugerrettighedsregler (direktiv 2011/83/EU) og national forbrugerlovgivning"
+    },
+    "cookie_law": {
+      "en": "the ePrivacy Directive (2002/58/EC) and the GDPR",
+      "uk": "Директива ePrivacy (2002/58/EC) та GDPR",
+      "ru": "Директива ePrivacy (2002/58/EC) и GDPR",
+      "pl": "dyrektywa o prywatności i łączności elektronicznej (2002/58/WE) oraz RODO",
+      "de": "die ePrivacy-Richtlinie (2002/58/EG) und die DSGVO",
+      "da": "ePrivacy-direktivet (2002/58/EF) og GDPR"
+    }
+  },
+  "gb": {
+    "privacy_law": {
+      "en": "the UK GDPR and the Data Protection Act 2018",
+      "uk": "UK GDPR і Закон про захист даних 2018 року (Data Protection Act 2018)",
+      "ru": "UK GDPR и Закон о защите данных 2018 года (Data Protection Act 2018)",
+      "pl": "brytyjskie RODO (UK GDPR) i ustawa Data Protection Act 2018",
+      "de": "die britische DSGVO (UK GDPR) und der Data Protection Act 2018",
+      "da": "UK GDPR og Data Protection Act 2018"
+    },
+    "privacy_authority": {
+      "en": "the Information Commissioner’s Office (ICO)",
+      "uk": "Управління комісара з питань інформації (ICO)",
+      "ru": "Управление комиссара по информации (ICO)",
+      "pl": "brytyjskiego urzędu ochrony danych (ICO)",
+      "de": "die britische Datenschutzbehörde (ICO)",
+      "da": "det britiske datatilsyn (ICO)"
+    },
+    "consumer_law": {
+      "en": "the Consumer Rights Act 2015 and the Consumer Contracts Regulations 2013",
+      "uk": "Закон про права споживачів 2015 року та Правила споживчих договорів 2013 року",
+      "ru": "Закон о правах потребителей 2015 года и Правила потребительских договоров 2013 года",
+      "pl": "ustawa Consumer Rights Act 2015 i rozporządzenie Consumer Contracts Regulations 2013",
+      "de": "der Consumer Rights Act 2015 und die Consumer Contracts Regulations 2013",
+      "da": "Consumer Rights Act 2015 og Consumer Contracts Regulations 2013"
+    },
+    "cookie_law": {
+      "en": "the Privacy and Electronic Communications Regulations (PECR) and the UK GDPR",
+      "uk": "Правила щодо приватності та електронних комунікацій (PECR) і UK GDPR",
+      "ru": "Правила о конфиденциальности и электронных коммуникациях (PECR) и UK GDPR",
+      "pl": "przepisy PECR (prywatność i łączność elektroniczna) oraz brytyjskie RODO",
+      "de": "die PECR-Vorschriften und die britische DSGVO (UK GDPR)",
+      "da": "PECR-reglerne og UK GDPR"
+    }
+  },
+  "us": {
+    "privacy_law": {
+      "en": "applicable US federal and state privacy laws (for example the California Consumer Privacy Act)",
+      "uk": "чинні федеральні закони та закони штатів США про приватність (наприклад, California Consumer Privacy Act)",
+      "ru": "действующие федеральные законы и законы штатов США о конфиденциальности (например, California Consumer Privacy Act)",
+      "pl": "obowiązujące federalne i stanowe przepisy USA o prywatności (np. California Consumer Privacy Act)",
+      "de": "die geltenden US-Bundes- und Landesgesetze zum Datenschutz (z. B. der California Consumer Privacy Act)",
+      "da": "gældende amerikanske føderale og delstatslige privatlivslove (f.eks. California Consumer Privacy Act)"
+    },
+    "privacy_authority": {
+      "en": "your state attorney general or the Federal Trade Commission (FTC)",
+      "uk": "генерального прокурора вашого штату або Федеральної торгової комісії (FTC)",
+      "ru": "генеральному прокурору вашего штата или Федеральной торговой комиссии (FTC)",
+      "pl": "prokuratora generalnego Twojego stanu lub Federalnej Komisji Handlu (FTC)",
+      "de": "den Generalstaatsanwalt Ihres Bundesstaates oder die Federal Trade Commission (FTC)",
+      "da": "din delstats justitsminister eller Federal Trade Commission (FTC)"
+    },
+    "consumer_law": {
+      "en": "applicable US federal and state consumer protection laws",
+      "uk": "чинні федеральні закони та закони штатів США про захист споживачів",
+      "ru": "действующие федеральные законы и законы штатов США о защите потребителей",
+      "pl": "obowiązujące federalne i stanowe przepisy USA o ochronie konsumentów",
+      "de": "die geltenden US-Bundes- und Landesgesetze zum Verbraucherschutz",
+      "da": "gældende amerikanske føderale og delstatslige forbrugerbeskyttelseslove"
+    },
+    "cookie_law": {
+      "en": "applicable US state privacy laws and the choices you make in the cookie banner",
+      "uk": "чинні закони штатів США про приватність і ваш вибір у банері cookie",
+      "ru": "действующие законы штатов США о конфиденциальности и ваш выбор в баннере cookie",
+      "pl": "obowiązujące stanowe przepisy USA o prywatności oraz Twoje wybory w banerze cookie",
+      "de": "die geltenden US-Landesgesetze zum Datenschutz und Ihre Auswahl im Cookie-Banner",
+      "da": "gældende amerikanske delstatslove om privatliv og dine valg i cookiebanneret"
+    }
+  },
+  "ua": {
+    "privacy_law": {
+      "en": "the Law of Ukraine “On Personal Data Protection”",
+      "uk": "Закон України «Про захист персональних даних»",
+      "ru": "Закон Украины «О защите персональных данных»",
+      "pl": "ustawa Ukrainy „O ochronie danych osobowych”",
+      "de": "das Gesetz der Ukraine „Über den Schutz personenbezogener Daten“",
+      "da": "Ukraines lov om beskyttelse af personoplysninger"
+    },
+    "privacy_authority": {
+      "en": "the Ukrainian Parliament Commissioner for Human Rights",
+      "uk": "Уповноваженого Верховної Ради України з прав людини",
+      "ru": "Уполномоченному Верховной Рады Украины по правам человека",
+      "pl": "Rzecznika Praw Człowieka Rady Najwyższej Ukrainy",
+      "de": "den Menschenrechtsbeauftragten des ukrainischen Parlaments",
+      "da": "Ukraines parlamentariske menneskerettighedskommissær"
+    },
+    "consumer_law": {
+      "en": "the Law of Ukraine “On Consumer Rights Protection”",
+      "uk": "Закон України «Про захист прав споживачів»",
+      "ru": "Закон Украины «О защите прав потребителей»",
+      "pl": "ustawa Ukrainy „O ochronie praw konsumentów”",
+      "de": "das Gesetz der Ukraine „Über den Schutz der Verbraucherrechte“",
+      "da": "Ukraines lov om forbrugerbeskyttelse"
+    },
+    "cookie_law": {
+      "en": "the Law of Ukraine “On Personal Data Protection” and the Law “On Electronic Communications”",
+      "uk": "Закон України «Про захист персональних даних» і Закон «Про електронні комунікації»",
+      "ru": "Закон Украины «О защите персональных данных» и Закон «Об электронных коммуникациях»",
+      "pl": "ustawa „O ochronie danych osobowych” i ustawa „O łączności elektronicznej” Ukrainy",
+      "de": "das ukrainische Gesetz „Über den Schutz personenbezogener Daten“ und das Gesetz „Über elektronische Kommunikation“",
+      "da": "Ukraines lov om beskyttelse af personoplysninger og lov om elektronisk kommunikation"
+    }
+  },
+  "other": {
+    "privacy_law": {
+      "en": "the data protection laws applicable in the store’s country of operation",
+      "uk": "закони про захист даних, чинні в країні роботи магазину",
+      "ru": "законы о защите данных, действующие в стране работы магазина",
+      "pl": "przepisy o ochronie danych obowiązujące w kraju działalności sklepu",
+      "de": "die im Sitzland des Shops geltenden Datenschutzgesetze",
+      "da": "de databeskyttelseslove, der gælder i butikkens land"
+    },
+    "privacy_authority": {
+      "en": "your local data protection authority",
+      "uk": "місцевого органу із захисту даних",
+      "ru": "местному органу по защите данных",
+      "pl": "lokalnego organu ochrony danych",
+      "de": "Ihre örtliche Datenschutzbehörde",
+      "da": "din lokale databeskyttelsesmyndighed"
+    },
+    "consumer_law": {
+      "en": "the consumer protection laws applicable in the store’s country of operation",
+      "uk": "закони про захист споживачів, чинні в країні роботи магазину",
+      "ru": "законы о защите потребителей, действующие в стране работы магазина",
+      "pl": "przepisy o ochronie konsumentów obowiązujące w kraju działalności sklepu",
+      "de": "die im Sitzland des Shops geltenden Verbraucherschutzgesetze",
+      "da": "de forbrugerbeskyttelseslove, der gælder i butikkens land"
+    },
+    "cookie_law": {
+      "en": "the privacy and electronic communications rules applicable in the store’s country of operation",
+      "uk": "правила приватності та електронних комунікацій, чинні в країні роботи магазину",
+      "ru": "правила конфиденциальности и электронных коммуникаций, действующие в стране работы магазина",
+      "pl": "przepisy o prywatności i łączności elektronicznej obowiązujące w kraju działalności sklepu",
+      "de": "die im Sitzland des Shops geltenden Vorschriften zu Datenschutz und elektronischer Kommunikation",
+      "da": "de regler om privatliv og elektronisk kommunikation, der gælder i butikkens land"
+    }
+  }
+}

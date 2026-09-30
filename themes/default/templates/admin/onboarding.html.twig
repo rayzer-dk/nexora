@@ -1,0 +1,10 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.onboarding.title'),'dashboard') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.onboarding.title') }}</span></nav><h1>{{ ui_text('admin.onboarding.title') }}</h1><p>{{ ui_text('admin.onboarding.intro') }}</p></div></header>
+<section class="admin-panel onboarding" data-onboarding>
+<div class="onboarding__progress"><strong>{{ done }} / {{ total }}</strong><progress class="onboarding-bar" max="{{ total }}" value="{{ done }}"></progress><small>{{ percent }}%</small></div>
+{% if done == total %}<div class="admin-notice is-success">{{ ui_text('admin.onboarding.complete') }}</div>{% endif %}
+<ol class="onboarding__steps">
+{% for s in steps %}<li class="onboarding__step{{ s.done ? ' is-done' : '' }}" data-step="{{ s.key }}" data-done="{{ s.done ? '1' : '0' }}"><span class="onboarding__icon">{{ ui_icon(s.done ? 'check' : s.icon, 18) }}</span><div><h2>{{ ui_text('admin.onboarding.step.' ~ s.key) }}</h2><p>{{ ui_text('admin.onboarding.step.' ~ s.key ~ '_hint') }}</p></div><a class="admin-button{{ s.done ? '' : ' is-primary' }}" href="{{ s.url }}">{{ s.done ? ui_text('admin.onboarding.review') : ui_text('admin.onboarding.open') }}{{ ui_icon('arrow-right', 16) }}</a></li>{% endfor %}
+</ol>
+</section>
+{{ shell.end() }}

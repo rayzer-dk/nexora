@@ -41,7 +41,7 @@
  <section class="admin-panel admin-form">
   <div class="admin-panel__header"><h2>{{ ui_text('admin.blog.cover') }}</h2></div>
   {% if article.cover_url %}<img class="admin-blog-cover" src="{{ article.cover_url }}" alt="" width="320" height="180" loading="lazy"><label class="admin-check"><input type="checkbox" name="cover_remove" value="1"> {{ ui_text('admin.blog.cover_remove') }}</label>{% endif %}
-  <label>{{ ui_text('admin.blog.cover_upload') }}<input type="file" name="cover" accept="image/jpeg,image/png,image/webp,image/avif"><small>{{ ui_text('admin.blog.cover_hint') }}</small></label>
+  <label>{{ ui_text('admin.blog.cover_upload') }}<input type="file" name="cover" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif"><small>{{ ui_text('admin.blog.cover_hint') }}</small></label>
   <label>{{ ui_text('admin.blog.cover_alt') }}<input type="text" name="cover_alt" value="{{ article.cover_alt }}" maxlength="255"></label>
  </section>
 </aside>

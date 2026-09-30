@@ -84,4 +84,6 @@ Product: %product%',
     'http.error.not_found' => 'Page not found.',
     'scheduler.label.indexnow' => 'IndexNow',
     'scheduler.description.indexnow' => 'Every 30 minutes tells Bing, Yandex and other search engines about new and changed pages (only for stores with IndexNow enabled).',
+    'scheduler.label.quality' => 'Quality monitor',
+    'scheduler.description.quality' => 'Every 6 hours checks the store, keeps the score history and sends an e-mail when a new critical problem appears or the score drops.',
 ];

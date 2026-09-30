@@ -40,7 +40,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
     private function permissionForRoute(string $route, Request $request): ?string
     {
         $get=$request->isMethod('GET');
-        if ($route==='admin_dashboard'||$route==='admin_api_session'||$route==='admin_interface_language'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account_security')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
+        if ($route==='admin_dashboard'||$route==='admin_onboarding'||$route==='admin_api_session'||$route==='admin_api_quick_search'||$route==='admin_interface_language'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account_security')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
         if ($route==='admin_analytics') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic_settings') return AdminPermissionCatalog::SYSTEM_SETTINGS;

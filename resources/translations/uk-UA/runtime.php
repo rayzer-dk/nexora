@@ -71,8 +71,8 @@ return [
     'php.core.install.installationhealthverifier.pisliainstaliatsiina_perevirka_bd' => 'Післяінсталяційна перевірка БД',
     'php.core.install.installationhealthverifier.stan_vstanovlennia' => 'Стан встановлення',
     'php.core.install.installationhealthverifier.standartnyi_podatkovyi_klas' => 'Стандартний податковий клас',
-    'php.core.install.installationhealthverifier.ukrainska_lokal' => 'Українська локаль',
-    'php.core.install.installationhealthverifier.valiuta_uah' => 'Валюта UAH',
+    'php.core.install.installationhealthverifier.ukrainska_lokal' => 'Мова за замовчуванням',
+    'php.core.install.installationhealthverifier.valiuta_uah' => 'Валюта за замовчуванням',
     'php.core.install.installationseeder.ne_vdalosia_vyznachyty_korektnyi_domen_mahazynu_z_pu' => 'Не вдалося визначити коректний домен магазину з публічної адреси.',
     'php.core.install.installationseeder.novyny_saitu_pidkazky_ta_dopomoha_korystuvacham' => 'Новини сайту, підказки та допомога користувачам.',
     'php.core.install.installationseeder.novyny_ta_dopomoha' => 'Новини та допомога',
@@ -1943,4 +1943,6 @@ return [
     'payment.method.liqpay' => 'Картка через LiqPay',
     'payment.method.wayforpay' => 'Картка через WayForPay',
     'php.core.install.installationseeder.standard_tax' => 'Стандартний податок',
+    'media.heic_decoder_missing' => 'Для HEIC на сервері потрібне розширення PHP Imagick зі збіркою libheif. Збережіть фото як JPEG або встановіть декодер.',
+    'media.heic_decode_failed' => 'Не вдалося перетворити HEIC-зображення. Спробуйте зберегти його як JPEG.',
 ];

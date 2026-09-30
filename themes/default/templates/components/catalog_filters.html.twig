@@ -25,6 +25,7 @@
             <span>{{ ui_text('sort') }}</span>
             <select name="sort">
                 <option value="newest"{% if catalog_filter.sort == 'newest' %} selected{% endif %}>{{ ui_text('sort_newest') }}</option>
+                <option value="popular"{% if catalog_filter.sort == 'popular' %} selected{% endif %}>{{ ui_text('sort_popular') }}</option>
                 <option value="price_asc"{% if catalog_filter.sort == 'price_asc' %} selected{% endif %}>{{ ui_text('sort_price_asc') }}</option>
                 <option value="price_desc"{% if catalog_filter.sort == 'price_desc' %} selected{% endif %}>{{ ui_text('sort_price_desc') }}</option>
                 <option value="name_asc"{% if catalog_filter.sort == 'name_asc' %} selected{% endif %}>{{ ui_text('sort_name_asc') }}</option>

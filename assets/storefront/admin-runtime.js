@@ -208,23 +208,44 @@ function initCommandPalette() {
   const results = q('[data-command-results]', palette || document);
   if (!palette || !input || !results) return;
   const links = qa('[data-command-source] a').map((link) => ({ label: link.textContent.trim(), href: link.href })).filter((item) => item.label);
+  let remote = [];
+  let timer = 0;
+  let sequence = 0;
+  const row = (item, index) => {
+    const link = document.createElement('a');
+    link.href = item.href;
+    const label = document.createElement('span');
+    label.textContent = item.detail ? `${item.label} · ${item.detail}` : item.label;
+    const key = document.createElement('kbd');
+    key.textContent = item.type ? t(`js_qs_${item.type}`) : String(index + 1);
+    link.append(label, key);
+    return link;
+  };
   const render = (query = '') => {
     const needle = query.trim().toLocaleLowerCase('uk-UA');
     const matches = links.filter((item) => !needle || item.label.toLocaleLowerCase('uk-UA').includes(needle)).slice(0, 12);
     results.innerHTML = '';
-    matches.forEach((item, index) => {
-      const link = document.createElement('a');
-      link.href = item.href;
-      const label = document.createElement('span');
-      label.textContent = item.label;
-      const key = document.createElement('kbd');
-      key.textContent = String(index + 1);
-      link.append(label, key);
-      results.appendChild(link);
-    });
-    if (!matches.length) { const empty = document.createElement('p'); empty.textContent = t('js_nothing_found'); results.replaceChildren(empty); }
+    matches.forEach((item, index) => results.appendChild(row(item, index)));
+    remote.forEach((item, index) => results.appendChild(row(item, index)));
+    if (!matches.length && !remote.length) { const empty = document.createElement('p'); empty.textContent = t('js_nothing_found'); results.replaceChildren(empty); }
+  };
+  // Data search (products, orders, customers): asked after a short pause, stale answers are dropped.
+  const searchData = (query) => {
+    window.clearTimeout(timer);
+    const value = query.trim();
+    if (value.length < 2) { if (remote.length) { remote = []; render(query); } return; }
+    timer = window.setTimeout(async () => {
+      const mine = ++sequence;
+      try {
+        const response = await fetch(`/admin/api/quick-search?q=${encodeURIComponent(value)}`, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+        if (!response.ok || mine !== sequence) return;
+        remote = (await response.json()).results ?? [];
+        render(input.value);
+      } catch (_) { /* the section list keeps working without the data search */ }
+    }, 220);
   };
   const open = () => {
+    remote = [];
     render('');
     palette.hidden = false;
     palette.setAttribute('aria-hidden', 'false');
@@ -238,7 +259,10 @@ function initCommandPalette() {
     document.body.classList.remove('has-admin-modal');
     window.setTimeout(() => { palette.hidden = true; input.value = ''; }, 180);
   };
-  input.addEventListener('input', () => render(input.value));
+  input.addEventListener('input', () => { render(input.value); searchData(input.value); });
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') { const first = q('a', results); if (first) { event.preventDefault(); window.location.assign(first.href); } }
+  });
   qa('[data-command-close]', palette).forEach((node) => node.addEventListener('click', close));
   qa('[data-command-open]').forEach((node) => node.addEventListener('click', open));
   document.addEventListener('keydown', (event) => {
@@ -246,6 +270,25 @@ function initCommandPalette() {
       event.preventDefault();
       if (palette.hidden) open(); else close();
     } else if (event.key === 'Escape' && !palette.hidden) close();
+  });
+}
+
+// Keyboard shortcuts: "/" opens the search, "g" then a letter jumps to a section (g o = orders, g p = products, g c = customers, g d = dashboard).
+function initHotkeys() {
+  const routes = { d: '/admin', o: '/admin/orders', p: '/admin/catalog/products', c: '/admin/commerce/customers', q: '/admin/system/quality' };
+  let waiting = 0;
+  document.addEventListener('keydown', (event) => {
+    const target = event.target;
+    const typing = target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+    if (typing || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === '/') {
+      const opener = q('[data-command-open]');
+      if (opener) { event.preventDefault(); opener.click(); }
+      return;
+    }
+    if (waiting && routes[event.key]) { event.preventDefault(); waiting = 0; window.location.assign(routes[event.key]); return; }
+    waiting = event.key === 'g' ? Date.now() : 0;
+    if (waiting) window.setTimeout(() => { waiting = 0; }, 1200);
   });
 }
 
@@ -443,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initImagePreviews();
   initSidebar();
   initSidebarCollapse();
+  initHotkeys();
   initCommandPalette();
   initAutoSubmit();
   initCopyControls();

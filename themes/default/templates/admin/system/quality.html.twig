@@ -7,6 +7,14 @@
         <ul class="quality-counts"><li class="is-ok">{{ ui_icon('circle-check', 16) }}<span>{{ ui_text('admin.quality.ok') }}: {{ report.counts.ok }}</span></li><li class="is-warn">{{ ui_icon('triangle-alert', 16) }}<span>{{ ui_text('admin.quality.warn') }}: {{ report.counts.warn }}</span></li><li class="is-fail">{{ ui_icon('circle-x', 16) }}<span>{{ ui_text('admin.quality.fail') }}: {{ report.counts.fail }}</span></li></ul>
     </div>
 </section>
+{% if history|length > 1 %}
+{% set n = history|length %}
+<section class="admin-panel quality-history" data-quality-history><div class="admin-panel__header"><div><h2>{{ ui_text('admin.quality.history') }}</h2><small>{{ ui_text('admin.quality.history_hint') }}</small></div>{{ ui_icon('activity', 20) }}</div>
+<svg data-chart class="quality-history__chart" viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label="{{ ui_text('admin.quality.history') }}"><polyline fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" points="{% for h in history %}{{ (loop.index0 * 300 / (n - 1))|round(1) }},{{ (78 - h.score * 76 / 100)|round(1) }} {% endfor %}"/></svg>
+<p class="quality-history__meta"><span>{{ history|first.at }} · {{ history|first.score }}</span><span>{{ history|last.at }} · {{ history|last.score }}</span></p></section>
+{% endif %}
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
+{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
 <div class="quality-groups">
 {% set group_icons = {security: 'shield-check', reliability: 'activity', performance: 'gauge', content: 'file-text', international: 'languages', commerce: 'store'} %}
 {% for group in groups %}{% if report.groups[group] is defined %}
@@ -16,6 +24,7 @@
 <li class="quality-check is-{{ check.status }}" data-quality-check="{{ check.id }}" data-status="{{ check.status }}">
     <span class="quality-check__icon">{{ ui_icon(check.status == 'ok' ? 'circle-check' : (check.status == 'warn' ? 'triangle-alert' : 'circle-x'), 20) }}</span>
     <div class="quality-check__text"><strong>{{ ui_text('admin.quality.check.' ~ check.id) }}</strong>{% if check.status != 'ok' %}<small>{{ ui_text('admin.quality.hint.' ~ check.id)|replace({'%n%': check.n}) }}</small>{% endif %}</div>
+    {% if check.status != 'ok' and check.id in fixable %}<form method="post" action="{{ path('admin_system_quality_fix', {id: check.id}) }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_quality') }}"><button class="admin-button is-primary" type="submit" data-quality-autofix="{{ check.id }}">{{ ui_icon('wand-sparkles', 16) }}<span>{{ ui_text('admin.quality.autofix') }}</span></button></form>{% endif %}
     {% if check.status != 'ok' and check.link %}<a class="admin-button" href="{{ check.link }}">{{ ui_text('admin.quality.fix') }}</a>{% endif %}
 </li>
 {% endfor %}

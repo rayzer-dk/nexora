@@ -151,6 +151,42 @@ final class OrderAdminController extends AbstractController
         $ctx=$this->contexts->resolve($request);if(!$this->isCsrfTokenValid('admin_order_saved_view_delete_'.$id,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();$user=$this->getUser();$adminId=$user instanceof AdminUser?$user->id:null;$this->db->executeStatement('DELETE FROM mc_admin_saved_view WHERE id=? AND store_id=? AND entity_type=? AND (admin_id=? OR admin_id IS NULL)',[$id,$ctx->storeId,'orders',$adminId]);return $this->redirectToRoute('admin_orders');
     }
 
+    /** Bulk actions on ticked orders: mark completed or move the delivery status. Each order goes through the same service as the single-order button. */
+    #[Route('/admin/orders/bulk', name: 'admin_order_bulk', methods: ['POST'])]
+    public function bulk(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('admin_order_bulk', (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+        $action = (string) $request->request->get('action', '');
+        $ids = array_slice(array_values(array_unique(array_filter(array_map('strval', (array) $request->request->all('order_ids')), static fn (string $id): bool => preg_match('/^[0-9a-f-]{36}$/i', $id) === 1))), 0, 100);
+        $fulfillment = str_starts_with($action, 'fulfillment:') ? substr($action, 12) : null;
+        if ($ids === [] || ($action !== 'complete' && $fulfillment === null)) {
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('admin.orders.bulk.nothing'));
+
+            return $this->redirectToRoute('admin_orders');
+        }
+        $done = 0;
+        $failed = 0;
+        foreach ($ids as $publicId) {
+            try {
+                $this->order($publicId, $request);
+                if ($fulfillment !== null) {
+                    $this->orders->updateFulfillment($publicId, $fulfillment, null, $this->actor());
+                } else {
+                    $this->orders->markCompleted($publicId, $this->actor());
+                }
+                $this->notifyFailSoft($publicId);
+                ++$done;
+            } catch (\Throwable) {
+                ++$failed;
+            }
+        }
+        $this->addFlash($failed === 0 ? 'success' : 'error', \Commerce\Core\I18n\CanonicalUiText::get('admin.orders.bulk.result', ['done' => (string) $done, 'failed' => (string) $failed]));
+
+        return $this->redirectToRoute('admin_orders');
+    }
+
     #[Route('/admin/orders/{publicId}/preview', name:'admin_order_preview', methods:['GET'])]
     public function preview(string $publicId, Request $request): Response
     {

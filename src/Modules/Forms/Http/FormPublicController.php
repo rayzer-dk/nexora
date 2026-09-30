@@ -33,6 +33,7 @@ final class FormPublicController extends AbstractController
         if ($form === null) {
             throw $this->createNotFoundException();
         }
+        $form = $this->forms->localize($form, $context->locale);
         $canonical = $request->getSchemeAndHttpHost() . '/forms/' . $slug;
 
         return $this->render('@storefront/forms/show.html.twig', [
@@ -60,9 +61,10 @@ final class FormPublicController extends AbstractController
             return $this->respond($request, $slug, false, $message, $ajax, 429);
         }
         try {
-            $this->forms->submit($context->storeId, $form, $request->request->all(), $request->getClientIp() ?? '', $context->locale);
+            $this->forms->submit($context->storeId, $form, $request->request->all(), $request->getClientIp() ?? '', $context->locale, $request->files->all());
             $ok = true;
-            $message = (string) ($form['success_message'] ?? '') !== '' ? (string) $form['success_message'] : CanonicalUiText::get('forms.success.default');
+            $localized = $this->forms->localize($form, $context->locale);
+            $message = (string) ($localized['success_message'] ?? '') !== '' ? (string) $localized['success_message'] : CanonicalUiText::get('forms.success.default');
         } catch (\DomainException $e) {
             $ok = false;
             $message = $e->getMessage();
@@ -76,8 +78,11 @@ final class FormPublicController extends AbstractController
         if ($ajax) {
             return new JsonResponse(['ok' => $ok, 'message' => $message], $status);
         }
-        $this->addFlash($ok ? 'success' : 'error', $message);
+        $this->addFlash($ok ? 'form_success' : 'form_error', $message);
+        // An embedded form sends its own page as "_back"; only a local absolute path is honoured.
+        $back = (string) $request->request->get('_back', '');
+        $target = preg_match('#^/(?!/)[A-Za-z0-9/_\-.%]{0,200}$#', $back) === 1 ? $back : '/forms/' . $slug;
 
-        return new RedirectResponse('/forms/' . $slug);
+        return new RedirectResponse($target);
     }
 }

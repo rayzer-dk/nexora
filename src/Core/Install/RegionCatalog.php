@@ -45,6 +45,25 @@ final class RegionCatalog
         'AMD' => ['051', 'Armenian dram', '֏', 2], 'UZS' => ['860', 'Uzbekistani som', 'soʻm', 2], 'RSD' => ['941', 'Serbian dinar', 'din', 2], 'ISK' => ['352', 'Icelandic króna', 'kr', 0],
     ];
 
+    /** Approximate units per 1 USD, used only to give demo products plausible prices in any currency (live rates come from the rate sources). */
+    private const DEMO_RATES_PER_USD = [
+        'UAH' => 41.0, 'EUR' => 0.92, 'DKK' => 6.40, 'PLN' => 4.00, 'GBP' => 0.79,
+        'CZK' => 23.0, 'SEK' => 10.5, 'NOK' => 10.7, 'CHF' => 0.88, 'HUF' => 360.0, 'RON' => 4.6, 'BGN' => 1.8, 'TRY' => 40.0, 'KZT' => 500.0,
+        'GEL' => 2.7, 'MDL' => 17.8, 'RUB' => 90.0, 'BYN' => 3.3, 'AED' => 3.67, 'SAR' => 3.75, 'ILS' => 3.7, 'INR' => 84.0, 'CNY' => 7.2,
+        'JPY' => 150.0, 'KRW' => 1350.0, 'CAD' => 1.36, 'AUD' => 1.5, 'NZD' => 1.65, 'BRL' => 5.2, 'MXN' => 18.0, 'ZAR' => 18.0, 'SGD' => 1.34,
+        'HKD' => 7.8, 'THB' => 35.0, 'AZN' => 1.7, 'AMD' => 390.0, 'UZS' => 12500.0, 'RSD' => 108.0, 'ISK' => 138.0,
+    ];
+
+    public static function demoRatePerUsd(string $currency): float
+    {
+        return self::DEMO_RATES_PER_USD[strtoupper($currency)] ?? 1.0;
+    }
+
+    public static function minorUnits(string $currency): int
+    {
+        return self::CURRENCIES[strtoupper($currency)][3] ?? 2;
+    }
+
     /** @return list<string> */
     public static function countryCodes(): array
     {

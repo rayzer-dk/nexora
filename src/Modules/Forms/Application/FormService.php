@@ -10,6 +10,7 @@ use Commerce\Modules\Notification\Domain\NotificationChannel;
 use Commerce\Modules\Notification\Domain\NotificationMessage;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * Form builder: the merchant defines fields, visitors submit, the merchant reads the answers in the admin.
@@ -18,7 +19,17 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 final class FormService
 {
-    public const TYPES = ['text', 'email', 'tel', 'textarea', 'number', 'date', 'select', 'radio', 'checkbox'];
+    public const TYPES = ['text', 'email', 'tel', 'textarea', 'number', 'date', 'select', 'radio', 'checkbox', 'file'];
+    /** extension => accepted detected MIME types; files are stored outside the web root and served only to the admin */
+    public const FILE_TYPES = [
+        'pdf' => ['application/pdf'],
+        'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'], 'png' => ['image/png'], 'webp' => ['image/webp'],
+        'txt' => ['text/plain'], 'csv' => ['text/plain', 'text/csv', 'application/csv'],
+        'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip', 'application/octet-stream'],
+        'xlsx' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip', 'application/octet-stream'],
+    ];
+    public const MAX_FILE_BYTES = 5242880;
+    public const MAX_FILE_FIELDS = 3;
     public const MAX_FIELDS = 30;
     private const MAX_OPTIONS = 30;
 
@@ -26,6 +37,7 @@ final class FormService
         private readonly Connection $db,
         private readonly NotificationOutbox $notifications,
         #[Autowire('%kernel.secret%')] private readonly string $secret,
+        #[Autowire('%kernel.project_dir%')] private readonly string $projectDir = '',
     ) {
     }
 
@@ -98,7 +110,9 @@ final class FormService
             'submit_label' => $this->text($input['submit_label'] ?? '', 80) ?: null,
             'success_message' => $this->text($input['success_message'] ?? '', 500) ?: null,
             'notify_email' => $email !== '' ? $email : null,
-            'fields' => json_encode($fields, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), 'updated_at' => $now,
+            'fields' => json_encode($fields, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            'translations' => ($translations = $this->normalizeTranslations($input['translations'] ?? [], $fields, $locale)) === [] ? null : json_encode($translations, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            'updated_at' => $now,
         ];
         if ($id !== null && $this->find($storeId, $id) !== null) {
             $this->db->update('mc_form', $row, ['id' => $id, 'store_id' => $storeId]);
@@ -112,7 +126,54 @@ final class FormService
 
     public function delete(int $storeId, int $id): void
     {
+        $ids = array_map('intval', $this->db->fetchFirstColumn('SELECT id FROM mc_form_submission WHERE form_id=? AND store_id=?', [$id, $storeId]));
         $this->db->delete('mc_form', ['id' => $id, 'store_id' => $storeId]);
+        foreach ($ids as $submissionId) {
+            $this->removeFiles($submissionId);
+        }
+    }
+
+    /**
+     * The form as a visitor of $locale sees it: the base texts, replaced by the translation when one exists.
+     * Option values stay in the base language (that is what is validated and stored); `option_labels` carries what is shown.
+     *
+     * @param array<string,mixed> $form @return array<string,mixed>
+     */
+    public function localize(array $form, string $locale): array
+    {
+        $translations = is_array($form['translations'] ?? null) ? $form['translations'] : [];
+        $t = $translations[$locale] ?? null;
+        if (!is_array($t) || $locale === (string) ($form['locale'] ?? '')) {
+            foreach ($form['fields'] as &$field) {
+                $field['option_labels'] = [];
+            }
+            unset($field);
+
+            return $form;
+        }
+        foreach (['intro', 'submit_label', 'success_message'] as $key) {
+            if ((string) ($t[$key] ?? '') !== '') {
+                $form[$key] = (string) $t[$key];
+            }
+        }
+        foreach ($form['fields'] as &$field) {
+            $ft = $t['fields'][$field['key']] ?? [];
+            $field['base_label'] = (string) $field['label'];
+            if ((string) ($ft['label'] ?? '') !== '') {
+                $field['label'] = (string) $ft['label'];
+            }
+            if ((string) ($ft['placeholder'] ?? '') !== '') {
+                $field['placeholder'] = (string) $ft['placeholder'];
+            }
+            $labels = [];
+            foreach (array_values((array) $field['options']) as $i => $option) {
+                $labels[$option] = (string) (($ft['options'][$i] ?? '') !== '' ? $ft['options'][$i] : $option);
+            }
+            $field['option_labels'] = $labels;
+        }
+        unset($field);
+
+        return $form;
     }
 
     /**
@@ -121,13 +182,30 @@ final class FormService
      * @return int submission id
      * @throws \DomainException  message is a translated error text for the visitor
      */
-    public function submit(int $storeId, array $form, array $input, string $ip, string $locale): int
+    public function submit(int $storeId, array $form, array $input, string $ip, string $locale, array $files = []): int
     {
         $answers = [];
+        $uploads = [];
         $missing = false;
         $size = 0;
-        foreach ((array) $form['fields'] as $field) {
+        $base = $form['fields'];
+        $form = $this->localize($form, $locale);
+        foreach ((array) $form['fields'] as $index => $field) {
             $key = (string) $field['key'];
+            $field['label'] = (string) ($field['label'] ?? '');
+            if ($field['type'] === 'file') {
+                $upload = $files[$key] ?? null;
+                if (!$upload instanceof UploadedFile || $upload->getError() === UPLOAD_ERR_NO_FILE) {
+                    if (!empty($field['required'])) {
+                        $missing = true;
+                    }
+                    continue;
+                }
+                $checked = $this->checkUpload($upload, (string) $field['label']);
+                $uploads[$key] = [$upload, $checked];
+                $answers[] = ['key' => $key, 'label' => (string) ($base[$index]['label'] ?? $field['label']), 'type' => 'file', 'value' => $checked['name'], 'file' => '', 'size' => $checked['size']];
+                continue;
+            }
             $raw = $input[$key] ?? '';
             $value = is_array($raw) ? '' : trim((string) $raw);
             $size += strlen($value);
@@ -154,7 +232,7 @@ final class FormService
             if (!$valid) {
                 throw new \DomainException(CanonicalUiText::get('forms.error.invalid_value', ['field' => (string) $field['label']]));
             }
-            $answers[] = ['key' => $key, 'label' => (string) $field['label'], 'type' => $type, 'value' => $type === 'checkbox' ? '✓' : $value];
+            $answers[] = ['key' => $key, 'label' => (string) ($base[$index]['label'] ?? $field['label']), 'type' => $type, 'value' => $type === 'checkbox' ? '✓' : $value];
         }
         if ($missing) {
             throw new \DomainException(CanonicalUiText::get('forms.error.required'));
@@ -169,6 +247,21 @@ final class FormService
             'ip_hash' => hash_hmac('sha256', $ip, $this->secret . '|form-ip', true), 'status' => 'new', 'created_at' => $now,
         ]);
         $id = (int) $this->db->lastInsertId();
+        if ($uploads !== []) {
+            try {
+                foreach ($answers as &$answer) {
+                    if ($answer['type'] === 'file' && isset($uploads[$answer['key']])) {
+                        $answer['file'] = $this->storeUpload($id, (string) $answer['key'], $uploads[$answer['key']][0], $uploads[$answer['key']][1]['extension']);
+                    }
+                }
+                unset($answer);
+                $this->db->update('mc_form_submission', ['answers' => json_encode($answers, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)], ['id' => $id]);
+            } catch (\Throwable) {
+                $this->db->delete('mc_form_submission', ['id' => $id]);
+                $this->removeFiles($id);
+                throw new \DomainException(CanonicalUiText::get('forms.error.upload_failed'));
+            }
+        }
         $this->notify($storeId, $form, $answers, $id);
 
         return $id;
@@ -197,6 +290,89 @@ final class FormService
     public function deleteSubmission(int $storeId, int $submissionId): void
     {
         $this->db->delete('mc_form_submission', ['id' => $submissionId, 'store_id' => $storeId]);
+        $this->removeFiles($submissionId);
+    }
+
+    /**
+     * @return array{path:string,name:string,mime:string}|null the stored file of a submission's answer, or null
+     */
+    public function fileFor(int $storeId, int $submissionId, string $key): ?array
+    {
+        $row = $this->db->fetchOne('SELECT answers FROM mc_form_submission WHERE id=? AND store_id=?', [$submissionId, $storeId]);
+        if (!is_string($row)) {
+            return null;
+        }
+        foreach (json_decode($row, true) ?: [] as $answer) {
+            if (($answer['key'] ?? '') !== $key || ($answer['type'] ?? '') !== 'file' || (string) ($answer['file'] ?? '') === '') {
+                continue;
+            }
+            $stored = basename((string) $answer['file']);
+            $path = $this->filesDir($submissionId) . '/' . $stored;
+            $extension = strtolower(pathinfo($stored, PATHINFO_EXTENSION));
+            if (!is_file($path) || !isset(self::FILE_TYPES[$extension])) {
+                return null;
+            }
+
+            return ['path' => $path, 'name' => (string) $answer['value'], 'mime' => self::FILE_TYPES[$extension][0]];
+        }
+
+        return null;
+    }
+
+    /** @return array{name:string,size:int,extension:string} */
+    private function checkUpload(UploadedFile $file, string $label): array
+    {
+        $fail = static fn (): \DomainException => new \DomainException(CanonicalUiText::get('forms.error.file_invalid', ['field' => $label]));
+        if (!$file->isValid() || $file->getSize() < 1 || $file->getSize() > self::MAX_FILE_BYTES) {
+            throw $fail();
+        }
+        $name = trim((string) preg_replace('/[\x00-\x1f\x7f\/\\]+/u', '', basename(str_replace('\\', '/', $file->getClientOriginalName()))));
+        $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if ($name === '' || !isset(self::FILE_TYPES[$extension])) {
+            throw $fail();
+        }
+        $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->file($file->getPathname());
+        if (!in_array($mime, self::FILE_TYPES[$extension], true)) {
+            throw $fail();
+        }
+        if (in_array($extension, ['docx', 'xlsx'], true) && (string) file_get_contents($file->getPathname(), false, null, 0, 2) !== 'PK') {
+            throw $fail();
+        }
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true) && @getimagesize($file->getPathname()) === false) {
+            throw $fail();
+        }
+
+        return ['name' => mb_substr($name, 0, 120), 'size' => (int) $file->getSize(), 'extension' => $extension];
+    }
+
+    private function storeUpload(int $submissionId, string $key, UploadedFile $file, string $extension): string
+    {
+        $dir = $this->filesDir($submissionId);
+        if (!is_dir($dir) && !@mkdir($dir, 0750, true) && !is_dir($dir)) {
+            throw new \RuntimeException('form_upload_dir');
+        }
+        $stored = $key . '-' . bin2hex(random_bytes(8)) . '.' . $extension;
+        $file->move($dir, $stored);
+        @chmod($dir . '/' . $stored, 0640);
+
+        return $stored;
+    }
+
+    private function filesDir(int $submissionId): string
+    {
+        return $this->projectDir . '/var/forms/' . $submissionId;
+    }
+
+    private function removeFiles(int $submissionId): void
+    {
+        $dir = $this->filesDir($submissionId);
+        if ($this->projectDir === '' || !is_dir($dir)) {
+            return;
+        }
+        foreach (glob($dir . '/*') ?: [] as $file) {
+            @unlink($file);
+        }
+        @rmdir($dir);
     }
 
     /** @return list<list<string>> header row plus one row per submission, spreadsheet-safe */
@@ -232,6 +408,7 @@ final class FormService
     private function hydrate(array $row): array
     {
         $row['fields'] = json_decode((string) $row['fields'], true) ?: [];
+        $row['translations'] = is_string($row['translations'] ?? null) ? (json_decode((string) $row['translations'], true) ?: []) : [];
 
         return $row;
     }
@@ -272,10 +449,63 @@ final class FormService
                     throw new \InvalidArgumentException('form_options_required');
                 }
             }
+            if ($type === 'file' && count(array_filter($fields, static fn (array $f): bool => $f['type'] === 'file')) >= self::MAX_FILE_FIELDS) {
+                throw new \InvalidArgumentException('form_too_many_files');
+            }
             $fields[] = ['key' => $key, 'type' => $type, 'label' => $label, 'required' => !empty($row['required']), 'placeholder' => $this->text($row['placeholder'] ?? '', 120), 'options' => $options];
         }
 
         return $fields;
+    }
+
+    /**
+     * @param mixed $input {locale: {intro, submit_label, success_message, fields: {key: {label, placeholder, options}}}}
+     * @param list<array<string,mixed>> $fields
+     * @return array<string,array<string,mixed>>
+     */
+    private function normalizeTranslations(mixed $input, array $fields, string $baseLocale): array
+    {
+        $out = [];
+        $keys = array_column($fields, 'key');
+        foreach (is_array($input) ? $input : [] as $locale => $row) {
+            if (!is_string($locale) || $locale === $baseLocale || preg_match('/^[a-z]{2,3}(-[A-Z]{2})?$/', $locale) !== 1 || !is_array($row) || count($out) >= 12) {
+                continue;
+            }
+            $entry = [];
+            foreach (['intro' => 2000, 'submit_label' => 80, 'success_message' => 500] as $key => $max) {
+                $value = $this->text($row[$key] ?? '', $max);
+                if ($value !== '') {
+                    $entry[$key] = $value;
+                }
+            }
+            foreach (is_array($row['fields'] ?? null) ? $row['fields'] : [] as $key => $ft) {
+                if (!in_array($key, $keys, true) || !is_array($ft)) {
+                    continue;
+                }
+                $item = [];
+                foreach (['label' => 190, 'placeholder' => 120] as $k => $max) {
+                    $value = $this->text($ft[$k] ?? '', $max);
+                    if ($value !== '') {
+                        $item[$k] = $value;
+                    }
+                }
+                $options = [];
+                foreach (preg_split('/\R/', (string) ($ft['options'] ?? '')) ?: [] as $option) {
+                    $options[] = $this->text($option, 120);
+                }
+                if (array_filter($options) !== []) {
+                    $item['options'] = $options;
+                }
+                if ($item !== []) {
+                    $entry['fields'][$key] = $item;
+                }
+            }
+            if ($entry !== []) {
+                $out[$locale] = $entry;
+            }
+        }
+
+        return $out;
     }
 
     private function text(mixed $value, int $max): string
@@ -296,7 +526,7 @@ final class FormService
             }
             $lines = [];
             foreach ($answers as $answer) {
-                $lines[] = $answer['label'] . ': ' . $answer['value'];
+                $lines[] = $answer['label'] . ': ' . $answer['value'] . ($answer['type'] === 'file' ? ' ' . CanonicalUiText::get('forms.mail.attachment') : '');
             }
             $subject = CanonicalUiText::get('forms.mail.subject', ['form' => (string) $form['name']]);
             $this->notifications->enqueue(NotificationChannel::Email, new NotificationMessage('form_submission', $subject, implode("\n", $lines), [], 'generic'), $to, null, 'form-submission:' . $submissionId);

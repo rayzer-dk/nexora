@@ -46,6 +46,7 @@ final readonly class InstallationSeeder
                 'name' => trim($request->storeName),
                 'default_locale' => $locale,
                 'default_currency' => $currency,
+                'default_country' => $request->countryCode(),
                 'timezone' => $request->timezoneName(),
                 'status' => 'active',
                 'created_at' => $now,
@@ -124,7 +125,7 @@ final readonly class InstallationSeeder
             $this->siteCapabilities->applyMode($storeId, $request->siteMode, 'system:installer');
             $this->seedForumBoards($db, $storeId, $now);
 
-            $this->seedInformationPages($db, $storeId, $now, trim($request->storeName), trim($request->adminEmail), $locale);
+            $this->seedInformationPages($db, $storeId, $now, trim($request->storeName), trim($request->adminEmail), $locale, $country);
             $db->insert('mc_consent_policy', [
                 'public_id' => $this->publicIds->binary(), 'store_id' => $storeId, 'policy_version' => '1.0',
                 'legal_document_id' => null, 'status' => 'active', 'default_region_mode' => 'eu_strict',
@@ -189,11 +190,11 @@ final readonly class InstallationSeeder
         }
     }
 
-    private function seedInformationPages(Connection $db, int $storeId, string $now, string $storeName, string $email, string $storeLocale): void
+    private function seedInformationPages(Connection $db, int $storeId, string $now, string $storeName, string $email, string $storeLocale, string $country = ''): void
     {
-        // Legal page drafts ship in Ukrainian and English only: other store languages start from the English drafts.
-        $pageLocale = in_array(substr($storeLocale, 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US';
-        \Commerce\Core\I18n\CanonicalUiText::useLocale($pageLocale);
+        // Page drafts exist in uk, ru, pl, de, da and en; the store language picks the draft, the country picks the legal frame.
+        $pageLocale = \Commerce\Modules\Content\System\InformationPageTemplates::directoryFor($storeLocale);
+        \Commerce\Core\I18n\CanonicalUiText::useLocale(in_array(substr($pageLocale, 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US');
         $path = $this->projectDir . '/config/content/information_pages.json';
         $document = json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR);
         $templates = new \Commerce\Modules\Content\System\InformationPageTemplates($this->projectDir);
@@ -205,8 +206,8 @@ final readonly class InstallationSeeder
             ]);
             $contentId = (int) $db->lastInsertId();
             $db->insert('mc_content_translation', [
-                'content_id' => $contentId, 'locale' => $pageLocale, 'title' => trim((string) ($definition['title_key'] ?? '')) !== '' ? \Commerce\Core\I18n\CanonicalUiText::get((string) $definition['title_key']) : (string) ($definition['title'] ?? $key),
-                'excerpt' => null, 'body_html' => $templates->body((string) $key, $pageLocale, $profile), 'meta_title' => null, 'meta_description' => null,
+                'content_id' => $contentId, 'locale' => $pageLocale, 'title' => $templates->title((string) $key, $pageLocale) ?? (trim((string) ($definition['title_key'] ?? '')) !== '' ? \Commerce\Core\I18n\CanonicalUiText::get((string) $definition['title_key']) : (string) ($definition['title'] ?? $key)),
+                'excerpt' => null, 'body_html' => $templates->body((string) $key, $pageLocale, $profile, $country), 'meta_title' => null, 'meta_description' => null,
                 'created_at' => $now, 'updated_at' => $now,
             ]);
         }

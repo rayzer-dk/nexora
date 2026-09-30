@@ -2,6 +2,26 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.19.0 — 2026-09-30
+
+Schema 63. Recommended block in categories, forms in pages, HEIC, legal pages for more countries, quality monitor with history, admin productivity.
+
+### Added
+- **"Recommended" block in category listings** (best-selling products of the last 180 days in the category) and a "Popular" sort option.
+- **Forms inside pages**: a `[form:address]` shortcode in pages, blog articles and category descriptions embeds a form. New **file** field (type/size checked, stored outside the web root, downloadable only by administrators, removed by the retention sweep) and **per-language labels/help/button texts** for every field.
+- **HEIC/HEIF uploads** (iPhone photos) are decoded to JPEG in-process by the PHP Imagick extension (built with libheif; the platform never starts external programs) and converted to WebP on upload. Without HEIC support the upload is refused with a clear message and the quality monitor warns.
+- **Legal pages and demo data for other countries**: privacy, terms, returns and cookie drafts in uk, en, ru, pl, de, da with country-specific frames (law, authority, withdrawal period); `commerce:install --country=DE|PL|DK…` seeds pages, demo prices and rates for that country.
+- **Quality monitor**: score history (chart), one-click fixes for fixable checks, notification e-mail when the score drops, scheduled task `quality`, console command `commerce:quality:check`.
+- **First steps wizard** (Admin → Overview → first steps): products, delivery, payment, taxes, legal pages, two-factor, first order; progress is derived from real data and shown on the dashboard.
+- **Admin productivity**: bulk actions in the orders list, Ctrl+K palette also finds products, orders and customers, keyboard shortcuts (`/`, `g d`, `g o`, `g p`, `g c`, `g q`).
+- CI: weekly "PHP next" workflow (PHP 8.5 and nightly = future 8.6), non-blocking.
+
+### Fixed
+- E2E extension fixture no longer pins the core version (`>=3.0.0`), so version bumps do not break the suite.
+- ECB and NBU rate sources verified against the live services.
+- Installer with a non-Ukrainian country: the post-install diagnostics no longer demand the Ukrainian locale and UAH, and the store keeps the chosen country (`default_country`, used by the Google Merchant feed label) instead of `UA`.
+- Admin form editor: Twig loop syntax compatible with Twig 3; two save buttons (top and bottom) on long forms.
+
 ## 3.18.1 — 2026-09-30
 
 - PHP: the upper bound `<8.6` is lifted (`>=8.4 <9.0` in `composer.json`, `PlatformVersion`, installer, `release.json`, manifest). All locked vendor packages already accept PHP 8.6. There is no released 8.6 build yet, so the platform was verified on 8.4.21 (full suite) and on PHP 8.5.8 (unit suite with `E_ALL`, lint of all PHP files); 8.6 itself is covered by the static readiness scan only.

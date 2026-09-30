@@ -36,11 +36,11 @@ final readonly class InstallationHealthVerifier
             $adminCount = (int) $this->connection->fetchOne("SELECT COUNT(*) FROM mc_admin_user WHERE status='active'");
             $add($checks, 'admin', \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationhealthverifier.aktyvnyi_administrator'), $adminCount >= 1, (string) $adminCount, '>=1');
 
-            $localeCount = (int) $this->connection->fetchOne("SELECT COUNT(*) FROM mc_store_locale WHERE locale_code='uk-UA' AND enabled=1");
-            $add($checks, 'locale', \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationhealthverifier.ukrainska_lokal'), $localeCount >= 1, (string) $localeCount, 'uk-UA enabled');
+            $localeCount = (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_store_locale sl JOIN mc_store s ON s.id=sl.store_id AND s.default_locale=sl.locale_code WHERE sl.enabled=1');
+            $add($checks, 'locale', \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationhealthverifier.ukrainska_lokal'), $localeCount >= 1, (string) $localeCount, 'default locale enabled');
 
-            $currencyCount = (int) $this->connection->fetchOne("SELECT COUNT(*) FROM mc_store_currency WHERE currency_code='UAH' AND enabled=1");
-            $add($checks, 'currency', \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationhealthverifier.valiuta_uah'), $currencyCount >= 1, (string) $currencyCount, 'UAH enabled');
+            $currencyCount = (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_store_currency sc JOIN mc_store s ON s.id=sc.store_id AND s.default_currency=sc.currency_code WHERE sc.enabled=1');
+            $add($checks, 'currency', \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationhealthverifier.valiuta_uah'), $currencyCount >= 1, (string) $currencyCount, 'default currency enabled');
 
             $locationCount = (int) $this->connection->fetchOne("SELECT COUNT(*) FROM mc_inventory_location WHERE status='active'");
             $add($checks, 'inventory', \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationhealthverifier.aktyvnyi_sklad'), $locationCount >= 1, (string) $locationCount, '>=1');

@@ -103,6 +103,7 @@
     <section class="admin-modal__dialog" role="dialog" aria-modal="true" aria-label="{{ ui_text('admin_quick_jump') }}">
         <div class="admin-command__search">{{ ui_icon('search', 20) }}<input type="search" placeholder="{{ ui_text('admin_jump_placeholder') }}" autocomplete="off" data-command-input><kbd>Esc</kbd></div>
         <div class="admin-command__results" data-command-results></div>
+        <p class="admin-command__hint">{{ ui_text('admin.nav.hotkeys') }}</p>
     </section>
 </div>
 <dialog class="admin-dialog" data-quick-preview-dialog aria-label="{{ ui_text('admin_quick_preview') }}"><div class="admin-dialog__bar"><strong>{{ ui_text('admin_quick_preview') }}</strong><button type="button" class="admin-icon-button is-sm" data-quick-preview-close title="{{ ui_text('admin_close') }}" aria-label="{{ ui_text('admin_close') }}">{{ ui_icon('x', 16) }}</button></div><div class="admin-dialog__body" data-quick-preview-body><p>{{ ui_text('admin_loading') }}</p></div></dialog>

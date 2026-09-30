@@ -11,6 +11,7 @@ final readonly class ProductCatalogFilter
     public const SORT_PRICE_DESC = 'price_desc';
     public const SORT_NAME_ASC = 'name_asc';
     public const SORT_NAME_DESC = 'name_desc';
+    public const SORT_POPULAR = 'popular';
 
     /** @var list<string> */
     public const SORTS = [
@@ -19,6 +20,7 @@ final readonly class ProductCatalogFilter
         self::SORT_PRICE_DESC,
         self::SORT_NAME_ASC,
         self::SORT_NAME_DESC,
+        self::SORT_POPULAR,
     ];
 
     public function __construct(

@@ -96,6 +96,10 @@ final class DataRetentionCommand extends Command
 
         // Privacy and growth: closed inquiries hold names, phones and e-mails; the rest are plain logs.
         $report['form_submissions_handled'] = $this->purge('mc_form_submission', "status='handled' AND created_at < ?", [$this->cutoff($days('form-days', 30, 3650))]);
+        if (!$this->dryRun && $this->tableExists('mc_form_submission')) {
+            // Uploaded attachments live in var/forms/<submission id>/; drop those whose submission was purged.
+            $report['form_files_orphaned'] = $this->sweepFormFiles();
+        }
         $report['inquiries_closed'] = $this->purge('mc_customer_inquiry', "status IN ('resolved','closed') AND updated_at < ?", [$this->cutoff($days('inquiry-days', 30, 3650))]);
         $report['ai_usage'] = $this->purge('mc_ai_usage', 'created_at < ?', [$this->cutoff($days('ai-log-days', 30, 3650))]);
         $report['automation_runs'] = $this->purge('mc_automation_run', 'created_at < ?', [$this->cutoff($days('automation-log-days', 30, 3650))]);
@@ -134,6 +138,30 @@ final class DataRetentionCommand extends Command
     }
 
     /** @param list<string> $params */
+    private function sweepFormFiles(): int
+    {
+        $root = $this->projectDir . '/var/forms';
+        if (!is_dir($root)) {
+            return 0;
+        }
+        $removed = 0;
+        foreach (new \DirectoryIterator($root) as $item) {
+            if ($item->isDot() || !$item->isDir() || preg_match('/^\d+$/', $item->getFilename()) !== 1) {
+                continue;
+            }
+            if ($this->db->fetchOne('SELECT 1 FROM mc_form_submission WHERE id=?', [(int) $item->getFilename()]) !== false) {
+                continue;
+            }
+            foreach (glob($item->getPathname() . '/*') ?: [] as $file) {
+                @unlink($file);
+            }
+            @rmdir($item->getPathname());
+            ++$removed;
+        }
+
+        return $removed;
+    }
+
     private function purge(string $table, string $where, array $params): int
     {
         if (!$this->tableExists($table)) {

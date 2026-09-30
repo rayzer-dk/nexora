@@ -84,4 +84,6 @@ Email: %email%%product%
     'http.error.not_found' => 'Сторінку не знайдено.',
     'scheduler.label.indexnow' => 'IndexNow',
     'scheduler.description.indexnow' => 'Раз на 30 хвилин повідомляє Bing, Yandex та інші пошукові системи про нові й змінені сторінки (лише для магазинів із увімкненим IndexNow).',
+    'scheduler.label.quality' => 'Монітор якості',
+    'scheduler.description.quality' => 'Раз на 6 годин перевіряє стан магазину, зберігає історію оцінки й надсилає лист, якщо з’явилася нова критична проблема або оцінка впала.',
 ];

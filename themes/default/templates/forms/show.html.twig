@@ -5,30 +5,7 @@
     <article class="content-page__body custom-form" data-custom-form="{{ form.slug }}">
         <h1>{{ form.name }}</h1>
         {% if form.intro %}<p class="content-page__lead">{{ form.intro }}</p>{% endif %}
-        {% for message in app.flashes('success') %}<div class="store-notice is-success" role="status">{{ message }}</div>{% endfor %}
-        {% for message in app.flashes('error') %}<div class="store-notice is-error" role="alert">{{ message }}</div>{% endfor %}
-        <form method="post" action="/forms/{{ form.slug }}/submit" class="custom-form__body" data-inquiry-form>
-            <input type="hidden" name="_token" value="{{ csrf_token('form_' ~ form.slug) }}">
-            {% include '@storefront/components/spam_fields.html.twig' %}
-            {% for field in form.fields %}
-            {% set id = 'cf-' ~ form.slug ~ '-' ~ field.key %}
-            {% if field.type == 'checkbox' %}
-            <label class="custom-form__check"><input type="checkbox" name="{{ field.key }}" value="1" {{ field.required ? 'required' : '' }}><span>{{ field.label }}{% if field.required %} <abbr title="{{ ui_text('required') }}">*</abbr>{% endif %}</span></label>
-            {% elseif field.type == 'radio' %}
-            <fieldset class="custom-form__group"><legend>{{ field.label }}{% if field.required %} <abbr title="{{ ui_text('required') }}">*</abbr>{% endif %}</legend>
-                {% for option in field.options %}<label class="custom-form__check"><input type="radio" name="{{ field.key }}" value="{{ option }}" {{ field.required and loop.first ? 'required' : '' }}><span>{{ option }}</span></label>{% endfor %}
-            </fieldset>
-            {% else %}
-            <label for="{{ id }}"><span>{{ field.label }}{% if field.required %} <abbr title="{{ ui_text('required') }}">*</abbr>{% endif %}</span>
-                {% if field.type == 'textarea' %}<textarea id="{{ id }}" name="{{ field.key }}" rows="5" maxlength="4000" placeholder="{{ field.placeholder }}" {{ field.required ? 'required' : '' }}></textarea>
-                {% elseif field.type == 'select' %}<select id="{{ id }}" name="{{ field.key }}" {{ field.required ? 'required' : '' }}><option value="">—</option>{% for option in field.options %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select>
-                {% else %}<input id="{{ id }}" type="{{ field.type == 'number' ? 'number' : (field.type in ['email','tel','date'] ? field.type : 'text') }}" name="{{ field.key }}" maxlength="500" {{ field.type == 'number' ? 'step="any"' : '' }} placeholder="{{ field.placeholder }}" {{ field.required ? 'required' : '' }}>{% endif %}
-            </label>
-            {% endif %}
-            {% endfor %}
-            {% include '@storefront/components/captcha.html.twig' with {form:'custom_form'} only %}
-            <button class="button button--primary" type="submit">{{ form.submit_label ?: ui_text('send') }}</button>
-        </form>
+        {% include '@storefront/forms/_form.html.twig' %}
     </article>
 </section>
 {% endblock %}

@@ -9,7 +9,9 @@ use Commerce\Modules\Admin\Http\AdminContextResolver;
 use Commerce\Modules\Forms\Application\FormService;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -107,6 +109,22 @@ final class FormAdminController extends AbstractController
         });
         $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
         $response->headers->set('Content-Disposition', 'attachment; filename="form-' . preg_replace('/[^a-z0-9-]/', '', (string) $form['slug']) . '.csv"');
+
+        return $response;
+    }
+
+    #[Route('/admin/content/forms/{id}/submissions/{submission}/file/{key}', name: 'admin_content_form_file', methods: ['GET'], requirements: ['id' => '\d+', 'submission' => '\d+', 'key' => 'f[0-9]{1,3}'])]
+    public function attachment(Request $request, int $id, int $submission, string $key): Response
+    {
+        $file = $this->forms->fileFor($this->storeId($request), $submission, $key);
+        if ($file === null) {
+            throw $this->createNotFoundException();
+        }
+        $response = new BinaryFileResponse($file['path']);
+        $response->headers->set('Content-Type', $file['mime']);
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Content-Security-Policy', "default-src 'none'; sandbox");
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, $file['name'], preg_replace('/[^A-Za-z0-9._-]+/', '_', $file['name']) ?: 'file');
 
         return $response;
     }

@@ -23,7 +23,7 @@
     </nav>
     {% endif %}
     <div class="article-main">
-      <div class="article-body">{{ article.body_html|raw }}</div>
+      <div class="article-body">{{ article.body_html|raw|with_forms }}</div>
       {% if article.tags %}<ul class="article-tags" aria-label="{{ ui_text('blog_tags_label')|e('html_attr') }}">{% for tag in article.tags %}<li><a class="blog-chip" href="/blog/tag/{{ tag.slug }}">{{ ui_icon('tag', 14) }}{{ tag.name }}</a></li>{% endfor %}</ul>{% endif %}
       {% include '@storefront/components/share_links.html.twig' with {share_url: share_url, share_title: article.title} only %}
     </div>

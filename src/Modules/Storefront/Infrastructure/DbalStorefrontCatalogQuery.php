@@ -172,11 +172,13 @@ final readonly class DbalStorefrontCatalogQuery
         );
 
         $orderParams = [];
+        $safeStoreId = (int) $context->storeId;
         $orderBy = match ($filter->sort) {
             ProductCatalogFilter::SORT_PRICE_ASC => 'pr.amount_minor IS NULL ASC,pr.amount_minor ASC,p.id DESC',
             ProductCatalogFilter::SORT_PRICE_DESC => 'pr.amount_minor IS NULL ASC,pr.amount_minor DESC,p.id DESC',
             ProductCatalogFilter::SORT_NAME_ASC => 'pt.name ASC,p.id DESC',
             ProductCatalogFilter::SORT_NAME_DESC => 'pt.name DESC,p.id DESC',
+            ProductCatalogFilter::SORT_POPULAR => "(SELECT COALESCE(SUM(soi.quantity),0) FROM mc_sales_order_item soi JOIN mc_sales_order so ON so.id=soi.order_id AND so.store_id={$safeStoreId} AND so.status NOT IN ('cancelled','expired','rejected') AND so.created_at>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 180 DAY) WHERE soi.product_id=p.id) DESC,sp.published_at DESC,p.id DESC",
             default => 'sp.published_at DESC,p.updated_at DESC,p.id DESC',
         };
         if ($categoryId !== null && $filter->sort === ProductCatalogFilter::SORT_NEWEST && trim($filter->search) === '') {

@@ -15,6 +15,7 @@
 <label class="admin-form-wide"><span>{{ ui_text('admin.forms.intro_label') }}</span><textarea name="intro" rows="3" maxlength="2000">{{ form.intro }}</textarea></label>
 <label class="admin-form-wide"><span>{{ ui_text('admin.forms.success_message') }}</span><input type="text" name="success_message" value="{{ form.success_message }}" maxlength="500"></label>
 </div></section>
+{% if form.id %}<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.forms.embed') }}</h2></div>{{ ui_icon('link', 20) }}</div><p>{{ ui_text('admin.forms.embed_hint') }}</p><p><code data-form-shortcode>[form slug="{{ form.slug }}"]</code></p></section>{% endif %}
 <section class="admin-panel" id="form-fields"><div class="admin-panel__header"><div><small>{{ ui_text('admin.forms.fields_hint') }}</small><h2>{{ ui_text('admin.forms.fields') }}</h2></div>{{ ui_icon('list-checks', 20) }}</div>
 <div class="form-fields">
 {% for i in 0..(slots - 1) %}{% set f = form.fields[i]|default(null) %}
@@ -31,5 +32,23 @@
 <p><small>{{ ui_text('admin.forms.fields_note') }}</small></p>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.forms.save') }}</button>{% if form.id and form.status == 'active' %}<a class="admin-button" href="/forms/{{ form.slug }}" target="_blank" rel="noopener">{{ ui_icon('external-link', 16) }}<span>{{ ui_text('admin.forms.open') }}</span></a>{% endif %}</div>
 </section>
+{% if form.id %}{% for l in locales %}{% if l.code != form.locale %}
+<section class="admin-panel form-translation" data-form-translation="{{ l.code }}"><div class="admin-panel__header"><div><small>{{ ui_text('admin.forms.translation_hint') }}</small><h2>{{ ui_text('admin.forms.translation') }}: {{ l.native_name }} · {{ l.code }}</h2></div>{{ ui_icon('languages', 20) }}</div>
+{% set tr = form.translations[l.code]|default({}) %}
+<div class="admin-form-grid">
+<label><span>{{ ui_text('admin.forms.submit_label') }}</span><input type="text" name="translations[{{ l.code }}][submit_label]" value="{{ tr.submit_label|default('') }}" maxlength="80"></label>
+<label><span>{{ ui_text('admin.forms.success_message') }}</span><input type="text" name="translations[{{ l.code }}][success_message]" value="{{ tr.success_message|default('') }}" maxlength="500"></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.forms.intro_label') }}</span><textarea name="translations[{{ l.code }}][intro]" rows="2" maxlength="2000">{{ tr.intro|default('') }}</textarea></label>
+</div>
+{% for f in form.fields %}{% set ft = tr.fields[f.key]|default({}) %}
+<fieldset class="form-field-row admin-info-block"><legend>{{ f.label }}</legend>
+<label><span>{{ ui_text('admin.forms.field_label') }}</span><input type="text" name="translations[{{ l.code }}][fields][{{ f.key }}][label]" value="{{ ft.label|default('') }}" maxlength="190"></label>
+<label><span>{{ ui_text('admin.forms.field_placeholder') }}</span><input type="text" name="translations[{{ l.code }}][fields][{{ f.key }}][placeholder]" value="{{ ft.placeholder|default('') }}" maxlength="120"></label>
+{% if f.type in ['select', 'radio'] %}<label class="admin-form-wide"><span>{{ ui_text('admin.forms.field_options') }}</span><textarea name="translations[{{ l.code }}][fields][{{ f.key }}][options]" rows="2" maxlength="4000">{{ ft.options|default([])|join("\n") }}</textarea><small>{{ ui_text('admin.forms.translation_options_hint') }}</small></label>{% endif %}
+</fieldset>
+{% endfor %}
+</section>
+{% endif %}{% endfor %}{% endif %}
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.forms.save') }}</button></div>
 </form>
 {{ shell.end() }}

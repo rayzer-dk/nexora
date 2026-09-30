@@ -37,4 +37,6 @@ return [
     'checkout.error.item_price_unavailable' => 'Товар «%name%» сейчас недоступен для заказа в валюте %currency%. Удалите его из корзины или выберите другую валюту.',
     'scheduler.label.indexnow' => 'IndexNow',
     'scheduler.description.indexnow' => 'Раз в 30 минут сообщает Bing, Yandex и другим поисковым системам о новых и изменённых страницах (только для магазинов с включённым IndexNow).',
+    'scheduler.label.quality' => 'Монитор качества',
+    'scheduler.description.quality' => 'Раз в 6 часов проверяет состояние магазина, сохраняет историю оценки и отправляет письмо, если появилась новая критическая проблема или оценка упала.',
 ];

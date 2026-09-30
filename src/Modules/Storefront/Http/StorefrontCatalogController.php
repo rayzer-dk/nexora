@@ -193,6 +193,11 @@ final class StorefrontCatalogController extends AbstractController
             throw $this->createNotFoundException();
         }
         if ($page === 1 && $filter->search !== '') $this->searchAnalytics->record($context->storeId, $context->locale, $filter->search, (int)($products['total'] ?? 0));
+        $recommended = [];
+        if ($page === 1 && !$filter->isFiltered() && (int) ($products['total'] ?? 0) > 8) {
+            // A short "recommended in this category" strip: best sellers of the last 180 days that are in stock.
+            $recommended = (array) ($this->catalog->products($context, (int) $category['id'], 1, 4, null, new ProductCatalogFilter(inStockOnly: true, sort: ProductCatalogFilter::SORT_POPULAR))['items'] ?? []);
+        }
         $facets = $this->catalog->catalogFacets($context, (int) $category['id']);
         $canonical = $request->getSchemeAndHttpHost() . $category['url'] . (!$filter->isFiltered() && $page > 1 ? '?page=' . $page : '');
 
@@ -201,6 +206,7 @@ final class StorefrontCatalogController extends AbstractController
             'store_name' => $context->storeName,
             'category' => $category,
             'products' => $products,
+            'recommended_products' => $recommended,
             'search_query' => $filter->search,
             'catalog_filter' => $filter,
             'catalog_facets' => $facets,
