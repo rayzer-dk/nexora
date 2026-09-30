@@ -8,7 +8,7 @@ use Commerce\Core\Site\SiteCapabilitySettings;
 use Commerce\Modules\Customer\Application\CustomerRegistrationService;
 use Commerce\Modules\Customer\Application\CustomerAccountSecurityService;
 use Commerce\Modules\Customer\Application\CustomerVerificationCodeService;
-use Commerce\Modules\Security\Bot\TurnstileVerifier;
+use Commerce\Modules\Security\Captcha\CaptchaVerifier;
 use Commerce\Modules\Customer\Application\DbalCustomerAccountQuery;
 use Commerce\Modules\Customer\Application\CustomerProfileService;
 use Commerce\Modules\Customer\Application\CustomerWishlistService;
@@ -34,8 +34,7 @@ final class CustomerAccountController extends AbstractController
         private readonly CustomerRegistrationService $registration,
         private readonly CustomerAccountSecurityService $accountSecurity,
         private readonly CustomerVerificationCodeService $verificationCodes,
-        private readonly TurnstileVerifier $turnstile,
-        private readonly string $turnstileSiteKey,
+        private readonly CaptchaVerifier $captcha,
         private readonly DbalCustomerAccountQuery $accounts,
         private readonly CustomerProfileService $profiles,
         private readonly CustomerWishlistService $wishlist,
@@ -80,13 +79,11 @@ final class CustomerAccountController extends AbstractController
             if (!$this->isCsrfTokenValid('customer_register', (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
             }
-            if (!$this->turnstile->verify((string) $request->request->get('cf-turnstile-response', ''), $request->getClientIp())) {
+            if (!$this->captcha->verify($request, 'register')) {
                 $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('flash.antibot_failed'));
                 return $this->render('@storefront/account/register.html.twig', [
                     'page_title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.http.customeraccountcontroller.stvoryty_oblikovyi_zapys'),
                     'store_name' => $context->storeName,
-                    'turnstile_enabled' => $this->turnstile->enabled(),
-                    'turnstile_site_key' => $this->turnstileSiteKey,
                     'seo_head' => ['robots' => 'noindex,nofollow'],
                 ]);
             }
@@ -119,8 +116,6 @@ final class CustomerAccountController extends AbstractController
         return $this->render('@storefront/account/register.html.twig', [
             'page_title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.http.customeraccountcontroller.stvoryty_oblikovyi_zapys'),
             'store_name' => $context->storeName,
-            'turnstile_enabled' => $this->turnstile->enabled(),
-            'turnstile_site_key' => $this->turnstileSiteKey,
             'seo_head' => ['robots' => 'noindex,nofollow'],
         ]);
     }

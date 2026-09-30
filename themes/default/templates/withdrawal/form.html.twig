@@ -9,7 +9,7 @@
 <input type="hidden" name="stage" value="confirm">
 <input type="hidden" name="name" value="{{ form.name }}"><input type="hidden" name="email" value="{{ form.email }}"><input type="hidden" name="order" value="{{ form.order }}"><input type="hidden" name="scope" value="{{ form.scope }}">
 <dl class="account-summary" data-withdrawal-summary><dt>{{ ui_text('name') }}</dt><dd>{{ form.name }}</dd><dt>Email</dt><dd>{{ form.email }}</dd><dt>{{ ui_text('withdrawal_order') }}</dt><dd>{{ form.order }}</dd>{% if form.scope %}<dt>{{ ui_text('withdrawal_scope') }}</dt><dd>{{ form.scope }}</dd>{% endif %}</dl>
-{% if turnstile_enabled and turnstile_site_key %}<div class="cf-turnstile" data-sitekey="{{ turnstile_site_key|e('html_attr') }}"></div><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
+{% include '@storefront/components/captcha.html.twig' with {form:'withdrawal'} only %}
 <button class="button button--primary" type="submit" data-withdrawal-confirm>{{ ui_icon('check', 18) }} {{ ui_text('withdrawal_confirm_button') }}</button>
 {% else %}
 <input type="hidden" name="stage" value="review">

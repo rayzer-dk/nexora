@@ -73,6 +73,7 @@
         if (attr.name === 'type' || attr.name === 'data-consent-category' || attr.name === 'data-consent-activated') continue;
         script.setAttribute(attr.name, attr.value);
       }
+      if (node.nonce) script.nonce = node.nonce; // the nonce attribute is hidden from getAttribute once the CSP has applied it
       script.textContent = node.textContent;
       node.dataset.consentActivated = '1';
       node.after(script);

@@ -1249,3 +1249,7 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 }
 
 .admin-page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-2); }
+
+.admin-fieldset { display: grid; gap: var(--mc-space-3); min-width: 0; margin: 0; padding: var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); }
+.admin-fieldset > legend { padding-inline: var(--mc-space-2); font-weight: var(--mc-font-weight-semibold); }
+.admin-fieldset > p { margin: 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }

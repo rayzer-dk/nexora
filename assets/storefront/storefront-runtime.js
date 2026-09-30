@@ -400,6 +400,7 @@ function initContactWidget() {
       if (errorBox) { errorBox.textContent = error instanceof Error ? error.message : t('js_send_failed'); errorBox.hidden = false; }
     } finally {
       if (button) button.disabled = false;
+      window.mcCaptchaReset?.(form);
     }
   });
 }
@@ -474,3 +475,172 @@ function initChatWidget() {
   });
 }
 initChatWidget();
+
+/* ---------- Sale timers, back to top, quick order, live total ---------- */
+function initSaleTimers() {
+  const nodes = qa('[data-sale-timer]:not(body)');
+  if (!nodes.length) return;
+  const pad = (n) => String(n).padStart(2, '0');
+  const tick = () => {
+    const now = Date.now();
+    let alive = false;
+    nodes.forEach((node) => {
+      const end = Date.parse(node.dataset.saleTimer || '');
+      const left = end - now;
+      if (!Number.isFinite(end) || left <= 0) { node.hidden = true; return; }
+      alive = true;
+      const s = Math.floor(left / 1000);
+      const d = Math.floor(s / 86400);
+      const value = q('[data-sale-timer-value]', node);
+      if (value) value.textContent = `${d > 0 ? `${d}${t('js_timer_days')} ` : ''}${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+    });
+    if (alive) window.setTimeout(tick, 1000);
+  };
+  tick();
+}
+initSaleTimers();
+
+function initBackToTop() {
+  const button = q('[data-back-to-top]');
+  if (!button) return;
+  const update = () => { button.hidden = window.scrollY < 600; };
+  window.addEventListener('scroll', update, { passive: true });
+  button.addEventListener('click', () => window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
+  update();
+}
+initBackToTop();
+
+function initQuickOrder() {
+  const dialog = q('[data-quick-order-dialog]');
+  const open = q('[data-quick-order-open]');
+  if (!dialog || !open) return;
+  open.addEventListener('click', () => {
+    const qty = q('[data-buy-actions] [data-qty-input]');
+    const hidden = q('[data-quick-order-qty]', dialog);
+    if (qty && hidden) hidden.value = qty.value;
+    if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+  });
+  q('[data-quick-order-close]', dialog)?.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+}
+initQuickOrder();
+
+function initLiveTotal() {
+  const form = q('form[data-buy-actions][data-unit-price]');
+  const out = q('[data-live-total]', form ?? document);
+  const input = form ? q('[data-qty-input]', form) : null;
+  if (!form || !out || !input) return;
+  const unit = Number(form.dataset.unitPrice) / 100;
+  const currency = form.dataset.currency;
+  if (!(unit > 0) || !currency) return;
+  const format = (() => { try { return new Intl.NumberFormat(document.documentElement.lang || undefined, { style: 'currency', currency }); } catch { return null; } })();
+  if (!format) return;
+  const update = () => {
+    const qty = Number(String(input.value).replace(',', '.'));
+    if (!(qty > 0) || qty === 1) { out.hidden = true; return; }
+    out.textContent = `${t('js_total')}: ${format.format(Math.round(unit * qty * 100) / 100)}`;
+    out.hidden = false;
+  };
+  ['input', 'change'].forEach((name) => input.addEventListener(name, update));
+  form.addEventListener('click', () => window.setTimeout(update, 0));
+  update();
+}
+initLiveTotal();
+
+/* ---------- Captcha (built-in, reCAPTCHA v2/v3, Turnstile) ---------- */
+const captchaScripts = new Map();
+function loadCaptchaScript(src) {
+  if (!captchaScripts.has(src)) {
+    captchaScripts.set(src, new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src; script.async = true; script.defer = true;
+      script.onload = () => resolve(); script.onerror = () => reject(new Error('captcha script'));
+      document.head.append(script);
+    }));
+  }
+  return captchaScripts.get(src);
+}
+async function refreshBuiltinCaptcha(box) {
+  try {
+    const response = await fetch('/captcha/new', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    const data = await response.json();
+    const token = q('[data-captcha-token]', box);
+    if (token) token.value = data.token;
+    const image = q('[data-captcha-image]', box);
+    if (image && data.image) image.src = data.image;
+    const question = q('[data-captcha-question]', box);
+    if (question) question.textContent = data.question;
+    const answer = q('input[name="mc_captcha_answer"]', box);
+    if (answer) answer.value = '';
+  } catch { /* offline: the visitor can retry */ }
+}
+function initCaptcha() {
+  const boxes = qa('[data-captcha]');
+  if (!boxes.length) return;
+  const byProvider = (name) => boxes.filter((box) => box.dataset.captcha === name);
+  byProvider('builtin').forEach((box) => q('[data-captcha-refresh]', box)?.addEventListener('click', () => refreshBuiltinCaptcha(box)));
+  const turnstile = byProvider('turnstile');
+  if (turnstile.length) {
+    window.mcTurnstileReady = () => turnstile.forEach((box) => {
+      const el = q('[data-captcha-widget]', box);
+      if (el && !el.dataset.wid) el.dataset.wid = String(window.turnstile.render(el, { sitekey: box.dataset.sitekey }));
+    });
+    loadCaptchaScript('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=mcTurnstileReady').catch(() => {});
+  }
+  const v2 = byProvider('recaptcha_v2');
+  if (v2.length) {
+    window.mcRecaptchaReady = () => window.grecaptcha.ready(() => v2.forEach((box) => {
+      const el = q('[data-captcha-widget]', box);
+      if (el && !el.dataset.wid) el.dataset.wid = String(window.grecaptcha.render(el, { sitekey: box.dataset.sitekey }));
+    }));
+    loadCaptchaScript('https://www.google.com/recaptcha/api.js?render=explicit&onload=mcRecaptchaReady').catch(() => {});
+  }
+  const v3 = byProvider('recaptcha_v3');
+  if (v3.length) {
+    const key = v3[0].dataset.sitekey;
+    const run = (box) => window.grecaptcha.ready(() => window.grecaptcha.execute(key, { action: box.dataset.captchaForm }).then((token) => {
+      const field = q('[data-captcha-v3]', box);
+      if (field) field.value = token;
+    }).catch(() => {}));
+    loadCaptchaScript(`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(key)}`).then(() => {
+      v3.forEach(run);
+      window.setInterval(() => v3.forEach(run), 100000); // tokens live 2 minutes
+      v3.forEach((box) => box.closest('form')?.addEventListener('focusin', () => run(box), { once: true }));
+    }).catch(() => {});
+  }
+  window.mcCaptchaReset = (form) => {
+    qa('[data-captcha]', form).forEach((box) => {
+      const el = q('[data-captcha-widget]', box);
+      const wid = el?.dataset.wid;
+      if (box.dataset.captcha === 'builtin') refreshBuiltinCaptcha(box);
+      else if (box.dataset.captcha === 'turnstile' && wid !== undefined) window.turnstile?.reset(wid);
+      else if (box.dataset.captcha === 'recaptcha_v2' && wid !== undefined) window.grecaptcha?.reset(Number(wid));
+      else if (box.dataset.captcha === 'recaptcha_v3') window.grecaptcha?.ready(() => window.grecaptcha.execute(box.dataset.sitekey, { action: box.dataset.captchaForm }).then((token) => { const f = q('[data-captcha-v3]', box); if (f) f.value = token; }));
+    });
+  };
+}
+initCaptcha();
+
+/* ---------- Ecommerce events (consent-gated tags pick them up from gtag/fbq) ---------- */
+function mcTrack(name, item) {
+  if (!item || !item.currency) return;
+  const price = item.price;
+  const params = { currency: item.currency, value: Math.round(price * item.quantity * 100) / 100, items: [{ item_id: item.id, item_name: item.name, price, quantity: item.quantity }] };
+  try { window.gtag?.('event', name, params); } catch { /* tag blocked */ }
+  try {
+    if (typeof window.fbq === 'function') window.fbq('track', name === 'view_item' ? 'ViewContent' : 'AddToCart', { content_ids: [item.id], content_name: item.name, content_type: 'product', value: params.value, currency: item.currency });
+  } catch { /* tag blocked */ }
+}
+function initEcommerceEvents() {
+  const track = q('[data-recent-track][data-price-minor]');
+  if (track) mcTrack('view_item', { id: track.dataset.sku || track.dataset.id, name: track.dataset.name, price: Number(track.dataset.priceMinor) / 100, currency: track.dataset.currency, quantity: 1 });
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || !/\/cart\/add$/.test(form.getAttribute('action') || '')) return;
+    const card = form.closest('[data-product-card]');
+    const qty = Number(String(q('[name="quantity"]', form)?.value ?? '1').replace(',', '.')) || 1;
+    if (card) mcTrack('add_to_cart', { id: card.dataset.trackId, name: card.dataset.trackName, price: Number(card.dataset.trackPrice) / 100, currency: card.dataset.trackCurrency, quantity: qty });
+    else if (track) mcTrack('add_to_cart', { id: track.dataset.sku || track.dataset.id, name: track.dataset.name, price: Number(track.dataset.priceMinor) / 100, currency: track.dataset.currency, quantity: qty });
+  }, true);
+}
+initEcommerceEvents();

@@ -18,6 +18,7 @@
       <label><span>{{ ui_text('name_required') }}</span><input name="name" required maxlength="190" autocomplete="name"></label>
       <label><span>{{ ui_text('phone') }} *</span><input name="phone" type="tel" required maxlength="32" autocomplete="tel"></label>
       <p class="cw-dialog__error" role="alert" hidden data-cw-error></p>
+      {% include '@storefront/components/captcha.html.twig' with {form:'callback'} only %}
       <button class="button button--primary" type="submit">{{ ui_icon('phone-call', 16) }} {{ ui_text('cw_callback') }}</button>
     </form>
   </dialog>

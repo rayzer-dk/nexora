@@ -224,7 +224,7 @@ final readonly class DbalStorefrontCatalogQuery
         }
 
         $sql = "SELECT p.id,p.public_id,p.product_type,pt.name,pt.short_description,v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,
-                       pr.amount_minor,pr.compare_at_minor,pr.currency,pr.tax_included,sr.path,
+                       pr.amount_minor,pr.compare_at_minor,pr.ends_at AS price_ends_at,pr.currency,pr.tax_included,sr.path,
                        COALESCE(b.name,'') AS brand_name,
                        COALESCE((SELECT AVG(rv.rating) FROM mc_product_review rv WHERE rv.product_id=p.id AND rv.status='published'),0) AS rating_value,
                        (SELECT COUNT(*) FROM mc_product_review rc WHERE rc.product_id=p.id AND rc.status='published') AS review_count,
@@ -274,7 +274,7 @@ final readonly class DbalStorefrontCatalogQuery
         $where = implode(' AND ', $conditions);
         $fetchLimit = $limit + 1;
         $sql = "SELECT p.id,p.public_id,p.product_type,pt.name,pt.short_description,v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,
-                       pr.amount_minor,pr.compare_at_minor,pr.currency,pr.tax_included,sr.path,
+                       pr.amount_minor,pr.compare_at_minor,pr.ends_at AS price_ends_at,pr.currency,pr.tax_included,sr.path,
                        COALESCE(b.name,'') AS brand_name,
                        COALESCE((SELECT AVG(rv.rating) FROM mc_product_review rv WHERE rv.product_id=p.id AND rv.status='published'),0) AS rating_value,
                        (SELECT COUNT(*) FROM mc_product_review rc WHERE rc.product_id=p.id AND rc.status='published') AS review_count,
@@ -458,7 +458,7 @@ final readonly class DbalStorefrontCatalogQuery
         $row = $this->connection->fetchAssociative(
             "SELECT p.id,p.public_id,p.product_type,p.condition_code,p.country_of_origin,pt.name,pt.short_description,pt.description,pt.meta_title,pt.meta_description,
                     v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.allow_backorder,
-                    pr.amount_minor,pr.compare_at_minor,pr.currency,pr.tax_included,sr.path,p.brand_id,COALESCE(b.name,'') AS brand_name,tr.rate_bps,
+                    pr.amount_minor,pr.compare_at_minor,pr.ends_at AS price_ends_at,pr.currency,pr.tax_included,sr.path,p.brand_id,COALESCE(b.name,'') AS brand_name,tr.rate_bps,
                     mtp.consumer_display_mode,COALESCE(ppp.mode,'auto') AS purchase_mode,ppp.button_label AS purchase_button_label,ppp.eta_text AS purchase_eta_text,
                     COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) AS available_quantity
              FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active'
@@ -559,6 +559,7 @@ final readonly class DbalStorefrontCatalogQuery
             'product_type'=>(string)($row['product_type'] ?? 'physical'), 'name'=>(string)$row['name'], 'meta_title'=>(string)($row['meta_title']??''), 'meta_description'=>(string)($row['meta_description']??''), 'brand'=>(string)($row['brand_name']??''), 'brand_id'=>isset($row['brand_id']) && $row['brand_id'] !== null ? (int)$row['brand_id'] : null, 'sku'=>(string)$row['sku'], 'url'=>'/'.ltrim((string)$row['path'],'/'),
             'price'=>$this->money->format($priceMinor,(string)$row['currency'],$context->locale), 'price_minor'=>$priceMinor,
             'compare_at_price'=>$compareMinor!==null?$this->money->format($compareMinor,(string)$row['currency'],$context->locale):null, 'currency'=>(string)$row['currency'], 'gross_price'=>number_format($priceMinor/100,2,'.',''), 'merchant_price'=>number_format($priceMinor/100,2,'.',''),
+            'sale_ends_at'=>($compareMinor!==null && $compareMinor>$priceMinor && !empty($row['price_ends_at']))?(new \DateTimeImmutable((string)$row['price_ends_at'],new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z'):null,
             'image'=>$this->mediaUrl($row['image_key']??null), ...$this->purchaseState($row), 'available_quantity'=>(string)$row['available_quantity'],
             'quantity'=>['unit_code'=>(string)$row['sale_unit_code'],'unit_label'=>(string)$row['sale_unit_code'],'step'=>$this->trimDecimal((string)$row['quantity_step']),'min'=>$this->trimDecimal((string)$row['min_order_quantity']),'max'=>$row['max_order_quantity']!==null?$this->trimDecimal((string)$row['max_order_quantity']):null],
             'rating'=>['value'=>round((float)($row['rating_value'] ?? 0),1),'count'=>(int)($row['review_count'] ?? 0)],

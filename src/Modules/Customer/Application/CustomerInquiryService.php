@@ -18,12 +18,13 @@ final readonly class CustomerInquiryService
     /** @param array<string,mixed> $input */
     public function create(int $storeId,array $input,?string $productPublicId=null): string
     {
-        $type=trim((string)($input['inquiry_type']??'contact'));if(!in_array($type,['contact','callback','product_question','price_request'],true))$type='contact';
+        $type=trim((string)($input['inquiry_type']??'contact'));if(!in_array($type,['contact','callback','product_question','price_request','quick_order'],true))$type='contact';
         $name=trim((string)($input['name']??''));$email=mb_strtolower(trim((string)($input['email']??'')));$phone=trim((string)($input['phone']??''));$message=trim((string)($input['message']??''));$source=trim((string)($input['source_url']??''));
         if($name===''||mb_strlen($name)>190)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerregistrationservice.vkazhit_imia'));
         if($email!==''&&filter_var($email,FILTER_VALIDATE_EMAIL)===false)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerinquiryservice.nekorektnyi_email'));
         if($phone===''&&$email==='')throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerinquiryservice.vkazhit_telefon_abo_email'));
         if(mb_strlen($phone)>32||mb_strlen($message)>4000)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerinquiryservice.perevirte_vvedeni_dani'));
+        if($type==='quick_order'){if($phone==='')throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerinquiryservice.vkazhit_telefon_abo_email'));$qty=preg_replace('/[^0-9.,]/','',(string)($input['quantity']??'1'))?:'1';$sku=preg_replace('/[^A-Za-z0-9._-]/','',(string)($input['sku']??''));$message='× '.mb_substr($qty,0,12).($sku!==''?' · '.mb_substr($sku,0,64):'');}
         if($message===''&&$type!=='callback')throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerinquiryservice.napyshit_povidomlennia'));
         if(strlen($source)>1000)$source=substr($source,0,1000);
         $productId=null;$productName=null;

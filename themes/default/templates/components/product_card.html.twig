@@ -1,5 +1,5 @@
 {% set capabilities = site_capabilities() %}
-<article class="catalog-card" data-product-card>
+<article class="catalog-card" data-product-card data-track-id="{{ product.sku|default('')|e('html_attr') }}" data-track-name="{{ product.name|e('html_attr') }}" data-track-price="{{ product.price_minor|default(0) }}" data-track-currency="{{ product.currency|default('')|e('html_attr') }}">
     <a class="catalog-card__media" href="{{ product.url }}" aria-label="{{ product.name }}">
         {% if product.badges|default([]) %}<span class="catalog-card__badges">{% for badge in product.badges %}<span class="product-badge product-badge--{{ badge.tone }}" data-badge="{{ badge.code }}">{{ badge.label }}</span>{% endfor %}</span>{% elseif product.availability == 'https://schema.org/InStock' %}<span class="catalog-card__badges"><span class="product-badge product-badge--success">{{ ui_text('in_stock') }}</span></span>{% endif %}
         <img src="{{ product.image }}" alt="{{ product.name }}" width="640" height="640" loading="lazy" decoding="async">
@@ -9,7 +9,7 @@
         <h2><a href="{{ product.url }}">{{ product.name }}</a></h2>
         {% if capabilities.features.reviews|default(false) and product.rating is defined and product.rating.count > 0 %}<div class="catalog-card__rating"><span class="rating-stars" aria-hidden="true">{% for i in 1..5 %}{{ ui_icon(i <= product.rating.value|round ? 'star-filled' : 'star-empty', 14) }}{% endfor %}</span><small>{{ product.rating.value }} ({{ product.rating.count }})</small></div>{% endif %}
         <div class="catalog-card__meta"><span>SKU {{ product.sku }}</span><span class="{{ product.availability == 'https://schema.org/InStock' ? 'is-stock' : 'is-out' }}">{{ product.availability_label }}</span></div>
-        <div class="catalog-card__price"><strong>{{ product.price }}</strong>{% if product.compare_at_price %}<del>{{ product.compare_at_price }}</del>{% endif %}</div>
+        <div class="catalog-card__price"><strong>{{ product.price }}</strong>{% if product.compare_at_price %}<del>{{ product.compare_at_price }}</del>{% endif %}</div>{% if product.sale_ends_at %}<div class="sale-timer" data-sale-timer="{{ product.sale_ends_at }}"><span class="sale-timer__label">{{ ui_icon('timer', 14) }} {{ ui_text('sale_ends_in') }}</span><span class="sale-timer__value" data-sale-timer-value></span></div>{% endif %}
         <div class="catalog-card__actions">
             {% if capabilities.features.cart|default(false) and product.purchase_allowed|default(false) and product.variant_id is defined and product.variant_id %}
             <form class="catalog-card__cart-form" action="/cart/add" method="post" data-card-add-to-cart>

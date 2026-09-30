@@ -82,6 +82,19 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'container' => '1408',
                 'font' => 'system',
             ],
+            'display' => [
+                'card_style' => 'classic',
+                'card_columns' => '4',
+                'card_ratio' => 'square',
+                'card_actions' => 'visible',
+                'category_style' => 'classic',
+                'product_layout' => 'classic',
+                'sticky_header' => false,
+                'back_to_top' => true,
+                'sale_timer' => true,
+                'quick_order' => false,
+                'benefits' => '',
+            ],
             'header' => [
                 'search_placeholder' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.poshuk_tovariv_katehorii_brendiv'),
                 'show_category_nav' => true,
@@ -135,6 +148,20 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $scheme=(string)($input['theme']['color_scheme']??$defaults['theme']['color_scheme']); $out['theme']['color_scheme']=in_array($scheme,['light','auto','dark'],true)?$scheme:$defaults['theme']['color_scheme'];
         $container=(int)($input['theme']['container']??$defaults['theme']['container']); $out['theme']['container']=(string)max(960,min(1680,$container));
         $font=(string)($input['theme']['font']??$defaults['theme']['font']); $out['theme']['font']=in_array($font,['system','inter','manrope'],true)?$font:$defaults['theme']['font'];
+        $choice = static fn (mixed $v, array $allowed, string $fallback): string => in_array((string) $v, $allowed, true) ? (string) $v : $fallback;
+        $d = $defaults['display'];
+        $in = is_array($input['display'] ?? null) ? $input['display'] : [];
+        $out['display']['card_style'] = $choice($in['card_style'] ?? $d['card_style'], ['classic', 'minimal', 'outlined', 'overlay', 'list'], $d['card_style']);
+        $out['display']['card_columns'] = $choice($in['card_columns'] ?? $d['card_columns'], ['3', '4', '5'], $d['card_columns']);
+        $out['display']['card_ratio'] = $choice($in['card_ratio'] ?? $d['card_ratio'], ['square', 'portrait', 'landscape'], $d['card_ratio']);
+        $out['display']['card_actions'] = $choice($in['card_actions'] ?? $d['card_actions'], ['visible', 'hover'], $d['card_actions']);
+        $out['display']['category_style'] = $choice($in['category_style'] ?? $d['category_style'], ['classic', 'overlay', 'chips'], $d['category_style']);
+        $out['display']['product_layout'] = $choice($in['product_layout'] ?? $d['product_layout'], ['classic', 'wide', 'stacked', 'split'], $d['product_layout']);
+        foreach (['sticky_header', 'back_to_top', 'sale_timer', 'quick_order'] as $flag) {
+            $out['display'][$flag] = (bool) ($in[$flag] ?? $d[$flag]);
+        }
+        $lines = array_slice(array_values(array_filter(array_map(fn (string $l): string => $this->text($l, 90), preg_split('/\R/u', (string) ($in['benefits'] ?? '')) ?: []), static fn (string $l): bool => $l !== '')), 0, 4);
+        $out['display']['benefits'] = implode("\n", $lines);
         $out['header']['search_placeholder'] = $this->text($input['header']['search_placeholder'] ?? '', 160);
         $out['header']['show_category_nav'] = (bool) ($input['header']['show_category_nav'] ?? false);
         foreach (array_keys($defaults['home']) as $key) {

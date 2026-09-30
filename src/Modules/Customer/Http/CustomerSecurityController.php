@@ -24,6 +24,7 @@ final class CustomerSecurityController extends AbstractController
         private readonly CustomerAccountSecurityService $security,
         private readonly CustomerVerificationCodeService $verificationCodes,
         private readonly DbalCustomerAccountQuery $accounts,
+        private readonly \Commerce\Modules\Security\Captcha\CaptchaVerifier $captcha,
     ) {
     }
 
@@ -38,6 +39,10 @@ final class CustomerSecurityController extends AbstractController
         if ($request->isMethod('POST')) {
             if (!$this->isCsrfTokenValid('customer_password_forgot', (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
+            }
+            if (!$this->captcha->verify($request, 'password_recovery')) {
+                $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('flash.antibot_failed'));
+                return $this->redirectToRoute('customer_password_forgot');
             }
             try {
                 $this->security->requestPasswordReset((string) $request->request->get('email', ''), $context->storeName);

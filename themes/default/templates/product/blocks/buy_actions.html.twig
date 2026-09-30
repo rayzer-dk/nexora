@@ -1,9 +1,10 @@
 {% set capabilities = site_capabilities() %}
+{% set display = storefront_presentation().display %}
 {% set quantity = product.quantity|default({unit_code:'item', unit_label:ui_text('pieces_short'), step:'1', min:'1', max:null}) %}
 {% set unit_labels = {'item':ui_text('unit_item'),'pack':ui_text('unit_pack'),'set':ui_text('unit_set'),'pair':ui_text('unit_pair'),'kg':ui_text('unit_kg'),'g':ui_text('unit_g'),'l':ui_text('unit_l'),'ml':ui_text('unit_ml'),'m':ui_text('unit_m'),'sqm':ui_text('unit_sqm')} %}
 {% if product.purchase_allowed and capabilities.features.cart|default(false) %}
 {% if product.product_type|default('physical') == 'digital' %}<div class="purchase-note"><strong>{{ ui_text('digital_product') }}</strong><small>{{ ui_text('digital_product_note') }}</small></div>{% endif %}
-<form class="buy-actions" data-buy-actions method="post" action="/cart/add">
+<form class="buy-actions" data-buy-actions data-unit-price="{{ product.price_minor|default(0) }}" data-currency="{{ product.currency|default('') }}" method="post" action="/cart/add">
     <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
     <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
     <commerce-quantity class="quantity">
@@ -14,7 +15,22 @@
     </commerce-quantity>
     <button class="button button--primary button--lg" type="submit" data-primary-buy>{{ ui_icon('shopping-cart', 20) }}<span>{{ product.purchase_button_label|default(ui_text('add_cart')) }}</span></button>
     {% if capabilities.features.checkout|default(false) %}<button class="button button--secondary button--lg" type="submit" name="next" value="checkout">{{ ui_text('buy_now') }}</button>{% endif %}
+    <output class="buy-actions__total" data-live-total hidden aria-live="polite"></output>
 </form>
+{% if display.quick_order %}
+<button class="button button--secondary quick-order-open" type="button" data-quick-order-open>{{ ui_icon('zap', 18) }}<span>{{ ui_text('quick_order') }}</span></button>
+<dialog class="cw-dialog quick-order" data-quick-order-dialog aria-labelledby="quick-order-title">
+    <form method="post" action="/product/{{ product.id }}/inquiry" data-inquiry-form>
+        <div class="cw-dialog__head"><h2 id="quick-order-title">{{ ui_text('quick_order') }}</h2><button class="cw-dialog__close" type="button" data-quick-order-close aria-label="{{ ui_text('cw_close') }}">{{ ui_icon('x', 20) }}</button></div>
+        <p>{{ ui_text('quick_order_text') }}</p>
+        <input type="hidden" name="_token" value="{{ csrf_token('product_inquiry_' ~ product.id) }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="quick_order"><input type="hidden" name="source_url" value="{{ app.request.uri }}"><input type="hidden" name="sku" value="{{ product.sku|default('') }}"><input type="hidden" name="quantity" value="{{ quantity.min }}" data-quick-order-qty>
+        <label><span>{{ ui_text('name_required') }}</span><input name="name" required maxlength="190" autocomplete="name"></label>
+        <label><span>{{ ui_text('phone') }} *</span><input name="phone" type="tel" required maxlength="32" autocomplete="tel"></label>
+        {% include '@storefront/components/captcha.html.twig' with {form:'quick_order'} only %}
+        <button class="button button--primary" type="submit">{{ ui_icon('zap', 16) }} {{ ui_text('quick_order_send') }}</button>
+    </form>
+</dialog>
+{% endif %}
 {% elseif product.purchase_allowed %}
 <div class="purchase-unavailable"><strong>{{ product.availability_label }}</strong></div>
 {% elseif product.notify_available %}
@@ -22,13 +38,16 @@
     <input type="hidden" name="_token" value="{{ csrf_token('stock_notify_' ~ product.id) }}">{% include '@storefront/components/spam_fields.html.twig' %}
     <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
     <label><span>{{ ui_text('notify_when_available') }}</span><div class="inline-action"><input type="email" name="email" required autocomplete="email" placeholder="{{ ui_text('your_email') }}"><button class="button button--primary" type="submit">{{ ui_text('notify') }}</button></div></label>
-    <small>{{ ui_text('stock_notification_note') }}</small>
+    {% include '@storefront/components/captcha.html.twig' with {form:'stock_notify'} only %}<small>{{ ui_text('stock_notification_note') }}</small>
 </form>
 {% elseif product.price_request %}
 <form class="product-inquiry-form" data-inquiry-form method="post" action="/product/{{ product.id }}/inquiry">
     <input type="hidden" name="_token" value="{{ csrf_token('product_inquiry_' ~ product.id) }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="price_request"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
     <h3>{{ ui_text('ask_price') }}</h3><div class="delivery-fields"><label><span>{{ ui_text('name') }}</span><input name="name" required maxlength="190"></label><label><span>{{ ui_text('phone_or_email') }}</span><input name="phone" maxlength="32" placeholder="+380..."></label><label><span>Email</span><input name="email" type="email" maxlength="320"></label></div><label><span>{{ ui_text('message') }}</span><textarea name="message" maxlength="4000" rows="3">{{ ui_text('price_request_default') }}</textarea></label><button class="button button--primary button--lg" type="submit">{{ ui_text('send_request') }}</button>
-</form>
+{% include '@storefront/components/captcha.html.twig' with {form:'price_request'} only %}</form>
 {% else %}
 <div class="purchase-unavailable"><strong>{{ product.availability_label }}</strong>{% if product.purchase_eta_text %}<span>{{ product.purchase_eta_text }}</span>{% endif %}</div>
+{% endif %}
+{% if display.benefits %}
+<ul class="product-benefits">{% set icons = ['truck','shield-check','refresh-cw','headset'] %}{% for line in display.benefits|split("\n") %}<li>{{ ui_icon(icons[loop.index0], 18) }}<span>{{ line }}</span></li>{% endfor %}</ul>
 {% endif %}

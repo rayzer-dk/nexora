@@ -383,10 +383,18 @@ services:
         arguments:
             $publicBaseUrl: '%commerce.app_public_url%'
 
-    Commerce\Modules\Security\Bot\TurnstileVerifier:
+    Commerce\Modules\Security\Captcha\CaptchaSettings:
         arguments:
-            $enabled: '%commerce.turnstile.enabled%'
-            $secretKey: '%commerce.turnstile.secret_key%'
+            $envTurnstileEnabled: '%commerce.turnstile.enabled%'
+            $envTurnstileSiteKey: '%commerce.turnstile.site_key%'
+            $envTurnstileSecret: '%commerce.turnstile.secret_key%'
+
+    Commerce\Modules\Security\Captcha\CaptchaVerifier: '@Commerce\Modules\Security\Captcha\CaptchaService'
+
+    Commerce\Modules\Security\Captcha\BuiltinCaptcha:
+        arguments:
+            $secret: '%kernel.secret%'
+            $cache: '@cache.app'
 
     Commerce\Core\Runtime\ComponentInventory:
         arguments:
@@ -429,14 +437,6 @@ services:
         arguments:
             $appSecret: '%kernel.secret%'
             $smsEnabled: '%commerce.sms.enabled%'
-
-    Commerce\Modules\Customer\Http\CustomerAccountController:
-        arguments:
-            $turnstileSiteKey: '%commerce.turnstile.site_key%'
-
-    Commerce\Modules\ConsumerRights\Http\WithdrawalController:
-        arguments:
-            $turnstileSiteKey: '%commerce.turnstile.site_key%'
 
     Commerce\Modules\Content\System\InformationPageCatalog:
         arguments:

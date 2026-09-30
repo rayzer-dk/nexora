@@ -1,0 +1,15 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.captcha.title'),'captcha') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.captcha.title') }}</span></nav><h1>{{ ui_text('admin.captcha.title') }}</h1><p>{{ ui_text('admin.captcha.intro') }}</p></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+{% if s.source == 'env' %}<div class="admin-notice is-warning">{{ ui_text('admin.captcha.env_notice') }}</div>{% endif %}
+<section class="admin-panel"><form method="post" action="{{ path('admin_system_captcha') }}" class="admin-form-grid" data-captcha-settings><input type="hidden" name="_token" value="{{ csrf_token('admin_captcha') }}">
+<label>{{ ui_text('admin.captcha.provider') }}<select name="provider">{% for p in ['none'] | merge(providers) %}<option value="{{ p }}"{{ s.provider == p ? ' selected' : '' }}>{{ provider_labels[p] }}</option>{% endfor %}</select><small>{{ ui_text('admin.captcha.provider_hint') }}</small></label>
+<label>{{ ui_text('admin.captcha.site_key') }}<input type="text" name="site_key" value="{{ s.site_key }}" maxlength="255" autocomplete="off" spellcheck="false"><small>{{ ui_text('admin.captcha.site_key_hint') }}</small></label>
+<label>{{ ui_text('admin.captcha.secret') }}<input type="password" name="secret" value="" maxlength="255" autocomplete="new-password" placeholder="{{ s.has_secret ? ui_text('admin.captcha.secret_saved') : '' }}"><small>{{ ui_text('admin.captcha.secret_hint') }}</small></label>
+<label>{{ ui_text('admin.captcha.score') }}<input type="number" name="score" min="1" max="99" value="{{ s.score }}"><small>{{ ui_text('admin.captcha.score_hint') }}</small></label>
+<fieldset class="admin-form-wide admin-fieldset"><legend>{{ ui_text('admin.captcha.forms') }}</legend><p>{{ ui_text('admin.captcha.forms_hint') }}</p>
+<div class="admin-check-grid">{% for key, label in form_labels %}<label class="admin-check"><input type="checkbox" name="forms[]" value="{{ key }}"{{ key in s.forms ? ' checked' : '' }}> {{ label }}</label>{% endfor %}</div></fieldset>
+<div class="admin-form-wide"><small>{{ ui_text('admin.captcha.privacy_note') }}</small></div>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div></form></section>
+{{ shell.end() }}

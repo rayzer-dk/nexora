@@ -1,0 +1,18 @@
+{% set c = captcha_widget(form) %}
+{% if c %}
+<div class="captcha" data-captcha="{{ c.provider }}" data-captcha-form="{{ c.form }}"{% if c.site_key %} data-sitekey="{{ c.site_key }}"{% endif %}>
+{% if c.provider == 'builtin' %}
+    <input type="hidden" name="mc_captcha_token" value="{{ c.token }}" data-captcha-token>
+    <div class="captcha__challenge">
+        {% if c.mode == 'image' %}<img class="captcha__image" src="/captcha/image/{{ c.token }}" width="168" height="56" alt="{{ ui_text('captcha_image_alt') }}" data-captcha-image>{% else %}<span class="captcha__question" data-captcha-question>{{ c.question }}</span>{% endif %}
+        <button class="captcha__refresh" type="button" data-captcha-refresh aria-label="{{ ui_text('captcha_refresh') }}" title="{{ ui_text('captcha_refresh') }}">{{ ui_icon('refresh-cw', 16) }}</button>
+    </div>
+    <label class="captcha__answer"><span>{{ ui_text(c.mode == 'image' ? 'captcha_label_image' : 'captcha_label_math') }}</span><input name="mc_captcha_answer" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" required></label>
+{% elseif c.provider == 'recaptcha_v3' %}
+    <input type="hidden" name="g-recaptcha-response" value="" data-captcha-v3>
+    <small class="captcha__note">{{ ui_text('captcha_protected_by_recaptcha') }}</small>
+{% else %}
+    <div class="captcha__widget" data-captcha-widget></div>
+{% endif %}
+</div>
+{% endif %}

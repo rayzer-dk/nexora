@@ -4,6 +4,7 @@
         <span class="product-price__current">{{ product.price }}</span>
         {% if product.compare_at_price %}<span class="product-price__old">{{ product.compare_at_price }}</span>{% endif %}
     </div>
+{% if product.sale_ends_at %}<div class="sale-timer" data-sale-timer="{{ product.sale_ends_at }}"><span class="sale-timer__label">{{ ui_icon('timer', 14) }} {{ ui_text('sale_ends_in') }}</span><span class="sale-timer__value" data-sale-timer-value></span></div>{% endif %}
     {% if tax %}
         {% if tax.display_mode == 'gross_with_breakdown' %}
             <small class="product-price__tax">{{ ui_text('price_vat_included') }}{% if tax.rate_label %} {{ tax.rate_label }}{% endif %}; {{ ui_text('including_vat') }} {{ tax.tax_amount }}</small>

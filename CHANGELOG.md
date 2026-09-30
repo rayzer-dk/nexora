@@ -2,6 +2,24 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.14.0 — 2026-09-30
+
+Schema 58, production channel. Captcha, product display variants, analytics tags, conversion tools.
+
+### Added
+- **Captcha** (Admin → System → Captcha): built-in image captcha (self-hosted, stateless signed token, single use, arithmetic fallback without GD), Google reCAPTCHA v2 / v3 and Cloudflare Turnstile. The forms that require it are chosen individually: registration, password recovery, contact, call-back, price request, quick order, newsletter, back-in-stock, review, question, forum, contract withdrawal. Secret keys are stored encrypted; the legacy `TURNSTILE_*` variables still work until settings are saved.
+- **Product display variants** (Admin → Appearance → Storefront): card style (classic, minimal, outlined, text-over-photo, list), 3/4/5 columns, photo ratio, always-visible or on-hover buttons, home category tile style, four product page layouts.
+- **Analytics & pixels** (Admin → System → Analytics & pixels): GA4, Google Tag Manager and Meta Pixel by validated ID. Tags load only after the matching consent category; `view_item` / `add_to_cart` events are emitted (purchases stay server-side).
+- **Quick order** (one-click order request from the product page, stored as an inquiry), **sale countdown** for prices with an end date, **live total** for quantities above one, **sticky header**, **back-to-top** button and **benefit lines** under the buy button — each switchable.
+
+### Fixed
+- The contact / call-back / price-request endpoint was released in 3.13.1 without the anti-spam gate because of a failed patch; it is now covered by a test.
+- Consent activation of inline tags now keeps the CSP nonce, so consent-gated inline snippets run under the strict CSP.
+
+### Changed
+- `TurnstileVerifier` was replaced by the provider-neutral `CaptchaService`; registration and withdrawal use it.
+- Chat and captcha/analytics hosts are merged into the page CSP through one helper instead of overwriting each other.
+
 ## 3.13.1 — 2026-09-30
 
 Schema 57, production channel. Cookie consent and anti-spam audit fixes.

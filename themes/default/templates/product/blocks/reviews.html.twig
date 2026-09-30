@@ -17,7 +17,7 @@
             <label>{{ ui_text('title') }}<input type="text" name="title" maxlength="255"></label>
             <label>{{ ui_text('your_review') }}<textarea name="body" rows="4" maxlength="8000" required></textarea></label>
             <label>{{ ui_text('product_photo') }} <small>{{ ui_text('review_image_limits') }}</small><input type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/avif" multiple></label>
-            <button class="button button--primary" type="submit">{{ ui_text('send_review') }}</button>
+            {% include '@storefront/components/captcha.html.twig' with {form:'review'} only %}<button class="button button--primary" type="submit">{{ ui_text('send_review') }}</button>
         </form>
     {% else %}<p><a href="{{ path('customer_login') }}">{{ ui_text('sign_in_prompt') }}</a>, {{ ui_text('to_leave_review') }}</p>{% endif %}
 </section>

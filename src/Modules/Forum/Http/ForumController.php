@@ -28,6 +28,7 @@ final class ForumController extends AbstractController
         private readonly ForumProfileService $profiles,
         private readonly ForumDirectMessageService $directMessages,
         private readonly PublicFormSpamGuard $spamGuard,
+        private readonly \Commerce\Modules\Security\Captcha\CaptchaVerifier $captcha,
     ) {
     }
 
@@ -109,7 +110,7 @@ final class ForumController extends AbstractController
             time(),
             strlen((string) $request->getContent()),
         );
-        if (!$spam->allowed) {
+        if (!$spam->allowed || !$this->captcha->verify($request, 'forum')) {
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.povidomlennia_ne_proishlo_antyspam_perevirku'));
             return $this->redirectToRoute('storefront_forum_board', ['slug' => $slug]);
         }
@@ -198,7 +199,7 @@ final class ForumController extends AbstractController
             time(),
             strlen((string) $request->getContent()),
         );
-        if (!$spam->allowed) {
+        if (!$spam->allowed || !$this->captcha->verify($request, 'forum')) {
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.povidomlennia_ne_proishlo_antyspam_perevirku'));
             return $this->redirectToRoute('storefront_forum_topic', $target);
         }

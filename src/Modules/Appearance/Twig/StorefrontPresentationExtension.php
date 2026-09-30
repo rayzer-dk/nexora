@@ -68,7 +68,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
                 return null;
             }
             // The security-headers subscriber extends the CSP with this vendor's hosts (and only this vendor's).
-            $this->requests->getCurrentRequest()?->attributes->set('_csp_extra', $chat['csp']);
+            \Commerce\Modules\Security\Http\CspExtra::merge($this->requests->getCurrentRequest(), $chat['csp']);
 
             return ['provider' => $chat['provider'], 'id' => $chat['id'], 'base' => $chat['base']];
         } catch (\Throwable) {
@@ -101,11 +101,14 @@ final class StorefrontPresentationExtension extends AbstractExtension
     }
 
     /** @return array<string,mixed> */
+    /** @var array<int,array<string,mixed>> */
+    private array $presentationMemo = [];
+
     public function presentation(): array
     {
         try {
             $ctx = $this->context();
-            return $ctx !== null ? $this->settings->get($ctx->storeId) : StorefrontPresentationSettings::defaults();
+            return $ctx !== null ? ($this->presentationMemo[$ctx->storeId] ??= $this->settings->get($ctx->storeId)) : StorefrontPresentationSettings::defaults();
         } catch (\Throwable) {
             return StorefrontPresentationSettings::defaults();
         }

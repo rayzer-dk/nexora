@@ -6,7 +6,7 @@ namespace Commerce\Modules\ConsumerRights\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\ConsumerRights\Withdrawal\WithdrawalNoticeService;
-use Commerce\Modules\Security\Bot\TurnstileVerifier;
+use Commerce\Modules\Security\Captcha\CaptchaVerifier;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,8 +19,7 @@ final class WithdrawalController extends AbstractController
     public function __construct(
         private readonly StorefrontContextResolver $contexts,
         private readonly WithdrawalNoticeService $notices,
-        private readonly TurnstileVerifier $turnstile,
-        private readonly string $turnstileSiteKey,
+        private readonly CaptchaVerifier $captcha,
     ) {
     }
 
@@ -42,7 +41,7 @@ final class WithdrawalController extends AbstractController
                 $error = 'withdrawal_error_invalid';
             } elseif ($stage === 'review') {
                 $step = 'confirm';
-            } elseif (!$this->turnstile->verify((string) $request->request->get('cf-turnstile-response', ''), $request->getClientIp())) {
+            } elseif (!$this->captcha->verify($request, 'withdrawal')) {
                 $error = 'withdrawal_error_bot';
                 $step = 'confirm';
             } else {
@@ -60,8 +59,6 @@ final class WithdrawalController extends AbstractController
             'form' => $form,
             'error' => $error,
             'step' => $step,
-            'turnstile_enabled' => $this->turnstile->enabled(),
-            'turnstile_site_key' => $this->turnstileSiteKey,
         ]);
         $response->headers->set('Cache-Control', 'no-store, private');
         return $response;

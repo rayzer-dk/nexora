@@ -26,7 +26,7 @@ final class NewsletterController extends AbstractController
     public function subscribe(Request $request): Response
     {
         if(!$this->isCsrfTokenValid('newsletter_subscribe',(string)$request->request->get('_token')))throw $this->createAccessDeniedException();
-        if(!$this->protection->allow($request,'newsletter')){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.review.http.productfeedbackcontroller.formu_ne_pryiniato_onovit_storinku_ta_sprobuite_shch'));return $this->redirect((string)($request->headers->get('referer')?:'/'));}
+        if(!$this->protection->allow($request,'newsletter','newsletter')){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.review.http.productfeedbackcontroller.formu_ne_pryiniato_onovit_storinku_ta_sprobuite_shch'));return $this->redirect((string)($request->headers->get('referer')?:'/'));}
         $context=$this->contexts->resolve($request);$email=mb_strtolower(trim((string)$request->request->get('email')));
         if(filter_var($email,FILTER_VALIDATE_EMAIL)===false){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.inventory.application.stocknotificationservice.vkazhit_korektnyi_email'));return $this->redirect((string)($request->headers->get('referer')?:'/'));}
         $token=rtrim(strtr(base64_encode(random_bytes(32)),'+/','-_'),'=');$hash=hash('sha256',$token,true);$now=$this->now();

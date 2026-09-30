@@ -4,6 +4,7 @@
   "arrow-left",
   "arrow-left-right",
   "arrow-right",
+  "arrow-up",
   "arrow-up-down",
   "badge-percent",
   "ban",
@@ -133,6 +134,7 @@
   "terminal",
   "thumbs-up",
   "ticket",
+  "timer",
   "trash-2",
   "triangle-alert",
   "truck",
@@ -145,7 +147,8 @@
   "wallet",
   "wifi-off",
   "workflow",
-  "x"
+  "x",
+  "zap"
  ],
  "aliases": {
   "check-circle": "circle-check",
