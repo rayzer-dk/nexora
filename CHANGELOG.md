@@ -2,6 +2,13 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.20.3 — 2026-09-30
+
+Schema 64. Installation on shared hosting.
+
+### Fixed
+- The database default character set (e.g. `utf8mb3` on shared hosting) no longer blocks the installer: it is now a recommendation, because every table is created explicitly as InnoDB / `utf8mb4` (verified on a server with global MyISAM, empty `sql_mode` and a `utf8mb3` database).
+
 ## 3.20.2 — 2026-09-30
 
 Schema 64. Installation on shared hosting.

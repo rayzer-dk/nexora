@@ -73,7 +73,7 @@ final class SystemPreflightInspector
             $results[] = new RequirementResult('db.engine',\Commerce\Core\I18n\CanonicalUiText::get('php.core.health.systempreflightinspector.skhovyshche_za_zamovchuvanniam'),$engine === 'innodb',RequirementLevel::Required,$engine,'InnoDB',\Commerce\Core\I18n\CanonicalUiText::get('php.core.health.systempreflightinspector.vstanovit_default_storage_engine_innodb'));
 
             $charset = strtolower((string) $connection->fetchOne('SELECT @@character_set_database'));
-            $results[] = new RequirementResult('db.charset',\Commerce\Core\I18n\CanonicalUiText::get('php.core.health.systempreflightinspector.koduvannia_bazy_danykh'),$charset === 'utf8mb4',RequirementLevel::Required,$charset,'utf8mb4',\Commerce\Core\I18n\CanonicalUiText::get('php.core.health.systempreflightinspector.vykorystovuite_utf8mb4_dlia_bazy_mahazynu'));
+            $results[] = new RequirementResult('db.charset',\Commerce\Core\I18n\CanonicalUiText::get('php.core.health.systempreflightinspector.koduvannia_bazy_danykh'),$charset === 'utf8mb4',RequirementLevel::Recommended,$charset,'utf8mb4',\Commerce\Core\I18n\CanonicalUiText::get('php.core.health.systempreflightinspector.vykorystovuite_utf8mb4_dlia_bazy_mahazynu'));
 
             $mode = strtoupper((string) $connection->fetchOne('SELECT @@sql_mode'));
             $strict = str_contains($mode,'STRICT_TRANS_TABLES') || str_contains($mode,'STRICT_ALL_TABLES');
