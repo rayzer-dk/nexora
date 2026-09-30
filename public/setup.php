@@ -10,6 +10,7 @@ const MC_MIN_MYSQL = '8.4.0';
 const MC_MIN_MARIADB = '10.11.0';
 
 $projectDir = dirname(__DIR__);
+require_once $projectDir . '/src/Core/Install/RegionCatalog.php';
 
 $installerLocales = ['uk-UA', 'ru-RU', 'en-US'];
 $requestedInstallerLocale = (string) ($_GET['lang'] ?? $_POST['_lang'] ?? $_COOKIE['nexora_setup_lang'] ?? 'uk-UA');
@@ -168,7 +169,14 @@ $values = [
     'admin_email' => $_POST['admin_email'] ?? '',
     'public_url' => $_POST['public_url'] ?? detectPublicUrl(),
     'site_mode' => $_POST['site_mode'] ?? 'shop',
+    'country' => strtoupper((string) ($_POST['country'] ?? ($installerLocale === 'uk-UA' ? 'UA' : ($installerLocale === 'ru-RU' ? 'UA' : 'US')))),
+    'currency' => strtoupper((string) ($_POST['currency'] ?? '')),
+    'store_locale' => (string) ($_POST['store_locale'] ?? $installerLocale),
+    'timezone' => (string) ($_POST['timezone'] ?? ''),
 ];
+$regionPreset = \Commerce\Core\Install\RegionCatalog::preset((string) $values['country']);
+if ($values['currency'] === '') { $values['currency'] = $regionPreset['currency']; }
+if ($values['timezone'] === '') { $values['timezone'] = $regionPreset['timezone']; }
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (!hash_equals((string) $_SESSION['mc_setup_csrf'], (string) ($_POST['_csrf'] ?? ''))) {
@@ -191,6 +199,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $createDatabase = isset($_POST['create_database']);
     $installDemo = isset($_POST['install_demo']);
     $siteMode = trim((string) ($_POST['site_mode'] ?? 'shop'));
+    $storeCountry = strtoupper(trim((string) ($_POST['country'] ?? 'UA')));
+    $storeCurrency = strtoupper(trim((string) ($_POST['currency'] ?? '')));
+    $storeLocale = trim((string) ($_POST['store_locale'] ?? ''));
+    $storeTimezone = trim((string) ($_POST['timezone'] ?? ''));
+    if (!in_array($storeCountry, \Commerce\Core\Install\RegionCatalog::countryCodes(), true)) {
+        $storeCountry = 'OTHER';
+    }
+    if ($storeCurrency !== '' && !isset(\Commerce\Core\Install\RegionCatalog::currencies()[$storeCurrency])) {
+        $storeCurrency = '';
+    }
+    if (!in_array($storeLocale, \Commerce\Core\Install\RegionCatalog::BUNDLED_LOCALES, true)) {
+        $storeLocale = $installerLocale;
+    }
+    if ($storeTimezone !== '' && !in_array($storeTimezone, \DateTimeZone::listIdentifiers(), true)) {
+        $storeTimezone = '';
+    }
 
     if (!preg_match('/^[A-Za-z0-9._:\-\[\]]+$/', $dbHost)) {
         $errors[] = it('installer.adresa_servera_bazy_danykh_mistyt_nepidtrymuvani_symvoly');
@@ -323,10 +347,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'APP_SECRET' => $appSecret,
                 'SYMFONY_TRUSTED_PROXIES' => '',
                 'APP_PUBLIC_URL' => $publicUrl,
-                'STORE_DEFAULT_COUNTRY' => 'UA',
-                'STORE_DEFAULT_LOCALE' => $installerLocale,
-                'STORE_DEFAULT_CURRENCY' => 'UAH',
-                'STORE_DEFAULT_TIMEZONE' => 'Europe/Kyiv',
+                'STORE_DEFAULT_COUNTRY' => $storeCountry,
+                'STORE_DEFAULT_LOCALE' => $storeLocale,
+                'STORE_DEFAULT_CURRENCY' => $storeCurrency !== '' ? $storeCurrency : \Commerce\Core\Install\RegionCatalog::preset($storeCountry)['currency'],
+                'STORE_DEFAULT_TIMEZONE' => $storeTimezone !== '' ? $storeTimezone : \Commerce\Core\Install\RegionCatalog::preset($storeCountry)['timezone'],
                 'DATABASE_URL' => $databaseUrl,
                 'DATABASE_SERVER_VERSION' => $doctrineServerVersion,
                 'LOCK_DSN' => 'flock',
@@ -436,6 +460,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'public_url' => $publicUrl,
                 'install_demo' => $installDemo,
                 'site_mode' => $siteMode,
+                'country' => $storeCountry,
+                'currency' => $storeCurrency,
+                'locale' => $storeLocale,
+                'timezone' => $storeTimezone,
             ];
             $installResult = runApplicationInstall($projectDir, $installPayload, [$dbPassword, $adminPassword]);
             if (($installResult['code'] ?? 1) !== 0 || !is_file($lockFile)) {
@@ -911,6 +939,10 @@ function runApplicationInstall(string $projectDir, array $payload, array $secret
             '--admin-password' => (string) ($payload['admin_password'] ?? ''),
             '--public-url' => (string) ($payload['public_url'] ?? ''),
             '--site-mode' => (string) ($payload['site_mode'] ?? 'shop'),
+            '--country' => (string) ($payload['country'] ?? 'UA'),
+            '--currency' => (string) ($payload['currency'] ?? ''),
+            '--locale' => (string) ($payload['locale'] ?? ''),
+            '--timezone' => (string) ($payload['timezone'] ?? ''),
             '--no-interaction' => true,
         ];
         if ((bool) ($payload['install_demo'] ?? false)) {
@@ -1079,6 +1111,12 @@ function e(string $value): string
 <div><label><?= e(it('installer.store_name')) ?></label><input name="store_name" value="<?= e((string) $values['store_name']) ?>" required></div>
 <div><label><?= e(it('installer.store_url')) ?></label><input name="public_url" value="<?= e((string) $values['public_url']) ?>" required></div>
 <div class="full"><label><?= e(it('installer.site_profile')) ?></label><select name="site_mode"><option value="shop" <?= $values['site_mode'] === 'shop' ? 'selected' : '' ?>><?= e(it('installer.mode_shop')) ?></option><option value="catalog" <?= $values['site_mode'] === 'catalog' ? 'selected' : '' ?>><?= e(it('installer.mode_catalog')) ?></option><option value="content" <?= $values['site_mode'] === 'content' ? 'selected' : '' ?>><?= e(it('installer.mode_content')) ?></option><option value="landing" <?= $values['site_mode'] === 'landing' ? 'selected' : '' ?>><?= e(it('installer.mode_landing')) ?></option><option value="forum" <?= $values['site_mode'] === 'forum' ? 'selected' : '' ?>><?= e(it('installer.mode_forum')) ?></option><option value="hybrid" <?= $values['site_mode'] === 'hybrid' ? 'selected' : '' ?>><?= e(it('installer.mode_hybrid')) ?></option></select><p class="muted" style="margin:7px 0 0"><?= e(it('installer.profile_hint')) ?></p></div>
+<div class="setup-group"><h3><?= e(it('installer.step_region')) ?></h3><p><?= e(it('installer.region_hint')) ?></p></div>
+<div><label><?= e(it('installer.country')) ?></label><select name="country" id="setup_country"><?php foreach (\Commerce\Core\Install\RegionCatalog::countryCodes() as $cc): $pr = \Commerce\Core\Install\RegionCatalog::preset($cc); ?><option value="<?= e($cc) ?>" data-currency="<?= e($pr['currency']) ?>" data-timezone="<?= e($pr['timezone']) ?>" data-locale="<?= e($pr['locale']) ?>" <?= $values['country'] === $cc ? 'selected' : '' ?>><?= e($cc === 'OTHER' ? it('installer.country_other') : \Commerce\Core\Install\RegionCatalog::countryName($cc, substr($installerLocale, 0, 2)) . ' · ' . $cc) ?></option><?php endforeach; ?></select></div>
+<div><label><?= e(it('installer.currency')) ?></label><select name="currency" id="setup_currency"><?php foreach (\Commerce\Core\Install\RegionCatalog::currencies() as $code => $row): ?><option value="<?= e($code) ?>" <?= $values['currency'] === $code ? 'selected' : '' ?>><?= e($code . ' · ' . $row['name']) ?></option><?php endforeach; ?></select></div>
+<div><label><?= e(it('installer.store_language')) ?></label><select name="store_locale" id="setup_locale"><?php foreach (\Commerce\Core\Install\RegionCatalog::BUNDLED_LOCALES as $lc): ?><option value="<?= e($lc) ?>" <?= $values['store_locale'] === $lc ? 'selected' : '' ?>><?= e(\Commerce\Core\Install\RegionCatalog::localeName($lc, $lc) . ' · ' . $lc) ?></option><?php endforeach; ?></select></div>
+<div><label><?= e(it('installer.timezone')) ?></label><select name="timezone" id="setup_timezone"><?php $tzFound = false; foreach (\DateTimeZone::listIdentifiers() as $tz): if ($tz === $values['timezone']) { $tzFound = true; } ?><option value="<?= e($tz) ?>" <?= $values['timezone'] === $tz ? 'selected' : '' ?>><?= e($tz) ?></option><?php endforeach; ?></select></div>
+<p class="field-hint full"><?= e(it('installer.region_change_later')) ?></p>
 <div class="setup-group"><h3><?= e(it('installer.step_admin')) ?></h3><p><?= e(it('installer.admin_hint')) ?></p></div>
 <div><label><?= e(it('installer.admin_name')) ?></label><input name="admin_name" value="<?= e((string) $values['admin_name']) ?>" required></div>
 <div><label><?= e(it('installer.admin_email')) ?></label><input type="email" name="admin_email" value="<?= e((string) $values['admin_email']) ?>" required></div>
@@ -1088,6 +1126,7 @@ function e(string $value): string
 <div class="full"><button class="button" <?= $runtimeReady ? '' : 'disabled' ?>><?= e(it('installer.install_button')) ?></button></div>
 </div></form></section>
 </main><script>
+(function(){var c=document.getElementById('setup_country');if(!c)return;c.addEventListener('change',function(){var o=c.options[c.selectedIndex];[['setup_currency','currency'],['setup_timezone','timezone'],['setup_locale','locale']].forEach(function(p){var el=document.getElementById(p[0]);var v=o.getAttribute('data-'+p[1]);if(el&&v){el.value=v;}});});})();
 document.querySelectorAll('[data-toggle-password]').forEach(function(button){button.addEventListener('click',function(){var input=document.getElementById(button.getAttribute('data-toggle-password'));if(!input)return;var reveal=input.type==='password';input.type=reveal?'text':'password';button.setAttribute('aria-pressed',reveal?'true':'false');});});
 var demoBox=document.getElementById('install_demo');var demoNote=document.getElementById('demo-enabled-note');function syncDemoNote(){if(!demoBox||!demoNote)return;demoNote.hidden=!demoBox.checked;}if(demoBox){demoBox.addEventListener('change',syncDemoNote);syncDemoNote();}
 var installerError=document.getElementById('install-errors');if(installerError){requestAnimationFrame(function(){installerError.scrollIntoView({block:'center',behavior:'instant'});});}

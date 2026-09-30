@@ -163,7 +163,7 @@ input:disabled, select:disabled, textarea:disabled { background: var(--mc-color-
 input[type="checkbox"], input[type="radio"] { flex: none; width: var(--mc-icon-size-md); height: var(--mc-icon-size-md); margin: 0; accent-color: var(--mc-color-primary); }
 input[type="file"] { width: 100%; padding: var(--mc-space-2); border: 1px dashed var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); font-size: var(--mc-font-size-sm); }
 .account-form label, .feedback-form label, .delivery-fields label, .coupon-box label, .checkout-wide-field,
-.modal label, .contact-form-card label, .product-inquiry-form label, .stock-notify-form label, .catalog-filter,
+.modal label, .contact-form-card label, .custom-form__body label, .product-inquiry-form label, .stock-notify-form label, .catalog-filter,
 .forum-compose-inline, .field {
   display: grid; align-content: start; gap: var(--mc-space-1);
   font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-medium);
@@ -172,7 +172,7 @@ input[type="file"] { width: 100%; padding: var(--mc-space-2); border: 1px dashed
 label:has(> input[type="checkbox"]), .catalog-filter--check { display: flex; align-items: center; gap: var(--mc-space-2); font-weight: var(--mc-font-weight-regular); }
 fieldset { min-width: 0; margin: 0; padding: 0; border: 0; display: grid; gap: var(--mc-space-3); }
 legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); }
-.account-form, .feedback-form, .contact-form-card form, .product-inquiry-form, .stock-notify-form, .modal form { display: grid; gap: var(--mc-space-4); }
+.account-form, .feedback-form, .contact-form-card form, .custom-form__body, .product-inquiry-form, .stock-notify-form, .modal form { display: grid; gap: var(--mc-space-4); }
 .delivery-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--mc-space-4); }
 .inline-action, .coupon-row { display: flex; gap: var(--mc-space-2); align-items: stretch; }
 .inline-action input, .coupon-row input { flex: 1; min-width: 0; }
@@ -1333,3 +1333,8 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 .product-articles { margin-top: var(--mc-space-8); }
 .product-articles h2 { font-size: var(--mc-font-size-lg); margin: 0 0 var(--mc-space-3); }
 .product-articles__list { display: grid; gap: var(--mc-space-2); list-style: none; margin: 0; padding: 0; }
+
+.custom-form { max-width: 720px; }
+.custom-form__group { padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); }
+.custom-form__check { display: flex; align-items: center; gap: var(--mc-space-2); font-weight: var(--mc-font-weight-regular); }
+.custom-form abbr { color: var(--mc-color-danger); text-decoration: none; }

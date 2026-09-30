@@ -44,7 +44,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if ($route==='admin_analytics') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic_settings') return AdminPermissionCatalog::SYSTEM_SETTINGS;
-        if (str_starts_with($route,'admin_system_ai')||str_starts_with($route,'admin_system_data')||str_starts_with($route,'admin_system_fraud')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if (str_starts_with($route,'admin_system_ai')||str_starts_with($route,'admin_system_data')||str_starts_with($route,'admin_system_fraud')||str_starts_with($route,'admin_system_quality')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_b2b')) return $get?AdminPermissionCatalog::B2B_VIEW:AdminPermissionCatalog::B2B_MANAGE;
         if (str_starts_with($route,'admin_rewards')) return $get?AdminPermissionCatalog::REWARDS_VIEW:AdminPermissionCatalog::REWARDS_MANAGE;
         if (str_starts_with($route,'admin_access_')) return AdminPermissionCatalog::ADMIN_USERS_MANAGE;

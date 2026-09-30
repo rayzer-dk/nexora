@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Pricing\Application;
 
+use Commerce\Modules\Pricing\Infrastructure\EcbExchangeRateSource;
 use Commerce\Modules\Pricing\Infrastructure\NbuExchangeRateSource;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -15,7 +16,7 @@ final class ExchangeRateService
     /** A fetched rate older than this is treated as missing; converted prices are then withdrawn. */
     private const FETCHED_TTL_DAYS = 4;
 
-    public function __construct(private readonly Connection $db, private readonly NbuExchangeRateSource $nbu)
+    public function __construct(private readonly Connection $db, private readonly NbuExchangeRateSource $nbu, private readonly ?EcbExchangeRateSource $ecb = null)
     {
     }
 
@@ -39,24 +40,77 @@ final class ExchangeRateService
         $this->insert($base, $quote, $value, 'manual', $validDays !== null && $validDays > 0 ? $validDays : null);
     }
 
-    /** @return array{provider:string,date:string,stored:int,missing:list<string>} */
-    public function refreshFromNbu(): array
+    /**
+     * Fetches official rates from every free source (ECB first, then NBU for pairs the ECB does not list) and stores
+     * the pairs the stores need. A source that is down is skipped; the last stored rate stays valid until it expires.
+     *
+     * @return array{provider:string,date:string,stored:int,missing:list<string>}
+     */
+    public function refresh(): array
     {
-        $table = $this->nbu->fetch();
-        $rates = $table['uah_per_unit'];
+        $pairs = $this->requiredPairs();
         $stored = 0;
-        $missing = [];
-        foreach ($this->requiredPairs() as $pair) {
-            if (!isset($rates[$pair['base']], $rates[$pair['quote']])) {
-                $missing[] = $pair['base'] . '/' . $pair['quote'];
-                continue;
+        $date = '';
+        $providers = [];
+        $failure = null;
+
+        if ($this->ecb !== null && $pairs !== []) {
+            try {
+                $table = $this->ecb->fetch();
+                $per = $table['per_eur'];
+                $left = [];
+                foreach ($pairs as $pair) {
+                    if (isset($per[$pair['base']], $per[$pair['quote']])) {
+                        // 1 base = (units per EUR of quote / units per EUR of base) quote
+                        $this->insert($pair['base'], $pair['quote'], $per[$pair['quote']] / $per[$pair['base']], EcbExchangeRateSource::CODE, self::FETCHED_TTL_DAYS, $table['date'] . ' 00:00:00');
+                        ++$stored;
+                    } else {
+                        $left[] = $pair;
+                    }
+                }
+                $providers[] = EcbExchangeRateSource::CODE;
+                $date = $table['date'];
+                $pairs = $left;
+            } catch (\Throwable $e) {
+                $failure = $e;
             }
-            // 1 base = (UAH per base / UAH per quote) quote
-            $this->insert($pair['base'], $pair['quote'], $rates[$pair['base']] / $rates[$pair['quote']], NbuExchangeRateSource::CODE, self::FETCHED_TTL_DAYS, $table['date'] . ' 00:00:00');
-            ++$stored;
         }
 
-        return ['provider' => NbuExchangeRateSource::CODE, 'date' => $table['date'], 'stored' => $stored, 'missing' => $missing];
+        $missing = [];
+        if ($pairs !== []) {
+            try {
+                $table = $this->nbu->fetch();
+                $rates = $table['uah_per_unit'];
+                foreach ($pairs as $pair) {
+                    if (!isset($rates[$pair['base']], $rates[$pair['quote']])) {
+                        $missing[] = $pair['base'] . '/' . $pair['quote'];
+                        continue;
+                    }
+                    // 1 base = (UAH per base / UAH per quote) quote
+                    $this->insert($pair['base'], $pair['quote'], $rates[$pair['base']] / $rates[$pair['quote']], NbuExchangeRateSource::CODE, self::FETCHED_TTL_DAYS, $table['date'] . ' 00:00:00');
+                    ++$stored;
+                }
+                $providers[] = NbuExchangeRateSource::CODE;
+                $date = $date !== '' ? $date : $table['date'];
+            } catch (\Throwable $e) {
+                if ($providers === []) {
+                    throw $e;
+                }
+                foreach ($pairs as $pair) {
+                    $missing[] = $pair['base'] . '/' . $pair['quote'];
+                }
+            }
+        } elseif ($providers === [] && $failure !== null) {
+            throw $failure;
+        }
+
+        return ['provider' => implode('+', $providers), 'date' => $date !== '' ? $date : gmdate('Y-m-d'), 'stored' => $stored, 'missing' => $missing];
+    }
+
+    /** @deprecated kept for callers written before the ECB source; use refresh() */
+    public function refreshFromNbu(): array
+    {
+        return $this->refresh();
     }
 
     /** @return list<array<string,mixed>> latest rate per pair, newest first */

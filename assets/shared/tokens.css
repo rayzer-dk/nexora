@@ -25,6 +25,14 @@
   --mc-color-accent-fill: var(--mc-color-accent-base);
   --mc-color-danger-fill: #c9251b; /* filled danger badges keep white text at >= 4.5:1 in both schemes */
   --mc-color-success: #0f7a4b;
+  --mc-color-violet: #6d4bd8;
+  /* icon tints for the always-dark admin sidebar */
+  --mc-chrome-tone-blue: #6aa5ff;
+  --mc-chrome-tone-green: #4cd6a0;
+  --mc-chrome-tone-orange: #ffb066;
+  --mc-chrome-tone-violet: #b39cff;
+  --mc-chrome-tone-teal: #5fd3dd;
+  --mc-color-teal: #0e7c86;
   --mc-color-warning: #8f5a0c;
   --mc-color-danger: #b42318;
   --mc-color-success-soft: color-mix(in srgb, var(--mc-color-success) 11%, var(--mc-color-background));
@@ -140,6 +148,8 @@
   --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary-base) 22%, var(--mc-color-background));
   --mc-color-accent: color-mix(in srgb, var(--mc-color-accent-base) 88%, #fff);
   --mc-color-success: #34c78a;
+  --mc-color-violet: #a48bff;
+  --mc-color-teal: #45c4cf;
   --mc-color-warning: #e3a94b;
   --mc-color-danger: #ff6b5e;
   --mc-color-background: #0b1220;
@@ -165,6 +175,8 @@
     --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary-base) 22%, var(--mc-color-background));
     --mc-color-accent: color-mix(in srgb, var(--mc-color-accent-base) 88%, #fff);
     --mc-color-success: #34c78a;
+    --mc-color-violet: #a48bff;
+    --mc-color-teal: #45c4cf;
     --mc-color-warning: #e3a94b;
     --mc-color-danger: #ff6b5e;
     --mc-color-background: #0b1220;

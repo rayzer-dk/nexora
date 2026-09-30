@@ -17,7 +17,7 @@ final readonly class CaptchaSettings
     public const PROVIDERS = ['builtin', 'recaptcha_v2', 'recaptcha_v3', 'turnstile'];
 
     /** Forms that can be protected; keys are used in templates, controllers and the admin UI. */
-    public const FORMS = ['register', 'password_recovery', 'contact', 'callback', 'price_request', 'quick_order', 'newsletter', 'stock_notify', 'review', 'question', 'forum', 'withdrawal', 'login'];
+    public const FORMS = ['register', 'password_recovery', 'contact', 'callback', 'price_request', 'quick_order', 'newsletter', 'stock_notify', 'custom_form', 'review', 'question', 'forum', 'withdrawal', 'login'];
 
     private const CONTEXT = 'captcha.secret';
 

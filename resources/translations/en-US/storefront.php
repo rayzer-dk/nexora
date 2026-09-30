@@ -919,4 +919,10 @@ return [
     'device_verify_logout' => 'Sign out',
     'product_articles' => 'Helpful articles',
     'blog_products' => 'Products from this article',
+    'required' => 'required',
+    'forms.error.invalid_value' => 'Please check the field “%field%”.',
+    'forms.error.required' => 'Please fill in all required fields.',
+    'forms.error.empty' => 'The form is empty or too large.',
+    'forms.success.default' => 'Thank you! Your message has been sent.',
+    'forms.mail.subject' => 'New answer in the form “%form%”',
 ];

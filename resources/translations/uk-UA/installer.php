@@ -138,4 +138,12 @@ return [
     'installer.open_store' => 'Відкрити магазин',
     'installer.admin_password_hint' => 'Щонайменше 12 символів.',
     'installer.demo_enabled_note' => 'Буде створено демонстраційні товари, категорії та сторінки.',
+    'installer.step_region' => 'Країна та регіональні налаштування',
+    'installer.region_hint' => 'Валюта, мова, часовий пояс і податок підставляються за країною; їх можна змінити.',
+    'installer.country' => 'Країна магазину',
+    'installer.country_other' => 'Інша країна',
+    'installer.currency' => 'Валюта за замовчуванням',
+    'installer.store_language' => 'Мова магазину за замовчуванням',
+    'installer.timezone' => 'Часовий пояс',
+    'installer.region_change_later' => 'Усе це можна змінити пізніше в адмінці: додати країни, мови та валюти, обрати основні.',
 ];

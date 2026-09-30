@@ -1940,4 +1940,5 @@ return [
     'runtime.exception.mfa_already_enabled' => 'Two-factor authentication is already enabled.',
     'payment.method.liqpay' => 'Card via LiqPay',
     'payment.method.wayforpay' => 'Card via WayForPay',
+    'php.core.install.installationseeder.standard_tax' => 'Standard tax',
 ];

@@ -52,6 +52,7 @@ final class DataRetentionCommand extends Command
             ->addOption('security-days', null, InputOption::VALUE_REQUIRED, 'Security event history', '180')
             ->addOption('incident-days', null, InputOption::VALUE_REQUIRED, 'Runtime incident history', '90')
             ->addOption('delivery-days', null, InputOption::VALUE_REQUIRED, 'Finished webhook/marketing deliveries', '30')
+            ->addOption('form-days', null, InputOption::VALUE_REQUIRED, 'Handled form submissions (contain contact data)', '365')
             ->addOption('inquiry-days', null, InputOption::VALUE_REQUIRED, 'Closed customer inquiries (contain contact data)', '365')
             ->addOption('ai-log-days', null, InputOption::VALUE_REQUIRED, 'AI assistant usage log', '90')
             ->addOption('automation-log-days', null, InputOption::VALUE_REQUIRED, 'Automation rule run log', '90')
@@ -94,6 +95,7 @@ final class DataRetentionCommand extends Command
         $report['api_rate_window'] = $this->count('mc_api_rate_window', 'window_started_at < ?', [$this->cutoff(1)], static fn (Connection $db, array $p): int => $db->executeStatement('DELETE FROM mc_api_rate_window WHERE window_started_at < ?', $p));
 
         // Privacy and growth: closed inquiries hold names, phones and e-mails; the rest are plain logs.
+        $report['form_submissions_handled'] = $this->purge('mc_form_submission', "status='handled' AND created_at < ?", [$this->cutoff($days('form-days', 30, 3650))]);
         $report['inquiries_closed'] = $this->purge('mc_customer_inquiry', "status IN ('resolved','closed') AND updated_at < ?", [$this->cutoff($days('inquiry-days', 30, 3650))]);
         $report['ai_usage'] = $this->purge('mc_ai_usage', 'created_at < ?', [$this->cutoff($days('ai-log-days', 30, 3650))]);
         $report['automation_runs'] = $this->purge('mc_automation_run', 'created_at < ?', [$this->cutoff($days('automation-log-days', 30, 3650))]);

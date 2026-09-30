@@ -1,0 +1,25 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.quality.title'),'quality') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.quality.title') }}</span></nav><h1>{{ ui_text('admin.quality.title') }}</h1><p>{{ ui_text('admin.quality.intro') }}</p></div></header>
+<section class="quality-hero is-{{ report.level }}" data-quality-score="{{ report.score }}" data-quality-level="{{ report.level }}">
+    <div class="quality-hero__score"><strong>{{ report.score }}</strong><small>/ 100</small></div>
+    <div class="quality-hero__body"><h2>{{ ui_text('admin.quality.level.' ~ report.level) }}</h2>
+        <div class="quality-bar" role="img" aria-label="{{ report.score }} / 100"><span style="width: {{ report.score }}%"></span></div>
+        <ul class="quality-counts"><li class="is-ok">{{ ui_icon('circle-check', 16) }}<span>{{ ui_text('admin.quality.ok') }}: {{ report.counts.ok }}</span></li><li class="is-warn">{{ ui_icon('triangle-alert', 16) }}<span>{{ ui_text('admin.quality.warn') }}: {{ report.counts.warn }}</span></li><li class="is-fail">{{ ui_icon('circle-x', 16) }}<span>{{ ui_text('admin.quality.fail') }}: {{ report.counts.fail }}</span></li></ul>
+    </div>
+</section>
+<div class="quality-groups">
+{% set group_icons = {security: 'shield-check', reliability: 'activity', performance: 'gauge', content: 'file-text', international: 'languages', commerce: 'store'} %}
+{% for group in groups %}{% if report.groups[group] is defined %}
+<section class="admin-panel quality-group" data-quality-group="{{ group }}"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.quality.group.' ~ group) }}</h2></div>{{ ui_icon(group_icons[group], 20) }}</div>
+<ul class="quality-list">
+{% for check in report.groups[group] %}
+<li class="quality-check is-{{ check.status }}" data-quality-check="{{ check.id }}" data-status="{{ check.status }}">
+    <span class="quality-check__icon">{{ ui_icon(check.status == 'ok' ? 'circle-check' : (check.status == 'warn' ? 'triangle-alert' : 'circle-x'), 20) }}</span>
+    <div class="quality-check__text"><strong>{{ ui_text('admin.quality.check.' ~ check.id) }}</strong>{% if check.status != 'ok' %}<small>{{ ui_text('admin.quality.hint.' ~ check.id)|replace({'%n%': check.n}) }}</small>{% endif %}</div>
+    {% if check.status != 'ok' and check.link %}<a class="admin-button" href="{{ check.link }}">{{ ui_text('admin.quality.fix') }}</a>{% endif %}
+</li>
+{% endfor %}
+</ul></section>
+{% endif %}{% endfor %}
+</div>
+{{ shell.end() }}

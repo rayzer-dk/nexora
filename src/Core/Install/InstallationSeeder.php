@@ -33,16 +33,20 @@ final readonly class InstallationSeeder
             }
 
             $now = $this->now();
-            $this->seedLocaleAndCurrency($db, $now);
+            $locale = $request->localeCode();
+            $currency = $request->currencyCode();
+            $country = $request->countryCode();
+            \Commerce\Core\I18n\CanonicalUiText::useLocale(in_array(substr($locale, 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US');
+            $this->seedLocaleAndCurrency($db, $now, $locale, $currency);
 
             $storePublicId = $this->publicIds->binary();
             $db->insert('mc_store', [
                 'public_id' => $storePublicId,
                 'code' => 'default',
                 'name' => trim($request->storeName),
-                'default_locale' => 'uk-UA',
-                'default_currency' => 'UAH',
-                'timezone' => 'Europe/Kyiv',
+                'default_locale' => $locale,
+                'default_currency' => $currency,
+                'timezone' => $request->timezoneName(),
                 'status' => 'active',
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -63,16 +67,16 @@ final readonly class InstallationSeeder
                 'updated_at' => $now,
             ]);
 
-            $db->insert('mc_store_locale', ['store_id' => $storeId, 'locale_code' => 'uk-UA', 'enabled' => 1, 'is_default' => 1, 'url_prefix' => null, 'sort_order' => 10]);
-            $db->insert('mc_store_currency', ['store_id' => $storeId, 'currency_code' => 'UAH', 'enabled' => 1, 'is_default' => 1, 'auto_convert' => 0, 'rounding_increment_minor' => 1, 'sort_order' => 10]);
+            $db->insert('mc_store_locale', ['store_id' => $storeId, 'locale_code' => $locale, 'enabled' => 1, 'is_default' => 1, 'url_prefix' => null, 'sort_order' => 10]);
+            $db->insert('mc_store_currency', ['store_id' => $storeId, 'currency_code' => $currency, 'enabled' => 1, 'is_default' => 1, 'auto_convert' => 0, 'rounding_increment_minor' => 1, 'sort_order' => 10]);
 
             $db->insert('mc_market', [
-                'public_id' => $this->publicIds->binary(), 'store_id' => $storeId, 'code' => 'ua', 'name' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.ukraina'),
-                'default_locale' => 'uk-UA', 'default_currency' => 'UAH', 'legacy_tax_display_mode' => 'inclusive',
+                'public_id' => $this->publicIds->binary(), 'store_id' => $storeId, 'code' => strtolower($country), 'name' => RegionCatalog::countryName($country, $locale),
+                'default_locale' => $locale, 'default_currency' => $currency, 'legacy_tax_display_mode' => 'inclusive',
                 'status' => 'active', 'created_at' => $now, 'updated_at' => $now,
             ]);
             $marketId = (int) $db->lastInsertId();
-            $db->insert('mc_market_country', ['market_id' => $marketId, 'country_code' => 'UA']);
+            $db->insert('mc_market_country', ['market_id' => $marketId, 'country_code' => $country]);
             $db->insert('mc_market_tax_policy', [
                 'market_id' => $marketId, 'consumer_display_mode' => 'price_only', 'business_display_mode' => 'net_with_gross',
                 'prices_entered_including_tax' => 1, 'calculation_basis' => 'destination', 'merchant_feed_gross_price' => 1, 'updated_at' => $now,
@@ -83,10 +87,10 @@ final readonly class InstallationSeeder
                 'payment_obligation_label_required' => 1, 'updated_at' => $now,
             ]);
             $standardTaxClass = $db->fetchOne("SELECT id FROM mc_tax_class WHERE code='standard' AND enabled=1 LIMIT 1");
-            if ($standardTaxClass !== false) {
+            if ($standardTaxClass !== false && $country !== 'OTHER') {
                 $db->insert('mc_tax_rate', [
-                    'tax_class_id' => (int) $standardTaxClass, 'country_code' => 'UA', 'region_code' => null, 'name' => \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationseeder.standartnyi_pdv'),
-                    'rate_bps' => 2000, 'priority' => 100, 'valid_from' => '2000-01-01 00:00:00.000000', 'valid_to' => null,
+                    'tax_class_id' => (int) $standardTaxClass, 'country_code' => $country, 'region_code' => null, 'name' => \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationseeder.standard_tax'),
+                    'rate_bps' => RegionCatalog::preset($country)['vat_bps'], 'priority' => 100, 'valid_from' => '2000-01-01 00:00:00.000000', 'valid_to' => null,
                     'enabled' => 1, 'created_at' => $now, 'updated_at' => $now,
                 ]);
             }
@@ -111,7 +115,7 @@ final readonly class InstallationSeeder
             $adminId = (int) $db->lastInsertId();
 
             $db->insert('mc_store_profile', [
-                'store_id' => $storeId, 'legal_name' => null, 'registration_number' => null, 'country_code' => 'UA',
+                'store_id' => $storeId, 'legal_name' => null, 'registration_number' => null, 'country_code' => $country === 'OTHER' ? 'US' : $country,
                 'registration_address' => null, 'email' => trim($request->adminEmail), 'phone' => null,
                 'privacy_contact' => trim($request->adminEmail), 'return_contact' => trim($request->adminEmail),
                 'warranty_contact' => trim($request->adminEmail), 'updated_at' => $now,
@@ -120,7 +124,7 @@ final readonly class InstallationSeeder
             $this->siteCapabilities->applyMode($storeId, $request->siteMode, 'system:installer');
             $this->seedForumBoards($db, $storeId, $now);
 
-            $this->seedInformationPages($db, $storeId, $now, trim($request->storeName), trim($request->adminEmail));
+            $this->seedInformationPages($db, $storeId, $now, trim($request->storeName), trim($request->adminEmail), $locale);
             $db->insert('mc_consent_policy', [
                 'public_id' => $this->publicIds->binary(), 'store_id' => $storeId, 'policy_version' => '1.0',
                 'legal_document_id' => null, 'status' => 'active', 'default_region_mode' => 'eu_strict',
@@ -137,19 +141,31 @@ final readonly class InstallationSeeder
         });
     }
 
-    private function seedLocaleAndCurrency(Connection $db, string $now): void
+    private function seedLocaleAndCurrency(Connection $db, string $now, string $locale, string $currency): void
     {
-        if ((int) $db->fetchOne('SELECT COUNT(*) FROM mc_locale WHERE code = ?', ['uk-UA']) === 0) {
+        foreach (array_unique([$locale, 'en-US', ...RegionCatalog::BUNDLED_LOCALES]) as $code) {
+            if ((int) $db->fetchOne('SELECT COUNT(*) FROM mc_locale WHERE code = ?', [$code]) > 0) {
+                continue;
+            }
+            $parts = explode('-', $code);
             $db->insert('mc_locale', [
-                'code' => 'uk-UA', 'language_code' => 'uk', 'region_code' => 'UA', 'name' => \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationseeder.ukrainska_ukraina'),
-                'native_name' => \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationseeder.ukrainska'), 'direction' => 'ltr', 'enabled' => 1, 'created_at' => $now, 'updated_at' => $now,
+                'code' => $code, 'language_code' => $parts[0], 'region_code' => $parts[1] ?? null,
+                'name' => RegionCatalog::localeName($code, 'en'), 'native_name' => RegionCatalog::localeName($code, $code),
+                'direction' => 'ltr', 'enabled' => 1, 'created_at' => $now, 'updated_at' => $now,
             ]);
         }
-        if ((int) $db->fetchOne('SELECT COUNT(*) FROM mc_currency WHERE code = ?', ['UAH']) === 0) {
-            $db->insert('mc_currency', [
-                'code' => 'UAH', 'numeric_code' => '980', 'name' => \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installationseeder.ukrainska_hryvnia'), 'symbol' => '₴',
-                'minor_units' => 2, 'enabled' => 1, 'created_at' => $now, 'updated_at' => $now,
-            ]);
+        // The whole currency list is registered so the merchant only has to switch a currency on; a code missing from
+        // the list can still be added by hand in Admin → System → Localization.
+        foreach (RegionCatalog::currencies() as $code => $row) {
+            if ((int) $db->fetchOne('SELECT COUNT(*) FROM mc_currency WHERE code = ?', [$code]) === 0) {
+                $db->insert('mc_currency', [
+                    'code' => $code, 'numeric_code' => $row['numeric'], 'name' => $row['name'], 'symbol' => $row['symbol'],
+                    'minor_units' => $row['minor_units'], 'enabled' => 1, 'created_at' => $now, 'updated_at' => $now,
+                ]);
+            }
+        }
+        if ((int) $db->fetchOne('SELECT COUNT(*) FROM mc_currency WHERE code = ?', [$currency]) === 0) {
+            $db->insert('mc_currency', ['code' => $currency, 'numeric_code' => null, 'name' => $currency, 'symbol' => $currency, 'minor_units' => 2, 'enabled' => 1, 'created_at' => $now, 'updated_at' => $now]);
         }
     }
 
@@ -173,8 +189,11 @@ final readonly class InstallationSeeder
         }
     }
 
-    private function seedInformationPages(Connection $db, int $storeId, string $now, string $storeName, string $email): void
+    private function seedInformationPages(Connection $db, int $storeId, string $now, string $storeName, string $email, string $storeLocale): void
     {
+        // Legal page drafts ship in Ukrainian and English only: other store languages start from the English drafts.
+        $pageLocale = in_array(substr($storeLocale, 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US';
+        \Commerce\Core\I18n\CanonicalUiText::useLocale($pageLocale);
         $path = $this->projectDir . '/config/content/information_pages.json';
         $document = json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR);
         $templates = new \Commerce\Modules\Content\System\InformationPageTemplates($this->projectDir);
@@ -186,8 +205,8 @@ final readonly class InstallationSeeder
             ]);
             $contentId = (int) $db->lastInsertId();
             $db->insert('mc_content_translation', [
-                'content_id' => $contentId, 'locale' => 'uk-UA', 'title' => trim((string) ($definition['title_key'] ?? '')) !== '' ? \Commerce\Core\I18n\CanonicalUiText::get((string) $definition['title_key']) : (string) ($definition['title'] ?? $key),
-                'excerpt' => null, 'body_html' => $templates->body((string) $key, 'uk-UA', $profile), 'meta_title' => null, 'meta_description' => null,
+                'content_id' => $contentId, 'locale' => $pageLocale, 'title' => trim((string) ($definition['title_key'] ?? '')) !== '' ? \Commerce\Core\I18n\CanonicalUiText::get((string) $definition['title_key']) : (string) ($definition['title'] ?? $key),
+                'excerpt' => null, 'body_html' => $templates->body((string) $key, $pageLocale, $profile), 'meta_title' => null, 'meta_description' => null,
                 'created_at' => $now, 'updated_at' => $now,
             ]);
         }

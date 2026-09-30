@@ -1,0 +1,15 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(form.name,'forms') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_content_forms') }}">{{ ui_text('admin.forms.title') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.forms.submissions') }}</span></nav><h1>{{ form.name }}</h1><p>{{ ui_text('admin.forms.submissions_intro') }}</p></div>
+<div class="admin-page-actions"><a class="admin-button" href="{{ path('admin_content_form_export', {id: form.id}) }}">{{ ui_icon('download', 16) }}<span>{{ ui_text('admin.forms.export') }}</span></a></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
+<section class="admin-panel">
+{% if submissions %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>#</th><th>{{ ui_text('admin.forms.date') }}</th><th>{{ ui_text('admin.forms.answers') }}</th><th>{{ ui_text('admin.forms.status') }}</th><th></th></tr></thead><tbody>
+{% for s in submissions %}<tr data-submission="{{ s.id }}"><td>{{ s.id }}</td><td>{{ s.created_at|slice(0, 16) }}</td>
+<td><dl class="form-answers">{% for a in s.answers %}<dt>{{ a.label }}</dt><dd>{{ a.value }}</dd>{% endfor %}</dl></td>
+<td><span class="admin-badge {{ s.status == 'handled' ? 'is-success' : (s.status == 'new' ? 'is-warning' : '') }}">{{ ui_text('admin.forms.submission.' ~ s.status) }}</span></td>
+<td class="admin-table__actions">
+{% if s.status != 'handled' %}<form method="post" action="{{ path('admin_content_form_submission_status', {id: form.id, submission: s.id}) }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_forms') }}"><input type="hidden" name="status" value="handled"><button class="admin-icon-button is-success" type="submit" title="{{ ui_text('admin.forms.mark_handled') }}" aria-label="{{ ui_text('admin.forms.mark_handled') }}">{{ ui_icon('check', 18) }}</button></form>{% endif %}
+{% if admin_can('content.delete') %}<form method="post" action="{{ path('admin_content_form_submission_delete', {id: form.id, submission: s.id}) }}" class="admin-inline-form" data-confirm="{{ ui_text('admin.forms.submission_delete_confirm')|e('html_attr') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_forms') }}"><button class="admin-icon-button is-danger" type="submit" title="{{ ui_text('admin.forms.delete') }}" aria-label="{{ ui_text('admin.forms.delete') }}">{{ ui_icon('trash-2', 18) }}</button></form>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p>{{ ui_text('admin.forms.no_submissions') }}</p>{% endif %}
+</section>
+{{ shell.end() }}

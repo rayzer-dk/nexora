@@ -85,7 +85,7 @@ final class LocalizationAdminController extends AbstractController
             $message = '';
             if ($this->rates->requiredPairs() !== []) {
                 try {
-                    $result = $this->rates->refreshFromNbu();
+                    $result = $this->rates->refresh();
                     $message = CanonicalUiText::get('admin.localization.rates.fetched', ['date' => $result['date'], 'count' => (string) $result['stored']]) . ' ';
                     if ($result['missing'] !== []) {
                         $message .= CanonicalUiText::get('admin.localization.rates.missing', ['pairs' => implode(', ', $result['missing'])]) . ' ';

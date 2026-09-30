@@ -41,6 +41,10 @@ final class InstallCommand extends Command
             ->addOption('admin-password', null, InputOption::VALUE_REQUIRED, \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.parol_administratora_shchonaimenshe_12_symvoliv'))
             ->addOption('public-url', null, InputOption::VALUE_REQUIRED, \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.publichna_adresa_mahazynu'), 'https://shop.example.com')
             ->addOption('site-mode', null, InputOption::VALUE_REQUIRED, \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.profil_saitu_shop_catalog_content_landing_hybrid'), 'shop')
+            ->addOption('country', null, InputOption::VALUE_REQUIRED, 'Store country (ISO 3166-1 alpha-2); proposes currency, language, time zone and tax rate', 'UA')
+            ->addOption('currency', null, InputOption::VALUE_REQUIRED, 'Default currency (ISO 4217); defaults to the country preset', '')
+            ->addOption('locale', null, InputOption::VALUE_REQUIRED, 'Default language (uk-UA, en-US, ru-RU, pl-PL, de-DE, da-DK); defaults to the country preset', '')
+            ->addOption('timezone', null, InputOption::VALUE_REQUIRED, 'Time zone; defaults to the country preset', '')
             ->addOption('demo', null, InputOption::VALUE_NONE, \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.vstanovyty_prezentatsiini_demo_dani'));
     }
 
@@ -71,7 +75,7 @@ final class InstallCommand extends Command
         $siteMode = (string) $input->getOption('site-mode');
 
         try {
-            $request = new InstallRequest($storeName, $adminName, $adminEmail, $adminPassword, $publicUrl, $siteMode);
+            $request = new InstallRequest($storeName, $adminName, $adminEmail, $adminPassword, $publicUrl, $siteMode, strtoupper((string) $input->getOption('country')), strtoupper((string) $input->getOption('currency')), (string) $input->getOption('locale'), (string) $input->getOption('timezone'));
         } catch (\InvalidArgumentException $e) {
             $io->error($e->getMessage());
             return Command::INVALID;

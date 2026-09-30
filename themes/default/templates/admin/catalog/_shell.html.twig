@@ -9,7 +9,7 @@
     <title>{{ title }} · Nexora Commerce</title>
     <link rel="icon" type="image/svg+xml" href="/assets/branding/nexora-mark.svg">
     <meta name="color-scheme" content="light dark">
-    <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">try{var t=localStorage.getItem('mc_admin_theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}}catch(e){}</script>
+    <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">try{var t=localStorage.getItem('mc_admin_theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}if(localStorage.getItem('mc_admin_sidebar')==='collapsed'){document.documentElement.dataset.sidebar='collapsed';}}catch(e){}</script>
     <link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-runtime.css', '/assets/admin-runtime.css') }}">
     <script type="module" src="{{ vite_asset('assets/admin/main.ts', '/assets/admin.js') }}"></script>
     {% if feature in ['builder','media'] %}<link rel="stylesheet" href="{{ vite_asset('assets/admin/admin-builder-media.css', '/assets/admin-builder-media.css') }}">{% endif %}
@@ -40,6 +40,7 @@
             {% if admin_can('appearance.view') %}{{ nav.link(section, 'appearance', '/admin/appearance/storefront', 'palette', ui_text('admin_storefront')) }}{{ nav.link(section, 'editor', '/admin/appearance/editor', 'monitor', ui_text('ui.admin.dashboard.visual_store_editor')) }}{{ nav.link(section, 'contact_widget', '/admin/appearance/contact-widget', 'headset', ui_text('admin.cw.title')) }}{{ nav.link(section, 'builder_home', '/admin/appearance/builder/home', 'layout-template', ui_text('ui.admin.catalog._shell.page_builder')) }}{{ nav.link(section, 'builder_product', '/admin/appearance/builder/product', 'layout-grid', ui_text('ui.admin.catalog._shell.product_builder')) }}{{ nav.link(section, 'builder_checkout', '/admin/appearance/builder/checkout', 'shopping-cart', ui_text('ui.admin.catalog._shell.checkout_builder')) }}{{ nav.link(section, 'navigation', '/admin/appearance/navigation', 'list-tree', ui_text('admin_navigation')) }}{% endif %}
             {% if admin_can('content.view') %}{{ nav.link(section, 'content', '/admin/content/pages', 'file-text', ui_text('admin_pages')) }}{{ nav.link(section, 'blog', '/admin/content/blog', 'pencil', ui_text('admin.blog.title')) }}{% endif %}
             {% if admin_can('media.view') %}{{ nav.link(section, 'media', '/admin/media', 'image', ui_text('admin_media_library')) }}{% endif %}
+            {% if admin_can('content.view') %}{{ nav.link(section, 'forms', '/admin/content/forms', 'clipboard-list', ui_text('admin.forms.title')) }}{% endif %}
             {% if admin_can('content.view') %}{{ nav.link(section, 'downloads', '/admin/content/downloads', 'download', ui_text('admin.downloads.title')) }}{% endif %}
             {% if admin_can('forum.view') %}{{ nav.link(section, 'forum', '/admin/forum', 'messages-square', ui_text('admin_forum')) }}{% endif %}
             {% if admin_can('system.settings') or admin_can('extensions.manage') or admin_can('integrations.manage') or admin_can('system.cron.view') or admin_can('admin_users.manage') or admin_can('system.audit.view') or admin_can('developer_tools.view') or admin_can('system.update') %}<span class="admin-nav__label">{{ ui_text('admin_system') }}</span>{% endif %}
@@ -48,7 +49,7 @@
             {% if admin_can('integrations.manage') %}{{ nav.link(section, 'integrations', '/admin/system/integrations', 'plug', ui_text('admin_integrations')) }}{% endif %}
             {% if admin_can('system.update') %}{{ nav.link(section, 'migration', '/admin/system/migration', 'database-zap', ui_text('admin_migration')) }}{% endif %}
             {% if admin_can('system.settings') %}{{ nav.link(section, 'seo_redirects', '/admin/system/seo-redirects', 'git-branch', ui_text('admin.system.seo_redirects.nav')) }}{{ nav.link(section, 'indexnow', '/admin/system/seo-indexnow', 'refresh-cw', ui_text('admin.indexnow.title')) }}{{ nav.link(section, 'captcha', '/admin/system/captcha', 'shield-check', ui_text('admin.captcha.title')) }}{{ nav.link(section, 'push', '/admin/system/push', 'smartphone', ui_text('admin.push.title')) }}{{ nav.link(section, 'tracking', '/admin/system/tracking', 'chart-column', ui_text('admin.tracking.title')) }}{{ nav.link(section, 'stability', '/admin/system/stability', 'heart-pulse', ui_text('admin_stability')) }}{% endif %}
-            {% if admin_can('system.settings') %}{{ nav.link(section, 'data', '/admin/system/data', 'database', ui_text('admin.data.title')) }}{% endif %}
+            {% if admin_can('system.settings') %}{{ nav.link(section, 'quality', '/admin/system/quality', 'gauge', ui_text('admin.quality.title')) }}{{ nav.link(section, 'data', '/admin/system/data', 'database', ui_text('admin.data.title')) }}{% endif %}
             {% if admin_can('system.settings') %}{{ nav.link(section, 'fraud', '/admin/system/fraud', 'shield-check', ui_text('admin.fraud.title')) }}{% endif %}
             {% if admin_can('system.settings') %}{{ nav.link(section, 'ai', '/admin/system/ai', 'sparkles', ui_text('admin.ai.title')) }}{% endif %}
             {% if admin_can('system.cron.view') %}{{ nav.link(section, 'cron', '/admin/system/cron', 'clock', ui_text('admin_cron_automation')) }}{% endif %}
@@ -57,6 +58,7 @@
             {% if admin_can('admin_users.manage') %}{{ nav.link(section, 'access', '/admin/system/access', 'shield-user', ui_text('admin_admins_permissions')) }}{% endif %}
         </nav>
         <div class="admin-sidebar__footer">
+            <button class="admin-nav__link admin-nav__collapse" type="button" data-sidebar-collapse aria-pressed="false" title="{{ ui_text('admin.nav.collapse') }}">{{ ui_icon('panel-left-close', 20) }}<span>{{ ui_text('admin.nav.collapse') }}</span></button>
             {{ nav.link(section, 'security', '/admin/account/security', 'shield-check', ui_text('admin.mfa.nav')) }}
             <form method="post" action="/admin/logout"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button class="admin-nav__link" type="submit">{{ ui_icon('log-out', 20) }}<span>{{ ui_text('admin_logout') }}</span></button></form>
         </div>
@@ -90,7 +92,7 @@
         </header>
         <main class="admin-content">
 {% endmacro %}
-{% macro link(current, key, href, icon, label) %}<a class="admin-nav__link{{ current == key ? ' is-active' : '' }}" href="{{ href }}"{{ current == key ? ' aria-current="page"' : '' }}>{{ ui_icon(icon, 20) }}<span>{{ label }}</span></a>{% endmacro %}
+{% macro link(current, key, href, icon, label) %}{% set tone = 'blue' %}{% for prefix in ['/admin/orders', '/admin/shipments', '/admin/b2b', '/admin/customer-experience', '/admin/commerce/customers', '/admin/commerce/inquiries', '/admin/returns'] %}{% if href starts with prefix %}{% set tone = 'green' %}{% endif %}{% endfor %}{% for prefix in ['/admin/commerce/promotions', '/admin/commerce/campaigns', '/admin/commerce/marketing', '/admin/commerce/feeds', '/admin/commerce/notification', '/admin/rewards'] %}{% if href starts with prefix %}{% set tone = 'orange' %}{% endif %}{% endfor %}{% for prefix in ['/admin/appearance', '/admin/content', '/admin/media', '/admin/forum'] %}{% if href starts with prefix %}{% set tone = 'violet' %}{% endif %}{% endfor %}{% if href starts with '/admin/system' or href starts with '/admin/account' %}{% set tone = 'teal' %}{% endif %}<a class="admin-nav__link{{ current == key ? ' is-active' : '' }}" data-tone="{{ tone }}" href="{{ href }}" title="{{ label }}"{{ current == key ? ' aria-current="page"' : '' }}>{{ ui_icon(icon, 20) }}<span>{{ label }}</span></a>{% endmacro %}
 {% macro flashes(flashes) %}{% for type,messages in flashes %}{% for message in messages %}<div class="admin-notice is-{{ type }}" role="status">{{ message }}</div>{% endfor %}{% endfor %}{% endmacro %}
 {% macro end() %}
         </main>

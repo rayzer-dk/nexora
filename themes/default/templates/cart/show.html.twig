@@ -20,4 +20,5 @@
     <div class="empty-state" data-cart-empty {% if cart.items %}hidden{% endif %}><h2>{{ ui_text('cart_empty') }}</h2><p>{{ ui_text('cart_empty_text') }}</p><a class="button button--primary" href="/catalog">{{ ui_text('go_catalog') }}{{ ui_icon('arrow-right', 16) }}</a></div>
 </section>
 {% if app.user and is_granted('ROLE_CUSTOMER') and cart.items %}<section class="cart-save shell"><form method="post" action="{{ path('customer_saved_cart_save') }}" class="feedback-form"><input type="hidden" name="_token" value="{{ csrf_token('saved_cart_save') }}"><label>{{ ui_text('save_cart_later') }}<input type="text" name="name" maxlength="190" placeholder="{{ ui_text('save_cart_placeholder') }}"></label><button class="button button--secondary" type="submit">{{ ui_text('save_cart') }}</button></form></section>{% endif %}
+{% include '@storefront/components/recently_viewed.html.twig' %}
 {% endblock %}

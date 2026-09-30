@@ -138,4 +138,12 @@ return [
     'installer.open_store' => 'Open store',
     'installer.admin_password_hint' => 'At least 12 characters.',
     'installer.demo_enabled_note' => 'Demo products, categories and pages will be created.',
+    'installer.step_region' => 'Country and regional settings',
+    'installer.region_hint' => 'Currency, language, time zone and tax are proposed from the country; you can change them.',
+    'installer.country' => 'Store country',
+    'installer.country_other' => 'Other country',
+    'installer.currency' => 'Default currency',
+    'installer.store_language' => 'Default store language',
+    'installer.timezone' => 'Time zone',
+    'installer.region_change_later' => 'You can change all of this later in the admin: add countries, languages and currencies and choose the defaults.',
 ];

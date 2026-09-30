@@ -23,7 +23,7 @@ final class CurrencyPricesCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption('fetch', null, InputOption::VALUE_NONE, 'Fetch current NBU rates before converting.')
+        $this->addOption('fetch', null, InputOption::VALUE_NONE, 'Fetch current official rates (ECB, NBU) before converting.')
             ->addOption('full', null, InputOption::VALUE_NONE, 'Rebuild all converted prices instead of only changed products.');
     }
 
@@ -32,7 +32,7 @@ final class CurrencyPricesCommand extends Command
         $status = Command::SUCCESS;
         if ((bool) $input->getOption('fetch') && $this->rates->requiredPairs() !== []) {
             try {
-                $r = $this->rates->refreshFromNbu();
+                $r = $this->rates->refresh();
                 $output->writeln(sprintf('rates: %s %s stored=%d missing=%s', $r['provider'], $r['date'], $r['stored'], $r['missing'] === [] ? '-' : implode(',', $r['missing'])));
             } catch (Throwable $e) {
                 // The last stored rate stays valid until it expires; conversion continues with it.

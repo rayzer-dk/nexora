@@ -2,6 +2,22 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.18.0 — 2026-09-30
+
+Schema 62, production channel. International store setup, form builder, quality monitor, collapsible colour admin.
+
+### Added
+- **Country-neutral setup.** The installer (browser and `commerce:install --country/--currency/--locale/--timezone`) now asks for the store country and proposes currency, language, time zone and standard tax rate from it; every value stays editable. The whole currency list (40 currencies) is registered so the merchant only switches currencies on; languages and currencies that are missing can still be added by hand. Nothing is seeded as Ukrainian any more: market, tax rate, legal page drafts (English unless the store language is Ukrainian or Russian) follow the chosen country. `STORE_DEFAULT_*` values written by the installer were previously ignored by the seeder; they are now honoured.
+- **ECB exchange rates** next to NBU: automatic rates are fetched from the European Central Bank first and from NBU for pairs the ECB does not list; a source that is down is skipped.
+- **Form builder** (Admin → Content → Forms): forms with text, e-mail, phone, multi-line, number, date, list, radio and checkbox fields, per-language forms, public page `/forms/{address}`, spam guard, captcha (new "Custom forms" switch), e-mail notification, answers list with new / read / handled status, CSV export (formula-injection safe) and automatic removal of handled answers after a year.
+- **Quality monitor** (Admin → System → Quality monitor): a 0–100 score and 26 read-only checks across security, reliability, performance, content and SEO, languages and currencies, and sales setup, each with a hint and a link to the page that fixes it.
+- **Collapsible admin sidebar**: one button folds the menu to icons (with tooltips); the state is remembered per browser.
+- **Colour tones**: admin navigation icons are tinted per area (catalog / sales / marketing / content / system), dashboard cards get a coloured accent, and the quality monitor uses status colours. New violet and teal tokens (light and dark).
+- **Recently viewed** products now also appear on the catalog and cart pages (they already existed on the home and product pages; consent-gated as before).
+
+### Fixed
+- Ukrainian and Russian gaps in translations: 63 extension-runtime messages that were English in the Ukrainian catalog, English fallbacks in checkout and catalog texts for ru / pl / de / da, "Credit note" and SEO field labels.
+
 ## 3.17.0 — 2026-09-30
 
 Schema 61, production channel. Google sign-in, LiqPay and WayForPay, order fraud scoring, new-device confirmation, product info blocks, article ↔ product links.

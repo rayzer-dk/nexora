@@ -183,6 +183,25 @@ function initSidebar() {
   });
 }
 
+function initSidebarCollapse() {
+  const button = q('[data-sidebar-collapse]');
+  if (!button) return;
+  const root = document.documentElement;
+  const sync = () => button.setAttribute('aria-pressed', String(root.dataset.sidebar === 'collapsed'));
+  sync();
+  button.addEventListener('click', () => {
+    const collapsed = root.dataset.sidebar !== 'collapsed';
+    if (collapsed) root.dataset.sidebar = 'collapsed';
+    else delete root.dataset.sidebar;
+    try {
+      localStorage.setItem('mc_admin_sidebar', collapsed ? 'collapsed' : 'expanded');
+    } catch {
+      /* storage unavailable: state lasts for this page only */
+    }
+    sync();
+  });
+}
+
 function initCommandPalette() {
   const palette = q('[data-command-palette]');
   const input = q('[data-command-input]', palette || document);
@@ -423,6 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDirtyGuard();
   initImagePreviews();
   initSidebar();
+  initSidebarCollapse();
   initCommandPalette();
   initAutoSubmit();
   initCopyControls();

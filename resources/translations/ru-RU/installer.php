@@ -138,4 +138,12 @@ return [
     'installer.open_store' => 'Открыть магазин',
     'installer.admin_password_hint' => 'Не менее 12 символов.',
     'installer.demo_enabled_note' => 'Будут созданы демонстрационные товары, категории и страницы.',
+    'installer.step_region' => 'Страна и региональные настройки',
+    'installer.region_hint' => 'Валюта, язык, часовой пояс и налог подставляются по стране; их можно изменить.',
+    'installer.country' => 'Страна магазина',
+    'installer.country_other' => 'Другая страна',
+    'installer.currency' => 'Валюта по умолчанию',
+    'installer.store_language' => 'Язык магазина по умолчанию',
+    'installer.timezone' => 'Часовой пояс',
+    'installer.region_change_later' => 'Всё это можно изменить позже в админке: добавить страны, языки и валюты, выбрать основные.',
 ];

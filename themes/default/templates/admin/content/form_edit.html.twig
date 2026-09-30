@@ -1,0 +1,35 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(form.id ? form.name : ui_text('admin.forms.new'),'forms') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_content_forms') }}">{{ ui_text('admin.forms.title') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ form.id ? form.name : ui_text('admin.forms.new') }}</span></nav><h1>{{ form.id ? form.name : ui_text('admin.forms.new') }}</h1></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
+{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<form method="post" action="{{ path('admin_content_form_save') }}" class="admin-form-stack" data-form-editor>
+<input type="hidden" name="_token" value="{{ csrf_token('admin_forms') }}"><input type="hidden" name="id" value="{{ form.id }}">
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.forms.settings') }}</h2></div>{{ ui_icon('clipboard-list', 20) }}</div>
+<div class="admin-form-grid">
+<label><span>{{ ui_text('admin.forms.name') }}</span><input type="text" name="name" value="{{ form.name }}" maxlength="190" required></label>
+<label><span>{{ ui_text('admin.forms.slug') }}</span><input type="text" name="slug" value="{{ form.slug }}" maxlength="118" pattern="[a-z0-9][a-z0-9\-]*" placeholder="wholesale-request"><small>{{ ui_text('admin.forms.slug_hint') }}</small></label>
+<label><span>{{ ui_text('admin.forms.locale') }}</span><select name="locale"><option value="">{{ ui_text('admin.forms.locale_any') }}</option>{% for l in locales %}<option value="{{ l.code }}" {{ form.locale == l.code ? 'selected' : '' }}>{{ l.native_name }} · {{ l.code }}</option>{% endfor %}</select></label>
+<label><span>{{ ui_text('admin.forms.status') }}</span><select name="status"><option value="draft" {{ form.status != 'active' ? 'selected' : '' }}>{{ ui_text('admin.forms.status.draft') }}</option><option value="active" {{ form.status == 'active' ? 'selected' : '' }}>{{ ui_text('admin.forms.status.active') }}</option></select></label>
+<label><span>{{ ui_text('admin.forms.notify_email') }}</span><input type="email" name="notify_email" value="{{ form.notify_email }}" maxlength="190"><small>{{ ui_text('admin.forms.notify_hint') }}</small></label>
+<label><span>{{ ui_text('admin.forms.submit_label') }}</span><input type="text" name="submit_label" value="{{ form.submit_label }}" maxlength="80"></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.forms.intro_label') }}</span><textarea name="intro" rows="3" maxlength="2000">{{ form.intro }}</textarea></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.forms.success_message') }}</span><input type="text" name="success_message" value="{{ form.success_message }}" maxlength="500"></label>
+</div></section>
+<section class="admin-panel" id="form-fields"><div class="admin-panel__header"><div><small>{{ ui_text('admin.forms.fields_hint') }}</small><h2>{{ ui_text('admin.forms.fields') }}</h2></div>{{ ui_icon('list-checks', 20) }}</div>
+<div class="form-fields">
+{% for i in 0..(slots - 1) %}{% set f = form.fields[i]|default(null) %}
+<fieldset class="form-field-row admin-info-block" data-field-row><legend>{{ loop.index }}</legend>
+<input type="hidden" name="fields[{{ i }}][key]" value="{{ f ? f.key : '' }}">
+<label><span>{{ ui_text('admin.forms.field_label') }}</span><input type="text" name="fields[{{ i }}][label]" value="{{ f ? f.label : '' }}" maxlength="190"></label>
+<label><span>{{ ui_text('admin.forms.field_type') }}</span><select name="fields[{{ i }}][type]">{% for t in types %}<option value="{{ t }}" {{ f and f.type == t ? 'selected' : '' }}>{{ ui_text('admin.forms.type.' ~ t) }}</option>{% endfor %}</select></label>
+<label><span>{{ ui_text('admin.forms.field_placeholder') }}</span><input type="text" name="fields[{{ i }}][placeholder]" value="{{ f ? f.placeholder : '' }}" maxlength="120"></label>
+<label class="admin-check"><input type="checkbox" name="fields[{{ i }}][required]" value="1" {{ f and f.required ? 'checked' : '' }}><span>{{ ui_text('admin.forms.field_required') }}</span></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.forms.field_options') }}</span><textarea name="fields[{{ i }}][options]" rows="2" maxlength="4000">{{ f ? f.options|join("\n") : '' }}</textarea></label>
+</fieldset>
+{% endfor %}
+</div>
+<p><small>{{ ui_text('admin.forms.fields_note') }}</small></p>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.forms.save') }}</button>{% if form.id and form.status == 'active' %}<a class="admin-button" href="/forms/{{ form.slug }}" target="_blank" rel="noopener">{{ ui_icon('external-link', 16) }}<span>{{ ui_text('admin.forms.open') }}</span></a>{% endif %}</div>
+</section>
+</form>
+{{ shell.end() }}

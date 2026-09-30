@@ -81,6 +81,10 @@ final class WebInstallController extends AbstractController
             '--admin-password' => (string) ($payload['admin_password'] ?? ''),
             '--public-url' => (string) ($payload['public_url'] ?? ''),
             '--site-mode' => (string) ($payload['site_mode'] ?? 'shop'),
+            '--country' => (string) ($payload['country'] ?? 'UA'),
+            '--currency' => (string) ($payload['currency'] ?? ''),
+            '--locale' => (string) ($payload['locale'] ?? ''),
+            '--timezone' => (string) ($payload['timezone'] ?? ''),
             '--no-interaction' => true,
         ];
         if ((bool) ($payload['install_demo'] ?? false)) {
