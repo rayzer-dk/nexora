@@ -364,6 +364,7 @@ legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-
 .catalog-card__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--mc-space-1) var(--mc-space-2); margin-top: var(--mc-space-1); }
 .catalog-card__price strong { font-size: var(--mc-font-size-xl); font-weight: var(--mc-font-weight-bold); line-height: var(--mc-line-height-tight); letter-spacing: var(--mc-letter-spacing-tight); }
 .catalog-card__price del { color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
+.catalog-card__vat { flex-basis: 100%; color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); }
 .catalog-card__actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--mc-space-2); margin-top: auto; padding-top: var(--mc-space-2); }
 .catalog-card__cart-form { grid-column: 1 / -1; display: contents; }
 .catalog-card__actions > .catalog-card__buy, .catalog-card__cart-form .catalog-card__buy { grid-column: 1 / -1; }

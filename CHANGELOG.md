@@ -2,6 +2,21 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.20.0 — 2026-09-30
+
+Schema 64. Translations in the admin, publish policy, catalogue quality, VAT per product class with display modes, undo.
+
+### Added
+- **Translations of products and categories in the admin**: a "Translations" page per product/category (status per language, all texts and SEO fields, created together with the address of the new language). The **AI translate** button fills a language from the default one; nothing is saved until the form is submitted. Articles already had per-language editing.
+- **Publish policy** (Catalogue → Quality): `off` / `warn` / `block` for publishing products and articles that lack an enabled language. Applies to the manual edit forms; imports and bulk editing are not blocked.
+- **Catalogue quality**: dashboard card and page `/admin/catalog/quality` (no image, no description, no price, no category, missing translations, no SEO meta, no stock; completeness per language; filter and list).
+- **VAT**: tax class per product, VAT rates page (System → Tax) with add/disable/delete, four storefront display modes (one price; incl. VAT with the VAT amount; net with the gross price; net only). Orders now record VAT per line (net price, rate, class) and the order total tax.
+- **Undo** of the last bulk product edit (price, stock, status, name, SKU): "Undo" bar and `Ctrl+Z`, valid for 15 minutes, own action only, single use.
+
+### Fixed
+- The admin AI buttons and "select all" helpers were never bundled into the admin runtime and did nothing; they are now part of it.
+- Order document: the VAT line is shown after the total ("incl. VAT"), not as an extra charge before it.
+
 ## 3.19.0 — 2026-09-30
 
 Schema 63. Recommended block in categories, forms in pages, HEIC, legal pages for more countries, quality monitor with history, admin productivity.

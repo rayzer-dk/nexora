@@ -18,11 +18,12 @@ final class AdminContextTwigExtension extends AbstractExtension
         private readonly AdminContextResolver $contexts,
         private readonly RequestStack $requests,
         private readonly Security $security,
+        private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo,
     ) {}
 
     public function getFunctions(): array
     {
-        return [new TwigFunction('admin_context_switcher', [$this, 'contextSwitcher'])];
+        return [new TwigFunction('admin_context_switcher', [$this, 'contextSwitcher']), new TwigFunction('admin_undo_pending', [$this, 'undoPending'])];
     }
 
     /** @return array<string,mixed> */
@@ -53,6 +54,21 @@ final class AdminContextTwigExtension extends AbstractExtension
             ];
         } catch (\Throwable) {
             return ['current' => null, 'stores' => [], 'markets' => [], 'locales' => [], 'currencies' => []];
+        }
+    }
+
+    /** @return array{id:int,kind:string,label:string}|null the administrator's own last reversible action from the last few minutes */
+    public function undoPending(): ?array
+    {
+        $request = $this->requests->getCurrentRequest();
+        $user = $this->security->getUser();
+        if ($request === null || !$user instanceof AdminUser || !$request->isMethod('GET')) {
+            return null;
+        }
+        try {
+            return $this->undo->latest($this->contexts->resolve($request)->storeId, $user->id, 300);
+        } catch (\Throwable) {
+            return null;
         }
     }
 }

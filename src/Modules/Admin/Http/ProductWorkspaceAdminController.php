@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Modules\Admin\Domain\AdminUser;
-use Commerce\Modules\Catalog\Application\Command\UpdateProductCommand;
 use Commerce\Modules\Catalog\Application\ProductWriter;
 use Commerce\Modules\Catalog\Infrastructure\DbalCatalogAdminQuery;
 use Doctrine\DBAL\Connection;
@@ -16,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ProductWorkspaceAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly ProductWriter $writer, private readonly Connection $db) {}
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly ProductWriter $writer, private readonly Connection $db, private readonly \Commerce\Modules\Catalog\Application\ProductBulkEditor $editor, private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo) {}
 
     #[Route('/admin/catalog/products/bulk-edit', name:'admin_catalog_products_bulk_edit', methods:['GET','POST'])]
     public function bulkEdit(Request $request): Response
@@ -24,9 +23,10 @@ final class ProductWorkspaceAdminController extends AbstractController
         $ctx=$this->contexts->resolve($request);$ids=$this->ids($request->isMethod('POST')?$request->request->all('product_ids'):(array)$request->query->all('id'));
         if($request->isMethod('POST')&&$request->request->has('bulk_editor_save')){
             if(!$this->isCsrfTokenValid('products_bulk_editor',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
-            $rows=$request->request->all('rows');$ok=0;$failed=0;
-            foreach($rows as $publicId=>$data){if(!is_array($data))continue;try{$p=$this->query->productForEdit($ctx->storeId,$ctx->marketId,$ctx->locale,(string)$publicId);$this->writer->update(new UpdateProductCommand(productId:(int)$p['id'],storeId:$ctx->storeId,marketId:$ctx->marketId,locale:$ctx->locale,name:(string)($data['name']??$p['name']),sku:(string)($data['sku']??$p['sku']),priceMinor:$this->minor((string)($data['price']??'0')),currency:(string)($p['currency']??$ctx->currency),stockQuantity:$this->qty((string)($data['stock']??$p['stock_quantity']??'0')),unitCode:(string)($p['sale_unit_code']??'pcs'),categoryIds:$p['category_ids'],manualSlug:(string)($p['slug']??''),shortDescription:(string)($p['short_description']??''),description:(string)($p['description']??''),gtin:$p['gtin']!==null?(string)$p['gtin']:null,mpn:$p['mpn']!==null?(string)$p['mpn']:null,status:in_array((string)($data['status']??''),['draft','published','archived'],true)?(string)$data['status']:(string)$p['status'],brandId:$p['brand_id']!==null?(int)$p['brand_id']:null,purchaseMode:(string)($p['purchase_mode']??'auto'),purchaseButtonLabel:$p['purchase_button_label']!==null?(string)$p['purchase_button_label']:null,purchaseEtaText:$p['purchase_eta_text']!==null?(string)$p['purchase_eta_text']:null));$ok++;}catch(\Throwable $e){$failed++;$this->addFlash('error',(string)$publicId.': '.\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}}
-            $this->addFlash($failed?'warning':'success',sprintf(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.productworkspaceadmincontroller.zberezheno_d_tovariv_pomylok_d'),$ok,$failed));return $this->redirectToRoute('admin_catalog_products');
+            $result=$this->editor->apply($ctx->storeId,$ctx->marketId,$ctx->locale,$ctx->currency,$request->request->all('rows'));
+            foreach($result['failed'] as $failedId){$this->addFlash('error',$failedId.': '.\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
+            if($result['previous']!==[]&&$this->adminId()!==null){$this->undo->remember($ctx->storeId,(int)$this->adminId(),'product_bulk',sprintf(\Commerce\Core\I18n\CanonicalUiText::get('admin.undo.product_bulk'),count($result['previous'])),['rows'=>$result['previous']]);}
+            $this->addFlash($result['failed']?'warning':'success',sprintf(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.productworkspaceadmincontroller.zberezheno_d_tovariv_pomylok_d'),$result['ok'],count($result['failed'])));return $this->redirectToRoute('admin_catalog_products');
         }
         if($ids===[]){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.productworkspaceadmincontroller.oberit_khocha_b_odyn_tovar'));return $this->redirectToRoute('admin_catalog_products');}
         $rows=[];foreach(array_slice($ids,0,100) as $id){try{$rows[]=$this->query->productForEdit($ctx->storeId,$ctx->marketId,$ctx->locale,$id);}catch(\Throwable){}}
@@ -58,6 +58,4 @@ final class ProductWorkspaceAdminController extends AbstractController
 
     private function adminId(): ?int{$u=$this->getUser();return $u instanceof AdminUser?$u->id:null;}
     /** @param array<mixed> $values @return list<string> */ private function ids(array $values): array{$out=[];foreach($values as $v){$s=trim((string)$v);if(preg_match('/^[0-9a-fA-F-]{36}$/D',$s))$out[$s]=true;}return array_keys($out);}
-    private function minor(string $v): int{$v=str_replace(',','.',trim($v));if(!preg_match('/^\\d{1,9}(?:\\.\\d{1,2})?$/D',$v))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.importexport.application.catalogcsvservice.nekorektna_tsina'));return(int)round((float)$v*100);}
-    private function qty(string $v): string{$v=str_replace(',','.',trim($v));if(!preg_match('/^\\d{1,12}(?:\\.\\d{1,6})?$/D',$v))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.importexport.application.catalogcsvservice.nekorektnyi_zalyshok'));return number_format((float)$v,6,'.','');}
 }

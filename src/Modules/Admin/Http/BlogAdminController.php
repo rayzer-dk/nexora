@@ -23,6 +23,7 @@ final class BlogAdminController extends AbstractController
         private readonly BlogService $blog,
         private readonly MediaImageService $media,
         private readonly Connection $db,
+        private readonly \Commerce\Modules\Localization\Application\ContentPolicyService $contentPolicy,
     ) {
     }
 
@@ -84,6 +85,16 @@ final class BlogAdminController extends AbstractController
             if ($cover instanceof UploadedFile) {
                 $in['cover_url'] = $this->media->upload($cover, $ctx->storeId)->url;
             }
+            $missingLocales = [];
+            if ((string) ($in['status'] ?? '') === 'published' && ($policy = $this->contentPolicy->mode($ctx->storeId)) !== 'off') {
+                $translated = $id !== null ? array_map('strval', $this->db->fetchFirstColumn('SELECT locale FROM mc_content_translation WHERE content_id = ?', [$id])) : [];
+                $translated[] = $ctx->locale;
+                $enabled = array_map('strval', $this->db->fetchFirstColumn('SELECT locale_code FROM mc_store_locale WHERE store_id=? AND enabled=1', [$ctx->storeId]));
+                $missingLocales = array_values(array_diff($enabled, $translated));
+                if ($missingLocales !== [] && $policy === 'block') {
+                    throw new \InvalidArgumentException(CanonicalUiText::get('admin.translations.publish_blocked', ['locales' => implode(', ', $missingLocales)]));
+                }
+            }
             $admin = $this->getUser();
             $savedId = $this->blog->save($ctx->storeId, $ctx->locale, $id, $in, $admin !== null ? $admin->getUserIdentifier() : 'admin');
         } catch (\InvalidArgumentException|\RuntimeException $e) {
@@ -93,6 +104,9 @@ final class BlogAdminController extends AbstractController
             return $this->form($ctx->storeId, $ctx->locale, $id, $this->merge($previous ?? $this->blank(), $in));
         }
         $this->addFlash('success', CanonicalUiText::get('admin.blog.saved'));
+        if ($missingLocales !== []) {
+            $this->addFlash('warning', CanonicalUiText::get('admin.translations.publish_warning', ['locales' => implode(', ', $missingLocales)]));
+        }
         return $this->redirectToRoute('admin_content_blog_edit', ['id' => $savedId]);
     }
 

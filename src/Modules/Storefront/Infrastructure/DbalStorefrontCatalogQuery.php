@@ -556,17 +556,35 @@ final readonly class DbalStorefrontCatalogQuery
     {
         $priceMinor = (int)($row['amount_minor'] ?? 0); $compareMinor = $row['compare_at_minor'] !== null ? (int)$row['compare_at_minor'] : null; $rate = (int)($row['rate_bps'] ?? 0);
         $taxMinor = $rate > 0 ? $priceMinor - intdiv(($priceMinor * 10000) + intdiv(10000 + $rate,2),10000+$rate) : 0;
+        $mode = $this->taxDisplayMode((int) $context->marketId);
+        $showNet = in_array($mode, ['net', 'net_with_gross'], true);
+        $netCompare = $compareMinor !== null ? $compareMinor - ($rate > 0 ? $compareMinor - intdiv(($compareMinor * 10000) + intdiv(10000 + $rate,2),10000+$rate) : 0) : null;
         return [
             'id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(), 'internal_id'=>(int)$row['id'], 'variant_id'=>Uuid::fromBinary((string)$row['variant_public_id'])->toRfc4122(),
             'product_type'=>(string)($row['product_type'] ?? 'physical'), 'name'=>(string)$row['name'], 'meta_title'=>(string)($row['meta_title']??''), 'meta_description'=>(string)($row['meta_description']??''), 'brand'=>(string)($row['brand_name']??''), 'brand_id'=>isset($row['brand_id']) && $row['brand_id'] !== null ? (int)$row['brand_id'] : null, 'sku'=>(string)$row['sku'], 'url'=>'/'.ltrim((string)$row['path'],'/'),
-            'price'=>$this->money->format($priceMinor,(string)$row['currency'],$context->locale), 'price_minor'=>$priceMinor,
-            'compare_at_price'=>$compareMinor!==null?$this->money->format($compareMinor,(string)$row['currency'],$context->locale):null, 'currency'=>(string)$row['currency'], 'gross_price'=>number_format($priceMinor/100,2,'.',''), 'merchant_price'=>number_format($priceMinor/100,2,'.',''),
+            'price'=>$this->money->format($showNet?$priceMinor-$taxMinor:$priceMinor,(string)$row['currency'],$context->locale), 'price_minor'=>$priceMinor,
+            'compare_at_price'=>$compareMinor!==null?$this->money->format($showNet?(int)$netCompare:$compareMinor,(string)$row['currency'],$context->locale):null, 'currency'=>(string)$row['currency'], 'gross_price'=>number_format($priceMinor/100,2,'.',''), 'merchant_price'=>number_format($priceMinor/100,2,'.',''),
             'sale_ends_at'=>($compareMinor!==null && $compareMinor>$priceMinor && !empty($row['price_ends_at']))?(new \DateTimeImmutable((string)$row['price_ends_at'],new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z'):null,
             'image'=>$this->mediaUrl($row['image_key']??null), ...$this->purchaseState($row), 'available_quantity'=>(string)$row['available_quantity'],
             'quantity'=>['unit_code'=>(string)$row['sale_unit_code'],'unit_label'=>(string)$row['sale_unit_code'],'step'=>$this->trimDecimal((string)$row['quantity_step']),'min'=>$this->trimDecimal((string)$row['min_order_quantity']),'max'=>$row['max_order_quantity']!==null?$this->trimDecimal((string)$row['max_order_quantity']):null],
             'rating'=>['value'=>round((float)($row['rating_value'] ?? 0),1),'count'=>(int)($row['review_count'] ?? 0)],
-            'tax'=>['display_mode'=>'price_only','rate_label'=>$rate>0?($rate/100).'%':'0%','tax_amount'=>$this->money->format($taxMinor,(string)$row['currency'],$context->locale),'net_price'=>$this->money->format($priceMinor-$taxMinor,(string)$row['currency'],$context->locale),'gross_price'=>$this->money->format($priceMinor,(string)$row['currency'],$context->locale)],
+            'tax'=>['display_mode'=>$mode,'rate_label'=>$rate>0?($rate/100).'%':'0%','tax_amount'=>$this->money->format($taxMinor,(string)$row['currency'],$context->locale),'net_price'=>$this->money->format($priceMinor-$taxMinor,(string)$row['currency'],$context->locale),'gross_price'=>$this->money->format($priceMinor,(string)$row['currency'],$context->locale)],
         ];
+    }
+
+    private function taxDisplayMode(int $marketId): string
+    {
+        static $cache = [];
+        if (!isset($cache[$marketId])) {
+            try {
+                $mode = (string) $this->connection->fetchOne('SELECT consumer_display_mode FROM mc_market_tax_policy WHERE market_id=?', [$marketId]);
+            } catch (\Throwable) {
+                $mode = '';
+            }
+            $cache[$marketId] = in_array($mode, ['price_only', 'gross_with_breakdown', 'net_with_gross', 'net'], true) ? $mode : 'price_only';
+        }
+
+        return $cache[$marketId];
     }
 
     /** @return array{availability_label:string,availability:string,purchase_mode:string,purchase_allowed:bool,purchase_button_label:string,purchase_eta_text:?string,notify_available:bool,price_request:bool} */

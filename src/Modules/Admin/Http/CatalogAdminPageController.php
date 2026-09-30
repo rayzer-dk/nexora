@@ -42,6 +42,9 @@ final class CatalogAdminPageController extends AbstractController
         private readonly ProductDocumentService $documents,
         private readonly ProductDigitalAssetService $digitalAssets,
         private readonly Connection $db,
+        private readonly \Commerce\Modules\Catalog\Application\CatalogTranslationService $translations,
+        private readonly \Commerce\Modules\Localization\Application\ContentPolicyService $contentPolicy,
+        private readonly \Commerce\Modules\Tax\Application\TaxSettingsService $taxSettings,
     ) {
     }
 
@@ -204,6 +207,13 @@ final class CatalogAdminPageController extends AbstractController
                 $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.sesiiu_formy_vtracheno_povtorit_diiu'));
             } else {
                 try {
+                    $missingLocales = [];
+                    if ((string) $request->request->get('status', 'draft') === 'published' && ($policy = $this->contentPolicy->mode($context->storeId)) !== 'off') {
+                        $missingLocales = array_values(array_diff($this->translations->missingForProduct($context->storeId, (int) $product['id']), trim((string) $request->request->get('name', '')) !== '' && trim((string) $request->request->get('description', '')) !== '' ? [$context->locale] : []));
+                        if ($missingLocales !== [] && $policy === 'block') {
+                            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.translations.publish_blocked', ['locales' => implode(', ', $missingLocales)]));
+                        }
+                    }
                     $categoryIds = array_values(array_filter(array_map('intval', $request->request->all('category_ids')), static fn (int $id): bool => $id > 0));
                     $this->products->update(new UpdateProductCommand(
                         productId: (int) $product['id'], storeId: $context->storeId, marketId: $context->marketId, locale: $context->locale,
@@ -222,9 +232,15 @@ final class CatalogAdminPageController extends AbstractController
                         purchaseButtonLabel: trim((string) $request->request->get('purchase_button_label', '')) ?: null,
                         purchaseEtaText: trim((string) $request->request->get('purchase_eta_text', '')) ?: null,
                     ));
+                    if ($request->request->has('tax_class_id')) {
+                        $this->taxSettings->setProductClass((int) $product['id'], (int) $request->request->get('tax_class_id', 0));
+                    }
                     $this->updateAttachedImageSettings($request, (int) $product['id']);
                     $mediaErrors = $this->attachUploadedImages($request, $context->storeId, (int) $product['id'], (string) $request->request->get('name', $product['name']));
                     $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.tovar_onovleno'));
+                    if ($missingLocales !== []) {
+                        $this->addFlash('warning', \Commerce\Core\I18n\CanonicalUiText::get('admin.translations.publish_warning', ['locales' => implode(', ', $missingLocales)]));
+                    }
                     foreach ($mediaErrors as $mediaError) {
                         $this->addFlash('error', $mediaError);
                     }
@@ -246,6 +262,7 @@ final class CatalogAdminPageController extends AbstractController
                 'purchase_eta_text' => (string) $request->request->get('purchase_eta_text', ''),
             ]);
         }
+        $product['tax_class_id'] = $this->taxSettings->productClassId((int) $product['id']);
         if (!isset($product['price_input'])) {
             $product['price_input'] = $product['amount_minor'] === null ? '0.00' : $this->moneyDisplay((int) $product['amount_minor']);
         }
@@ -267,6 +284,7 @@ final class CatalogAdminPageController extends AbstractController
             'info_blocks' => $this->productInfo->forEdit((int) $product['id']),
             'digital_assets' => $product['product_type'] === 'digital' ? $this->digitalAssets->forProduct((int) $product['id']) : [],
             'locales' => $this->query->storeLocales($context->storeId),
+            'tax_classes' => $this->taxSettings->classes(),
             'currency' => $context->currency,
             'csrf_id' => 'admin_product_update_' . $publicId,
         ]);

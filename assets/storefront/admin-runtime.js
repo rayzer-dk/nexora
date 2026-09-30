@@ -1,3 +1,4 @@
+import '../admin/admin-runtime.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
 import { lucideIconNode } from '../shared/lucide-icons.js';
 
@@ -280,6 +281,11 @@ function initHotkeys() {
   document.addEventListener('keydown', (event) => {
     const target = event.target;
     const typing = target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+    if (!typing && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'z') {
+      const undo = q('[data-undo-form]');
+      if (undo) { event.preventDefault(); undo.requestSubmit(); }
+      return;
+    }
     if (typing || event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.key === '/') {
       const opener = q('[data-command-open]');

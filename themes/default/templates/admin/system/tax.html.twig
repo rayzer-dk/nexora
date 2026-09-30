@@ -1,0 +1,21 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.tax.title'),'system') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.tax.title') }}</span></nav><h1>{{ ui_text('admin.tax.title') }}</h1><p>{{ ui_text('admin.tax.intro') }}</p></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
+{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<section class="admin-panel"><form method="post" action="{{ path('admin_system_tax_mode') }}" class="admin-form-stack" data-tax-mode><input type="hidden" name="_token" value="{{ csrf_token('admin_tax') }}">
+<div class="admin-panel__header"><div><h2>{{ ui_text('admin.tax.display') }}</h2><small>{{ ui_text('admin.tax.display_hint') }}</small></div></div>
+<fieldset class="tax-modes">{% for m in modes %}<label class="tax-modes__option"><input type="radio" name="mode" value="{{ m }}"{% if m == mode %} checked{% endif %}><span><strong>{{ ui_text('admin.tax.mode.' ~ m) }}</strong><small>{{ ui_text('admin.tax.mode.' ~ m ~ '_example') }}</small></span></label>{% endfor %}</fieldset>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.translations.save') }}</button></div></form></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.tax.rates') }}</h2><small>{{ ui_text('admin.tax.rates_hint') }}</small></div></div>
+{% if rates %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.tax.country') }}</th><th>{{ ui_text('admin.tax.class') }}</th><th>{{ ui_text('admin.tax.name') }}</th><th>{{ ui_text('admin.tax.rate') }}</th><th>{{ ui_text('admin.tax.enabled') }}</th><th></th></tr></thead><tbody>
+{% for r in rates %}<tr data-tax-rate="{{ r.id }}"><td>{{ r.country_code }}</td><td>{{ r.class_name }}</td><td>{{ r.name }}</td><td>{{ (r.rate_bps / 100)|number_format(2, '.', '') }}%</td><td><span class="admin-badge {{ r.enabled ? 'is-success' : '' }}">{{ r.enabled ? ui_text('admin.tax.on') : ui_text('admin.tax.off') }}</span></td>
+<td class="admin-table__actions"><form method="post" action="{{ path('admin_system_tax_rate_toggle', {id: r.id}) }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_tax') }}"><button class="admin-icon-button" type="submit" title="{{ ui_text('admin.tax.toggle') }}" aria-label="{{ ui_text('admin.tax.toggle') }}">{{ ui_icon('check', 18) }}</button></form>
+<form method="post" action="{{ path('admin_system_tax_rate_delete', {id: r.id}) }}" class="admin-inline-form" data-confirm="{{ ui_text('admin.tax.delete_confirm')|e('html_attr') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_tax') }}"><button class="admin-icon-button is-danger" type="submit" title="{{ ui_text('admin.tax.delete') }}" aria-label="{{ ui_text('admin.tax.delete') }}">{{ ui_icon('trash-2', 18) }}</button></form></td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p>{{ ui_text('admin.tax.no_rates') }}</p>{% endif %}
+<form method="post" action="{{ path('admin_system_tax_rate_add') }}" class="admin-form-stack" data-tax-add><input type="hidden" name="_token" value="{{ csrf_token('admin_tax') }}"><h3>{{ ui_text('admin.tax.add') }}</h3>
+<div class="admin-form-grid admin-form-grid--dense"><label><span>{{ ui_text('admin.tax.class') }}</span><select name="class_id">{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></label>
+<label><span>{{ ui_text('admin.tax.country') }}</span><input type="text" name="country" value="{{ country }}" maxlength="2" required></label>
+<label><span>{{ ui_text('admin.tax.name') }}</span><input type="text" name="name" maxlength="190" required></label>
+<label><span>{{ ui_text('admin.tax.rate') }} (%)</span><input type="text" inputmode="decimal" name="percent" placeholder="20" required></label></div>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.tax.add') }}</button></div></form></section>
+{{ shell.end() }}

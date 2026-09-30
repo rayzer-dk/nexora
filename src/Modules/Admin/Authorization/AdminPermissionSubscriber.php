@@ -40,7 +40,8 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
     private function permissionForRoute(string $route, Request $request): ?string
     {
         $get=$request->isMethod('GET');
-        if ($route==='admin_dashboard'||$route==='admin_onboarding'||$route==='admin_api_session'||$route==='admin_api_quick_search'||$route==='admin_interface_language'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account_security')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
+        if ($route==='admin_dashboard'||$route==='admin_onboarding'||$route==='admin_api_session'||$route==='admin_api_quick_search'||$route==='admin_interface_language'||$route==='admin_undo'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account_security')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
+        if (str_starts_with($route,'admin_system_tax')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if ($route==='admin_analytics') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic_settings') return AdminPermissionCatalog::SYSTEM_SETTINGS;
@@ -62,7 +63,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (in_array($route,['admin_commerce_products_bulk','admin_catalog_products_bulk_edit'],true)) return AdminPermissionCatalog::CATALOG_BULK;
         if (str_contains($route,'catalog_product_delete')||str_contains($route,'catalog_products_delete')) return AdminPermissionCatalog::CATALOG_DELETE;
         if (str_starts_with($route,'admin_catalog_search')) return $get?AdminPermissionCatalog::SEARCH_VIEW:AdminPermissionCatalog::SEARCH_MANAGE;
-        if (preg_match('/^admin_catalog_(?:product|category)_(?:edit|new)$/D',$route)===1 || str_contains($route,'products_bulk_edit')) return AdminPermissionCatalog::CATALOG_MANAGE;
+        if (preg_match('/^admin_catalog_(?:product|category)_(?:edit|new|translations|translation_save)$/D',$route)===1 || str_contains($route,'products_bulk_edit')) return AdminPermissionCatalog::CATALOG_MANAGE;
         if (str_starts_with($route,'admin_catalog_')) return $get?AdminPermissionCatalog::CATALOG_VIEW:AdminPermissionCatalog::CATALOG_MANAGE;
         if ($route==='admin_commerce_customers') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if ($route==='admin_content_page_edit') return AdminPermissionCatalog::CONTENT_MANAGE;

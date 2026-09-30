@@ -26,6 +26,7 @@ use Symfony\Component\Uid\Uuid;
 final readonly class CheckoutOrderService
 {
     public function __construct(
+        private \Commerce\Modules\Tax\Application\TaxRateResolver $taxRates,
         private Connection $db,
         private PublicIdFactory $ids,
         private PaymentProviderRegistry $payments,
@@ -113,6 +114,16 @@ final readonly class CheckoutOrderService
             $promotionResult=$this->promotions->calculateForCart($context->storeId,$cartId,trim((string)($input['coupon_code']??'')) ?: null,$customerId,$email,true);
             if ($promotionResult->couponMessage !== null && trim((string)($input['coupon_code']??'')) !== '') throw new \DomainException($promotionResult->couponMessage);
             $discount=$promotionResult->discountMinor; $shipping=0; $tax=0; $total=max(0,$subtotal-$discount+$shipping+$tax);
+            // VAT is informational: prices are tax-inclusive, so it is recorded per line (after the proportional discount) and never added to the total.
+            $taxLines=[]; $taxIncluded=0; $taxCountry=(string)$context->countryCode!==''?(string)$context->countryCode:(string)$db->fetchOne('SELECT default_country FROM mc_store WHERE id=?',[$context->storeId]);
+            foreach($rows as $taxRow){
+                $q=Quantity::fromString((string)$taxRow['quantity']); $line=intdiv(((int)$taxRow['unit_price_minor']*$q->micros)+500000,1000000);
+                $afterDiscount=$subtotal>0?max(0,$line-intdiv(($discount*$line)+intdiv($subtotal,2),$subtotal)):$line;
+                $found=$this->taxRates->forProduct((int)$taxRow['product_id'],$taxCountry);
+                $lineTax=\Commerce\Modules\Tax\Application\TaxRateResolver::includedTax($afterDiscount,$found['rate_bps']);
+                $taxLines[(int)$taxRow['cart_item_id']]=['tax'=>$lineTax,'rate'=>$found['rate_bps'],'class'=>$found['class_code'],'net_unit'=>(int)$taxRow['unit_price_minor']-\Commerce\Modules\Tax\Application\TaxRateResolver::includedTax((int)$taxRow['unit_price_minor'],$found['rate_bps'])];
+                $taxIncluded+=$lineTax;
+            }
             $giftCode=trim((string)($input['gift_card_code']??''));
             $giftPreview=$giftCode!==''?$this->giftCards->preview($context->storeId,$giftCode,$context->currency,$total):null;
             if($giftCode!=='' && $giftPreview===null) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.podarunkova_kartka_nediisna_prostrochena_abo_maie_in'));
@@ -125,7 +136,7 @@ final readonly class CheckoutOrderService
             $paymentTerms=$b2bTerms===null?null:(int)$b2bTerms['payment_terms_days'];
             $dueAt=$paymentTerms!==null&&$paymentTerms>0?(new DateTimeImmutable('+'.$paymentTerms.' days',new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'):null;
             $now=$this->now(); $public=$this->ids->generate(); $storeCode=(string)($db->fetchOne('SELECT code FROM mc_store WHERE id=?',[$context->storeId]) ?: 'MC'); $orderNumber=$this->orderNumber($db,$context->storeId,$storeCode);
-            $db->insert('mc_sales_order',['public_id'=>$public->toBinary(),'store_id'=>$context->storeId,'customer_id'=>$customerId,'b2b_company_id'=>$b2bTerms===null?null:(int)$b2bTerms['company_id'],'b2b_approval_status'=>$b2bApproval,'purchase_order_number'=>$purchaseOrderNumber!==''?$purchaseOrderNumber:null,'payment_terms_days'=>$paymentTerms,'due_at'=>$dueAt,'order_number'=>$orderNumber,'checkout_idempotency_key'=>$idempotencyKey,'status'=>$b2bApproval==='pending'?'pending_approval':'placed','payment_status'=>'pending','fulfillment_status'=>'unfulfilled','currency'=>$context->currency,'prices_include_tax'=>1,'subtotal_minor'=>$subtotal,'discount_minor'=>$discount,'shipping_minor'=>$shipping,'tax_minor'=>$tax,'tax_country_code'=>$context->countryCode,'tax_calculation_mode'=>'included','total_minor'=>$total,'customer_email'=>$email!==''?$email:null,'customer_email_normalized'=>$email!==''?$email:null,'customer_phone'=>$phone,'customer_name'=>$name,'customer_comment'=>$customerComment!==''?$customerComment:null,'company_name'=>$companyName!==''?$companyName:($b2bTerms!==null?(string)$b2bTerms['name']:null),'company_tax_id'=>$companyTaxId!==''?$companyTaxId:($b2bTerms!==null?(string)($b2bTerms['tax_id']??''):null),'locale'=>$context->locale,'created_at'=>$now,'updated_at'=>$now]);
+            $db->insert('mc_sales_order',['public_id'=>$public->toBinary(),'store_id'=>$context->storeId,'customer_id'=>$customerId,'b2b_company_id'=>$b2bTerms===null?null:(int)$b2bTerms['company_id'],'b2b_approval_status'=>$b2bApproval,'purchase_order_number'=>$purchaseOrderNumber!==''?$purchaseOrderNumber:null,'payment_terms_days'=>$paymentTerms,'due_at'=>$dueAt,'order_number'=>$orderNumber,'checkout_idempotency_key'=>$idempotencyKey,'status'=>$b2bApproval==='pending'?'pending_approval':'placed','payment_status'=>'pending','fulfillment_status'=>'unfulfilled','currency'=>$context->currency,'prices_include_tax'=>1,'subtotal_minor'=>$subtotal,'discount_minor'=>$discount,'shipping_minor'=>$shipping,'tax_minor'=>$taxIncluded,'tax_country_code'=>$context->countryCode,'tax_calculation_mode'=>'included','total_minor'=>$total,'customer_email'=>$email!==''?$email:null,'customer_email_normalized'=>$email!==''?$email:null,'customer_phone'=>$phone,'customer_name'=>$name,'customer_comment'=>$customerComment!==''?$customerComment:null,'company_name'=>$companyName!==''?$companyName:($b2bTerms!==null?(string)$b2bTerms['name']:null),'company_tax_id'=>$companyTaxId!==''?$companyTaxId:($b2bTerms!==null?(string)($b2bTerms['tax_id']??''):null),'locale'=>$context->locale,'created_at'=>$now,'updated_at'=>$now]);
             $orderId=(int)$db->lastInsertId();
             $gift=$giftCode!==''?$this->giftCards->redeem($db,$context->storeId,$giftCode,$context->currency,$total,$orderId):null;
             $giftMinor=(int)($gift['amount_minor']??0);
@@ -135,7 +146,7 @@ final readonly class CheckoutOrderService
             $db->update('mc_sales_order',['gift_card_minor'=>$giftMinor,'gift_card_last4'=>$gift['last4']??null,'loyalty_minor'=>$loyaltyMinor,'loyalty_points_spent'=>(int)$loyalty['points'],'total_minor'=>$total,'updated_at'=>$now],['id'=>$orderId]);
             foreach($rows as $r){
                 $q=Quantity::fromString((string)$r['quantity']); $line=intdiv(((int)$r['unit_price_minor']*$q->micros)+500000,1000000);
-                $db->insert('mc_sales_order_item',['order_id'=>$orderId,'product_id'=>(int)$r['product_id'],'variant_id'=>(int)$r['variant_id'],'sku'=>(string)$r['sku'],'name'=>(string)$r['name'],'quantity'=>$q->toDatabase(),'unit_code'=>(string)$r['unit_code'],'unit_price_minor'=>(int)$r['unit_price_minor'],'unit_price_net_minor'=>(int)$r['unit_price_minor'],'unit_price_gross_minor'=>(int)$r['unit_price_minor'],'line_total_minor'=>$line,'tax_minor'=>0,'tax_rate_bps'=>0,'tax_class_code'=>null,'snapshot'=>json_encode(['sku'=>(string)$r['sku'],'name'=>(string)$r['name'],'unit_code'=>(string)$r['unit_code'],'purchase_mode'=>(string)$r['purchase_mode']],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE)]);
+                $db->insert('mc_sales_order_item',['order_id'=>$orderId,'product_id'=>(int)$r['product_id'],'variant_id'=>(int)$r['variant_id'],'sku'=>(string)$r['sku'],'name'=>(string)$r['name'],'quantity'=>$q->toDatabase(),'unit_code'=>(string)$r['unit_code'],'unit_price_minor'=>(int)$r['unit_price_minor'],'unit_price_net_minor'=>$taxLines[(int)$r['cart_item_id']]['net_unit'],'unit_price_gross_minor'=>(int)$r['unit_price_minor'],'line_total_minor'=>$line,'tax_minor'=>$taxLines[(int)$r['cart_item_id']]['tax'],'tax_rate_bps'=>$taxLines[(int)$r['cart_item_id']]['rate'],'tax_class_code'=>$taxLines[(int)$r['cart_item_id']]['class'],'snapshot'=>json_encode(['sku'=>(string)$r['sku'],'name'=>(string)$r['name'],'unit_code'=>(string)$r['unit_code'],'purchase_mode'=>(string)$r['purchase_mode']],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE)]);
                 $orderItemId=(int)$db->lastInsertId();
                 if ((string)$r['product_type'] === 'digital') {
                     $assets=$db->fetchAllAssociative("SELECT id,max_downloads,access_days FROM mc_product_digital_asset WHERE product_id=? AND status='active' ORDER BY id ASC",[(int)$r['product_id']]);

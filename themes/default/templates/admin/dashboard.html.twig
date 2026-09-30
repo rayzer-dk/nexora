@@ -14,6 +14,7 @@
 </header>
 
 {% if onboarding.done < onboarding.total %}<a class="onboarding-card" href="{{ path('admin_onboarding') }}"><span class="onboarding-card__text"><strong>{{ ui_text('admin.onboarding.card') }}</strong><small>{{ onboarding.done }} / {{ onboarding.total }}</small></span><progress class="onboarding-bar" max="{{ onboarding.total }}" value="{{ onboarding.done }}"></progress>{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
+{% if catalog_quality and catalog_quality.total > 0 and catalog_quality.clean < catalog_quality.total %}<a class="onboarding-card catalog-quality-card" href="{{ path('admin_catalog_quality') }}"><span class="onboarding-card__text"><strong>{{ ui_text('admin.catalog_quality.card') }} · {{ catalog_quality.score }}%</strong><small>{{ ui_text('admin.catalog_quality.card_hint', {count: catalog_quality.total - catalog_quality.clean}) }}</small></span><progress class="onboarding-bar" max="100" value="{{ catalog_quality.score }}"></progress>{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
 <section class="dash-kpis" aria-label="{{ ui_text('admin.dashboard.kpi_title') }}">
 {% for k in report.kpis %}
   <article class="dash-kpi">

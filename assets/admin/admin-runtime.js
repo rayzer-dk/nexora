@@ -40,7 +40,7 @@ document.querySelectorAll('[data-ai-task]').forEach((button) => {
     const status = box?.querySelector('[data-ai-status]');
     const provider = box?.querySelector('[data-ai-provider]');
     if (!box || !status || !provider) return;
-    let inputs = {}; let outputs = {};
+    let inputs; let outputs;
     try { inputs = JSON.parse(button.dataset.aiIn || '{}'); outputs = JSON.parse(button.dataset.aiOut || '{}'); } catch { return; }
     const body = new URLSearchParams({ _token: box.dataset.aiToken || '', task: button.dataset.aiTask || '', provider: provider.value });
     for (const [name, selector] of Object.entries(inputs)) body.append(`fields[${name}]`, document.querySelector(selector)?.value || '');
@@ -92,3 +92,40 @@ if (aiPlayground) {
     }
   });
 }
+
+// Translation editor: fills one language panel from the default-language panel through the AI translate task. Nothing is saved until the form is sent.
+document.querySelectorAll('[data-translate-from]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const page = button.closest('[data-translate-page]');
+    const panel = button.closest('[data-translate-panel]');
+    const source = page?.querySelector('[data-translate-panel][data-source]');
+    const provider = page?.querySelector('[data-ai-provider]');
+    const status = panel?.querySelector('[data-ai-status]');
+    if (!page || !panel || !source || !provider || !status) return;
+    const target = panel.dataset.locale || '';
+    button.disabled = true;
+    let done = 0;
+    try {
+      for (const field of panel.querySelectorAll('[data-translate-field]')) {
+        const name = field.getAttribute('name');
+        const text = source.querySelector(`[data-translate-field][name="${name}"]`)?.value?.trim() || '';
+        if (!text) continue;
+        status.textContent = t('admin.ai.generating') + ' ' + name;
+        const body = new URLSearchParams({ _token: page.dataset.aiToken || '', task: 'translate', provider: provider.value });
+        body.append('fields[text]', text);
+        body.append('fields[target]', target);
+        const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
+        field.value = data.fields?.text || '';
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        done += 1;
+      }
+      status.textContent = done > 0 ? t('admin.ai.draft_inserted') : '';
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+    } finally {
+      button.disabled = false;
+    }
+  });
+});
