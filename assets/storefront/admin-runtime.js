@@ -674,6 +674,64 @@ function initTabs() {
   });
 }
 
+function initProductTabs() {
+  const form = q('#product-form[data-product-tabs]');
+  if (!form) return;
+  let labels = {};
+  try { labels = JSON.parse(form.dataset.productTabs || '{}'); } catch { labels = {}; }
+  const panels = qa('[data-product-tab]');
+  const order = Object.keys(labels).filter((id) => panels.some((p) => p.dataset.productTab === id));
+  if (order.length < 2) return;
+  const list = document.createElement('div');
+  list.className = 'admin-tabs';
+  list.setAttribute('role', 'tablist');
+  const key = `mc_product_tab_${location.pathname}`;
+  const buttons = order.map((id) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'admin-tab';
+    b.setAttribute('role', 'tab');
+    b.dataset.tabTarget = id;
+    const label = document.createElement('span');
+    label.textContent = labels[id];
+    b.appendChild(label);
+    return b;
+  });
+  list.append(...buttons);
+  form.before(list);
+  const activate = (id, save = true) => {
+    const target = order.includes(id) ? id : order[0];
+    panels.forEach((p) => { p.hidden = p.dataset.productTab !== target; });
+    buttons.forEach((b) => { const on = b.dataset.tabTarget === target; b.classList.toggle('is-active', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+    if (save) { try { sessionStorage.setItem(key, target); } catch { /* per-page only */ } }
+  };
+  buttons.forEach((b, i) => {
+    b.addEventListener('click', () => activate(b.dataset.tabTarget));
+    b.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      const n = buttons[(i + (e.key === 'ArrowRight' ? 1 : buttons.length - 1)) % buttons.length];
+      n.focus();
+      n.click();
+    });
+  });
+  // A required field in a hidden tab cannot be focused by the browser: show its tab so the message is visible.
+  form.addEventListener('invalid', (event) => {
+    const panel = event.target instanceof Element ? event.target.closest('[data-product-tab]') : null;
+    if (panel && panel.hidden) activate(panel.dataset.productTab, false);
+  }, true);
+  // A link to a section (#variants, #digital-files...) opens the tab it lives in.
+  const fromHash = () => {
+    const el = location.hash.length > 1 ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+    const panel = el?.closest('[data-product-tab]');
+    return panel ? panel.dataset.productTab : '';
+  };
+  let initial = fromHash();
+  if (!initial) { try { initial = sessionStorage.getItem(key) || ''; } catch { initial = ''; } }
+  activate(initial, false);
+  window.addEventListener('hashchange', () => { const id = fromHash(); if (id) activate(id); });
+}
+
 function initTemplateEditors() {
   qa('[data-notification-template]').forEach((card) => {
     const form = q('[data-tpl-form]', card);
@@ -1149,6 +1207,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSlugGenerators();
   initMediaSortable();
   initMultiSelects();
+  initProductTabs();
   initCopyControls();
   initHealthCheck();
   initSiteProfilePreset();

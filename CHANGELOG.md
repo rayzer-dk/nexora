@@ -2,6 +2,17 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.28.0 — 2026-10-01
+
+- **The product form is split into tabs**: Main, Price and variants, Photos and video, Specifications, Files and SEO. One
+  group of fields is shown at a time; the main Save button stays on screen on every tab and saves all of them. Blocks that
+  have their own Save button (custom fields, information blocks) say so. A required field left empty on another tab opens
+  that tab when you press Save, a link such as `#variants` opens the tab it lives in, and the last tab is remembered.
+- Tax model unchanged: prices are entered and charged tax-inclusive (see `TaxSettingsService`); tax-exclusive prices and
+  compound taxes are not part of this release because they change checkout totals and need their own design.
+- End-to-end tests follow the tabs (`openProductTab`); the library test uploads a unique file because identical bytes are one
+  picture since 3.26.0.
+
 ## 3.27.0 — 2026-10-01
 
 - **The shop shows an admin change at once.** The stored catalogue data of the shop (product lists, product pages,

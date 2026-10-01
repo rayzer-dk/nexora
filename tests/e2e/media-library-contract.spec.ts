@@ -27,10 +27,14 @@ test('Media Library upload, metadata, search and store removal form one real lif
   await upload.locator('input[type="file"]').setInputFiles({
     name: 'e2e-media.png',
     mimeType: 'image/png',
-    buffer: Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGPkqrjDAANMDEgANwcARI4BZoWJLsMAAAAASUVORK5CYII=',
-      'base64',
-    ),
+    // identical bytes are one picture in the library, so every run needs its own file
+    buffer: Buffer.concat([
+      Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGPkqrjDAANMDEgANwcARI4BZoWJLsMAAAAASUVORK5CYII=',
+        'base64',
+      ),
+      Buffer.from(`-${Date.now()}-${Math.random()}`),
+    ]),
   });
 
   expect((await uploadResponse).status()).toBeLessThan(400);

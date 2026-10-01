@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, openProductTab } from './helpers';
 
 // Release 3.26.0: originals live in real library folders, sizes and formats are a separate cache, the format is a choice
 // (WebP only / AVIF with a WebP fallback), photos and videos of a product are one list ordered by dragging.
@@ -120,6 +120,7 @@ test('product photos are ordered by dragging, new photos go to the chosen folder
   await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
   await page.locator('tr').filter({ hasNotText: /Picked|E2E|Warm/i }).locator('a[href*="/admin/catalog/products/"][href$="/edit"]').nth(3).click();
   await page.waitForURL(/\/edit/);
+  await openProductTab(page, 'media');
   const editUrl = page.url();
 
   const select = page.locator('select[name="upload_folder"]');
@@ -132,6 +133,7 @@ test('product photos are ordered by dragging, new photos go to the chosen folder
   await saveProduct(page);
   await expectNoServerError(page);
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'media');
   const items = page.locator('[data-media-sortable] > [data-media-token][data-media-kind="photo"]');
   const count = await items.count();
   expect(count).toBeGreaterThanOrEqual(2);
@@ -147,6 +149,7 @@ test('product photos are ordered by dragging, new photos go to the chosen folder
 
   // the order survives a reload; the first photo is the main one
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'media');
   await expect(page.locator('[data-media-sortable] > [data-media-token]').first()).toHaveAttribute('data-media-token', lastToken);
   await expect(page.locator('[data-media-sortable] > .is-primary')).toHaveAttribute('data-media-token', lastToken);
 

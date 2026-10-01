@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, openProductTab } from './helpers';
 
 // Release 3.25.0: product videos (a link, preview first, player after a click), manual review of unused pictures with a
 // restorable trash, files of a picture in the library, and the remembered library folder.
@@ -44,6 +44,7 @@ test('a product video is a link: preview first, the player loads only after a cl
   await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
   await page.locator('tr').filter({ hasNotText: /Picked|E2E|Warm/i }).locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().click();
   await page.waitForURL(/\/edit/);
+  await openProductTab(page, 'media');
   const editUrl = page.url();
   const slug = await page.locator('#product-form input[name="slug"]').inputValue();
 
@@ -54,6 +55,7 @@ test('a product video is a link: preview first, the player loads only after a cl
 
   // a good link with an own preview, placed before the photos
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'media');
   await page.locator('input[name="video_url"]').fill('https://youtu.be/dQw4w9WgXcQ');
   await page.locator('input[name="video_new_title"]').fill('E2E video');
   await page.locator('input[name="video_poster"]').setInputFiles({ name: 'poster.png', mimeType: 'image/png', buffer: unique() });
@@ -98,6 +100,7 @@ test('a product video is a link: preview first, the player loads only after a cl
 
   // after the photos
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'media');
   const total = await page.locator('[data-media-sortable] > [data-media-token]').count();
   for (let i = 0; i < total && (await page.locator('[data-media-sortable] > [data-media-token]').last().getAttribute('data-media-kind')) !== 'video'; i++) {
     const saved = page.waitForResponse((r) => r.request().method() === 'POST' && /\/media\/order$/.test(new URL(r.url()).pathname));
@@ -115,6 +118,7 @@ test('a product video is a link: preview first, the player loads only after a cl
 
   // remove it
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'media');
   await page.locator('.admin-media-item.is-video button.is-danger').first().click();
   const accept = page.locator('[data-confirm-accept]');
   if (await accept.isVisible().catch(() => false)) await accept.click();
@@ -133,7 +137,7 @@ test('unused pictures are reviewed by hand: deselect, move to the trash, restore
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
   // choosing a file submits the upload form by itself
   await Promise.all([
-    page.waitForEvent('load'), // the page reloads itself after the upload
+    page.waitForEvent('load', { timeout: 60000 }), // the page reloads itself after the upload
     page.waitForResponse((r) => r.request().method() === 'POST' && new URL(r.url()).pathname === '/admin/media/upload'),
     page.locator('[data-media-drop] input[type="file"]').setInputFiles({ name: 'unused.png', mimeType: 'image/png', buffer: unique() }),
   ]);

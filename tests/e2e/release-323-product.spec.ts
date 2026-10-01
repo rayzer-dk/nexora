@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, openProductTab } from './helpers';
 
 // Product page (gallery + viewer + tabs + buy box), product card and catalog filters (3.23.0).
 
@@ -202,12 +202,14 @@ test('admin product form edits the SEO title/description and the old price shown
   const productUrl = await page.evaluate(() => document.querySelector<HTMLAnchorElement>('a[href^="/"][target="_blank"], a[data-view-on-store]')?.getAttribute('href') || '');
 
   const title = `E2E SEO title ${Date.now()}`;
+  await openProductTab(page, 'seo');
   await form.locator('input[name="meta_title"]').fill(title);
   await form.locator('textarea[name="meta_description"]').fill('E2E SEO description');
+  await openProductTab(page, 'sales');
   await form.locator('input[name="compare_at_price"]').fill(String((price * 2).toFixed(2)));
   await page.locator('[data-primary-submit]').first().click();
   await page.waitForLoadState('networkidle');
-  await expect(page.locator('#product-form input[name="meta_title"]')).toHaveValue(title);
+  await expect(page.locator('#product-form input[name="meta_title"]')).toHaveValue(title); // hidden fields keep their value
   await expect(page.locator('#product-form input[name="compare_at_price"]')).not.toHaveValue('');
 
   if (productUrl) {
@@ -217,8 +219,10 @@ test('admin product form edits the SEO title/description and the old price shown
   }
 
   // restore
+  await openProductTab(page, 'seo');
   await page.locator('#product-form input[name="meta_title"]').fill(oldMeta);
   await page.locator('#product-form textarea[name="meta_description"]').fill('');
+  await openProductTab(page, 'sales');
   await page.locator('#product-form input[name="compare_at_price"]').fill(oldCompare);
   await page.locator('[data-primary-submit]').first().click();
   await page.waitForLoadState('networkidle');

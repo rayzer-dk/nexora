@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, openProductTab } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
@@ -195,6 +195,7 @@ test('product info blocks render on the product page and articles link to produc
   const sku = await page.locator('input[name="sku"]').first().inputValue();
   expect(sku).not.toBe('');
 
+  await openProductTab(page, 'details');
   const blocks = page.locator('#info-blocks form');
   const table = blocks.locator('fieldset').last();
   await table.locator('select[name$="[type]"]').selectOption('table');

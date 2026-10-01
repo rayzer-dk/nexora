@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, openProductTab } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
@@ -49,6 +49,7 @@ test('translations page creates a second-language version of a product and a cat
   expect(response?.status()).toBe(200);
   await expectNoServerError(page);
   expect(await page.locator('.admin-content').innerText()).not.toMatch(/admin\.translations\./);
+  await page.locator('[data-lang-item="en-US"] button, [data-lang-item="en-US"] a').first().click();
   const panel = page.locator('form[action$="/translations/en-US"]');
   await panel.locator('input[name="name"]').fill('E2E English name');
   await panel.locator('textarea[name="description"]').fill('<p>E2E English description</p>');
@@ -62,6 +63,7 @@ test('translations page creates a second-language version of a product and a cat
     .getAttribute('href');
   const catResponse = await page.goto(cat!, { waitUntil: 'domcontentloaded' });
   expect(catResponse?.status()).toBe(200);
+  await page.locator('[data-lang-item="en-US"] button, [data-lang-item="en-US"] a').first().click();
   const catPanel = page.locator('form[action$="/translations/en-US"]');
   await catPanel.locator('input[name="name"]').fill('E2E English category');
   await Promise.all([page.waitForLoadState('domcontentloaded'), catPanel.locator('button[type="submit"]').click()]);
@@ -122,6 +124,7 @@ test('block mode refuses to publish a product that lacks a language, warn mode p
   const sku = `E2E-PUB-${Date.now()}`;
   await page.locator('input[name="name"]').fill('E2E publish policy');
   await page.locator('input[name="sku"]').fill(sku);
+  await openProductTab(page, 'sales');
   await page.locator('input[name="price"]').fill('10.00');
   await Promise.all([
     page.waitForLoadState('domcontentloaded'),
@@ -202,6 +205,7 @@ test('tax page: rates, display modes and the product tax class', async ({ page }
   }
   const id = await firstProductId(page);
   await page.goto(`/admin/catalog/products/${id}/edit`, { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'sales');
   await expect(page.locator('select[data-tax-class]')).toBeVisible();
 });
 

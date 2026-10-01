@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoHorizontalOverflow, expectNoServerError } from './helpers';
+import { expectNoHorizontalOverflow, expectNoServerError, openProductTab } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
@@ -227,11 +227,13 @@ test('custom fields: define, fill on the product, show on the storefront', async
   await page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().click();
   await page.waitForLoadState('domcontentloaded');
   const editUrl = page.url();
+  await openProductTab(page, 'details');
   const valuesForm = page.locator('form[action$="/fields"]');
   await expect(valuesForm).toHaveCount(1);
   await valuesForm.locator('input[name^="field["]').first().fill('24');
   await Promise.all([page.waitForResponse((r) => r.url().endsWith('/fields') && r.request().method() === 'POST'), valuesForm.locator('button[type="submit"]').click()]);
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'details');
   await expect(page.locator('form[action$="/fields"] input[name^="field["]').first()).toHaveValue('24');
   const slug = await page.locator('input[name="slug"]').first().inputValue();
   const shop = await page.context().newPage();
@@ -242,6 +244,7 @@ test('custom fields: define, fill on the product, show on the storefront', async
   await page.locator('form[action$="/fields"] input[name^="field["]').first().fill('abc');
   await Promise.all([page.waitForResponse((r) => r.url().endsWith('/fields') && r.request().method() === 'POST'), page.locator('form[action$="/fields"] button[type="submit"]').click()]);
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'details');
   await expect(page.locator('form[action$="/fields"] input[name^="field["]').first()).toHaveValue('');
 });
 

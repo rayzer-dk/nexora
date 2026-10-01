@@ -3764,4 +3764,11 @@ return [
     'admin.filter.selected' => 'Вибрано: %count%',
     'admin.filter.clear' => 'Скинути',
     'admin.catalog.products.category' => 'Категорія',
+    'admin.product.tabs.general' => 'Основне',
+    'admin.product.tabs.sales' => 'Ціна та варіанти',
+    'admin.product.tabs.media' => 'Фото і відео',
+    'admin.product.tabs.details' => 'Характеристики',
+    'admin.product.tabs.files' => 'Файли',
+    'admin.product.tabs.seo' => 'SEO',
+    'admin.product.tabs.own_save' => 'Цей блок має власну кнопку «Зберегти»; головна кнопка його не зберігає.',
 ];

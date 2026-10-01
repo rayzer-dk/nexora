@@ -3769,4 +3769,11 @@ return [
     'admin.filter.selected' => '%count% selected',
     'admin.filter.clear' => 'Clear',
     'admin.catalog.products.category' => 'Category',
+    'admin.product.tabs.general' => 'Main',
+    'admin.product.tabs.sales' => 'Price and variants',
+    'admin.product.tabs.media' => 'Photos and video',
+    'admin.product.tabs.details' => 'Specifications',
+    'admin.product.tabs.files' => 'Files',
+    'admin.product.tabs.seo' => 'SEO',
+    'admin.product.tabs.own_save' => 'This block has its own Save button; the main Save button does not include it.',
 ];

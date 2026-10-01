@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, openProductTab } from './helpers';
 
 async function loginAdmin(page: Page): Promise<void> {
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
@@ -45,8 +45,10 @@ test('admin catalog create, publish, stock-price update and delete are reflected
   await expect(descriptionEditor).toBeVisible();
   await descriptionEditor.click();
   await page.keyboard.type('E2E product body.');
+  await openProductTab(page, 'sales');
   await productForm.locator('input[name="price"]').fill('123.45');
   await productForm.locator('input[name="stock_quantity"]').fill('3');
+  await openProductTab(page, 'general');
   const categoryCheckbox = productForm.locator('label').filter({ hasText: categoryName }).locator('input[name="category_ids[]"]');
   await expect(categoryCheckbox).toBeVisible();
   await categoryCheckbox.check();
@@ -78,6 +80,7 @@ test('admin catalog create, publish, stock-price update and delete are reflected
 
   await page.goto(`/admin/catalog/products/${productPublicId}/edit`, { waitUntil: 'domcontentloaded' });
   const updateForm = page.locator('form.admin-form');
+  await openProductTab(page, 'sales');
   await updateForm.locator('input[name="price"]').fill('321.45');
   await updateForm.locator('input[name="stock_quantity"]').fill('0');
   const updateResponse = page.waitForResponse((response) =>

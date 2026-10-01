@@ -33,3 +33,8 @@ export async function expectNoServerError(page: Page): Promise<void> {
   await expect(page.locator('body')).not.toContainText('500 Internal Server Error');
   await expect(page.locator('body')).not.toContainText('Ой! Произошла ошибка');
 }
+
+/** The product form shows one group of fields at a time; this opens a group (general, sales, media, details, files, seo). */
+export async function openProductTab(page: Page, id: 'general' | 'sales' | 'media' | 'details' | 'files' | 'seo'): Promise<void> {
+  await page.locator(`.admin-tabs [data-tab-target="${id}"]`).click();
+}

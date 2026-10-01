@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, openProductTab } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
@@ -115,6 +115,7 @@ test('custom units appear in product forms and the HTML editor offers links, lib
   await page.locator('.rich-editor__source-toggle').click();
 
   // Media library picker closes with ×.
+  await openProductTab(page, 'media');
   await page.locator('[data-media-pick="multiple"]').click();
   await expect(page.locator('dialog.mc-picker[open]')).toBeVisible();
   await page.locator('dialog.mc-picker .admin-modal__close').click();
@@ -153,16 +154,19 @@ test('a product picks an already uploaded image and a category gets a cover imag
   const sku = `PICK-${Date.now()}`;
   await page.locator('input[name="name"]').fill(`Picked ${sku}`);
   await page.locator('input[name="sku"]').fill(sku);
+  await openProductTab(page, 'media');
   await page.locator('[data-media-pick="multiple"]').click();
   await expect(page.locator('dialog.mc-picker[open] .mc-picker__tile').first()).toBeVisible();
   await page.locator('dialog.mc-picker[open] .mc-picker__tile').first().click();
   await page.locator('dialog.mc-picker[open] .mc-picker__foot .is-primary').click();
   await expect(page.locator('#product-media-picked input[name="existing_media[]"]')).toHaveCount(1);
   // Enter in a text field saves the product (it must not trigger a secondary action).
+  await openProductTab(page, 'general');
   await page.locator('input[name="sku"]').press('Enter');
   await page.waitForURL(/\/admin\/catalog\/products\/[^/]+\/edit$/);
   await expect(page.locator('.admin-media-grid .admin-media-item')).toHaveCount(1);
   // Custom document types: choosing "custom" reveals a free-text field.
+  await openProductTab(page, 'files');
   await page.locator('select[name="document_type"]').selectOption('__custom');
   await expect(page.locator('input[name="document_type_custom"]')).toBeVisible();
 });
