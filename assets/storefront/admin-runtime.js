@@ -188,6 +188,85 @@ function initImagePreviews() {
   });
 }
 
+// The photos and videos of a product are one list that is ordered by dragging (or with the arrow buttons, which also work
+// on touch screens). The first photo is the main one. On a saved product every change is stored at once.
+function initMediaSortable() {
+  qa('[data-media-sortable]').forEach((grid) => {
+    let dragged = null;
+    const items = () => qa(':scope > [data-media-token]', grid);
+    const refresh = () => {
+      let mainSeen = false;
+      items().forEach((item) => {
+        const input = q('input[name="media_order[]"]', item);
+        if (input) input.value = item.dataset.mediaToken || '';
+        const isPhoto = item.dataset.mediaKind === 'photo';
+        const isMain = isPhoto && !mainSeen;
+        if (isPhoto) mainSeen = true;
+        item.classList.toggle('is-primary', isMain);
+        const badge = q('[data-media-badge]', item);
+        if (badge && isPhoto) badge.textContent = isMain ? (grid.dataset.labelMain || '') : (badge.dataset.labelOther || badge.textContent);
+      });
+    };
+    items().forEach((item) => { const badge = q('[data-media-badge]', item); if (badge && !item.classList.contains('is-primary')) badge.dataset.labelOther = badge.textContent || ''; });
+    const save = async () => {
+      refresh();
+      if (!grid.dataset.orderUrl) return;
+      const body = new URLSearchParams();
+      body.set('_media_token', grid.dataset.orderToken || '');
+      items().forEach((item) => body.append('media_order[]', item.dataset.mediaToken || ''));
+      try {
+        const response = await fetch(grid.dataset.orderUrl, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }, credentials: 'same-origin' });
+        if (!response.ok) throw new Error('order');
+        toast(t('js_media_order_saved'), 'success', 2200);
+      } catch (_) {
+        toast(t('js_media_order_failed'), 'error', 6000);
+      }
+    };
+    grid.addEventListener('dragstart', (event) => {
+      const item = event.target instanceof Element ? event.target.closest('[data-media-token]') : null;
+      if (!item || item.parentElement !== grid) return;
+      dragged = item;
+      item.classList.add('is-dragging');
+      if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.dataset.mediaToken || ''); }
+    });
+    grid.addEventListener('dragover', (event) => {
+      if (!dragged) return;
+      event.preventDefault();
+      const over = event.target instanceof Element ? event.target.closest('[data-media-token]') : null;
+      if (!over || over === dragged || over.parentElement !== grid) return;
+      const box = over.getBoundingClientRect();
+      const after = (event.clientX - box.left) > box.width / 2 || (event.clientY - box.top) > box.height * 0.75;
+      grid.insertBefore(dragged, after ? over.nextSibling : over);
+    });
+    grid.addEventListener('drop', (event) => { if (dragged) event.preventDefault(); });
+    grid.addEventListener('dragend', () => {
+      if (!dragged) return;
+      dragged.classList.remove('is-dragging');
+      dragged = null;
+      void save();
+    });
+    grid.addEventListener('click', (event) => {
+      const button = event.target instanceof Element ? event.target.closest('[data-media-move]') : null;
+      if (!button) return;
+      const item = button.closest('[data-media-token]');
+      if (!item) return;
+      const step = Number(button.getAttribute('data-media-move')) || 0;
+      if (step < 0 && item.previousElementSibling) grid.insertBefore(item, item.previousElementSibling);
+      else if (step > 0 && item.nextElementSibling) grid.insertBefore(item.nextElementSibling, item);
+      else return;
+      button.focus();
+      void save();
+    });
+    refresh();
+  });
+  // The folder new photos are uploaded to is remembered for the next product.
+  qa('select[data-upload-folder]').forEach((select) => {
+    select.addEventListener('change', () => {
+      try { document.cookie = `mc_upload_folder=${encodeURIComponent(select.value)}; path=/admin; max-age=31536000; samesite=lax`; } catch (_) { /* the choice is simply not remembered */ }
+    });
+  });
+}
+
 function initSidebar() {
   const toggle = q('[data-sidebar-toggle]');
   const sidebar = q('[data-admin-sidebar]');
@@ -1038,6 +1117,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDefaultSubmit();
   initMediaPickers();
   initSlugGenerators();
+  initMediaSortable();
   initCopyControls();
   initHealthCheck();
   initSiteProfilePreset();

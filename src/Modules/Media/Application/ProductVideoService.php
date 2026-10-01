@@ -17,7 +17,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class ProductVideoService
 {
     public const MAX_PER_PRODUCT = 8;
-    public const PLACEMENTS = ['start', 'end'];
     private const FILE_EXTENSIONS = ['mp4', 'webm', 'ogv', 'm4v'];
 
     public function __construct(
@@ -93,34 +92,34 @@ final class ProductVideoService
     public function forAdmin(int $productId): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            'SELECT v.id,v.provider,v.video_ref,v.url,v.title,v.placement,v.sort_order,v.poster_asset_id,ma.storage_key FROM mc_product_video v LEFT JOIN mc_media_asset ma ON ma.id=v.poster_asset_id WHERE v.product_id=? ORDER BY v.placement DESC,v.sort_order,v.id',
+            'SELECT v.id,v.provider,v.video_ref,v.url,v.title,v.sort_order,v.poster_asset_id,ma.storage_key FROM mc_product_video v LEFT JOIN mc_media_asset ma ON ma.id=v.poster_asset_id WHERE v.product_id=? ORDER BY v.sort_order,v.id',
             [$productId],
         );
 
         return array_map(fn (array $r): array => [
             'id' => (int) $r['id'], 'provider' => (string) $r['provider'], 'url' => (string) $r['url'], 'title' => (string) ($r['title'] ?? ''),
-            'placement' => (string) $r['placement'], 'sort_order' => (int) $r['sort_order'],
+            'sort_order' => (int) $r['sort_order'],
             'poster' => $this->posterUrl($r, 'thumb'),
         ], $rows);
     }
 
     /**
-     * Videos for the product page. A video placed at the "start" comes before the photos, "end" after them.
+     * Videos for the product page, each with its place (sort_order) in the shared list of photos and videos.
      *
-     * @return array{start:list<array<string,mixed>>,end:list<array<string,mixed>>}
+     * @return list<array<string,mixed>>
      */
     public function forStorefront(int $productId, string $productName): array
     {
-        $out = ['start' => [], 'end' => []];
+        $out = [];
         $rows = $this->connection->fetchAllAssociative(
-            'SELECT v.id,v.provider,v.video_ref,v.url,v.title,v.placement,v.poster_asset_id,ma.storage_key,ma.width,ma.height FROM mc_product_video v LEFT JOIN mc_media_asset ma ON ma.id=v.poster_asset_id WHERE v.product_id=? ORDER BY v.sort_order,v.id',
+            'SELECT v.id,v.provider,v.video_ref,v.url,v.title,v.sort_order,v.poster_asset_id,ma.storage_key,ma.width,ma.height FROM mc_product_video v LEFT JOIN mc_media_asset ma ON ma.id=v.poster_asset_id WHERE v.product_id=? ORDER BY v.sort_order,v.id',
             [$productId],
         );
         foreach ($rows as $r) {
             $master = $r['storage_key'] !== null ? '/media/' . ltrim((string) $r['storage_key'], '/') : null;
             $poster = $this->posterUrl($r, 'product');
             $title = (string) ($r['title'] ?: $productName);
-            $out[$r['placement'] === 'start' ? 'start' : 'end'][] = [
+            $out[] = [
                 'type' => 'video',
                 'provider' => (string) $r['provider'],
                 'embed' => self::embedUrl((string) $r['provider'], (string) $r['video_ref'], (string) $r['url']),
@@ -128,13 +127,15 @@ final class ProductVideoService
                 'title' => $title,
                 'url' => $poster,
                 'srcset' => $master !== null ? $this->variants->srcset($master, ['product', 'zoom']) : '',
+                'avif_srcset' => $master !== null && $this->variants->avifEnabled() ? $this->variants->srcset($master, ['product', 'zoom'], 'avif') : '',
                 'sizes' => '(max-width: 900px) 100vw, 50vw',
                 'thumb' => $this->posterUrl($r, 'thumb'),
-                'full' => $master ?? $poster,
+                'full' => $master !== null ? $this->variants->url($master, 'zoom') : $poster,
                 'alt' => $title,
                 'width' => (int) ($r['width'] ?: 1280),
                 'height' => (int) ($r['height'] ?: 720),
                 'has_poster' => $master !== null || $r['provider'] === 'youtube',
+                'sort_order' => (int) $r['sort_order'],
             ];
         }
 
@@ -144,7 +145,7 @@ final class ProductVideoService
     /**
      * Adds a link to a product. Throws InvalidArgumentException with a translated message on a bad link or a full list.
      */
-    public function add(int $productId, string $input, ?string $title, string $placement, ?UploadedFile $poster = null, ?int $storeId = null): int
+    public function add(int $productId, string $input, ?string $title, ?UploadedFile $poster = null, ?int $storeId = null): int
     {
         $parsed = self::parse($input);
         if ($parsed === null) {
@@ -158,15 +159,14 @@ final class ProductVideoService
         }
         $posterId = null;
         if ($poster instanceof UploadedFile && $poster->isValid()) {
-            $posterId = $this->images->upload($poster, $storeId)->assetId;
+            $posterId = $this->images->upload($poster, $storeId, null, 'video-posters')->assetId;
         } else {
             $posterId = $this->fetchPoster($parsed, $storeId);
         }
-        $next = (int) $this->connection->fetchOne('SELECT COALESCE(MAX(sort_order),0)+10 FROM mc_product_video WHERE product_id=?', [$productId]);
+        $next = (int) $this->connection->fetchOne('SELECT GREATEST(COALESCE((SELECT MAX(sort_order) FROM mc_product_media WHERE product_id=?),0),COALESCE((SELECT MAX(sort_order) FROM mc_product_video WHERE product_id=?),0))+10', [$productId, $productId]);
         $this->connection->insert('mc_product_video', [
             'product_id' => $productId, 'provider' => $parsed['provider'], 'video_ref' => $parsed['ref'], 'url' => $parsed['url'],
             'title' => $title !== null && trim($title) !== '' ? mb_substr(trim($title), 0, 190) : null,
-            'placement' => in_array($placement, self::PLACEMENTS, true) ? $placement : 'end',
             'sort_order' => $next, 'poster_asset_id' => $posterId,
             'created_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'),
         ]);
@@ -174,24 +174,14 @@ final class ProductVideoService
         return (int) $this->connection->lastInsertId();
     }
 
-    /** @param array<int|string,mixed> $titles @param array<int|string,mixed> $placements @param array<int|string,mixed> $orders */
-    public function updateMany(int $productId, array $titles, array $placements, array $orders): void
+    /** @param array<int|string,mixed> $titles */
+    public function updateMany(int $productId, array $titles): void
     {
         foreach ($this->connection->fetchFirstColumn('SELECT id FROM mc_product_video WHERE product_id=?', [$productId]) as $id) {
             $id = (int) $id;
-            $set = [];
             if (array_key_exists($id, $titles)) {
                 $title = trim((string) $titles[$id]);
-                $set['title'] = $title === '' ? null : mb_substr($title, 0, 190);
-            }
-            if (isset($placements[$id]) && in_array((string) $placements[$id], self::PLACEMENTS, true)) {
-                $set['placement'] = (string) $placements[$id];
-            }
-            if (isset($orders[$id])) {
-                $set['sort_order'] = max(0, min(100000, (int) $orders[$id]));
-            }
-            if ($set !== []) {
-                $this->connection->update('mc_product_video', $set, ['id' => $id, 'product_id' => $productId]);
+                $this->connection->update('mc_product_video', ['title' => $title === '' ? null : mb_substr($title, 0, 190)], ['id' => $id, 'product_id' => $productId]);
             }
         }
     }
@@ -256,7 +246,7 @@ final class ProductVideoService
                     return null;
                 }
 
-                return $this->images->upload(new UploadedFile($temporary, 'poster-' . $parsed['ref'] . '.jpg', $info['mime'], null, true), $storeId)->assetId;
+                return $this->images->upload(new UploadedFile($temporary, 'poster-' . $parsed['ref'] . '.jpg', $info['mime'], null, true), $storeId, null, 'video-posters')->assetId;
             } finally {
                 @unlink($temporary);
             }

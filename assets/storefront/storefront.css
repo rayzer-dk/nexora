@@ -30,6 +30,7 @@ body.has-storefront-modal { overflow: hidden; }
 button, input, select, textarea, optgroup { font: inherit; color: inherit; letter-spacing: inherit; }
 img, svg, video { max-width: 100%; }
 img { display: block; height: auto; }
+picture { display: contents; }
 h1, h2, h3, h4 { margin: 0; line-height: var(--mc-line-height-snug); letter-spacing: var(--mc-letter-spacing-tight); font-weight: var(--mc-font-weight-bold); text-wrap: balance; }
 h1 { font-size: var(--mc-font-size-3xl); line-height: var(--mc-line-height-tight); }
 h2 { font-size: var(--mc-font-size-2xl); }

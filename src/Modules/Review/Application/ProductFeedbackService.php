@@ -41,7 +41,7 @@ final class ProductFeedbackService
         try{
             $this->db->insert('mc_product_review',['public_id'=>$this->ids->binary(),'store_id'=>$ctx->storeId,'product_id'=>$product,'customer_id'=>$customerId,'locale'=>$ctx->locale,'author_name'=>$author,'rating'=>$rating,'title'=>$title!==''?$title:null,'body'=>$body,'verified_purchase'=>$verified?1:0,'status'=>'pending','created_at'=>$now]);
             $reviewId=(int)$this->db->lastInsertId();
-            foreach($validImages as $sort=>$image){$asset=$this->media->upload($image,$ctx->storeId);$this->db->insert('mc_review_media',['review_id'=>$reviewId,'media_id'=>$asset->assetId,'sort_order'=>$sort]);}
+            foreach($validImages as $sort=>$image){$asset=$this->media->upload($image,$ctx->storeId,null,'reviews');$this->db->insert('mc_review_media',['review_id'=>$reviewId,'media_id'=>$asset->assetId,'sort_order'=>$sort]);}
             $this->db->commit();
         }catch(\Throwable $e){if($this->db->isTransactionActive())$this->db->rollBack();throw $e;}
         try{$this->automation?->fire($ctx->storeId,'review_created','review:'.$reviewId,['name'=>$author,'text'=>$author.' · '.$rating.'/5'.($title!==''?' · '.$title:''),'url'=>'/admin/customer-experience']);}catch(\Throwable){}

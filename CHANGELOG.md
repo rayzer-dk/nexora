@@ -2,6 +2,28 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.26.0 — 2026-10-01
+
+- Pictures work like in a file manager: you upload the **original** into a real folder and everything else is made for
+  you. The original is stored as `media/<folder>/<name>.<ext>` with a readable name (`iphone-15-pro.jpg`; a taken name gets
+  `-2`), upright and without camera metadata (GPS and so on), scaled down only above 2560 px. Sizes and formats are a
+  separate cache, `media/cache/<size>-g<generation>/<folder>/<name>.<webp|avif|jpg>`, that can be deleted at any time and is
+  made again on demand. The "master" copy and the optional "source" copy of 3.24-3.25 are gone: the original is the only
+  stored file.
+- Real, nested folders in the Media library (a parent can be chosen when creating a folder). New photos go to the folder
+  chosen at upload, in the library and in the product form, and the last choice is remembered. Moving a picture between
+  folders only changes where it is listed; its file and URL stay the same, so no page ever breaks.
+- The storefront format is a choice: **WebP only** (default), **AVIF with a WebP fallback** (`<picture>` with an AVIF
+  source first, offered when this PHP build can write AVIF) or **JPEG**. AVIF has its own quality setting. The full-screen
+  viewer and product gallery use the 1600 px size instead of the stored file.
+- Photos and videos of a product are one list. Drag items to order them (arrow buttons work on touch screens); the order is
+  saved at once, the first photo is the main one, and a video can sit between photos. The old "start / end" placement of
+  videos is replaced by this order. Database schema 72.
+- If a size cannot be made the controller answers with the original, so a picture is never broken. Folder and file names
+  are plain ASCII; the names `cache` and `uploads` are reserved.
+- Runtime data is no longer part of the source tree or the production archive: everything under `public/media` except the
+  demo pictures is ignored.
+
 ## 3.25.0 — 2026-10-01
 
 - Product video: a product can have up to 8 video links (YouTube, Vimeo or a direct https link to an mp4/webm file),

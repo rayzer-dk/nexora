@@ -1,9 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectNoServerError } from './helpers';
 
-// Release 3.24.0: one stored master per picture, named sizes made on demand, the main photo made at once.
+// Releases 3.24.0 / 3.26.0: the original stays in its folder, named sizes are made on demand into a separate cache, the main photo at once.
 
-const VARIANT = /\/media\/[\w/-]+\.(thumb|card|product|zoom)-g(\d+)\.(webp|avif|jpe?g|png)$/;
+const VARIANT = /\/media\/cache\/(thumb|card|product|zoom)-g(\d+)\/[\w/-]+\.(webp|avif|jpg)$/;
 
 async function firstBuyableCard(page: Page) {
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
@@ -16,9 +16,9 @@ test('catalog cards use the card size with a srcset of named sizes that really l
   const img = card.locator('img').first();
   const src = (await img.getAttribute('src')) ?? '';
   expect(src).toMatch(VARIANT);
-  expect(src).toContain('.card-g');
+  expect(src).toContain('/cache/card-g');
   const srcset = (await img.getAttribute('srcset')) ?? '';
-  expect(srcset).toMatch(/\.thumb-g\d+\.\w+ 160w, .*\.card-g\d+\.\w+ 480w, .*\.product-g\d+\.\w+ 960w/);
+  expect(srcset).toMatch(/cache\/thumb-g\d+\/.*\.\w+ 160w, .*cache\/card-g\d+\/.*\.\w+ 480w, .*cache\/product-g\d+\/.*\.\w+ 960w/);
   expect(await img.getAttribute('sizes')).toBeTruthy();
   for (const part of srcset.split(',')) {
     const url = part.trim().split(' ')[0];
@@ -30,41 +30,41 @@ test('catalog cards use the card size with a srcset of named sizes that really l
   await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
 });
 
-test('the product page serves product and zoom sizes, small thumbs and the master in the full-screen viewer', async ({ page }) => {
+test('the product page serves product and zoom sizes, small thumbs and the zoom size in the full-screen viewer', async ({ page }) => {
   const card = await firstBuyableCard(page);
   await card.locator('a.catalog-card__media').click();
   await page.waitForLoadState('domcontentloaded');
   const main = page.locator('[data-gallery-main]');
-  expect((await main.getAttribute('src')) ?? '').toContain('.product-g');
-  expect((await main.getAttribute('srcset')) ?? '').toMatch(/\.product-g\d+\.\w+ 960w, .*\.zoom-g\d+\.\w+ 1600w/);
+  expect((await main.getAttribute('src')) ?? '').toContain('/cache/product-g');
+  expect((await main.getAttribute('srcset')) ?? '').toMatch(/cache\/product-g\d+\/.*\.\w+ 960w, .*cache\/zoom-g\d+\/.*\.\w+ 1600w/);
   const thumbs = page.locator('[data-gallery-thumb]');
   if ((await thumbs.count()) > 1) {
     for (const t of await thumbs.all()) {
-      expect((await t.locator('img').getAttribute('src')) ?? '').toContain('.thumb-g');
-      expect((await t.getAttribute('data-full')) ?? '').not.toMatch(VARIANT);
+      expect((await t.locator('img').getAttribute('src')) ?? '').toContain('/cache/thumb-g');
+      expect((await t.getAttribute('data-full')) ?? '').toContain('/cache/zoom-g');
     }
   }
   await page.locator('[data-gallery-open]').click();
   const full = page.locator('[data-gallery-dialog-image]');
   await expect(full).toBeVisible();
-  expect((await full.getAttribute('src')) ?? '').not.toMatch(VARIANT);
+  expect((await full.getAttribute('src')) ?? '').toContain('/cache/zoom-g');
   await expect.poll(() => full.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
 });
 
 test('only the closed set of sizes can be requested', async ({ request, page }) => {
   const card = await firstBuyableCard(page);
   const src = (await card.locator('img').first().getAttribute('src')) ?? '';
-  const [, stem] = src.match(/^(\/media\/[\w/-]+)\.card-g\d+\.\w+$/) ?? [];
+  const [, stem] = src.match(/^\/media\/cache\/card-g\d+\/([\w/-]+)\.\w+$/) ?? [];
   expect(stem).toBeTruthy();
   const ext = src.split('.').pop();
-  for (const bad of [`${stem}.huge-g1.${ext}`, `${stem}.card-g1.php`, `/media/../etc/passwd.card-g1.${ext}`, `${stem}.card-g9999.${ext}`]) {
+  for (const bad of [`/media/cache/huge-g1/${stem}.${ext}`, `/media/cache/card-g1/${stem}.php`, `/media/cache/card-g1/../etc/passwd.${ext}`, `/media/cache/card-g9999/${stem}.${ext}`, `/media/cache/card-g1/${stem}.png`]) {
     const res = await request.get(bad, { maxRedirects: 0 });
     expect(res.status(), bad).toBe(404);
   }
-  const old = await request.get(`${stem}.card-g0.${ext}`, { maxRedirects: 0 });
+  const old = await request.get(`/media/cache/card-g0/${stem}.${ext}`, { maxRedirects: 0 });
   expect(old.status()).toBe(302);
   expect(old.headers().location ?? '').toMatch(VARIANT);
-  const follow = await request.get(`${stem}.card-g0.${ext}`);
+  const follow = await request.get(`/media/cache/card-g0/${stem}.${ext}`);
   expect(follow.status(), 'an older generation leads to the current file').toBe(200);
 });
 
@@ -79,8 +79,9 @@ test('admin: the four sizes are editable and saving keeps the generation when no
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
   for (const name of ['thumb', 'card', 'product', 'zoom']) await expect(page.locator(`select[name="presets[${name}]"]`)).toHaveCount(1);
-  await expect(page.locator('input[name="widths[]"], input[name="include_original"], input[name="jpeg_fallback"]')).toHaveCount(0);
-  await expect(page.locator('.media-processing-summary')).toContainText('1920');
+  await expect(page.locator('input[name="widths[]"], input[name="include_original"], input[name="jpeg_fallback"], input[name="keep_source"]')).toHaveCount(0);
+  await expect(page.locator('select[name="format"] option')).toHaveCount(3);
+  await expect(page.locator('.media-processing-summary')).toContainText('2560');
 
   const generation = async (): Promise<number> => {
     await page.goto('/catalog', { waitUntil: 'domcontentloaded' });

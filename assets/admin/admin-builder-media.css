@@ -202,3 +202,12 @@
 .media-processing-settings { margin-top: var(--mc-space-4); }
 .media-processing-settings > summary { cursor: pointer; font-weight: var(--mc-font-weight-semibold); }
 @media (max-width: 1024px) { .media-layout { grid-template-columns: 1fr; } .media-folders { position: static; } }
+
+/* 3.26 nested folders */
+.media-folder-row--depth-1 { padding-left: var(--mc-space-3); }
+.media-folder-row--depth-2 { padding-left: var(--mc-space-5); }
+.media-folder-row--depth-3 { padding-left: var(--mc-space-6); }
+.media-folder-row--depth-4 { padding-left: calc(var(--mc-space-6) + var(--mc-space-2)); }
+.media-folder-form { flex-wrap: wrap; }
+.media-folder-form input { flex: 1 1 100%; }
+.media-folder-form select { flex: 1 1 0; min-width: 0; }

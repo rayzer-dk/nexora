@@ -23,7 +23,7 @@ final class MediaVariantController
     {
     }
 
-    #[Route('/media/{key}', name: 'media_variant', requirements: ['key' => '[A-Za-z0-9_/\-]+\.(?:thumb|card|product|zoom)-g\d{1,4}\.(?:webp|avif|jpe?g|png)'], methods: ['GET', 'HEAD'], priority: 500)]
+    #[Route('/media/{key}', name: 'media_variant', requirements: ['key' => 'cache/(?:thumb|card|product|zoom)-g\d{1,4}/[A-Za-z0-9_/\-]+\.(?:webp|avif|jpg)'], methods: ['GET', 'HEAD'], priority: 500)]
     public function __invoke(string $key): Response
     {
         $current = $this->variants->currentGenerationUrl($key);
@@ -34,10 +34,19 @@ final class MediaVariantController
             return $redirect;
         }
         $path = $this->variants->ensure($key);
-        if ($path === null) {
-            return new Response('', Response::HTTP_NOT_FOUND, ['Cache-Control' => 'public, max-age=60']);
-        }
         $parsed = $this->variants->parse($key);
+        if ($path === null) {
+            // The size could not be made (unreadable file, no free disk space): show the original instead of a broken picture.
+            $original = $parsed !== null && $parsed['gen'] === $this->variants->profile()['generation'] ? $this->variants->findOriginal($parsed['stem']) : null;
+            if ($original === null) {
+                return new Response('', Response::HTTP_NOT_FOUND, ['Cache-Control' => 'public, max-age=60']);
+            }
+            $fallback = new BinaryFileResponse($this->variants->path($original), 200, ['Content-Type' => self::TYPES[strtolower(pathinfo($original, PATHINFO_EXTENSION))] ?? 'application/octet-stream'], false);
+            $fallback->headers->set('Cache-Control', 'public, max-age=60');
+            $fallback->headers->set('X-Content-Type-Options', 'nosniff');
+
+            return $fallback;
+        }
         $response = new BinaryFileResponse($path, 200, ['Content-Type' => self::TYPES[$parsed['ext'] ?? 'jpg'] ?? 'application/octet-stream'], false);
         $response->headers->set('Cache-Control', 'public, max-age=31536000, immutable');
         $response->headers->set('X-Content-Type-Options', 'nosniff');

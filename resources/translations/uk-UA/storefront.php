@@ -1052,4 +1052,6 @@ return [
     'footer_links' => 'Посилання',
     'play_video' => 'Відтворити відео',
     'video_number' => 'Відео %number%',
+    'js_media_order_saved' => 'Порядок збережено',
+    'js_media_order_failed' => 'Не вдалося зберегти порядок. Оновіть сторінку й спробуйте ще раз.',
 ];

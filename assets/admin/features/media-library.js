@@ -11,7 +11,7 @@ const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? k
      if(!d.files?.length){body.textContent=labels.none||'';return;}
      const table=document.createElement('table'); table.className='media-files__table';
      d.files.forEach(f=>{
-       const tr=table.insertRow(); const name=f.role==='source'?labels.source:f.role==='master'?labels.master:(labels.presets?.[f.preset]||f.preset);
+       const tr=table.insertRow(); const name=f.role==='original'?labels.source:(labels.presets?.[f.preset]||f.preset);
        const c1=tr.insertCell(); const a=document.createElement('a'); a.href=f.url; a.target='_blank'; a.rel='noopener'; a.textContent=name; c1.append(a);
        if(f.role==='size'&&!f.current){const em=document.createElement('em'); em.textContent=' ('+(labels.outdated||'')+')'; c1.append(em); tr.classList.add('is-outdated');}
        tr.insertCell().textContent=f.format; tr.insertCell().textContent=f.width?f.width+'×'+f.height:''; tr.insertCell().textContent=kb(f.bytes);

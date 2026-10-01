@@ -14,11 +14,10 @@ pw.local.config.ts
 /phpstan.phar
 /build/
 /public/media/demo/dummyjson/
-# Image sizes are made on demand from the master file and are never part of the source tree
-/public/media/**/*.thumb-g*
-/public/media/**/*.card-g*
-/public/media/**/*.product-g*
-/public/media/**/*.zoom-g*
+# Everything uploaded to the library (folders chosen by the merchant) and the size cache is runtime data; only the demo pictures are tracked
+/public/media/*
+!/public/media/demo/
+!/public/media/.gitkeep
 /var/media-locks/
 /var/media-trash/
 /public/media/video/

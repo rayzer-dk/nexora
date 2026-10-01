@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Commerce\Modules\Media\Application;
 
 use Commerce\Core\Id\PublicIdFactory;
-use Commerce\Core\Configuration\ConfigurationRevisionStore;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\DBAL\Connection;
@@ -22,13 +21,18 @@ final readonly class MediaImageService
     public function __construct(
         private Connection $connection,
         private PublicIdFactory $publicIds,
-        private ConfigurationRevisionStore $revisions,
         private MediaVariantService $variants,
         private string $projectDir,
     ) {
     }
 
-    public function upload(UploadedFile $file, ?int $storeId = null): ImageUploadResult
+    /**
+     * Stores one uploaded picture as an ORIGINAL in a library folder (public/media/<folder>/<name>.<ext>): upright, without
+     * camera metadata, at most ORIGINAL_MAX px on the long side. Sizes and formats are made later as cache files.
+     * The file keeps a readable name; a name that is taken gets -2, -3 and so on. The same picture uploaded again returns the
+     * existing one.
+     */
+    public function upload(UploadedFile $file, ?int $storeId = null, ?int $folderId = null, ?string $directory = null): ImageUploadResult
     {
         if (!$file->isValid()) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.zavantazhennia_zobrazhennia_ne_zavershylosia_uspishn'));
@@ -58,7 +62,7 @@ final readonly class MediaImageService
         $width = (int) $info[0];
         $height = (int) $info[1];
         $mime = strtolower((string) $info['mime']);
-        if (!in_array($mime, ['image/jpeg','image/png','image/webp','image/avif'], true)) {
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp', 'image/avif'], true)) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.dozvoleni_jpeg_png_webp_ta_avif'));
         }
         if ($width < 1 || $height < 1 || $width > self::MAX_DIMENSION || $height > self::MAX_DIMENSION || ($width * $height) > self::MAX_PIXELS) {
@@ -68,85 +72,199 @@ final readonly class MediaImageService
         if (!is_string($raw) || $raw === '') {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.ne_vdalosia_prochytaty_zavantazhene_zobrazhennia'));
         }
-        $source = @imagecreatefromstring($raw);
-        if (!$source instanceof GdImage) {
-            throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.gd_ne_zmih_dekoduvaty_zobrazhennia'));
+        $isJpeg = $fromHeic || $mime === 'image/jpeg';
+        $extension = $isJpeg ? 'jpg' : match ($mime) { 'image/png' => 'png', 'image/webp' => 'webp', default => 'avif' };
+
+        $data = $raw;
+        $storedWidth = $width;
+        $storedHeight = $height;
+        $long = max($width, $height);
+        // A JPEG with camera metadata (GPS, device, rotation) is always re-encoded; anything too large is scaled down.
+        $hasMetadata = $isJpeg && str_contains(substr($raw, 0, 131072), "Exif\0\0");
+        if ($hasMetadata || $long > MediaImageProfile::ORIGINAL_MAX) {
+            $source = @imagecreatefromstring($raw);
+            if (!$source instanceof GdImage) {
+                throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.gd_ne_zmih_dekoduvaty_zobrazhennia'));
+            }
+            try {
+                if ($isJpeg && !$fromHeic) {
+                    $source = $this->orientedUpright($source, $raw, $width, $height);
+                }
+                [$data, $storedWidth, $storedHeight] = $this->encodeOriginal($source, $width, $height, $extension);
+            } finally {
+                imagedestroy($source);
+            }
         }
 
+        $checksum = hash('sha256', $data, true);
+        $existing = $this->connection->fetchAssociative('SELECT id,public_id,storage_key,width,height FROM mc_media_asset WHERE checksum_sha256=? AND mime_type=? LIMIT 1', [$checksum, 'image/' . ($extension === 'jpg' ? 'jpeg' : $extension)]);
+        if (is_array($existing) && is_file($this->publicMediaPath((string) $existing['storage_key']))) {
+            return new ImageUploadResult(
+                (int) $existing['id'],
+                \Symfony\Component\Uid\Uuid::fromBinary((string) $existing['public_id'])->toRfc4122(),
+                '/media/' . ltrim((string) $existing['storage_key'], '/'),
+                (string) $existing['storage_key'],
+                (int) $existing['width'],
+                (int) $existing['height'],
+                [],
+            );
+        }
+
+        $folderDirectory = $directory !== null && $directory !== '' ? MediaSlug::make($directory, 'uploads') : $this->folderDirectory($storeId, $folderId);
+        $base = MediaSlug::make(pathinfo((string) $file->getClientOriginalName(), PATHINFO_FILENAME), 'image');
+        [$key, $target] = $this->claimFile($folderDirectory, $base, $extension, $data);
+        $mimeType = 'image/' . ($extension === 'jpg' ? 'jpeg' : $extension);
+        $metadata = [
+            'source_mime' => $fromHeic ? 'image/heic' : $mime,
+            'source_name' => mb_substr(basename((string) $file->getClientOriginalName()), 0, 190, 'UTF-8'),
+            'focal_point' => ['x' => 0.5, 'y' => 0.5],
+            'generator' => 'gd',
+        ];
+        $uuid = $this->publicIds->generate();
+        $now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
         try {
-            if (!$fromHeic && $mime === 'image/jpeg') {
-                $source = $this->orientedUpright($source, $raw, $width, $height);
-            }
-            $checksum = hash('sha256', $raw);
-            $relativeBase = 'catalog/' . substr($checksum, 0, 2) . '/' . $checksum;
-            $profile = $storeId !== null ? $this->processingProfile($storeId) : MediaImageProfile::RECOMMENDED;
-            if ($fromHeic && in_array($profile['format'], ['original', 'jpeg', 'png'], true)) {
-                $profile['format'] = 'webp'; // HEIC is not browser-friendly: it is always converted to WebP (or AVIF when the store chose it)
-            }
-            if (in_array($profile['format'], ['webp', 'avif'], true) && !function_exists($profile['format'] === 'avif' ? 'imageavif' : 'imagewebp')) {
-                $profile['format'] = 'original'; // this PHP build cannot write the chosen format: keep the picture's own format instead of failing the upload
-            }
-            $derivatives = $this->generateDerivatives($source, $width, $height, $relativeBase, $mime, $profile);
-            if ($profile['keep_source']) {
-                $derivatives[] = $this->keepSource($raw, $relativeBase, $fromHeic ? 'image/jpeg' : $mime, $width, $height);
-            }
-            if ($derivatives === []) {
-                throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.ne_vdalosia_stvoryty_optymizovani_kopii_zobrazhennia'));
-            }
-            $preferred = $this->preferredDerivative($derivatives);
-            $existing = $this->connection->fetchAssociative('SELECT id,public_id,storage_key,width,height,metadata FROM mc_media_asset WHERE storage_key_hash=? LIMIT 1', [hash('sha256', $preferred['key'], true)]);
-            if (is_array($existing)) {
-                $existingMetadata = $this->decodeMetadata($existing['metadata'] ?? null);
-                return new ImageUploadResult(
-                    (int) $existing['id'],
-                    \Symfony\Component\Uid\Uuid::fromBinary((string) $existing['public_id'])->toRfc4122(),
-                    '/media/' . ltrim((string) $existing['storage_key'], '/'),
-                    (string) $existing['storage_key'],
-                    (int) $existing['width'],
-                    (int) $existing['height'],
-                    is_array($existingMetadata['derivatives'] ?? null) ? $existingMetadata['derivatives'] : $derivatives,
-                );
-            }
-            $metadata = [
-                'source_mime' => $fromHeic ? 'image/heic' : $mime,
-                'source_checksum' => $checksum,
-                'focal_point' => ['x' => 0.5, 'y' => 0.5],
-                'derivatives' => $derivatives,
-                'generator' => 'gd',
-            ];
-            $uuid = $this->publicIds->generate();
-            $now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
             $this->connection->insert('mc_media_asset', [
                 'public_id' => $uuid->toBinary(),
-                'storage_key' => $preferred['key'],
-                'storage_key_hash' => hash('sha256', $preferred['key'], true),
-                'mime_type' => $preferred['mime'],
-                'bytes' => $preferred['bytes'],
-                'width' => $preferred['width'],
-                'height' => $preferred['height'],
-                'checksum_sha256' => hash('sha256', $raw, true),
+                'storage_key' => $key,
+                'storage_key_hash' => hash('sha256', $key, true),
+                'mime_type' => $mimeType,
+                'bytes' => strlen($data),
+                'width' => $storedWidth,
+                'height' => $storedHeight,
+                'checksum_sha256' => $checksum,
                 'metadata' => json_encode($metadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
                 'created_at' => $now,
             ]);
-            $assetId = (int) $this->connection->lastInsertId();
-            if ($storeId !== null) {
-                $this->connection->executeStatement(
-                    "INSERT IGNORE INTO mc_store_media_asset (store_id,asset_id,folder_id,tags_json,created_at,updated_at) VALUES (?,?,NULL,'[]',?,?)",
-                    [$storeId, $assetId, $now, $now],
-                );
-            }
-            return new ImageUploadResult(
-                $assetId,
-                $uuid->toRfc4122(),
-                '/media/' . $preferred['key'],
-                $preferred['key'],
-                $preferred['width'],
-                $preferred['height'],
-                $derivatives,
-            );
-        } finally {
-            imagedestroy($source);
+        } catch (\Throwable $exception) {
+            @unlink($target); // no record, no file
+            throw $exception;
         }
+        $assetId = (int) $this->connection->lastInsertId();
+        if ($storeId !== null) {
+            $this->connection->executeStatement(
+                "INSERT IGNORE INTO mc_store_media_asset (store_id,asset_id,folder_id,tags_json,created_at,updated_at) VALUES (?,?,?,'[]',?,?)",
+                [$storeId, $assetId, $this->ownedFolder($storeId, $folderId), $now, $now],
+            );
+        }
+
+        return new ImageUploadResult($assetId, $uuid->toRfc4122(), '/media/' . $key, $key, $storedWidth, $storedHeight, [
+            ['format' => $extension, 'width' => $storedWidth, 'height' => $storedHeight, 'key' => $key, 'mime' => $mimeType, 'bytes' => strlen($data), 'role' => 'original'],
+        ]);
+    }
+
+    /** Folder id of the store, or null when it does not exist / belongs to another store. */
+    private function ownedFolder(int $storeId, ?int $folderId): ?int
+    {
+        if ($folderId === null || $folderId < 1) {
+            return null;
+        }
+
+        return (bool) $this->connection->fetchOne('SELECT 1 FROM mc_media_folder WHERE id=? AND store_id=?', [$folderId, $storeId]) ? $folderId : null;
+    }
+
+    /** Directory of a library folder under public/media ("uploads" for pictures without a folder). */
+    private function folderDirectory(?int $storeId, ?int $folderId): string
+    {
+        $folderId = $storeId !== null ? $this->ownedFolder($storeId, $folderId) : null;
+        if ($folderId === null) {
+            return 'uploads';
+        }
+        $parts = [];
+        $current = $folderId;
+        for ($depth = 0; $current !== null && $depth < 8; ++$depth) {
+            $row = $this->connection->fetchAssociative('SELECT parent_id,slug FROM mc_media_folder WHERE id=?', [$current]);
+            if (!is_array($row)) {
+                break;
+            }
+            array_unshift($parts, MediaSlug::make((string) $row['slug'], 'folder-' . $current, 60));
+            $current = $row['parent_id'] !== null ? (int) $row['parent_id'] : null;
+        }
+        if ($parts === [] || $parts[0] === 'cache') {
+            array_unshift($parts, 'library'); // "cache" is the reserved name of the size cache
+        }
+
+        return implode('/', $parts);
+    }
+
+    /**
+     * Creates the file under a free name (the name of the upload, then -2, -3 …) and returns its key and path. The file is
+     * created exclusively, so two uploads of the same name at the same moment cannot overwrite each other.
+     *
+     * @return array{0:string,1:string}
+     */
+    private function claimFile(string $directory, string $base, string $extension, string $data): array
+    {
+        $this->ensureDirectory($this->publicMediaPath($directory));
+        for ($n = 1; $n < 10000; ++$n) {
+            $name = $n === 1 ? $base : $base . '-' . $n;
+            $stem = $directory . '/' . $name;
+            $taken = false;
+            foreach (['jpg', 'jpeg', 'png', 'webp', 'avif'] as $other) {
+                if ($other !== $extension && is_file($this->publicMediaPath($stem . '.' . $other))) {
+                    $taken = true; // the same stem with another extension would share its cache files
+                }
+            }
+            if ($taken) {
+                continue;
+            }
+            $key = $stem . '.' . $extension;
+            $target = $this->publicMediaPath($key);
+            $handle = @fopen($target, 'xb');
+            if ($handle === false) {
+                continue;
+            }
+            $written = fwrite($handle, $data);
+            fclose($handle);
+            if ($written !== strlen($data)) {
+                @unlink($target);
+                throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
+            }
+            @chmod($target, 0644);
+
+            return [$key, $target];
+        }
+        throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
+    }
+
+    /**
+     * Re-encodes an image as a clean original: scaled down to ORIGINAL_MAX on the long side, no metadata.
+     *
+     * @return array{0:string,1:int,2:int} bytes, width, height
+     */
+    private function encodeOriginal(GdImage $source, int $width, int $height, string $extension): array
+    {
+        $scale = min(1.0, MediaImageProfile::ORIGINAL_MAX / max($width, $height));
+        $targetWidth = max(1, (int) round($width * $scale));
+        $targetHeight = max(1, (int) round($height * $scale));
+        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+        if (!$canvas instanceof GdImage) {
+            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.9fa25998ff4b'));
+        }
+        try {
+            if ($extension === 'jpg') {
+                imagefilledrectangle($canvas, 0, 0, $targetWidth, $targetHeight, (int) imagecolorallocate($canvas, 255, 255, 255));
+            } else {
+                imagealphablending($canvas, false);
+                imagesavealpha($canvas, true);
+                imagefilledrectangle($canvas, 0, 0, $targetWidth, $targetHeight, (int) imagecolorallocatealpha($canvas, 255, 255, 255, 127));
+            }
+            imagecopyresampled($canvas, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
+            ob_start();
+            $ok = match ($extension) {
+                'png' => imagepng($canvas, null, 6),
+                'webp' => function_exists('imagewebp') && imagewebp($canvas, null, 90),
+                'avif' => function_exists('imageavif') && imageavif($canvas, null, 80),
+                default => imagejpeg($canvas, null, 92),
+            };
+            $encoded = (string) ob_get_clean();
+        } finally {
+            imagedestroy($canvas);
+        }
+        if (!$ok || $encoded === '') {
+            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
+        }
+
+        return [$encoded, $targetWidth, $targetHeight];
     }
 
     public function attachToProduct(int $productId, int $assetId, string $role = 'gallery', int $sortOrder = 0, ?string $altText = null, ?int $variantId = null): void
@@ -175,6 +293,11 @@ final readonly class MediaImageService
                 $db->executeStatement("UPDATE mc_product_media SET role='primary' WHERE product_id=? AND media_asset_id=? AND role='gallery'", [$productId, $assetId]);
             }
         });
+        $this->warmPrimary($productId);
+    }
+
+    public function warmPrimaryOf(int $productId): void
+    {
         $this->warmPrimary($productId);
     }
 
@@ -220,16 +343,14 @@ final readonly class MediaImageService
     public function updateProductImage(
         int $productId,
         int $assetId,
-        int $sortOrder,
         ?string $altText,
         float $focalX = 0.5,
         float $focalY = 0.5,
     ): void {
-        $sortOrder = max(0, min(100000, $sortOrder));
         $focalX = max(0.0, min(1.0, $focalX));
         $focalY = max(0.0, min(1.0, $focalY));
 
-        $this->connection->transactional(function (Connection $db) use ($productId, $assetId, $sortOrder, $altText, $focalX, $focalY): void {
+        $this->connection->transactional(function (Connection $db) use ($productId, $assetId, $altText, $focalX, $focalY): void {
             $attached = $db->fetchOne('SELECT COUNT(*) FROM mc_product_media WHERE product_id=? AND media_asset_id=?', [$productId, $assetId]);
             if ((int) $attached !== 1) {
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.170b90665a9d'));
@@ -244,7 +365,6 @@ final readonly class MediaImageService
                 'metadata' => json_encode($metadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
             ], ['id' => $assetId]);
             $db->update('mc_product_media', [
-                'sort_order' => $sortOrder,
                 'alt_text' => $this->cleanAlt($altText),
             ], ['product_id' => $productId, 'media_asset_id' => $assetId]);
         });
@@ -266,25 +386,9 @@ final readonly class MediaImageService
                 'width' => (int) $row['width'], 'height' => (int) $row['height'],
                 'role' => (string) $row['role'], 'sort_order' => (int) $row['sort_order'],
                 'alt_text' => (string) ($row['alt_text'] ?? ''),
-                'derivatives' => is_array($metadata['derivatives'] ?? null) ? $metadata['derivatives'] : [],
                 'focal_point' => is_array($metadata['focal_point'] ?? null) ? $metadata['focal_point'] : ['x'=>0.5,'y'=>0.5],
             ];
         }, $rows);
-    }
-
-    /**
-     * Writes the one MASTER file of an upload (at most MASTER_WIDTH px wide). Every other size is made from it later:
-     * the main product photo right away, everything else on the first request (see MediaVariantService).
-     *
-     * @param array{format:string,quality:int,keep_source:bool,presets:array<string,int>,generation:int} $profile
-     * @return list<array{format:string,width:int,height:int,key:string,mime:string,bytes:int,role?:string}>
-     */
-    private function generateDerivatives(GdImage $source, int $sourceWidth, int $sourceHeight, string $relativeBase, string $sourceMime, array $profile): array
-    {
-        $format = $profile['format'] === 'original' ? $this->formatFromMime($sourceMime) : $profile['format'];
-        $width = min($sourceWidth, MediaImageProfile::MASTER_WIDTH);
-
-        return [$this->resizeAndWrite($source, $sourceWidth, $sourceHeight, $width, $relativeBase, $format, $profile['quality'])];
     }
 
     /** Applies the EXIF orientation of a phone photo, so the master is upright and the variants need no rotation. */
@@ -309,99 +413,6 @@ final readonly class MediaImageService
         }
 
         return $rotated;
-    }
-
-    /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
-    private function resizeAndWrite(GdImage $source,int $sourceWidth,int $sourceHeight,int $width,string $base,string $format,int $quality): array
-    {
-        $height=max(1,(int)round($sourceHeight*($width/$sourceWidth)));
-        $canvas=imagecreatetruecolor($width,$height);
-        if(!$canvas instanceof GdImage) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.9fa25998ff4b'));
-        if($format==='jpeg'){
-            // JPEG has no alpha channel: flatten transparency onto white instead of black.
-            imagefilledrectangle($canvas,0,0,$width,$height,(int)imagecolorallocate($canvas,255,255,255));
-        }else{
-            imagealphablending($canvas,false); imagesavealpha($canvas,true);
-            imagefilledrectangle($canvas,0,0,$width,$height,(int)imagecolorallocatealpha($canvas,255,255,255,127));
-        }
-        imagecopyresampled($canvas,$source,0,0,0,0,$width,$height,$sourceWidth,$sourceHeight);
-        try{return $this->writeByFormat($canvas,$base,$format,$quality,$width,$height);}finally{imagedestroy($canvas);}
-    }
-
-    /** Stores the untouched upload (HEIC: its JPEG conversion) next to the derivatives. It is never used on the storefront. @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int,role:string} */
-    private function keepSource(string $raw,string $relativeBase,string $mime,int $width,int $height): array
-    {
-        $extension=match($mime){'image/png'=>'png','image/webp'=>'webp','image/avif'=>'avif',default=>'jpg'};
-        $key=$relativeBase.'.source.'.$extension;
-        $path=$this->publicMediaPath($key); $this->ensureDirectory(dirname($path));
-        if(@file_put_contents($path,$raw)===false) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
-        @chmod($path,0644);
-        return ['format'=>$this->formatFromMime($mime),'width'=>$width,'height'=>$height,'key'=>$key,'mime'=>$mime,'bytes'=>strlen($raw),'role'=>'source'];
-    }
-
-    /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
-    private function writeByFormat(GdImage $image,string $base,string $format,int $quality,int $width,int $height): array
-    {
-        return match($format){
-            'jpeg'=>$this->writeJpeg($image,$base.'.jpg',$quality,$width,$height),
-            'png'=>$this->writePng($image,$base.'.png',$width,$height),
-            'webp'=>$this->writeModern($image,$base.'.webp','webp',$quality,$width,$height),
-            'avif'=>$this->writeModern($image,$base.'.avif','avif',$quality,$width,$height),
-            default=>throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679')),
-        };
-    }
-
-    private function formatFromMime(string $mime): string
-    {
-        return match($mime){'image/jpeg'=>'jpeg','image/png'=>'png','image/webp'=>'webp','image/avif'=>'avif',default=>'jpeg'};
-    }
-
-    /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
-    private function writeModern(GdImage $image,string $key,string $format,int $quality,int $width,int $height): array
-    {
-        $function=$format==='avif'?'imageavif':'imagewebp';
-        if(!function_exists($function)) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
-        $path=$this->publicMediaPath($key); $this->ensureDirectory(dirname($path));
-        $ok=$format==='avif'?@imageavif($image,$path,$quality):@imagewebp($image,$path,$quality);
-        if(!$ok) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
-        @chmod($path,0644); return ['format'=>$format,'width'=>$width,'height'=>$height,'key'=>$key,'mime'=>'image/'.$format,'bytes'=>(int)filesize($path)];
-    }
-
-    /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
-    private function writeJpeg(GdImage $image,string $key,int $quality,int $width,int $height): array
-    {
-        $path=$this->publicMediaPath($key); $this->ensureDirectory(dirname($path));
-        imageinterlace($image,true);
-        if(!@imagejpeg($image,$path,max(1,min(100,$quality)))) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
-        @chmod($path,0644); return ['format'=>'jpeg','width'=>$width,'height'=>$height,'key'=>$key,'mime'=>'image/jpeg','bytes'=>(int)filesize($path)];
-    }
-
-    /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
-    private function writePng(GdImage $image,string $key,int $width,int $height): array
-    {
-        $path=$this->publicMediaPath($key); $this->ensureDirectory(dirname($path));
-        if(!@imagepng($image,$path,6)) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
-        @chmod($path,0644); return ['format'=>'png','width'=>$width,'height'=>$height,'key'=>$key,'mime'=>'image/png','bytes'=>(int)filesize($path)];
-    }
-
-    /** @param list<array{format:string,width:int,height:int,key:string,mime:string,bytes:int}> $derivatives @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
-    private function preferredDerivative(array $derivatives): array
-    {
-        $pool = array_values(array_filter($derivatives, static fn (array $d): bool => !isset($d['role'])));
-        if ($pool === []) {
-            $pool = $derivatives;
-        }
-        usort($pool, static fn (array $a, array $b): int => $b['width'] <=> $a['width']);
-        return $pool[0];
-    }
-
-
-    /** @return array{format:string,quality:int,keep_source:bool,presets:array<string,int>,generation:int} */
-    private function processingProfile(int $storeId): array
-    {
-        $saved=$this->revisions->latestValidPayload($storeId,'media','image_processing');
-
-        return MediaImageProfile::normalize(is_array($saved)?$saved:[]);
     }
 
     /** @return array<string,mixed> */

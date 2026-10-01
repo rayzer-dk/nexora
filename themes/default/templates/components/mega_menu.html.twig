@@ -1,7 +1,7 @@
 {# Catalog mega-menu: every active category with its sub-categories and photos.
    Desktop: wide panel with one column per top-level category. Mobile: slide-in drawer with an accordion.
    Progressive enhancement: without JavaScript the toggle is a plain link to the catalog and the panel stays closed. #}
-{% macro thumb(node, size) %}{% if node.image %}<span class="mega__thumb mega__thumb--{{ size }}"><img {{ media_attrs(node.image, 'thumb') }} alt="" width="{{ size }}" height="{{ size }}" loading="lazy" decoding="async"></span>{% else %}<span class="mega__thumb mega__thumb--{{ size }} is-placeholder" aria-hidden="true">{{ ui_icon('image', 16) }}</span>{% endif %}{% endmacro %}
+{% macro thumb(node, size) %}{% if node.image %}<span class="mega__thumb mega__thumb--{{ size }}">{{ media_picture(node.image, 'thumb', [], '', {alt: '', width: (size), height: (size), loading: 'lazy', decoding: 'async'}) }}</span>{% else %}<span class="mega__thumb mega__thumb--{{ size }} is-placeholder" aria-hidden="true">{{ ui_icon('image', 16) }}</span>{% endif %}{% endmacro %}
 {% import _self as mega %}
 {% set mega_tree = storefront_mega_tree() %}
 <div class="mega" data-mega>

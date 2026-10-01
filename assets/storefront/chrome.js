@@ -114,24 +114,7 @@ function initSwitchers() {
   }));
 }
 
-// A named image size (…card-g3.webp) is made on its first request. When the server cannot make it (no rewrite to the
-// application, unwritable folder, broken file) the picture falls back to the stored master instead of a broken icon.
-const VARIANT_URL = /^(\/media\/[\w/-]+)\.(?:thumb|card|product|zoom)-g\d+\.(webp|avif|jpe?g|png)(\?.*)?$/;
-function initImageFallback() {
-  document.addEventListener('error', (event) => {
-    const img = event.target;
-    if (!(img instanceof HTMLImageElement) || img.dataset.mediaFallback === '1') return;
-    const match = VARIANT_URL.exec(new URL(img.currentSrc || img.src, location.href).pathname);
-    if (!match) return;
-    img.dataset.mediaFallback = '1';
-    img.removeAttribute('srcset');
-    img.removeAttribute('sizes');
-    img.src = `${match[1]}.${match[2]}`;
-  }, true);
-}
-
 function boot() {
-  try { initImageFallback(); } catch (_) { /* images simply keep their own URL */ }
   try { initMegaMenu(); } catch (_) { /* the plain catalog link keeps working */ }
   try { initSwitchers(); } catch (_) { /* plain links keep working */ }
 }

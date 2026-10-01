@@ -47,6 +47,8 @@ final class CatalogAdminPageController extends AbstractController
         private readonly \Commerce\Modules\Tax\Application\TaxSettingsService $taxSettings,
         private readonly \Commerce\Modules\Catalog\Application\CategoryImageService $categoryImages,
         private readonly \Commerce\Modules\Media\Application\ProductVideoService $videos,
+        private readonly \Commerce\Modules\Media\Application\ProductMediaOrder $mediaOrder,
+        private readonly \Commerce\Modules\Media\Application\MediaLibraryService $mediaLibrary,
     ) {
     }
 
@@ -156,7 +158,7 @@ final class CatalogAdminPageController extends AbstractController
         }
         $categories = $this->query->categories($context->storeId, $context->locale, 1, 100, '')['items'];
         $brands = $this->query->brands($context->storeId);
-        return $this->render('@storefront/admin/catalog/product_form.html.twig', ['categories' => $categories, 'brands' => $brands, 'product' => null, 'images' => [], 'currency' => $context->currency, 'csrf_id' => 'admin_product_create']);
+        return $this->render('@storefront/admin/catalog/product_form.html.twig', ['categories' => $categories, 'brands' => $brands, 'product' => null, 'images' => [], 'videos' => [], 'media_items' => [], 'media_folders' => $this->mediaFolderChoices($context->storeId), 'upload_folder' => $this->uploadFolder($request, $context->storeId), 'currency' => $context->currency, 'csrf_id' => 'admin_product_create']);
     }
 
     #[Route('/admin/catalog/categories/{publicId}/edit', name: 'admin_catalog_category_edit', methods: ['GET', 'POST'])]
@@ -298,6 +300,9 @@ final class CatalogAdminPageController extends AbstractController
             'product' => $product,
             'images' => $this->media->productImages((int) $product['id']),
             'videos' => $this->videos->forAdmin((int) $product['id']),
+            'media_items' => $this->mediaOrder->merge($this->media->productImages((int) $product['id']), $this->videos->forAdmin((int) $product['id'])),
+            'media_folders' => $this->mediaFolderChoices($context->storeId),
+            'upload_folder' => $this->uploadFolder($request, $context->storeId),
             'variants' => $this->query->variantsForEdit((int) $product['id'], $context->storeId, $context->marketId),
             'attributes' => $this->query->productAttributesForEdit((int) $product['id'], $context->locale),
             'documents' => $this->query->productDocumentsForEdit((int) $product['id']),
@@ -600,15 +605,14 @@ final class CatalogAdminPageController extends AbstractController
 
     private function updateAttachedImageSettings(Request $request, int $productId): void
     {
-        $sorts = $request->request->all('media_sort');
         $alts = $request->request->all('media_alt');
         $focalX = $request->request->all('media_focal_x');
         $focalY = $request->request->all('media_focal_y');
-        if (!is_array($sorts)) {
+        if (!is_array($alts)) {
             return;
         }
         $allowedIds = array_fill_keys(array_map(static fn (array $image): int => (int) $image['id'], $this->media->productImages($productId)), true);
-        foreach ($sorts as $assetIdRaw => $sortRaw) {
+        foreach ($alts as $assetIdRaw => $altRaw) {
             $assetId = (int) $assetIdRaw;
             if ($assetId < 1 || !isset($allowedIds[$assetId])) {
                 continue;
@@ -616,30 +620,92 @@ final class CatalogAdminPageController extends AbstractController
             $this->media->updateProductImage(
                 $productId,
                 $assetId,
-                (int) $sortRaw,
-                isset($alts[$assetIdRaw]) ? (string) $alts[$assetIdRaw] : null,
+                (string) $altRaw,
                 $this->focalValue($focalX[$assetIdRaw] ?? 0.5),
                 $this->focalValue($focalY[$assetIdRaw] ?? 0.5),
             );
         }
     }
 
+    /** Library folders for the "upload to" list: id => path like "Phones / Apple". @return list<array{id:int,label:string}> */
+    private function mediaFolderChoices(int $storeId): array
+    {
+        $folders = $this->mediaLibrary->folders($storeId);
+        $byId = [];
+        foreach ($folders as $folder) {
+            $byId[(int) $folder['id']] = $folder;
+        }
+        $label = static function (array $folder) use ($byId): string {
+            $parts = [(string) $folder['name']];
+            $guard = 0;
+            $parent = $folder['parent_id'] !== null ? (int) $folder['parent_id'] : null;
+            while ($parent !== null && isset($byId[$parent]) && $guard++ < 8) {
+                array_unshift($parts, (string) $byId[$parent]['name']);
+                $parent = $byId[$parent]['parent_id'] !== null ? (int) $byId[$parent]['parent_id'] : null;
+            }
+
+            return implode(' / ', $parts);
+        };
+        $out = array_map(static fn (array $f): array => ['id' => (int) $f['id'], 'label' => $label($f)], $folders);
+        usort($out, static fn (array $a, array $b): int => strcasecmp($a['label'], $b['label']));
+
+        return $out;
+    }
+
+    /** The folder new photos go to: the one chosen in the form, otherwise the one remembered in a cookie, otherwise none. */
+    private function uploadFolder(Request $request, int $storeId): ?int
+    {
+        $raw = $request->request->has('upload_folder') ? $request->request->get('upload_folder') : ($request->cookies->get('mc_upload_folder') ?? $request->cookies->get('mc_media_folder'));
+        $id = is_scalar($raw) && ctype_digit((string) $raw) ? (int) $raw : 0;
+        if ($id < 1) {
+            return null;
+        }
+        foreach ($this->mediaLibrary->folders($storeId) as $folder) {
+            if ((int) $folder['id'] === $id) {
+                return $id;
+            }
+        }
+
+        return null;
+    }
+
+    #[Route('/admin/catalog/products/{publicId}/media/order', name: 'admin_catalog_product_media_order', methods: ['POST'])]
+    public function productMediaOrder(string $publicId, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('admin_product_media_' . $publicId, (string) $request->request->get('_media_token'))) {
+            return $this->json(['ok' => false], Response::HTTP_FORBIDDEN);
+        }
+        try {
+            $context = $this->context->resolve($request);
+            $product = $this->query->productForEdit($context->storeId, $context->marketId, $context->locale, $publicId);
+            $tokens = array_values(array_filter(array_map('strval', (array) $request->request->all('media_order')), static fn (string $t): bool => preg_match('~^[pv]:\d{1,18}$~', $t) === 1));
+            $this->mediaOrder->save((int) $product['id'], $tokens);
+        } catch (\Throwable) {
+            return $this->json(['ok' => false], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return $this->json(['ok' => true]);
+    }
+
     /** Saves the video list (title, place, order) and adds the link typed into the "add video" field. @return list<string> */
     private function saveVideos(Request $request, int $storeId, int $productId): array
     {
-        $this->videos->updateMany($productId, $request->request->all('video_title'), $request->request->all('video_placement'), $request->request->all('video_sort'));
+        $this->videos->updateMany($productId, $request->request->all('video_title'));
         $link = trim((string) $request->request->get('video_url', ''));
-        if ($link === '') {
-            return [];
+        $errors = [];
+        if ($link !== '') {
+            try {
+                $poster = $request->files->get('video_poster');
+                $this->videos->add($productId, $link, (string) $request->request->get('video_new_title', ''), $poster instanceof UploadedFile && $poster->getError() !== UPLOAD_ERR_NO_FILE ? $poster : null, $storeId);
+            } catch (\InvalidArgumentException $e) {
+                $errors[] = $e->getMessage();
+            }
         }
-        try {
-            $poster = $request->files->get('video_poster');
-            $this->videos->add($productId, $link, (string) $request->request->get('video_new_title', ''), (string) $request->request->get('video_new_placement', 'end'), $poster instanceof UploadedFile && $poster->getError() !== UPLOAD_ERR_NO_FILE ? $poster : null, $storeId);
-        } catch (\InvalidArgumentException $e) {
-            return [$e->getMessage()];
+        if ($request->request->has('media_order')) {
+            $this->mediaOrder->save($productId, array_map('strval', $request->request->all('media_order')));
         }
 
-        return [];
+        return $errors;
     }
 
     private function focalValue(mixed $value): float
@@ -662,7 +728,8 @@ final class CatalogAdminPageController extends AbstractController
         }
         $errors = [];
         $existing = $this->media->productImages($productId);
-        $sort = count($existing) * 10;
+        $sort = (int) $this->db->fetchOne('SELECT GREATEST(COALESCE((SELECT MAX(sort_order) FROM mc_product_media WHERE product_id=?),0),COALESCE((SELECT MAX(sort_order) FROM mc_product_video WHERE product_id=?),0))+10', [$productId, $productId]);
+        $folderId = $this->uploadFolder($request, $storeId);
         $hasPrimary = array_filter($existing, static fn (array $image): bool => ($image['role'] ?? '') === 'primary') !== [];
         $attached = array_map(static fn (array $image): int => (int) ($image['id'] ?? 0), $existing);
         foreach (array_slice($chosen, 0, 50) as $assetId) {
@@ -685,7 +752,7 @@ final class CatalogAdminPageController extends AbstractController
                 continue;
             }
             try {
-                $uploaded = $this->media->upload($file, $storeId);
+                $uploaded = $this->media->upload($file, $storeId, $folderId);
                 $role = $hasPrimary ? 'gallery' : 'primary';
                 $this->media->attachToProduct($productId, $uploaded->assetId, $role, $sort, $productName);
                 $hasPrimary = true;

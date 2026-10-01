@@ -56,10 +56,17 @@ test('a product video is a link: preview first, the player loads only after a cl
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
   await page.locator('input[name="video_url"]').fill('https://youtu.be/dQw4w9WgXcQ');
   await page.locator('input[name="video_new_title"]').fill('E2E video');
-  await page.locator('select[name="video_new_placement"]').selectOption('start');
   await page.locator('input[name="video_poster"]').setInputFiles({ name: 'poster.png', mimeType: 'image/png', buffer: unique() });
   await saveProduct(page);
-  await expect(page.locator('[data-product-videos] .admin-video-row')).toHaveCount(1);
+  const videoItem = page.locator('.admin-media-item.is-video');
+  await expect(videoItem).toHaveCount(1);
+  // a new video is added at the end of the shared list; the arrow button puts it first and the order is saved at once
+  for (let i = 0; i < 20 && (await page.locator('[data-media-sortable] > [data-media-token]').first().getAttribute('data-media-kind')) !== 'video'; i++) {
+    const saved = page.waitForResponse((r) => r.request().method() === 'POST' && /\/media\/order$/.test(new URL(r.url()).pathname));
+    await videoItem.locator('[data-media-move="-1"]').click();
+    expect((await saved).status()).toBe(200);
+  }
+  await expect(page.locator('[data-media-sortable] > [data-media-token]').first()).toHaveAttribute('data-media-kind', 'video');
 
   // storefront: the video is the first gallery item, shown as its preview, no player and no request to the video host yet
   const hosts: string[] = [];
@@ -91,8 +98,12 @@ test('a product video is a link: preview first, the player loads only after a cl
 
   // after the photos
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
-  await page.locator('select[name^="video_placement["]').selectOption('end');
-  await saveProduct(page);
+  const total = await page.locator('[data-media-sortable] > [data-media-token]').count();
+  for (let i = 0; i < total && (await page.locator('[data-media-sortable] > [data-media-token]').last().getAttribute('data-media-kind')) !== 'video'; i++) {
+    const saved = page.waitForResponse((r) => r.request().method() === 'POST' && /\/media\/order$/.test(new URL(r.url()).pathname));
+    await page.locator('.admin-media-item.is-video [data-media-move="1"]').click();
+    expect((await saved).status()).toBe(200);
+  }
   // the storefront keeps product data for a few seconds, so look again until the change shows
   await expect(async () => {
     await page.goto(`/${slug}?fresh=${Date.now()}`, { waitUntil: 'domcontentloaded' });
@@ -104,11 +115,11 @@ test('a product video is a link: preview first, the player loads only after a cl
 
   // remove it
   await page.goto(editUrl, { waitUntil: 'domcontentloaded' });
-  await page.locator('[data-product-videos] button.is-danger').first().click();
+  await page.locator('.admin-media-item.is-video button.is-danger').first().click();
   const accept = page.locator('[data-confirm-accept]');
   if (await accept.isVisible().catch(() => false)) await accept.click();
   await page.waitForURL(/\/edit/);
-  await expect(page.locator('[data-product-videos] .admin-video-row')).toHaveCount(0);
+  await expect(page.locator('.admin-media-item.is-video')).toHaveCount(0);
   await expect(async () => {
     await page.goto(`/${slug}?fresh=${Date.now()}`, { waitUntil: 'domcontentloaded' });
     expect(await page.locator('[data-gallery-thumb].is-video').count()).toBe(0);

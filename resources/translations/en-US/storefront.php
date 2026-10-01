@@ -1052,4 +1052,6 @@ return [
     'footer_links' => 'Links',
     'play_video' => 'Play video',
     'video_number' => 'Video %number%',
+    'js_media_order_saved' => 'Order saved',
+    'js_media_order_failed' => 'Could not save the order. Reload the page and try again.',
 ];

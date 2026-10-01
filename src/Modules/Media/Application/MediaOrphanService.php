@@ -246,6 +246,7 @@ final class MediaOrphanService
 
             return null;
         }
+        $this->removeCacheOf($this->stemOf($key));
         $this->connection->delete('mc_media_asset', ['id' => $assetId]);
 
         return count($moved);
@@ -397,32 +398,41 @@ final class MediaOrphanService
         return $mentioned;
     }
 
-    /** media/<stem>.<ext> => <stem> (the part shared by the master, the source and every variant) */
+    /** media/<folder>/<name>.<ext> => <folder>/<name> (shared by the original and every cache file) */
     private function stemOf(string $key): string
     {
         $key = ltrim(str_replace('\\', '/', $key), '/');
-        $base = basename($key);
-        $dot = strpos($base, '.');
 
-        return ($dot === false ? $key : substr($key, 0, strlen($key) - strlen($base)) . substr($base, 0, $dot));
+        return preg_replace('~\.[A-Za-z0-9]+$~', '', $key) ?? $key;
     }
 
-    /** @return list<string> files (relative to media/) that belong to the stem */
+    /** @return list<string> original files (relative to media/) of the stem; the cache files are removed separately */
     private function filesOf(string $stem): array
     {
-        if ($stem === '' || str_contains($stem, '..')) {
+        if ($stem === '' || str_contains($stem, '..') || str_starts_with($stem, 'cache/')) {
             return [];
         }
-        $dir = dirname($this->mediaRoot() . '/' . $stem);
-        $prefix = basename($stem) . '.';
         $files = [];
-        foreach (is_dir($dir) ? (scandir($dir) ?: []) : [] as $name) {
-            if (str_starts_with($name, $prefix) && is_file($dir . '/' . $name)) {
-                $files[] = ltrim(substr($dir . '/' . $name, strlen($this->mediaRoot())), '/');
+        foreach (['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'svg', 'mp4', 'webm'] as $extension) {
+            if (is_file($this->mediaRoot() . '/' . $stem . '.' . $extension)) {
+                $files[] = $stem . '.' . $extension;
             }
         }
 
         return $files;
+    }
+
+    /** Cache files are made again on demand, so a trashed picture takes its cache with it for good. */
+    private function removeCacheOf(string $stem): void
+    {
+        if ($stem === '' || str_contains($stem, '..')) {
+            return;
+        }
+        foreach (glob($this->mediaRoot() . '/cache/*-g*', GLOB_ONLYDIR) ?: [] as $dir) {
+            foreach (['webp', 'avif', 'jpg'] as $extension) {
+                @unlink($dir . '/' . $stem . '.' . $extension);
+            }
+        }
     }
 
     private function columnExists(string $table, string $column): bool

@@ -1,7 +1,7 @@
 {# Blog article card. Variables: article, [large] #}
 <article class="article-card{% if large|default(false) %} article-card--featured{% endif %}" data-blog-card>
   <a class="article-card__image{% if not article.image %} is-placeholder{% endif %}" href="{{ article.url }}" tabindex="-1" aria-hidden="true">
-    {% if article.image %}<img {{ media_attrs(article.image, 'card', ['card', 'product'], large|default(false) ? '(min-width: 1024px) 66vw, 100vw' : '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw') }} alt="" width="960" height="540" loading="{{ large|default(false) ? 'eager' : 'lazy' }}" decoding="async"{% if large|default(false) %} fetchpriority="high"{% endif %}>{% else %}{{ ui_icon('file-text', 32) }}{% endif %}
+    {% if article.image %}{{ media_picture(article.image, 'card', ['card', 'product'], large|default(false) ? '(min-width: 1024px) 66vw, 100vw' : '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw', {alt: '', width: '960', height: '540', loading: large|default(false) ? 'eager' : 'lazy', decoding: 'async', fetchpriority: large|default(false) ? 'high' : null}) }}{% else %}{{ ui_icon('file-text', 32) }}{% endif %}
   </a>
   <div class="article-card__body">
     <p class="article-card__meta">

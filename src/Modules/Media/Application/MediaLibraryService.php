@@ -89,13 +89,41 @@ final readonly class MediaLibraryService
         return ['items' => $items, 'total' => $total, 'page' => $page, 'limit' => $limit];
     }
 
-    /** @return list<array<string,mixed>> */
+    /**
+     * Folders as a tree in display order (a folder, then its sub-folders). "depth" is the nesting level, "label" the name
+     * with an indent for use in lists, "path" the names joined with " / ".
+     *
+     * @return list<array<string,mixed>>
+     */
     public function folders(int $storeId): array
     {
-        return $this->db->fetchAllAssociative(
-            'SELECT id,parent_id,name,slug FROM mc_media_folder WHERE store_id=? ORDER BY COALESCE(parent_id,0),name,id',
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT id,parent_id,name,slug FROM mc_media_folder WHERE store_id=? ORDER BY name,id',
             [$storeId],
         );
+        $children = [];
+        $known = [];
+        foreach ($rows as $row) {
+            $known[(int) $row['id']] = true;
+        }
+        foreach ($rows as $row) {
+            $parent = $row['parent_id'] !== null && isset($known[(int) $row['parent_id']]) ? (int) $row['parent_id'] : 0;
+            $children[$parent][] = $row;
+        }
+        $out = [];
+        $walk = static function (int $parent, int $depth, string $path) use (&$walk, &$out, $children): void {
+            foreach ($children[$parent] ?? [] as $row) {
+                if ($depth > 8) {
+                    continue;
+                }
+                $full = $path === '' ? (string) $row['name'] : $path . ' / ' . $row['name'];
+                $out[] = $row + ['depth' => $depth, 'label' => str_repeat("\u{2014} ", $depth) . $row['name'], 'path' => $full];
+                $walk((int) $row['id'], $depth + 1, $full);
+            }
+        };
+        $walk(0, 0, '');
+
+        return $out;
     }
 
     /** @return array{all:int,unfiled:int,folders:array<int,int>} */
@@ -112,7 +140,8 @@ final readonly class MediaLibraryService
 
     public function deleteFolder(int $storeId, int $folderId): void
     {
-        $this->db->executeStatement('UPDATE mc_media_folder SET parent_id=NULL WHERE store_id=? AND parent_id=?', [$storeId, $folderId]);
+        $parent = $this->db->fetchOne('SELECT parent_id FROM mc_media_folder WHERE id=? AND store_id=?', [$folderId, $storeId]);
+        $this->db->executeStatement('UPDATE mc_media_folder SET parent_id=? WHERE store_id=? AND parent_id=?', [$parent === false || $parent === null ? null : (int) $parent, $storeId, $folderId]);
         $this->db->delete('mc_media_folder', ['id' => $folderId, 'store_id' => $storeId]);
     }
 
@@ -141,20 +170,17 @@ final readonly class MediaLibraryService
         if ($parentId !== null && !(bool) $this->db->fetchOne('SELECT 1 FROM mc_media_folder WHERE id=? AND store_id=?', [$parentId, $storeId])) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.medialibraryservice.batkivsku_papku_ne_znaideno'));
         }
-        $base = mb_strtolower($name);
-        $base = preg_replace('/[^\pL\pN]+/u', '-', $base) ?: 'folder';
-        $base = trim($base, '-');
-        if ($base === '') {
-            $base = 'folder';
+        $slug = MediaSlug::make($name, 'folder', 60);
+        if ($slug === 'cache' && $parentId === null) {
+            $slug = 'cache-folder'; // "cache" is the reserved name of the size cache
         }
-        $slug = mb_substr($base, 0, 170);
         $candidate = $slug;
         $i = 2;
         while ((bool) $this->db->fetchOne(
             'SELECT 1 FROM mc_media_folder WHERE store_id=? AND parent_id <=> ? AND slug=?',
             [$storeId, $parentId, $candidate],
         )) {
-            $candidate = mb_substr($slug, 0, 160) . '-' . $i++;
+            $candidate = mb_substr($slug, 0, 50) . '-' . $i++;
         }
         $this->db->insert('mc_media_folder', [
             'store_id' => $storeId,

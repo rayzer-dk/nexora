@@ -23,9 +23,9 @@
   </header>
   {% set img_align = article.image_align|default('none') %}
   {% set img_size = article.image_size|default('m') %}
-  {% if article.image and img_align == 'none' %}<figure class="article-hero article-hero--{{ img_size }}" data-lightbox-item><img {{ media_attrs(article.image, 'product', ['product', 'zoom'], '(min-width: 1024px) 900px, 100vw') }} alt="{{ article.image_alt|e('html_attr') }}" width="1440" height="810" fetchpriority="high" decoding="async"></figure>{% endif %}
+  {% if article.image and img_align == 'none' %}<figure class="article-hero article-hero--{{ img_size }}" data-lightbox-item>{{ media_picture(article.image, 'product', ['product', 'zoom'], '(min-width: 1024px) 900px, 100vw', {alt: (article.image_alt), width: '1440', height: '810', fetchpriority: 'high', decoding: 'async'}) }}</figure>{% endif %}
       <div class="article-body">
-        {% if article.image and (img_align == 'left' or img_align == 'right') %}<figure class="article-figure article-figure--{{ img_align }} article-figure--{{ img_size }}" data-lightbox-item><img {{ media_attrs(article.image, 'card', ['card', 'product'], '(min-width: 1024px) 360px, 50vw') }} alt="{{ article.image_alt|e('html_attr') }}" width="720" height="540" loading="eager" decoding="async"></figure>{% endif %}
+        {% if article.image and (img_align == 'left' or img_align == 'right') %}<figure class="article-figure article-figure--{{ img_align }} article-figure--{{ img_size }}" data-lightbox-item>{{ media_picture(article.image, 'card', ['card', 'product'], '(min-width: 1024px) 360px, 50vw', {alt: (article.image_alt), width: '720', height: '540', loading: 'eager', decoding: 'async'}) }}</figure>{% endif %}
         {{ article.body_html|raw|with_forms }}
       </div>
       {% if article.tags %}<ul class="article-tags" aria-label="{{ ui_text('blog_tags_label')|e('html_attr') }}">{% for tag in article.tags %}<li><a class="blog-chip" href="/blog/tag/{{ tag.slug }}">{{ ui_icon('tag', 14) }}{{ tag.name }}</a></li>{% endfor %}</ul>{% endif %}
@@ -42,7 +42,7 @@
       {% if related %}
       <section class="aside-card" aria-labelledby="article-related-title">
         <h2 id="article-related-title">{{ ui_icon('newspaper', 16) }}{{ ui_text('blog_related') }}</h2>
-        <ul class="article-rail__list">{% for item in related|slice(0, 4) %}<li><a class="article-rail__item" href="{{ item.url }}">{% if item.image %}<img {{ media_attrs(item.image, 'thumb') }} alt="" width="96" height="64" loading="lazy" decoding="async">{% else %}<span class="article-rail__ph" aria-hidden="true">{{ ui_icon('file-text', 20) }}</span>{% endif %}<span><strong>{{ item.title }}</strong><small>{{ item.date }}</small></span></a></li>{% endfor %}</ul>
+        <ul class="article-rail__list">{% for item in related|slice(0, 4) %}<li><a class="article-rail__item" href="{{ item.url }}">{% if item.image %}{{ media_picture(item.image, 'thumb', [], '', {alt: '', width: '96', height: '64', loading: 'lazy', decoding: 'async'}) }}{% else %}<span class="article-rail__ph" aria-hidden="true">{{ ui_icon('file-text', 20) }}</span>{% endif %}<span><strong>{{ item.title }}</strong><small>{{ item.date }}</small></span></a></li>{% endfor %}</ul>
       </section>
       {% endif %}
     </aside>

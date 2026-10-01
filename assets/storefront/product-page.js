@@ -29,8 +29,8 @@ class CommerceProductGallery extends HTMLElement {
         if (!(main instanceof HTMLImageElement)) return;
         // Single-image products still open the viewer; a list of one keeps the code path uniform.
         const items = thumbs.length > 0
-            ? thumbs.map((button) => ({ src: button.getAttribute('data-src') || '', srcset: button.getAttribute('data-srcset') || '', sizes: button.getAttribute('data-sizes') || '', alt: button.getAttribute('data-alt') || '', thumb: button.getAttribute('data-thumb') || button.getAttribute('data-src') || '', full: button.getAttribute('data-full') || button.getAttribute('data-src') || '', video: button.getAttribute('data-video') || '', embed: button.getAttribute('data-embed') || '', title: button.getAttribute('data-title') || '' }))
-            : [{ src: main.getAttribute('src') || '', srcset: main.getAttribute('srcset') || '', sizes: main.getAttribute('sizes') || '', alt: main.alt, thumb: main.getAttribute('data-thumb') || main.getAttribute('src') || '', full: main.getAttribute('data-full') || main.getAttribute('src') || '', video: main.getAttribute('data-video') || '', embed: main.getAttribute('data-embed') || '', title: main.getAttribute('data-title') || '' }];
+            ? thumbs.map((button) => ({ src: button.getAttribute('data-src') || '', srcset: button.getAttribute('data-srcset') || '', avif: button.getAttribute('data-avif-srcset') || '', sizes: button.getAttribute('data-sizes') || '', alt: button.getAttribute('data-alt') || '', thumb: button.getAttribute('data-thumb') || button.getAttribute('data-src') || '', full: button.getAttribute('data-full') || button.getAttribute('data-src') || '', video: button.getAttribute('data-video') || '', embed: button.getAttribute('data-embed') || '', title: button.getAttribute('data-title') || '' }))
+            : [{ src: main.getAttribute('src') || '', srcset: main.getAttribute('srcset') || '', avif: (main.parentElement && main.parentElement.querySelector('source') ? main.parentElement.querySelector('source').getAttribute('srcset') : '') || '', sizes: main.getAttribute('sizes') || '', alt: main.alt, thumb: main.getAttribute('data-thumb') || main.getAttribute('src') || '', full: main.getAttribute('data-full') || main.getAttribute('src') || '', video: main.getAttribute('data-video') || '', embed: main.getAttribute('data-embed') || '', title: main.getAttribute('data-title') || '' }];
         const total = items.length;
         let index = Math.max(0, thumbs.findIndex((item) => item.classList.contains('is-active')));
         let lightbox = null;
@@ -70,6 +70,11 @@ class CommerceProductGallery extends HTMLElement {
             if (stage instanceof HTMLElement) {
                 stage.classList.toggle('is-video', Boolean(item.video));
                 openButton?.setAttribute('aria-label', (item.video ? stage.dataset.playLabel : stage.dataset.openLabel) || '');
+            }
+            const avifSource = main.parentElement ? main.parentElement.querySelector('source[data-gallery-source]') : null;
+            if (avifSource) {
+                if (item.avif) { avifSource.setAttribute('srcset', item.avif); if (item.sizes) avifSource.setAttribute('sizes', item.sizes); }
+                else { avifSource.removeAttribute('srcset'); avifSource.removeAttribute('sizes'); }
             }
             main.src = item.src;
             if (item.srcset) main.srcset = item.srcset; else main.removeAttribute('srcset');

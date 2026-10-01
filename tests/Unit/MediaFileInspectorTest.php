@@ -36,38 +36,37 @@ final class MediaFileInspectorTest extends TestCase
         return new MediaFileInspector($variants, $this->dir);
     }
 
-    private function image(string $name, int $width): void
+    private function image(string $relative, int $width): void
     {
+        @mkdir(dirname($this->dir . '/public/media/' . $relative), 0777, true);
         $img = imagecreatetruecolor($width, (int) ($width / 2));
-        imagewebp($img, $this->dir . '/public/media/catalog/ab/' . $name, 80);
+        imagewebp($img, $this->dir . '/public/media/' . $relative, 80);
     }
 
-    public function testListsSourceMasterSizesAndWhatIsStillToBeMade(): void
+    public function testListsOriginalAndMadeSizesAndWhatIsStillToBeMade(): void
     {
-        $this->image('f00.webp', 800);
-        $this->image('f00.card-g2.webp', 480);
-        $this->image('f00.card-g1.webp', 400); // outdated generation
-        file_put_contents($this->dir . '/public/media/catalog/ab/f00.source.jpeg', str_repeat('x', 100));
-        $this->image('other.webp', 100); // another picture must not be listed
+        $this->image('catalog/ab/f00.webp', 800);
+        $this->image('cache/card-g2/catalog/ab/f00.webp', 480);
+        $this->image('cache/card-g1/catalog/ab/f00.webp', 400); // outdated generation
+        $this->image('catalog/ab/other.webp', 100); // another picture must not be listed
+        $this->image('cache/card-g2/catalog/ab/other.webp', 100);
 
         $r = $this->inspector(2)->inspect('catalog/ab/f00.webp');
         $roles = array_map(static fn (array $f): string => $f['role'] . ':' . $f['preset'] . ':' . ($f['current'] ? 'now' : 'old'), $r['files']);
-        self::assertSame(['source::now', 'master::now', 'size:card:old', 'size:card:now'], $roles);
+        self::assertSame(['original::now', 'size:card:old', 'size:card:now'], $roles);
         self::assertSame(['thumb', 'product', 'zoom'], array_column($r['pending'], 'preset'));
-        self::assertSame(800, $r['files'][1]['width']);
-        self::assertGreaterThan(100, $r['bytes']);
+        self::assertSame(800, $r['files'][0]['width']);
+        self::assertSame('/media/cache/card-g2/catalog/ab/f00.webp', $r['files'][2]['url']);
     }
 
-    public function testForgetSizesKeepsMasterAndSource(): void
+    public function testForgetSizesKeepsTheOriginal(): void
     {
-        $this->image('f00.webp', 800);
-        $this->image('f00.card-g2.webp', 480);
-        $this->image('f00.thumb-g1.webp', 160);
-        file_put_contents($this->dir . '/public/media/catalog/ab/f00.source.jpeg', 'x');
+        $this->image('catalog/ab/f00.webp', 800);
+        $this->image('cache/card-g2/catalog/ab/f00.webp', 480);
+        $this->image('cache/thumb-g1/catalog/ab/f00.webp', 160);
 
         self::assertSame(2, $this->inspector(2)->forgetSizes('catalog/ab/f00.webp'));
         self::assertFileExists($this->dir . '/public/media/catalog/ab/f00.webp');
-        self::assertFileExists($this->dir . '/public/media/catalog/ab/f00.source.jpeg');
-        self::assertFileDoesNotExist($this->dir . '/public/media/catalog/ab/f00.card-g2.webp');
+        self::assertFileDoesNotExist($this->dir . '/public/media/cache/card-g2/catalog/ab/f00.webp');
     }
 }

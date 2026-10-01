@@ -54,8 +54,8 @@ DirectoryIndex index.php
     <ElseIf "%{REQUEST_URI} =~ m#^/assets/#">
         Header set Cache-Control "public, max-age=3600, must-revalidate"
     </ElseIf>
-    # Image sizes carry their generation in the name (…card-g3.webp): a changed size is a new URL, so they never go stale.
-    <ElseIf "%{REQUEST_URI} =~ m#^/media/.+\.(thumb|card|product|zoom)-g[0-9]+\.(webp|avif|jpe?g|png)$#">
+    # Image sizes carry their generation in the folder name (/media/cache/card-g3/…): a changed size is a new URL, so they never go stale.
+    <ElseIf "%{REQUEST_URI} =~ m#^/media/cache/(thumb|card|product|zoom)-g[0-9]+/.+\.(webp|avif|jpg)$#">
         Header set Cache-Control "public, max-age=31536000, immutable"
     </ElseIf>
     # Uploaded media files are versioned by name.

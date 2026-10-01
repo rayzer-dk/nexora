@@ -44,7 +44,7 @@ final class MediaLibraryAdminController extends AbstractController
         if($folder!==null&&$folder>0&&!in_array($folder,array_map(static fn(array $f):int=>(int)$f['id'],$folders),true)){$folder=null;}
         $kind=in_array((string)$request->query->get('kind',''),['image','video'],true)?(string)$request->query->get('kind'):null;
         $result=$this->library->search($ctx->storeId,(string)$request->query->get('q',''),$folder,(int)$request->query->get('page',1),48,$kind);
-        $response=$this->render('@storefront/admin/media/library.html.twig',['result'=>$result,'folders'=>$folders,'counts'=>$this->library->folderCounts($ctx->storeId),'folder'=>$folder,'kind'=>$kind,'query'=>(string)$request->query->get('q',''),'processing'=>$this->processing($ctx->storeId)]);
+        $response=$this->render('@storefront/admin/media/library.html.twig',['result'=>$result,'folders'=>$folders,'counts'=>$this->library->folderCounts($ctx->storeId),'folder'=>$folder,'kind'=>$kind,'query'=>(string)$request->query->get('q',''),'processing'=>$this->processing($ctx->storeId),'avif_supported'=>function_exists('imageavif')]);
         if($request->query->has('folder')){$response->headers->setCookie(Cookie::create('mc_media_folder',$folder===null?'all':($folder===0?'none':(string)$folder),time()+31536000,'/admin',null,$request->isSecure(),true,false,Cookie::SAMESITE_LAX));}
         return $response;
     }
@@ -109,7 +109,7 @@ final class MediaLibraryAdminController extends AbstractController
     {
         $ctx=$this->contexts->resolve($request); $this->csrf($request,'media_upload'); $files=$request->files->all('files'); if (!is_array($files)) $files=[];
         $folder=$this->optionalInt($request->request->get('folder_id')); $count=0;
-        try { foreach($files as $file){ if(!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) continue; $mime=strtolower((string)$file->getMimeType()); $saved=str_starts_with($mime,'video/')?$this->videos->upload($file):$this->images->upload($file,$ctx->storeId); $this->metadata->save($ctx->storeId,$saved->assetId,new MediaMetadata($folder)); $count++; } $this->addFlash('success',$count.\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.fail_iv_zavantazheno_zobrazhennia_optymizovano_video')); }
+        try { foreach($files as $file){ if(!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) continue; $mime=strtolower((string)$file->getMimeType()); $saved=str_starts_with($mime,'video/')?$this->videos->upload($file):$this->images->upload($file,$ctx->storeId,$folder); $this->metadata->save($ctx->storeId,$saved->assetId,new MediaMetadata($folder)); $count++; } $this->addFlash('success',$count.\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.fail_iv_zavantazheno_zobrazhennia_optymizovano_video')); }
         catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.zavantazhennia_zupyneno').\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         return $this->redirectToRoute('admin_media_library',$folder?['folder'=>$folder]:[]);
     }
@@ -125,7 +125,7 @@ final class MediaLibraryAdminController extends AbstractController
         $folder=$this->optionalInt($request->request->get('folder_id')); $ids=[]; $failed=0;
         foreach($files as $file){
             if(!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile){continue;}
-            try{$mime=strtolower((string)$file->getMimeType()); $saved=str_starts_with($mime,'video/')?$this->videos->upload($file):$this->images->upload($file,$ctx->storeId); $this->metadata->save($ctx->storeId,$saved->assetId,new MediaMetadata($folder)); $ids[]=$saved->assetId;}
+            try{$mime=strtolower((string)$file->getMimeType()); $saved=str_starts_with($mime,'video/')?$this->videos->upload($file):$this->images->upload($file,$ctx->storeId,$folder); $this->metadata->save($ctx->storeId,$saved->assetId,new MediaMetadata($folder)); $ids[]=$saved->assetId;}
             catch(\Throwable){++$failed;}
         }
         return $this->json(['ok'=>$failed===0,'uploaded'=>$ids,'failed'=>$failed],$ids===[]&&$failed>0?422:200);
@@ -167,7 +167,7 @@ final class MediaLibraryAdminController extends AbstractController
             'format'=>(string)$r->get('format','webp'),
             'presets'=>array_map('intval',(array)$r->all('presets')),
             'quality'=>(int)$r->get('quality',82),
-            'keep_source'=>$r->has('keep_source'),
+            'avif_quality'=>(int)$r->get('avif_quality',60),
         ]);
         $previous=$this->revisions->latestValidPayload($ctx->storeId,'media','image_processing');
         $profile=MediaImageProfile::withGeneration(is_array($previous)?$previous:[],$profile);
@@ -204,7 +204,7 @@ final class MediaLibraryAdminController extends AbstractController
     }
 
 
-    /** @return array{format:string,quality:int,keep_source:bool,presets:array<string,int>,generation:int,preset:string} */
+    /** @return array{format:string,quality:int,avif_quality:int,presets:array<string,int>,generation:int,preset:string} */
     private function processing(int $storeId): array
     {
         $input=$this->revisions->latestValidPayload($storeId,'media','image_processing');

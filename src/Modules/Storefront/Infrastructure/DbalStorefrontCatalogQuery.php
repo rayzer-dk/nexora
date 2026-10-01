@@ -862,19 +862,22 @@ final readonly class DbalStorefrontCatalogQuery
      */
     private function productImages(int $productId, string $name): array
     {
-        $rows=$this->connection->fetchAllAssociative("SELECT ma.storage_key,ma.width,ma.height,pm.alt_text FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=? AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC",[$productId]);
+        $rows=$this->connection->fetchAllAssociative("SELECT ma.storage_key,ma.width,ma.height,pm.alt_text,pm.sort_order,pm.role FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=? AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC",[$productId]);
         if ($rows===[]) { return [['url'=>'/assets/product-placeholder.svg','alt'=>$name,'srcset'=>'','sizes'=>'(max-width: 900px) 100vw, 50vw','width'=>640,'height'=>640,'thumb'=>'/assets/product-placeholder.svg','full'=>'/assets/product-placeholder.svg']]; }
-        return array_map(function(array $r) use ($name): array {
+        $lowest=(int)min(array_map(static fn(array $r):int=>(int)$r['sort_order'],$rows));
+        return array_map(function(array $r) use ($name,$lowest): array {
             $master=$this->mediaUrl($r['storage_key']);
             return [
                 'url'=>$this->variants->url($master,'product'),
                 'alt'=>(string)($r['alt_text']?:$name),
                 'srcset'=>$this->variants->srcset($master,['product','zoom']),
+                'avif_srcset'=>$this->variants->avifEnabled()?$this->variants->srcset($master,['product','zoom'],'avif'):'',
+                'sort_order'=>$r['role']==='primary'?$lowest:(int)$r['sort_order'],
                 'sizes'=>'(max-width: 900px) 100vw, 50vw',
                 'width'=>(int)($r['width']?:1200),
                 'height'=>(int)($r['height']?:1200),
                 'thumb'=>$this->variants->url($master,'thumb'),
-                'full'=>$master,
+                'full'=>$this->variants->url($master,'zoom'),
             ];
         },$rows);
     }
@@ -890,9 +893,16 @@ final readonly class DbalStorefrontCatalogQuery
     {
         $videos = $this->videos->forStorefront($productId, $name);
         $placeholder = ($images[0]['url'] ?? '') === '/assets/product-placeholder.svg';
-        $photos = $placeholder && ($videos['start'] !== [] || $videos['end'] !== []) ? [] : array_map(static fn (array $i): array => $i + ['type' => 'image'], $images);
+        $photos = $placeholder && $videos !== [] ? [] : array_map(static fn (array $i): array => $i + ['type' => 'image'], $images);
+        // One shared order: a video sits where the merchant dragged it between the photos. Equal places: videos first, then photos in their own order.
+        $merged = array_merge(array_map(static fn (array $v): array => $v + ['_k' => 0], $videos), array_map(static fn (array $p): array => $p + ['_k' => 1], $photos));
+        usort($merged, static fn (array $a, array $b): int => [(int) ($a['sort_order'] ?? 0), $a['_k']] <=> [(int) ($b['sort_order'] ?? 0), $b['_k']]);
 
-        return array_merge($videos['start'], $photos, $videos['end']);
+        return array_map(static function (array $item): array {
+            unset($item['_k']);
+
+            return $item;
+        }, $merged);
     }
 
     /** @return list<array{name:string,value:string}> */

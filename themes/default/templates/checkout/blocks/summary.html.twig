@@ -2,7 +2,7 @@
   <div class="order-summary__head"><span>{{ block.props.title|default(ui_text('order_summary')) }}</span><strong>{{ ui_text('items_count', {count: cart.count}) }}</strong></div>
   <ul class="summary-items">
   {% for item in cart.items %}
-    <li class="summary-item"><a class="summary-item__img" href="{{ item.url }}" tabindex="-1" aria-hidden="true"><img class="summary-image" {{ media_attrs(item.image, 'thumb') }} alt="" width="64" height="64" loading="lazy" decoding="async"></a><div class="summary-item__info"><strong>{{ item.name }}</strong><span>{% if item.options %}{{ item.options }} · {% endif %}{{ item.quantity }} {{ item.unit_code }} × {{ item.unit_price }}</span></div><b>{{ item.line_total }}</b></li>
+    <li class="summary-item"><a class="summary-item__img" href="{{ item.url }}" tabindex="-1" aria-hidden="true">{{ media_picture(item.image, 'thumb', [], '', {class: 'summary-image', alt: '', width: '64', height: '64', loading: 'lazy', decoding: 'async'}) }}</a><div class="summary-item__info"><strong>{{ item.name }}</strong><span>{% if item.options %}{{ item.options }} · {% endif %}{{ item.quantity }} {{ item.unit_code }} × {{ item.unit_price }}</span></div><b>{{ item.line_total }}</b></li>
   {% endfor %}
   </ul>
   <div class="summary-totals">

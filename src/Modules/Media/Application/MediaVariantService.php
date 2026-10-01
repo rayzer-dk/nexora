@@ -9,22 +9,23 @@ use Doctrine\DBAL\Connection;
 use GdImage;
 
 /**
- * Named image sizes ("variants") of a stored master picture.
+ * Sizes and formats ("variants") of a stored original picture, kept as a cache.
  *
- *  master:   media/<stem>.<ext>                     written once at upload (at most MASTER_WIDTH px wide)
- *  variant:  media/<stem>.<preset>-g<N>.<ext>       made from the master, kept on disk as a plain file
+ *  original: media/<folder>/<name>.<ext>                                       what was uploaded (jpg, png, webp, avif)
+ *  variant:  media/cache/<preset>-g<N>/<folder>/<name>.<webp|avif|jpg>         made from the original, a plain file
  *
  * A variant URL is built without touching the database. The first request for a file that does not exist yet reaches the
  * media controller, which makes the file under a lock and serves it; every later request is answered by the web server
  * from disk. The set of presets is closed (see MediaImageProfile::PRESET_WIDTHS), so no other size can be requested.
+ * The whole cache can be deleted at any time: it is made again on demand.
  */
 final class MediaVariantService
 {
-    private const MASTER_PATTERN = '~^(?<stem>[A-Za-z0-9_/\-]+)\.(?<ext>webp|avif|jpe?g|png)$~';
-    private const VARIANT_PATTERN = '~^(?<stem>[A-Za-z0-9_/\-]+)\.(?<preset>thumb|card|product|zoom)-g(?<gen>\d{1,4})\.(?<ext>webp|avif|jpe?g|png)$~';
+    private const STEM = '[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*';
+    private const ORIGINAL_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif'];
     private const MAX_PIXELS = 48000000;
 
-    /** @var array{format:string,quality:int,keep_source:bool,presets:array<string,int>,generation:int}|null */
+    /** @var array{format:string,quality:int,avif_quality:int,presets:array<string,int>,generation:int}|null */
     private ?array $profile = null;
 
     public function __construct(
@@ -34,7 +35,7 @@ final class MediaVariantService
     ) {
     }
 
-    /** @return array{format:string,quality:int,keep_source:bool,presets:array<string,int>,generation:int} */
+    /** @return array{format:string,quality:int,avif_quality:int,presets:array<string,int>,generation:int} */
     public function profile(): array
     {
         if ($this->profile !== null) {
@@ -53,19 +54,35 @@ final class MediaVariantService
         return $this->profile = MediaImageProfile::normalize(is_array($payload) ? $payload : []);
     }
 
-    /** URL of the named size of a stored picture; anything that is not a raster file under /media/ comes back unchanged. */
-    public function url(string $url, string $preset): string
+    /** True when the storefront also offers AVIF (chosen in the settings and supported by this PHP build). */
+    public function avifEnabled(): bool
+    {
+        return $this->profile()['format'] === 'avif_webp' && function_exists('imageavif');
+    }
+
+    /** The format of the fallback (main) file: webp or jpg. */
+    public function mainExtension(): string
+    {
+        return MediaImageProfile::extension($this->profile()['format']);
+    }
+
+    /**
+     * URL of the named size of a stored original. Anything that is not a raster original under /media/ (placeholders,
+     * SVG, external URLs, cache files) comes back unchanged. $ext picks the format (default: the main one).
+     */
+    public function url(string $url, string $preset, ?string $ext = null): string
     {
         $profile = $this->profile();
         if (!isset($profile['presets'][$preset]) || !str_starts_with($url, '/media/')) {
             return $url;
         }
         $key = substr($url, 7);
-        if (preg_match(self::MASTER_PATTERN, $key, $m) !== 1) {
+        if (str_starts_with($key, 'cache/') || preg_match('~^(?<stem>' . self::STEM . ')\.(?<ext>webp|avif|jpe?g|png)$~', $key, $m) !== 1) {
             return $url;
         }
+        $ext = $ext === 'avif' ? 'avif' : $this->mainExtension();
 
-        return '/media/' . $m['stem'] . '.' . $preset . '-g' . $profile['generation'] . '.' . $m['ext'];
+        return '/media/cache/' . $preset . '-g' . $profile['generation'] . '/' . $m['stem'] . '.' . $ext;
     }
 
     /**
@@ -73,12 +90,12 @@ final class MediaVariantService
      *
      * @param list<string> $presets
      */
-    public function srcset(string $url, array $presets): string
+    public function srcset(string $url, array $presets, ?string $ext = null): string
     {
         $profile = $this->profile();
         $parts = [];
         foreach ($presets as $preset) {
-            $variant = $this->url($url, $preset);
+            $variant = $this->url($url, $preset, $ext);
             if ($variant !== $url && isset($profile['presets'][$preset])) {
                 $parts[] = $variant . ' ' . $profile['presets'][$preset] . 'w';
             }
@@ -90,7 +107,7 @@ final class MediaVariantService
     /** @return array{stem:string,preset:string,gen:int,ext:string}|null */
     public function parse(string $key): ?array
     {
-        if (preg_match(self::VARIANT_PATTERN, $key, $m) !== 1) {
+        if (preg_match('~^cache/(?<preset>thumb|card|product|zoom)-g(?<gen>\d{1,4})/(?<stem>' . self::STEM . ')\.(?<ext>webp|avif|jpg)$~', $key, $m) !== 1) {
             return null;
         }
 
@@ -108,7 +125,22 @@ final class MediaVariantService
             return null;
         }
 
-        return '/media/' . $parsed['stem'] . '.' . $parsed['preset'] . '-g' . $this->profile()['generation'] . '.' . $parsed['ext'];
+        return '/media/cache/' . $parsed['preset'] . '-g' . $this->profile()['generation'] . '/' . $parsed['stem'] . '.' . $parsed['ext'];
+    }
+
+    /** Relative path (to media/) of the original of a stem, or null when no original exists. */
+    public function findOriginal(string $stem): ?string
+    {
+        if ($stem === '' || str_contains($stem, '..')) {
+            return null;
+        }
+        foreach (self::ORIGINAL_EXTENSIONS as $ext) {
+            if (is_file($this->path($stem . '.' . $ext))) {
+                return $stem . '.' . $ext;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -130,10 +162,11 @@ final class MediaVariantService
         if (is_file($target)) {
             return $target;
         }
-        $master = $this->path($parsed['stem'] . '.' . $parsed['ext']);
-        if (!is_file($master)) {
+        $original = $this->findOriginal($parsed['stem']);
+        if ($original === null) {
             return null;
         }
+        $master = $this->path($original);
         $lockDir = rtrim($this->projectDir, '/\\') . '/var/media-locks';
         if (!is_dir($lockDir) && !@mkdir($lockDir, 0755, true) && !is_dir($lockDir)) {
             return null;
@@ -148,7 +181,7 @@ final class MediaVariantService
                 return $target; // another request made it while this one waited
             }
 
-            return $this->make($master, $target, $parsed['ext'], $width, $profile['quality']) ? $target : null;
+            return $this->make($master, $target, $parsed['ext'], $width, $parsed['ext'] === 'avif' ? $profile['avif_quality'] : $profile['quality']) ? $target : null;
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);
@@ -164,15 +197,18 @@ final class MediaVariantService
     public function warm(string $storageKey, ?array $presets = null): int
     {
         $made = 0;
+        $original = '/media/' . ltrim($storageKey, '/');
         foreach ($presets ?? MediaImageProfile::EAGER_PRESETS as $preset) {
-            $url = $this->url('/media/' . ltrim($storageKey, '/'), $preset);
-            if ($url === '/media/' . ltrim($storageKey, '/')) {
-                continue;
-            }
-            $key = substr($url, 7);
-            $existed = is_file($this->path($key));
-            if ($this->ensure($key) !== null && !$existed) {
-                ++$made;
+            foreach ($this->avifEnabled() ? ['webp', 'avif'] : [null] as $ext) {
+                $url = $this->url($original, $preset, $ext);
+                if ($url === $original) {
+                    continue;
+                }
+                $key = substr($url, 7);
+                $existed = is_file($this->path($key));
+                if ($this->ensure($key) !== null && !$existed) {
+                    ++$made;
+                }
             }
         }
 
@@ -210,8 +246,8 @@ final class MediaVariantService
     }
 
     /**
-     * Removes variant files that no page references any more: older generations, and variants whose master is gone.
-     * Never touches a master, a kept source or any other file. A newly made file always gets a grace period.
+     * Removes cache files nobody references any more: older generations and files whose original is gone. Never touches
+     * an original or any file outside media/cache. A newly made file always gets a grace period (except "everything").
      *
      * @return array{files:int,bytes:int}
      */
@@ -219,12 +255,12 @@ final class MediaVariantService
     {
         $root = rtrim($this->projectDir, '/\\') . '/public/media';
         $result = ['files' => 0, 'bytes' => 0];
-        if (!is_dir($root)) {
+        if (!is_dir($root . '/cache')) {
             return $result;
         }
         $current = $this->profile()['generation'];
         $limitTime = time() - max(0, $graceDays) * 86400;
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root . '/cache', \FilesystemIterator::SKIP_DOTS));
         foreach ($iterator as $file) {
             if ($deadline !== null && time() >= $deadline) {
                 break;
@@ -234,11 +270,11 @@ final class MediaVariantService
             }
             $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
             $parsed = $this->parse($relative);
-            if ($parsed === null) {
-                continue; // masters, sources, demo files and everything else stay untouched
+            $isTemporary = str_ends_with($relative, '.tmp');
+            if ($parsed === null && !$isTemporary) {
+                continue; // anything unexpected stays untouched
             }
-            $masterExists = is_file($root . '/' . $parsed['stem'] . '.' . $parsed['ext']);
-            $stale = $parsed['gen'] !== $current || !$masterExists || $everything;
+            $stale = $everything || $isTemporary || $parsed['gen'] !== $current || $this->findOriginal($parsed['stem']) === null;
             if (!$stale || (!$everything && $file->getMTime() > $limitTime)) {
                 continue;
             }
@@ -248,8 +284,61 @@ final class MediaVariantService
                 @unlink($file->getPathname());
             }
         }
+        if (!$dryRun) {
+            $this->removeEmptyDirectories($root . '/cache');
+        }
 
         return $result;
+    }
+
+    /** Removes every cache file of one picture (all presets, generations and formats). @return int files removed */
+    public function forget(string $storageKey): int
+    {
+        $removed = 0;
+        $stem = $this->stemOf($storageKey);
+        foreach ($this->cacheFiles($stem) as $relative) {
+            if (@unlink($this->path($relative))) {
+                ++$removed;
+            }
+        }
+
+        return $removed;
+    }
+
+    /** @return list<string> cache files (relative to media/) of one picture */
+    public function cacheFiles(string $stem): array
+    {
+        $files = [];
+        if ($stem === '' || str_contains($stem, '..')) {
+            return $files;
+        }
+        foreach (glob($this->path('cache') . '/*-g*', GLOB_ONLYDIR) ?: [] as $dir) {
+            foreach (['webp', 'avif', 'jpg'] as $ext) {
+                $candidate = $dir . '/' . $stem . '.' . $ext;
+                if (is_file($candidate)) {
+                    $files[] = 'cache/' . basename($dir) . '/' . $stem . '.' . $ext;
+                }
+            }
+        }
+
+        return $files;
+    }
+
+    /** media/<folder>/<name>.<ext> => <folder>/<name> */
+    public function stemOf(string $key): string
+    {
+        $key = ltrim(str_replace('\\', '/', $key), '/');
+
+        return preg_replace('~\.[A-Za-z0-9]+$~', '', $key) ?? $key;
+    }
+
+    private function removeEmptyDirectories(string $path): void
+    {
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $item) {
+            if ($item->isDir() && !$item->isLink()) {
+                @rmdir($item->getPathname());
+            }
+        }
     }
 
     public function path(string $key): string
@@ -257,10 +346,13 @@ final class MediaVariantService
         return rtrim($this->projectDir, '/\\') . '/public/media/' . $key;
     }
 
-    private function make(string $master, string $target, string $ext, int $width, int $quality): bool
+    private function make(string $original, string $target, string $ext, int $width, int $quality): bool
     {
-        $info = @getimagesize($master);
+        $info = @getimagesize($original);
         if (!is_array($info) || $info[0] < 1 || $info[1] < 1 || $info[0] * $info[1] > self::MAX_PIXELS) {
+            return false;
+        }
+        if ($ext === 'avif' && !function_exists('imageavif')) {
             return false;
         }
         $dir = dirname($target);
@@ -268,34 +360,40 @@ final class MediaVariantService
             return false;
         }
         $temporary = $target . '.' . bin2hex(random_bytes(4)) . '.tmp';
-        if ($info[0] <= $width) {
-            // The master is already that small: the variant is a plain copy, so the URL stays a static file.
-            $ok = @copy($master, $temporary);
+        $sameFormat = match ($info['mime'] ?? '') {
+            'image/webp' => $ext === 'webp',
+            'image/avif' => $ext === 'avif',
+            'image/jpeg' => $ext === 'jpg',
+            default => false,
+        };
+        if ($sameFormat && $info[0] <= $width) {
+            // The original is already that small and in that format: the variant is a plain copy.
+            $ok = @copy($original, $temporary);
         } else {
-            $raw = @file_get_contents($master);
+            $raw = @file_get_contents($original);
             $source = is_string($raw) ? @imagecreatefromstring($raw) : false;
             if (!$source instanceof GdImage) {
                 return false;
             }
-            $height = max(1, (int) round($info[1] * ($width / $info[0])));
-            $canvas = imagecreatetruecolor($width, $height);
+            $targetWidth = min($width, $info[0]); // never enlarge
+            $height = max(1, (int) round($info[1] * ($targetWidth / $info[0])));
+            $canvas = imagecreatetruecolor($targetWidth, $height);
             if (!$canvas instanceof GdImage) {
                 imagedestroy($source);
 
                 return false;
             }
-            if ($ext === 'jpg' || $ext === 'jpeg') {
-                imagefilledrectangle($canvas, 0, 0, $width, $height, (int) imagecolorallocate($canvas, 255, 255, 255));
+            if ($ext === 'jpg') {
+                imagefilledrectangle($canvas, 0, 0, $targetWidth, $height, (int) imagecolorallocate($canvas, 255, 255, 255));
             } else {
                 imagealphablending($canvas, false);
                 imagesavealpha($canvas, true);
-                imagefilledrectangle($canvas, 0, 0, $width, $height, (int) imagecolorallocatealpha($canvas, 255, 255, 255, 127));
+                imagefilledrectangle($canvas, 0, 0, $targetWidth, $height, (int) imagecolorallocatealpha($canvas, 255, 255, 255, 127));
             }
-            imagecopyresampled($canvas, $source, 0, 0, 0, 0, $width, $height, $info[0], $info[1]);
+            imagecopyresampled($canvas, $source, 0, 0, 0, 0, $targetWidth, $height, $info[0], $info[1]);
             $ok = match ($ext) {
                 'webp' => function_exists('imagewebp') && @imagewebp($canvas, $temporary, $quality),
-                'avif' => function_exists('imageavif') && @imageavif($canvas, $temporary, $quality),
-                'png' => @imagepng($canvas, $temporary, 6),
+                'avif' => @imageavif($canvas, $temporary, $quality, 6),
                 default => @imagejpeg($canvas, $temporary, $quality),
             };
             imagedestroy($canvas);
