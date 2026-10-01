@@ -16,6 +16,17 @@
     </section>
 </main>
 <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">
+window.MC_I18N={{ ui_catalog_json(['js_close']) }};
+document.querySelectorAll('.admin-notice').forEach(function (notice) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'notice-close';
+    button.setAttribute('aria-label', window.MC_I18N.js_close || '');
+    button.textContent = '\u00d7';
+    button.addEventListener('click', function () { notice.style.display = 'none'; });
+    notice.classList.add('has-notice-close');
+    notice.appendChild(button);
+});
 document.querySelectorAll('[data-password-toggle]').forEach(function (button) {
     button.addEventListener('click', function () {
         var input = button.closest('.admin-password-field').querySelector('input');

@@ -66,7 +66,7 @@ final class SecurityHeadersSubscriber
         // Pages that carry a session, CSRF token or CSP nonce must never be stored by a shared cache
         // (reverse proxy, LiteSpeed, CDN); a cached login form makes every sign-in fail with a stale token.
         $path = $request->getPathInfo();
-        foreach (['/admin', '/account', '/checkout', '/cart', '/setup.php', '/install'] as $prefix) {
+        foreach (['/admin', '/account', '/checkout', '/cart', '/setup.php', '/upgrade.php', '/install'] as $prefix) {
             if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
                 $headers->set('Cache-Control', 'no-store, private');
                 $headers->set('X-LiteSpeed-Cache-Control', 'no-cache');

@@ -13,6 +13,9 @@ foreach([
 ] as $row){foreach($row['bad'] as $bad)if(str_contains($row['src'],$bad))$errors[]=$row['file'].' exposes raw exception text';}
 foreach(['wipeRequestFile','--no-interaction','doctrine:migrations:migrate','InstallationHealthVerifier'] as $token)if(!str_contains($web.$install,$token))$errors[]='Installer missing '.$token;
 foreach(['loadPlan','assertSafeCoreSql','markDoctrineMigration','LEDGER_TABLE'] as $token)if(!str_contains($migr,$token))$errors[]='Upgrade runner missing '.$token;
+foreach(['bootstrap/upgrade.php','bin/upgrade.php','public/upgrade.php'] as $f)if(!is_file($root.'/'.$f))$errors[]='Missing in-place upgrade tool '.$f;
+$up=(string)file_get_contents($root.'/bootstrap/upgrade.php');foreach(['SHA256SUMS.txt','opcache_reset','doctrine:migrations:migrate','var/upgrade.lock','count($files) > 500'] as $token)if(!str_contains($up,$token))$errors[]='Upgrade tool missing '.$token;
+if(!str_contains((string)file_get_contents($root.'/public/upgrade.php'),'hash_equals'))$errors[]='public/upgrade.php must be APP_SECRET protected';
 $versions=[];foreach(glob($root.'/migrations/Version*.php')?:[] as $file){if(preg_match('/Version(\d+)\.php$/',basename($file),$m)){$versions[]=$m[1];if(!str_contains((string)file_get_contents($file),'function down('))$errors[]='Migration missing down(): '.basename($file);}}
 if(count($versions)!==count(array_unique($versions)))$errors[]='Duplicate migration version detected';
 if($errors){fwrite(STDERR,"Install/upgrade safety check FAILED\n- ".implode("\n- ",$errors)."\n");exit(1);}echo "Install/upgrade safety check: OK\n";echo 'migrations='.count($versions)." unique=yes reversible_contract=yes raw_install_errors=no\n";

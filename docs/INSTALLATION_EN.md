@@ -50,6 +50,15 @@ After successful installation:
 - administration opens at `/admin/login`;
 - no files are moved or copied.
 
+## Upgrading an existing installation in place
+
+1. Back up the database and files.
+2. Unpack the new ZIP **over** the installation directory. The archive contains no `.env`, `.env.local`, `var/` or uploaded `public/media/` files, so they are not overwritten.
+3. Open `https://your-domain.example/upgrade.php`, enter `APP_SECRET` (the line in `.env.local` or `.env`) and press "Upgrade system". Console equivalent: `php bin/upgrade.php`.
+4. Using `SHA256SUMS.txt` the script removes files from older releases that are not part of the new one (they break the container build), clears `var/cache`, resets OPcache and runs database migrations. Log: `var/log/upgrade.log`.
+
+If the site or admin stops opening right after unpacking, stale files are the usual cause; `upgrade.php` runs without the framework and fixes it. The document root must point at `public/`; keep `.claude`, `.devcontainer`, `docs` and `bin` unreachable from the web.
+
 ## CLI installation
 
 CLI is the preferred recovery/developer path. Create `.env.local` with the database connection and run:

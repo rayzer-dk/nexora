@@ -2,6 +2,15 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.32.0 — 2026-10-01
+
+Upgrade in place, installer feedback, closable notices — schema 73.
+
+- Upgrade over an existing installation: unpack the new archive over the old one and open `/upgrade.php` (APP_SECRET-protected) or run `php bin/upgrade.php`. It removes files of older releases that are not in `SHA256SUMS.txt` (the usual reason the admin and storefront stop opening after an overlay), clears `var/cache`, resets OPcache and applies database migrations. `.env*`, `var/`, `public/media/` and `extensions/` are never touched. Log: `var/log/upgrade.log`.
+- Installer: the install button shows a spinner and "Installing…" with a hint while the installation runs; the error card can be closed.
+- All inline notices and errors (admin, storefront, login page) have a close (×) button.
+- Docs: in-place upgrade section in `docs/INSTALLATION*.md` and `INSTALL_UK.txt`.
+
 ## 3.31.0 — 2026-10-01
 
 Product options (colour, memory…) — schema 73.

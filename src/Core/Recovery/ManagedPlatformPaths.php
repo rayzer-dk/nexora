@@ -42,7 +42,7 @@ final class ManagedPlatformPaths
         return [
             '.env', '.env.local', '.env.prod', '.env.prod.local', '.htaccess',
             'composer.json', 'composer.lock', 'package.json', 'package-lock.json', 'yarn.lock',
-            'phpunit.xml.dist', 'vite.config.ts', 'tsconfig.json', 'public/index.php', 'public/setup.php',
+            'phpunit.xml.dist', 'vite.config.ts', 'tsconfig.json', 'public/index.php', 'public/setup.php', 'public/upgrade.php',
         ];
     }
 
@@ -79,7 +79,7 @@ final class ManagedPlatformPaths
         return [
             'composer.json', 'composer.lock', 'package.json', 'package-lock.json', 'yarn.lock',
             'phpunit.xml.dist', 'vite.config.ts', 'tsconfig.json',
-            'public/index.php', 'public/setup.php', 'extensions/manifest.schema.json',
+            'public/index.php', 'public/setup.php', 'public/upgrade.php', 'extensions/manifest.schema.json',
         ];
     }
 

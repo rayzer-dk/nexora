@@ -3834,4 +3834,5 @@ return [
     'admin.catalog.options.error_in_use' => 'This option or value is used by variants. Delete those variants first.',
     'admin.catalog.options.error_empty' => 'Add at least one option with values first.',
     'admin.catalog.options.error_too_many' => 'Too many combinations (more than 200). Reduce the number of values.',
+    'js_close' => 'Close',
 ];

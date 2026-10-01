@@ -1,6 +1,7 @@
 import './cart-drawer.js';
 import { lucideIcon } from '../shared/lucide-icons.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
+import { initDismissibleNotices } from '../shared/dismissible-notices.js';
 import './lightbox.js';
 import './chrome.js';
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
@@ -364,6 +365,7 @@ function initRecentlyViewed() {
 initRecentlyViewed();
 document.addEventListener('commerce:consent-changed', initRecentlyViewed);
 initThemeToggle('mc_theme');
+initDismissibleNotices();
 function initContactWidget() {
   const root = q('[data-contact-widget]');
   if (!root) return;
