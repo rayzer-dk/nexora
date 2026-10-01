@@ -1050,4 +1050,6 @@ return [
     'builder_tablet' => 'Tablet',
     'builder_mobile' => 'Mobile',
     'footer_links' => 'Links',
+    'play_video' => 'Play video',
+    'video_number' => 'Video %number%',
 ];

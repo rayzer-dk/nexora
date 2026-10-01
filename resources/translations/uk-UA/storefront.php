@@ -1050,4 +1050,6 @@ return [
     'builder_tablet' => 'Планшет',
     'builder_mobile' => 'Телефон',
     'footer_links' => 'Посилання',
+    'play_video' => 'Відтворити відео',
+    'video_number' => 'Відео %number%',
 ];

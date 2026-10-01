@@ -784,4 +784,6 @@ return [
     'cart_drawer_open_page' => 'Vollständigen Warenkorb öffnen',
     'zoom_out' => 'Verkleinern',
     'zoom_in' => 'Vergrößern',
+    'play_video' => 'Video abspielen',
+    'video_number' => 'Video %number%',
 ];

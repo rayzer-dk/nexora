@@ -785,4 +785,6 @@ return [
     'ck_success_pay_on_receipt' => 'Оплатите %amount% при получении заказа.',
     'cart_drawer_close' => 'Закрыть корзину',
     'cart_drawer_open_page' => 'Открыть полную страницу корзины',
+    'play_video' => 'Воспроизвести видео',
+    'video_number' => 'Видео %number%',
 ];

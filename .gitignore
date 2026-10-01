@@ -21,3 +21,4 @@ pw.local.config.ts
 /public/media/**/*.zoom-g*
 /var/media-locks/
 /var/media-trash/
+/public/media/video/

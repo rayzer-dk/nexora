@@ -49,7 +49,8 @@ final class SecurityHeadersSubscriber
             "img-src 'self' data: blob: https:",
             $with("font-src 'self' data:", 'font'),
             $with("connect-src 'self' https://accounts.google.com https://challenges.cloudflare.com", 'connect'),
-            $with("frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com", 'frame'),
+            $with("frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com https://www.youtube-nocookie.com https://player.vimeo.com", 'frame'),
+            "media-src 'self' https:",
             "worker-src 'self' blob:",
         ]);
 

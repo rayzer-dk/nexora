@@ -33,14 +33,31 @@ Nginx needs `try_files $uri /index.php$is_args$args;`, Apache uses the bundled `
 Media library > Image processing. Changing a width or the quality raises the **generation**. New pages use new URLs
 (made on demand), nothing is uploaded again, and an old URL redirects to the current one.
 
-## Cleanup (`commerce:media:gc`, daily, dry-run unless `--apply`)
+## Where files are stored
 
-* Removes size files of older generations (younger than 7 days are kept) and sizes whose master no longer exists.
-  Masters and originals are never touched by this step. A removed size is simply made again when requested.
-* Moves **unused pictures** to `var/media-trash/<date>/` and purges the trash after 30 days. A picture counts as used when
-  any row points at it by id (products, documents, category images, page share images, the media library, and every other
-  foreign key to the asset table), when its file name appears in any rich text or settings column, or when it is younger
-  than 30 days or a demo picture. A column that cannot be checked counts as "used".
+New uploads go to `media/catalog/<first 2 hex of the hash>/<hash>.<ext>` and `media/video/<2 hex>/<hash>.<ext>`: 256 fixed
+folders, no folder per day or month, however many pictures are imported. The library folders you create are only
+labels in the database; they do not move files. Older files keep their old paths.
+
+## Cleanup
+
+* `commerce:media:gc` (daily, dry-run unless `--apply`) removes size files of older generations (younger than 7 days are
+  kept) and sizes whose master no longer exists, and purges the trash after 30 days. Masters and originals are never
+  touched by this step. A removed size is simply made again when requested.
+* **Unused pictures are removed by hand**: Media library > Unused pictures lists the candidates as thumbnails with check
+  boxes. A picture counts as used when any row points at it by id (products, product videos, documents, category images,
+  page share images, and every other foreign key to the asset table; being listed in the library does not count), when its
+  file name appears in any rich text or settings column, or when it is younger than the chosen age (30 days by default)
+  or a demo picture. A column that cannot be checked counts as "used". Each picture in the confirmed selection is checked
+  again before it moves to `var/media-trash/<date>/` with a manifest (`_assets/<id>.json`).
+* The same screen lists the trash and restores pictures (files and records, including library membership) for 30 days.
+* `commerce:media:gc --orphans --apply` does the unused-picture step without a screen (opt-in; not scheduled).
 * `--clear-sizes` removes every made size (they return on demand). `--orphan-days`, `--grace-days`, `--trash-days` tune the periods.
 
-Copy files back from `var/media-trash/` to `public/media/` (same relative path) and upload the picture again to restore one.
+## Video
+
+A product video is a link (YouTube, Vimeo or a direct https mp4/webm file) stored in `mc_product_video`; nothing is hosted.
+The product gallery shows the preview picture and creates the player only after a click. The preview is fetched once when
+the link is saved (YouTube thumbnail, Vimeo oEmbed; only those fixed hosts are contacted) and stored as a library picture,
+or an own picture is uploaded. Without a reachable preview YouTube falls back to its own thumbnail and the other providers
+to a neutral placeholder.

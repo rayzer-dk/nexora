@@ -31,7 +31,7 @@ rm -rf "$OUT_DIR" "$ZIP"
 mkdir -p "$OUT_DIR"
 rsync -a ./ "$OUT_DIR/" \
   --exclude '/.git/' --exclude '/.build-tools/' --exclude '/node_modules/' --exclude '/build/' --exclude '/tests/' \
-  --exclude '/phpunit.xml.dist' --exclude '/.github/' --exclude '/var/*' --exclude '/pw.local.config.ts' --exclude '/public/media/demo/dummyjson/' --exclude '/.env' --exclude '/.env.local'
+  --exclude '/phpunit.xml.dist' --exclude '/.github/' --exclude '/var/*' --exclude '/pw.local.config.ts' --exclude '/public/media/demo/dummyjson/' --exclude '/public/media/catalog/' --exclude '/public/media/video/' --exclude '/public/media/downloads/' --exclude '/.env' --exclude '/.env.local'
 
 # The shipped vendor/ uses an authoritative class map (no filesystem lookups at runtime), so the map MUST be
 # rebuilt from the files that are actually in this package; a map copied from an older build silently lacks

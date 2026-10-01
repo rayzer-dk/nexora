@@ -20,6 +20,7 @@ final readonly class DbalStorefrontCatalogQuery
         private SearchCandidateProviderInterface $searchCandidates,
         private \Commerce\Modules\Catalog\Application\ProductBadgeService $badges,
         private \Commerce\Modules\Media\Application\MediaVariantService $variants,
+        private \Commerce\Modules\Media\Application\ProductVideoService $videos,
     ) {
     }
 
@@ -490,6 +491,7 @@ final readonly class DbalStorefrontCatalogQuery
         $product['country_of_origin'] = $row['country_of_origin'] ?: null;
         $product['tax']['display_mode'] = (string) ($row['consumer_display_mode'] ?: 'price_only');
         $product['images'] = $this->productImages((int)$row['id'], (string)$row['name']);
+        $product['gallery'] = $this->gallery((int)$row['id'], (string)$row['name'], $product['images']);
         // The detail query has no card image column: use the first gallery image (feeds JSON-LD, sharing and the "recently viewed" cards).
         if (($product['images'][0]['url'] ?? '') !== '') { $product['image'] = (string) $product['images'][0]['url']; }
         $product['attributes'] = $this->productAttributes((int)$row['id'], $context->locale);
@@ -875,6 +877,22 @@ final readonly class DbalStorefrontCatalogQuery
                 'full'=>$master,
             ];
         },$rows);
+    }
+
+    /**
+     * Gallery of the product page: photos plus videos. Videos placed at the start come first, the others follow the photos.
+     * "images" stays photos only (cards, structured data and sharing never use a video preview).
+     *
+     * @param list<array<string,mixed>> $images
+     * @return list<array<string,mixed>>
+     */
+    private function gallery(int $productId, string $name, array $images): array
+    {
+        $videos = $this->videos->forStorefront($productId, $name);
+        $placeholder = ($images[0]['url'] ?? '') === '/assets/product-placeholder.svg';
+        $photos = $placeholder && ($videos['start'] !== [] || $videos['end'] !== []) ? [] : array_map(static fn (array $i): array => $i + ['type' => 'image'], $images);
+
+        return array_merge($videos['start'], $photos, $videos['end']);
     }
 
     /** @return list<array{name:string,value:string}> */

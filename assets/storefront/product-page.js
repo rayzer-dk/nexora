@@ -29,16 +29,48 @@ class CommerceProductGallery extends HTMLElement {
         if (!(main instanceof HTMLImageElement)) return;
         // Single-image products still open the viewer; a list of one keeps the code path uniform.
         const items = thumbs.length > 0
-            ? thumbs.map((button) => ({ src: button.getAttribute('data-src') || '', srcset: button.getAttribute('data-srcset') || '', sizes: button.getAttribute('data-sizes') || '', alt: button.getAttribute('data-alt') || '', thumb: button.getAttribute('data-thumb') || button.getAttribute('data-src') || '', full: button.getAttribute('data-full') || button.getAttribute('data-src') || '' }))
-            : [{ src: main.getAttribute('src') || '', srcset: main.getAttribute('srcset') || '', sizes: main.getAttribute('sizes') || '', alt: main.alt, thumb: main.getAttribute('data-thumb') || main.getAttribute('src') || '', full: main.getAttribute('data-full') || main.getAttribute('src') || '' }];
+            ? thumbs.map((button) => ({ src: button.getAttribute('data-src') || '', srcset: button.getAttribute('data-srcset') || '', sizes: button.getAttribute('data-sizes') || '', alt: button.getAttribute('data-alt') || '', thumb: button.getAttribute('data-thumb') || button.getAttribute('data-src') || '', full: button.getAttribute('data-full') || button.getAttribute('data-src') || '', video: button.getAttribute('data-video') || '', embed: button.getAttribute('data-embed') || '', title: button.getAttribute('data-title') || '' }))
+            : [{ src: main.getAttribute('src') || '', srcset: main.getAttribute('srcset') || '', sizes: main.getAttribute('sizes') || '', alt: main.alt, thumb: main.getAttribute('data-thumb') || main.getAttribute('src') || '', full: main.getAttribute('data-full') || main.getAttribute('src') || '', video: main.getAttribute('data-video') || '', embed: main.getAttribute('data-embed') || '', title: main.getAttribute('data-title') || '' }];
         const total = items.length;
         let index = Math.max(0, thumbs.findIndex((item) => item.classList.contains('is-active')));
         let lightbox = null;
+
+        const openButton = this.querySelector('[data-gallery-open]');
+        let player = null;
+        const stopVideo = () => { player?.remove(); player = null; stage?.classList.remove('is-playing'); };
+        // The player is created only after a click: until then the page loads the preview picture and nothing else.
+        const playVideo = (item) => {
+            if (!item.video || !item.embed || !(stage instanceof HTMLElement)) return;
+            stopVideo();
+            player = document.createElement('div');
+            player.className = 'product-gallery__player';
+            if (item.video === 'file') {
+                const video = document.createElement('video');
+                video.controls = true; video.autoplay = true; video.playsInline = true; video.preload = 'metadata';
+                video.src = item.embed; video.poster = item.src;
+                player.append(video);
+            } else {
+                const frame = document.createElement('iframe');
+                frame.src = item.embed + (item.embed.includes('?') ? '&' : '?') + 'autoplay=1';
+                frame.title = item.title || item.alt;
+                frame.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
+                frame.allowFullscreen = true;
+                frame.referrerPolicy = 'strict-origin-when-cross-origin';
+                player.append(frame);
+            }
+            stage.append(player);
+            stage.classList.add('is-playing');
+        };
 
         const show = (next, fromLightbox = false) => {
             index = (next + total) % total;
             const item = items[index];
             if (!item.src) return;
+            stopVideo();
+            if (stage instanceof HTMLElement) {
+                stage.classList.toggle('is-video', Boolean(item.video));
+                openButton?.setAttribute('aria-label', (item.video ? stage.dataset.playLabel : stage.dataset.openLabel) || '');
+            }
             main.src = item.src;
             if (item.srcset) main.srcset = item.srcset; else main.removeAttribute('srcset');
             if (item.sizes) main.sizes = item.sizes; else main.removeAttribute('sizes');
@@ -63,7 +95,9 @@ class CommerceProductGallery extends HTMLElement {
 
         if (dialog instanceof HTMLDialogElement) {
             lightbox = createLightbox(dialog, items, () => index, (i) => show(i, true));
-            this.querySelector('[data-gallery-open]')?.addEventListener('click', () => lightbox.open(index));
+            openButton?.addEventListener('click', () => { if (items[index].video) playVideo(items[index]); else lightbox.open(index); });
+        } else if (openButton) {
+            openButton.addEventListener('click', () => { if (items[index].video) playVideo(items[index]); });
         }
     }
 }

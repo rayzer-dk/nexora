@@ -10,6 +10,9 @@ use Commerce\Modules\Media\Application\MediaVideoService;
 use Commerce\Modules\Media\Application\MediaImageProfile;
 use Commerce\Modules\Media\Application\MediaMetadata;
 use Commerce\Modules\Media\Application\MediaMetadataService;
+use Commerce\Modules\Media\Application\MediaFileInspector;
+use Commerce\Modules\Media\Application\MediaOrphanService;
+use Symfony\Component\HttpFoundation\Cookie;
 use Commerce\Core\Configuration\ConfigurationRevisionStore;
 use Commerce\Modules\Admin\Domain\AdminUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -27,20 +30,76 @@ final class MediaLibraryAdminController extends AbstractController
         private readonly MediaVideoService $videos,
         private readonly MediaMetadataService $metadata,
         private readonly ConfigurationRevisionStore $revisions,
+        private readonly MediaOrphanService $orphans,
+        private readonly MediaFileInspector $inspector,
     ) {}
 
     #[Route('/admin/media', name:'admin_media_library', methods:['GET'])]
     public function index(Request $request): Response
     {
-        $ctx=$this->contexts->resolve($request); $folder=$this->folderFilter($request->query->get('folder'));
-        $result=$this->library->search($ctx->storeId,(string)$request->query->get('q',''),$folder,(int)$request->query->get('page',1),48);
-        return $this->render('@storefront/admin/media/library.html.twig',['result'=>$result,'folders'=>$this->library->folders($ctx->storeId),'counts'=>$this->library->folderCounts($ctx->storeId),'folder'=>$folder,'query'=>(string)$request->query->get('q',''),'processing'=>$this->processing($ctx->storeId)]);
+        $ctx=$this->contexts->resolve($request); $folders=$this->library->folders($ctx->storeId);
+        // The last opened folder is remembered in a cookie and used when the page is opened without an explicit folder.
+        $raw=$request->query->has('folder')?$request->query->get('folder'):$request->cookies->get('mc_media_folder');
+        $folder=$this->folderFilter($raw);
+        if($folder!==null&&$folder>0&&!in_array($folder,array_map(static fn(array $f):int=>(int)$f['id'],$folders),true)){$folder=null;}
+        $kind=in_array((string)$request->query->get('kind',''),['image','video'],true)?(string)$request->query->get('kind'):null;
+        $result=$this->library->search($ctx->storeId,(string)$request->query->get('q',''),$folder,(int)$request->query->get('page',1),48,$kind);
+        $response=$this->render('@storefront/admin/media/library.html.twig',['result'=>$result,'folders'=>$folders,'counts'=>$this->library->folderCounts($ctx->storeId),'folder'=>$folder,'kind'=>$kind,'query'=>(string)$request->query->get('q',''),'processing'=>$this->processing($ctx->storeId)]);
+        if($request->query->has('folder')){$response->headers->setCookie(Cookie::create('mc_media_folder',$folder===null?'all':($folder===0?'none':(string)$folder),time()+31536000,'/admin',null,$request->isSecure(),true,false,Cookie::SAMESITE_LAX));}
+        return $response;
+    }
+
+    /** Files that exist on disk for one picture (source, master, made sizes, sizes still to be made). */
+    #[Route('/admin/media/{assetId}/files.json', name:'admin_media_files', methods:['GET'], requirements:['assetId'=>'\\d+'])]
+    public function files(Request $request,int $assetId): JsonResponse
+    {
+        $ctx=$this->contexts->resolve($request);
+        $key=$this->library->owns($ctx->storeId,$assetId)?$this->library->storageKey($assetId):null;
+        return $key===null?$this->json(['files'=>[],'pending'=>[],'bytes'=>0],404):$this->json($this->inspector->inspect($key));
+    }
+
+    #[Route('/admin/media/{assetId}/rebuild', name:'admin_media_rebuild', methods:['POST'], requirements:['assetId'=>'\\d+'])]
+    public function rebuild(Request $request,int $assetId): Response
+    {
+        $ctx=$this->contexts->resolve($request); $this->csrf($request,'media_rebuild_'.$assetId);
+        $key=$this->library->owns($ctx->storeId,$assetId)?$this->library->storageKey($assetId):null;
+        if($key!==null){$n=$this->inspector->forgetSizes($key); $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.media.rebuild.done',['count'=>$n]));}
+        return $this->redirectToRoute('admin_media_library');
+    }
+
+    /** Manual review of unused pictures: thumbnails with check boxes, nothing is removed until the list is confirmed. */
+    #[Route('/admin/media/cleanup', name:'admin_media_cleanup', methods:['GET'])]
+    public function cleanup(Request $request): Response
+    {
+        $this->contexts->resolve($request);
+        $days=in_array((int)$request->query->get('days',30),[0,7,30,90],true)?(int)$request->query->get('days',30):30;
+        $items=$this->orphans->find(500,$days);
+        $total=0; foreach($items as $i=>$item){$items[$i]['disk']=$this->inspector->inspect($item['key'])['bytes']; $total+=$items[$i]['disk'];}
+        return $this->render('@storefront/admin/media/cleanup.html.twig',['items'=>$items,'total_bytes'=>$total,'days'=>$days,'trash'=>$this->orphans->listTrash(),'trash_days'=>30]);
+    }
+
+    #[Route('/admin/media/cleanup/trash', name:'admin_media_cleanup_trash', methods:['POST'], priority:10)]
+    public function cleanupTrash(Request $request): Response
+    {
+        $this->contexts->resolve($request); $this->csrf($request,'media_cleanup');
+        $r=$this->orphans->trashAssets(array_map('intval',(array)$request->request->all('ids')),0);
+        $this->addFlash($r['skipped']>0?'warning':'success',\Commerce\Core\I18n\CanonicalUiText::get('admin.media.cleanup.done',['trashed'=>$r['trashed'],'skipped'=>$r['skipped']]));
+        return $this->redirectToRoute('admin_media_cleanup',['days'=>(int)$request->request->get('days',30)]);
+    }
+
+    #[Route('/admin/media/cleanup/restore', name:'admin_media_cleanup_restore', methods:['POST'])]
+    public function cleanupRestore(Request $request): Response
+    {
+        $this->contexts->resolve($request); $this->csrf($request,'media_cleanup');
+        $items=[]; foreach((array)$request->request->all('restore') as $token){ if(is_string($token)&&preg_match('~^(\\d{8}):(\\d+)$~',$token,$m)===1){$items[]=['date'=>$m[1],'id'=>(int)$m[2]];} }
+        $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.media.cleanup.restored',['count'=>$this->orphans->restore($items)]));
+        return $this->redirectToRoute('admin_media_cleanup');
     }
 
     #[Route('/admin/media.json', name:'admin_media_library_json', methods:['GET'])]
     public function libraryJson(Request $request): JsonResponse
     {
-        $ctx=$this->contexts->resolve($request); $result=$this->library->search($ctx->storeId,(string)$request->query->get('q',''),$this->folderFilter($request->query->get('folder')),max(1,(int)$request->query->get('page',1)),72);
+        $ctx=$this->contexts->resolve($request); $result=$this->library->search($ctx->storeId,(string)$request->query->get('q',''),$this->folderFilter($request->query->get('folder')),max(1,(int)$request->query->get('page',1)),72,in_array((string)$request->query->get('kind',''),['image','video'],true)?(string)$request->query->get('kind'):null);
         $result['folders']=$this->library->folders($ctx->storeId); $result['counts']=$this->library->folderCounts($ctx->storeId);
         return $this->json($result);
     }
@@ -85,7 +144,7 @@ final class MediaLibraryAdminController extends AbstractController
     public function bulkDelete(Request $request): Response
     {
         $ctx=$this->contexts->resolve($request); $this->csrf($request,'media_bulk');
-        try{[$done,$busy]=$this->library->deleteMany($ctx->storeId,array_map('intval',(array)$request->request->all('ids'))); $this->addFlash($busy>0?'warning':'success',\Commerce\Core\I18n\CanonicalUiText::get('admin.media.bulk.deleted',['count'=>$done,'busy'=>$busy]));}
+        try{$ids=array_values(array_filter(array_map('intval',(array)$request->request->all('ids')),fn(int $id):bool=>$this->library->owns($ctx->storeId,$id))); $r=$this->orphans->trashAssets($ids,0); $this->addFlash($r['skipped']>0?'warning':'success',\Commerce\Core\I18n\CanonicalUiText::get('admin.media.bulk.deleted',['count'=>$r['trashed'],'busy'=>$r['skipped']]));}
         catch(\Throwable){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         return $this->redirectToRoute('admin_media_library',$this->backQuery($request));
     }
@@ -140,7 +199,7 @@ final class MediaLibraryAdminController extends AbstractController
     public function delete(Request $request,int $assetId): Response
     {
         $ctx=$this->contexts->resolve($request); $this->csrf($request,'media_delete_'.$assetId);
-        try{$this->library->delete($ctx->storeId,$assetId);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.fail_vydaleno_z_biblioteky'));}catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
+        try{$r=$this->library->owns($ctx->storeId,$assetId)?$this->orphans->trashAssets([$assetId],0):['trashed'=>0,'skipped'=>1]; $r['trashed']>0?$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.medialibraryadmincontroller.fail_vydaleno_z_biblioteky')):$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.medialibraryservice.fail_vykorystovuietsia_v_katalozi_spochatku_pryberit'));}catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         return $this->redirectToRoute('admin_media_library');
     }
 

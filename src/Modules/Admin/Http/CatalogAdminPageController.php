@@ -46,6 +46,7 @@ final class CatalogAdminPageController extends AbstractController
         private readonly \Commerce\Modules\Localization\Application\ContentPolicyService $contentPolicy,
         private readonly \Commerce\Modules\Tax\Application\TaxSettingsService $taxSettings,
         private readonly \Commerce\Modules\Catalog\Application\CategoryImageService $categoryImages,
+        private readonly \Commerce\Modules\Media\Application\ProductVideoService $videos,
     ) {
     }
 
@@ -142,6 +143,7 @@ final class CatalogAdminPageController extends AbstractController
                         purchaseEtaText: trim((string) $request->request->get('purchase_eta_text', '')) ?: null,
                     ));
                     $mediaErrors = $this->attachUploadedImages($request, $context->storeId, (int) $created['id'], (string) $request->request->get('name', ''));
+                    $mediaErrors = array_merge($mediaErrors, $this->saveVideos($request, $context->storeId, (int) $created['id']));
                     $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.chernetku_tovaru_stvoreno'));
                     foreach ($mediaErrors as $mediaError) {
                         $this->addFlash('error', $mediaError);
@@ -254,6 +256,7 @@ final class CatalogAdminPageController extends AbstractController
                     if ($missingLocales !== []) {
                         $this->addFlash('warning', \Commerce\Core\I18n\CanonicalUiText::get('admin.translations.publish_warning', ['locales' => implode(', ', $missingLocales)]));
                     }
+                    $mediaErrors = array_merge($mediaErrors, $this->saveVideos($request, $context->storeId, (int) $product['id']));
                     foreach ($mediaErrors as $mediaError) {
                         $this->addFlash('error', $mediaError);
                     }
@@ -294,6 +297,7 @@ final class CatalogAdminPageController extends AbstractController
             'brands' => $brands,
             'product' => $product,
             'images' => $this->media->productImages((int) $product['id']),
+            'videos' => $this->videos->forAdmin((int) $product['id']),
             'variants' => $this->query->variantsForEdit((int) $product['id'], $context->storeId, $context->marketId),
             'attributes' => $this->query->productAttributesForEdit((int) $product['id'], $context->locale),
             'documents' => $this->query->productDocumentsForEdit((int) $product['id']),
@@ -527,6 +531,20 @@ final class CatalogAdminPageController extends AbstractController
         return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId]);
     }
 
+    #[Route('/admin/catalog/products/{publicId}/videos/{videoId}/remove', name: 'admin_catalog_product_video_remove', methods: ['POST'], requirements: ['videoId' => '\d+'])]
+    public function productVideoRemove(string $publicId, int $videoId, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('admin_product_media_' . $publicId, (string) $request->request->get('_media_token'))) {
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.sesiiu_formy_vtracheno_povtorit_diiu'));
+            return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId]);
+        }
+        $context = $this->context->resolve($request);
+        $product = $this->query->productForEdit($context->storeId, $context->marketId, $context->locale, $publicId);
+        $this->videos->remove((int) $product['id'], $videoId);
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.video.removed'));
+        return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId]);
+    }
+
     #[Route('/admin/catalog/products/{publicId}/duplicate', name: 'admin_catalog_product_duplicate', methods: ['POST'])]
     public function productDuplicate(string $publicId, Request $request): Response
     {
@@ -604,6 +622,24 @@ final class CatalogAdminPageController extends AbstractController
                 $this->focalValue($focalY[$assetIdRaw] ?? 0.5),
             );
         }
+    }
+
+    /** Saves the video list (title, place, order) and adds the link typed into the "add video" field. @return list<string> */
+    private function saveVideos(Request $request, int $storeId, int $productId): array
+    {
+        $this->videos->updateMany($productId, $request->request->all('video_title'), $request->request->all('video_placement'), $request->request->all('video_sort'));
+        $link = trim((string) $request->request->get('video_url', ''));
+        if ($link === '') {
+            return [];
+        }
+        try {
+            $poster = $request->files->get('video_poster');
+            $this->videos->add($productId, $link, (string) $request->request->get('video_new_title', ''), (string) $request->request->get('video_new_placement', 'end'), $poster instanceof UploadedFile && $poster->getError() !== UPLOAD_ERR_NO_FILE ? $poster : null, $storeId);
+        } catch (\InvalidArgumentException $e) {
+            return [$e->getMessage()];
+        }
+
+        return [];
     }
 
     private function focalValue(mixed $value): float

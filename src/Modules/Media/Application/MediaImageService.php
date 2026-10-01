@@ -78,7 +78,7 @@ final readonly class MediaImageService
                 $source = $this->orientedUpright($source, $raw, $width, $height);
             }
             $checksum = hash('sha256', $raw);
-            $relativeBase = 'catalog/' . gmdate('Y/m') . '/' . substr($checksum, 0, 2) . '/' . $checksum;
+            $relativeBase = 'catalog/' . substr($checksum, 0, 2) . '/' . $checksum;
             $profile = $storeId !== null ? $this->processingProfile($storeId) : MediaImageProfile::RECOMMENDED;
             if ($fromHeic && in_array($profile['format'], ['original', 'jpeg', 'png'], true)) {
                 $profile['format'] = 'webp'; // HEIC is not browser-friendly: it is always converted to WebP (or AVIF when the store chose it)

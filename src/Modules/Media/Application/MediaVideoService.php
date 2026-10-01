@@ -34,7 +34,7 @@ final readonly class MediaVideoService
         };
         $checksum = hash_file('sha256', $source);
         if (!is_string($checksum) || $checksum === '') throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediavideoservice.ne_vdalosia_obchyslyty_checksum_video'));
-        $key = 'video/' . gmdate('Y/m') . '/' . substr($checksum, 0, 2) . '/' . $checksum . '.' . $extension;
+        $key = 'video/' . substr($checksum, 0, 2) . '/' . $checksum . '.' . $extension;
         $hash = hash('sha256', $key, true);
         $existing = $this->db->fetchAssociative('SELECT id,public_id,storage_key FROM mc_media_asset WHERE storage_key_hash=? LIMIT 1', [$hash]);
         if (is_array($existing)) {

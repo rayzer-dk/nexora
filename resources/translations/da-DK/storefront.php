@@ -853,4 +853,6 @@ return [
     'cart_drawer_open_page' => 'Åbn hele kurvesiden',
     'zoom_out' => 'Zoom ud',
     'zoom_in' => 'Zoom ind',
+    'play_video' => 'Afspil video',
+    'video_number' => 'Video %number%',
 ];

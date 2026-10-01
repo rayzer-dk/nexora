@@ -89,5 +89,5 @@ Product: %product%',
     'scheduler.label.media_warm' => 'Product photo sizes',
     'scheduler.description.media_warm' => 'Every 15 minutes makes the thumbnail, card and product-page sizes of the main product photos that still lack them, for example after an import. Other photos get their sizes on first view.',
     'scheduler.label.media_gc' => 'Image cleanup',
-    'scheduler.description.media_gc' => 'Daily removes image sizes of older generations and moves pictures that nothing uses to the trash folder, where they stay for 30 days. A picture used anywhere is never touched.',
+    'scheduler.description.media_gc' => 'Daily removes image sizes of older generations and purges the trash after 30 days. Unused pictures are never removed automatically: review and remove them by hand in Media library > Cleanup.',
 ];

@@ -1,0 +1,51 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.media.cleanup.title'),'media','media') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="{{ path('admin_media_library') }}">{{ ui_text('admin.media.library.mediateka') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.media.cleanup.title') }}</span></nav><h1>{{ ui_text('admin.media.cleanup.title') }}</h1><p>{{ ui_text('admin.media.cleanup.intro', {days: trash_days}) }}</p></div><a class="admin-button" href="{{ path('admin_media_library') }}">{{ ui_text('admin.media.cleanup.back') }}</a></header>
+{% for type,messages in app.flashes %}{% for message in messages %}<div class="admin-notice is-{{ type }}">{{ message }}</div>{% endfor %}{% endfor %}
+<section class="admin-panel media-cleanup" data-media-cleanup data-total="{{ items|length }}" data-selected-text="{{ ui_text('admin.media.cleanup.selected', {selected: '%selected%', total: '%total%', size: '%size%'})|e('html_attr') }}">
+  <form method="get" class="media-cleanup__filter"><label>{{ ui_text('admin.media.cleanup.age') }} <select name="days">{% for d in [90, 30, 7, 0] %}<option value="{{ d }}"{{ days == d ? ' selected' : '' }}>{{ d == 0 ? ui_text('admin.media.cleanup.age_any') : ui_text('admin.media.cleanup.age_days', {days: d}) }}</option>{% endfor %}</select></label><button class="admin-button" type="submit">OK</button></form>
+  {% if items is empty %}<p class="admin-muted">{{ ui_text('admin.media.cleanup.empty') }}</p>{% else %}
+  <form method="post" action="{{ path('admin_media_cleanup_trash') }}" data-confirm="{{ ui_text('admin.media.cleanup.confirm', {days: trash_days})|e('html_attr') }}">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('media_cleanup') }}"><input type="hidden" name="days" value="{{ days }}">
+    <div class="media-cleanup__bar">
+      <strong data-cleanup-count></strong>
+      <button class="admin-button" type="button" data-cleanup-all>{{ ui_text('admin.media.cleanup.select_all') }}</button>
+      <button class="admin-button" type="button" data-cleanup-none>{{ ui_text('admin.media.cleanup.select_none') }}</button>
+      <button class="admin-button" type="button" data-cleanup-invert>{{ ui_text('admin.media.cleanup.invert') }}</button>
+      <button class="admin-button is-danger" type="submit" data-cleanup-submit>{{ ui_icon('trash-2', 16) }} {{ ui_text('admin.media.cleanup.trash_selected') }}</button>
+    </div>
+    <p class="admin-muted">{{ ui_text('admin.media.cleanup.hint') }}</p>
+    <ul class="media-cleanup__grid">
+      {% for item in items %}<li><label class="media-cleanup__tile" title="{{ item.key }}"><input type="checkbox" name="ids[]" value="{{ item.id }}" data-bytes="{{ item.disk }}" checked><img src="{{ item.key starts with 'video/' ? '/assets/video-placeholder.svg' : ('/media/' ~ item.key)|media_variant('thumb') }}" alt="" width="96" height="96" loading="lazy"><span>{{ item.width }}×{{ item.height }} · {{ (item.disk / 1024)|round }} KB</span></label></li>{% endfor %}
+    </ul>
+    {% if items|length >= 500 %}<p class="admin-muted">{{ ui_text('admin.media.cleanup.limit_note') }}</p>{% endif %}
+  </form>
+  {% endif %}
+</section>
+<section class="admin-panel media-cleanup-trash">
+  <h2>{{ ui_text('admin.media.cleanup.trash_title') }}</h2>
+  {% if trash is empty %}<p class="admin-muted">{{ ui_text('admin.media.cleanup.trash_empty') }}</p>{% else %}
+  <form method="post" action="{{ path('admin_media_cleanup_restore') }}" data-confirm="{{ ui_text('admin.media.cleanup.restore_confirm')|e('html_attr') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('media_cleanup') }}">
+    <ul class="media-trash-list">{% for t in trash %}<li><label><input type="checkbox" name="restore[]" value="{{ t.date }}:{{ t.id }}"> <code>{{ t.key }}</code> <small>{{ t.date|slice(0,4) }}-{{ t.date|slice(4,2) }}-{{ t.date|slice(6,2) }} · {{ ui_text('admin.media.cleanup.files', {count: t.files}) }} · {{ (t.bytes / 1024)|round }} KB</small></label></li>{% endfor %}</ul>
+    <button class="admin-button" type="submit">{{ ui_icon('undo-2', 16) }} {{ ui_text('admin.media.cleanup.restore') }}</button>
+  </form>{% endif %}
+</section>
+<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">
+(() => {
+  const root = document.querySelector('[data-media-cleanup]'); if (!root) return;
+  const boxes = [...root.querySelectorAll('input[name="ids[]"]')]; const label = root.querySelector('[data-cleanup-count]');
+  const submit = root.querySelector('[data-cleanup-submit]');
+  const size = (b) => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.round(b / 1024) + ' KB';
+  const refresh = () => {
+    const on = boxes.filter((b) => b.checked);
+    if (label) label.textContent = (root.dataset.selectedText || '').replace('%selected%', on.length).replace('%total%', boxes.length).replace('%size%', size(on.reduce((n, b) => n + Number(b.dataset.bytes || 0), 0)));
+    if (submit) submit.disabled = on.length === 0;
+    boxes.forEach((b) => b.closest('.media-cleanup__tile')?.classList.toggle('is-off', !b.checked));
+  };
+  root.querySelector('[data-cleanup-all]')?.addEventListener('click', () => { boxes.forEach((b) => { b.checked = true; }); refresh(); });
+  root.querySelector('[data-cleanup-none]')?.addEventListener('click', () => { boxes.forEach((b) => { b.checked = false; }); refresh(); });
+  root.querySelector('[data-cleanup-invert]')?.addEventListener('click', () => { boxes.forEach((b) => { b.checked = !b.checked; }); refresh(); });
+  boxes.forEach((b) => b.addEventListener('change', refresh)); refresh();
+})();
+</script>
+{{ shell.end() }}

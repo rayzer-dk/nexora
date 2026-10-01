@@ -13,7 +13,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'commerce:media:gc', description: 'Remove outdated image sizes and move unused pictures to the trash folder. Dry-run unless --apply is given.')]
+#[AsCommand(name: 'commerce:media:gc', description: 'Remove outdated image sizes and purge the old trash. With --orphans also move unused pictures to the trash (normally done by hand in Media library > Cleanup). Dry-run unless --apply is given.')]
 final class MediaGcCommand extends Command
 {
     public function __construct(private readonly MediaVariantService $variants, private readonly MediaOrphanService $orphans)
@@ -24,6 +24,7 @@ final class MediaGcCommand extends Command
     protected function configure(): void
     {
         $this->addOption('apply', null, InputOption::VALUE_NONE, 'Actually remove files. Without it the command only reports.')
+            ->addOption('orphans', null, InputOption::VALUE_NONE, 'Also move unused pictures to the trash. Off by default: unused pictures are reviewed and removed by hand in the admin.')
             ->addOption('clear-sizes', null, InputOption::VALUE_NONE, 'Also remove every made size of the current generation (they are made again on demand).')
             ->addOption('grace-days', null, InputOption::VALUE_REQUIRED, 'Outdated sizes younger than this many days are kept.', '7')
             ->addOption('orphan-days', null, InputOption::VALUE_REQUIRED, 'Pictures younger than this many days are never treated as unused.', '30')
@@ -38,9 +39,10 @@ final class MediaGcCommand extends Command
         $apply = (bool) $input->getOption('apply');
         $deadline = time() + max(5, (int) $input->getOption('max-seconds'));
         $sizes = $this->variants->collectStale(!$apply, (int) $input->getOption('grace-days'), (bool) $input->getOption('clear-sizes'), $deadline);
-        $orphans = $this->orphans->trash(!$apply, (int) $input->getOption('limit'), (int) $input->getOption('orphan-days'));
+        $withOrphans = (bool) $input->getOption('orphans');
+        $orphans = $withOrphans ? $this->orphans->trash(!$apply, (int) $input->getOption('limit'), (int) $input->getOption('orphan-days')) : ['assets' => count($this->orphans->find((int) $input->getOption('limit'), (int) $input->getOption('orphan-days'))), 'files' => 0];
         $purged = $apply ? $this->orphans->purgeTrash((int) $input->getOption('trash-days')) : 0;
-        $io->writeln(sprintf('%s: %d outdated size files (%.1f MB), %d unused pictures (%d files) %s, %d old trash folders purged.', $apply ? 'Applied' : 'Dry-run', $sizes['files'], $sizes['bytes'] / 1048576, $orphans['assets'], $orphans['files'], $apply ? 'moved to var/media-trash' : 'found', $purged));
+        $io->writeln(sprintf('%s: %d outdated size files (%.1f MB), %d unused pictures (%d files) %s, %d old trash folders purged.', $apply ? 'Applied' : 'Dry-run', $sizes['files'], $sizes['bytes'] / 1048576, $orphans['assets'], $orphans['files'], $apply && $withOrphans ? 'moved to var/media-trash' : 'found (review them in Media library > Cleanup)', $purged));
 
         return Command::SUCCESS;
     }

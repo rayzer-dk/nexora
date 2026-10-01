@@ -2039,4 +2039,7 @@ return [
     'demo.commerce.search.12' => 'tv',
     'demo.commerce.search.13' => 'power bank',
     'demo.commerce.search.14' => 'smartphone under 15000',
+    'media.video_link_invalid' => 'Enter a YouTube or Vimeo link, or an https link to an mp4/webm file.',
+    'media.video_limit' => 'A product can have at most %max% videos.',
+    'media.video_duplicate' => 'This video is already added to the product.',
 ];

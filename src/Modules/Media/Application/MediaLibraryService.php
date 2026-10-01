@@ -14,7 +14,7 @@ final readonly class MediaLibraryService
     }
 
     /** @return array{items:list<array<string,mixed>>,total:int,page:int,limit:int} */
-    public function search(int $storeId, string $query = '', ?int $folderId = null, int $page = 1, int $limit = 48): array
+    public function search(int $storeId, string $query = '', ?int $folderId = null, int $page = 1, int $limit = 48, ?string $kind = null): array
     {
         $page = max(1, $page);
         $limit = max(12, min(96, $limit));
@@ -30,6 +30,11 @@ final readonly class MediaLibraryService
             }
             $where[] = 'sma.folder_id=?';
             $params[] = $folderId;
+        }
+
+        if ($kind === 'image' || $kind === 'video') {
+            $where[] = 'ma.mime_type LIKE ?';
+            $params[] = $kind . '/%';
         }
 
         $query = trim($query);
@@ -127,29 +132,6 @@ final readonly class MediaLibraryService
         );
     }
 
-    /**
-     * Deletes every unused asset in the list; returns [deleted, skipped-because-in-use].
-     * @param list<int> $assetIds
-     * @return array{0:int,1:int}
-     */
-    public function deleteMany(int $storeId, array $assetIds): array
-    {
-        $deleted = 0;
-        $busy = 0;
-        foreach (array_unique(array_map('intval', $assetIds)) as $id) {
-            if ($id <= 0 || !$this->owns($storeId, $id)) {
-                continue;
-            }
-            if ($this->usageCount($storeId, $id) > 0) {
-                ++$busy;
-                continue;
-            }
-            $this->db->delete('mc_store_media_asset', ['store_id' => $storeId, 'asset_id' => $id]);
-            ++$deleted;
-        }
-        return [$deleted, $busy];
-    }
-
     public function createFolder(int $storeId, string $name, ?int $parentId = null): int
     {
         $name = trim(strip_tags($name));
@@ -192,45 +174,10 @@ final readonly class MediaLibraryService
         );
     }
 
-    public function usageCount(int $storeId, int $assetId): int
+    public function storageKey(int $assetId): ?string
     {
-        if (!$this->owns($storeId, $assetId)) {
-            return 0;
-        }
-        $storageKey = $this->db->fetchOne('SELECT storage_key FROM mc_media_asset WHERE id=?', [$assetId]);
-        if (!is_string($storageKey) || $storageKey === '') {
-            return 0;
-        }
+        $key = $this->db->fetchOne('SELECT storage_key FROM mc_media_asset WHERE id=?', [$assetId]);
 
-        $catalog = (int) $this->db->fetchOne(
-            "SELECT
-                (SELECT COUNT(DISTINCT pm.product_id)
-                   FROM mc_product_media pm
-                   JOIN mc_store_product sp ON sp.product_id=pm.product_id AND sp.store_id=?
-                  WHERE pm.media_asset_id=?)
-              + (SELECT COUNT(DISTINCT pd.product_id)
-                   FROM mc_product_document pd
-                   JOIN mc_store_product sp2 ON sp2.product_id=pd.product_id AND sp2.store_id=?
-                  WHERE pd.media_id=?)",
-            [$storeId, $assetId, $storeId, $assetId],
-        );
-        $layout = (int) $this->db->fetchOne(
-            'SELECT COUNT(*) FROM mc_layout_revision WHERE store_id=? AND CAST(payload AS CHAR) LIKE ?',
-            [$storeId, '%' . $storageKey . '%'],
-        );
-
-        return $catalog + $layout;
-    }
-
-    public function delete(int $storeId, int $assetId): void
-    {
-        if (!$this->owns($storeId, $assetId)) {
-            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.9a697f5165d4'));
-        }
-        if ($this->usageCount($storeId, $assetId) > 0) {
-            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.medialibraryservice.fail_vykorystovuietsia_v_katalozi_spochatku_pryberit'));
-        }
-
-        $this->db->delete('mc_store_media_asset', ['store_id' => $storeId, 'asset_id' => $assetId]);
+        return is_string($key) && $key !== '' ? $key : null;
     }
 }

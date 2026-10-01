@@ -784,4 +784,6 @@ return [
     'cart_drawer_open_page' => 'Otwórz pełną stronę koszyka',
     'zoom_out' => 'Pomniejsz',
     'zoom_in' => 'Powiększ',
+    'play_video' => 'Odtwórz wideo',
+    'video_number' => 'Wideo %number%',
 ];

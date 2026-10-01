@@ -554,6 +554,10 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
+    Commerce\Modules\Media\Application\MediaFileInspector:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     Commerce\Modules\Media\Application\MediaVideoService:
         arguments:
             $projectDir: '%kernel.project_dir%'

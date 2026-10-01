@@ -2041,4 +2041,7 @@ return [
     'demo.commerce.search.12' => 'телевізор',
     'demo.commerce.search.13' => 'павербанк',
     'demo.commerce.search.14' => 'смартфон до 15000',
+    'media.video_link_invalid' => 'Вкажіть посилання на YouTube або Vimeo, чи https-посилання на файл mp4/webm.',
+    'media.video_limit' => 'У товару може бути не більше %max% відео.',
+    'media.video_duplicate' => 'Це відео вже додано до товару.',
 ];

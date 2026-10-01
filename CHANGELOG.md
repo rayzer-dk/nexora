@@ -2,6 +2,28 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.25.0 — 2026-10-01
+
+- Product video: a product can have up to 8 video links (YouTube, Vimeo or a direct https link to an mp4/webm file),
+  placed before or after the photos. The page loads only the preview picture; the player is created after the visitor
+  clicks it (YouTube through the no-cookie host). The preview is fetched once when the link is saved and stored as an
+  ordinary library picture, or an own preview can be uploaded. Database schema 71 (`mc_product_video`).
+- Unused pictures are now reviewed by hand: Media library > Unused pictures shows a compact grid of thumbnails with
+  check boxes (deselect one, select all, deselect all, invert), the size on disk and an age filter. Only the confirmed
+  selection is moved to the trash, each picture is checked again at that moment, and the trash (with a manifest) can be
+  restored from the same screen for 30 days. The nightly task no longer removes pictures by itself; `commerce:media:gc
+  --orphans` is the explicit opt-in.
+- Deleting from the media library moves the picture to the same restorable trash after the full "in use" check (product
+  photos, videos, documents, category images, page share images, blog and rich text). Being listed in the library is no
+  longer counted as use, so pictures that only sit in the library can be found and cleaned.
+- The media library shows what is stored for a picture: the untouched original, the master, every made size with format,
+  pixels and weight, sizes that will be made on first view and outdated ones, plus "Rebuild sizes". New filters:
+  images / videos. Thumbnails in the grid use the card size.
+- The last opened library folder is remembered (cookie) and opened next time; "All folders" is an explicit choice.
+- New uploads are stored in `catalog/<2 hex>/<hash>` and `video/<2 hex>/<hash>` (256 fixed folders) instead of a folder
+  per month, so daily imports no longer create new folders. Existing files keep working.
+- Faster unused-picture search: text references are checked in batches per column instead of one query per picture.
+
 ## 3.24.0 — 2026-10-01
 
 Images are reworked at the root (no compatibility with the earlier naming: the platform is not installed anywhere yet).
