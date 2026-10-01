@@ -2,6 +2,14 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.31.0 — 2026-10-01
+
+Product options (colour, memory…) — schema 73.
+
+- Admin: "Product options" block on the Sales tab. Add an option with values, set a price difference, a colour swatch and one of the product pictures per value, then "Generate variants" (every combination becomes a variant with its own SKU, price and stock; the main variant takes the first combination).
+- Storefront: option pickers (buttons / colour swatches) replace the flat variant list; choosing a value switches the variant, price, add-to-cart form, address (`?variant=`) and, when a picture is assigned, the gallery image. Combinations out of stock cannot be bought.
+- The production package no longer contains `.devcontainer`.
+
 ## 3.30.0 — 2026-10-01
 
 Admin editor, product form and storefront fixes.

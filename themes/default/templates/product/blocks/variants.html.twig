@@ -1,4 +1,15 @@
-{% if product.variants %}
+{% if product.option_groups|default([]) %}
+<div class="option-picker" data-option-picker data-variants="{{ product.variants|json_encode|e('html_attr') }}">
+    {% for group in product.option_groups %}
+    <fieldset class="option-group" data-option-group="{{ group.id }}">
+        <legend>{{ group.name }}: <strong data-option-current></strong></legend>
+        <div class="option-group__values">
+            {% for value in group.values %}<button type="button" class="option-value{{ value.swatch ? ' option-value--swatch' : '' }}" data-option="{{ group.id }}" data-option-value="{{ value.id }}" data-label="{{ value.label|e('html_attr') }}" data-media="{{ value.media_id|default('') }}" aria-pressed="false" title="{{ value.label|e('html_attr') }}">{% if value.swatch %}<span class="option-value__dot" style="background:{{ value.swatch }}"></span>{% endif %}<span class="option-value__label">{{ value.label }}</span></button>{% endfor %}
+        </div>
+    </fieldset>
+    {% endfor %}
+</div>
+{% elseif product.variants %}
 {% set has_swatch = false %}
 {% for variant in product.variants %}{% if variant.swatch|default('') %}{% set has_swatch = true %}{% endif %}{% endfor %}
 <fieldset class="variant-picker{{ has_swatch ? ' variant-picker--swatches' : '' }}">

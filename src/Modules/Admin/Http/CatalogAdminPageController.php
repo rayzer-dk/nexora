@@ -35,6 +35,7 @@ final class CatalogAdminPageController extends AbstractController
         private readonly \Commerce\Modules\CustomField\Application\CustomFieldService $customFields,
         private readonly \Commerce\Modules\ProductInfo\Application\ProductInfoService $productInfo,
         private readonly ProductWriter $products,
+        private readonly \Commerce\Modules\Catalog\Application\ProductOptionService $options,
         private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus,
         private readonly CatalogMaintenanceService $maintenance,
         private readonly MediaImageService $media,
@@ -311,6 +312,9 @@ final class CatalogAdminPageController extends AbstractController
             'media_folders' => $this->mediaFolderChoices($context->storeId),
             'upload_folder' => $this->uploadFolder($request, $context->storeId),
             'variants' => $this->query->variantsForEdit((int) $product['id'], $context->storeId, $context->marketId),
+            'product_options' => $this->options->forEdit((int) $product['id'], $context->locale),
+            'variant_labels' => $this->options->variantLabels((int) $product['id'], $context->locale),
+            'option_pictures' => $this->options->pictures((int) $product['id']),
             'attributes' => $this->query->productAttributesForEdit((int) $product['id'], $context->locale),
             'documents' => $this->query->productDocumentsForEdit((int) $product['id']),
             'custom_definitions' => $this->customFields->definitions($context->storeId),
@@ -322,6 +326,35 @@ final class CatalogAdminPageController extends AbstractController
             'currency' => $context->currency,
             'csrf_id' => 'admin_product_update_' . $publicId,
         ]);
+    }
+
+    #[Route('/admin/catalog/products/{publicId}/options', name: 'admin_catalog_product_options', methods: ['POST'])]
+    public function productOptions(string $publicId, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('admin_product_options_' . $publicId, (string) $request->request->get('_options_token'))) {
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.sesiiu_formy_variantiv_vtracheno_povtorit_diiu'));
+            return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId]);
+        }
+        try {
+            $context = $this->context->resolve($request);
+            $product = $this->query->productForEdit($context->storeId, $context->marketId, $context->locale, $publicId);
+            $productId = (int) $product['id'];
+            $action = (string) $request->request->get('_option_action', 'save');
+            $this->options->save($productId, $context->locale, (array) $request->request->all('option'), (array) $request->request->all('option_value'), (array) $request->request->all('new_option'));
+            if (str_starts_with($action, 'delete_option:')) {
+                $this->options->deleteOption($productId, (int) substr($action, 14));
+            } elseif (str_starts_with($action, 'delete_value:')) {
+                $this->options->deleteValue($productId, (int) substr($action, 13));
+            } elseif ($action === 'generate') {
+                $created = $this->options->generate($productId, $context->storeId, $context->marketId);
+                $this->addFlash('success', sprintf(\Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.options.generated'), $created));
+                return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId, '_fragment' => 'variants']);
+            }
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.options.saved'));
+        } catch (\Throwable $e) {
+            $this->addFlash('error', $e instanceof \InvalidArgumentException || $e instanceof \DomainException ? $e->getMessage() : \Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.options.failed'));
+        }
+        return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId, '_fragment' => 'options']);
     }
 
     #[Route('/admin/catalog/products/{publicId}/variants/create', name: 'admin_catalog_product_variant_create', methods: ['POST'])]

@@ -372,6 +372,77 @@ function initSimpleAjaxForms() {
 }
 document.addEventListener('DOMContentLoaded', initSimpleAjaxForms);
 
+/**
+ * Product options (colour, memory…): a click picks the variant with that combination, then the price, the add-to-cart
+ * form, the address and the gallery picture follow it. Without JS the picker is simply not shown to be used.
+ */
+function initOptionPicker() {
+    const root = document.querySelector('[data-option-picker]');
+    if (!(root instanceof HTMLElement)) return;
+    let variants = [];
+    try { variants = JSON.parse(root.dataset.variants || '[]'); } catch { return; }
+    if (!Array.isArray(variants) || variants.length === 0) return;
+    const buttons = [...root.querySelectorAll('[data-option-value]')];
+    const keyOf = (variant) => Object.entries(variant.values || {}).map(([option, value]) => `${option}:${value}`).sort().join('|');
+    const initial = variants.find((variant) => variant.selected) || variants[0];
+    let chosen = { ...(initial.values || {}) };
+
+    const match = () => variants.find((variant) => Object.keys(chosen).every((option) => String((variant.values || {})[option]) === String(chosen[option])) && Object.keys(variant.values || {}).length === Object.keys(chosen).length);
+    const compatible = (option, value) => variants.some((variant) => String((variant.values || {})[option]) === String(value) && Object.entries(chosen).every(([other, picked]) => other === String(option) || String((variant.values || {})[other]) === String(picked)));
+
+    const apply = (variant) => {
+        document.querySelectorAll('input[name="variant_id"]').forEach((input) => { input.value = variant.id; });
+        const price = document.querySelector('.product-price__current');
+        if (price && variant.price) price.textContent = variant.price;
+        if (variant.id !== initial.id) document.querySelectorAll('.product-price__old, .product-price__discount').forEach((node) => { node.hidden = true; });
+        else document.querySelectorAll('.product-price__old, .product-price__discount').forEach((node) => { node.hidden = false; });
+        document.querySelectorAll('form[data-buy-actions] button[type="submit"]').forEach((button) => { button.disabled = !variant.available; });
+        if (variant.id !== initial.id || new URLSearchParams(location.search).has('variant')) {
+            try { history.replaceState(null, '', `${location.pathname}?variant=${encodeURIComponent(variant.id)}${location.hash}`); } catch { /* ignore */ }
+        }
+        const withPicture = Object.values(variant.values || {}).map((value) => root.querySelector(`[data-option-value="${CSS.escape(String(value))}"]`)).find((button) => button && button.dataset.media);
+        if (withPicture) {
+            const thumb = document.querySelector(`[data-gallery-thumb][data-media-id="${CSS.escape(withPicture.dataset.media || '')}"]`);
+            if (thumb instanceof HTMLElement) thumb.click();
+        }
+    };
+
+    const render = () => {
+        buttons.forEach((button) => {
+            const option = button.dataset.option || '';
+            const value = button.dataset.optionValue || '';
+            const on = String(chosen[option]) === value;
+            button.setAttribute('aria-pressed', on ? 'true' : 'false');
+            button.classList.toggle('is-selected', on);
+            button.classList.toggle('is-unavailable', !on && !compatible(option, value));
+            if (on) {
+                const label = button.closest('[data-option-group]')?.querySelector('[data-option-current]');
+                if (label) label.textContent = button.dataset.label || '';
+            }
+        });
+    };
+
+    buttons.forEach((button) => button.addEventListener('click', () => {
+        const option = button.dataset.option || '';
+        const value = Number(button.dataset.optionValue);
+        const next = { ...chosen, [option]: value };
+        let variant = variants.find((candidate) => keyOf(candidate) === Object.entries(next).map(([o, v]) => `${o}:${v}`).sort().join('|'));
+        if (!variant) {
+            // This combination does not exist: switch to the closest variant that has the clicked value.
+            variant = variants.find((candidate) => String((candidate.values || {})[option]) === String(value));
+            if (!variant) return;
+            chosen = { ...(variant.values || {}) };
+        } else {
+            chosen = next;
+        }
+        render();
+        apply(variant);
+    }));
+    render();
+    const current = match() || initial;
+    if (current) apply(current);
+}
+
 /** Product detail tabs. Without JS every panel is visible and the tab bar is a list of in-page anchors. */
 function initProductTabs() {
     const root = document.querySelector('[data-product-tabs]');
@@ -448,4 +519,4 @@ function initSharePopovers() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => { initProductTabs(); initSharePopovers(); });
+document.addEventListener('DOMContentLoaded', () => { initProductTabs(); initOptionPicker(); initSharePopovers(); });

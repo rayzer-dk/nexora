@@ -501,6 +501,7 @@ final readonly class DbalStorefrontCatalogQuery
         $product['reviews'] = $this->reviews((int)$row['id'], $context);
         $product['breadcrumbs'] = $this->breadcrumbs((int)$row['id'], $context, (string)$row['name']);
         $product['variants'] = $this->productVariants((int) $row['id'], $context, (int) $row['variant_id']);
+        $product['option_groups'] = $product['variants'] === [] ? [] : $this->optionGroups((int) $row['id'], $context->locale);
         $product['questions'] = $this->questions((int)$row['id'], $context);
         $product['related'] = $this->relationProducts((int)$row['id'], $context, 'related');
         $product['complementary'] = $this->relationProducts((int)$row['id'], $context, 'complementary');
@@ -515,7 +516,7 @@ final readonly class DbalStorefrontCatalogQuery
     {
         $rows = $this->connection->fetchAllAssociative(
             "SELECT v.id,v.public_id,v.sku,pr.amount_minor,pr.currency,
-                    COALESCE(NULLIF((SELECT GROUP_CONCAT(COALESCE(ovt.name,ov.code) ORDER BY po.sort_order,ov.sort_order SEPARATOR ' / ') FROM mc_variant_option_value vov JOIN mc_product_option_value ov ON ov.id=vov.option_value_id JOIN mc_product_option po ON po.id=ov.option_id LEFT JOIN mc_product_option_value_translation ovt ON ovt.option_value_id=ov.id AND ovt.locale=? WHERE vov.variant_id=v.id),''),v.sku) label,
+                    COALESCE(NULLIF((SELECT GROUP_CONCAT(COALESCE(ovt.name,(SELECT x.name FROM mc_product_option_value_translation x WHERE x.option_value_id=ov.id ORDER BY x.locale LIMIT 1),ov.code) ORDER BY po.sort_order,ov.sort_order SEPARATOR ' / ') FROM mc_variant_option_value vov JOIN mc_product_option_value ov ON ov.id=vov.option_value_id JOIN mc_product_option po ON po.id=ov.option_id LEFT JOIN mc_product_option_value_translation ovt ON ovt.option_value_id=ov.id AND ovt.locale=? WHERE vov.variant_id=v.id),''),v.sku) label,
                     COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) available_quantity,
                     p.product_type,v.allow_backorder
              FROM mc_product_variant v
@@ -528,18 +529,63 @@ final readonly class DbalStorefrontCatalogQuery
             return [];
         }
         $swatches = $this->variantSwatches(array_map(static fn (array $row): int => (int) $row['id'], $rows));
-        return array_map(function (array $row) use ($context, $selectedVariantId, $swatches): array {
+        $valueMap = $this->variantOptionValues(array_map(static fn (array $row): int => (int) $row['id'], $rows));
+        return array_map(function (array $row) use ($context, $selectedVariantId, $swatches, $valueMap): array {
             $available = (string) $row['product_type'] === 'digital' || (float) $row['available_quantity'] > 0 || (bool) $row['allow_backorder'];
             return [
                 'id' => Uuid::fromBinary((string) $row['public_id'])->toRfc4122(),
                 'swatch' => $swatches[(int) $row['id']] ?? '',
                 'label' => (string) $row['label'],
+                'values' => $valueMap[(int) $row['id']] ?? [],
                 'sku' => (string) $row['sku'],
                 'price' => $this->money->format((int) $row['amount_minor'], (string) $row['currency'], $context->locale),
                 'selected' => (int) $row['id'] === $selectedVariantId,
                 'available' => $available,
             ];
         }, $rows);
+    }
+
+    /**
+     * Option value ids of every variant, keyed by option id: [variantId => [optionId => valueId]].
+     *
+     * @param list<int> $variantIds
+     * @return array<int,array<int,int>>
+     */
+    private function variantOptionValues(array $variantIds): array
+    {
+        $placeholders = implode(',', array_fill(0, count($variantIds), '?'));
+        $result = [];
+        foreach ($this->connection->fetchAllAssociative("SELECT vov.variant_id,ov.option_id,ov.id value_id FROM mc_variant_option_value vov JOIN mc_product_option_value ov ON ov.id=vov.option_value_id WHERE vov.variant_id IN ({$placeholders})", $variantIds) as $row) {
+            $result[(int) $row['variant_id']][(int) $row['option_id']] = (int) $row['value_id'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * The option pickers of a product: [{id,name,values:[{id,label,swatch,media_id}]}] (only options that have values).
+     *
+     * @return list<array{id:int,name:string,values:list<array{id:int,label:string,swatch:string,media_id:?int}>}>
+     */
+    private function optionGroups(int $productId, string $locale): array
+    {
+        $options = $this->connection->fetchAllAssociative(
+            'SELECT po.id,COALESCE(pot.name,(SELECT x.name FROM mc_product_option_translation x WHERE x.option_id=po.id ORDER BY x.locale LIMIT 1),po.code) name FROM mc_product_option po LEFT JOIN mc_product_option_translation pot ON pot.option_id=po.id AND pot.locale=? WHERE po.product_id=? ORDER BY po.sort_order,po.id',
+            [$locale, $productId],
+        );
+        $groups = [];
+        foreach ($options as $option) {
+            $values = $this->connection->fetchAllAssociative(
+                'SELECT ov.id,ov.swatch,ov.media_asset_id,COALESCE(ovt.name,(SELECT x.name FROM mc_product_option_value_translation x WHERE x.option_value_id=ov.id ORDER BY x.locale LIMIT 1),ov.code) label FROM mc_product_option_value ov LEFT JOIN mc_product_option_value_translation ovt ON ovt.option_value_id=ov.id AND ovt.locale=? WHERE ov.option_id=? ORDER BY ov.sort_order,ov.id',
+                [$locale, (int) $option['id']],
+            );
+            if ($values === []) {
+                continue;
+            }
+            $groups[] = ['id' => (int) $option['id'], 'name' => (string) $option['name'], 'values' => array_map(static fn (array $v): array => ['id' => (int) $v['id'], 'label' => (string) $v['label'], 'swatch' => (string) ($v['swatch'] ?? ''), 'media_id' => $v['media_asset_id'] !== null ? (int) $v['media_asset_id'] : null], $values)];
+        }
+
+        return $groups;
     }
 
     /**
@@ -862,12 +908,13 @@ final readonly class DbalStorefrontCatalogQuery
      */
     private function productImages(int $productId, string $name): array
     {
-        $rows=$this->connection->fetchAllAssociative("SELECT ma.storage_key,ma.width,ma.height,pm.alt_text,pm.sort_order,pm.role FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=? AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC",[$productId]);
+        $rows=$this->connection->fetchAllAssociative("SELECT ma.id media_id,ma.storage_key,ma.width,ma.height,pm.alt_text,pm.sort_order,pm.role FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=? AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC",[$productId]);
         if ($rows===[]) { return [['url'=>'/assets/product-placeholder.svg','alt'=>$name,'srcset'=>'','sizes'=>'(max-width: 900px) 100vw, 50vw','width'=>640,'height'=>640,'thumb'=>'/assets/product-placeholder.svg','full'=>'/assets/product-placeholder.svg']]; }
         $lowest=(int)min(array_map(static fn(array $r):int=>(int)$r['sort_order'],$rows));
         return array_map(function(array $r) use ($name,$lowest): array {
             $master=$this->mediaUrl($r['storage_key']);
             return [
+                'media_id'=>(int)$r['media_id'],
                 'url'=>$this->variants->url($master,'product'),
                 'alt'=>(string)($r['alt_text']?:$name),
                 'srcset'=>$this->variants->srcset($master,['product','zoom']),

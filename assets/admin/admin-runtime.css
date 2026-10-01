@@ -1717,3 +1717,14 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 
 .admin-attr-grid { align-items: start; }
 .admin-sku-field { min-width: 0; }
+
+.admin-option-stack { display: grid; gap: var(--mc-space-3); margin-bottom: var(--mc-space-3); }
+.admin-option { display: grid; gap: var(--mc-space-2); padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); }
+.admin-option__head { display: flex; align-items: center; gap: var(--mc-space-2); }
+.admin-option__head > input { flex: 1 1 auto; font-weight: 600; }
+.admin-option__values { display: grid; gap: var(--mc-space-1); }
+.admin-option__row { display: grid; grid-template-columns: minmax(8rem, 2fr) minmax(5rem, 1fr) 3rem minmax(8rem, 2fr) 2rem; gap: var(--mc-space-2); align-items: center; }
+.admin-option__row.is-head { color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
+.admin-option__row input[type="color"] { width: 100%; padding: 0; }
+.admin-option__add { display: grid; gap: var(--mc-space-1); }
+.admin-variant-editor__title { margin: 0 0 var(--mc-space-2); font-size: var(--mc-font-size-md); }
