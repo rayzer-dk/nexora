@@ -199,7 +199,7 @@ test('category text blocks render sanitised above and below the grid', async ({ 
   await expect(page.locator('textarea[name="description_bottom"]')).toHaveValue(/E2E seo/);
   const name = await page.locator('input[name="name"]').first().inputValue();
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
-  const link = page.locator('main a, header a, nav a').filter({ hasText: name }).first();
+  const link = page.locator('main a, header a, nav a').filter({ hasText: name }).locator('visible=true').first();
   await expect(link).toBeVisible();
   await link.click();
   await page.waitForLoadState('domcontentloaded');

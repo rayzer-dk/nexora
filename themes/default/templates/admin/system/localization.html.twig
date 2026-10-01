@@ -6,7 +6,7 @@
 </header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 
-<form method="post" action="{{ path('admin_system_localization_locales') }}" class="admin-panel" data-dirty-guard>
+<form method="post" action="{{ path('admin_system_localization_locales') }}" class="admin-panel" id="locales" data-dirty-guard>
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_locales') }}">
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.localization.locales.eyebrow') }}</small><h2>{{ ui_text('admin.localization.locales.title') }}</h2></div></div>
     <p class="admin-card-note">{{ ui_text('admin.localization.locales.help') }}</p>
@@ -40,7 +40,7 @@
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.localization.currencies.eyebrow') }}</small><h2>{{ ui_text('admin.localization.currencies.title') }}</h2></div></div>
     <p class="admin-card-note">{{ ui_text('admin.localization.currencies.help', {base: data.default_currency}) }}</p>
     <div class="admin-table-wrap"><table class="admin-table">
-        <thead><tr><th>{{ ui_text('admin.localization.col.currency') }}</th><th>{{ ui_text('admin.localization.col.shown') }}</th><th>{{ ui_text('admin.localization.col.prices') }}</th><th>{{ ui_text('admin.localization.col.auto_convert') }}</th><th>{{ ui_text('admin.localization.col.rate_source') }}</th><th>{{ ui_text('admin.localization.col.rounding') }}</th><th>{{ ui_text('admin.localization.col.order') }}</th></tr></thead>
+        <thead><tr><th>{{ ui_text('admin.localization.col.currency') }}</th><th>{{ ui_text('admin.localization.col.shown') }}</th><th>{{ ui_text('admin.localization.col.prices') }}</th><th>{{ ui_text('admin.localization.col.auto_convert') }}</th><th>{{ ui_text('admin.localization.col.rate_source') }}</th><th>{{ ui_text('admin.localization.col.markup') }}</th><th>{{ ui_text('admin.localization.col.rounding') }}</th><th>{{ ui_text('admin.localization.col.order') }}</th></tr></thead>
         <tbody>
         {% for currency in data.currencies %}
             {% set prefix = 'currency[' ~ currency.code ~ ']' %}
@@ -49,13 +49,18 @@
                 <td><label class="admin-check-inline"><input type="checkbox" name="{{ prefix }}[enabled]" value="1" {{ currency.enabled or currency.is_default ? 'checked' }} {{ currency.is_default ? 'disabled' }}><span class="visually-hidden">{{ ui_text('admin.localization.col.shown') }}</span></label>{% if currency.is_default %}<input type="hidden" name="{{ prefix }}[enabled]" value="1">{% endif %}</td>
                 <td>{{ currency.price_count }}{% if currency.enabled and not currency.is_default and currency.price_count == 0 %} <span class="admin-badge is-warning" title="{{ ui_text('admin.localization.currencies.hidden_no_prices')|e('html_attr') }}">{{ ui_text('admin.localization.currencies.hidden') }}</span>{% endif %}</td>
                 <td>{% if currency.is_default %}—{% else %}<label class="admin-check-inline"><input type="checkbox" name="{{ prefix }}[auto_convert]" value="1" {{ currency.auto_convert ? 'checked' }}><span class="visually-hidden">{{ ui_text('admin.localization.col.auto_convert') }}</span></label>{% endif %}</td>
-                <td>{% if currency.is_default %}—<input type="hidden" name="{{ prefix }}[rate_source]" value="nbu">{% else %}<select name="{{ prefix }}[rate_source]" aria-label="{{ ui_text('admin.localization.col.rate_source') }}"><option value="nbu" {{ currency.rate_source != 'manual' ? 'selected' }}>{{ ui_text('admin.localization.rate_source.nbu') }}</option><option value="manual" {{ currency.rate_source == 'manual' ? 'selected' }}>{{ ui_text('admin.localization.rate_source.manual') }}</option></select>{% endif %}</td>
+                <td>{% if currency.is_default %}—<input type="hidden" name="{{ prefix }}[rate_source]" value="auto">{% else %}<select name="{{ prefix }}[rate_source]" aria-label="{{ ui_text('admin.localization.col.rate_source') }}">{% for code in rate_sources %}<option value="{{ code }}" {{ currency.rate_source == code ? 'selected' }}>{{ ui_text('admin.localization.rate_source.' ~ code) }}</option>{% endfor %}</select>{% endif %}</td>
+                <td>{% if currency.is_default %}—{% else %}<label class="admin-input-suffix"><input type="text" inputmode="decimal" name="{{ prefix }}[rate_markup]" value="{{ (currency.rate_markup_bps / 100)|number_format(2, '.', '') }}" class="admin-input-narrow" aria-label="{{ ui_text('admin.localization.col.markup') }}"><span>%</span></label>{% endif %}</td>
                 <td><select name="{{ prefix }}[rounding_increment_minor]" aria-label="{{ ui_text('admin.localization.col.rounding') }}">{% for step in [1,5,10,50,100] %}<option value="{{ step }}" {{ currency.rounding_increment_minor == step ? 'selected' }}>{{ ui_text('admin.localization.rounding.' ~ step) }}</option>{% endfor %}</select></td>
                 <td><input type="number" name="{{ prefix }}[sort_order]" value="{{ currency.sort_order }}" min="0" max="9999" class="admin-input-narrow" aria-label="{{ ui_text('admin.localization.col.order') }}"></td>
             </tr>
         {% endfor %}
         </tbody>
     </table></div>
+    <dl class="admin-hint-list">
+        {% for code in rate_sources %}<div><dt>{{ ui_text('admin.localization.rate_source.' ~ code) }}</dt><dd>{{ ui_text('admin.localization.rate_source_hint.' ~ code) }}</dd></div>{% endfor %}
+        <div><dt>{{ ui_text('admin.localization.col.markup') }}</dt><dd>{{ ui_text('admin.localization.markup_hint') }}</dd></div>
+    </dl>
     <details class="admin-inline-create">
         <summary>{{ ui_text('admin.localization.currencies.add') }}</summary>
         <div class="admin-form-grid">
@@ -80,7 +85,7 @@
             <tr>
                 <td><strong>{{ currency.code }}</strong></td>
                 <td>{% if currency.rate %}1 {{ currency.code }} = {{ currency.rate.per_quote }} {{ data.default_currency }}{% if currency.rate.expired %} <span class="admin-badge is-warning">{{ ui_text('admin.localization.rates.expired') }}</span>{% endif %}{% else %}<span class="admin-badge is-warning">{{ ui_text('admin.localization.rates.none') }}</span>{% endif %}</td>
-                <td>{{ ui_text('admin.localization.rate_source.' ~ (currency.rate_source == 'manual' ? 'manual' : 'nbu')) }}</td>
+                <td>{{ ui_text('admin.localization.rate_source.' ~ currency.rate_source) }}{% if currency.rate and currency.rate.provider != 'manual' and currency.rate_source == 'auto' %} <small>({{ currency.rate.provider|upper }})</small>{% endif %}</td>
                 <td>{{ currency.rate ? currency.rate.observed_at : '—' }}</td>
                 <td>{% if currency.rate_source == 'manual' %}
                     <form method="post" action="{{ path('admin_system_localization_rate') }}" class="admin-rate-form">
@@ -95,5 +100,30 @@
         {% endfor %}
         </tbody>
     </table></div>
+</section>
+
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.localization.providers.eyebrow') }}</small><h2>{{ ui_text('admin.localization.providers.title') }}</h2></div></div>
+    <p class="admin-card-note">{{ ui_text('admin.localization.providers.help') }}</p>
+    <div class="admin-table-wrap"><table class="admin-table">
+        <thead><tr><th>{{ ui_text('admin.localization.providers.provider') }}</th><th>{{ ui_text('admin.localization.providers.last_success') }}</th><th>{{ ui_text('admin.localization.providers.rate_date') }}</th><th>{{ ui_text('admin.localization.providers.state') }}</th></tr></thead>
+        <tbody>
+        {% for code, st in rate_providers %}
+            <tr>
+                <td><strong>{{ ui_text('admin.localization.rate_source.' ~ code) }}</strong></td>
+                <td>{{ st.last_success_at ?: '—' }}</td>
+                <td>{{ st.last_rate_date ?: '—' }}</td>
+                <td>{% if st.last_error %}<span class="admin-badge is-danger" title="{{ st.last_error|e('html_attr') }}">{{ ui_text('admin.localization.providers.failed') }}</span> <small>{{ st.last_attempt_at }}</small>{% elseif st.last_success_at %}<span class="admin-badge is-success">{{ ui_text('admin.localization.providers.ok') }}</span>{% else %}<span class="admin-badge is-muted">{{ ui_text('admin.localization.providers.never') }}</span>{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    <form method="post" action="{{ path('admin_system_localization_rate_api') }}" class="admin-form-grid admin-form-grid--dense" data-dirty-guard>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_rate_api') }}">
+        <label><span>{{ ui_text('admin.localization.rate_api.service') }}</span><select name="service">{% for svc in rate_api.services %}<option value="{{ svc }}" {{ rate_api.service == svc ? 'selected' }}>{{ ui_text('admin.localization.rate_api.service.' ~ svc) }}</option>{% endfor %}</select><small>{{ ui_text('admin.localization.rate_api.service_help') }}</small></label>
+        <label><span>{{ ui_text('admin.localization.rate_api.key') }}</span><input type="password" name="api_key" autocomplete="off" maxlength="128" placeholder="{{ rate_api.has_key ? ui_text('admin.localization.rate_api.key_saved')|e('html_attr') : '' }}"><small>{{ ui_text('admin.localization.rate_api.key_help') }}</small></label>
+        {% if rate_api.has_key %}<label class="admin-check-inline"><input type="checkbox" name="clear_key" value="1"><span>{{ ui_text('admin.localization.rate_api.clear') }}</span></label>{% endif %}
+        <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.localization.rate_api.save') }}</button></div>
+    </form>
 </section>
 {{ shell.end() }}

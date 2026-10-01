@@ -1,0 +1,55 @@
+{#- Slide-in cart fragment. Fetched by assets/storefront/cart-drawer.js; also the no-JS fallback is the /cart page. -#}
+{% set capabilities = site_capabilities() %}
+<div class="cart-drawer__inner" data-cart-drawer-body data-cart-count-value="{{ cart.count }}">
+  <header class="cart-drawer__head">
+    <h2 class="cart-drawer__title" id="cart-drawer-title">{{ ui_icon('shopping-cart', 20) }}<span>{{ ui_text('cart') }}</span>{% if cart.count > 0 %}<small class="cart-drawer__count">{{ cart.count }}</small>{% endif %}</h2>
+    <button class="cart-drawer__close" type="button" data-cart-drawer-close aria-label="{{ ui_text('cart_drawer_close') }}">{{ ui_icon('x', 20) }}</button>
+  </header>
+  {% if cart.items %}
+  <div class="cart-drawer__lines" data-cart-drawer-lines>
+    {% for item in cart.items %}
+    <article class="drawer-line" data-drawer-item="{{ item.id }}">
+      <a class="drawer-line__img" href="{{ item.url }}"><img src="{{ item.image }}" alt="" width="72" height="72" loading="lazy" decoding="async"></a>
+      <div class="drawer-line__info">
+        <a class="drawer-line__name" href="{{ item.url }}">{{ item.name }}</a>
+        {% if item.options %}<small class="drawer-line__meta">{{ item.options }}</small>{% else %}<small class="drawer-line__meta">SKU {{ item.sku }}</small>{% endif %}
+        <div class="drawer-line__row">
+          <form class="drawer-line__qty" method="post" action="/cart/{{ item.id }}/update" data-drawer-update>
+            <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
+            <div class="cart-qty">
+              <button class="quantity__btn" type="button" data-drawer-minus aria-label="{{ ui_text('decrease') }}">{{ ui_icon('minus', 16) }}</button>
+              <label class="sr-only" for="dq-{{ item.id }}">{{ ui_text('quantity') }}</label>
+              <input id="dq-{{ item.id }}" type="number" name="quantity" min="{{ item.min_quantity }}" step="{{ item.quantity_step }}" value="{{ item.quantity }}"{% if item.max_quantity %} max="{{ item.max_quantity }}"{% endif %} inputmode="decimal" data-drawer-qty>
+              <button class="quantity__btn" type="button" data-drawer-plus aria-label="{{ ui_text('increase') }}">{{ ui_icon('plus', 16) }}</button>
+            </div>
+            <noscript><button class="button button--secondary button--sm" type="submit">{{ ui_text('update') }}</button></noscript>
+          </form>
+          <strong class="drawer-line__total">{{ item.line_total }}</strong>
+        </div>
+      </div>
+      <form class="drawer-line__remove" method="post" action="/cart/{{ item.id }}/remove" data-drawer-remove>
+        <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
+        <button class="drawer-line__remove-btn" type="submit" aria-label="{{ ui_text('remove') }}" title="{{ ui_text('remove') }}">{{ ui_icon('trash-2', 16) }}</button>
+      </form>
+    </article>
+    {% endfor %}
+  </div>
+  <footer class="cart-drawer__foot">
+    <dl class="cart-drawer__totals">
+      <div><dt>{{ ui_text('products_sum') }}</dt><dd>{{ cart.subtotal }}</dd></div>
+      {% if cart.discount_minor > 0 %}<div class="is-discount"><dt>{{ ui_text('automatic_discount') }}</dt><dd>−{{ cart.discount }}</dd></div>{% endif %}
+      <div class="is-grand"><dt>{{ ui_text('amount_due') }}</dt><dd>{{ cart.total }}</dd></div>
+    </dl>
+    <p class="cart-drawer__note">{{ ui_text('shipping_payment_next') }}</p>
+    {% if capabilities.features.checkout|default(false) %}<a class="button button--primary button--lg button--block" href="/checkout">{{ ui_text('checkout_action') }}{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
+    <div class="cart-drawer__links"><button class="button button--secondary button--block" type="button" data-cart-drawer-close>{{ ui_text('continue_shopping') }}</button><a class="cart-drawer__full" href="/cart">{{ ui_text('cart_drawer_open_page') }}</a></div>
+  </footer>
+  {% else %}
+  <div class="cart-drawer__empty">
+    <span class="cart-drawer__empty-icon" aria-hidden="true">{{ ui_icon('shopping-bag', 32) }}</span>
+    <strong>{{ ui_text('cart_empty') }}</strong>
+    <p>{{ ui_text('cart_empty_text') }}</p>
+    <a class="button button--primary" href="/catalog">{{ ui_text('go_catalog') }}{{ ui_icon('arrow-right', 16) }}</a>
+  </div>
+  {% endif %}
+</div>

@@ -76,11 +76,17 @@ final readonly class MediaImageService
         try {
             $checksum = hash('sha256', $raw);
             $relativeBase = 'catalog/' . gmdate('Y/m') . '/' . substr($checksum, 0, 2) . '/' . $checksum;
-            $profile = $storeId !== null ? $this->processingProfile($storeId) : ['format'=>'original','widths'=>[640,960,1280],'include_original'=>true,'quality'=>85];
+            $profile = $storeId !== null ? $this->processingProfile($storeId) : MediaImageProfile::RECOMMENDED;
             if ($fromHeic && in_array($profile['format'], ['original', 'jpeg', 'png'], true)) {
                 $profile['format'] = 'webp'; // HEIC is not browser-friendly: it is always converted to WebP (or AVIF when the store chose it)
             }
+            if (in_array($profile['format'], ['webp', 'avif'], true) && !function_exists($profile['format'] === 'avif' ? 'imageavif' : 'imagewebp')) {
+                $profile['format'] = 'original'; // this PHP build cannot write the chosen format: keep the picture's own format instead of failing the upload
+            }
             $derivatives = $this->generateDerivatives($source, $width, $height, $relativeBase, $mime, $profile);
+            if ($profile['keep_source']) {
+                $derivatives[] = $this->keepSource($raw, $relativeBase, $fromHeic ? 'image/jpeg' : $mime, $width, $height);
+            }
             if ($derivatives === []) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.media.application.mediaimageservice.ne_vdalosia_stvoryty_optymizovani_kopii_zobrazhennia'));
             }
@@ -278,26 +284,56 @@ final readonly class MediaImageService
         return ['deleted_assets' => $deletedAssets, 'deleted_files' => $dryRun ? 0 : $deletedFiles];
     }
 
-    /** @param array{format:string,widths:list<int>,include_original:bool,quality:int} $profile
-     * @return list<array{format:string,width:int,height:int,key:string,mime:string,bytes:int}>
+    /** @param array{format:string,widths:list<int>,include_original:bool,quality:int,keep_source:bool,jpeg_fallback:bool} $profile
+     * @return list<array{format:string,width:int,height:int,key:string,mime:string,bytes:int,role?:string}>
      */
     private function generateDerivatives(GdImage $source, int $sourceWidth, int $sourceHeight, string $relativeBase, string $sourceMime, array $profile): array
     {
+        $cap = MediaImageProfile::MAX_DERIVATIVE_WIDTH;
         $targets = array_values(array_filter($profile['widths'], static fn (int $w): bool => $w > 0 && $w < $sourceWidth));
-        if ($profile['include_original'] || $targets === []) $targets[] = $sourceWidth;
+        // The full-size copy is capped: a 6000 px photo is never served as a 6000 px file (the untouched original is kept separately).
+        if ($profile['include_original'] || $targets === []) $targets[] = min($sourceWidth, $cap);
         $targets = array_values(array_unique($targets)); sort($targets);
         $format = $profile['format'] === 'original' ? $this->formatFromMime($sourceMime) : $profile['format'];
         $derivatives=[];
         foreach($targets as $width){
-            $height=max(1,(int)round($sourceHeight*($width/$sourceWidth)));
-            $canvas=imagecreatetruecolor($width,$height);
-            if(!$canvas instanceof GdImage) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.9fa25998ff4b'));
-            imagealphablending($canvas,false); imagesavealpha($canvas,true);
-            $transparent=imagecolorallocatealpha($canvas,255,255,255,127); imagefilledrectangle($canvas,0,0,$width,$height,$transparent);
-            imagecopyresampled($canvas,$source,0,0,0,0,$width,$height,$sourceWidth,$sourceHeight);
-            try{$derivatives[]=$this->writeByFormat($canvas,$relativeBase.'-'.$width,$format,$profile['quality'],$width,$height);}finally{imagedestroy($canvas);}
+            $derivatives[]=$this->resizeAndWrite($source,$sourceWidth,$sourceHeight,$width,$relativeBase.'-'.$width,$format,$profile['quality']);
+        }
+        if ($profile['jpeg_fallback'] && $format !== 'jpeg') {
+            $width = min($sourceWidth, 1280);
+            $fallback = $this->resizeAndWrite($source,$sourceWidth,$sourceHeight,$width,$relativeBase.'-fallback','jpeg',85);
+            $fallback['role'] = 'fallback';
+            $derivatives[] = $fallback;
         }
         return $derivatives;
+    }
+
+    /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
+    private function resizeAndWrite(GdImage $source,int $sourceWidth,int $sourceHeight,int $width,string $base,string $format,int $quality): array
+    {
+        $height=max(1,(int)round($sourceHeight*($width/$sourceWidth)));
+        $canvas=imagecreatetruecolor($width,$height);
+        if(!$canvas instanceof GdImage) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.9fa25998ff4b'));
+        if($format==='jpeg'){
+            // JPEG has no alpha channel: flatten transparency onto white instead of black.
+            imagefilledrectangle($canvas,0,0,$width,$height,(int)imagecolorallocate($canvas,255,255,255));
+        }else{
+            imagealphablending($canvas,false); imagesavealpha($canvas,true);
+            imagefilledrectangle($canvas,0,0,$width,$height,(int)imagecolorallocatealpha($canvas,255,255,255,127));
+        }
+        imagecopyresampled($canvas,$source,0,0,0,0,$width,$height,$sourceWidth,$sourceHeight);
+        try{return $this->writeByFormat($canvas,$base,$format,$quality,$width,$height);}finally{imagedestroy($canvas);}
+    }
+
+    /** Stores the untouched upload (HEIC: its JPEG conversion) next to the derivatives. It is never used on the storefront. @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int,role:string} */
+    private function keepSource(string $raw,string $relativeBase,string $mime,int $width,int $height): array
+    {
+        $extension=match($mime){'image/png'=>'png','image/webp'=>'webp','image/avif'=>'avif',default=>'jpg'};
+        $key=$relativeBase.'-source.'.$extension;
+        $path=$this->publicMediaPath($key); $this->ensureDirectory(dirname($path));
+        if(@file_put_contents($path,$raw)===false) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
+        @chmod($path,0644);
+        return ['format'=>$this->formatFromMime($mime),'width'=>$width,'height'=>$height,'key'=>$key,'mime'=>$mime,'bytes'=>strlen($raw),'role'=>'source'];
     }
 
     /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
@@ -348,23 +384,21 @@ final readonly class MediaImageService
     /** @param list<array{format:string,width:int,height:int,key:string,mime:string,bytes:int}> $derivatives @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
     private function preferredDerivative(array $derivatives): array
     {
-        $pool = $derivatives;
+        $pool = array_values(array_filter($derivatives, static fn (array $d): bool => !isset($d['role'])));
+        if ($pool === []) {
+            $pool = $derivatives;
+        }
         usort($pool, static fn (array $a, array $b): int => $b['width'] <=> $a['width']);
         return $pool[0];
     }
 
 
-    /** @return array{format:string,widths:list<int>,include_original:bool,quality:int} */
+    /** @return array{format:string,widths:list<int>,include_original:bool,quality:int,keep_source:bool,jpeg_fallback:bool} */
     private function processingProfile(int $storeId): array
     {
         $saved=$this->revisions->latestValidPayload($storeId,'media','image_processing');
-        $input=is_array($saved)?$saved:[];
-        $format=strtolower(trim((string)($input['format']??'original')));
-        if(!in_array($format,['original','jpeg','png','webp','avif'],true))$format='original';
-        $allowed=[320,640,960,1280,1920];
-        $widths=array_values(array_unique(array_filter(array_map('intval',(array)($input['widths']??[640,960,1280])),static fn(int $w):bool=>in_array($w,$allowed,true))));
-        sort($widths);
-        return ['format'=>$format,'widths'=>$widths,'include_original'=>(bool)($input['include_original']??true),'quality'=>max(35,min(95,(int)($input['quality']??85)))];
+
+        return MediaImageProfile::normalize(is_array($saved)?$saved:[]);
     }
 
     /** @return array<string,mixed> */

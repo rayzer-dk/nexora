@@ -50,6 +50,41 @@ final class TaxAdminController extends AbstractController
         });
     }
 
+    #[Route('/admin/system/tax/rates/{id}/edit', name: 'admin_system_tax_rate_edit', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function edit(Request $request, int $id): Response
+    {
+        $this->contexts->resolve($request);
+        $rate = $this->tax->rate($id);
+        if ($rate === null) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->render('@storefront/admin/system/tax_edit.html.twig', [
+            'rate' => $rate,
+            'classes' => $this->tax->classes(),
+            'percent' => rtrim(rtrim(number_format(((int) $rate['rate_bps']) / 100, 2, '.', ''), '0'), '.'),
+        ]);
+    }
+
+    #[Route('/admin/system/tax/rates/{id}/edit', name: 'admin_system_tax_rate_update', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function update(Request $request, int $id): RedirectResponse
+    {
+        if (!$this->isCsrfTokenValid('admin_tax', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException(CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+        $in = $request->request;
+        try {
+            $this->tax->updateRate($id, (int) $in->get('class_id', 0), (string) $in->get('country', ''), (string) $in->get('region', ''), (string) $in->get('name', ''), (string) $in->get('percent', ''), (int) $in->get('priority', 100), $in->getBoolean('enabled'), (string) $in->get('valid_from', ''), (string) $in->get('valid_to', ''));
+            $this->addFlash('success', CanonicalUiText::get('admin.tax.saved'));
+        } catch (\InvalidArgumentException $e) {
+            $this->addFlash('error', CanonicalUiText::get('admin.tax.error.' . $e->getMessage()));
+
+            return $this->redirectToRoute('admin_system_tax_rate_edit', ['id' => $id]);
+        }
+
+        return $this->redirectToRoute('admin_system_tax');
+    }
+
     #[Route('/admin/system/tax/rates/{id}/toggle', name: 'admin_system_tax_rate_toggle', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function toggle(Request $request, int $id): RedirectResponse
     {

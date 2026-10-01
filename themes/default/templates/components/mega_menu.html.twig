@@ -1,0 +1,44 @@
+{# Catalog mega-menu: every active category with its sub-categories and photos.
+   Desktop: wide panel with one column per top-level category. Mobile: slide-in drawer with an accordion.
+   Progressive enhancement: without JavaScript the toggle is a plain link to the catalog and the panel stays closed. #}
+{% macro thumb(node, size) %}{% if node.image %}<span class="mega__thumb mega__thumb--{{ size }}"><img src="{{ node.image }}" alt="" width="{{ size }}" height="{{ size }}" loading="lazy" decoding="async"></span>{% else %}<span class="mega__thumb mega__thumb--{{ size }} is-placeholder" aria-hidden="true">{{ ui_icon('image', 16) }}</span>{% endif %}{% endmacro %}
+{% import _self as mega %}
+{% set mega_tree = storefront_mega_tree() %}
+<div class="mega" data-mega>
+    <a class="reference-catalog-toggle" href="/catalog" role="button" aria-expanded="false" aria-controls="mega-panel" aria-haspopup="true" data-mega-toggle>{{ ui_icon('grid-2x2', 18) }}<span>{{ ui_text('catalog') }}</span>{{ ui_icon('chevron-down', 16) }}</a>
+    <div class="mega__panel" id="mega-panel" data-mega-panel hidden>
+        <div class="mega__scrim" data-mega-close></div>
+        <nav class="mega__sheet" aria-label="{{ ui_text('categories') }}">
+            <div class="mega__head"><strong>{{ ui_text('catalog') }}</strong><button class="mega__close" type="button" data-mega-close aria-label="{{ ui_text('mega_close') }}" title="{{ ui_text('mega_close') }}">{{ ui_icon('x', 20) }}</button></div>
+            <div class="shell mega__inner">
+                {% if mega_tree %}
+                <div class="mega__grid">
+                    {% for cat in mega_tree %}
+                    <section class="mega__group">
+                        <div class="mega__group-head">
+                            <a class="mega__cat mega__cat--top" href="{{ cat.url }}">{{ mega.thumb(cat, 56) }}<span class="mega__cat-name">{{ cat.name }}</span></a>
+                            {% if cat.children %}<button class="mega__expand" type="button" aria-expanded="false" aria-controls="mega-sub-{{ cat.id }}" aria-label="{{ ui_text('mega_expand') }}: {{ cat.name }}" data-mega-expand>{{ ui_icon('chevron-down', 16) }}</button>{% endif %}
+                        </div>
+                        {% if cat.children %}
+                        <ul class="mega__sub" id="mega-sub-{{ cat.id }}">
+                            {% for child in cat.children|slice(0, 8) %}
+                            <li><a class="mega__cat" href="{{ child.url }}">{{ mega.thumb(child, 32) }}<span class="mega__cat-name">{{ child.name }}</span></a>
+                                {% if child.children %}<ul class="mega__subsub">{% for leaf in child.children|slice(0, 4) %}<li><a href="{{ leaf.url }}">{{ leaf.name }}</a></li>{% endfor %}</ul>{% endif %}
+                            </li>
+                            {% endfor %}
+                            {% if cat.children|length > 8 %}<li><a class="mega__more" href="{{ cat.url }}">{{ ui_text('mega_view_all') }}{{ ui_icon('arrow-right', 14) }}</a></li>{% endif %}
+                        </ul>
+                        {% endif %}
+                    </section>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="mega__foot"><a class="mega__all" href="/catalog">{{ ui_icon('layout-grid', 16) }}{{ ui_text('mega_all_products') }}{{ ui_icon('arrow-right', 14) }}</a></div>
+                {% if presentation.header.show_category_nav and primary_navigation %}
+                <div class="mega__extra"><h2 class="mega__extra-title">{{ ui_text('mega_menu_section') }}</h2><ul>{% for item in primary_navigation %}<li><a href="{{ item.url }}"{% if item.open_new_tab|default(false) %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ item.name }}</a></li>{% endfor %}</ul></div>
+                {% endif %}
+                <div class="mega__extra"><h2 class="mega__extra-title">{{ ui_text('mega_information') }}</h2><ul>{% if capabilities.features.content %}<li><a href="/about-us">{{ ui_text('about') }}</a></li><li><a href="/shipping">{{ ui_text('shipping_payment') }}</a></li><li><a href="/returns">{{ ui_text('returns') }}</a></li>{% endif %}{% if capabilities.features.blog %}<li><a href="/blog">{{ ui_text('blog') }}</a></li>{% endif %}{% if capabilities.features.forum|default(false) %}<li><a href="/forum">{{ ui_text('forum') }}</a></li>{% endif %}{% if capabilities.features.content %}<li><a href="/contact">{{ ui_text('contacts') }}</a></li>{% endif %}</ul></div>
+            </div>
+        </nav>
+    </div>
+</div>

@@ -14,7 +14,7 @@ final readonly class DbalBlogQuery
 {
     private const PUBLISHED = "ce.content_type='article' AND ce.status='published' AND (ce.published_at IS NULL OR ce.published_at<=UTC_TIMESTAMP(6))";
     private const SELECT = "ce.id,ce.public_id,ce.published_at,ce.updated_at,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description,sr.path,
-                    em.value_json AS image_meta,bm.cover_url,bm.cover_alt,bm.author_name,bm.featured,bm.noindex,bm.canonical_url,bm.reading_minutes,bm.category_id,
+                    em.value_json AS image_meta,bm.cover_url,bm.cover_alt,bm.image_size,bm.image_align,bm.author_name,bm.featured,bm.noindex,bm.canonical_url,bm.reading_minutes,bm.category_id,
                     bc.slug AS category_slug,COALESCE(bct.name,bc.slug) AS category_name";
     private const JOINS = "FROM mc_content_entry ce
              JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=:locale
@@ -171,7 +171,7 @@ final readonly class DbalBlogQuery
     }
 
     /**
-     * Related articles: same category or shared tags, best match first, then newest.
+     * Related articles: same category or shared tags first, then the newest others, so the article rail is never empty.
      *
      * @return list<array<string,mixed>>
      */
@@ -181,8 +181,7 @@ final readonly class DbalBlogQuery
             'SELECT ' . self::SELECT . ',
                     (SELECT COUNT(*) FROM mc_blog_article_tag a JOIN mc_blog_article_tag b ON b.tag_slug=a.tag_slug AND b.content_id=:self WHERE a.content_id=ce.id) AS shared_tags
              ' . self::JOINS . ' WHERE ce.store_id=:store AND ' . self::PUBLISHED . ' AND ce.id<>:self
-               AND (bm.category_id=:cat OR EXISTS (SELECT 1 FROM mc_blog_article_tag a JOIN mc_blog_article_tag b ON b.tag_slug=a.tag_slug AND b.content_id=:self WHERE a.content_id=ce.id))
-             ORDER BY shared_tags DESC,ce.published_at DESC LIMIT ' . max(1, min(12, $limit)),
+             ORDER BY (bm.category_id=:cat) DESC,shared_tags DESC,ce.published_at DESC LIMIT ' . max(1, min(12, $limit)),
             ['locale' => $locale, 'ns' => 'demo-' . $storeId, 'store' => $storeId, 'self' => $contentId, 'cat' => $categoryId],
         );
         return array_map(fn (array $r): array => $this->card($r, $locale), $rows);
@@ -250,6 +249,8 @@ final readonly class DbalBlogQuery
             'date' => $published ? $this->formatDate((string) $published, $locale) : '',
             'iso' => $published ? $this->iso($published) : '',
             'image' => $image,
+            'image_size' => in_array((string) ($r['image_size'] ?? ''), ['s', 'm', 'l'], true) ? (string) $r['image_size'] : 'm',
+            'image_align' => in_array((string) ($r['image_align'] ?? ''), ['none', 'left', 'right', 'hide'], true) ? (string) $r['image_align'] : 'none',
             'image_alt' => (string) (($r['cover_alt'] ?? '') !== '' ? $r['cover_alt'] : $r['title']),
             'author' => (string) ($r['author_name'] ?? ''),
             'featured' => (int) ($r['featured'] ?? 0) === 1,

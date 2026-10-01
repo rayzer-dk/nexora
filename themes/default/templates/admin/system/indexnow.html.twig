@@ -1,11 +1,11 @@
-{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}
 {{ shell.start(ui_text('admin.indexnow.title'),'indexnow') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.indexnow.title') }}</span></nav><h1>{{ ui_text('admin.indexnow.title') }}</h1><p>{{ ui_text('admin.indexnow.intro') }}</p></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
 {% if not usable %}<section class="admin-panel" data-indexnow-unusable><p>{{ ui_icon('clock', 16) }} {{ ui_text('admin.indexnow.unusable') }} <code>{{ host }}</code></p></section>{% endif %}
 <section class="admin-panel"><form method="post" action="{{ path('admin_system_seo_indexnow_save') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_indexnow') }}">
 <label class="admin-check"><input type="checkbox" name="enabled" value="1"{{ state.enabled ? ' checked' : '' }}> {{ ui_text('admin.indexnow.enabled') }}</label>
-<div class="admin-form-wide"><small>{{ ui_text('admin.indexnow.key_file') }}: <a href="{{ key_location }}" target="_blank" rel="noopener noreferrer"><code>{{ key_location }}</code></a></small></div>
+<div class="admin-form-wide">{{ help.hint(ui_text('admin.help.indexnow.note'), 'https://www.indexnow.org/documentation', ui_text('admin.help.indexnow.docs')) }}<small>{{ ui_text('admin.indexnow.key_file') }}: <a href="{{ key_location }}" target="_blank" rel="noopener noreferrer"><code>{{ key_location }}</code></a></small></div>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div></form></section>
 <section class="admin-panel"><div class="admin-panel__header"><h2>{{ ui_text('admin.indexnow.status') }}</h2></div>
 <dl class="admin-definition-list"><div><dt>{{ ui_text('admin.indexnow.last_run') }}</dt><dd>{{ state.last_run_at ?: '—' }}</dd></div><div><dt>{{ ui_text('admin.indexnow.last_status') }}</dt><dd>{{ state.last_status ?: '—' }}</dd></div><div><dt>{{ ui_text('admin.indexnow.last_count') }}</dt><dd>{{ state.last_count }}</dd></div></dl>

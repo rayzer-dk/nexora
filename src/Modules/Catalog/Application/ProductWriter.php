@@ -138,12 +138,17 @@ final readonly class ProductWriter
             ], ['id' => $command->productId]);
             $db->update('mc_store_product', ['status' => $publicationStatus, 'published_at' => $publishedAt], ['store_id' => $command->storeId, 'product_id' => $command->productId]);
             $db->update('mc_market_product', ['status' => $publicationStatus, 'published_at' => $publishedAt], ['market_id' => $command->marketId, 'product_id' => $command->productId]);
-            $db->update('mc_product_translation', [
+            $translation = [
                 'name' => trim($command->name),
                 'short_description' => $this->plainText($command->shortDescription),
                 'description' => $this->richText($command->description),
                 'updated_at' => $now,
-            ], ['product_id' => $command->productId, 'store_id' => $command->storeId, 'locale' => $command->locale]);
+            ];
+            if ($command->updateSeoMeta) {
+                $translation['meta_title'] = $this->nullableShortText($command->metaTitle, 255);
+                $translation['meta_description'] = $this->nullableShortText($command->metaDescription, 500);
+            }
+            $db->update('mc_product_translation', $translation, ['product_id' => $command->productId, 'store_id' => $command->storeId, 'locale' => $command->locale]);
 
             $db->update('mc_product_variant', [
                 'sku' => trim($command->sku),
@@ -180,10 +185,14 @@ final readonly class ProductWriter
                 'tax_included' => 1,
                 'updated_at' => $now,
             ];
+            if ($command->updateCompareAt) {
+                // The "old price" is only meaningful when it is higher than the current price.
+                $priceData['compare_at_minor'] = $command->compareAtMinor !== null && $command->compareAtMinor > $command->priceMinor ? $command->compareAtMinor : null;
+            }
             if ($priceId === false) {
                 $db->insert('mc_price', array_merge($priceData, [
                     'variant_id' => $variantId, 'store_id' => $command->storeId, 'price_list_id' => null, 'market_id' => $command->marketId,
-                    'customer_group' => 'default', 'max_quantity' => null, 'compare_at_minor' => null, 'priority' => 100,
+                    'customer_group' => 'default', 'max_quantity' => null, 'compare_at_minor' => $priceData['compare_at_minor'] ?? null, 'priority' => 100,
                     'starts_at' => null, 'ends_at' => null, 'created_at' => $now,
                 ]));
             } else {

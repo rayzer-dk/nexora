@@ -520,10 +520,6 @@ services:
         arguments:
             $richTextSanitizer: '@html_sanitizer.sanitizer.commerce.rich_text'
 
-    Commerce\Modules\Admin\Http\ContentAdminPageController:
-        arguments:
-            $richTextSanitizer: '@html_sanitizer.sanitizer.commerce.rich_text'
-
 
     Commerce\Modules\Demo\Application\DemoSeeder:
         arguments:

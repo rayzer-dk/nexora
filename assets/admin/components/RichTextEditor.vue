@@ -97,11 +97,11 @@ const setBlock = (event: Event) => {
   else chain.setHeading({ level: Number(value.slice(1)) as 1 | 2 | 3 | 4 }).run();
 };
 const align = (value: 'left' | 'center' | 'right' | 'justify') => {
-  const current = editor.getAttributes('paragraph').align ?? editor.getAttributes('heading').align ?? null;
+  const current = editor.getAttributes('paragraph').align ?? editor.getAttributes('heading').align ?? editor.getAttributes('image').align ?? null;
   if (current === value) editor.chain().focus().unsetBlockAlign().run();
   else editor.chain().focus().setBlockAlign(value).run();
 };
-const isAligned = (value: string) => (editor.getAttributes('paragraph').align ?? editor.getAttributes('heading').align ?? null) === value;
+const isAligned = (value: string) => (editor.getAttributes('paragraph').align ?? editor.getAttributes('heading').align ?? editor.getAttributes('image').align ?? null) === value;
 
 // ---- link dialog ----
 const linkDialog = reactive({ open: false, url: '', text: '', blank: false, nofollow: false, hasLink: false, hasSelection: false });

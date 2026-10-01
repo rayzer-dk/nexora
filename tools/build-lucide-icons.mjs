@@ -32,5 +32,7 @@ for (const name of [...new Set(manifest.icons)].sort()) {
     `<${tag} ${Object.entries(attrs).filter(([k]) => k !== 'key').map(([k, v]) => `${k}="${esc(v)}"`).join(' ')}/>`,
   ).join('');
 }
+// Custom glyphs Lucide does not ship (social network marks): raw SVG bodies from the manifest.
+for (const [name, body] of Object.entries(manifest.custom ?? {})) out.icons[name] = String(body);
 writeFileSync('resources/icons/lucide.json', JSON.stringify(out, null, 1) + '\n');
 console.log(`lucide ${pkg.version}: ${Object.keys(out.icons).length} icons`);

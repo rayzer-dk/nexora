@@ -1,16 +1,17 @@
 {% extends '@storefront/base.html.twig' %}
 {% block head %}<script type="module" src="{{ vite_asset('assets/storefront/checkout.js', '/assets/checkout.js') }}"></script>{% endblock %}
 {% block body %}
-<section class="checkout-page" data-checkout data-country="{{ country_code }}" data-i18n-branch-placeholder="{{ ui_text('branch_search_placeholder') }}" data-i18n-cities-failed="{{ ui_text('cities_load_failed') }}" data-i18n-carrier-unavailable="{{ ui_text('carrier_service_unavailable') }}" data-i18n-points-failed="{{ ui_text('points_load_failed') }}" data-i18n-promo-failed="{{ ui_text('promo_check_failed') }}" data-i18n-promo-retry="{{ ui_text('promo_check_failed_retry') }}">
+{% set old = old|default({}) %}
+{% set numbered = checkout_layout.blocks|filter(b => b.component in ['checkout_contact', 'checkout_shipping', 'checkout_payment']) %}
+<section class="checkout-page" data-checkout data-country="{{ country_code }}" data-i18n-branch-placeholder="{{ ui_text('branch_search_placeholder') }}" data-i18n-cities-failed="{{ ui_text('cities_load_failed') }}" data-i18n-carrier-unavailable="{{ ui_text('carrier_service_unavailable') }}" data-i18n-points-failed="{{ ui_text('points_load_failed') }}" data-i18n-promo-failed="{{ ui_text('promo_check_failed') }}" data-i18n-promo-retry="{{ ui_text('promo_check_failed_retry') }}" data-i18n-required="{{ ui_text('ck_required') }}" data-i18n-invalid-email="{{ ui_text('ck_invalid_email') }}" data-i18n-invalid-phone="{{ ui_text('ck_invalid_phone') }}" data-i18n-pick-delivery="{{ ui_text('ck_pick_delivery') }}" data-i18n-pick-pickup="{{ ui_text('ck_pick_pickup') }}" data-i18n-placing="{{ ui_text('ck_placing') }}" data-i18n-no-city="{{ ui_text('ck_no_city') }}" data-i18n-searching="{{ ui_text('ck_searching') }}" data-i18n-errors-title="{{ ui_text('ck_errors_title') }}" data-i18n-pick-region="{{ ui_text('checkout_region_required') }}">
   <div class="checkout-shell">
-    <header class="checkout-heading"><a class="section-link" href="/cart">{{ ui_icon('arrow-left', 16) }}{{ ui_text('back_cart') }}</a><div><span>{{ ui_text('quick_checkout') }}</span><h1>{{ ui_text('checkout_title') }}</h1></div></header>
-    {% for message in app.flashes('checkout_error') %}<div class="store-notice is-error" role="alert">{{ message }}</div>{% endfor %}
-    <form method="post" action="/checkout/place" class="checkout-builder-layout" data-checkout-form>
+    <header class="checkout-heading"><h1>{{ ui_text('checkout_title') }}</h1><a class="section-link" href="/cart">{{ ui_icon('arrow-left', 16) }}{{ ui_text('back_cart') }}</a></header>
+    {% for message in app.flashes('checkout_error') %}<div class="store-notice is-error" role="alert" data-checkout-flash>{{ ui_icon('circle-alert', 18) }}<span>{{ message }}</span></div>{% endfor %}
+    <div class="store-notice is-error ck-errors" role="alert" tabindex="-1" data-checkout-errors hidden></div>
+    <form method="post" action="/checkout/place" class="checkout-builder-layout" data-checkout-form novalidate>
       <input type="hidden" name="_token" value="{{ csrf_token('checkout_place') }}"><input type="hidden" name="checkout_key" value="{{ checkout_key }}"><input type="hidden" data-promotion-token value="{{ csrf_token('checkout_promotion') }}">
-      {% if cart.requires_shipping %}<input type="hidden" name="carrier" value="nova_post" data-carrier-value>{% else %}<input type="hidden" name="carrier" value="digital">{% endif %}<input type="hidden" name="city_id" data-city-id><input type="hidden" name="city_name" data-city-name><input type="hidden" name="point_id" data-point-id><input type="hidden" name="point_name" data-point-name><input type="hidden" name="service_type" value="pickup_point">
-      <div class="checkout-builder-slot is-left" style="--checkout-order:0">
-        <section class="checkout-card checkout-builder-block"><div class="checkout-card__head"><b>{{ ui_icon('gift', 16) }}</b><div><strong>{{ ui_text('gift_rewards') }}</strong><span>{{ ui_text('gift_rewards_desc') }}</span></div></div><div class="coupon-box"><label><span>{{ ui_text('gift_card_code') }}</span><input type="text" name="gift_card_code" maxlength="64" autocomplete="off" placeholder="GC-..."></label>{% if customer_user and loyalty_config.enabled %}<label><span>{{ ui_text('redeem_points') }}</span><input type="number" name="loyalty_points" min="0" max="{{ loyalty_account.points_balance|default(0) }}" step="1" value="0"><small>{{ ui_text('points_available', {points: loyalty_account.points_balance|default(0), min: loyalty_config.min_redeem_points}) }}</small></label>{% elseif not customer_user %}<small>{{ ui_text('loyalty_login') }}</small>{% endif %}</div></section>
-      </div>
+      {% if not cart.requires_shipping %}<input type="hidden" name="carrier" value="digital">{% endif %}
+      <input type="hidden" name="city_id" data-city-id value="{{ old.city_id|default('') }}"><input type="hidden" name="city_name" data-city-name value="{{ old.city_name|default('') }}"><input type="hidden" name="point_id" data-point-id value="{{ old.point_id|default('') }}"><input type="hidden" name="point_name" data-point-name value="{{ old.point_name|default('') }}"><input type="hidden" name="service_type" value="pickup_point" data-service-type>
       {% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.before_contact'} only %}
       {% for block in checkout_layout.blocks %}
         {% if block.component == 'checkout_shipping' %}{% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.before_shipping'} only %}{% endif %}
@@ -19,21 +20,28 @@
         {% set placement = block.props.placement|default(block.component == 'checkout_summary' ? 'right' : 'left') %}
         {% set vis = block.visibility %}
         <div class="checkout-builder-slot is-{{ placement }}{% if vis.desktop == false %} is-hidden-desktop{% endif %}{% if vis.tablet == false %} is-hidden-tablet{% endif %}{% if vis.mobile == false %} is-hidden-mobile{% endif %}" style="--checkout-order:{{ loop.index }}">
-          {% if block.component == 'checkout_contact' %}{% include '@storefront/checkout/blocks/contact.html.twig' with {block:block, number:loop.index} %}
-          {% elseif block.component == 'checkout_shipping' %}{% include '@storefront/checkout/blocks/shipping.html.twig' with {block:block, number:loop.index} %}
-          {% elseif block.component == 'checkout_company' %}{% include '@storefront/checkout/blocks/company.html.twig' with {block:block, number:loop.index} %}
-          {% elseif block.component == 'checkout_comment' %}{% include '@storefront/checkout/blocks/comment.html.twig' with {block:block, number:loop.index} %}
-          {% elseif block.component == 'checkout_payment' %}{% include '@storefront/checkout/blocks/payment.html.twig' with {block:block, number:loop.index} %}
-          {% elseif block.component == 'checkout_coupon' %}{% include '@storefront/checkout/blocks/coupon.html.twig' with {block:block, number:loop.index} %}
-          {% elseif block.component == 'checkout_consent' %}{% include '@storefront/checkout/blocks/consent.html.twig' with {block:block, number:loop.index} %}
-          {% elseif block.component == 'checkout_summary' %}{% include '@storefront/checkout/blocks/summary.html.twig' with {block:block, number:loop.index} %}
-          {% elseif block.component starts with 'extension.' %}{% include '@storefront/checkout/blocks/extension_component.html.twig' with {block:block, number:loop.index} %}{% endif %}
+          {% set number = 0 %}{% for nb in numbered %}{% if nb.component == block.component %}{% set number = loop.index %}{% endif %}{% endfor %}
+          {% if block.component == 'checkout_contact' %}{% include '@storefront/checkout/blocks/contact.html.twig' with {block:block, number:number, old:old} %}
+          {% elseif block.component == 'checkout_shipping' %}{% include '@storefront/checkout/blocks/shipping.html.twig' with {block:block, number:number, old:old} %}
+          {% elseif block.component == 'checkout_company' %}{% include '@storefront/checkout/blocks/company.html.twig' with {block:block, number:number, old:old} %}
+          {% elseif block.component == 'checkout_comment' %}{% include '@storefront/checkout/blocks/comment.html.twig' with {block:block, number:number, old:old} %}
+          {% elseif block.component == 'checkout_payment' %}{% include '@storefront/checkout/blocks/payment.html.twig' with {block:block, number:number, old:old} %}
+          {% elseif block.component == 'checkout_coupon' %}{% include '@storefront/checkout/blocks/coupon.html.twig' with {block:block, number:number, old:old} %}
+          {% elseif block.component == 'checkout_consent' %}{% include '@storefront/checkout/blocks/consent.html.twig' with {block:block, number:number, old:old} %}
+          {% elseif block.component == 'checkout_summary' %}{% include '@storefront/checkout/blocks/summary.html.twig' with {block:block, number:number, old:old} %}
+          {% elseif block.component starts with 'extension.' %}{% include '@storefront/checkout/blocks/extension_component.html.twig' with {block:block, number:number} %}{% endif %}
         </div>
         {% if block.component == 'checkout_contact' %}{% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.after_contact'} only %}{% endif %}
         {% if block.component == 'checkout_shipping' %}{% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.after_shipping'} only %}{% endif %}
         {% if block.component == 'checkout_payment' %}{% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.after_payment'} only %}{% endif %}
         {% if block.component == 'checkout_summary' %}{% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.after_summary'} only %}{% endif %}
       {% endfor %}
+      <div class="checkout-builder-slot is-left" style="--checkout-order:90">
+        <details class="ck-fold" data-checkout-block="gift"><summary>{{ ui_icon('gift', 18) }}<span>{{ ui_text('gift_rewards') }}</span>{{ ui_icon('chevron-down', 16) }}</summary>
+          <div class="ck-grid"><label class="ck-field"><span>{{ ui_text('gift_card_code') }}</span><input type="text" name="gift_card_code" maxlength="64" autocomplete="off" placeholder="GC-..."></label>
+          {% if customer_user and loyalty_config.enabled %}<label class="ck-field"><span>{{ ui_text('redeem_points') }}</span><input type="number" name="loyalty_points" min="0" max="{{ loyalty_account.points_balance|default(0) }}" step="1" value="0"><small>{{ ui_text('points_available', {points: loyalty_account.points_balance|default(0), min: loyalty_config.min_redeem_points}) }}</small></label>{% elseif not customer_user %}<p class="ck-hint">{{ ui_text('loyalty_login') }}</p>{% endif %}</div>
+        </details>
+      </div>
     </form>
   </div>
 </section>

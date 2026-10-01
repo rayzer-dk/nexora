@@ -31,7 +31,21 @@ final readonly class UpdateProductCommand
         public string $purchaseMode = 'auto',
         public ?string $purchaseButtonLabel = null,
         public ?string $purchaseEtaText = null,
+        public ?string $metaTitle = null,
+        public ?string $metaDescription = null,
+        public bool $updateSeoMeta = false,
+        public ?int $compareAtMinor = null,
+        public bool $updateCompareAt = false,
     ) {
+        if ($metaTitle !== null && mb_strlen(trim($metaTitle), 'UTF-8') > 255) {
+            throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.product.error.seo_title_long'));
+        }
+        if ($metaDescription !== null && mb_strlen(trim($metaDescription), 'UTF-8') > 500) {
+            throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.product.error.seo_description_long'));
+        }
+        if ($compareAtMinor !== null && $compareAtMinor < 0) {
+            throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.product.error.old_price_negative'));
+        }
         if ($productId < 1 || $storeId < 1 || $marketId < 1) {
             throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.995588e393fa'));
         }

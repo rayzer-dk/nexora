@@ -3,6 +3,7 @@
     <div class="product-price__main">
         <span class="product-price__current">{{ product.price }}</span>
         {% if product.compare_at_price %}<span class="product-price__old">{{ product.compare_at_price }}</span>{% endif %}
+        {% if product.discount_percent|default(0) > 0 %}<span class="product-price__discount" data-discount>-{{ product.discount_percent }}%</span>{% endif %}
     </div>
 {% if product.sale_ends_at %}<div class="sale-timer" data-sale-timer="{{ product.sale_ends_at }}"><span class="sale-timer__label">{{ ui_icon('timer', 14) }} {{ ui_text('sale_ends_in') }}</span><span class="sale-timer__value" data-sale-timer-value></span></div>{% endif %}
     {% if tax %}

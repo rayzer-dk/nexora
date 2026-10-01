@@ -23,6 +23,7 @@ export default defineConfig({
         cart: 'assets/storefront/cart.js',
         consent: 'assets/storefront/consent.js',
         slider: 'assets/storefront/slider.js',
+        catalogPage: 'assets/storefront/catalog-page.js',
         adminRuntime: 'assets/storefront/admin-runtime.js',
         adminBuilder: 'assets/admin/features/builder.js',
         adminMedia: 'assets/admin/features/media-library.js',

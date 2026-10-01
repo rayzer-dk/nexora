@@ -9,7 +9,7 @@ declare module '@tiptap/core' {
   }
 }
 
-const TYPES = ['paragraph', 'heading'];
+const TYPES = ['paragraph', 'heading', 'image'];
 
 /**
  * Paragraph alignment stored as the legacy `align` attribute: unlike `style`/`class` it survives the

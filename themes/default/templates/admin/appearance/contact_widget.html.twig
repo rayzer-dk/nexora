@@ -1,4 +1,4 @@
-{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}
 {{ shell.start(ui_text('admin.cw.title'),'contact_widget') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.cw.title') }}</span></nav><h1>{{ ui_text('admin.cw.title') }}</h1><p>{{ ui_text('admin.cw.intro') }}</p></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
@@ -7,11 +7,11 @@
 <label>{{ ui_text('admin.cw.position') }}<select name="position"><option value="right"{{ s.position == 'right' ? ' selected' : '' }}>{{ ui_text('admin.cw.position_right') }}</option><option value="left"{{ s.position == 'left' ? ' selected' : '' }}>{{ ui_text('admin.cw.position_left') }}</option></select></label>
 <label class="admin-check"><input type="checkbox" name="callback_enabled" value="1"{{ s.callback_enabled ? ' checked' : '' }}> {{ ui_text('admin.cw.callback') }}</label>
 <label class="admin-check"><input type="checkbox" name="write_enabled" value="1"{{ s.write_enabled ? ' checked' : '' }}> {{ ui_text('admin.cw.write') }}</label>
-<label>{{ ui_text('admin.cw.phone') }}<input type="tel" name="phone" maxlength="32" value="{{ s.phone }}" placeholder="+380..."><small>{{ ui_text('admin.cw.phone_hint') }}</small></label>
+<label>{{ ui_text('admin.cw.phone') }}<input type="tel" name="phone" maxlength="32" value="{{ s.phone }}" placeholder="+380...">{{ help.hint(ui_text('admin.help.cw.phone'), null, null, '+380441234567') }}<small>{{ ui_text('admin.cw.phone_hint') }}</small></label>
 <label>{{ ui_text('admin.cw.email') }}<input type="email" name="email" maxlength="190" value="{{ s.email }}"><small>{{ ui_text('admin.cw.email_hint') }}</small></label>
-<label>Viber<input type="tel" name="viber" maxlength="32" value="{{ s.viber }}" placeholder="380..."><small>{{ ui_text('admin.cw.viber_hint') }}</small></label>
-<label>Messenger<input type="text" name="messenger" maxlength="190" value="{{ s.messenger }}" placeholder="your.page"><small>{{ ui_text('admin.cw.messenger_hint') }}</small></label>
-<label>Telegram<input type="text" name="telegram" maxlength="64" value="{{ s.telegram }}" placeholder="username"><small>{{ ui_text('admin.cw.telegram_hint') }}</small></label>
+<label>Viber<input type="tel" name="viber" maxlength="32" value="{{ s.viber }}" placeholder="380...">{{ help.hint(ui_text('admin.help.cw.viber'), 'https://www.viber.com/en/business/', ui_text('admin.help.cw.viber_link'), '380441234567') }}<small>{{ ui_text('admin.cw.viber_hint') }}</small></label>
+<label>Messenger<input type="text" name="messenger" maxlength="190" value="{{ s.messenger }}" placeholder="your.page">{{ help.hint(ui_text('admin.help.cw.messenger'), null, null, 'your.page') }}<small>{{ ui_text('admin.cw.messenger_hint') }}</small></label>
+<label>Telegram<input type="text" name="telegram" maxlength="64" value="{{ s.telegram }}" placeholder="username">{{ help.hint(ui_text('admin.help.cw.telegram'), 'https://core.telegram.org/bots', ui_text('admin.help.cw.telegram_link'), 'my_shop') }}<small>{{ ui_text('admin.cw.telegram_hint') }}</small></label>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div></form></section>
 <section class="admin-panel" data-chat-settings><div class="admin-panel__header"><h2>{{ ui_text('admin.chat.title') }}</h2></div>
 <p>{{ ui_text('admin.chat.intro') }}</p>

@@ -1,0 +1,18 @@
+{# Cookie consent. Logic lives in assets/storefront/consent.js (data-consent-* hooks are a contract with the e2e specs).
+   Desktop: one compact row (icon · text · actions). Mobile: stacked card with the primary "Accept" first. #}
+<div class="mc-consent" data-commerce-consent hidden role="dialog" aria-modal="false" aria-labelledby="mc-consent-title">
+    <span class="mc-consent__icon" aria-hidden="true">{{ ui_icon('cookie', 24) }}</span>
+    <div class="mc-consent__copy"><h2 class="mc-consent__title" id="mc-consent-title">{{ ui_text('privacy_cookies') }}</h2><p class="mc-consent__text">{{ ui_text('consent_text') }}</p>{% if capabilities.features.content %}<p class="mc-consent__links"><a href="/cookie-policy">{{ ui_text('cookie_policy') }}</a> · <a href="/privacy-policy">{{ ui_text('privacy_policy') }}</a></p>{% endif %}</div>
+    <div class="mc-consent__actions">
+        <button class="button button--ghost mc-consent__customize" type="button" data-consent-customize aria-expanded="false" aria-controls="mc-consent-choices">{{ ui_icon('sliders-horizontal', 16) }}{{ ui_text('consent_customize') }}</button>
+        <button class="button button--secondary mc-consent__reject" type="button" data-consent-reject-optional>{{ ui_text('reject_optional') }}</button>
+        <button class="button button--secondary mc-consent__save" type="button" data-consent-save hidden>{{ ui_text('save_choice') }}</button>
+        <button class="button button--primary mc-consent__accept" type="button" data-consent-accept-all>{{ ui_icon('check', 16) }}{{ ui_text('accept_all') }}</button>
+    </div>
+    <div class="mc-consent__choices" id="mc-consent-choices" data-consent-choices hidden>
+        <label class="mc-consent__choice"><input type="checkbox" checked disabled aria-label="{{ ui_text('essential') }}"> <span><strong>{{ ui_text('essential') }}</strong><small>{{ ui_text('essential_desc') }}</small></span></label>
+        <label class="mc-consent__choice"><input type="checkbox" name="consent_preferences" aria-label="{{ ui_text('preferences') }}"> <span><strong>{{ ui_text('preferences') }}</strong><small>{{ ui_text('preferences_desc') }}</small></span></label>
+        <label class="mc-consent__choice"><input type="checkbox" name="consent_analytics" aria-label="{{ ui_text('analytics') }}"> <span><strong>{{ ui_text('analytics') }}</strong><small>{{ ui_text('analytics_desc') }}</small></span></label>
+        <label class="mc-consent__choice"><input type="checkbox" name="consent_marketing" aria-label="{{ ui_text('marketing') }}"> <span><strong>{{ ui_text('marketing') }}</strong><small>{{ ui_text('marketing_desc') }}</small></span></label>
+    </div>
+</div>

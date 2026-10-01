@@ -29,7 +29,7 @@
             {% if admin_can('search.view') %}{{ nav.link(section, 'search', '/admin/catalog/search', 'search', ui_text('admin_search_recommendations')) }}{% endif %}
             {% if admin_can('catalog.view') %}{{ nav.link(section, 'merchandising', '/admin/catalog/merchandising', 'arrow-up-down', ui_text('admin_merchandising')) }}{{ nav.link(section, 'badges', '/admin/catalog/badges', 'tag', ui_text('admin.badges.title')) }}{{ nav.link(section, 'import_export', '/admin/commerce/import-export', 'file-spreadsheet', ui_text('admin_import_export')) }}{% endif %}
             {% if admin_can('orders.view') or admin_can('customers.view') or admin_can('b2b.view') %}<span class="admin-nav__label">{{ ui_text('admin_sales') }}</span>{% endif %}
-            {% if admin_can('orders.view') %}{{ nav.link(section, 'orders', '/admin/orders', 'receipt', ui_text('admin_orders')) }}{{ nav.link(section, 'shipments', '/admin/shipments', 'truck', ui_text('admin_shipments')) }}{{ nav.link(section, 'shipping_countries', '/admin/shipments/countries', 'globe', ui_text('admin.shipping_countries.title')) }}{% endif %}
+            {% if admin_can('orders.view') %}{{ nav.link(section, 'orders', '/admin/orders', 'receipt', ui_text('admin_orders')) }}{{ nav.link(section, 'shipments', '/admin/shipments', 'truck', ui_text('admin_shipments')) }}{{ nav.link(section, 'shipping_countries', '/admin/shipments/countries', 'globe', ui_text('admin.shipping_countries.title')) }}{{ nav.link(section, 'shipping_methods', '/admin/shipments/methods', 'wallet', ui_text('admin.checkout_methods.title')) }}{% endif %}
             {% if admin_can('customers.view') %}{{ nav.link(section, 'customers', '/admin/commerce/customers', 'users', ui_text('admin_customers')) }}{{ nav.link(section, 'inquiries', '/admin/commerce/inquiries', 'inbox', ui_text('admin_inquiries')) }}{{ nav.link(section, 'customer_experience', '/admin/customer-experience', 'rotate-ccw', ui_text('admin_returns_feedback')) }}{% endif %}
             {% if admin_can('b2b.view') %}{{ nav.link(section, 'b2b', '/admin/b2b', 'building', ui_text('admin_b2b')) }}{% endif %}
             {% if admin_can('marketing.view') or admin_can('feeds.view') or admin_can('notifications.view') or admin_can('rewards.view') %}<span class="admin-nav__label">{{ ui_text('admin.nav.marketing') }}</span>{% endif %}
@@ -58,6 +58,7 @@
             {% if admin_can('developer_tools.view') %}{{ nav.link(section, 'developer', '/admin/system/developer', 'terminal', ui_text('ui.admin.catalog._shell.developer_tools')) }}{% endif %}
             {% if admin_can('admin_users.manage') %}{{ nav.link(section, 'access', '/admin/system/access', 'shield-user', ui_text('admin_admins_permissions')) }}{% endif %}
         </nav>
+        <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">try{var mcNav=document.querySelector('.admin-nav'),mcNavY=sessionStorage.getItem('mc_admin_nav_scroll');if(mcNav&&mcNavY!==null){mcNav.scrollTop=parseInt(mcNavY,10)||0;}}catch(e){}</script>
         <div class="admin-sidebar__footer">
             <button class="admin-nav__link admin-nav__collapse" type="button" data-sidebar-collapse aria-pressed="false" title="{{ ui_text('admin.nav.collapse') }}">{{ ui_icon('panel-left-close', 20) }}<span>{{ ui_text('admin.nav.collapse') }}</span></button>
             {{ nav.link(section, 'security', '/admin/account/security', 'shield-check', ui_text('admin.mfa.nav')) }}
@@ -88,7 +89,6 @@
                 {% endif %}
                 {% set ui_languages = admin_interface_languages() %}
                 {% if ui_languages.available|length > 1 %}<form method="post" action="/admin/interface-language"><input type="hidden" name="_token" value="{{ csrf_token('admin_interface_language') }}"><input type="hidden" name="back" value="{{ app.request.requestUri }}"><label title="{{ ui_text('admin.context.interface_language_help') }}">{{ ui_icon('languages', 16) }}<span class="visually-hidden">{{ ui_text('admin.context.interface_language') }}</span><select name="ui_locale" data-autosubmit aria-label="{{ ui_text('admin.context.interface_language') }}">{% for code, name in ui_languages.available %}<option value="{{ code }}"{{ code == ui_languages.current ? ' selected' : '' }}>{{ name }}</option>{% endfor %}</select></label></form>{% endif %}
-                {% if show_context %}<span class="admin-badge" title="{{ ui_text('admin_store_context') }}">{{ context_switcher.current.locale }} · {{ context_switcher.current.currency }}</span>{% endif %}
             </div>
             {% endif %}
             <button class="admin-icon-button admin-theme-toggle" type="button" data-theme-toggle aria-label="{{ ui_text('admin.theme_toggle') }}" title="{{ ui_text('admin.theme_toggle') }}"><span class="admin-theme-toggle__moon" aria-hidden="true">{{ ui_icon('moon', 20) }}</span><span class="admin-theme-toggle__sun" aria-hidden="true">{{ ui_icon('sun', 20) }}</span></button>

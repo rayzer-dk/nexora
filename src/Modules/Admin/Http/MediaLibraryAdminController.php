@@ -7,6 +7,7 @@ namespace Commerce\Modules\Admin\Http;
 use Commerce\Modules\Media\Application\MediaImageService;
 use Commerce\Modules\Media\Application\MediaLibraryService;
 use Commerce\Modules\Media\Application\MediaVideoService;
+use Commerce\Modules\Media\Application\MediaImageProfile;
 use Commerce\Modules\Media\Application\MediaMetadata;
 use Commerce\Modules\Media\Application\MediaMetadataService;
 use Commerce\Core\Configuration\ConfigurationRevisionStore;
@@ -101,16 +102,19 @@ final class MediaLibraryAdminController extends AbstractController
     public function settings(Request $request): Response
     {
         $ctx=$this->contexts->resolve($request); $this->csrf($request,'media_settings');
-        $widths=array_map('intval',(array)$request->request->all('widths'));
         $user=$this->getUser(); $actor=$user instanceof AdminUser?'admin:'.$user->id:'admin';
+        $r=$request->request;
+        $profile=MediaImageProfile::fromPreset((string)$r->get('preset','recommended'),[
+            'format'=>(string)$r->get('format','webp'),
+            'widths'=>array_map('intval',(array)$r->all('widths')),
+            'include_original'=>$r->has('include_original'),
+            'quality'=>(int)$r->get('quality',82),
+            'keep_source'=>$r->has('keep_source'),
+            'jpeg_fallback'=>$r->has('jpeg_fallback'),
+        ]);
         try{
-            $this->revisions->activateStoreJson($ctx->storeId,'media','image_processing',[
-                'format'=>(string)$request->request->get('format','original'),
-                'widths'=>$widths,
-                'include_original'=>$request->request->has('include_original'),
-                'quality'=>max(35,min(95,(int)$request->request->get('quality',85))),
-            ],$actor);
-            $this->addFlash('success','Image processing settings saved.');
+            $this->revisions->activateStoreJson($ctx->storeId,'media','image_processing',$profile,$actor);
+            $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.media.library.processing_saved'));
         }catch(\Throwable){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         return $this->redirectToRoute('admin_media_library');
     }
@@ -141,13 +145,13 @@ final class MediaLibraryAdminController extends AbstractController
     }
 
 
-    /** @return array{format:string,widths:list<int>,include_original:bool,quality:int} */
+    /** @return array{format:string,widths:list<int>,include_original:bool,quality:int,keep_source:bool,jpeg_fallback:bool,preset:string} */
     private function processing(int $storeId): array
     {
-        $input=$this->revisions->latestValidPayload($storeId,'media','image_processing'); $input=is_array($input)?$input:[];
-        $format=strtolower(trim((string)($input['format']??'original'))); if(!in_array($format,['original','jpeg','png','webp','avif'],true))$format='original';
-        $allowed=[320,640,960,1280,1920]; $widths=array_values(array_unique(array_filter(array_map('intval',(array)($input['widths']??[640,960,1280])),static fn(int $w):bool=>in_array($w,$allowed,true)))); sort($widths);
-        return ['format'=>$format,'widths'=>$widths,'include_original'=>(bool)($input['include_original']??true),'quality'=>max(35,min(95,(int)($input['quality']??85)))];
+        $input=$this->revisions->latestValidPayload($storeId,'media','image_processing');
+        $profile=MediaImageProfile::normalize(is_array($input)?$input:[]);
+
+        return $profile+['preset'=>MediaImageProfile::detect($profile)];
     }
 
     /** @return array<string,string> */

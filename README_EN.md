@@ -1,4 +1,4 @@
-# Nexora Commerce 3.22.0
+# Nexora Commerce 3.23.0
 
 Modern modular e-commerce platform for Ukraine and Europe. One canonical source: the `main` branch.
 
@@ -33,7 +33,7 @@ Full guide: `docs/INSTALLATION_EN.md`.
 1. Unpack the full release ZIP (contains `vendor/` and built assets).
 2. Point the domain Document Root to `public/`.
 3. Open `/setup.php` and complete the installer (optionally with demo data; later: `commerce:demo:install` / `commerce:demo:remove`).
-4. Add one cron entry: `php bin/console commerce:cron:run` every 5 minutes.
+4. Add one cron entry every 5 minutes (the ready-to-paste line with absolute paths is shown in admin System → Cron): `*/5 * * * * /usr/bin/php /path/to/bin/console commerce:cron:run >/dev/null 2>&1`. Without cron access use the secret web URL or the built-in fallback.
 
 Run `php bin/console commerce:system:check` at any time to re-check PHP, extensions, writable paths and database.
 

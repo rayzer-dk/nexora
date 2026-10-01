@@ -32,7 +32,11 @@ final readonly class ProductCatalogFilter
         public string $sort = self::SORT_NEWEST,
         /** @var array<string,list<string>> */
         public array $attributeFilters = [],
+        public int $minRating = 0,
     ) {
+        if ($minRating < 0 || $minRating > 5) {
+            throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.product.error.min_rating'));
+        }
         if ($brandId !== null && $brandId < 1) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.c26eae3e1518'));
         }
@@ -71,11 +75,12 @@ final readonly class ProductCatalogFilter
             || $this->minPriceMinor !== null
             || $this->maxPriceMinor !== null
             || $this->sort !== self::SORT_NEWEST
-            || $this->attributeFilters !== [];
+            || $this->attributeFilters !== []
+            || $this->minRating > 0;
     }
     public function isFilteredExceptSearch(): bool
     {
-        return $this->brandId !== null || $this->inStockOnly || $this->minPriceMinor !== null || $this->maxPriceMinor !== null || $this->attributeFilters !== [] || $this->sort !== self::SORT_NEWEST;
+        return $this->brandId !== null || $this->inStockOnly || $this->minPriceMinor !== null || $this->maxPriceMinor !== null || $this->attributeFilters !== [] || $this->minRating > 0 || $this->sort !== self::SORT_NEWEST;
     }
 
 }

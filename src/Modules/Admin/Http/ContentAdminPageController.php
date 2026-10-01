@@ -4,25 +4,27 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Admin\Http;
 
-use Commerce\Modules\Content\System\InformationPageCatalog;
-use Commerce\Modules\Seo\System\SystemPageRouteCatalog;
-use DateTimeImmutable;
-use DateTimeZone;
-use Doctrine\DBAL\Connection;
+use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Modules\Admin\Application\ContentLanguageTabs;
+use Commerce\Modules\Ai\Application\AiTaskService;
+use Commerce\Modules\Content\Application\InformationPageService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HtmlSanitizer\HtmlSanitizerInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+/** Information pages: list, create, edit in every store language, duplicate, publish/unpublish, delete. */
 final class ContentAdminPageController extends AbstractController
 {
+    private const REF = '(?!new$)[A-Za-z0-9_-]+';
+    private const TEXT_FIELDS = ['title', 'excerpt', 'body_html', 'meta_title', 'meta_description'];
+
     public function __construct(
         private readonly AdminContextResolver $context,
-        private readonly Connection $connection,
-        private readonly InformationPageCatalog $definitions,
-        private readonly SystemPageRouteCatalog $routes,
-        private readonly HtmlSanitizerInterface $richTextSanitizer,
+        private readonly InformationPageService $pages,
+        private readonly ContentLanguageTabs $tabs,
+        private readonly AiTaskService $ai,
     ) {
     }
 
@@ -30,110 +32,217 @@ final class ContentAdminPageController extends AbstractController
     public function index(Request $request): Response
     {
         $context = $this->context->resolve($request);
-        $rows = $this->connection->fetchAllAssociative(
-            "SELECT ce.system_key,ce.status,ct.title,ct.updated_at
-             FROM mc_content_entry ce
-             JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=?
-             WHERE ce.store_id=? AND ce.content_type='page' AND ce.system_key IS NOT NULL
-             ORDER BY ce.id ASC",
-            [$context->locale, $context->storeId],
-        );
-        $items = [];
-        foreach ($rows as $row) {
-            try {
-                $definition = $this->definitions->get((string) $row['system_key']);
-                $route = $this->routes->route($definition->routeKey, $context->locale);
-                $row['url'] = '/' . $route->path;
-            } catch (\Throwable) {
-                $row['url'] = null;
-            }
-            $items[] = $row;
-        }
-        return $this->render('@storefront/admin/content/pages.html.twig', ['items' => $items]);
-    }
+        $filters = ['q' => trim((string) $request->query->get('q', '')), 'status' => (string) $request->query->get('status', '')];
 
-    #[Route('/admin/content/pages/{systemKey}', name: 'admin_content_page_edit', methods: ['GET', 'POST'], requirements: ['systemKey' => '[a-z0-9_-]+'])]
-    public function edit(Request $request, string $systemKey): Response
-    {
-        $context = $this->context->resolve($request);
-        try {
-            $definition = $this->definitions->get($systemKey);
-        } catch (\InvalidArgumentException) {
-            throw $this->createNotFoundException();
-        }
-        $row = $this->connection->fetchAssociative(
-            "SELECT ce.id,ce.status,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description
-             FROM mc_content_entry ce
-             JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=?
-             WHERE ce.store_id=? AND ce.content_type='page' AND ce.system_key=? LIMIT 1",
-            [$context->locale, $context->storeId, $systemKey],
-        );
-        if (!is_array($row)) {
-            throw $this->createNotFoundException();
-        }
-
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('admin_content_page_' . $systemKey, (string) $request->request->get('_token'))) {
-                $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.sesiiu_formy_vtracheno_povtorit_diiu'));
-            } else {
-                $title = trim((string) $request->request->get('title', ''));
-                $body = trim((string) $request->request->get('body_html', ''));
-                $status = (string) $request->request->get('status', 'draft');
-                if ($title === '') {
-                    $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.nazva_storinky_oboviazkova'));
-                } elseif (!in_array($status, ['draft', 'published'], true)) {
-                    $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.nevidomyi_status_storinky'));
-                } elseif ($status === 'published' && $body === '') {
-                    $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.pered_publikatsiieiu_zapovnit_zmist_storinky'));
-                } else {
-                    $safeBody = $body === '' ? null : $this->richTextSanitizer->sanitize($body);
-                    $now = $this->now();
-                    $this->connection->transactional(function (Connection $db) use ($row, $title, $safeBody, $status, $request, $now, $context): void {
-                        $db->update('mc_content_translation', [
-                            'title' => $title,
-                            'excerpt' => $this->nullable((string) $request->request->get('excerpt', '')),
-                            'body_html' => $safeBody,
-                            'meta_title' => $this->nullable((string) $request->request->get('meta_title', '')),
-                            'meta_description' => $this->nullable((string) $request->request->get('meta_description', '')),
-                            'updated_at' => $now,
-                        ], ['content_id' => (int) $row['id'], 'locale' => $context->locale]);
-                        $db->update('mc_content_entry', [
-                            'status' => $status,
-                            'published_at' => $status === 'published' ? $now : null,
-                            'updated_at' => $now,
-                        ], ['id' => (int) $row['id']]);
-                    });
-                    $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.storinku_zberezheno'));
-                    return $this->redirectToRoute('admin_content_pages');
-                }
-            }
-            $row = array_merge($row, [
-                'title' => (string) $request->request->get('title', $row['title']),
-                'excerpt' => (string) $request->request->get('excerpt', $row['excerpt'] ?? ''),
-                'body_html' => (string) $request->request->get('body_html', $row['body_html'] ?? ''),
-                'meta_title' => (string) $request->request->get('meta_title', $row['meta_title'] ?? ''),
-                'meta_description' => (string) $request->request->get('meta_description', $row['meta_description'] ?? ''),
-                'status' => (string) $request->request->get('status', $row['status']),
-            ]);
-        }
-
-        $route = $this->routes->route($definition->routeKey, $context->locale);
-        return $this->render('@storefront/admin/content/page_form.html.twig', [
-            'page' => $row,
-            'system_key' => $systemKey,
-            'public_url' => '/' . $route->path,
-            'csrf_id' => 'admin_content_page_' . $systemKey,
+        return $this->render('@storefront/admin/content/pages.html.twig', [
+            'items' => $this->pages->list($context->storeId, $context->locale, $filters),
+            'filters' => $filters,
+            'locale' => $context->locale,
         ]);
     }
 
-    private function nullable(string $value): ?string
+    #[Route('/admin/content/pages/new', name: 'admin_content_page_new', methods: ['GET', 'POST'])]
+    public function new(Request $request): Response
     {
-        $value = trim($value);
-        return $value === '' ? null : $value;
+        $context = $this->context->resolve($request);
+        $locale = $this->defaultLocale($context->storeId, $context->locale);
+        if ($request->isMethod('POST')) {
+            $result = $this->persist($request, $context->storeId, $locale, null);
+            if ($result instanceof RedirectResponse) {
+                return $result;
+            }
+            $values = $result;
+        } else {
+            $values = ['title' => '', 'excerpt' => '', 'body_html' => '', 'meta_title' => '', 'meta_description' => '', 'status' => 'draft', 'slug' => '', 'page_group' => 'company', 'show_in_footer' => true, 'show_in_menu' => false, 'sort_order' => 100, 'noindex' => false, 'canonical_url' => '', 'og_asset_id' => 0, 'og_url' => ''];
+        }
+
+        return $this->form($context->storeId, $locale, null, $values + ['is_system' => false, 'system_key' => null, 'has_translation' => false, 'path' => null, 'default_text' => null, 'translated' => [], 'ref' => 'new', 'id' => 0, 'public_id' => '']);
     }
 
-    private function now(): string
+    #[Route('/admin/content/pages/{ref}', name: 'admin_content_page_edit', methods: ['GET', 'POST'], requirements: ['ref' => self::REF])]
+    public function edit(Request $request, string $ref): Response
     {
-        return (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
+        $context = $this->context->resolve($request);
+        $page = $this->pages->find($context->storeId, $ref, $context->locale);
+        if ($page === null) {
+            throw $this->createNotFoundException();
+        }
+        if ($request->isMethod('POST')) {
+            $result = $this->persist($request, $context->storeId, $context->locale, (int) $page['id'], (bool) $page['is_system']);
+            if ($result instanceof RedirectResponse) {
+                return $result;
+            }
+            $page = array_merge($page, $result);
+        } elseif ($request->query->get('prefill') === 'default' && !$page['has_translation'] && is_array($page['default_text'])) {
+            $page = array_merge($page, $page['default_text'], ['prefilled' => 'default']);
+        }
+
+        return $this->form($context->storeId, $context->locale, (int) $page['id'], $page);
+    }
+
+    /** Fills a language that has no text yet with an AI translation of the default language; nothing is saved until the editor presses Save. */
+    #[Route('/admin/content/pages/{ref}/translate', name: 'admin_content_page_translate', methods: ['POST'], requirements: ['ref' => self::REF])]
+    public function translate(Request $request, string $ref): Response
+    {
+        $context = $this->context->resolve($request);
+        $page = $this->pages->find($context->storeId, $ref, $context->locale);
+        if ($page === null) {
+            throw $this->createNotFoundException();
+        }
+        if (!$this->isCsrfTokenValid('admin_content_page_' . $ref, (string) $request->request->get('_token'))) {
+            $this->addFlash('error', CanonicalUiText::get('common.security.invalid_csrf'));
+
+            return $this->redirectToRoute('admin_content_page_edit', ['ref' => $ref, 'locale' => $context->locale]);
+        }
+        $source = is_array($page['default_text']) ? $page['default_text'] : null;
+        $provider = (string) $request->request->get('provider', '');
+        if ($source === null || $provider === '') {
+            $this->addFlash('error', CanonicalUiText::get('admin.ai.error_input'));
+
+            return $this->redirectToRoute('admin_content_page_edit', ['ref' => $ref, 'locale' => $context->locale]);
+        }
+        $admin = $this->getUser();
+        $translated = [];
+        try {
+            foreach (self::TEXT_FIELDS as $field) {
+                $text = trim((string) ($source[$field] ?? ''));
+                $translated[$field] = $text === '' ? '' : ($this->ai->run($context->storeId, $admin !== null ? $admin->getUserIdentifier() : 'admin', 'translate', $provider, ['text' => $text, 'target' => $context->locale], $context->locale)['fields']['text'] ?? '');
+            }
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+
+            return $this->redirectToRoute('admin_content_page_edit', ['ref' => $ref, 'locale' => $context->locale]);
+        }
+        $this->addFlash('success', CanonicalUiText::get('admin.pages.translated_draft'));
+
+        return $this->form($context->storeId, $context->locale, (int) $page['id'], array_merge($page, $translated, ['prefilled' => 'ai']));
+    }
+
+    #[Route('/admin/content/pages/{ref}/toggle', name: 'admin_content_page_toggle', methods: ['POST'], requirements: ['ref' => self::REF])]
+    public function toggle(Request $request, string $ref): RedirectResponse
+    {
+        $context = $this->context->resolve($request);
+        if ($this->isCsrfTokenValid('admin_content_pages', (string) $request->request->get('_token'))) {
+            try {
+                $page = $this->pages->find($context->storeId, $ref, $context->locale) ?? throw new \InvalidArgumentException(CanonicalUiText::get('admin.pages.error.not_found'));
+                $status = $this->pages->toggle($context->storeId, (int) $page['id']);
+                $this->addFlash('success', CanonicalUiText::get($status === 'published' ? 'admin.pages.published' : 'admin.pages.unpublished'));
+            } catch (\InvalidArgumentException $e) {
+                $this->addFlash('error', $e->getMessage());
+            }
+        } else {
+            $this->addFlash('error', CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+
+        return $this->redirectToRoute('admin_content_pages');
+    }
+
+    #[Route('/admin/content/pages/{ref}/duplicate', name: 'admin_content_page_duplicate', methods: ['POST'], requirements: ['ref' => self::REF])]
+    public function duplicate(Request $request, string $ref): RedirectResponse
+    {
+        $context = $this->context->resolve($request);
+        if (!$this->isCsrfTokenValid('admin_content_pages', (string) $request->request->get('_token'))) {
+            $this->addFlash('error', CanonicalUiText::get('common.security.invalid_csrf'));
+
+            return $this->redirectToRoute('admin_content_pages');
+        }
+        try {
+            $page = $this->pages->find($context->storeId, $ref, $context->locale) ?? throw new \InvalidArgumentException(CanonicalUiText::get('admin.pages.error.not_found'));
+            $admin = $this->getUser();
+            $copy = $this->pages->duplicate($context->storeId, (int) $page['id'], $admin !== null ? $admin->getUserIdentifier() : 'admin');
+            $this->addFlash('success', CanonicalUiText::get('admin.pages.duplicated'));
+
+            return $this->redirectToRoute('admin_content_page_edit', ['ref' => (string) $copy]);
+        } catch (\InvalidArgumentException $e) {
+            $this->addFlash('error', $e->getMessage());
+
+            return $this->redirectToRoute('admin_content_pages');
+        }
+    }
+
+    #[Route('/admin/content/pages/{ref}/delete', name: 'admin_content_page_delete', methods: ['POST'], requirements: ['ref' => self::REF])]
+    public function delete(Request $request, string $ref): RedirectResponse
+    {
+        $context = $this->context->resolve($request);
+        if ($this->isCsrfTokenValid('admin_content_pages', (string) $request->request->get('_token'))) {
+            try {
+                $page = $this->pages->find($context->storeId, $ref, $context->locale) ?? throw new \InvalidArgumentException(CanonicalUiText::get('admin.pages.error.not_found'));
+                $this->pages->delete($context->storeId, (int) $page['id']);
+                $this->addFlash('success', CanonicalUiText::get('admin.pages.deleted'));
+            } catch (\InvalidArgumentException $e) {
+                $this->addFlash('error', $e->getMessage());
+            }
+        } else {
+            $this->addFlash('error', CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+
+        return $this->redirectToRoute('admin_content_pages');
+    }
+
+    /** @return RedirectResponse|array<string,mixed> the redirect after a successful save, otherwise the submitted values to show again */
+    private function persist(Request $request, int $storeId, string $locale, ?int $id, bool $isSystem = false): RedirectResponse|array
+    {
+        $key = $id === null ? 'new' : (string) ($request->attributes->get('ref') ?? $id);
+        $input = $request->request->all();
+        $values = [
+            'title' => (string) ($input['title'] ?? ''), 'excerpt' => (string) ($input['excerpt'] ?? ''), 'body_html' => (string) ($input['body_html'] ?? ''),
+            'meta_title' => (string) ($input['meta_title'] ?? ''), 'meta_description' => (string) ($input['meta_description'] ?? ''), 'status' => (string) ($input['status'] ?? 'draft'),
+            'slug' => (string) ($input['slug'] ?? ''), 'page_group' => (string) ($input['page_group'] ?? 'company'),
+            'show_in_footer' => $request->request->getBoolean('show_in_footer'), 'show_in_menu' => $request->request->getBoolean('show_in_menu'),
+            'sort_order' => (int) ($input['sort_order'] ?? 100), 'noindex' => (string) ($input['robots'] ?? 'index') === 'noindex',
+            'canonical_url' => (string) ($input['canonical_url'] ?? ''), 'og_asset_id' => (int) ($input['og_asset_id'] ?? 0), 'og_url' => '',
+        ];
+        if (!$this->isCsrfTokenValid('admin_content_page_' . $key, (string) $request->request->get('_token'))) {
+            $this->addFlash('error', CanonicalUiText::get('admin.pages.error.session'));
+
+            return $values;
+        }
+        try {
+            $admin = $this->getUser();
+            $savedId = $this->pages->save($storeId, $locale, $id, $values + ['robots' => $values['noindex'] ? 'noindex' : 'index', 'placement_present' => $request->request->get('placement_present')], $admin !== null ? $admin->getUserIdentifier() : 'admin');
+        } catch (\InvalidArgumentException|\RuntimeException $e) {
+            $this->addFlash('error', $e->getMessage());
+
+            return $values;
+        }
+        $this->addFlash('success', CanonicalUiText::get('admin.pages.saved'));
+        $saved = $this->pages->find($storeId, $isSystem ? $key : (string) $savedId, $locale);
+
+        return $this->redirectToRoute('admin_content_page_edit', ['ref' => $saved['ref'] ?? (string) $savedId, 'locale' => $locale]);
+    }
+
+    /** @param array<string,mixed> $page */
+    private function form(int $storeId, string $locale, ?int $id, array $page): Response
+    {
+        $tabs = [];
+        if ($id !== null) {
+            foreach ($this->tabs->tabs($storeId, $locale, (array) ($page['translated'] ?? [])) as $tab) {
+                $tabs[] = $tab + ['href' => $tab['current'] ? '' : $this->generateUrl('admin_content_page_edit', ['ref' => (string) $page['ref'], 'locale' => $tab['code']])];
+            }
+        }
+        $isDefault = $locale === $this->defaultLocale($storeId, $locale);
+        $ref = $id === null ? 'new' : (string) $page['ref'];
+
+        return $this->render('@storefront/admin/content/page_form.html.twig', [
+            'page' => $page,
+            'locale' => $locale,
+            'is_default_locale' => $isDefault,
+            'lang_tabs' => $tabs,
+            'groups' => InformationPageService::GROUPS,
+            'csrf_id' => 'admin_content_page_' . $ref,
+            'ai_default_text' => $isDefault ? null : ($page['default_text'] ?? null),
+        ]);
+    }
+
+    private function defaultLocale(int $storeId, string $fallback): string
+    {
+        $tabs = $this->tabs->tabs($storeId, $fallback);
+        foreach ($tabs as $tab) {
+            if ($tab['is_default']) {
+                return $tab['code'];
+            }
+        }
+
+        return $fallback;
     }
 }

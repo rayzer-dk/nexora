@@ -44,6 +44,7 @@ final class StorefrontCatalogController extends AbstractController
         private readonly SearchAnalyticsRecorder $searchAnalytics,
         private readonly ExtensionRouteController $extensionRoutes,
         private readonly SiteCapabilitySettings $capabilities,
+        private readonly \Commerce\Modules\Content\Infrastructure\DbalInformationPageQuery $informationPages,
     ) {
     }
 
@@ -103,7 +104,8 @@ final class StorefrontCatalogController extends AbstractController
                 return $this->redirect($exactUrl, 302);
             }
         }
-        $products = $this->catalog->products($context, null, $page, 24, null, $filter);
+        $perPage = $this->perPage($request);
+        $products = $this->catalog->products($context, null, $page, $perPage, null, $filter);
         if ($page > (int) ($products['pages'] ?? 1)) {
             // Pages past the end are soft-404s ("empty but indexable"); answer 404 instead.
             throw $this->createNotFoundException();
@@ -122,6 +124,7 @@ final class StorefrontCatalogController extends AbstractController
             'catalog_filter' => $filter,
             'catalog_facets' => $facets,
             'catalog_query' => $query,
+            'catalog_per_page' => $perPage,
             'catalog_query_base' => $this->filterQueryString($request),
             'seo_head' => [
                 'description' => \Commerce\Core\I18n\CanonicalUiText::get('seo.catalog.description', ['store' => $context->storeName]),
@@ -164,6 +167,7 @@ final class StorefrontCatalogController extends AbstractController
         $requiredFeature = match ($resolved->route->entityType) {
             SeoEntityType::Product, SeoEntityType::Category => 'catalog',
             SeoEntityType::BlogArticle => 'blog',
+            SeoEntityType::CmsPage => 'content',
             default => null,
         };
         if ($requiredFeature !== null && !$this->capabilities->enabled($context->storeId, $requiredFeature)) {
@@ -176,6 +180,7 @@ final class StorefrontCatalogController extends AbstractController
             SeoEntityType::Product => $this->product($request, $context, $resolved->route->entityPublicId),
             SeoEntityType::Category => $this->category($request, $context, $resolved->route->entityPublicId),
             SeoEntityType::BlogArticle => $this->blogArticle($request, $context, $resolved->route->entityPublicId),
+            SeoEntityType::CmsPage => $this->cmsPage($request, $context, $resolved->route->entityPublicId, $resolved->route->path),
             default => throw $this->createNotFoundException(),
         };
     }
@@ -188,7 +193,8 @@ final class StorefrontCatalogController extends AbstractController
         }
         $page = max(1, $request->query->getInt('page', 1));
         $filter = $this->catalogFilter($request);
-        $products = $this->catalog->products($context, (int) $category['id'], $page, 24, null, $filter);
+        $perPage = $this->perPage($request);
+        $products = $this->catalog->products($context, (int) $category['id'], $page, $perPage, null, $filter);
         if ($page > (int) ($products['pages'] ?? 1)) {
             throw $this->createNotFoundException();
         }
@@ -211,6 +217,7 @@ final class StorefrontCatalogController extends AbstractController
             'catalog_filter' => $filter,
             'catalog_facets' => $facets,
             'catalog_query' => $this->filterQuery($request),
+            'catalog_per_page' => $perPage,
             'catalog_query_base' => $this->filterQueryString($request),
             'seo_head' => [
                 'title' => (string) ($category['meta_title'] ?? '') !== '' ? (string) $category['meta_title'] : (string) ($category['name'] ?? ''),
@@ -219,6 +226,34 @@ final class StorefrontCatalogController extends AbstractController
                 'canonical' => $canonical,
                 'robots' => $filter->isFiltered() ? 'noindex,follow' : 'index,follow,max-image-preview:large',
                 'hreflang' => $filter->isFiltered() ? [] : [$context->locale => $canonical, 'x-default' => $canonical],
+            ],
+        ]);
+    }
+
+    /** A page the merchant added under Content > Information pages, served at its own /{slug}. Drafts are not public. */
+    private function cmsPage(Request $request, $context, string $publicId, string $path): Response
+    {
+        $page = $this->informationPages->byPublicId($context, $publicId);
+        if ($page === null || $page['status'] !== 'published' || trim((string) ($page['body_html'] ?? '')) === '') {
+            throw $this->createNotFoundException();
+        }
+        $base = $request->getSchemeAndHttpHost();
+        $own = $base . '/' . $path;
+        $canonical = trim((string) ($page['canonical_url'] ?? '')) !== '' ? (string) $page['canonical_url'] : $own;
+        $image = (string) ($page['og_key'] ?? '') !== '' ? $this->shareImage($base, ['/media/' . ltrim((string) $page['og_key'], '/')]) : null;
+
+        return $this->render('@storefront/content/page.html.twig', [
+            'page_title' => (string) $page['title'],
+            'store_name' => $context->storeName,
+            'page' => $page,
+            'published' => true,
+            'seo_head' => [
+                'title' => (string) ($page['meta_title'] ?? ''),
+                'description' => (string) ($page['meta_description'] ?? '') !== '' ? (string) $page['meta_description'] : (string) ($page['excerpt'] ?? ''),
+                'image' => $image,
+                'canonical' => $canonical,
+                'robots' => !empty($page['noindex']) ? 'noindex,follow' : 'index,follow,max-image-preview:large',
+                'hreflang' => [$context->locale => $own, 'x-default' => $own],
             ],
         ]);
     }
@@ -413,7 +448,14 @@ final class StorefrontCatalogController extends AbstractController
             maxPriceMinor: $max,
             sort: $sort,
             attributeFilters: $this->attributeFilters($request),
+            minRating: max(0, min(5, (int) filter_var($request->query->get('rating'), FILTER_VALIDATE_INT, ['options' => ['default' => 0]]))),
         );
+    }
+
+    private function perPage(Request $request): int
+    {
+        $value = (int) filter_var($request->query->get('per_page'), FILTER_VALIDATE_INT, ['options' => ['default' => 24]]);
+        return in_array($value, [12, 24, 48, 60], true) ? $value : 24;
     }
 
     private function priceMinor(mixed $value): ?int
@@ -434,7 +476,7 @@ final class StorefrontCatalogController extends AbstractController
     /** @return array<string,mixed> */
     private function filterQuery(Request $request): array
     {
-        $allowed = ['q', 'brand', 'in_stock', 'min_price', 'max_price', 'sort'];
+        $allowed = ['q', 'brand', 'in_stock', 'min_price', 'max_price', 'sort', 'rating', 'per_page'];
         $result = [];
         foreach ($allowed as $key) {
             $value = $request->query->get($key);

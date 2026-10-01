@@ -1,0 +1,56 @@
+/* pages-settings (3.23.0): content-language tabs, information page editor, tax editor, currency providers */
+
+/* Content-language tab bar shared by every multilingual edit form */
+.admin-panel--tabs { padding: var(--mc-space-2) var(--mc-space-3); display: grid; gap: var(--mc-space-2); }
+.lang-tabs { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--mc-space-2); }
+.lang-tabs__list { display: flex; flex-wrap: wrap; gap: var(--mc-space-1); margin: 0; padding: 0; list-style: none; }
+.lang-tabs__item { margin: 0; }
+.lang-tabs__tab { display: inline-flex; align-items: center; gap: var(--mc-space-2); min-height: var(--mc-control-height-md); padding: 0 var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); color: var(--mc-color-text); font: inherit; font-size: var(--mc-font-size-sm); text-decoration: none; cursor: pointer; }
+.lang-tabs__tab:hover { border-color: var(--mc-color-border-strong); background: var(--mc-color-surface-subtle); }
+.lang-tabs__item.is-current .lang-tabs__tab { border-color: var(--mc-color-primary); background: var(--mc-color-primary-soft); color: var(--mc-color-primary); font-weight: var(--mc-font-weight-semibold); }
+.lang-tabs__code { font-family: var(--mc-font-mono); font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-semibold); letter-spacing: 0.04em; }
+.lang-tabs__default { color: var(--mc-color-muted); font-size: var(--mc-font-size-2xs); text-transform: uppercase; letter-spacing: 0.04em; }
+.lang-tabs__mark { display: inline-grid; place-items: center; min-width: var(--mc-space-4); font-weight: var(--mc-font-weight-bold); }
+.lang-tabs__item.is-done .lang-tabs__mark { color: var(--mc-color-success); }
+.lang-tabs__item.is-missing .lang-tabs__mark { color: var(--mc-color-warning); }
+.lang-tabs__add { display: inline-flex; align-items: center; gap: var(--mc-space-1); color: var(--mc-color-primary); font-size: var(--mc-font-size-sm); text-decoration: none; }
+.lang-tabs__add:hover { text-decoration: underline; }
+.lang-tabs__tab:focus-visible, .lang-tabs__add:focus-visible { outline: 2px solid var(--mc-color-focus); outline-offset: 2px; }
+.admin-notice--inline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--mc-space-3); margin: 0; }
+
+/* Translation editor: the status strip doubles as the tab bar */
+.translation-status { display: grid; gap: var(--mc-space-2); }
+.translation-panel[hidden] { display: none; }
+
+/* Information page editor: texts on the left, publishing and placement on the right */
+.admin-form.admin-page-editor { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--mc-space-4); align-items: start; }
+.admin-page-editor__main, .admin-page-editor__side { display: grid; gap: var(--mc-space-3); min-width: 0; align-content: start; }
+.admin-input-prefix { display: flex; align-items: stretch; min-width: 0; border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); background: var(--mc-color-background); overflow: hidden; }
+.admin-input-prefix > span { display: inline-flex; align-items: center; padding: 0 var(--mc-space-3); background: var(--mc-color-surface); color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); white-space: nowrap; border-right: 1px solid var(--mc-color-border); }
+.admin-input-prefix > input { flex: 1; min-width: 0; border: 0; border-radius: 0; box-shadow: none; }
+.admin-input-prefix > .admin-slug-field { flex: 1; min-width: 0; }
+.admin-input-prefix .admin-slug-field input { border: 0; border-radius: 0; box-shadow: none; }
+.admin-input-suffix { display: inline-flex; align-items: center; gap: var(--mc-space-1); }
+.admin-input-suffix > span { color: var(--mc-color-muted); }
+@media (min-width: 1024px) {
+  .admin-form.admin-page-editor { grid-template-columns: minmax(0, 1fr) 340px; }
+}
+@media (min-width: 1536px) {
+  .admin-form.admin-page-editor { grid-template-columns: minmax(0, 1fr) 380px; }
+}
+
+/* Hint lists under settings tables (which option suits whom) */
+.admin-hint-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--mc-space-2) var(--mc-space-4); margin: var(--mc-space-3) 0; padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); }
+.admin-hint-list > div { display: grid; gap: var(--mc-space-1); }
+.admin-hint-list dt { font-weight: var(--mc-font-weight-semibold); font-size: var(--mc-font-size-sm); }
+.admin-hint-list dd { margin: 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
+
+/* Tax rate editor */
+.tax-edit { display: grid; gap: var(--mc-space-3); }
+.tax-edit__row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--mc-space-3); align-items: end; }
+.tax-edit__checks { display: flex; flex-wrap: wrap; gap: var(--mc-space-4); }
+.tax-edit__note { margin: 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
+.lang-tabs__note { margin: 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
+.admin-page-editor__slug { display: grid; gap: var(--mc-space-1); }
+.lang-tabs__name { font-size: var(--mc-font-size-sm); }
+.admin-button small, .admin-button .admin-cell-sub { color: inherit; }

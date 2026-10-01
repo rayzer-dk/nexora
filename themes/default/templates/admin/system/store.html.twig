@@ -1,4 +1,4 @@
-{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}
 {{ shell.start(ui_text('admin.system.store.dani_mahazynu'),'store') }}
 <header class="admin-page-header">
     <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">Store setup · v{{ platform_version }}</span></nav><h1>{{ ui_text('admin.system.store.dani_mahazynu') }}</h1><p>{{ ui_text('admin.system.store.osnovni_rekvizyty_lokal_valiuta_ta_kontakty_kozh') }}</p></div>
@@ -7,26 +7,26 @@
 <form method="post" class="admin-panel" data-dirty-guard>
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('store_identity') }}">
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.system.store.osnovne') }}</small><h2>{{ ui_text('admin.system.store.mahazyn_i_rynok') }}</h2></div><span class="admin-badge">{{ ui_text('ui.admin.system.store.atomic_save') }}</span></div>
-    <div class="admin-form-grid">
+    <div class="admin-form-grid admin-form-grid--dense">
         <label><span>{{ ui_text('admin.system.store.nazva_mahazynu') }}</span><input type="text" name="name" value="{{ settings.name }}" maxlength="190" required></label>
-        <label><span>{{ ui_text('admin.system.store.kraina') }}</span><input type="text" name="country_code" value="{{ settings.country_code }}" maxlength="2" pattern="[A-Za-z]{2}" required></label>
+        <label><span>{{ ui_text('admin.system.store.kraina') }}</span><input type="text" name="country_code" value="{{ settings.country_code }}" maxlength="2" pattern="[A-Za-z]{2}" required>{{ help.hint(ui_text('admin.help.store.country'), null, null, 'UA') }}</label>
         <label><span>{{ ui_text('admin.system.store.mova_za_zamovchuvanniam') }}</span><select name="default_locale">{% if locales is empty %}<option value="{{ settings.default_locale }}">{{ settings.default_locale }}</option>{% else %}{% for locale in locales %}<option value="{{ locale.code }}" {{ locale.code == settings.default_locale ? 'selected' : '' }}>{{ locale.native_name }} · {{ locale.code }}</option>{% endfor %}{% endif %}</select></label>
         <label><span>{{ ui_text('admin.system.store.valiuta') }}</span><select name="default_currency">{% if currencies is empty %}<option value="{{ settings.default_currency }}">{{ settings.default_currency }}</option>{% else %}{% for currency in currencies %}<option value="{{ currency.code }}" {{ currency.code == settings.default_currency ? 'selected' : '' }}>{{ currency.code }} · {{ currency.name }}</option>{% endfor %}{% endif %}</select></label>
-        <label class="is-wide"><span>{{ ui_text('admin.system.store.domeny_mahazynu') }}</span><textarea name="domains" rows="3" placeholder="{{ ui_text('ui.admin.system.store.shop_example_com_10_www_shop_example_com')|e('html_attr') }}">{{ settings.domains|default([])|join('\n') }}</textarea><small>{{ ui_text('admin.system.store.pershyi_domen_osnovnyi_kozhen_host_mozhe_nalezha') }}</small></label>
-        <label><span>{{ ui_text('admin.system.store.chasovyi_poias') }}</span><select name="timezone">{% set zone_found = false %}{% for zone in timezones %}{% if zone == settings.timezone %}{% set zone_found = true %}{% endif %}<option value="{{ zone }}" {{ zone == settings.timezone ? 'selected' : '' }}>{{ zone }}</option>{% endfor %}{% if not zone_found %}<option value="{{ settings.timezone }}" selected>{{ settings.timezone }}</option>{% endif %}</select></label>
+        <label class="is-wide"><span>{{ ui_text('admin.system.store.domeny_mahazynu') }}</span><textarea name="domains" rows="2" placeholder="{{ ui_text('ui.admin.system.store.shop_example_com_10_www_shop_example_com')|e('html_attr') }}">{{ settings.domains|default([])|join('\n') }}</textarea><small>{{ ui_text('admin.system.store.pershyi_domen_osnovnyi_kozhen_host_mozhe_nalezha') }}</small></label>
+        <label><span>{{ ui_text('admin.system.store.chasovyi_poias') }}</span><select name="timezone">{% set zone_found = false %}{% for zone in timezones %}{% if zone == settings.timezone %}{% set zone_found = true %}{% endif %}<option value="{{ zone }}" {{ zone == settings.timezone ? 'selected' : '' }}>{{ zone }}</option>{% endfor %}{% if not zone_found %}<option value="{{ settings.timezone }}" selected>{{ settings.timezone }}</option>{% endif %}</select>{{ help.hint(ui_text('admin.help.store.timezone'), null, null, 'Europe/Kyiv') }}</label>
     </div>
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.system.store.yurydychni_ta_kontaktni_dani') }}</small><h2>{{ ui_text('admin.system.store.rekvizyty') }}</h2></div></div>
-    <div class="admin-form-grid">
+    <div class="admin-form-grid admin-form-grid--dense">
         <label><span>{{ ui_text('admin.system.store.yurydychna_nazva') }}</span><input type="text" name="legal_name" value="{{ settings.legal_name }}" maxlength="255"></label>
-        <label><span>{{ ui_text('admin.system.store.yedrpou_reiestratsiinyi_nomer') }}</span><input type="text" name="registration_number" value="{{ settings.registration_number }}" maxlength="128"></label>
-        <label><span>{{ ui_text('admin.system.store.podatkovyi_nomer') }}</span><input type="text" name="tax_number" value="{{ settings.tax_number|default('') }}" maxlength="128"></label>
-        <label><span>{{ ui_text('admin.system.store.vat_pdv_nomer') }}</span><input type="text" name="vat_number" value="{{ settings.vat_number|default('') }}" maxlength="128"></label>
-        <label class="is-wide"><span>{{ ui_text('admin.system.store.adresa') }}</span><textarea name="registration_address" maxlength="1000" rows="3">{{ settings.registration_address }}</textarea></label>
-        <label><span>IBAN</span><input type="text" name="iban" value="{{ settings.iban|default('') }}" maxlength="64"></label>
+        <label><span>{{ ui_text('admin.system.store.yedrpou_reiestratsiinyi_nomer') }}</span><input type="text" name="registration_number" value="{{ settings.registration_number }}" maxlength="128">{{ help.hint(ui_text('admin.help.store.edrpou'), 'https://usr.minjust.gov.ua/ua/freesearch', ui_text('admin.help.store.edrpou_link'), '12345678') }}</label>
+        <label><span>{{ ui_text('admin.system.store.podatkovyi_nomer') }}</span><input type="text" name="tax_number" value="{{ settings.tax_number|default('') }}" maxlength="128">{{ help.hint(ui_text('admin.help.store.tax'), null, null, '1234567890') }}</label>
+        <label><span>{{ ui_text('admin.system.store.vat_pdv_nomer') }}</span><input type="text" name="vat_number" value="{{ settings.vat_number|default('') }}" maxlength="128">{{ help.hint(ui_text('admin.help.store.vat')) }}</label>
+        <label class="is-wide"><span>{{ ui_text('admin.system.store.adresa') }}</span><textarea name="registration_address" maxlength="1000" rows="2">{{ settings.registration_address }}</textarea></label>
+        <label><span>IBAN</span><input type="text" name="iban" value="{{ settings.iban|default('') }}" maxlength="64">{{ help.hint(ui_text('admin.help.store.iban'), null, null, 'UA213223130000026007233566001') }}</label>
         <label><span>{{ ui_text('admin.system.store.bank') }}</span><input type="text" name="bank_name" value="{{ settings.bank_name|default('') }}" maxlength="255"></label>
         <label><span>{{ ui_text('admin.system.store.email_mahazynu') }}</span><input type="email" name="email" value="{{ settings.email }}" maxlength="320"></label>
         <label><span>{{ ui_text('admin.system.store.telefon') }}</span><input type="text" name="phone" value="{{ settings.phone }}" maxlength="64"></label>
-        <label><span>{{ ui_text('ui.admin.system.store.privacy_email') }}</span><input type="email" name="privacy_contact" value="{{ settings.privacy_contact }}" maxlength="320"></label>
+        <label><span>{{ ui_text('ui.admin.system.store.privacy_email') }}</span><input type="email" name="privacy_contact" value="{{ settings.privacy_contact }}" maxlength="320">{{ help.hint(ui_text('admin.help.store.privacy')) }}</label>
         <label><span>{{ ui_text('admin.system.store.povernennia') }}</span><input type="email" name="return_contact" value="{{ settings.return_contact }}" maxlength="320"></label>
         <label><span>{{ ui_text('admin.system.store.harantiia') }}</span><input type="email" name="warranty_contact" value="{{ settings.warranty_contact }}" maxlength="320"></label>
     </div>

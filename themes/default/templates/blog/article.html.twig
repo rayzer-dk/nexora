@@ -1,8 +1,16 @@
 {% extends '@storefront/base.html.twig' %}
 {% block head %}<link rel="alternate" type="application/rss+xml" title="{{ ui_text('blog_rss')|e('html_attr') }}" href="/blog/feed.xml"><script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>{% endblock %}
 {% block body %}
-<article class="shell article-page" data-article>
+<article class="shell article-page" data-article data-lightbox-scope>
   {% include '@storefront/components/breadcrumbs.html.twig' with {items: breadcrumbs} only %}
+  <div class="article-layout{% if article.toc %} has-toc{% endif %}">
+    {% if article.toc %}
+    <nav class="article-toc" aria-labelledby="article-toc-title">
+      <h2 id="article-toc-title">{{ ui_icon('list-tree', 16) }}{{ ui_text('blog_toc') }}</h2>
+      <ol>{% for item in article.toc %}<li class="{{ item.level == 3 ? 'article-toc__l3' : 'article-toc__l2' }}"><a href="#{{ item.id }}">{{ item.text }}</a></li>{% endfor %}</ol>
+    </nav>
+    {% endif %}
+    <div class="article-main">
   <header class="article-header">
     <p class="article-header__kicker">{% if article.category %}<a class="blog-chip" href="/blog/category/{{ article.category.slug }}">{{ article.category.name }}</a>{% else %}<span class="eyebrow">{{ ui_text('blog') }}</span>{% endif %}</p>
     <h1>{{ article.title }}</h1>
@@ -13,20 +21,31 @@
       <span>{{ ui_icon('clock', 16) }}{{ ui_text('blog_min_read')|replace({'%min%': article.reading_minutes}) }}</span>
     </p>
   </header>
-  {% if article.image %}<figure class="article-page__media"><img src="{{ article.image }}" alt="{{ article.image_alt }}" width="1440" height="810" fetchpriority="high" decoding="async"></figure>{% endif %}
-
-  <div class="article-layout{% if article.toc %} has-toc{% endif %}">
-    {% if article.toc %}
-    <nav class="article-toc" aria-labelledby="article-toc-title">
-      <h2 id="article-toc-title">{{ ui_icon('list-tree', 16) }}{{ ui_text('blog_toc') }}</h2>
-      <ol>{% for item in article.toc %}<li class="{{ item.level == 3 ? 'article-toc__l3' : 'article-toc__l2' }}"><a href="#{{ item.id }}">{{ item.text }}</a></li>{% endfor %}</ol>
-    </nav>
-    {% endif %}
-    <div class="article-main">
-      <div class="article-body">{{ article.body_html|raw|with_forms }}</div>
+  {% set img_align = article.image_align|default('none') %}
+  {% set img_size = article.image_size|default('m') %}
+  {% if article.image and img_align == 'none' %}<figure class="article-hero article-hero--{{ img_size }}" data-lightbox-item><img src="{{ article.image }}" alt="{{ article.image_alt|e('html_attr') }}" width="1440" height="810" fetchpriority="high" decoding="async"></figure>{% endif %}
+      <div class="article-body">
+        {% if article.image and (img_align == 'left' or img_align == 'right') %}<figure class="article-figure article-figure--{{ img_align }} article-figure--{{ img_size }}" data-lightbox-item><img src="{{ article.image }}" alt="{{ article.image_alt|e('html_attr') }}" width="720" height="540" loading="eager" decoding="async"></figure>{% endif %}
+        {{ article.body_html|raw|with_forms }}
+      </div>
       {% if article.tags %}<ul class="article-tags" aria-label="{{ ui_text('blog_tags_label')|e('html_attr') }}">{% for tag in article.tags %}<li><a class="blog-chip" href="/blog/tag/{{ tag.slug }}">{{ ui_icon('tag', 14) }}{{ tag.name }}</a></li>{% endfor %}</ul>{% endif %}
       {% include '@storefront/components/share_links.html.twig' with {share_url: share_url, share_title: article.title} only %}
     </div>
+    <aside class="article-rail" aria-label="{{ ui_text('blog_related')|e('html_attr') }}">
+      {% set linked_products = article_products(article.id) %}
+      {% if linked_products %}
+      <section class="aside-card" aria-labelledby="article-products-title">
+        <h2 id="article-products-title">{{ ui_icon('shopping-bag', 16) }}{{ ui_text('blog_products') }}</h2>
+        <ul class="aside-links">{% for p in linked_products %}<li><a href="{{ p.path }}">{{ p.name }}{{ ui_icon('chevron-right', 14) }}</a></li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+      {% if related %}
+      <section class="aside-card" aria-labelledby="article-related-title">
+        <h2 id="article-related-title">{{ ui_icon('newspaper', 16) }}{{ ui_text('blog_related') }}</h2>
+        <ul class="article-rail__list">{% for item in related|slice(0, 4) %}<li><a class="article-rail__item" href="{{ item.url }}">{% if item.image %}<img src="{{ item.image }}" alt="" width="96" height="64" loading="lazy" decoding="async">{% else %}<span class="article-rail__ph" aria-hidden="true">{{ ui_icon('file-text', 20) }}</span>{% endif %}<span><strong>{{ item.title }}</strong><small>{{ item.date }}</small></span></a></li>{% endfor %}</ul>
+      </section>
+      {% endif %}
+    </aside>
   </div>
 
   {% if neighbors.prev or neighbors.next %}
@@ -36,19 +55,5 @@
   </nav>
   {% endif %}
 
-  {% set linked_products = article_products(article.id) %}
-  {% if linked_products %}
-  <section class="article-products" aria-labelledby="article-products-title">
-    <h2 id="article-products-title">{{ ui_text('blog_products') }}</h2>
-    <ul class="article-products__list">{% for p in linked_products %}<li class="article-products__item"><a href="{{ p.path }}">{{ p.name }}</a></li>{% endfor %}</ul>
-  </section>
-  {% endif %}
-
-  {% if related %}
-  <section class="article-related" aria-labelledby="article-related-title">
-    <h2 id="article-related-title">{{ ui_text('blog_related') }}</h2>
-    <div class="article-grid">{% for item in related %}{% include '@storefront/components/blog_card.html.twig' with {article: item} only %}{% endfor %}</div>
-  </section>
-  {% endif %}
 </article>
 {% endblock %}

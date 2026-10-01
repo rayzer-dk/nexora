@@ -37,6 +37,7 @@ final class OrderAdminController extends AbstractController
         private readonly OrderDocumentService $documents,
         private readonly ShipmentOperationService $shipments,
         private readonly NovaPostShipmentOperationService $novaPostShipments,
+        private readonly \Commerce\Modules\Order\Application\OrderMethodPresenter $methodLabels,
     ) {}
 
     #[Route('/admin/orders', name: 'admin_orders', methods: ['GET'])]
@@ -243,6 +244,8 @@ final class OrderAdminController extends AbstractController
             'items' => $items,
             'payment' => $payment,
             'fulfillment' => $fulfillment,
+            'payment_label' => $payment !== [] ? $this->methodLabels->payment((string) $payment['provider_code'], $this->contexts->resolve($request)->locale) : '',
+            'delivery_label' => $fulfillment !== [] ? $this->methodLabels->delivery((string) $fulfillment['provider_code'], $this->contexts->resolve($request)->locale) : '',
             'refunds' => $refunds,
             'events' => $events,
             'notifications' => $notificationRows,

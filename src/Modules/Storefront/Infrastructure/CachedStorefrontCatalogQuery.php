@@ -52,6 +52,7 @@ final readonly class CachedStorefrontCatalogQuery
             'max' => $filter->maxPriceMinor,
             'sort' => $filter->sort,
             'attrs' => $filter->attributeFilters,
+            'rating' => $filter->minRating,
         ];
 
         return $this->cache->get($this->key('products', $context, $payload), function (ItemInterface $item) use ($context, $categoryId, $page, $limit, $filter): array {

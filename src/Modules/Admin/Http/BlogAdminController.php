@@ -24,6 +24,7 @@ final class BlogAdminController extends AbstractController
         private readonly MediaImageService $media,
         private readonly Connection $db,
         private readonly \Commerce\Modules\Localization\Application\ContentPolicyService $contentPolicy,
+        private readonly \Commerce\Modules\Admin\Application\ContentLanguageTabs $languageTabs,
     ) {
     }
 
@@ -59,6 +60,18 @@ final class BlogAdminController extends AbstractController
         $article = $this->blog->find($ctx->storeId, $id, $ctx->locale);
         if ($article === null) {
             throw $this->createNotFoundException();
+        }
+        if ($request->query->get('prefill') === 'default' && !$article['has_translation']) {
+            // "Copy from default language": the default-language text is shown as a starting point and stored only on Save.
+            foreach ($this->languageTabs->tabs($ctx->storeId, $ctx->locale) as $tab) {
+                $source = $tab['is_default'] ? $this->blog->find($ctx->storeId, $id, $tab['code']) : null;
+                if ($source !== null && $source['has_translation']) {
+                    foreach (['title', 'excerpt', 'body_html', 'meta_title', 'meta_description'] as $field) {
+                        $article[$field] = $source[$field];
+                    }
+                    $article['prefilled'] = 'default';
+                }
+            }
         }
         return $this->form($ctx->storeId, $ctx->locale, $id, $article);
     }
@@ -173,9 +186,28 @@ final class BlogAdminController extends AbstractController
             'locale' => $locale,
             'locales' => array_map('strval', $locales),
             'translated' => array_map('strval', $translated),
+            'lang_tabs' => $id !== null ? $this->blogTabs($storeId, $locale, $id, array_map('strval', $translated)) : [],
             'categories' => $this->blog->categories($storeId, $locale),
             'stored_status' => $stored,
         ]);
+    }
+
+    /**
+     * @param list<string> $translated
+     * @return list<array<string,mixed>>
+     */
+    private function blogTabs(int $storeId, string $locale, int $id, array $translated): array
+    {
+        $done = [];
+        foreach ($translated as $code) {
+            $done[$code] = true;
+        }
+        $tabs = [];
+        foreach ($this->languageTabs->tabs($storeId, $locale, $done) as $tab) {
+            $tabs[] = $tab + ['href' => $tab['current'] ? '' : $this->generateUrl('admin_content_blog_edit', ['id' => $id, 'locale' => $tab['code']])];
+        }
+
+        return $tabs;
     }
 
     /**
@@ -185,7 +217,7 @@ final class BlogAdminController extends AbstractController
      */
     private function merge(array $base, array $in): array
     {
-        foreach (['title', 'slug', 'excerpt', 'body_html', 'meta_title', 'meta_description', 'status', 'published_at', 'cover_alt', 'author_name', 'canonical_url', 'tags', 'product_skus'] as $key) {
+        foreach (['title', 'slug', 'excerpt', 'body_html', 'meta_title', 'meta_description', 'status', 'published_at', 'cover_alt', 'author_name', 'canonical_url', 'tags', 'product_skus', 'image_size', 'image_align'] as $key) {
             if (array_key_exists($key, $in)) {
                 $base[$key] = (string) $in[$key];
             }
@@ -202,7 +234,7 @@ final class BlogAdminController extends AbstractController
         return [
             'id' => null, 'public_id' => '', 'status' => 'draft', 'published_at' => '', 'has_translation' => false, 'title' => '', 'excerpt' => '',
             'body_html' => '', 'meta_title' => '', 'meta_description' => '', 'slug' => '', 'path' => '', 'category_id' => 0, 'cover_url' => '',
-            'cover_alt' => '', 'author_name' => '', 'featured' => false, 'noindex' => false, 'canonical_url' => '', 'tags' => '', 'product_skus' => '',
+            'cover_alt' => '', 'image_size' => 'm', 'image_align' => 'none', 'author_name' => '', 'featured' => false, 'noindex' => false, 'canonical_url' => '', 'tags' => '', 'product_skus' => '',
         ];
     }
 }

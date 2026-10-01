@@ -1,0 +1,25 @@
+{#- Connection guide: where each external service key comes from. Texts live in admin.guide.* -#}
+{% set guide = [
+  {id: 'nova_post', name: 'Nova Post', link: 'https://my.novaposhta.ua/settings/index#apikeys', env: ['NOVA_POST_API_KEY', 'NOVA_POST_SENDER_REF', 'NOVA_POST_SENDER_PHONE'], example: 'NOVA_POST_PAYER_TYPE=Sender'},
+  {id: 'ukrposhta', name: 'Ukrposhta', link: 'https://ukrposhta.ua/ua/ukrposhta-api', env: ['UKRPOSHTA_BEARER'], example: ''},
+  {id: 'meest', name: 'Meest', link: 'https://meest.com/', env: ['MEEST_API_BASE', 'MEEST_API_TOKEN'], example: ''},
+  {id: 'liqpay', name: 'LiqPay', link: 'https://www.liqpay.ua/en/adminbusiness', env: ['LIQPAY_ENABLED', 'LIQPAY_PUBLIC_KEY', 'LIQPAY_PRIVATE_KEY', 'LIQPAY_SANDBOX'], example: 'LIQPAY_SANDBOX=1'},
+  {id: 'monobank', name: 'monobank acquiring', link: 'https://web.monobank.ua/', env: ['MONOBANK_ACQUIRING_ENABLED', 'MONOBANK_ACQUIRING_TOKEN'], example: ''},
+  {id: 'wayforpay', name: 'WayForPay', link: 'https://m.wayforpay.com/', env: ['WAYFORPAY_ENABLED', 'WAYFORPAY_MERCHANT_ACCOUNT', 'WAYFORPAY_SECRET_KEY', 'WAYFORPAY_DOMAIN'], example: 'WAYFORPAY_DOMAIN=shop.example.com'},
+  {id: 'merchant', name: 'Google Merchant Center', link: 'https://merchants.google.com/', env: ['GOOGLE_MERCHANT_ENABLED', 'GOOGLE_MERCHANT_ACCOUNT_ID', 'GOOGLE_MERCHANT_DATA_SOURCE', 'GOOGLE_MERCHANT_SERVICE_ACCOUNT_JSON'], example: ''},
+  {id: 'ga4', name: 'Google Analytics 4 (server events)', link: 'https://analytics.google.com/', env: ['MARKETING_GA4_ENABLED', 'MARKETING_GA4_MEASUREMENT_ID', 'MARKETING_GA4_API_SECRET'], example: 'MARKETING_GA4_MEASUREMENT_ID=G-ABCDE12345'},
+  {id: 'meta', name: 'Meta Conversions API', link: 'https://business.facebook.com/events_manager', env: ['MARKETING_META_ENABLED', 'MARKETING_META_PIXEL_ID', 'MARKETING_META_ACCESS_TOKEN'], example: ''},
+  {id: 'tiktok', name: 'TikTok Events API', link: 'https://ads.tiktok.com/', env: ['MARKETING_TIKTOK_ENABLED', 'MARKETING_TIKTOK_PIXEL_CODE', 'MARKETING_TIKTOK_ACCESS_TOKEN'], example: ''},
+  {id: 'mail', name: 'E-mail (SMTP)', link: 'https://symfony.com/doc/current/mailer.html#transport-setup', env: ['MAILER_DSN', 'MAIL_FROM_ADDRESS', 'MAIL_FROM_NAME'], example: 'MAILER_DSN=smtp://user:password@smtp.example.com:587'},
+  {id: 'telegram', name: 'Telegram notifications', link: 'https://t.me/BotFather', env: ['TELEGRAM_NOTIFICATIONS_ENABLED', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_DEFAULT_CHAT_ID'], example: ''},
+  {id: 'google_login', name: 'Sign in with Google', link: 'https://console.cloud.google.com/apis/credentials', env: ['GOOGLE_LOGIN_ENABLED', 'GOOGLE_LOGIN_CLIENT_ID', 'GOOGLE_LOGIN_CLIENT_SECRET'], example: ''},
+  {id: 'meili', name: 'Meilisearch (optional)', link: 'https://www.meilisearch.com/docs', env: ['MEILISEARCH_ENABLED', 'MEILISEARCH_ENDPOINT', 'MEILISEARCH_API_KEY'], example: ''},
+] %}
+<p class="admin-hint">{{ ui_text('admin.guide.intro') }}</p>
+<div class="admin-guide">{% for svc in guide %}<article class="admin-guide__card" id="guide-{{ svc.id }}">
+  <h3>{{ svc.name }}<a class="admin-button is-sm" href="{{ svc.link }}" target="_blank" rel="noopener noreferrer">{{ ui_icon('external-link', 14) }}<span>{{ ui_text('admin.guide.open') }}</span></a></h3>
+  <p><strong>{{ ui_text('admin.guide.' ~ svc.id ~ '.what') }}</strong></p>
+  <p>{{ ui_text('admin.guide.' ~ svc.id ~ '.how') }}</p>
+  <div class="admin-guide__env" aria-label="{{ ui_text('admin.guide.variables') }}">{% for v in svc.env %}<code>{{ v }}</code>{% endfor %}</div>
+  {% if svc.example %}<p class="admin-guide__reco">{{ ui_text('admin.guide.example') }}: <code>{{ svc.example }}</code></p>{% endif %}
+</article>{% endfor %}</div>

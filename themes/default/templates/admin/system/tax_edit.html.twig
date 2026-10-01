@@ -1,0 +1,18 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.tax.edit'),'system') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_system_tax') }}">{{ ui_text('admin.tax.title') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.tax.edit') }}</span></nav><h1>{{ ui_text('admin.tax.edit') }}</h1><p>{{ ui_text('admin.tax.edit_intro') }}</p></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
+{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<section class="admin-panel tax-edit"><form method="post" action="{{ path('admin_system_tax_rate_update', {id: rate.id}) }}" class="admin-form-stack" data-tax-edit><input type="hidden" name="_token" value="{{ csrf_token('admin_tax') }}">
+<div class="admin-form-grid admin-form-grid--dense">
+<label><span>{{ ui_text('admin.tax.name') }}</span><input type="text" name="name" value="{{ rate.name }}" maxlength="190" required></label>
+<label><span>{{ ui_text('admin.tax.rate') }} (%)</span><input type="text" inputmode="decimal" name="percent" value="{{ percent }}" required><small>{{ ui_text('admin.tax.rate_hint') }}</small></label>
+<label><span>{{ ui_text('admin.tax.country') }}</span><input type="text" name="country" value="{{ rate.country_code }}" maxlength="2" required><small>{{ ui_text('admin.tax.country_hint') }}</small></label>
+<label><span>{{ ui_text('admin.tax.region') }}</span><input type="text" name="region" value="{{ rate.region_code }}" maxlength="64"><small>{{ ui_text('admin.tax.region_hint') }}</small></label>
+<label><span>{{ ui_text('admin.tax.class') }}</span><select name="class_id">{% for c in classes %}<option value="{{ c.id }}"{% if c.id == rate.tax_class_id %} selected{% endif %}>{{ c.name }}</option>{% endfor %}</select><small>{{ ui_text('admin.tax.class_hint') }}</small></label>
+<label><span>{{ ui_text('admin.tax.priority') }}</span><input type="number" name="priority" value="{{ rate.priority }}" min="0" max="65535"><small>{{ ui_text('admin.tax.priority_hint') }}</small></label>
+<label><span>{{ ui_text('admin.tax.valid_from') }}</span><input type="date" name="valid_from" value="{{ rate.valid_from|slice(0,10) }}"></label>
+<label><span>{{ ui_text('admin.tax.valid_to') }}</span><input type="date" name="valid_to" value="{{ rate.valid_to ? rate.valid_to|slice(0,10) : '' }}"></label></div>
+<label class="admin-check"><input type="checkbox" name="enabled" value="1"{% if rate.enabled %} checked{% endif %}><span>{{ ui_text('admin.tax.enabled') }}</span></label>
+<p class="tax-edit__note">{{ ui_text('admin.tax.included_note') }}</p>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.common.save') }}</button><a class="admin-button" href="{{ path('admin_system_tax') }}">{{ ui_text('admin.tax.cancel') }}</a></div></form></section>
+{{ shell.end() }}

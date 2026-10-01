@@ -227,7 +227,7 @@ final readonly class DemoSeeder
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.22.0',
+                'version' => '3.23.0',
                 'catalog_source' => 'DummyJSON',
             ]);
 
@@ -334,6 +334,30 @@ final readonly class DemoSeeder
         $db->insert('mc_content_translation',['content_id'=>$id,'locale'=>$locale,'title'=>$article['title'],'excerpt'=>$article['excerpt'],'body_html'=>$article['body'],'meta_title'=>$article['title'],'meta_description'=>$article['excerpt'],'created_at'=>$now,'updated_at'=>$now]);
         $this->seo->ensureForCreatedEntity($storeId,$locale,SeoEntityType::BlogArticle,$public->toRfc4122(),$article['title'],$article['slug']);
         $this->tag($db,$storeId,'article',$public->toRfc4122(),'seed',['kind'=>'article','sort'=>$sort]);
+        // Every demo article gets a locally generated cover (no external downloads); it is also registered in the media library.
+        $cover=match($article['slug']){'how-to-choose-laptop'=>'blog-laptop','smartphone-selection-guide'=>'blog-phone','smart-home-basics'=>'blog-home',default=>null};
+        if($cover!==null){
+            $url='/media/demo/blog/'.$cover.'.svg';
+            $this->registerSvgMedia($db,'demo/blog/'.$cover.'.svg',$now);
+            $meta=['cover_url'=>$url,'cover_alt'=>$article['title'],'image_size'=>'m','image_align'=>'none','reading_minutes'=>1];
+            if((int)$db->fetchOne('SELECT COUNT(*) FROM mc_blog_article_meta WHERE content_id=?',[$id])===1){$db->update('mc_blog_article_meta',$meta,['content_id'=>$id]);}
+            else{$db->insert('mc_blog_article_meta',$meta+['content_id'=>$id]);}
+        }
+    }
+
+    /** SVG covers are not readable by getimagesize(): register them in the media library with the declared size. */
+    private function registerSvgMedia(Connection $db,string $storageKey,string $now): void
+    {
+        $path=$this->projectDir.'/public/media/'.$storageKey;
+        if(!is_file($path)){return;}
+        $hash=hash('sha256',$storageKey,true);
+        $existing=$db->fetchOne('SELECT id FROM mc_media_asset WHERE storage_key_hash=?',[$hash]);
+        if($existing!==false){$this->linkMediaToStore($db,(int)$existing,$now);return;}
+        $svg=(string)file_get_contents($path);
+        $w=preg_match('/width="(\d+)"/',$svg,$mw)?(int)$mw[1]:1440;
+        $h=preg_match('/height="(\d+)"/',$svg,$mh)?(int)$mh[1]:810;
+        $db->insert('mc_media_asset',['public_id'=>$this->publicIds->generate()->toBinary(),'storage_key'=>$storageKey,'storage_key_hash'=>$hash,'mime_type'=>'image/svg+xml','bytes'=>(int)filesize($path),'width'=>$w,'height'=>$h,'checksum_sha256'=>hash_file('sha256',$path,true),'metadata'=>json_encode(['demo'=>true],JSON_THROW_ON_ERROR),'created_at'=>$now]);
+        $this->linkMediaToStore($db,(int)$db->lastInsertId(),$now);
     }
 
     /** Editorial showcase: categories, covers, tags and long-form articles from resources/demo/blog-articles.json. */
@@ -362,6 +386,7 @@ final readonly class DemoSeeder
                 'cover_url'=>(string)($article['cover']??''),'cover_alt'=>(string)$tr['title'],'author_name'=>$author,
                 'featured'=>!empty($article['featured']),'tags'=>implode(', ',(array)($tr['tags']??[])),
             ],'demo:editorial');
+            if(str_ends_with((string)($article['cover']??''),'.svg')){$this->registerSvgMedia($db,ltrim(substr((string)$article['cover'],strlen('/media/')),'/'),$now);}
             $public=(string)$db->fetchOne('SELECT public_id FROM mc_content_entry WHERE id=?',[$id]);
             $this->tag($db,$storeId,'article',Uuid::fromBinary($public)->toRfc4122(),'seed',['kind'=>'article','showcase'=>true]);
             $count++;
@@ -509,7 +534,7 @@ final readonly class DemoSeeder
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_TIMEOUT => 15,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.22.0',
+            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.23.0',
             CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$data): int {
                 if (strlen($data) + strlen($chunk) > 5 * 1024 * 1024) { return 0; }
                 $data .= $chunk;

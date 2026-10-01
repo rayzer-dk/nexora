@@ -5,7 +5,7 @@ declare(strict_types=1);
 // Release gate: components use design tokens instead of raw values for type, layers, radius, elevation and breakpoints.
 $root = dirname(__DIR__);
 $scope = $argv[1] ?? 'all';
-$files = glob($root . '/assets/{admin,storefront}/*.css', GLOB_BRACE);
+$files = glob($root . '/assets/{admin,storefront}{,/parts}/*.css', GLOB_BRACE);
 if ($scope !== 'all') {
     $files = array_filter($files, static fn (string $f) => str_contains($f, "/assets/$scope/"));
 }

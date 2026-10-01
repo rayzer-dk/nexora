@@ -1,9 +1,15 @@
 {% if product.variants %}
-<fieldset class="variant-picker">
-    <legend>{{ ui_text('variant') }}</legend>
+{% set has_swatch = false %}
+{% for variant in product.variants %}{% if variant.swatch|default('') %}{% set has_swatch = true %}{% endif %}{% endfor %}
+<fieldset class="variant-picker{{ has_swatch ? ' variant-picker--swatches' : '' }}">
+    <legend>{{ ui_text('variant') }}{% for variant in product.variants %}{% if variant.selected %}<strong class="variant-picker__current">{{ variant.label }}</strong>{% endif %}{% endfor %}</legend>
     <div class="variant-picker__options">
         {% for variant in product.variants %}
-            <a href="{{ product.url }}?variant={{ variant.id }}" class="variant-chip{% if variant.selected %} is-selected{% endif %}{% if not variant.available %} is-unavailable{% endif %}" aria-current="{{ variant.selected ? 'true' : 'false' }}" title="SKU {{ variant.sku }} · {{ variant.price }}{% if not variant.available %} · {{ ui_text('out_of_stock') }}{% endif %}">{{ variant.label }}</a>
+            {% if variant.swatch|default('') %}
+                <a href="{{ product.url }}?variant={{ variant.id }}" class="variant-swatch{% if variant.selected %} is-selected{% endif %}{% if not variant.available %} is-unavailable{% endif %}" aria-current="{{ variant.selected ? 'true' : 'false' }}" aria-label="{{ variant.label }}" title="{{ variant.label }} · {{ variant.price }}{% if not variant.available %} · {{ ui_text('out_of_stock') }}{% endif %}"><span class="variant-swatch__dot" style="background:{{ variant.swatch }}"></span><span class="variant-swatch__name">{{ variant.label }}</span></a>
+            {% else %}
+                <a href="{{ product.url }}?variant={{ variant.id }}" class="variant-chip{% if variant.selected %} is-selected{% endif %}{% if not variant.available %} is-unavailable{% endif %}" aria-current="{{ variant.selected ? 'true' : 'false' }}" title="SKU {{ variant.sku }}{% if not variant.available %} · {{ ui_text('out_of_stock') }}{% endif %}"><span class="variant-chip__label">{{ variant.label }}</span><span class="variant-chip__price">{{ variant.price }}</span></a>
+            {% endif %}
         {% endfor %}
     </div>
 </fieldset>

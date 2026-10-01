@@ -1,11 +1,11 @@
-{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}
 {{ shell.start(ui_text('admin.push.title'),'push') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.push.title') }}</span></nav><h1>{{ ui_text('admin.push.title') }}</h1><p>{{ ui_text('admin.push.intro') }}</p></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
 <section class="admin-panel"><form method="post" action="{{ path('admin_system_push') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_push') }}">
 <label class="admin-check"><input type="checkbox" name="enabled" value="1"{{ s.enabled ? ' checked' : '' }}> {{ ui_text('admin.push.enabled') }}</label>
-<label>{{ ui_text('admin.push.subject') }}<input type="text" name="subject" value="{{ s.subject }}" maxlength="190" placeholder="mailto:shop@example.com" required><small>{{ ui_text('admin.push.subject_hint') }}</small></label>
-<label class="admin-form-wide">{{ ui_text('admin.push.public_key') }}<input type="text" value="{{ s.public }}" readonly><small>{{ ui_text('admin.push.public_key_hint') }}</small></label>
+<label>{{ ui_text('admin.push.subject') }}<input type="text" name="subject" value="{{ s.subject }}" maxlength="190" placeholder="mailto:shop@example.com" required>{{ help.hint(ui_text('admin.push.subject_hint'), 'https://developer.mozilla.org/docs/Web/API/Push_API', ui_text('admin.help.push.docs'), 'mailto:shop@your-domain.com') }}</label>
+<label class="admin-form-wide">{{ ui_text('admin.push.public_key') }}<input type="text" value="{{ s.public }}" readonly>{{ help.hint(ui_text('admin.push.public_key_hint') ~ ' ' ~ ui_text('admin.help.push.key_note')) }}</label>
 <div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.push.save') }}</button></div></form>
 <form method="post" action="{{ path('admin_system_push_keys') }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_push') }}"><button class="admin-button" type="submit" data-confirm="{{ ui_text('admin.push.keys_confirm') }}">{{ ui_icon('refresh-cw', 16) }}{{ ui_text('admin.push.keys_regenerate') }}</button></form></section>
 {% if s.enabled %}

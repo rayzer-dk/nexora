@@ -6,64 +6,89 @@
 {% endblock %}
 
 {% block body %}
-{% set has_primary = regions.below_primary|default([])|length > 0 %}
-{% set has_secondary = regions.below_secondary|default([])|length > 0 %}
+{% set hero_summary = regions.hero_summary|default([]) %}
+{% set tab_of = {description:'description', attributes:'specs', documents:'specs', compliance:'specs', reviews:'reviews', qa:'questions', consumer_rights:'delivery'} %}
+{% set detail_blocks = regions.below_primary|default([])|merge(regions.below_secondary|default([])) %}
+{% set panels = {} %}
+{% set extras = [] %}
+{% for block in detail_blocks %}
+    {% if tab_of[block.type] is defined %}
+        {% set html %}{% include '@storefront/product/_block.html.twig' with {product: product, block: block} only %}{% endset %}
+        {% set panels = panels|merge({(tab_of[block.type]): (panels[tab_of[block.type]]|default('')) ~ html}) %}
+    {% else %}
+        {% set extras = extras|merge([block]) %}
+    {% endif %}
+{% endfor %}
+{% set custom_fields = product_custom_fields(product.internal_id) %}
+{% if custom_fields %}
+    {% set html %}<section class="product-custom-fields detail-card" aria-label="{{ ui_text('product_custom_fields')|e('html_attr') }}"><h2>{{ ui_text('product_custom_fields') }}</h2><dl class="spec-list">{% for f in custom_fields %}<div><dt>{{ f.label }}</dt><dd>{% if f.type == 'url' %}<a href="{{ f.value }}" rel="noopener nofollow" target="_blank">{{ f.value }}</a>{% else %}{{ f.value }}{% endif %}</dd></div>{% endfor %}</dl></section>{% endset %}
+    {% set panels = panels|merge({specs: (panels.specs|default('')) ~ html}) %}
+{% endif %}
+{% set has_delivery = false %}
+{% for block in hero_summary %}{% if block.type in ['fulfillment_preview', 'payment_trust'] %}{% set has_delivery = true %}{% endif %}{% endfor %}
+{% if panels.delivery is defined or has_delivery %}
+    {% set html %}<section class="detail-card pp-delivery">
+        <h2>{{ ui_text('shipping_payment') }}</h2>
+        <div class="pp-delivery__grid">
+            <a class="pp-delivery__item" href="/shipping">{{ ui_icon('truck', 20) }}<span><strong>{{ ui_text('quick_delivery_choice') }}</strong><small>{{ ui_text('delivery_choice_text') }}</small></span></a>
+            <a class="pp-delivery__item" href="/payment">{{ ui_icon('credit-card', 20) }}<span><strong>{{ ui_text('payment_methods_checkout') }}</strong><small>{{ ui_text('secure_payment') }} · {{ ui_text('card_data_not_stored') }}</small></span></a>
+            <a class="pp-delivery__item" href="/returns">{{ ui_icon('refresh-cw', 20) }}<span><strong>{{ ui_text('returns_warranty_terms') }}</strong><small>{{ ui_text('view_shipping_terms') }}</small></span></a>
+        </div>
+    </section>{% endset %}
+    {% set panels = panels|merge({delivery: html ~ (panels.delivery|default(''))}) %}
+{% endif %}
+{% set tabs = [] %}
+{% if panels.description is defined %}{% set tabs = tabs|merge([{id:'description', label:ui_text('description'), count:null}]) %}{% endif %}
+{% if panels.specs is defined %}{% set tabs = tabs|merge([{id:'specs', label:ui_text('attributes'), count:null}]) %}{% endif %}
+{% if panels.reviews is defined %}{% set tabs = tabs|merge([{id:'reviews', label:ui_text('reviews'), count:product.rating.count|default(0)}]) %}{% endif %}
+{% if panels.questions is defined %}{% set tabs = tabs|merge([{id:'questions', label:ui_text('qa_title'), count:product.questions|length}]) %}{% endif %}
+{% if panels.delivery is defined %}{% set tabs = tabs|merge([{id:'delivery', label:ui_text('shipping_payment'), count:null}]) %}{% endif %}
 <article class="product-page">
     <div class="shell">{% include '@storefront/components/breadcrumbs.html.twig' with {items: product.breadcrumbs|default([])} only %}</div>
     <div class="shell product-hero">
         {% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_gallery', product:product} only %}
         <section class="product-region product-region--media" aria-label="{{ ui_text('ui.product.show.product_media')|e('html_attr') }}">
-            {% for block in regions.hero_media|default([]) %}
-                <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}" style="--block-order:{{ block.order }};--block-mobile-order:{{ block.mobileOrder }};{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}">
-                    {% include block.template with {product: product, block: block} only %}
-                </div>
-            {% endfor %}
+            {% for block in regions.hero_media|default([]) %}{% include '@storefront/product/_block.html.twig' with {product: product, block: block} only %}{% endfor %}
         </section>
         {% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_gallery', product:product} only %}
 
         <section class="product-region product-region--summary" aria-label="{{ ui_text('ui.product.show.purchase_information')|e('html_attr') }}">
-            {% for block in regions.hero_summary|default([]) %}
-                {% if block.type == 'title_meta' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_title', product:product} only %}{% endif %}
-                {% if block.type == 'buy_actions' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_buy', product:product} only %}{% endif %}
-                <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}" style="--block-order:{{ block.order }};--block-mobile-order:{{ block.mobileOrder }};{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}">
-                    {% include block.template with {product: product, block: block} only %}
-                </div>
-                {% if block.type == 'title_meta' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_title', product:product} only %}{% endif %}
-                {% if block.type == 'price' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_price', product:product} only %}{% endif %}
-                {% if block.type == 'buy_actions' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_buy', product:product} only %}{% endif %}
+            {% for block in hero_summary %}
+                {% if block.type not in ['fulfillment_preview', 'payment_trust'] %}{% include '@storefront/product/_block.html.twig' with {product: product, block: block} only %}{% endif %}
             {% endfor %}
-            {% include '@storefront/components/share_links.html.twig' with {share_url: seo_head.canonical|default(app.request.uri), share_title: product.name} only %}
+            {% if has_delivery %}<a class="pp-delivery-link" href="#tab-delivery" data-tab-link="delivery">{{ ui_icon('truck', 18) }}<span>{{ ui_text('shipping_payment') }}</span>{{ ui_icon('chevron-right', 16) }}</a>{% endif %}
         </section>
     </div>
 
-    <div class="shell product-details{{ not has_primary or not has_secondary ? ' product-details--single' : '' }}">
-        <section class="product-region product-region--below-primary{{ not has_primary ? ' is-empty' : '' }}" aria-label="{{ ui_text('ui.product.show.product_details')|e('html_attr') }}">
-            {% for block in regions.below_primary|default([]) %}
-                {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_description', product:product} only %}{% endif %}
-                <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}"{% if block.settings.builder_background|default('') or block.settings.builder_color|default('') or block.settings.builder_padding|default('') or block.settings.builder_margin|default('') %} style="{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}"{% endif %}>
-                    {% include block.template with {product: product, block: block} only %}
-                </div>
-                {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_description', product:product} only %}{% endif %}
-                {% if block.type == 'attributes' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_attributes', product:product} only %}{% endif %}
-                {% if block.type == 'reviews' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_reviews', product:product} only %}{% endif %}
+    {% if tabs %}
+    <div class="shell">
+        <section class="pp-tabs" data-product-tabs aria-label="{{ ui_text('ui.product.show.product_details')|e('html_attr') }}">
+            <div class="pp-tabs__bar" role="tablist">
+                {% for tab in tabs %}<a class="pp-tabs__tab{{ loop.first ? ' is-active' : '' }}" role="tab" id="tab-btn-{{ tab.id }}" href="#tab-{{ tab.id }}" data-tab="{{ tab.id }}" aria-controls="tab-{{ tab.id }}" aria-selected="{{ loop.first ? 'true' : 'false' }}">{{ tab.label }}{% if tab.count %}<span class="pp-tabs__count">{{ tab.count }}</span>{% endif %}</a>{% endfor %}
+            </div>
+            {% for tab in tabs %}
+            <div class="pp-tabs__panel{{ loop.first ? ' is-active' : '' }}" role="tabpanel" id="tab-{{ tab.id }}" aria-labelledby="tab-btn-{{ tab.id }}" data-tab-panel="{{ tab.id }}">
+                {% if tab.id == 'description' and product.attributes|default([]) %}
+                    <div class="pp-split">
+                        <div class="pp-split__main">{{ panels.description|raw }}</div>
+                        <aside class="pp-split__aside detail-card" aria-label="{{ ui_text('attributes')|e('html_attr') }}">
+                            <h2><a href="#tab-specs" data-tab-link="specs">{{ ui_text('attributes') }}</a></h2>
+                            <dl class="spec-list">{% for attribute in product.attributes|slice(0, 8) %}<div><dt>{{ attribute.name }}</dt><dd>{{ attribute.value }}</dd></div>{% endfor %}</dl>
+                        </aside>
+                    </div>
+                {% else %}
+                    {{ panels[tab.id]|raw }}
+                {% endif %}
+            </div>
             {% endfor %}
         </section>
+    </div>
+    {% endif %}
 
-        <section class="product-region product-region--below-secondary{{ not has_secondary ? ' is-empty' : '' }}" aria-label="{{ ui_text('ui.product.show.additional_product_information')|e('html_attr') }}">
-            {% for block in regions.below_secondary|default([]) %}
-                {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_description', product:product} only %}{% endif %}
-                <div class="product-block product-block--{{ block.type }}{{ block.settings.builder_visibility.desktop is defined and not block.settings.builder_visibility.desktop ? ' is-hidden-desktop' : '' }}{{ block.settings.builder_visibility.tablet is defined and not block.settings.builder_visibility.tablet ? ' is-hidden-tablet' : '' }}{{ block.settings.builder_visibility.mobile is defined and not block.settings.builder_visibility.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}"{% if block.settings.builder_background|default('') or block.settings.builder_color|default('') or block.settings.builder_padding|default('') or block.settings.builder_margin|default('') %} style="{% if block.settings.builder_background|default('') %}background:{{ block.settings.builder_background }};{% endif %}{% if block.settings.builder_color|default('') %}color:{{ block.settings.builder_color }};{% endif %}{% if block.settings.builder_padding|default('') %}padding:{{ block.settings.builder_padding }};{% endif %}{% if block.settings.builder_margin|default('') %}margin:{{ block.settings.builder_margin }};{% endif %}"{% endif %}>
-                    {% include block.template with {product: product, block: block} only %}
-                </div>
-                {% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_description', product:product} only %}{% endif %}
-                {% if block.type == 'attributes' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_attributes', product:product} only %}{% endif %}
-                {% if block.type == 'reviews' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_reviews', product:product} only %}{% endif %}
-            {% endfor %}
-        </section>
-        {% set custom_fields = product_custom_fields(product.internal_id) %}
-        {% if custom_fields %}<section class="product-custom-fields" aria-label="{{ ui_text('product_custom_fields')|e('html_attr') }}"><h2>{{ ui_text('product_custom_fields') }}</h2><dl class="product-custom-fields__list">{% for f in custom_fields %}<div class="product-custom-fields__row"><dt>{{ f.label }}</dt><dd>{% if f.type == 'url' %}<a href="{{ f.value }}" rel="noopener nofollow" target="_blank">{{ f.value }}</a>{% else %}{{ f.value }}{% endif %}</dd></div>{% endfor %}</dl></section>{% endif %}
+    <div class="shell product-extras">
+        {% for block in extras %}{% include '@storefront/product/_block.html.twig' with {product: product, block: block} only %}{% endfor %}
         {% for b in product_info_blocks(product.internal_id) %}<section class="product-info-block product-info-block--{{ b.type }}">{% if b.title %}<h2>{{ b.title }}</h2>{% endif %}{% if b.type == 'info' %}<div class="product-info-block__body">{{ b.html|raw }}</div>{% elseif b.type == 'list' %}<ul class="product-info-block__list">{% for item in b.items %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<div class="product-info-block__table"><table><thead><tr>{% for c in b.columns %}<th scope="col">{{ c }}</th>{% endfor %}</tr></thead><tbody>{% for row in b.rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% endif %}</section>{% endfor %}
-        {% set product_articles_list = product_articles(product.internal_id) %}{% if product_articles_list %}<section class="product-articles"><h2>{{ ui_text('product_articles') }}</h2><ul class="product-articles__list">{% for a in product_articles_list %}<li><a href="{{ a.path }}">{{ a.title }}</a></li>{% endfor %}</ul></section>{% endif %}
+        {% set product_articles_list = product_articles(product.internal_id) %}{% if product_articles_list %}<section class="product-articles detail-card"><h2>{{ ui_text('product_articles') }}</h2><ul class="product-articles__list">{% for a in product_articles_list %}<li><a href="{{ a.path }}">{{ a.title }}</a></li>{% endfor %}</ul></section>{% endif %}
     </div>
 
     {% for block in regions.mobile_sticky|default([]) %}

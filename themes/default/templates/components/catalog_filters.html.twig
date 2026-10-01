@@ -1,64 +1,86 @@
-<form class="catalog-filters" method="get" action="" data-catalog-filter-form>
-    <div class="catalog-filters__row">
-        <label class="catalog-filter catalog-filter--search">
-            <span>{{ ui_text('filter_search') }}</span>
-            <input type="search" name="q" value="{{ catalog_filter.search }}" placeholder="{{ ui_text('filter_search_placeholder') }}" maxlength="120" autocomplete="off">
-        </label>
-        <label class="catalog-filter">
-            <span>{{ ui_text('brand') }}</span>
-            <select name="brand">
-                <option value="">{{ ui_text('all_brands') }}</option>
-                {% for brand in catalog_facets.brands %}
-                    <option value="{{ brand.id }}"{% if catalog_filter.brandId == brand.id %} selected{% endif %}>{{ brand.name }} ({{ brand.count }})</option>
-                {% endfor %}
-            </select>
-        </label>
-        <label class="catalog-filter">
-            <span>{{ ui_text('price_from') }}</span>
-            <input type="text" inputmode="decimal" name="min_price" value="{{ catalog_filter.minPriceMinor is not null ? (catalog_filter.minPriceMinor / 100)|number_format(2, '.', '') : '' }}" placeholder="0.00">
-        </label>
-        <label class="catalog-filter">
-            <span>{{ ui_text('price_to') }}</span>
-            <input type="text" inputmode="decimal" name="max_price" value="{{ catalog_filter.maxPriceMinor is not null ? (catalog_filter.maxPriceMinor / 100)|number_format(2, '.', '') : '' }}" placeholder="{{ ui_text('no_limit') }}">
-        </label>
-        <label class="catalog-filter">
-            <span>{{ ui_text('sort') }}</span>
-            <select name="sort">
-                <option value="newest"{% if catalog_filter.sort == 'newest' %} selected{% endif %}>{{ ui_text('sort_newest') }}</option>
-                <option value="popular"{% if catalog_filter.sort == 'popular' %} selected{% endif %}>{{ ui_text('sort_popular') }}</option>
-                <option value="price_asc"{% if catalog_filter.sort == 'price_asc' %} selected{% endif %}>{{ ui_text('sort_price_asc') }}</option>
-                <option value="price_desc"{% if catalog_filter.sort == 'price_desc' %} selected{% endif %}>{{ ui_text('sort_price_desc') }}</option>
-                <option value="name_asc"{% if catalog_filter.sort == 'name_asc' %} selected{% endif %}>{{ ui_text('sort_name_asc') }}</option>
-                <option value="name_desc"{% if catalog_filter.sort == 'name_desc' %} selected{% endif %}>{{ ui_text('sort_name_desc') }}</option>
-            </select>
-        </label>
-        <label class="catalog-filter catalog-filter--check">
-            <input type="checkbox" name="in_stock" value="1"{% if catalog_filter.inStockOnly %} checked{% endif %}>
-            <span>{{ ui_text('only_in_stock') }}</span>
-        </label>
-        <div class="catalog-filter__actions">
-            <button class="button button--primary" type="submit">{{ ui_icon('sliders-horizontal', 16) }}{{ ui_text('apply') }}</button>
-            {% if catalog_filter.isFiltered %}<a class="button button--ghost" href="{{ app.request.pathInfo }}">{{ ui_text('reset') }}</a>{% endif %}
-        </div>
+{# Filter sidebar (desktop) / bottom sheet (mobile). Query parameters are unchanged: q, brand, min_price, max_price, in_stock, rating, sort, per_page, attr[code][]. #}
+{% set price_lo = catalog_facets.price_min_minor is not null ? (catalog_facets.price_min_minor / 100)|round(0, 'floor') : 0 %}
+{% set price_hi = catalog_facets.price_max_minor is not null ? (catalog_facets.price_max_minor / 100)|round(0, 'ceil') : 0 %}
+{% set cur_min = catalog_filter.minPriceMinor is not null ? (catalog_filter.minPriceMinor / 100)|number_format(2, '.', '') : '' %}
+{% set cur_max = catalog_filter.maxPriceMinor is not null ? (catalog_filter.maxPriceMinor / 100)|number_format(2, '.', '') : '' %}
+<div class="cf-backdrop" data-filters-backdrop hidden></div>
+<aside class="cf" id="catalog-filters-panel" data-filters-panel aria-label="{{ ui_text('filter_title')|e('html_attr') }}">
+<form class="catalog-filters cf__form" id="catalog-filters" method="get" action="" data-catalog-filter-form>
+    <div class="cf__head">
+        <h2>{{ ui_icon('sliders-horizontal', 18) }}<span>{{ ui_text('filter_title') }}</span></h2>
+        <button class="cf__close" type="button" data-filters-close aria-label="{{ ui_text('close')|e('html_attr') }}">{{ ui_icon('x', 20) }}</button>
     </div>
-
-    {% if catalog_facets.attributes|default([]) is not empty %}
-        <div class="catalog-facets" aria-label="{{ ui_text('attribute_filters') }}">
-            {% for facet in catalog_facets.attributes %}
-                {% set selected_values = catalog_filter.attributeFilters[facet.code]|default([]) %}
-                <details class="catalog-facet"{% if selected_values is not empty %} open{% endif %}>
-                    <summary>{{ facet.name }}{% if facet.unit_label %}, {{ facet.unit_label }}{% endif %}{% if selected_values is not empty %}<span class="catalog-facet__badge">{{ selected_values|length }}</span>{% endif %}{{ ui_icon('chevron-down', 16) }}</summary>
-                    <div class="catalog-facet__values">
-                        {% for value in facet.values %}
-                            <label class="catalog-facet__value">
-                                <input type="checkbox" name="attr[{{ facet.code }}][]" value="{{ value.token }}"{% if value.token in selected_values %} checked{% endif %}>
-                                <span>{{ value.label }}</span>
-                                <small>{{ value.count }}</small>
-                            </label>
-                        {% endfor %}
-                    </div>
-                </details>
-            {% endfor %}
+    <div class="cf__body">
+        <div class="cf__group cf__group--plain">
+            <label class="cf__search">
+                <span class="visually-hidden">{{ ui_text('filter_search') }}</span>
+                {{ ui_icon('search', 16) }}
+                <input type="search" name="q" value="{{ catalog_filter.search }}" placeholder="{{ ui_text('filter_search_placeholder') }}" maxlength="120" autocomplete="off">
+            </label>
         </div>
-    {% endif %}
+
+        <details class="cf__group" open>
+            <summary>{{ ui_text('price') }}{{ ui_icon('chevron-down', 16) }}</summary>
+            <div class="cf__content">
+                <div class="cf__price">
+                    <label><span class="visually-hidden">{{ ui_text('price_from') }}</span><input type="text" inputmode="decimal" name="min_price" value="{{ cur_min }}" placeholder="{{ price_lo > 0 ? price_lo : ui_text('price_from') }}" data-price-min></label>
+                    <span class="cf__dash" aria-hidden="true">–</span>
+                    <label><span class="visually-hidden">{{ ui_text('price_to') }}</span><input type="text" inputmode="decimal" name="max_price" value="{{ cur_max }}" placeholder="{{ price_hi > 0 ? price_hi : ui_text('no_limit') }}" data-price-max></label>
+                </div>
+                {% if price_hi > price_lo %}
+                <div class="cf__range" data-price-range data-lo="{{ price_lo }}" data-hi="{{ price_hi }}">
+                    <div class="cf__range-track" aria-hidden="true"><span data-range-fill></span></div>
+                    <input type="range" min="{{ price_lo }}" max="{{ price_hi }}" step="1" value="{{ cur_min != '' ? cur_min|round : price_lo }}" data-range-min aria-label="{{ ui_text('price_from')|e('html_attr') }}">
+                    <input type="range" min="{{ price_lo }}" max="{{ price_hi }}" step="1" value="{{ cur_max != '' ? cur_max|round : price_hi }}" data-range-max aria-label="{{ ui_text('price_to')|e('html_attr') }}">
+                </div>
+                {% endif %}
+            </div>
+        </details>
+
+        {% if catalog_facets.brands|default([]) is not empty %}
+        <details class="cf__group"{% if catalog_filter.brandId is not null or catalog_facets.brands|length <= 12 %} open{% endif %}>
+            <summary>{{ ui_text('brand') }}{% if catalog_filter.brandId is not null %}<span class="cf__badge">1</span>{% endif %}{{ ui_icon('chevron-down', 16) }}</summary>
+            <div class="cf__content cf__list">
+                <label class="cf__option"><input type="radio" name="brand" value=""{% if catalog_filter.brandId is null %} checked{% endif %}><span>{{ ui_text('all_brands') }}</span></label>
+                {% for brand in catalog_facets.brands %}
+                    <label class="cf__option"><input type="radio" name="brand" value="{{ brand.id }}"{% if catalog_filter.brandId == brand.id %} checked{% endif %}><span>{{ brand.name }}</span><small>{{ brand.count }}</small></label>
+                {% endfor %}
+            </div>
+        </details>
+        {% endif %}
+
+        <details class="cf__group" open>
+            <summary>{{ ui_text('availability') }}{% if catalog_filter.inStockOnly %}<span class="cf__badge">1</span>{% endif %}{{ ui_icon('chevron-down', 16) }}</summary>
+            <div class="cf__content cf__list">
+                <label class="cf__option"><input type="checkbox" name="in_stock" value="1"{% if catalog_filter.inStockOnly %} checked{% endif %}><span>{{ ui_text('only_in_stock') }}</span></label>
+            </div>
+        </details>
+
+        <details class="cf__group"{% if catalog_filter.minRating > 0 %} open{% endif %}>
+            <summary>{{ ui_text('rating') }}{% if catalog_filter.minRating > 0 %}<span class="cf__badge">1</span>{% endif %}{{ ui_icon('chevron-down', 16) }}</summary>
+            <div class="cf__content cf__list">
+                {% for stars in [4, 3, 2] %}
+                    <label class="cf__option"><input type="radio" name="rating" value="{{ stars }}"{% if catalog_filter.minRating == stars %} checked{% endif %}><span class="rating-stars" aria-hidden="true">{% for i in 1..5 %}{{ ui_icon(i <= stars ? 'star-filled' : 'star-empty', 14) }}{% endfor %}</span><span>{{ ui_text('filter_and_up') }}</span></label>
+                {% endfor %}
+                {% if catalog_filter.minRating > 0 %}<label class="cf__option"><input type="radio" name="rating" value=""><span>{{ ui_text('reset') }}</span></label>{% endif %}
+            </div>
+        </details>
+
+        {% for facet in catalog_facets.attributes|default([]) %}
+            {% set selected_values = catalog_filter.attributeFilters[facet.code]|default([]) %}
+            <details class="cf__group"{% if selected_values is not empty %} open{% endif %}>
+                <summary>{{ facet.name }}{% if facet.unit_label %}, {{ facet.unit_label }}{% endif %}{% if selected_values is not empty %}<span class="cf__badge">{{ selected_values|length }}</span>{% endif %}{{ ui_icon('chevron-down', 16) }}</summary>
+                <div class="cf__content cf__list">
+                    {% for value in facet.values %}
+                        <label class="cf__option"><input type="checkbox" name="attr[{{ facet.code }}][]" value="{{ value.token }}"{% if value.token in selected_values %} checked{% endif %}><span>{{ value.label }}</span><small>{{ value.count }}</small></label>
+                    {% endfor %}
+                </div>
+            </details>
+        {% endfor %}
+    </div>
+    <div class="cf__foot">
+        {% if catalog_filter.isFiltered %}<a class="button button--secondary" href="{{ app.request.pathInfo }}">{{ ui_text('reset') }}</a>{% endif %}
+        <button class="button button--primary cf__apply" type="submit">{{ ui_text('apply') }}</button>
+    </div>
 </form>
+</aside>

@@ -1,0 +1,11 @@
+{# Compact share control: one icon button opening a small menu. Expects share_url and share_title. #}
+<details class="share-pop" data-share-pop data-share-links>
+    <summary class="button button--secondary button--icon" title="{{ ui_text('blog_share')|e('html_attr') }}" aria-label="{{ ui_text('blog_share')|e('html_attr') }}">{{ ui_icon('share-2', 18) }}</summary>
+    <div class="share-pop__menu" role="menu">
+        <a role="menuitem" rel="noopener noreferrer" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|url_encode }}">{{ ui_icon('external-link', 16) }}<span>Facebook</span></a>
+        <a role="menuitem" rel="noopener noreferrer" target="_blank" href="https://t.me/share/url?url={{ share_url|url_encode }}&amp;text={{ share_title|url_encode }}">{{ ui_icon('send', 16) }}<span>Telegram</span></a>
+        <a role="menuitem" rel="noopener noreferrer" target="_blank" href="https://twitter.com/intent/tweet?url={{ share_url|url_encode }}&amp;text={{ share_title|url_encode }}">{{ ui_icon('external-link', 16) }}<span>X</span></a>
+        <a role="menuitem" rel="noopener noreferrer" target="_blank" href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url|url_encode }}">{{ ui_icon('external-link', 16) }}<span>LinkedIn</span></a>
+        <button role="menuitem" type="button" data-copy-link="{{ share_url|e('html_attr') }}">{{ ui_icon('link', 16) }}<span>{{ ui_text('share_copy_link') }}</span></button>
+    </div>
+</details>

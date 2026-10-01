@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Core\Configuration\SystemSettingStore;
 use Commerce\Core\Store\StoreLocalizationSettings;
 use Commerce\Modules\Pricing\Application\CurrencyPriceSynchronizer;
 use Commerce\Modules\Pricing\Application\ExchangeRateService;
+use Commerce\Modules\Pricing\Infrastructure\ApiKeyExchangeRateSource;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +24,8 @@ final class LocalizationAdminController extends AbstractController
         private readonly StoreLocalizationSettings $settings,
         private readonly ExchangeRateService $rates,
         private readonly CurrencyPriceSynchronizer $prices,
+        private readonly SystemSettingStore $systemSettings,
+        private readonly ApiKeyExchangeRateSource $apiSource,
     ) {
     }
 
@@ -30,7 +34,14 @@ final class LocalizationAdminController extends AbstractController
     {
         $context = $this->contexts->resolve($request);
 
-        return $this->render('@storefront/admin/system/localization.html.twig', ['data' => $this->settings->overview($context->storeId)]);
+        $api = $this->apiSource->config();
+
+        return $this->render('@storefront/admin/system/localization.html.twig', [
+            'data' => $this->settings->overview($context->storeId),
+            'rate_sources' => $this->rates->sourceChoices(),
+            'rate_providers' => $this->rates->providerStatus(),
+            'rate_api' => ['service' => $api['service'], 'has_key' => $api['key'] !== '', 'services' => ApiKeyExchangeRateSource::SERVICES],
+        ]);
     }
 
     #[Route('/admin/system/localization/locales', name: 'admin_system_localization_locales', methods: ['POST'])]
@@ -57,7 +68,7 @@ final class LocalizationAdminController extends AbstractController
             $code = trim((string) $request->request->get('new_code', ''));
             if ($code !== '') {
                 $code = $this->settings->addCurrency($code, (string) $request->request->get('new_name', ''), (string) $request->request->get('new_symbol', ''), $request->request->getInt('new_minor_units', 2));
-                $rows[$code] = ['enabled' => '0', 'auto_convert' => '0', 'rate_source' => 'nbu', 'rounding_increment_minor' => '1', 'sort_order' => '100'];
+                $rows[$code] = ['enabled' => '0', 'auto_convert' => '0', 'rate_source' => 'auto', 'rounding_increment_minor' => '1', 'sort_order' => '100'];
             }
             $this->settings->saveCurrencies($storeId, $rows);
 
@@ -75,6 +86,29 @@ final class LocalizationAdminController extends AbstractController
             $this->rates->storeManual($quote, $base, (string) $request->request->get('value'), null);
 
             return $this->syncMessage($storeId, CanonicalUiText::get('admin.localization.rate.saved'));
+        });
+    }
+
+    #[Route('/admin/system/localization/rate-api', name: 'admin_system_localization_rate_api', methods: ['POST'])]
+    public function rateApi(Request $request): Response
+    {
+        return $this->guarded($request, 'localization_rate_api', function (int $storeId) use ($request): string {
+            $service = (string) $request->request->get('service', '');
+            if (!in_array($service, ApiKeyExchangeRateSource::SERVICES, true)) {
+                throw new \DomainException(CanonicalUiText::get('admin.localization.rate_api.invalid_service'));
+            }
+            $current = $this->apiSource->config();
+            $key = trim((string) $request->request->get('api_key', ''));
+            if ($request->request->getBoolean('clear_key')) {
+                $key = '';
+            } elseif ($key === '') {
+                $key = $current['key'];
+            } elseif (preg_match('/^[A-Za-z0-9_\-]{8,128}$/', $key) !== 1) {
+                throw new \DomainException(CanonicalUiText::get('admin.localization.rate_api.invalid_key'));
+            }
+            $this->systemSettings->setArray(ApiKeyExchangeRateSource::SETTING_KEY, ['service' => $service, 'key' => $key]);
+
+            return CanonicalUiText::get('admin.localization.rate_api.saved');
         });
     }
 

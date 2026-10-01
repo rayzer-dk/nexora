@@ -1,20 +1,84 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
-<section class="content-page shell">
+{% set is_contacts = page.system_key|default('') == 'contacts' %}
+{% set contact = storefront_contact(is_contacts) %}
+<section class="content-page shell{% if is_contacts %} content-page--contacts{% endif %}" data-lightbox-scope>
     {% include '@storefront/components/breadcrumbs.html.twig' with {items: [{name: ui_text('home'), url: '/'}, {name: page_title}]} only %}
-    <article class="content-page__body">
+    <header class="content-page__head">
         <h1>{{ page_title }}</h1>
-        {% if published %}
-            {% if page.excerpt %}<p class="content-page__lead">{{ page.excerpt }}</p>{% endif %}
-            <div class="rich-content">{{ page.body_html|raw|with_forms }}</div>
-        {% if page.system_key|default('') == 'contacts' %}
-            <section class="contact-form-card" id="contact-form"><h2>{{ ui_text('contact_us_title') }}</h2><p>{{ ui_text('contact_us_text') }}</p>{% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}<form method="post" action="/contact/send" data-inquiry-form><input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="contact"><input type="hidden" name="source_url" value="{{ app.request.uri }}"><div class="delivery-fields"><label><span>{{ ui_text('name_required') }}</span><input name="name" required maxlength="190" autocomplete="name"></label><label><span>{{ ui_text('phone') }}</span><input name="phone" maxlength="32" type="tel" autocomplete="tel"></label><label><span>Email</span><input name="email" maxlength="320" type="email" autocomplete="email"></label></div><label><span>{{ ui_text('message_required') }}</span><textarea name="message" required maxlength="4000" rows="6"></textarea></label>{% include '@storefront/components/captcha.html.twig' with {form:'contact'} only %}<button class="button button--primary" type="submit">{{ ui_text('send') }}</button></form></section>
+        {% if published and page.excerpt %}<p class="content-page__lead">{{ page.excerpt }}</p>{% endif %}
+    </header>
+    {% if not published %}
+        <div class="content-placeholder" role="status"><p>{{ ui_text('page_configuring') }}</p></div>
+    {% elseif is_contacts %}
+        {% if contact.address or contact.phones or contact.email or contact.hours or contact.social %}
+        <div class="contact-cards">
+            {% if contact.address %}<section class="contact-card"><span class="contact-card__icon">{{ ui_icon('map-pin', 20) }}</span><div><h2>{{ ui_text('contacts_address') }}</h2><p>{{ contact.address }}</p>{% if contact.map %}<a class="contact-card__link" href="{{ contact.map.link_url }}" target="_blank" rel="noopener noreferrer">{{ ui_text('contacts_open_map') }}{{ ui_icon('external-link', 14) }}</a>{% elseif contact.map_search_url %}<a class="contact-card__link" href="{{ contact.map_search_url }}" target="_blank" rel="noopener noreferrer">{{ ui_text('contacts_show_on_map') }}{{ ui_icon('external-link', 14) }}</a>{% endif %}</div></section>{% endif %}
+            {% if contact.phones or contact.email %}<section class="contact-card"><span class="contact-card__icon">{{ ui_icon('phone', 20) }}</span><div><h2>{{ ui_text('contacts_phone_email') }}</h2>{% for phone in contact.phones %}<p><a href="tel:{{ phone.href }}">{{ phone.label }}</a></p>{% endfor %}{% if contact.email %}<p><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></p>{% endif %}</div></section>{% endif %}
+            {% if contact.hours %}<section class="contact-card"><span class="contact-card__icon">{{ ui_icon('clock', 20) }}</span><div><h2>{{ ui_text('contacts_hours') }}</h2>{% for line in contact.hours %}<p>{{ line }}</p>{% endfor %}</div></section>{% endif %}
+            {% if contact.social %}<section class="contact-card"><span class="contact-card__icon">{{ ui_icon('share-2', 20) }}</span><div><h2>{{ ui_text('contacts_social') }}</h2>{% include '@storefront/components/social_links.html.twig' with {social: contact.social} only %}</div></section>{% endif %}
+        </div>
         {% endif %}
-        {% else %}
-            <div class="content-placeholder" role="status">
-                <p>{{ ui_text('page_configuring') }}</p>
+        <div class="contact-main">
+            <section class="contact-form-card" id="contact-form">
+                <h2>{{ ui_text('contact_us_title') }}</h2>
+                <p class="contact-form-card__hint">{{ ui_text('contact_us_text') }}</p>
+                {% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
+                {% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}
+                <form method="post" action="/contact/send" data-inquiry-form>
+                    <input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}">
+                    {% include '@storefront/components/spam_fields.html.twig' %}
+                    <input type="hidden" name="inquiry_type" value="contact">
+                    <input type="hidden" name="source_url" value="{{ app.request.uri }}">
+                    <div class="contact-form-card__grid">
+                        <label><span>{{ ui_text('name_required') }}</span><input name="name" required maxlength="190" autocomplete="name"></label>
+                        <label><span>{{ ui_text('phone') }}</span><input name="phone" maxlength="32" type="tel" autocomplete="tel"></label>
+                        <label class="is-wide"><span>Email</span><input name="email" maxlength="320" type="email" autocomplete="email"></label>
+                        <label class="is-wide"><span>{{ ui_text('message_required') }}</span><textarea name="message" required maxlength="4000" rows="5"></textarea></label>
+                    </div>
+                    {% include '@storefront/components/captcha.html.twig' with {form: 'contact'} only %}
+                    <button class="button button--primary" type="submit">{{ ui_icon('send', 16) }}<span>{{ ui_text('send') }}</span></button>
+                </form>
+            </section>
+            <div class="contact-side">
+            {% if contact.map %}
+            <section class="contact-map" aria-label="{{ ui_text('contacts_map')|e('html_attr') }}">
+                <iframe class="contact-map__frame" src="{{ contact.map.embed_url }}" title="{{ ui_text('contacts_map')|e('html_attr') }}" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe>
+                <a class="contact-map__link" href="{{ contact.map.link_url }}" target="_blank" rel="noopener noreferrer">{{ ui_icon('map-pin', 16) }}<span>{{ ui_text('contacts_open_map') }}</span></a>
+            </section>
+            {% endif %}
+            <article class="content-page__body content-page__body--side rich-content">{{ page.body_html|raw|with_forms }}</article>
             </div>
-        {% endif %}
-    </article>
+        </div>
+    {% else %}
+        <div class="content-page__layout{% if toc or related_pages %} has-aside{% endif %}">
+            <article class="content-page__body rich-content">{{ page.body_html|raw|with_forms }}</article>
+            {% if toc or related_pages or contact.has_any %}
+            <aside class="content-page__aside" aria-label="{{ ui_text('info_aside')|e('html_attr') }}">
+                {% if toc %}
+                <nav class="aside-card aside-card--toc" aria-labelledby="info-toc-title">
+                    <h2 id="info-toc-title">{{ ui_icon('list-tree', 16) }}{{ ui_text('info_toc') }}</h2>
+                    <ol>{% for item in toc %}<li class="{{ item.level == 3 ? 'is-l3' : 'is-l2' }}"><a href="#{{ item.id }}">{{ item.text }}</a></li>{% endfor %}</ol>
+                </nav>
+                {% endif %}
+                {% if related_pages %}
+                <nav class="aside-card" aria-labelledby="info-links-title">
+                    <h2 id="info-links-title">{{ ui_icon('info', 16) }}{{ ui_text('info_more') }}</h2>
+                    <ul class="aside-links">{% for link in related_pages %}<li><a href="{{ link.url }}">{{ link.title }}{{ ui_icon('chevron-right', 14) }}</a></li>{% endfor %}</ul>
+                </nav>
+                {% endif %}
+                {% if contact.phones or contact.email %}
+                <section class="aside-card aside-card--help">
+                    <h2>{{ ui_icon('headset', 16) }}{{ ui_text('info_help') }}</h2>
+                    <p>{{ ui_text('info_help_text') }}</p>
+                    {% for phone in contact.phones|slice(0, 1) %}<a class="aside-card__contact" href="tel:{{ phone.href }}">{{ ui_icon('phone', 16) }}{{ phone.label }}</a>{% endfor %}
+                    {% if contact.email %}<a class="aside-card__contact" href="mailto:{{ contact.email }}">{{ ui_icon('mail', 16) }}{{ contact.email }}</a>{% endif %}
+                    <a class="button button--secondary button--sm" href="/contact">{{ ui_text('info_contact_us') }}</a>
+                </section>
+                {% endif %}
+            </aside>
+            {% endif %}
+        </div>
+    {% endif %}
 </section>
 {% endblock %}

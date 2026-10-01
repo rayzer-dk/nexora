@@ -1,0 +1,19 @@
+{# One builder block of the product page: visibility/alignment/style settings + extension slots around it. #}
+{% set vis = block.settings.builder_visibility|default({}) %}
+{% set style = '' %}
+{% if block.settings.builder_background|default('') %}{% set style = style ~ 'background:' ~ block.settings.builder_background ~ ';' %}{% endif %}
+{% if block.settings.builder_color|default('') %}{% set style = style ~ 'color:' ~ block.settings.builder_color ~ ';' %}{% endif %}
+{% if block.settings.builder_padding|default('') %}{% set style = style ~ 'padding:' ~ block.settings.builder_padding ~ ';' %}{% endif %}
+{% if block.settings.builder_margin|default('') %}{% set style = style ~ 'margin:' ~ block.settings.builder_margin ~ ';' %}{% endif %}
+{% if block.type == 'title_meta' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_title', product:product} only %}{% endif %}
+{% if block.type == 'buy_actions' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_buy', product:product} only %}{% endif %}
+{% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.before_description', product:product} only %}{% endif %}
+<div class="product-block product-block--{{ block.type }}{{ vis.desktop is defined and not vis.desktop ? ' is-hidden-desktop' : '' }}{{ vis.tablet is defined and not vis.tablet ? ' is-hidden-tablet' : '' }}{{ vis.mobile is defined and not vis.mobile ? ' is-hidden-mobile' : '' }}{{ block.settings.builder_text_align|default('') ? ' is-align-' ~ block.settings.builder_text_align : '' }}" style="--block-order:{{ block.order }};--block-mobile-order:{{ block.mobileOrder }};{{ style }}">
+    {% include block.template with {product: product, block: block} only %}
+</div>
+{% if block.type == 'title_meta' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_title', product:product} only %}{% endif %}
+{% if block.type == 'price' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_price', product:product} only %}{% endif %}
+{% if block.type == 'buy_actions' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_buy', product:product} only %}{% endif %}
+{% if block.type == 'description' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_description', product:product} only %}{% endif %}
+{% if block.type == 'attributes' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_attributes', product:product} only %}{% endif %}
+{% if block.type == 'reviews' %}{% include '@storefront/product/_extension_slot.html.twig' with {slot:'product.after_reviews', product:product} only %}{% endif %}

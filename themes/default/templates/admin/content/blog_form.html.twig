@@ -2,8 +2,8 @@
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="{{ path('admin_content_blog') }}">{{ ui_text('admin.blog.title') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ article.title ?: ui_text('admin.blog.new') }}</span></nav><h1>{{ article_id ? ui_text('admin.blog.edit_article') : ui_text('admin.blog.new') }}</h1>
 {% if article.path and stored_status == 'published' %}<p>{{ ui_text('admin.blog.public_url') }} <a href="{{ article.path }}" target="_blank" rel="noopener"><code>{{ article.path }}</code></a></p>{% endif %}</div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
-{% if article_id %}<div class="admin-panel admin-blog-langs"><strong>{{ ui_text('admin.blog.languages') }}:</strong>{% for code in locales %}<a class="admin-badge {{ code == locale ? 'is-primary' : (code in translated ? 'is-success' : 'is-muted') }}" href="{{ path('admin_content_blog_edit', {id: article_id, locale: code}) }}">{{ code }}{% if code not in translated %} · {{ ui_text('admin.blog.lang_missing') }}{% endif %}</a>{% endfor %}</div>
-{% if not article.has_translation %}<div class="admin-notice is-info">{{ ui_text('admin.blog.translation_new')|replace({'%locale%': locale}) }}</div>{% endif %}{% endif %}
+{% if article_id and lang_tabs|length > 0 %}{% import '@storefront/admin/_lang_tabs.html.twig' as langs %}<div class="admin-panel admin-panel--tabs">{{ langs.bar(lang_tabs) }}
+{% if not article.has_translation and not article.prefilled|default(false) %}<div class="admin-notice is-info admin-notice--inline"><span>{{ ui_text('admin.blog.translation_new')|replace({'%locale%': locale}) }}</span><a class="admin-button" href="{{ path('admin_content_blog_edit', {id: article_id, locale: locale, prefill: 'default'}) }}">{{ ui_icon('copy', 16) }}<span>{{ ui_text('admin.lang_tabs.copy_default') }}</span></a></div>{% elseif article.prefilled|default('') == 'default' %}<div class="admin-notice is-info admin-notice--inline"><span>{{ ui_text('admin.pages.prefilled_default') }}</span></div>{% endif %}</div>{% endif %}
 <form method="post" action="{{ path('admin_content_blog_save') }}" enctype="multipart/form-data" class="admin-blog-editor" data-blog-form>
 <input type="hidden" name="_token" value="{{ csrf_token('admin_content_blog') }}"><input type="hidden" name="id" value="{{ article_id }}">
 <div class="admin-blog-editor__main">
@@ -29,7 +29,7 @@
   <label>{{ ui_text('admin.blog.status') }}<select name="status"><option value="draft"{{ article.status == 'draft' ? ' selected' : '' }}>{{ ui_text('admin.blog.state_draft') }}</option><option value="published"{{ article.status == 'published' ? ' selected' : '' }}>{{ ui_text('admin.blog.state_published') }}</option></select></label>
   <label>{{ ui_text('admin.blog.publish_at') }}<input type="datetime-local" name="published_at" value="{{ article.published_at|replace({' ': 'T'}) }}"><small>{{ ui_text('admin.blog.publish_at_hint') }}</small></label>
   <label class="admin-check"><input type="checkbox" name="featured" value="1"{{ article.featured ? ' checked' : '' }}> {{ ui_text('admin.blog.featured_flag') }}</label>
-  <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div>
+  <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}{% if article_id %} <small>({{ locale }})</small>{% endif %}</button></div>
  </section>
  <section class="admin-panel admin-form">
   <div class="admin-panel__header"><h2>{{ ui_text('admin.blog.organize') }}</h2></div>
@@ -43,6 +43,8 @@
   {% if article.cover_url %}<img class="admin-blog-cover" src="{{ article.cover_url }}" alt="" width="320" height="180" loading="lazy"><label class="admin-check"><input type="checkbox" name="cover_remove" value="1"> {{ ui_text('admin.blog.cover_remove') }}</label>{% endif %}
   <label>{{ ui_text('admin.blog.cover_upload') }}<input type="file" name="cover" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif"><small>{{ ui_text('admin.blog.cover_hint') }}</small></label>
   <label>{{ ui_text('admin.blog.cover_alt') }}<input type="text" name="cover_alt" value="{{ article.cover_alt }}" maxlength="255"></label>
+  <label>{{ ui_text('admin.blog.image_align') }}<select name="image_align">{% for v, label in {none: ui_text('admin.blog.image_align_none'), left: ui_text('admin.blog.image_align_left'), right: ui_text('admin.blog.image_align_right'), hide: ui_text('admin.blog.image_align_hide')} %}<option value="{{ v }}"{{ article.image_align|default('none') == v ? ' selected' : '' }}>{{ label }}</option>{% endfor %}</select><small>{{ ui_text('admin.blog.image_align_hint') }}</small></label>
+  <label>{{ ui_text('admin.blog.image_size') }}<select name="image_size">{% for v, label in {s: ui_text('admin.blog.image_size_s'), m: ui_text('admin.blog.image_size_m'), l: ui_text('admin.blog.image_size_l')} %}<option value="{{ v }}"{{ article.image_size|default('m') == v ? ' selected' : '' }}>{{ label }}</option>{% endfor %}</select><small>{{ ui_text('admin.blog.image_size_hint') }}</small></label>
  </section>
 </aside>
 </form>

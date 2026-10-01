@@ -35,7 +35,7 @@ final class ExtensionSettingsSchemaValidator
             if (!is_array($field)) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.f0f0bcb5e8cf'));
             }
-            $allowedKeys = ['key','type','label','help','required','default','min','max','step','options','group','placeholder','advanced'];
+            $allowedKeys = ['key','type','label','help','required','default','min','max','step','options','group','placeholder','advanced','help_url','example'];
             foreach (array_keys($field) as $fieldProperty) {
                 if (!in_array((string) $fieldProperty, $allowedKeys, true)) {
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.07b0b1fa39e5') . (string) $fieldProperty . '.');
@@ -83,6 +83,10 @@ final class ExtensionSettingsSchemaValidator
             $normalizedField['group'] = preg_match('/^[a-z][a-z0-9_.-]{0,63}$/D', $group) === 1 ? $group : 'general';
             $normalizedField['placeholder'] = mb_substr(trim((string) ($field['placeholder'] ?? '')), 0, 190, 'UTF-8');
             $normalizedField['advanced'] = (bool) ($field['advanced'] ?? false);
+            // Optional "where to get it" link (https only) and a recommended value/example shown under the field.
+            $helpUrl = trim((string) ($field['help_url'] ?? ''));
+            $normalizedField['help_url'] = $helpUrl !== '' && mb_strlen($helpUrl, 'UTF-8') <= 500 && preg_match('#^https://[^\s"<>]+$#', $helpUrl) === 1 ? $helpUrl : '';
+            $normalizedField['example'] = mb_substr(trim((string) ($field['example'] ?? '')), 0, 190, 'UTF-8');
             if (array_key_exists('max', $field)) {
                 if (!is_int($field['max']) && !is_float($field['max'])) {
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.9a297b3a7e4f'));

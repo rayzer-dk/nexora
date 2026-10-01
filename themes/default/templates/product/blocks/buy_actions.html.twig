@@ -7,18 +7,22 @@
 <form class="buy-actions" data-buy-actions data-unit-price="{{ product.price_minor|default(0) }}" data-currency="{{ product.currency|default('') }}" method="post" action="/cart/add">
     <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
     <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
-    <commerce-quantity class="quantity">
-        <button class="quantity__btn" type="button" data-qty-minus aria-label="{{ ui_text('decrease') }}">{{ ui_icon('minus', 16) }}</button>
-        <input name="quantity" data-qty-input type="number" min="{{ quantity.min }}" step="{{ quantity.step }}" value="{{ quantity.min }}"{% if quantity.max %} max="{{ quantity.max }}"{% endif %} inputmode="decimal" aria-label="{{ ui_text('quantity') }}">
-        <span class="quantity__unit" aria-hidden="true">{{ unit_labels[quantity.unit_code]|default(measurement_unit_label(quantity.unit_code)) }}</span>
-        <button class="quantity__btn" type="button" data-qty-plus aria-label="{{ ui_text('increase') }}">{{ ui_icon('plus', 16) }}</button>
-    </commerce-quantity>
-    <button class="button button--primary button--lg" type="submit" data-primary-buy>{{ ui_icon('shopping-cart', 20) }}<span>{{ product.purchase_button_label|default(ui_text('add_cart')) }}</span></button>
-    {% if capabilities.features.checkout|default(false) %}<button class="button button--secondary button--lg" type="submit" name="next" value="checkout">{{ ui_text('buy_now') }}</button>{% endif %}
-    <output class="buy-actions__total" data-live-total hidden aria-live="polite"></output>
+    <div class="buy-actions__qty">
+        <commerce-quantity class="quantity">
+            <button class="quantity__btn" type="button" data-qty-minus aria-label="{{ ui_text('decrease') }}">{{ ui_icon('minus', 16) }}</button>
+            <input name="quantity" data-qty-input type="number" min="{{ quantity.min }}" step="{{ quantity.step }}" value="{{ quantity.min }}"{% if quantity.max %} max="{{ quantity.max }}"{% endif %} inputmode="decimal" aria-label="{{ ui_text('quantity') }}">
+            <span class="quantity__unit" aria-hidden="true">{{ unit_labels[quantity.unit_code]|default(measurement_unit_label(quantity.unit_code)) }}</span>
+            <button class="quantity__btn" type="button" data-qty-plus aria-label="{{ ui_text('increase') }}">{{ ui_icon('plus', 16) }}</button>
+        </commerce-quantity>
+        <output class="buy-actions__total" data-live-total hidden aria-live="polite"></output>
+    </div>
+    <div class="buy-actions__buttons">
+        <button class="button button--primary button--lg" type="submit" data-primary-buy>{{ ui_icon('shopping-cart', 20) }}<span>{{ product.purchase_button_label|default(ui_text('add_cart')) }}</span></button>
+        {% if capabilities.features.checkout|default(false) %}<button class="button button--secondary button--lg" type="submit" name="next" value="checkout">{{ ui_text('buy_now') }}</button>{% endif %}
+    </div>
 </form>
 {% if display.quick_order %}
-<button class="button button--secondary quick-order-open" type="button" data-quick-order-open>{{ ui_icon('zap', 18) }}<span>{{ ui_text('quick_order') }}</span></button>
+<button class="pp-quick-link quick-order-open" type="button" data-quick-order-open>{{ ui_icon('zap', 18) }}<span>{{ ui_text('quick_order') }}</span></button>
 <dialog class="cw-dialog quick-order" data-quick-order-dialog aria-labelledby="quick-order-title">
     <form method="post" action="/product/{{ product.id }}/inquiry" data-inquiry-form>
         <div class="cw-dialog__head"><h2 id="quick-order-title">{{ ui_text('quick_order') }}</h2><button class="cw-dialog__close" type="button" data-quick-order-close aria-label="{{ ui_text('cw_close') }}">{{ ui_icon('x', 20) }}</button></div>
@@ -49,5 +53,5 @@
 <div class="purchase-unavailable"><strong>{{ product.availability_label }}</strong>{% if product.purchase_eta_text %}<span>{{ product.purchase_eta_text }}</span>{% endif %}</div>
 {% endif %}
 {% if display.benefits %}
-<ul class="product-benefits">{% set icons = ['truck','shield-check','refresh-cw','headset'] %}{% for line in display.benefits|split("\n") %}<li>{{ ui_icon(icons[loop.index0], 18) }}<span>{{ line }}</span></li>{% endfor %}</ul>
+<ul class="product-benefits pp-benefits">{% set icons = ['truck','shield-check','refresh-cw','headset'] %}{% for line in display.benefits|split("\n") %}<li>{{ ui_icon(icons[loop.index0], 18) }}<span>{{ line }}</span></li>{% endfor %}</ul>
 {% endif %}

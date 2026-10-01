@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Content\Http;
 
+use Commerce\Modules\Content\Application\BlogContentProcessor;
 use Commerce\Modules\Content\Infrastructure\DbalInformationPageQuery;
 use Commerce\Modules\Content\System\InformationPageCatalog;
 use Commerce\Modules\Seo\System\SystemPageRouteCatalog;
@@ -33,6 +34,9 @@ final class InformationPageController extends AbstractController
         private readonly DbalInformationPageQuery $pages,
         private readonly InformationPageCatalog $definitions,
         private readonly SystemPageRouteCatalog $routes,
+        private readonly \Commerce\Modules\Storefront\Infrastructure\StorefrontContactSettings $contact,
+        private readonly \Commerce\Modules\Seo\StructuredData\OrganizationCommerceBuilder $organization,
+        private readonly \Commerce\Modules\Seo\StructuredData\StructuredDataGraphBuilder $graph,
     ) {
     }
 
@@ -66,7 +70,33 @@ final class InformationPageController extends AbstractController
         $published = $page['status'] === 'published' && trim((string) ($page['body_html'] ?? '')) !== '';
         $canonical = $request->getSchemeAndHttpHost() . '/' . $route->path;
 
+        $jsonLd = null;
+        if ($key === 'contacts') {
+            try {
+                $home = $request->getSchemeAndHttpHost() . '/';
+                $jsonLd = $this->graph->build(['@type' => 'ContactPage', 'name' => (string) ($page['title'] ?: $definition->title), 'url' => $canonical], $this->organization->build(['name' => $context->storeName, 'url' => $home]) + $this->contact->organizationData($context->storeId));
+            } catch (\Throwable) {
+                $jsonLd = null;
+            }
+        }
+        $anchored = BlogContentProcessor::withAnchors((string) ($page['body_html'] ?? ''));
+        $page['body_html'] = $anchored['html'];
+        $related = [];
+        try {
+            $titles = $this->pages->publishedTitles($context);
+            foreach ($this->definitions->all() as $other) {
+                if (!isset($titles[$other->key]) || $other->key === $key) {
+                    continue;
+                }
+                $related[] = ['title' => $titles[$other->key], 'url' => '/' . $this->routes->route($other->routeKey, $context->locale)->path];
+            }
+        } catch (\Throwable) {
+            $related = [];
+        }
+
         return $this->render('@storefront/content/page.html.twig', [
+            'toc' => count($anchored['toc']) >= 3 ? $anchored['toc'] : [],
+            'related_pages' => $related,
             'page_title' => (string) ($page['title'] ?: $definition->title),
             'store_name' => $context->storeName,
             'page' => $page,
@@ -75,6 +105,7 @@ final class InformationPageController extends AbstractController
                 'title' => (string) ($page['meta_title'] ?? ''),
                 'description' => (string) ($page['meta_description'] ?? '') !== '' ? (string) $page['meta_description'] : (string) ($page['excerpt'] ?? ''),
                 'canonical' => $canonical,
+                'json_ld' => $jsonLd,
                 'robots' => $published && $definition->indexable ? 'index,follow,max-image-preview:large' : 'noindex,follow',
                 'hreflang' => [$context->locale => $canonical, 'x-default' => $canonical],
             ],

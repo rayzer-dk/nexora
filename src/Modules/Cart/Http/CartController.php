@@ -37,6 +37,17 @@ final class CartController extends AbstractController
         if($cart!==null){$this->attachCookie($response,$request,$cart);} return $response;
     }
 
+    /** HTML fragment of the slide-in cart (header cart icon). Read-only: it never creates a cart. */
+    #[Route('/cart/drawer', name:'storefront_cart_drawer', methods:['GET'], priority:100)]
+    public function drawer(Request $request): Response
+    {
+        $context=$this->contexts->resolve($request); $cart=$this->mutations->find($context,$request->cookies->get('mc_cart'));
+        if($cart!==null){$context=$this->mutations->contextFor($context,$cart);}
+        $response=$this->render('@storefront/cart/_drawer.html.twig',['cart'=>$cart!==null?$this->query->summary($cart['id'],$context):$this->query->emptySummary($context)]);
+        $response->headers->set('Cache-Control','no-store, private');
+        return $response;
+    }
+
     #[Route('/cart/add', name:'storefront_cart_add', methods:['POST'], priority:100)]
     public function add(Request $request): Response
     {

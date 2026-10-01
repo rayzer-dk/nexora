@@ -70,13 +70,14 @@ test('floating contact buttons: admin configures them, storefront shows them, ca
   await expect(page.locator('[data-contact-widget]')).toHaveCount(0);
 });
 
-test('product page has share links and copy-link', async ({ page, context }) => {
+test('product page has a compact share popover with links and copy-link', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => undefined);
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   const href = await page.locator('[data-product-card] h2 a').first().getAttribute('href');
   await page.goto(href!, { waitUntil: 'domcontentloaded' });
-  const share = page.locator('[data-share-links]');
+  const share = page.locator('.product-page [data-share-links]').first();
   await expect(share).toBeVisible();
+  await share.locator('summary').click();
   await expect(share.locator('a[href^="https://www.facebook.com/sharer/sharer.php?u="]')).toHaveCount(1);
   await expect(share.locator('a[href^="https://t.me/share/url?url="]')).toHaveCount(1);
   await share.locator('[data-copy-link]').click();

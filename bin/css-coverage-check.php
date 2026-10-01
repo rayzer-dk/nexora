@@ -7,7 +7,7 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 $scope = $argv[1] ?? 'all';
 $css = '';
-foreach (glob($root . '/assets/{admin,storefront,shared}/*.css', GLOB_BRACE) as $file) {
+foreach (glob($root . '/assets/{admin,storefront,shared}{,/parts}/*.css', GLOB_BRACE) as $file) {
     $css .= file_get_contents($file);
 }
 preg_match_all('/\.([a-zA-Z_][\w-]*)/', $css, $m);

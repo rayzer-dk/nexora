@@ -402,6 +402,63 @@ function initNavAccordion() {
   });
   open(activeGroup || groups[Number(stored)] || groups[0], false);
   nav.classList.add('is-accordion');
+  keepNavScroll(nav);
+}
+
+/* The sidebar keeps its scroll position across page loads (sessionStorage, restored before paint by an inline script and
+   again here after the accordion settled); the active item is scrolled into view only when it is actually out of sight. */
+function keepNavScroll(nav) {
+  const key = 'mc_admin_nav_scroll';
+  const read = () => { try { const v = sessionStorage.getItem(key); return v === null ? null : Number.parseInt(v, 10) || 0; } catch { return null; } };
+  const write = () => { try { sessionStorage.setItem(key, String(Math.round(nav.scrollTop))); } catch { /* storage is optional */ } };
+  const saved = read();
+  if (saved !== null) nav.scrollTop = saved;
+  const active = q('.admin-nav__link.is-active', nav);
+  if (active && !active.hidden) {
+    const box = nav.getBoundingClientRect();
+    const item = active.getBoundingClientRect();
+    if (item.top < box.top) nav.scrollTop += item.top - box.top - 8;
+    else if (item.bottom > box.bottom) nav.scrollTop += item.bottom - box.bottom + 8;
+  }
+  write();
+  let timer = 0;
+  nav.addEventListener('scroll', () => { window.clearTimeout(timer); timer = window.setTimeout(write, 80); }, { passive: true });
+  nav.addEventListener('click', write, true);
+  window.addEventListener('pagehide', write);
+}
+
+/* Media settings: touching an advanced field switches the preset to "custom" so the edit is not silently ignored. */
+function initMediaPresetForm() {
+  qa('[data-media-preset-form]').forEach((form) => {
+    const custom = q('input[name="preset"][value="custom"]', form);
+    const advanced = q('[data-media-advanced]', form);
+    if (!custom || !advanced) return;
+    advanced.addEventListener('input', () => { custom.checked = true; });
+    advanced.addEventListener('change', () => { custom.checked = true; });
+    form.addEventListener('change', (event) => {
+      if (event.target instanceof HTMLInputElement && event.target.name === 'preset' && event.target.value === 'custom') advanced.open = true;
+    });
+  });
+}
+
+/* Help tips: click/tap toggles the popover (hover and keyboard focus are handled in CSS); Escape and outside clicks close it. */
+function initHelpTips() {
+  const close = (except) => qa('[data-admin-tip].is-open').forEach((tip) => {
+    if (tip === except) return;
+    tip.classList.remove('is-open');
+    q('.admin-tip__button', tip)?.setAttribute('aria-expanded', 'false');
+  });
+  document.addEventListener('click', (event) => {
+    const button = event.target instanceof Element ? event.target.closest('.admin-tip__button') : null;
+    if (!button) { close(null); return; }
+    event.preventDefault();
+    const tip = button.closest('[data-admin-tip]');
+    const open = !tip.classList.contains('is-open');
+    close(tip);
+    tip.classList.toggle('is-open', open);
+    button.setAttribute('aria-expanded', String(open));
+  });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(null); });
 }
 
 function initColorFields() {
@@ -943,17 +1000,17 @@ function initAdminPush() {
   const button = q('button', box);
   const status = q('[data-push-status]', box);
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) { button.disabled = true; status.textContent = t('js_push_unsupported'); return; }
-  const key = (b64) => { const pad = '='.repeat((4 - (b64.length % 4)) % 4); const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
+  const key = (b64) => { const pad = '='.repeat((4 - (b64.length % 4)) % 4); const raw = window.atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
   button.addEventListener('click', async () => {
     try {
-      if ((await Notification.requestPermission()) !== 'granted') { status.textContent = t('js_push_denied'); return; }
+      if ((await window.Notification.requestPermission()) !== 'granted') { status.textContent = t('js_push_denied'); return; }
       const registration = await navigator.serviceWorker.register('/nexora-push-sw.js');
       await navigator.serviceWorker.ready;
       const subscription = (await registration.pushManager.getSubscription()) || (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(box.dataset.pushKey) }));
       const json = subscription.toJSON();
       const response = await fetch(box.dataset.pushUrl, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': box.dataset.pushToken }, body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }) });
       status.textContent = response.ok ? t('js_push_enabled') : t('js_push_failed');
-    } catch (error) {
+    } catch (_error) {
       status.textContent = t('js_push_failed');
     }
   });
@@ -973,6 +1030,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   initTemplateEditors();
   initDataTables();
+  initMediaPresetForm();
+  initHelpTips();
   initColorFields();
   initColorHexInputs();
   initCustomSelects();

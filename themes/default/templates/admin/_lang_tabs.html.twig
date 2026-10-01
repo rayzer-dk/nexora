@@ -1,0 +1,27 @@
+{#
+  Content-language tab bar shared by every multilingual edit form.
+  tabs: list of {code, name, short, is_default, current, done, href?} - with href the tab is a link (server-side per-language form),
+  without it the tab is a button that switches an in-page panel [data-lang-panel="lang-<code>"].
+  options: {add_url, hint}.
+#}
+{% macro bar(tabs, options = {}) %}
+<nav class="lang-tabs" aria-label="{{ ui_text('admin.lang_tabs.label') }}" data-lang-tabs data-lang-overwrite="{{ ui_text('admin.lang_tabs.copy_overwrite')|e('html_attr') }}">
+  <ul class="lang-tabs__list">
+    {% for tab in tabs %}
+      <li class="lang-tabs__item{{ tab.current ? ' is-current' : '' }}{{ tab.done ? ' is-done' : ' is-missing' }}" data-lang-item="{{ tab.code }}">
+        {% if tab.href is defined and tab.href %}
+          <a class="lang-tabs__tab" href="{{ tab.href }}"{{ tab.current ? ' aria-current="page"' : '' }} lang="{{ tab.code }}">
+        {% else %}
+          <button type="button" class="lang-tabs__tab" data-lang-tab="lang-{{ tab.code }}" aria-selected="{{ tab.current ? 'true' : 'false' }}" lang="{{ tab.code }}">
+        {% endif %}
+          <span class="lang-tabs__code">{{ tab.short }}</span>
+          <span class="lang-tabs__name">{{ tab.name }}</span>
+          {% if tab.is_default %}<span class="lang-tabs__default">{{ ui_text('admin.lang_tabs.default') }}</span>{% endif %}
+          <span class="lang-tabs__mark" data-lang-mark title="{{ (tab.done ? ui_text('admin.lang_tabs.done') : ui_text('admin.lang_tabs.missing'))|e('html_attr') }}" aria-label="{{ (tab.done ? ui_text('admin.lang_tabs.done') : ui_text('admin.lang_tabs.missing'))|e('html_attr') }}">{{ tab.done ? '✓' : '•' }}</span>
+        {% if tab.href is defined and tab.href %}</a>{% else %}</button>{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  <a class="lang-tabs__add" href="{{ options.add_url|default(path('admin_system_localization') ~ '#locales') }}" title="{{ ui_text('admin.lang_tabs.add_hint')|e('html_attr') }}">{{ ui_icon('plus', 14) }}<span>{{ ui_text('admin.lang_tabs.add') }}</span></a>
+</nav>
+{% endmacro %}

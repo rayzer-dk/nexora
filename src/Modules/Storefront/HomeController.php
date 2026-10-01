@@ -30,6 +30,7 @@ final class HomeController extends AbstractController
         private readonly WebSiteBuilder $webSite,
         private readonly OrganizationCommerceBuilder $organization,
         private readonly StructuredDataGraphBuilder $graph,
+        private readonly \Commerce\Modules\Storefront\Infrastructure\StorefrontContactSettings $contact,
     ) {
     }
 
@@ -100,6 +101,7 @@ final class HomeController extends AbstractController
                     $request->getSchemeAndHttpHost() . '/',
                     $context->storeName,
                     (bool) ($features['search'] ?? false),
+                    $context->storeId,
                 ),
                 'description' => \Commerce\Core\I18n\CanonicalUiText::get('seo.home.description', ['store' => $context->storeName]),
                 'canonical' => $request->getSchemeAndHttpHost() . '/',
@@ -110,7 +112,7 @@ final class HomeController extends AbstractController
     }
 
     /** Organization + WebSite with a sitelinks SearchAction pointing at the catalog search. */
-    private function homeStructuredData(string $homeUrl, string $storeName, bool $searchEnabled): array
+    private function homeStructuredData(string $homeUrl, string $storeName, bool $searchEnabled, int $storeId): array
     {
         $webSite = $this->webSite->build($storeName, $homeUrl);
         $webSite['publisher'] = ['@id' => rtrim($homeUrl, '/') . '#organization'];
@@ -125,8 +127,19 @@ final class HomeController extends AbstractController
         }
 
         return $this->graph->build(
-            $this->organization->build(['name' => $storeName, 'url' => $homeUrl]),
+            $this->organizationNode($homeUrl, $storeName, $storeId),
             $webSite,
         );
+    }
+
+    /** Organization node enriched with the public contact details (social profiles, phone, address, geo) when the owner filled them in. */
+    private function organizationNode(string $homeUrl, string $storeName, int $storeId): array
+    {
+        $node = $this->organization->build(['name' => $storeName, 'url' => $homeUrl]);
+        try {
+            return $node + $this->contact->organizationData($storeId);
+        } catch (\Throwable) {
+            return $node;
+        }
     }
 }

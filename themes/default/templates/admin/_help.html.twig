@@ -1,0 +1,9 @@
+{#- Reusable admin help helpers. Import: {% import '@storefront/admin/_help.html.twig' as help %}
+    help.hint(text, link = null, link_label = null, example = null)  - small muted text under a field (optional "where to get it" link, https only; optional recommended value/example)
+    help.tip(text, link = null, link_label = null)   - info-icon button with popover, for tight spaces (toolbars, table headers)
+    help.field(label, hint, link = null, link_label = null) - label text + inline tip icon, to put inside <label><span>..</span>
+    Pass already translated text: help.hint(translated_text). -#}
+{% macro link_html(link, link_label) %}{% if link and (link starts with 'https://' or link starts with 'http://' or link starts with '/') %} <a class="admin-hint__link" href="{{ link }}" target="_blank" rel="noopener noreferrer">{{ link_label|default(ui_text('admin.help.where_to_get')) }}</a>{% endif %}{% endmacro %}
+{% macro hint(text, link = null, link_label = null, example = null) %}{% import _self as h %}<small class="admin-hint">{{ text }}{% if example %} {{ ui_text('admin.help.example') }} <span class="admin-hint__example">{{ example }}</span>{% endif %}{{ h.link_html(link, link_label) }}</small>{% endmacro %}
+{% macro tip(text, link = null, link_label = null) %}{% import _self as h %}<span class="admin-tip" data-admin-tip><button class="admin-tip__button" type="button" aria-label="{{ ui_text('admin.help.label') }}" aria-expanded="false">{{ ui_icon('info', 14) }}</button><span class="admin-tip__pop" role="tooltip">{{ text }}{{ h.link_html(link, link_label) }}</span></span>{% endmacro %}
+{% macro field(label, hint, link = null, link_label = null) %}{% import _self as h %}<span class="admin-field-label">{{ label }}{{ h.tip(hint, link, link_label) }}</span>{% endmacro %}

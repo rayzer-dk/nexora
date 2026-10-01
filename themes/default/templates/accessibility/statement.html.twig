@@ -1,11 +1,26 @@
 {% extends '@storefront/base.html.twig' %}
 {% block body %}
-<section class="shell account-auth"><article class="account-card" data-accessibility-statement>
-<div class="account-card__head"><span class="eyebrow">{{ ui_text('a11y_eyebrow') }}</span><h1>{{ ui_text('a11y_title') }}</h1><p>{{ ui_text('a11y_intro') }}</p></div>
+{% set contact = storefront_contact() %}
+<section class="shell content-page a11y-page" data-accessibility-statement data-lightbox-scope>
+{% include '@storefront/components/breadcrumbs.html.twig' with {items: [{name: ui_text('home'), url: '/'}, {name: ui_text('a11y_title')}]} only %}
+<header class="content-page__head"><span class="eyebrow">{{ ui_text('a11y_eyebrow') }}</span><h1>{{ ui_text('a11y_title') }}</h1><p class="content-page__lead">{{ ui_text('a11y_intro') }}</p></header>
+<div class="content-page__layout has-aside">
+<article class="content-page__body rich-content">
 <h2>{{ ui_text('a11y_standard_title') }}</h2><p>{{ ui_text('a11y_standard_text') }}</p>
 <h2>{{ ui_text('a11y_measures_title') }}</h2><p>{{ ui_text('a11y_measures_text') }}</p>
 <h2>{{ ui_text('a11y_limits_title') }}</h2><p>{{ ui_text('a11y_limits_text') }}</p>
 <h2>{{ ui_text('a11y_feedback_title') }}</h2><p>{{ ui_text('a11y_feedback_text') }} <a href="/contact">{{ ui_text('a11y_feedback_link') }}</a></p>
 <h2>{{ ui_text('a11y_enforcement_title') }}</h2><p>{{ ui_text('a11y_enforcement_text') }}</p>
-</article></section>
+</article>
+<aside class="content-page__aside" aria-label="{{ ui_text('info_aside')|e('html_attr') }}">
+<section class="aside-card aside-card--help">
+<h2>{{ ui_icon('headset', 16) }}{{ ui_text('info_help') }}</h2>
+<p>{{ ui_text('info_help_text') }}</p>
+{% for phone in contact.phones|slice(0, 1) %}<a class="aside-card__contact" href="tel:{{ phone.href }}">{{ ui_icon('phone', 16) }}{{ phone.label }}</a>{% endfor %}
+{% if contact.email %}<a class="aside-card__contact" href="mailto:{{ contact.email }}">{{ ui_icon('mail', 16) }}{{ contact.email }}</a>{% endif %}
+<a class="button button--secondary button--sm" href="/contact">{{ ui_text('info_contact_us') }}</a>
+</section>
+</aside>
+</div>
+</section>
 {% endblock %}

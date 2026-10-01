@@ -8,6 +8,9 @@ use Commerce\Modules\Cart\Application\CartMutationService;
 use Commerce\Modules\Cart\Application\DbalCartQuery;
 use Commerce\Modules\B2B\Application\B2bCommerceService;
 use Commerce\Modules\Checkout\Application\CheckoutLayoutService;
+use Commerce\Modules\Checkout\Application\CheckoutMethodSettings;
+use Commerce\Modules\Order\Application\OrderConfirmationQuery;
+use Commerce\Modules\Storefront\Infrastructure\PickupPointRepository;
 use Commerce\Modules\Customer\Domain\CustomerUser;
 use Commerce\Modules\Order\Application\CheckoutOrderService;
 use Commerce\Modules\Payment\Application\PaymentProviderRegistry;
@@ -40,6 +43,9 @@ final class CheckoutController extends AbstractController
         private readonly MarketingAttributionService $attribution,
         private readonly B2bCommerceService $b2b,
         private readonly LoyaltyService $loyalty,
+        private readonly CheckoutMethodSettings $methodSettings,
+        private readonly PickupPointRepository $pickupPoints,
+        private readonly OrderConfirmationQuery $confirmation,
     ) {}
 
     #[Route('/checkout', name: 'storefront_checkout', methods: ['GET'], priority: 100)]
@@ -60,10 +66,15 @@ final class CheckoutController extends AbstractController
         $b2b=$this->b2b->membership($context->storeId,$customerId);
         $loyaltyAccount=$customerId!==null?$this->loyalty->account($context->storeId,$customerId):null;
         $loyaltyConfig=$this->loyalty->config($context->storeId);
-        $methods=array_values(array_filter($this->payments->enabledMethods(),static fn($m):bool=>$m->code!=='b2b_invoice'||$b2b!==null));
+        $methods=array_values(array_filter($this->payments->enabledMethods(),fn($m):bool=>($m->code!=='b2b_invoice'||$b2b!==null)&&$this->methodSettings->isEnabled($context->storeId,$m->code)));
+        // Pay-on-receipt first: it is the most requested method for parcel and pickup orders.
+        usort($methods,static fn($a,$b):int=>[$a->code==='cash_on_delivery'?0:1]<=>[$b->code==='cash_on_delivery'?0:1]);
+        $deliveryOptions=array_values(array_filter(CheckoutMethodSettings::DELIVERY,fn(string $code):bool=>$this->methodSettings->isEnabled($context->storeId,$code)));
+        $pickupPoints=in_array('self_pickup',$deliveryOptions,true)?$this->pickupPoints->forCheckout($context->storeId,$context->storeName):[];
+        $old=$request->getSession()->getFlashBag()->get('checkout_old'); $old=is_array($old[0]??null)?$old[0]:[];
         $response = $this->render('@storefront/checkout/show.html.twig', [
             'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.oformlennia_zamovlennia'),'store_name'=>$context->storeName,'cart'=>$summary,'country_code'=>$context->countryCode,'delivery_regions'=>$this->shippingCountries->enabledRegions($context->storeId,$context->countryCode),'checkout_layout'=>$layout,
-            'payment_methods'=>$methods,'checkout_key'=>$key,'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
+            'payment_methods'=>$methods,'checkout_key'=>$key,'delivery_options'=>$deliveryOptions,'pickup_points'=>$pickupPoints,'old'=>$old,'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
             'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/checkout','robots'=>'noindex,nofollow'],
         ]);
         if ($cart['created']) $response->headers->setCookie(Cookie::create('mc_cart',$cart['token'])->withExpires(new \DateTimeImmutable('+7 days'))->withPath('/')->withSecure($request->isSecure())->withHttpOnly(true)->withSameSite(Cookie::SAMESITE_LAX));
@@ -96,9 +107,15 @@ final class CheckoutController extends AbstractController
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         if (!$this->shippingCountries->allows($context->storeId, $context->countryCode)) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('checkout_country_blocked')); return $this->redirectToRoute('storefront_checkout'); }
         $key=(string)$request->request->get('checkout_key');
-        if ($key==='' || !hash_equals((string)$request->getSession()->get('checkout.idempotency_key',''),$key)) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_oformlennia_zastarila_onovit_storinku'));
+        if ($key==='' || !hash_equals((string)$request->getSession()->get('checkout.idempotency_key',''),$key)) { $this->addFlash('checkout_error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_oformlennia_zastarila_onovit_storinku')); return $this->redirectToRoute('storefront_checkout'); }
         try { $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id()); $order=$this->orders->place($context,$cart['id'],$request->request->all(),$key,$customer instanceof CustomerUser ? $customer->id() : null); $this->attribution->attachOrder($order['public_id'],$request->getSession()); }
-        catch (\DomainException $e) { $this->addFlash('checkout_error',$e->getMessage()); return $this->redirectToRoute('storefront_checkout'); }
+        catch (\DomainException $e) {
+            $this->addFlash('checkout_error',$e->getMessage());
+            // Keep what the buyer typed (never the card/gift codes) so a validation error does not wipe the form.
+            $keep=[]; foreach(['name','phone','email','customer_comment','company_name','company_tax_id','carrier','city_id','city_name','point_id','point_name','delivery_manual','delivery_region','payment_method','coupon_code','purchase_order_number'] as $field){$keep[$field]=mb_substr((string)$request->request->get($field,''),0,500);}
+            $request->getSession()->getFlashBag()->set('checkout_old',[$keep]);
+            return $this->redirectToRoute('storefront_checkout');
+        }
         try { $flow=$this->paymentFlow->afterOrderPlaced($order['public_id']); }
         catch (\Throwable $e) {
             $this->addFlash('payment_issue',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.zamovlennia_stvoreno_ale_platizhnyi_servis_tymchasov'));
@@ -110,8 +127,9 @@ final class CheckoutController extends AbstractController
     }
 
     #[Route('/checkout/success/{order}', name: 'storefront_checkout_success', methods: ['GET'], priority: 100)]
-    public function success(string $order): Response
+    public function success(string $order, Request $request): Response
     {
-        return $this->render('@storefront/checkout/success.html.twig',['page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.zamovlennia_pryiniato'),'order_public_id'=>$order,'seo_head'=>['robots'=>'noindex,nofollow']]);
+        $context=$this->contexts->resolve($request);
+        return $this->render('@storefront/checkout/success.html.twig',['page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.zamovlennia_pryiniato'),'order_public_id'=>$order,'order_info'=>$this->confirmation->find($order,$context->storeId,$context->locale),'seo_head'=>['robots'=>'noindex,nofollow']]);
     }
 }

@@ -1,1 +1,34 @@
-{% extends '@storefront/base.html.twig' %}{% block body %}<section class="shell content-shell"><div class="content-card"><span class="eyebrow">{{ ui_text('order_created') }}</span><h1>{{ ui_text('thank_order') }}</h1><p>{{ ui_text('order_confirmation') }}</p>{% for message in app.flashes('payment_issue') %}<div class="store-notice is-error" role="alert">{{ message }}</div>{% endfor %}<a class="button button--primary" href="/catalog">{{ ui_text('continue_shopping') }}{{ ui_icon('arrow-right', 16) }}</a></div></section>{% endblock %}
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="shell ck-success">
+  <div class="ck-success__card">
+    <span class="ck-success__icon" aria-hidden="true">{{ ui_icon('circle-check', 32) }}</span>
+    <p class="eyebrow">{{ ui_text('order_created') }}</p>
+    <h1>{{ ui_text('thank_order') }}</h1>
+    {% if order_info %}<p class="ck-success__number">{{ ui_text('ck_success_number') }} <strong>{{ order_info.order_number }}</strong></p>{% endif %}
+    <p class="ck-success__lead">{{ ui_text('order_confirmation') }}{% if order_info and order_info.email %} {{ ui_text('ck_success_email', {email: order_info.email}) }}{% endif %}</p>
+    {% for message in app.flashes('payment_issue') %}<div class="store-notice is-error" role="alert">{{ message }}</div>{% endfor %}
+    {% if order_info %}
+    <div class="ck-success__grid">
+      {% if order_info.delivery %}
+      <section class="ck-success__box"><h2>{{ ui_icon(order_info.delivery.code == 'self_pickup' ? 'store' : 'truck', 18) }}<span>{{ ui_text('delivery') }}</span></h2>
+        <p><strong>{{ order_info.delivery.label }}</strong></p>
+        {% if order_info.delivery.pickup %}
+          <p class="ck-success__pickup-title">{{ ui_text('ck_success_pickup') }}</p>
+          <ul class="ck-success__list">{% if order_info.delivery.pickup.name %}<li><strong>{{ order_info.delivery.pickup.name }}</strong></li>{% endif %}{% if order_info.delivery.pickup.address %}<li>{{ ui_icon('map-pin', 14) }}<span>{{ order_info.delivery.pickup.address }}</span></li>{% endif %}{% if order_info.delivery.pickup.hours %}<li>{{ ui_icon('clock', 14) }}<span>{{ order_info.delivery.pickup.hours }}</span></li>{% endif %}{% if order_info.delivery.pickup.phone %}<li>{{ ui_icon('phone', 14) }}<span>{{ order_info.delivery.pickup.phone }}</span></li>{% endif %}</ul>
+        {% else %}<p class="ck-success__muted">{{ order_info.delivery.summary }}</p>{% endif %}
+      </section>
+      {% endif %}
+      {% if order_info.payment %}
+      <section class="ck-success__box"><h2>{{ ui_icon(order_info.payment.code == 'cash_on_delivery' ? 'wallet' : 'credit-card', 18) }}<span>{{ ui_text('ck_success_payment') }}</span></h2>
+        <p><strong>{{ order_info.payment.label }}</strong></p>
+        {% if order_info.payment.pay_on_receipt %}<p class="ck-success__muted">{{ ui_text('ck_success_pay_on_receipt', {amount: order_info.total}) }}</p>{% endif %}
+      </section>
+      {% endif %}
+    </div>
+    <ul class="ck-success__items">{% for item in order_info.items %}<li><span>{{ item.name }} <small>× {{ item.quantity }} {{ item.unit }}</small></span><b>{{ item.total }}</b></li>{% endfor %}<li class="is-total"><span>{{ ui_text('total') }}</span><b>{{ order_info.total }}</b></li></ul>
+    {% endif %}
+    <a class="button button--primary" href="/catalog">{{ ui_text('continue_shopping') }}{{ ui_icon('arrow-right', 16) }}</a>
+  </div>
+</section>
+{% endblock %}

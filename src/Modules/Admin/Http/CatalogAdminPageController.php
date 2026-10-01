@@ -239,6 +239,11 @@ final class CatalogAdminPageController extends AbstractController
                         purchaseMode: (string) $request->request->get('purchase_mode', 'auto'),
                         purchaseButtonLabel: trim((string) $request->request->get('purchase_button_label', '')) ?: null,
                         purchaseEtaText: trim((string) $request->request->get('purchase_eta_text', '')) ?: null,
+                        metaTitle: trim((string) $request->request->get('meta_title', '')) ?: null,
+                        metaDescription: trim((string) $request->request->get('meta_description', '')) ?: null,
+                        updateSeoMeta: $request->request->has('meta_title'),
+                        compareAtMinor: trim((string) $request->request->get('compare_at_price', '')) !== '' ? $this->moneyMinor((string) $request->request->get('compare_at_price', '0')) : null,
+                        updateCompareAt: $request->request->has('compare_at_price'),
                     ));
                     if ($request->request->has('tax_class_id')) {
                         $this->taxSettings->setProductClass((int) $product['id'], (int) $request->request->get('tax_class_id', 0));
@@ -268,11 +273,16 @@ final class CatalogAdminPageController extends AbstractController
                 'purchase_mode' => (string) $request->request->get('purchase_mode', 'auto'),
                 'purchase_button_label' => (string) $request->request->get('purchase_button_label', ''),
                 'purchase_eta_text' => (string) $request->request->get('purchase_eta_text', ''),
+                'meta_title' => (string) $request->request->get('meta_title', ''), 'meta_description' => (string) $request->request->get('meta_description', ''),
+                'compare_at_input' => (string) $request->request->get('compare_at_price', ''),
             ]);
         }
         $product['tax_class_id'] = $this->taxSettings->productClassId((int) $product['id']);
         if (!isset($product['price_input'])) {
             $product['price_input'] = $product['amount_minor'] === null ? '0.00' : $this->moneyDisplay((int) $product['amount_minor']);
+        }
+        if (!isset($product['compare_at_input'])) {
+            $product['compare_at_input'] = ($product['compare_at_minor'] ?? null) === null ? '' : $this->moneyDisplay((int) $product['compare_at_minor']);
         }
         if ($product['stock_quantity'] === null) {
             $product['stock_quantity'] = '0.000000';

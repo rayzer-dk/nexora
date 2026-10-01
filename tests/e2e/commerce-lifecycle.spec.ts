@@ -91,18 +91,12 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   const checkoutEmail = checkoutForm.locator('[name="email"]');
   if (await checkoutEmail.count()) await checkoutEmail.fill(email);
 
+  // A real customer path: the carrier directory may be unreachable, so the manual address must be reachable by clicking.
   const city = page.locator('[data-delivery-city]');
   if (await city.count()) {
     await city.fill('Київ');
-    const manual = page.locator('[name="delivery_manual"]');
-    if (await manual.count()) {
-      await manual.evaluate((element) => {
-        const input = element as HTMLInputElement;
-        input.value = 'Київ, тестове відділення 1';
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-      });
-    }
+    await page.locator('[data-delivery-manual-toggle]').click();
+    await page.locator('[name="delivery_manual"]').fill('Київ, тестове відділення 1');
   }
 
   const deliveryRegion = page.locator('select[name="delivery_region"]');

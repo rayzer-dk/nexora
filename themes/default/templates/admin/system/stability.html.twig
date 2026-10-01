@@ -15,7 +15,7 @@
     <div class="admin-panel__header"><div><small>{{ ui_text('ui.admin.system.stability.recovery') }}</small><h2>{{ ui_text('admin.system.stability.shvydke_vidnovlennia') }}</h2><p>{{ ui_text('admin.system.stability.yakshcho_problema_z_iavylas_pislia_dodatkovoho_p') }}</p></div><span class="admin-badge">{{ ui_text('ui.admin.system.stability.core_stays_on') }}</span></div>
     <form method="post" action="{{ path('admin_system_extensions_isolate_all') }}">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('extension_isolate_all') }}">
-        <button type="submit" class="admin-danger-action" data-confirm="{{ ui_text('admin.system.stability.vymknuty_vsi_aktyvni_dodatkovi_rozshyrennia_vbud') }}">{{ ui_text('admin.system.stability.uvimknuty_bezpechnyi_rezhym_rozshyren') }}</button>
+        <button type="submit" class="admin-button is-danger" data-confirm="{{ ui_text('admin.system.stability.vymknuty_vsi_aktyvni_dodatkovi_rozshyrennia_vbud') }}">{{ ui_icon('shield-check', 16) }}<span>{{ ui_text('admin.system.stability.uvimknuty_bezpechnyi_rezhym_rozshyren') }}</span></button>
     </form>
 </section>
 

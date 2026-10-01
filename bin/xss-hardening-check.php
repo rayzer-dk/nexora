@@ -7,7 +7,7 @@ $errors = [];
 $mustContain = [
     'config/packages/html_sanitizer.yaml' => ['commerce.rich_text', 'allow_safe_elements'],
     'src/Modules/Catalog/Application/ProductWriter.php' => ['HtmlSanitizerInterface', 'richTextSanitizer'],
-    'src/Modules/Admin/Http/ContentAdminPageController.php' => ['HtmlSanitizerInterface', 'sanitize('],
+    'src/Modules/Content/Application/InformationPageService.php' => ['HtmlSanitizerInterface', 'sanitize('],
     'src/Modules/Appearance/Builder/LayoutSchemaValidator.php' => ['strip_tags(', 'sanitizeNested('],
 ];
 foreach ($mustContain as $file => $needles) {

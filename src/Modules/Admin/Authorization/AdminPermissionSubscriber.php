@@ -42,6 +42,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         $get=$request->isMethod('GET');
         if ($route==='admin_dashboard'||$route==='admin_onboarding'||$route==='admin_api_session'||$route==='admin_api_quick_search'||$route==='admin_api_slug'||$route==='admin_interface_language'||$route==='admin_undo'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account_security')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
         if (str_starts_with($route,'admin_system_tax')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if (str_starts_with($route,'admin_system_storefront_')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if ($route==='admin_analytics') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic_settings') return AdminPermissionCatalog::SYSTEM_SETTINGS;
@@ -66,7 +67,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (preg_match('/^admin_catalog_(?:product|category)_(?:edit|new|translations|translation_save)$/D',$route)===1 || str_contains($route,'products_bulk_edit')) return AdminPermissionCatalog::CATALOG_MANAGE;
         if (str_starts_with($route,'admin_catalog_')) return $get?AdminPermissionCatalog::CATALOG_VIEW:AdminPermissionCatalog::CATALOG_MANAGE;
         if ($route==='admin_commerce_customers') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
-        if ($route==='admin_content_page_edit') return AdminPermissionCatalog::CONTENT_MANAGE;
+        if ($route==='admin_content_page_edit'||$route==='admin_content_page_new') return AdminPermissionCatalog::CONTENT_MANAGE;
         if (str_starts_with($route,'admin_content_')) return $get?AdminPermissionCatalog::CONTENT_VIEW:(str_contains($route,'delete')?AdminPermissionCatalog::CONTENT_DELETE:AdminPermissionCatalog::CONTENT_MANAGE);
         if (str_starts_with($route,'admin_appearance_builder')||$route==='admin_visual_store_editor') return AdminPermissionCatalog::APPEARANCE_MANAGE;
         if (str_starts_with($route,'admin_appearance_')) return $get?AdminPermissionCatalog::APPEARANCE_VIEW:AdminPermissionCatalog::APPEARANCE_MANAGE;
@@ -88,9 +89,9 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_contains($route,'extension')) return AdminPermissionCatalog::EXTENSIONS_MANAGE;
         if (str_contains($route,'recovery')) return AdminPermissionCatalog::SYSTEM_RECOVERY;
         if (str_contains($route,'update')) return AdminPermissionCatalog::SYSTEM_UPDATE;
-        if ($route==='admin_system_cron') return $get?AdminPermissionCatalog::SYSTEM_CRON_VIEW:AdminPermissionCatalog::SYSTEM_CRON_MANAGE;
+        if (str_starts_with($route,'admin_system_cron')) return $get?AdminPermissionCatalog::SYSTEM_CRON_VIEW:AdminPermissionCatalog::SYSTEM_CRON_MANAGE;
         if (str_starts_with($route,'admin_system_integrations')) return AdminPermissionCatalog::INTEGRATIONS_MANAGE;
-        if (in_array($route,['admin_system_site','admin_system_site_rollback','admin_system_store','admin_system_store_rollback','admin_system_localization','admin_system_localization_locales','admin_system_localization_currencies','admin_system_localization_rate','admin_system_localization_refresh'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if (in_array($route,['admin_system_site','admin_system_site_rollback','admin_system_store','admin_system_store_rollback','admin_system_localization','admin_system_localization_locales','admin_system_localization_currencies','admin_system_localization_rate','admin_system_localization_rate_api','admin_system_localization_refresh'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (in_array($route,['admin_system_stability','admin_system_components','admin_api_system_health'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_migration')) return AdminPermissionCatalog::SYSTEM_UPDATE;
         if ($route==='admin_ai_product_draft'||$route==='admin_ai_task') return AdminPermissionCatalog::CATALOG_MANAGE;

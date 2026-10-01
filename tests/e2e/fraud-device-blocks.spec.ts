@@ -28,7 +28,7 @@ test.beforeEach(async ({}, testInfo) => {
 /** Adds the first purchasable product to the cart and fills the checkout; returns without submitting. */
 async function fillCheckout(page: Page, email: string): Promise<void> {
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
-  const href = await page.locator('[data-product-card] h2 a').first().getAttribute('href');
+  const href = await page.locator('[data-product-card]').filter({ has: page.locator('form[data-card-add-to-cart]') }).first().locator('h2 a').getAttribute('href');
   await page.goto(href!, { waitUntil: 'domcontentloaded' });
   const add = page.waitForResponse((r) => r.url().endsWith('/cart/add') && r.request().method() === 'POST');
   await page.locator('form[data-buy-actions] [data-primary-buy]').click();
@@ -226,7 +226,7 @@ test('product info blocks render on the product page and articles link to produc
   // storefront: article lists the product, product lists the article and shows the size chart
   await page.goto(`/blog/${slug}`, { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const productLink = page.locator('.article-products__item a').first();
+  const productLink = page.locator('.article-rail .aside-links a').first();
   await expect(productLink).toBeVisible();
   await Promise.all([page.waitForURL((u) => !u.pathname.startsWith('/blog/')), productLink.click()]);
   const chart = page.locator('.product-info-block--table', { hasText: `Size chart ${suffix}` });

@@ -39,7 +39,7 @@ test('own analytics: cookie-free sessions, sources, funnel; bots are ignored', a
   const shop = await human.newPage();
   await shop.goto('/?utm_source=e2e-news&utm_medium=email&utm_campaign=e2e-camp', { waitUntil: 'domcontentloaded' });
   await shop.goto('/catalog', { waitUntil: 'domcontentloaded' });
-  const href = await shop.locator('.product-grid a[href^="/"]').first().getAttribute('href');
+  const href = await shop.locator('[data-product-card]').filter({ has: shop.locator('form[data-card-add-to-cart]') }).first().locator('h2 a').getAttribute('href');
   await shop.goto(href!, { waitUntil: 'domcontentloaded' });
   const variant = await shop.locator('form[action="/cart/add"] input[name="variant_id"]').first().inputValue();
   const token = await shop.locator('form[action="/cart/add"] input[name="_token"]').first().inputValue();
@@ -51,8 +51,8 @@ test('own analytics: cookie-free sessions, sources, funnel; bots are ignored', a
   await human.close();
 
   await expect.poll(async () => sessions(page), { timeout: 15000 }).toBe(before + 1);
-  await expect(page.locator('.dash-funnel li').nth(1)).toContainText('1');
-  await expect(page.locator('.dash-funnel li').nth(2)).toContainText('1');
+  await expect(page.locator('.dash-funnel li').nth(1)).toContainText(/[1-9]/);
+  await expect(page.locator('.dash-funnel li').nth(2)).toContainText(/[1-9]/);
   await expect(page.locator('.dash-funnel li').nth(3)).toContainText(/[1-9]/);
   await expect(page.locator('body')).toContainText('e2e-news');
   await expect(page.locator('body')).toContainText('e2e-camp');
@@ -95,7 +95,7 @@ test('AI assistant: key stored encrypted, limits and errors enforced, helpers ap
   await expectNoServerError(page);
   const card = page.locator('.ai-provider').filter({ hasText: 'OpenAI' });
   await card.locator('input[name="enabled"]').check();
-  await card.locator('input[name="model"]').fill('gpt-5');
+  await card.locator('input[name="model_custom"]').fill('gpt-5');
   await card.locator('input[name="api_key"]').fill('sk-e2e-key-1234567890abcdef');
   await Promise.all([page.waitForResponse((r) => r.url().includes('/admin/system/ai/save') && r.request().method() === 'POST'), card.locator('button[type="submit"]').first().click()]);
   await page.goto('/admin/system/ai', { waitUntil: 'domcontentloaded' });

@@ -1,14 +1,14 @@
-{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.fraud.title'),'fraud') }}
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}{{ shell.start(ui_text('admin.fraud.title'),'fraud') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.fraud.title') }}</span></nav><h1>{{ ui_text('admin.fraud.title') }}</h1><p>{{ ui_text('admin.fraud.intro') }}</p></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
 {% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.fraud.settings_hint') }}</small><h2>{{ ui_text('admin.fraud.settings') }}</h2></div>{{ ui_icon('shield-check', 20) }}</div>
 <form method="post" action="{{ path('admin_system_fraud_save') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_fraud') }}">
 <label class="admin-check"><input type="checkbox" name="enabled" value="1" {{ settings.enabled ? 'checked' : '' }}><span>{{ ui_text('admin.fraud.enabled') }}</span></label>
-<label><span>{{ ui_text('admin.fraud.review_score') }}</span><input type="number" name="review_score" min="10" max="99" value="{{ settings.review_score }}"></label>
-<label><span>{{ ui_text('admin.fraud.high_score') }}</span><input type="number" name="high_score" min="11" max="100" value="{{ settings.high_score }}"></label>
-<label><span>{{ ui_text('admin.fraud.velocity_limit') }}</span><input type="number" name="velocity_limit" min="1" max="50" value="{{ settings.velocity_limit }}"></label>
-<label><span>{{ ui_text('admin.fraud.high_value') }}</span><input type="number" name="high_value" min="0" step="1" value="{{ (settings.high_value_minor / 100)|round }}"></label>
+<label><span>{{ ui_text('admin.fraud.review_score') }}</span><input type="number" name="review_score" min="10" max="99" value="{{ settings.review_score }}">{{ help.hint(ui_text('admin.help.fraud.review_score'), null, null, '40') }}</label>
+<label><span>{{ ui_text('admin.fraud.high_score') }}</span><input type="number" name="high_score" min="11" max="100" value="{{ settings.high_score }}">{{ help.hint(ui_text('admin.help.fraud.high_score'), null, null, '80') }}</label>
+<label><span>{{ ui_text('admin.fraud.velocity_limit') }}</span><input type="number" name="velocity_limit" min="1" max="50" value="{{ settings.velocity_limit }}">{{ help.hint(ui_text('admin.help.fraud.velocity_limit'), null, null, '3') }}</label>
+<label><span>{{ ui_text('admin.fraud.high_value') }}</span><input type="number" name="high_value" min="0" step="1" value="{{ (settings.high_value_minor / 100)|round }}">{{ help.hint(ui_text('admin.help.fraud.high_value'), null, null, '50000') }}</label>
 <label class="admin-check admin-form-wide"><input type="checkbox" name="device_confirm" value="1" {{ settings.device_confirm ? 'checked' : '' }}><span>{{ ui_text('admin.fraud.device_confirm') }}</span></label>
 <p class="admin-form-wide"><small>{{ ui_text('admin.fraud.device_confirm_hint') }}</small></p>
 <div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.fraud.save') }}</button></div></form></section>

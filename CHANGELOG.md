@@ -2,6 +2,26 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.23.0 — 2026-10-01
+
+Schema 70. Storefront cart/checkout, header and catalog navigation, product page, content pages, admin content tools, cron, media.
+
+### Added
+- **Cart drawer** opening from the right (full screen on mobile), live cart badge, product photos in the cart, drawer and checkout summary.
+- **Checkout**: compact two-column layout with sticky summary and a visible submit button; manual address fallback when the carrier lookup is empty; self-pickup (pickup points in Settings → Contacts and pickup) and cash on delivery; admin page to switch delivery/payment methods on or off.
+- **Header**: compact language switcher with flags and a real currency switcher; catalog mega-menu with sub-categories and photos; custom header/footer/utility links in Appearance → Navigation; the locale/currency code is no longer printed in the footer.
+- **Cookie banner** with icon, primary "Accept" button, desktop layout and a re-open icon; back-to-top on the right; symmetric newsletter block; yellow review stars.
+- **Product page**: gallery with thumbnails, full-screen viewer with prev/next, swipe, zoom, keyboard; tabs (description, specs, reviews, questions, delivery); share popover; variant chips. **Filters**: sticky sidebar, active chips, instant apply, bottom sheet on mobile, rating filter and page size.
+- **Content**: two-column desktop layout for information pages, blog grid with fixed image ratios and text wrap, per-article image placement/size, contacts page with address, hours, OpenStreetMap map and social links, lightbox with navigation.
+- **Admin**: information pages (create, edit, duplicate, delete, per-language slug and meta), content language tabs with completeness markers, tax editing, currency rate providers (ECB, NBP, CNB, NBU, API key, manual), localized flash messages and builders, help hints and a connections guide, compact form grids, sidebar scroll kept between pages.
+- **Cron**: ready-to-copy crontab line with absolute paths, secret web trigger, fallback pseudo-cron, status and "run now". **AI**: refresh model list from the provider.
+- **Media**: recommended WebP preset (640/960/1280 + 1920 copy, original kept), simple mode with advanced settings in a collapsible block.
+
+### Fixed
+- Checkout could not be submitted when the carrier returned no branches; cart count badge stayed at zero after reload.
+- Product badge text contrast for custom HEX colours; "safe mode" button and all checkboxes/switches states.
+- Hosting-provider branding removed from docs and UI.
+
 ## 3.22.0 — 2026-09-30
 
 Schema 66. Lists, navigation, media library, e-mail templates, demo data.

@@ -132,6 +132,23 @@
     await persist(selection); banner.hidden = true;
   });
 
+  // "Customize" expands the per-category choices and reveals the "Save choice" button.
+  const choices = banner.querySelector('[data-consent-choices]');
+  const customize = banner.querySelector('[data-consent-customize]');
+  const saveButton = banner.querySelector('[data-consent-save]');
+  const showChoices = open => {
+    if (choices) choices.hidden = !open;
+    if (saveButton) saveButton.hidden = !open;
+    if (customize) customize.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  customize?.addEventListener('click', () => showChoices(Boolean(choices?.hidden)));
+
+  // The floating "cookie settings" icon is only offered while the banner is closed.
+  const fab = document.querySelector('[data-consent-fab]');
+  const syncFab = () => { if (fab) fab.hidden = !banner.hidden; };
+  new MutationObserver(syncFab).observe(banner, { attributes: true, attributeFilter: ['hidden'] });
+  syncFab();
+
   document.querySelectorAll('[data-consent-open]').forEach(button => {
     button.addEventListener('click', () => {
       const now = current();
@@ -140,8 +157,8 @@
         if (input) input.checked = Boolean(now[category]);
       });
       banner.hidden = false;
-      banner.querySelector('details')?.setAttribute('open', '');
-      banner.querySelector('button, input')?.focus();
+      showChoices(true);
+      (banner.querySelector('[name="consent_preferences"]') || banner.querySelector('button, input'))?.focus();
     });
   });
 

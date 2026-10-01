@@ -1,3 +1,6 @@
+import './features/lang-tabs';
+import './features/slug-autofill';
+
 document.addEventListener('DOMContentLoaded', async () => {
   const fields = Array.from(document.querySelectorAll<HTMLTextAreaElement>('textarea[data-rich-editor]'));
   if (fields.length === 0) return;

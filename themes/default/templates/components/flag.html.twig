@@ -1,0 +1,30 @@
+{# Inline SVG flag (no external requests). Expects `region` (ISO 3166 alpha-2). Unknown regions fall back to a globe icon. #}
+{% set r = region|default('')|upper %}
+{% if r in ['UA','US','GB','DE','PL','DK','RU','FR','ES','IT','CZ','RO','BG','TR','PT','NL','SE','NO','FI','HU','SK'] %}
+<svg data-chart="flag" class="flag" viewBox="0 0 20 14" width="20" height="14" aria-hidden="true" focusable="false">
+{%- if r == 'UA' -%}<rect width="20" height="7" fill="#0057b7"/><rect y="7" width="20" height="7" fill="#ffd700"/>
+{%- elseif r == 'US' -%}<rect width="20" height="14" fill="#fff"/><path fill="#b22234" d="M0 0h20v1.08H0zM0 2.15h20v1.08H0zM0 4.31h20v1.08H0zM0 6.46h20v1.08H0zM0 8.62h20v1.08H0zM0 10.77h20v1.08H0zM0 12.92h20V14H0z"/><rect width="9" height="7.54" fill="#3c3b6e"/>
+{%- elseif r == 'GB' -%}<rect width="20" height="14" fill="#012169"/><path d="M0 0l20 14M20 0L0 14" stroke="#fff" stroke-width="2.8"/><path d="M0 0l20 14M20 0L0 14" stroke="#c8102e" stroke-width="1.1"/><path d="M10 0v14M0 7h20" stroke="#fff" stroke-width="4.6"/><path d="M10 0v14M0 7h20" stroke="#c8102e" stroke-width="2.6"/>
+{%- elseif r == 'DE' -%}<rect width="20" height="14.01" fill="#ffce00"/><rect width="20" height="9.34" fill="#dd0000"/><rect width="20" height="4.67" fill="#000"/>
+{%- elseif r == 'PL' -%}<rect width="20" height="14" fill="#dc143c"/><rect width="20" height="7" fill="#fff"/>
+{%- elseif r == 'DK' -%}<rect width="20" height="14" fill="#c8102e"/><path fill="#fff" d="M6 0h2.4v14H6zM0 5.8h20v2.4H0z"/>
+{%- elseif r == 'RU' -%}<rect width="20" height="14" fill="#d52b1e"/><rect width="20" height="9.34" fill="#0039a6"/><rect width="20" height="4.67" fill="#fff"/>
+{%- elseif r == 'FR' -%}<rect width="20" height="14" fill="#ef4135"/><rect width="13.34" height="14" fill="#fff"/><rect width="6.67" height="14" fill="#0055a4"/>
+{%- elseif r == 'ES' -%}<rect width="20" height="14" fill="#aa151b"/><rect y="3.5" width="20" height="7" fill="#f1bf00"/>
+{%- elseif r == 'IT' -%}<rect width="20" height="14" fill="#ce2b37"/><rect width="13.34" height="14" fill="#fff"/><rect width="6.67" height="14" fill="#009246"/>
+{%- elseif r == 'CZ' -%}<rect width="20" height="14" fill="#d7141a"/><rect width="20" height="7" fill="#fff"/><path d="M0 0l10 7L0 14z" fill="#11457e"/>
+{%- elseif r == 'RO' -%}<rect width="20" height="14" fill="#ce1126"/><rect width="13.34" height="14" fill="#fcd116"/><rect width="6.67" height="14" fill="#002b7f"/>
+{%- elseif r == 'BG' -%}<rect width="20" height="14" fill="#d62612"/><rect width="20" height="9.34" fill="#00966e"/><rect width="20" height="4.67" fill="#fff"/>
+{%- elseif r == 'TR' -%}<rect width="20" height="14" fill="#e30a17"/><circle cx="7.4" cy="7" r="3.6" fill="#fff"/><circle cx="8.3" cy="7" r="2.9" fill="#e30a17"/><circle cx="11.6" cy="7" r="1.1" fill="#fff"/>
+{%- elseif r == 'PT' -%}<rect width="20" height="14" fill="#f00"/><rect width="8" height="14" fill="#060"/><circle cx="8" cy="7" r="2.3" fill="#ffda44"/>
+{%- elseif r == 'NL' -%}<rect width="20" height="14" fill="#21468b"/><rect width="20" height="9.34" fill="#fff"/><rect width="20" height="4.67" fill="#ae1c28"/>
+{%- elseif r == 'SE' -%}<rect width="20" height="14" fill="#006aa7"/><path fill="#fecc00" d="M5.5 0h2.6v14H5.5zM0 5.7h20v2.6H0z"/>
+{%- elseif r == 'NO' -%}<rect width="20" height="14" fill="#ba0c2f"/><path fill="#fff" d="M5 0h4v14H5zM0 5h20v4H0z"/><path fill="#00205b" d="M6 0h2v14H6zM0 6h20v2H0z"/>
+{%- elseif r == 'FI' -%}<rect width="20" height="14" fill="#fff"/><path fill="#003580" d="M5.5 0h3v14h-3zM0 5.5h20v3H0z"/>
+{%- elseif r == 'HU' -%}<rect width="20" height="14" fill="#477050"/><rect width="20" height="9.34" fill="#fff"/><rect width="20" height="4.67" fill="#ce2939"/>
+{%- elseif r == 'SK' -%}<rect width="20" height="14" fill="#ee1c25"/><rect width="20" height="9.34" fill="#0b4ea2"/><rect width="20" height="4.67" fill="#fff"/>
+{%- endif -%}
+</svg>
+{%- else -%}
+{{ ui_icon('globe', 16) }}
+{%- endif -%}

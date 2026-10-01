@@ -1,4 +1,4 @@
-# Nexora Commerce 3.22.0
+# Nexora Commerce 3.23.0
 
 Сучасна модульна e-commerce платформа для України та Європи. Один канонічний вихідний код у гілці `main`.
 
@@ -33,7 +33,7 @@ Google Commerce потребує перевірки з реальним Merchant
 1. Розпакуйте повний release ZIP (містить `vendor/` і зібрані assets).
 2. Направте Document Root домену на `public/`.
 3. Відкрийте `/setup.php` і пройдіть установку (за бажанням — з демо-даними; пізніше: `commerce:demo:install` / `commerce:demo:remove`).
-4. Додайте в cron один запис: `php bin/console commerce:cron:run` кожні 5 хвилин.
+4. Додайте в cron один запис кожні 5 хвилин (готовий рядок з абсолютними шляхами є в адмінці «Система → Cron»): `*/5 * * * * /usr/bin/php /path/to/bin/console commerce:cron:run >/dev/null 2>&1`. Без доступу до cron використайте секретну веб-адресу або вбудований резервний запуск.
 
 ## Розробка і перевірки
 

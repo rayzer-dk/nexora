@@ -41,6 +41,8 @@ final readonly class CheckoutOrderService
         private CustomerStoreMembershipService $memberships,
         private \Commerce\Modules\Fraud\Application\FraudService $fraud,
         private \Symfony\Component\HttpFoundation\RequestStack $requests,
+        private \Commerce\Modules\Checkout\Application\CheckoutMethodSettings $methodSettings,
+        private \Commerce\Modules\Storefront\Infrastructure\PickupPointRepository $pickupPoints,
     ) {}
 
     /**
@@ -77,6 +79,11 @@ final readonly class CheckoutOrderService
         $request = $this->requests->getMainRequest();
         $clientIp = ($request !== null && !str_starts_with($request->getPathInfo(), '/admin')) ? $request->getClientIp() : null;
         if ($request !== null && !str_starts_with($request->getPathInfo(), '/admin')) {
+            // Shop owners can switch methods off in Admin → Shipping; a stale or forged form must not bypass that.
+            if (!$this->methodSettings->isEnabled($context->storeId, $paymentCode)) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.payment.application.paymentproviderregistry.obranyi_sposib_oplaty_nedostupnyi'));
+            if ($providerCode !== '' && !$this->methodSettings->isEnabled($context->storeId, $providerCode)) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout.error.delivery_method_unavailable'));
+        }
+        if ($request !== null && !str_starts_with($request->getPathInfo(), '/admin')) {
             $this->fraud->preflight($context->storeId, $email, $phone, $clientIp);
         }
         $result = $this->db->transactional(function(Connection $db) use($context,$cartId,$input,$idempotencyKey,$name,$phone,$email,$providerCode,$payment,$customerId,$companyName,$companyTaxId,$customerComment,$purchaseOrderNumber,$unitPriceOverrides): array {
@@ -106,7 +113,14 @@ final readonly class CheckoutOrderService
             if ($hasDigital && $customerId === null) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.dlia_tsyfrovykh_tovariv_uviidit_abo_stvorit_oblikovy'));
             if ($hasDigital) { foreach($rows as $r){ if ((string)$r['product_type'] !== 'digital') continue; $assetCount=(int)$db->fetchOne("SELECT COUNT(*) FROM mc_product_digital_asset WHERE product_id=? AND status='active'",[(int)$r['product_id']]); if($assetCount<1) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.tsyfrovyi_tovar').(string)$r['name'].\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.tymchasovo_nedostupnyi_fail_dlia_vydachi_shche_ne_na')); } }
             if ($requiresShipping && $providerCode === '') throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.oberit_sluzhbu_dostavky'));
-            if ($requiresShipping && trim((string)($input['point_id'] ?? '')) === '' && trim((string)($input['delivery_manual'] ?? '')) === '') throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.oberit_viddilennia_abo_vkazhit_dostavku_vruchnu'));
+            $selfPickup = $requiresShipping && $providerCode === \Commerce\Modules\Shipping\Provider\SelfPickup\SelfPickupDeliveryProvider::CODE;
+            $pickupPoint = null;
+            if ($selfPickup) {
+                $pickupId = trim((string)($input['point_id'] ?? ''));
+                $pickupPoint = ctype_digit($pickupId) ? $this->pickupPoints->resolveForCheckout($context->storeId, $context->storeName, (int)$pickupId) : null;
+                if ($pickupPoint === null) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout.error.pickup_point_required'));
+            }
+            if ($requiresShipping && !$selfPickup && trim((string)($input['point_id'] ?? '')) === '' && trim((string)($input['delivery_manual'] ?? '')) === '') throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.oberit_viddilennia_abo_vkazhit_dostavku_vruchnu'));
             if (!$requiresShipping) $providerCode='digital';
             if (!$requiresShipping && $payment->requiresShipping) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.tsei_sposib_oplaty_dostupnyi_lyshe_dlia_fizychnoi_do'));
 
@@ -174,7 +188,7 @@ final readonly class CheckoutOrderService
                 }
             }
             $regionName='';
-            if ($requiresShipping) {
+            if ($requiresShipping && !$selfPickup) {
                 $regions=$db->fetchAllKeyValue('SELECT code,name FROM mc_shipping_region WHERE store_id=? AND country_code=? AND enabled=1',[$context->storeId,strtoupper($context->countryCode)]);
                 if ($regions!==[]) {
                     $regionCode=trim((string)($input['delivery_region']??''));
@@ -183,7 +197,8 @@ final readonly class CheckoutOrderService
                 }
             }
             $destination=['country'=>$context->countryCode,'region'=>$regionName,'provider'=>$providerCode,'city_id'=>(string)($input['city_id']??''),'city'=>(string)($input['city_name']??''),'point_id'=>(string)($input['point_id']??''),'point'=>(string)($input['point_name']??''),'manual'=>(string)($input['delivery_manual']??'')];
-            if ($requiresShipping) { $db->insert('mc_fulfillment',['public_id'=>$this->ids->binary(),'order_id'=>$orderId,'provider_code'=>$providerCode,'service_type'=>(string)($input['service_type']??'pickup_point'),'status'=>'pending','tracking_number'=>null,'destination_snapshot'=>json_encode($destination,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'provider_snapshot'=>null,'created_at'=>$now,'updated_at'=>$now]); } else { $db->update('mc_sales_order',['fulfillment_status'=>'not_required'],['id'=>$orderId]); }
+            if ($pickupPoint !== null) $destination=['country'=>$context->countryCode,'region'=>'','provider'=>$providerCode,'city_id'=>'','city'=>$pickupPoint['city'],'point_id'=>(string)$pickupPoint['id'],'point'=>$pickupPoint['name'],'address'=>$pickupPoint['address'],'working_hours'=>$pickupPoint['working_hours'],'phone'=>$pickupPoint['phone'],'manual'=>''];
+            if ($requiresShipping) { $db->insert('mc_fulfillment',['public_id'=>$this->ids->binary(),'order_id'=>$orderId,'provider_code'=>$providerCode,'service_type'=>$selfPickup?'store_pickup':(string)($input['service_type']??'pickup_point'),'status'=>'pending','tracking_number'=>null,'destination_snapshot'=>json_encode($destination,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'provider_snapshot'=>null,'created_at'=>$now,'updated_at'=>$now]); } else { $db->update('mc_sales_order',['fulfillment_status'=>'not_required'],['id'=>$orderId]); }
             $db->insert('mc_payment',['public_id'=>$this->ids->binary(),'order_id'=>$orderId,'provider_code'=>$payment->code,'provider_reference'=>null,'status'=>'pending','amount_minor'=>$total,'currency'=>$context->currency,'idempotency_key'=>'payment:'.$idempotencyKey,'metadata'=>json_encode(['online'=>$payment->online],JSON_THROW_ON_ERROR),'created_at'=>$now,'updated_at'=>$now]);
             $this->promotionRedemptions->record($orderId,$promotionResult,$customerId,$email);
             $db->insert('mc_order_event',['order_id'=>$orderId,'sequence_no'=>1,'event_type'=>'order.placed','payload'=>json_encode(['payment_method'=>$payment->code,'carrier'=>$providerCode],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'actor_type'=>'customer','actor_subject'=>$email!==''?$email:$phone,'created_at'=>$now]);

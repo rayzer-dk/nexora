@@ -204,7 +204,7 @@ test('navigation and content edits are reflected by the storefront', async ({ pa
   await expectNoServerError(page);
   const navForm = page.locator('form[action="/admin/appearance/navigation/save"]');
   await expect(navForm).toBeVisible();
-  await navForm.locator('select[name="item_type"]').selectOption('custom');
+  await navForm.locator('select[name="choice"]').selectOption('custom');
   await navForm.locator('input[name="url"]').fill('/contact');
   const labels = navForm.locator('input[name^="label["]');
   const labelCount = await labels.count();

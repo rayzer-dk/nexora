@@ -36,7 +36,7 @@ final class CurrencyPriceSynchronizer
         foreach ($stores as $store) {
             $base = strtoupper((string) $store['default_currency']);
             $targets = $this->db->fetchAllAssociative(
-                'SELECT sc.currency_code,sc.rounding_increment_minor,sc.rate_source,c.minor_units FROM mc_store_currency sc JOIN mc_currency c ON c.code=sc.currency_code WHERE sc.store_id=? AND sc.enabled=1 AND sc.auto_convert=1 AND sc.currency_code<>?',
+                'SELECT sc.currency_code,sc.rounding_increment_minor,sc.rate_source,sc.rate_markup_bps,c.minor_units FROM mc_store_currency sc JOIN mc_currency c ON c.code=sc.currency_code WHERE sc.store_id=? AND sc.enabled=1 AND sc.auto_convert=1 AND sc.currency_code<>?',
                 [(int) $store['id'], $base],
             );
             $baseUnits = (int) ($this->db->fetchOne('SELECT minor_units FROM mc_currency WHERE code=?', [$base]) ?: 2);
@@ -58,11 +58,12 @@ final class CurrencyPriceSynchronizer
     }
 
     /** Latest valid rate base->quote as a decimal string, using the inverse pair when needed. */
-    public function rate(string $base, string $quote, string $source = 'nbu'): ?string
+    public function rate(string $base, string $quote, string $source = 'auto'): ?string
     {
         // A manual rate is used only when the store chose "manual"; otherwise fetched rates are used so that a
-        // forgotten manual value can never silently override the official one (and vice versa).
-        $providerFilter = $source === 'manual' ? "provider='manual'" : "provider<>'manual'";
+        // forgotten manual value can never silently override the official one (and vice versa). A store that
+        // picked one publisher reads only that publisher's rows.
+        $providerFilter = $source === 'manual' ? "provider='manual'" : ($source === 'auto' ? "provider<>'manual'" : 'provider=' . $this->db->quote($source));
         $row = $this->db->fetchAssociative(
             'SELECT base_currency,rate FROM mc_exchange_rate WHERE ((base_currency=? AND quote_currency=?) OR (base_currency=? AND quote_currency=?))
              AND ' . $providerFilter . ' AND rate>0 AND (expires_at IS NULL OR expires_at>UTC_TIMESTAMP(6)) ORDER BY observed_at DESC,id DESC LIMIT 1',
@@ -76,11 +77,14 @@ final class CurrencyPriceSynchronizer
         return strtoupper((string) $row['base_currency']) === $base ? $rate : sprintf('%.12F', 1 / (float) $rate);
     }
 
-    /** @param array{currency_code:string,rounding_increment_minor:int|string,rate_source?:string,minor_units:int|string} $target */
+    /** @param array{currency_code:string,rounding_increment_minor:int|string,rate_source?:string,rate_markup_bps?:int|string,minor_units:int|string} $target */
     private function syncCurrency(int $storeId, string $base, int $baseUnits, array $target, bool $full): array
     {
         $currency = strtoupper((string) $target['currency_code']);
-        $rate = $this->rate($base, $currency, (string) ($target['rate_source'] ?? 'nbu'));
+        $rate = $this->rate($base, $currency, (string) ($target['rate_source'] ?? 'auto'));
+        if ($rate !== null) {
+            $rate = self::withMarkup($rate, (int) ($target['rate_markup_bps'] ?? 0));
+        }
         if ($rate === null) {
             $removed = $this->db->executeStatement('DELETE FROM mc_price WHERE store_id=? AND source=? AND currency=?', [$storeId, self::SOURCE, $currency]);
 
@@ -165,6 +169,12 @@ final class CurrencyPriceSynchronizer
             "SELECT COUNT(*) FROM mc_price WHERE store_id=? AND variant_id=? AND currency=? AND source='manual' AND customer_group=? AND min_quantity=? AND market_id <=> ? AND price_list_id <=> ?",
             [$storeId, (int) $row['variant_id'], $currency, (string) $row['customer_group'], (string) $row['min_quantity'], $row['market_id'], $row['price_list_id']],
         ) > 0;
+    }
+
+    /** Adds the merchant's safety markup (basis points) to a rate, so converted prices stay above the day's exchange drift. */
+    public static function withMarkup(string $rate, int $markupBps): string
+    {
+        return $markupBps > 0 ? sprintf('%.12F', (float) $rate * (1 + $markupBps / 10000)) : $rate;
     }
 
     private function convert(int $amountMinor, string $rate, int $baseUnits, int $targetUnits, int $increment): int

@@ -1,0 +1,17 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}{{ shell.start(ui_text('admin.checkout_methods.title'),'shipping_methods') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.checkout_methods.title') }}</span></nav><h1>{{ ui_text('admin.checkout_methods.title') }}</h1><p>{{ ui_text('admin.checkout_methods.intro') }}</p></div></header>
+{% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<form method="post" action="{{ path('admin_shipment_methods_save') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('shipping_methods') }}">
+<section class="admin-panel" data-no-table-tools><div class="admin-panel__header"><h2>{{ ui_text('admin.checkout_methods.delivery') }}</h2></div>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.badges.enabled') }}</th><th>{{ ui_text('admin.checkout_methods.method') }}</th><th>{{ ui_text('admin.checkout_methods.note') }}</th></tr></thead><tbody>
+{% for code in delivery_codes %}<tr><td><input type="checkbox" name="methods[]" value="{{ code }}"{{ enabled[code] ? ' checked' : '' }} aria-label="{{ ui_text('method.delivery.' ~ code) }}"></td><td><strong>{{ ui_text('method.delivery.' ~ code) }}</strong></td><td>{{ ui_text('admin.checkout_methods.note.' ~ code) }}{% if code == 'self_pickup' %} <a href="{{ path('admin_system_storefront_contacts') }}">{{ ui_text('admin.checkout_methods.pickup_points') }} ({{ pickup_points }})</a>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+{{ help.hint(ui_text('admin.checkout_methods.delivery_hint')) }}</section>
+<section class="admin-panel" data-no-table-tools><div class="admin-panel__header"><h2>{{ ui_text('admin.checkout_methods.payment') }}</h2></div>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.badges.enabled') }}</th><th>{{ ui_text('admin.checkout_methods.method') }}</th><th>{{ ui_text('admin.checkout_methods.note') }}</th></tr></thead><tbody>
+{% for code in payment_codes %}<tr><td><input type="checkbox" name="methods[]" value="{{ code }}"{{ enabled[code] ? ' checked' : '' }} aria-label="{{ ui_text('method.payment.' ~ code) }}"></td><td><strong>{{ ui_text('method.payment.' ~ code) }}</strong></td><td>{{ ui_text('admin.checkout_methods.note.' ~ code) }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% if other_payments %}{{ help.hint(ui_text('admin.checkout_methods.online_hint', {methods: other_payments|join(', ')})) }}{% else %}{{ help.hint(ui_text('admin.checkout_methods.online_none')) }}{% endif %}
+</section>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.badges.save') }}</button></div></form>
+{{ shell.end() }}

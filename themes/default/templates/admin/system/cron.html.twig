@@ -1,6 +1,61 @@
-{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.system.cron.cron_avtomatyzatsiia'),'cron') }}
-<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.system.cron.systema_avtomatyzatsiia') }}</span></nav><h1>{{ ui_text('admin.system.cron.cron_avtomatyzatsiia') }}</h1><p>{{ ui_text('admin.system.cron.odyn_systemnyi_cron_kozhni_5_khvylyn_modern_comm') }}</p></div></header>
-<section class="admin-panel"><div><small>{{ ui_text('admin.system.cron.rekomendovana_komanda') }}</small><h2>{{ ui_text('admin.system.cron.odna_komanda_dlia_vsikh_shtatnykh_zadach') }}</h2></div><div class="admin-copy-field"><code id="cron-command">{{ command }}</code><button type="button" class="admin-button" data-copy-target="#cron-command" title="{{ ui_text('admin.system.cron.kopiiuvaty_cron_komandu') }}">{{ ui_text('admin.system.cron.kopiiuvaty') }}</button></div><p class="admin-muted">{{ ui_text('admin.system.cron.mirohost_khvylyny') }} <strong>*/5</strong>{{ ui_text('admin.system.cron.hodyny') }} <strong>*</strong>{{ ui_text('admin.system.cron.dni_misiatsia') }} <strong>*</strong>{{ ui_text('admin.system.cron.misiatsi') }} <strong>*</strong>{{ ui_text('admin.system.cron.dni_tyzhnia') }} <strong>*</strong>{{ ui_text('admin.system.cron.komanda') }} <code>{{ command }}</code>.</p></section>
-<section class="admin-panel"><div><small>{{ ui_text('admin.system.cron.stan_zadach') }}</small><h2>{{ ui_text('admin.system.cron.shcho_vykonuietsia_avtomatychno') }}</h2></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.cron.zadacha') }}</th><th>{{ ui_text('admin.system.cron.interval') }}</th><th>{{ ui_text('admin.system.cron.ostannii_zapusk') }}</th><th>{{ ui_text('admin.system.cron.status') }}</th><th>{{ ui_text('admin.system.cron.nastupnyi') }}</th><th>{{ ui_text('admin.system.cron.rezultat') }}</th></tr></thead><tbody>{% for code,task in tasks %}{% set state=states[code]|default(null) %}<tr data-task-code="{{ code }}"><td><strong>{{ task.label }}</strong><small>{{ task.description }}</small></td><td>{{ (task.interval/60)|round }} {{ ui_text('admin.system.cron.khv') }}</td><td>{{ state.last_finished_at|default(ui_text('admin.system.cron.shche_ne_zapuskalas')) }}</td><td>{% if state %}<span class="admin-badge {{ state.last_status=='success'?'is-active':(state.last_status=='failed'?'is-danger':'') }}">{{ state.last_status }}</span>{% else %}<span class="admin-badge">{{ ui_text('admin.system.cron.ochikuie') }}</span>{% endif %}</td><td>{{ state.next_due_at|default(ui_text('admin.system.cron.pry_pershomu_cron')) }}</td><td><span title="{{ state.last_message|default('') }}">{{ state.last_message|default('—') }}</span></td></tr>{% endfor %}</tbody></table></div></section>
-<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-copy-target]');if(!b)return;const el=document.querySelector(b.dataset.copyTarget);if(!el)return;try{await navigator.clipboard.writeText(el.textContent.trim());b.textContent='{{ ui_text('admin.system.cron.skopiiovano') }}';setTimeout(()=>b.textContent='{{ ui_text('admin.system.cron.kopiiuvaty') }}',1200);}catch(_){}});</script>
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}
+{{ shell.start(ui_text('admin.system.cron.cron_avtomatyzatsiia'),'cron') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.system.cron.systema_avtomatyzatsiia') }}</span></nav><h1>{{ ui_text('admin.system.cron.cron_avtomatyzatsiia') }}</h1><p>{{ ui_text('admin.system.cron.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" role="status">{{ message }}</div>{% endfor %}{% endfor %}
+{% set output = app.flashes('cron_output') %}
+{% if output %}<section class="admin-panel"><h2>{{ ui_text('admin.system.cron.output_title') }}</h2><pre class="admin-cron-output" tabindex="0">{{ output|join("\n") }}</pre></section>{% endif %}
+
+<section class="admin-panel admin-cron-status" data-cron-status="{{ cron_status }}" data-cron-mode="{{ mode }}">
+  <div class="admin-cron-status__main">
+    <span class="admin-badge {{ mode == 'server' ? 'is-active' : (mode == 'pseudo' ? 'is-warning' : 'is-danger') }}">{{ ui_text('admin.system.cron.mode.' ~ mode) }}</span>
+    <div>
+      <strong>{% if tick.at %}{{ ui_text('admin.system.cron.heartbeat') }}: {{ tick.at }} UTC · {{ ui_text('admin.system.cron.ago', {'min': stale_minutes}) }}{% if tick.source %} · {{ ui_text('admin.system.cron.source.' ~ tick.source) }}{% endif %}{% else %}{{ ui_text('admin.system.cron.heartbeat_never') }}{% endif %}</strong>
+      <p class="admin-muted">{{ ui_text('admin.system.cron.mode.' ~ mode ~ '_hint') }}{% if cron_status == 'stale' and mode == 'none' %} {{ ui_text('admin.system.cron.stale_hint', {'min': stale_limit_minutes}) }}{% endif %}</p>
+    </div>
+  </div>
+  <form method="post" action="{{ path('admin_system_cron_run') }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_cron') }}"><button class="admin-button is-primary" type="submit">{{ ui_icon('play', 16) }} {{ ui_text('admin.system.cron.run_now') }}</button></form>
+</section>
+
+<div class="admin-cron-grid">
+<section class="admin-panel admin-cron-block">
+  <div><small>{{ ui_text('admin.system.cron.rekomendovana_komanda') }}</small><h2>{{ ui_text('admin.system.cron.crontab_title') }}</h2></div>
+  <p class="admin-muted">{{ ui_text('admin.system.cron.crontab_hint') }}</p>
+  <div class="admin-copy-field"><code id="cron-line">{{ line }}</code><button type="button" class="admin-button" data-copy-target="#cron-line" title="{{ ui_text('admin.system.cron.kopiiuvaty_cron_komandu') }}">{{ ui_icon('copy', 16) }} {{ ui_text('admin.system.cron.kopiiuvaty') }}</button></div>
+  <h3>{{ ui_text('admin.system.cron.panel_title') }}</h3>
+  <p class="admin-muted">{{ ui_text('admin.system.cron.panel_hint') }}</p>
+  <dl class="admin-kv">
+    <dt>{{ ui_text('admin.system.cron.panel_schedule') }}</dt><dd><code>{{ schedule }}</code></dd>
+    <dt>{{ ui_text('admin.system.cron.panel_command') }}</dt><dd><div class="admin-copy-field"><code id="cron-command">{{ command }}</code><button type="button" class="admin-button" data-copy-target="#cron-command" title="{{ ui_text('admin.system.cron.kopiiuvaty_cron_komandu') }}">{{ ui_icon('copy', 16) }} {{ ui_text('admin.system.cron.kopiiuvaty') }}</button></div></dd>
+    <dt>{{ ui_text('admin.system.cron.php_binary') }}</dt><dd><code>{{ php_binary }}</code> <small class="admin-muted">PHP {{ php_version }}</small></dd>
+    <dt>{{ ui_text('admin.system.cron.console_path') }}</dt><dd><code>{{ console_path }}</code></dd>
+  </dl>
+  <ul class="admin-cron-tips">
+    <li>{{ ui_text('admin.system.cron.tip_php') }}</li>
+    <li>{{ ui_text('admin.system.cron.tip_path') }}</li>
+    <li>{{ ui_text('admin.system.cron.tip_redirect') }}</li>
+  </ul>
+</section>
+
+<section class="admin-panel admin-cron-block">
+  <div><small>{{ ui_text('admin.system.cron.no_cli') }}</small><h2>{{ ui_text('admin.system.cron.web_title') }}</h2></div>
+  <p class="admin-muted">{{ ui_text('admin.system.cron.web_hint') }}</p>
+  <div class="admin-copy-field"><code id="cron-web-url">{{ web_url }}</code><button type="button" class="admin-button" data-copy-target="#cron-web-url" title="{{ ui_text('admin.system.cron.kopiiuvaty') }}">{{ ui_icon('copy', 16) }} {{ ui_text('admin.system.cron.kopiiuvaty') }}</button></div>
+  <p class="admin-muted">{{ ui_text('admin.system.cron.web_line_hint') }}</p>
+  <div class="admin-copy-field"><code id="cron-web-line">{{ web_line }}</code><button type="button" class="admin-button" data-copy-target="#cron-web-line" title="{{ ui_text('admin.system.cron.kopiiuvaty') }}">{{ ui_icon('copy', 16) }} {{ ui_text('admin.system.cron.kopiiuvaty') }}</button></div>
+  <form method="post" action="{{ path('admin_system_cron_token') }}" class="admin-inline-form" data-confirm="{{ ui_text('admin.system.cron.token_confirm') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_cron') }}"><button class="admin-button" type="submit">{{ ui_icon('refresh-cw', 16) }} {{ ui_text('admin.system.cron.token_regenerate') }}</button><small class="admin-muted">{{ ui_text('admin.system.cron.token_hint') }}</small></form>
+
+  <h3>{{ ui_text('admin.system.cron.pseudo_title') }}</h3>
+  <form method="post" action="{{ path('admin_system_cron_settings') }}" class="admin-cron-pseudo"><input type="hidden" name="_token" value="{{ csrf_token('admin_cron') }}">
+    <label class="admin-switch"><input type="checkbox" name="pseudo" value="1" role="switch"{{ pseudo_enabled ? ' checked' : '' }}><span>{{ ui_text('admin.system.cron.pseudo_label') }}</span></label>
+    <p class="admin-muted">{{ ui_text('admin.system.cron.pseudo_hint') }}</p>
+    <button class="admin-button" type="submit">{{ ui_icon('check', 16) }} {{ ui_text('admin.blog.save') }}</button>
+  </form>
+  <p class="admin-cron-why">{{ ui_icon('info', 16) }}<span>{{ ui_text('admin.system.cron.why_server') }}</span></p>
+</section>
+</div>
+
+<section class="admin-panel"><div><small>{{ ui_text('admin.system.cron.stan_zadach') }}</small><h2>{{ ui_text('admin.system.cron.shcho_vykonuietsia_avtomatychno') }}</h2></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.cron.zadacha') }}</th><th>{{ ui_text('admin.system.cron.interval') }}</th><th>{{ ui_text('admin.system.cron.ostannii_zapusk') }}</th><th>{{ ui_text('admin.system.cron.status') }}</th><th>{{ ui_text('admin.system.cron.nastupnyi') }}</th><th>{{ ui_text('admin.system.cron.rezultat') }}</th><th><span class="visually-hidden">{{ ui_text('admin.system.cron.run_task') }}</span></th></tr></thead><tbody>
+{% for row in rows %}<tr data-task-code="{{ row.code }}"><td><strong>{{ row.label }}</strong><small>{{ row.description }}</small></td><td>{{ row.interval_minutes }} {{ ui_text('admin.system.cron.khv') }}</td><td>{% if row.last_at %}{{ row.last_at|slice(0,19) }}<small>{{ ui_text('admin.system.cron.ago', {'min': row.last_ago}) }}</small>{% else %}{{ ui_text('admin.system.cron.shche_ne_zapuskalas') }}{% endif %}</td><td>{% if row.status %}<span class="admin-badge {{ row.status=='success'?'is-active':(row.status=='failed'?'is-danger':'') }}">{{ row.status }}</span>{% else %}<span class="admin-badge">{{ ui_text('admin.system.cron.ochikuie') }}</span>{% endif %}</td><td>{% if row.next_in is null %}{{ ui_text('admin.system.cron.pry_pershomu_cron') }}{% elseif row.next_in <= 0 %}{{ ui_text('admin.system.cron.due_now') }}{% else %}{{ ui_text('admin.system.cron.in_min', {'min': row.next_in}) }}{% endif %}</td><td><span class="admin-cron-message" title="{{ row.message|default('') }}">{{ row.message|default('—')|slice(0,160) }}</span></td><td><form method="post" action="{{ path('admin_system_cron_run') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_cron') }}"><input type="hidden" name="task" value="{{ row.code }}"><button class="admin-icon-button is-sm" type="submit" title="{{ ui_text('admin.system.cron.run_task') }}" aria-label="{{ ui_text('admin.system.cron.run_task') }}">{{ ui_icon('play', 14) }}</button></form></td></tr>{% endfor %}
+</tbody></table></div></section>
+<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">document.addEventListener('click',async(e)=>{const b=e.target.closest('[data-copy-target]');if(!b)return;const el=document.querySelector(b.dataset.copyTarget);if(!el)return;const label=b.innerHTML;try{await navigator.clipboard.writeText(el.textContent.trim());b.textContent='{{ ui_text('admin.system.cron.skopiiovano') }}';setTimeout(()=>{b.innerHTML=label;},1200);}catch(_){}});</script>
 {{ shell.end() }}

@@ -1,10 +1,45 @@
 {% if cart.requires_shipping %}
-<section class="checkout-card is-active checkout-builder-block" data-checkout-block="shipping">
-  <div class="checkout-card__head"><b>{{ number }}</b><div><strong>{{ block.props.title|default(ui_text('receive')) }}</strong><span>{{ block.props.subtitle|default(ui_text('receive_subtitle')) }}</span></div></div>
-  <div class="carrier-grid" role="radiogroup" aria-label="{{ ui_text('delivery_service') }}"><button class="carrier is-selected" type="button" data-carrier="nova_post"><strong>Nova Post</strong><span>{{ ui_text('delivery_branch_locker_courier') }}</span></button><button class="carrier" type="button" data-carrier="ukrposhta"><strong>{{ ui_text('ukrposhta') }}</strong><span>{{ ui_text('delivery_branch_courier') }}</span></button><button class="carrier" type="button" data-carrier="meest"><strong>Meest</strong><span>{{ ui_text('delivery_branch_locker') }}</span></button><button class="carrier" type="button" data-carrier="delivery_auto"><strong>{{ ui_text('ui.checkout.blocks.shipping.delivery') }}</strong><span>{{ ui_text('delivery_warehouse_courier') }}</span></button></div>
-  {% if delivery_regions|default([]) is not empty %}<div class="delivery-fields"><label><span>{{ ui_text('region') }} *</span><select name="delivery_region" required data-delivery-region><option value="">{{ ui_text('select_region') }}</option>{% for r in delivery_regions %}<option value="{{ r.code }}">{{ r.name }}</option>{% endfor %}</select></label></div>{% endif %}
-  <div class="delivery-fields delivery-search"><label><span>{{ ui_text('city') }}</span><input data-delivery-city type="search" placeholder="{{ ui_text('city_placeholder') }}" autocomplete="address-level2" required><div class="delivery-results" data-city-results hidden></div></label><label><span>{{ ui_text('branch_locker') }}</span><input data-delivery-point type="search" placeholder="{{ ui_text('branch_first_city') }}" autocomplete="off" disabled><div class="delivery-results" data-point-results hidden></div></label></div>
-  <div class="delivery-fallback store-notice is-warning" hidden data-delivery-fallback><strong>{{ ui_text('carrier_unavailable') }}</strong><span>{{ ui_text('checkout_still_possible') }}</span><input name="delivery_manual" data-delivery-manual type="text" placeholder="{{ ui_text('manual_delivery_placeholder') }}"></div>
+{% set options = delivery_options|default([]) %}
+{% set current = old.carrier|default('') in options ? old.carrier : (options|first|default('')) %}
+{% set carrier_desc = {nova_post: 'delivery_branch_locker_courier', ukrposhta: 'delivery_branch_courier', meest: 'delivery_branch_locker', delivery_auto: 'delivery_warehouse_courier', self_pickup: 'ck_pickup_desc'} %}
+<section class="checkout-card is-active checkout-builder-block" data-checkout-block="shipping" data-delivery-block>
+  <div class="checkout-card__head"><b>{{ number }}</b><div><strong>{{ block.props.title|default(ui_text('receive')) }}</strong></div></div>
+  {% if options is empty %}
+  <div class="store-notice is-warning" role="alert">{{ ui_icon('circle-alert', 18) }}<span>{{ ui_text('ck_no_delivery') }}</span></div>
+  {% else %}
+  <div class="ck-choices ck-choices--carriers" role="radiogroup" aria-label="{{ ui_text('delivery_service') }}" data-carrier-group>
+    {% for code in options %}
+    <label class="ck-choice{% if code == current %} is-selected{% endif %}" data-carrier="{{ code }}">
+      <input type="radio" name="carrier" value="{{ code }}"{% if code == current %} checked{% endif %}>
+      <span class="ck-choice__icon" aria-hidden="true">{{ ui_icon(code == 'self_pickup' ? 'store' : 'truck', 18) }}</span>
+      <span class="ck-choice__text"><strong>{{ ui_text('method.delivery.' ~ code) }}</strong><small>{{ ui_text(carrier_desc[code]) }}</small></span>
+    </label>
+    {% endfor %}
+  </div>
+  <div class="ck-panel" data-delivery-remote{% if current == 'self_pickup' %} hidden{% endif %}>
+    {% if delivery_regions|default([]) is not empty %}<div class="ck-grid"><label class="ck-field ck-field--wide"><span>{{ ui_text('region') }} *</span><select name="delivery_region" required data-delivery-region><option value="">{{ ui_text('select_region') }}</option>{% for r in delivery_regions %}<option value="{{ r.code }}"{% if old.delivery_region|default('') == r.code %} selected{% endif %}>{{ r.name }}</option>{% endfor %}</select></label></div>{% endif %}
+    <div class="ck-grid delivery-search">
+      <label class="ck-field"><span>{{ ui_text('city') }} *</span><input data-delivery-city type="search" value="{{ old.city_name|default('') }}" placeholder="{{ ui_text('city_placeholder') }}" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="delivery-results" data-city-results hidden role="listbox"></div></label>
+      <label class="ck-field"><span>{{ ui_text('branch_locker') }} *</span><input data-delivery-point type="search" value="{{ old.point_name|default('') }}" placeholder="{{ ui_text('branch_first_city') }}" autocomplete="off"{% if not old.city_id|default('') %} disabled{% endif %} role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="delivery-results" data-point-results hidden role="listbox"></div></label>
+    </div>
+    <p class="ck-hint" data-delivery-status aria-live="polite"></p>
+    <button class="ck-link" type="button" data-delivery-manual-toggle aria-expanded="{{ old.delivery_manual|default('') ? 'true' : 'false' }}">{{ ui_text('ck_manual_toggle') }}</button>
+    <div class="delivery-fallback" data-delivery-fallback{% if not old.delivery_manual|default('') %} hidden{% endif %}><label class="ck-field"><span>{{ ui_text('ck_manual_label') }}</span><input name="delivery_manual" data-delivery-manual type="text" maxlength="500" value="{{ old.delivery_manual|default('') }}" placeholder="{{ ui_text('manual_delivery_placeholder') }}"></label></div>
+  </div>
+  {% if 'self_pickup' in options %}
+  <div class="ck-panel" data-delivery-pickup{% if current != 'self_pickup' %} hidden{% endif %}>
+    <div class="ck-points" role="radiogroup" aria-label="{{ ui_text('ck_pick_pickup') }}">
+      {% for point in pickup_points|default([]) %}
+      <label class="ck-point"><input type="radio" name="pickup_choice" value="{{ point.id }}" data-pickup-name="{{ point.name }}"{% if (old.point_id|default('') == (point.id ~ '') and current == 'self_pickup') or (loop.first and (current != 'self_pickup' or not old.point_id|default(''))) %} checked{% endif %}>
+        <span class="ck-point__text"><strong>{{ point.name }}</strong>{% if point.address %}<small>{{ ui_icon('map-pin', 14) }}<span>{{ point.address }}</span></small>{% endif %}{% if point.working_hours %}<small>{{ ui_icon('clock', 14) }}<span>{{ point.working_hours }}</span></small>{% endif %}{% if point.phone %}<small>{{ ui_icon('phone', 14) }}<span>{{ point.phone }}</span></small>{% endif %}</span>
+        <span class="ck-badge">{{ ui_text('ck_free') }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  <p class="ck-error" data-delivery-error hidden></p>
+  {% endif %}
 </section>
 {% else %}
 <section class="checkout-card is-active checkout-builder-block" data-checkout-block="shipping"><div class="checkout-card__head"><b>{{ number }}</b><div><strong>{{ block.props.title|default(ui_text('receive')) }}</strong><span>{{ ui_text('digital_delivery') }}</span></div></div></section>

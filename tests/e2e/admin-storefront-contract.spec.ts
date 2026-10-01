@@ -187,7 +187,7 @@ test('custom header navigation created in admin appears on storefront and can be
   await page.goto('/admin/appearance/navigation?menu=header', { waitUntil: 'domcontentloaded' });
   const form = page.locator('form[action="/admin/appearance/navigation/save"]');
   await expect(form).toBeVisible();
-  await form.locator('select[name="item_type"]').selectOption('custom');
+  await form.locator('select[name="choice"]').selectOption('custom');
   await form.locator('input[name="url"]').fill('/catalog');
   const label = form.locator('input[name^="label["]').first();
   await label.fill(marker);
@@ -391,6 +391,7 @@ test('promotion created in admin changes checkout totals and disabling it stops 
 
   await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-checkout-form]')).toBeVisible();
+  await page.locator('details[data-checkout-block="coupon"]').evaluate((element) => { (element as HTMLDetailsElement).open = true; });
   const coupon = page.locator('[data-coupon-code]');
   await expect(coupon).toBeVisible();
   await coupon.fill(code);
@@ -418,6 +419,7 @@ test('promotion created in admin changes checkout totals and disabling it stops 
   await expect(page.locator('table.admin-table tbody tr').filter({ hasText: name })).toContainText('disabled');
 
   await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+  await page.locator('details[data-checkout-block="coupon"]').evaluate((element) => { (element as HTMLDetailsElement).open = true; });
   await page.locator('[data-coupon-code]').fill(code);
   const disabledPreviewPromise = page.waitForResponse((response) =>
     response.url().endsWith('/checkout/promotion/preview') && response.request().method() === 'POST'
@@ -644,7 +646,7 @@ test('locale visibility saved in admin changes the storefront language selector'
   await page.waitForLoadState('domcontentloaded');
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  const option = page.locator(`select[name="lang"] option[value="${localeCode}"]`);
+  const option = page.locator(`[data-lang-switch] [data-lang-option="${localeCode}"]`);
   if (original) await expect(option).toHaveCount(0);
   else await expect(option).toHaveCount(1);
 
@@ -902,6 +904,7 @@ test('admin-created coupon is applied by the real checkout promotion engine', as
 
   await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-checkout-form]')).toBeVisible();
+  await page.locator('details[data-checkout-block="coupon"]').evaluate((element) => { (element as HTMLDetailsElement).open = true; });
   const couponInput = page.locator('[data-coupon-code]');
   test.skip((await couponInput.count()) === 0, 'Checkout layout has no coupon block.');
   await couponInput.fill(code);
@@ -1001,7 +1004,7 @@ test('locale visibility in admin changes the real storefront language selector a
     await page.goto('/?lang=' + encodeURIComponent(locale), { waitUntil: 'domcontentloaded' });
     await expectNoServerError(page);
     await expect(page.locator('html')).toHaveAttribute('lang', locale);
-    await expect(page.locator('select[name="lang"] option[value="' + locale + '"]')).toHaveCount(1);
+    await expect(page.locator('[data-lang-switch] [data-lang-option="' + locale + '"]')).toHaveCount(1);
   } finally {
     if (!original) {
       await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
@@ -1056,8 +1059,8 @@ test('enabled non-default currency without prices stays hidden from storefront c
 
     await page.goto('/?currency=' + targetCode, { waitUntil: 'domcontentloaded' });
     await expectNoServerError(page);
-    await expect(page.locator('select[name="currency"] option[value="' + targetCode + '"]')).toHaveCount(0);
-    const footerContext = await page.locator('.site-footer__bottom span').last().innerText();
+    await expect(page.locator('[data-currency-switch] [data-currency-option="' + targetCode + '"]')).toHaveCount(0);
+    const footerContext = await page.locator('.site-footer__bottom').innerText();
     expect(footerContext).not.toContain(targetCode);
   } finally {
     if (!originalEnabled) {

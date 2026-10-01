@@ -86,6 +86,10 @@ final readonly class DbalStorefrontCatalogQuery
             $conditions[] = 'pr.amount_minor<=?';
             $filterParams[] = $filter->maxPriceMinor;
         }
+        if ($filter->minRating > 0) {
+            $conditions[] = "COALESCE((SELECT AVG(frv.rating) FROM mc_product_review frv WHERE frv.product_id=p.id AND frv.status='published'),0)>=?";
+            $filterParams[] = $filter->minRating;
+        }
 
         foreach ($filter->attributeFilters as $attributeCode => $selectedValues) {
             $valueSql = [];
@@ -485,6 +489,8 @@ final readonly class DbalStorefrontCatalogQuery
         $product['country_of_origin'] = $row['country_of_origin'] ?: null;
         $product['tax']['display_mode'] = (string) ($row['consumer_display_mode'] ?: 'price_only');
         $product['images'] = $this->productImages((int)$row['id'], (string)$row['name']);
+        // The detail query has no card image column: use the first gallery image (feeds JSON-LD, sharing and the "recently viewed" cards).
+        if (($product['images'][0]['url'] ?? '') !== '') { $product['image'] = (string) $product['images'][0]['url']; }
         $product['attributes'] = $this->productAttributes((int)$row['id'], $context->locale);
         $product['features'] = array_map(static fn(array $a): string => $a['name'] . ': ' . $a['value'], array_slice($product['attributes'], 0, 5));
         $product['documents'] = $this->productDocuments((int)$row['id'], $context->locale);
@@ -518,10 +524,12 @@ final readonly class DbalStorefrontCatalogQuery
         if (count($rows) <= 1) {
             return [];
         }
-        return array_map(function (array $row) use ($context, $selectedVariantId): array {
+        $swatches = $this->variantSwatches(array_map(static fn (array $row): int => (int) $row['id'], $rows));
+        return array_map(function (array $row) use ($context, $selectedVariantId, $swatches): array {
             $available = (string) $row['product_type'] === 'digital' || (float) $row['available_quantity'] > 0 || (bool) $row['allow_backorder'];
             return [
                 'id' => Uuid::fromBinary((string) $row['public_id'])->toRfc4122(),
+                'swatch' => $swatches[(int) $row['id']] ?? '',
                 'label' => (string) $row['label'],
                 'sku' => (string) $row['sku'],
                 'price' => $this->money->format((int) $row['amount_minor'], (string) $row['currency'], $context->locale),
@@ -529,6 +537,41 @@ final readonly class DbalStorefrontCatalogQuery
                 'available' => $available,
             ];
         }, $rows);
+    }
+
+    /**
+     * A variant whose only option value is a colour (the option value code is a CSS hex colour or a basic
+     * colour keyword) is rendered as a colour swatch; every other variant is rendered as a text chip.
+     *
+     * @param list<int> $variantIds
+     * @return array<int,string>
+     */
+    private function variantSwatches(array $variantIds): array
+    {
+        if ($variantIds === []) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($variantIds), '?'));
+        $rows = $this->connection->fetchAllAssociative(
+            "SELECT vov.variant_id,ov.code FROM mc_variant_option_value vov JOIN mc_product_option_value ov ON ov.id=vov.option_value_id WHERE vov.variant_id IN ({$placeholders})",
+            $variantIds,
+        );
+        $byVariant = [];
+        foreach ($rows as $row) {
+            $byVariant[(int) $row['variant_id']][] = strtolower(trim((string) $row['code']));
+        }
+        $keywords = ['black', 'white', 'red', 'green', 'blue', 'yellow', 'orange', 'purple', 'pink', 'brown', 'gray', 'grey', 'silver', 'gold', 'navy', 'beige', 'teal', 'cyan', 'magenta', 'maroon', 'olive', 'lime'];
+        $result = [];
+        foreach ($byVariant as $variantId => $codes) {
+            if (count($codes) !== 1) {
+                continue;
+            }
+            $code = $codes[0];
+            if (preg_match('/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/D', $code) === 1 || in_array($code, $keywords, true)) {
+                $result[$variantId] = $code;
+            }
+        }
+        return $result;
     }
 
     /** @return array{variant_id:int,variant_public_id:string,product_type:string,name:string,sku:string,price_minor:int,currency:string,unit_code:string,quantity_step:string,min_quantity:string,max_quantity:?string,available_quantity:string,allow_backorder?:bool}|null */
@@ -564,7 +607,7 @@ final readonly class DbalStorefrontCatalogQuery
             'id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(), 'internal_id'=>(int)$row['id'], 'variant_id'=>Uuid::fromBinary((string)$row['variant_public_id'])->toRfc4122(),
             'product_type'=>(string)($row['product_type'] ?? 'physical'), 'name'=>(string)$row['name'], 'meta_title'=>(string)($row['meta_title']??''), 'meta_description'=>(string)($row['meta_description']??''), 'brand'=>(string)($row['brand_name']??''), 'brand_id'=>isset($row['brand_id']) && $row['brand_id'] !== null ? (int)$row['brand_id'] : null, 'sku'=>(string)$row['sku'], 'url'=>'/'.ltrim((string)$row['path'],'/'),
             'price'=>$this->money->format($showNet?$priceMinor-$taxMinor:$priceMinor,(string)$row['currency'],$context->locale), 'price_minor'=>$priceMinor,
-            'compare_at_price'=>$compareMinor!==null?$this->money->format($showNet?(int)$netCompare:$compareMinor,(string)$row['currency'],$context->locale):null, 'currency'=>(string)$row['currency'], 'gross_price'=>number_format($priceMinor/100,2,'.',''), 'merchant_price'=>number_format($priceMinor/100,2,'.',''),
+            'compare_at_price'=>$compareMinor!==null?$this->money->format($showNet?(int)$netCompare:$compareMinor,(string)$row['currency'],$context->locale):null, 'discount_percent'=>($compareMinor!==null && $compareMinor>$priceMinor && $compareMinor>0)?max(1,min(99,(int)round((1-$priceMinor/$compareMinor)*100))):0, 'currency'=>(string)$row['currency'], 'gross_price'=>number_format($priceMinor/100,2,'.',''), 'merchant_price'=>number_format($priceMinor/100,2,'.',''),
             'sale_ends_at'=>($compareMinor!==null && $compareMinor>$priceMinor && !empty($row['price_ends_at']))?(new \DateTimeImmutable((string)$row['price_ends_at'],new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z'):null,
             'image'=>$this->mediaUrl($row['image_key']??null), ...$this->purchaseState($row), 'available_quantity'=>(string)$row['available_quantity'],
             'quantity'=>['unit_code'=>(string)$row['sale_unit_code'],'unit_label'=>(string)$row['sale_unit_code'],'step'=>$this->trimDecimal((string)$row['quantity_step']),'min'=>$this->trimDecimal((string)$row['min_order_quantity']),'max'=>$row['max_order_quantity']!==null?$this->trimDecimal((string)$row['max_order_quantity']):null],
@@ -819,13 +862,15 @@ final readonly class DbalStorefrontCatalogQuery
                 try{$decoded=json_decode((string)$r['metadata'],true,64,JSON_THROW_ON_ERROR); if(is_array($decoded)){$metadata=$decoded;}}catch(\JsonException){}
             }
             $derivatives=is_array($metadata['derivatives']??null)?$metadata['derivatives']:[];
-            $webp=[]; $jpeg=[];
+            // One srcset from the responsive derivatives of a single format (WebP first, then AVIF, JPEG, PNG); the untouched
+            // original ("source") and the JPEG copy for e-mails/feeds ("fallback") are never part of it.
+            $byFormat=[];
             foreach($derivatives as $d){
-                if(!is_array($d)||!is_string($d['key']??null)||!isset($d['width'])){continue;}
-                $item=$this->mediaUrl((string)$d['key']).' '.(int)$d['width'].'w';
-                if(($d['format']??'')==='webp'){$webp[]=$item;} elseif(($d['format']??'')==='jpeg'){$jpeg[]=$item;}
+                if(!is_array($d)||!is_string($d['key']??null)||!isset($d['width'])||isset($d['role'])){continue;}
+                $byFormat[(string)($d['format']??'')][]=$this->mediaUrl((string)$d['key']).' '.(int)$d['width'].'w';
             }
-            $set=$webp!==[]?$webp:$jpeg;
+            $set=[];
+            foreach(['webp','avif','jpeg','png'] as $format){if(isset($byFormat[$format])){$set=$byFormat[$format];break;}}
             return [
                 'url'=>$this->mediaUrl($r['storage_key']),
                 'alt'=>(string)($r['alt_text']?:$name),

@@ -1,0 +1,46 @@
+{# Result count, sort, page size and the active-filter chips. Sort/page-size controls belong to the #catalog-filters form. #}
+{% set q = catalog_query|default({}) %}
+{% set attr_sel = q.attr|default({}) %}
+{% set base_path = app.request.pathInfo %}
+{% set chips = [] %}
+{% if catalog_filter.search %}{% set chips = chips|merge([{label: '“' ~ catalog_filter.search ~ '”', href: base_path ~ '?' ~ (q|filter((v, k) => k != 'q')|url_encode)}]) %}{% endif %}
+{% if catalog_filter.brandId is not null %}
+    {% for brand in catalog_facets.brands|default([]) %}{% if brand.id == catalog_filter.brandId %}{% set chips = chips|merge([{label: ui_text('brand') ~ ': ' ~ brand.name, href: base_path ~ '?' ~ (q|filter((v, k) => k != 'brand')|url_encode)}]) %}{% endif %}{% endfor %}
+{% endif %}
+{% if catalog_filter.minPriceMinor is not null or catalog_filter.maxPriceMinor is not null %}
+    {% set price_label = ui_text('price') ~ ': ' ~ (catalog_filter.minPriceMinor is not null ? (catalog_filter.minPriceMinor / 100)|round : '0') ~ ' – ' ~ (catalog_filter.maxPriceMinor is not null ? (catalog_filter.maxPriceMinor / 100)|round : '∞') %}
+    {% set chips = chips|merge([{label: price_label, href: base_path ~ '?' ~ (q|filter((v, k) => k != 'min_price' and k != 'max_price')|url_encode)}]) %}
+{% endif %}
+{% if catalog_filter.inStockOnly %}{% set chips = chips|merge([{label: ui_text('only_in_stock'), href: base_path ~ '?' ~ (q|filter((v, k) => k != 'in_stock')|url_encode)}]) %}{% endif %}
+{% if catalog_filter.minRating > 0 %}{% set chips = chips|merge([{label: ui_text('rating') ~ ': ' ~ catalog_filter.minRating ~ '+', href: base_path ~ '?' ~ (q|filter((v, k) => k != 'rating')|url_encode)}]) %}{% endif %}
+{% for facet in catalog_facets.attributes|default([]) %}
+    {% for value in facet.values %}
+        {% if value.token in catalog_filter.attributeFilters[facet.code]|default([]) %}
+            {% set rest = attr_sel|merge({(facet.code): (attr_sel[facet.code]|default([])|filter(tok => tok != value.token))}) %}
+            {% set chips = chips|merge([{label: facet.name ~ ': ' ~ value.label, href: base_path ~ '?' ~ (q|merge({attr: rest})|url_encode)}]) %}
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+<div class="cf-toolbar" data-catalog-toolbar data-active-filters="{{ chips|length }}">
+    <button class="button button--secondary cf-toolbar__filters" type="button" data-filters-open aria-controls="catalog-filters-panel" aria-expanded="false">{{ ui_icon('sliders-horizontal', 16) }}<span>{{ ui_text('filter_title') }}</span>{% if chips|length %}<span class="cf__badge">{{ chips|length }}</span>{% endif %}</button>
+    <p class="cf-toolbar__count">{{ ui_text('catalog_total', {count: products.total}) }}</p>
+    <label class="cf-toolbar__field"><span>{{ ui_text('sort') }}</span>
+        <select name="sort" form="catalog-filters" data-filter-auto aria-label="{{ ui_text('sort') }}">
+            {% for code, label in {newest: ui_text('sort_newest'), popular: ui_text('sort_popular'), price_asc: ui_text('sort_price_asc'), price_desc: ui_text('sort_price_desc'), name_asc: ui_text('sort_name_asc'), name_desc: ui_text('sort_name_desc')} %}
+                <option value="{{ code }}"{% if catalog_filter.sort == code %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label class="cf-toolbar__field cf-toolbar__field--per"><span>{{ ui_text('filter_per_page') }}</span>
+        <select name="per_page" form="catalog-filters" data-filter-auto aria-label="{{ ui_text('filter_per_page') }}">
+            {% for n in [12, 24, 48, 60] %}<option value="{{ n }}"{% if catalog_per_page|default(24) == n %} selected{% endif %}>{{ n }}</option>{% endfor %}
+        </select>
+    </label>
+    <noscript><button class="button button--secondary" type="submit" form="catalog-filters">{{ ui_text('apply') }}</button></noscript>
+</div>
+{% if chips %}
+<div class="cf-chips" aria-label="{{ ui_text('filter_active')|e('html_attr') }}">
+    {% for chip in chips %}<a class="cf-chip" href="{{ chip.href }}" title="{{ ui_text('filter_remove')|e('html_attr') }}"><span>{{ chip.label }}</span>{{ ui_icon('x', 14) }}</a>{% endfor %}
+    <a class="cf-chips__clear" href="{{ base_path }}">{{ ui_text('filter_clear_all') }}</a>
+</div>
+{% endif %}

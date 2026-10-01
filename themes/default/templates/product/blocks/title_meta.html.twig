@@ -1,13 +1,23 @@
-<div class="product-title">
-    {% if product.brand %}<a class="product-brand" href="/catalog?brand={{ product.brand_id|default(0) }}">{{ product.brand }}</a>{% endif %}
-    {% if product.badges|default([]) %}<div class="product-badges">{% for badge in product.badges %}<span class="product-badge product-badge--{{ badge.tone }}"{% if badge.color|default('') %} style="background:{{ badge.color }};color:{{ badge.fg }}"{% endif %} data-badge="{{ badge.code }}">{{ badge.label }}</span>{% endfor %}</div>{% endif %}
-    <h1>{{ product.name }}</h1>
-    <div class="product-meta">
-        <span>SKU {{ product.sku }}</span>
-        {% if product.gtin %}<span>GTIN {{ product.gtin }}</span>{% endif %}
+{% set customer_caps = site_capabilities() %}
+{% set share_url = app.request.schemeAndHttpHost ~ product.url %}
+<div class="product-title pp-title">
+    {% if product.brand or product.badges|default([]) %}
+    <div class="pp-title__top">
+        {% if product.brand %}<a class="product-brand" href="/catalog?brand={{ product.brand_id|default(0) }}">{{ product.brand }}</a>{% endif %}
+        {% if product.badges|default([]) %}<div class="product-badges">{% for badge in product.badges %}<span class="product-badge product-badge--{{ badge.tone }}"{% if badge.color|default('') %} style="background:{{ badge.color }};color:{{ badge.fg }}"{% endif %} data-badge="{{ badge.code }}">{{ badge.label }}</span>{% endfor %}</div>{% endif %}
     </div>
-    {% set customer_caps = site_capabilities() %}
-    {% if customer_caps.features.customer_accounts|default(false) %}
-        {% if app.user %}<form class="product-wishlist" method="post" action="{{ path('customer_wishlist_add',{product:product.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('wishlist_add_' ~ product.id) }}"><button type="submit" class="button button--secondary button--sm" title="{{ ui_text('add_wishlist') }}">{{ ui_icon('heart', 16) }}{{ ui_text('to_wishlist') }}</button></form>{% else %}<a class="button button--secondary button--sm product-wishlist" href="{{ path('customer_login') }}">{{ ui_icon('heart', 16) }}{{ ui_text('login_to_save') }}</a>{% endif %}
     {% endif %}
+    <h1>{{ product.name }}</h1>
+    <div class="pp-title__meta">
+        <div class="product-meta">
+            <span>SKU {{ product.sku }}</span>
+            {% if product.gtin %}<span>GTIN {{ product.gtin }}</span>{% endif %}
+        </div>
+        <div class="pp-title__tools">
+            {% if customer_caps.features.customer_accounts|default(false) %}
+                {% if app.user %}<form class="product-wishlist" method="post" action="{{ path('customer_wishlist_add',{product:product.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('wishlist_add_' ~ product.id) }}"><button type="submit" class="button button--secondary button--icon" title="{{ ui_text('add_wishlist') }}" aria-label="{{ ui_text('add_wishlist') }}">{{ ui_icon('heart', 18) }}</button></form>{% else %}<a class="button button--secondary button--icon product-wishlist" href="{{ path('customer_login') }}" title="{{ ui_text('login_to_save') }}" aria-label="{{ ui_text('login_to_save') }}">{{ ui_icon('heart', 18) }}</a>{% endif %}
+            {% endif %}
+            {% include '@storefront/components/share_popover.html.twig' with {share_url: share_url, share_title: product.name} only %}
+        </div>
+    </div>
 </div>

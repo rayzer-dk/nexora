@@ -34,6 +34,7 @@
   --mc-chrome-tone-teal: #5fd3dd;
   --mc-color-teal: #0e7c86;
   --mc-color-warning: #8f5a0c;
+  --mc-color-star: #f5b301; /* rating stars: decorative gold; the numeric rating next to them stays in text colour */
   --mc-color-danger: #b42318;
   --mc-color-success-soft: color-mix(in srgb, var(--mc-color-success) 11%, var(--mc-color-background));
   --mc-color-warning-soft: color-mix(in srgb, var(--mc-color-warning) 13%, var(--mc-color-background));

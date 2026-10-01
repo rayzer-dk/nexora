@@ -1,9 +1,9 @@
 {% set p = block.props %}
 <section class="checkout-card is-active checkout-builder-block" data-checkout-block="contact">
-  <div class="checkout-card__head"><b>{{ number }}</b><div><strong>{{ p.title|default(ui_text('contact')) }}</strong><span>{{ p.subtitle|default(ui_text('contact_subtitle')) }}</span></div></div>
-  <div class="delivery-fields">
-    {% if p.show_name|default(true) %}<label><span>{{ ui_text('name') }}{% if p.require_name|default(true) %} *{% endif %}</span><input name="name" value="{{ customer_user ? customer_user.displayName : '' }}" {% if p.require_name|default(true) %}required{% endif %} maxlength="190" autocomplete="name"></label>{% endif %}
-    {% if p.show_phone|default(true) %}<label><span>{{ ui_text('phone') }}{% if p.require_phone|default(true) %} *{% endif %}</span><input name="phone" {% if p.require_phone|default(true) %}required{% endif %} maxlength="32" type="tel" autocomplete="tel" placeholder="+380"></label>{% endif %}
-    {% if p.show_email|default(true) %}<label><span>Email{% if p.require_email|default(false) %} *{% endif %}</span><input name="email" value="{{ customer_user ? customer_user.email : '' }}" {% if p.require_email|default(false) %}required{% endif %} maxlength="320" type="email" autocomplete="email" placeholder="{{ ui_text('email_confirmation_placeholder') }}"></label>{% endif %}
+  <div class="checkout-card__head"><b>{{ number }}</b><div><strong>{{ p.title|default(ui_text('contact')) }}</strong></div></div>
+  <div class="ck-grid">
+    {% if p.show_name|default(true) %}<label class="ck-field"><span>{{ ui_text('name') }}{% if p.require_name|default(true) %} *{% endif %}</span><input name="name" value="{{ old.name|default(customer_user ? customer_user.displayName : '') }}" {% if p.require_name|default(true) %}required{% endif %} maxlength="190" autocomplete="name"></label>{% endif %}
+    {% if p.show_phone|default(true) %}<label class="ck-field"><span>{{ ui_text('phone') }}{% if p.require_phone|default(true) %} *{% endif %}</span><input name="phone" value="{{ old.phone|default('') }}" {% if p.require_phone|default(true) %}required{% endif %} maxlength="32" type="tel" autocomplete="tel" inputmode="tel" placeholder="+380"></label>{% endif %}
+    {% if p.show_email|default(true) %}<label class="ck-field ck-field--wide"><span>Email{% if p.require_email|default(false) %} *{% endif %}</span><input name="email" value="{{ old.email|default(customer_user ? customer_user.email : '') }}" {% if p.require_email|default(false) %}required{% endif %} maxlength="320" type="email" autocomplete="email" placeholder="{{ ui_text('email_confirmation_placeholder') }}"></label>{% endif %}
   </div>
 </section>

@@ -1,4 +1,4 @@
-{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}
 {{ shell.start(ui_text('admin.system.extension_settings.nalashtuvannia_rozshyrennia'),'extensions') }}
 <header class="admin-page-header">
     <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">Extension SDK · v{{ platform_version }}</span></nav><h1>{{ extension.name }}</h1><p>{{ extension.code }} · {{ extension.version }} {{ ui_text('admin.system.extension_settings.deklaratyvni_nalashtuvannia_bez_vykonannia_kodu_') }}</p></div>
@@ -29,7 +29,7 @@
                 {% else %}
                     <input id="{{ input_id }}" type="{{ field.type == 'email' ? 'email' : (field.type == 'url' ? 'url' : (field.type in ['number','integer'] ? 'number' : 'text')) }}" name="settings[{{ field.key }}]" value="{{ field.value }}" {% if field.type == 'integer' %}step="1"{% elseif field.type == 'number' %}step="any"{% endif %}{% if field.min is defined %} min="{{ field.min }}"{% endif %}{% if field.max is defined %} max="{{ field.max }}"{% endif %} {% if field.required %}required{% endif %}>
                 {% endif %}
-                {% if field.help %}<small>{{ field.help }}</small>{% endif %}
+                {% if field.help or field.help_url or field.example %}{{ help.hint(field.help|default(''), field.help_url|default(null), null, field.example|default(null)) }}{% endif %}
             </label>
         {% endfor %}
         </div>

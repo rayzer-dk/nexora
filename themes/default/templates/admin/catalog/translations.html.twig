@@ -4,21 +4,26 @@
 <div class="admin-page-actions"><a class="admin-button" href="{{ path(kind == 'product' ? 'admin_catalog_product_edit' : 'admin_catalog_category_edit', {publicId: entity.public_id}) }}">{{ ui_icon('arrow-left', 16) }}<span>{{ ui_text('admin.translations.back') }}</span></a></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
 {% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
-<div data-translate-page data-ai-token="{{ csrf_token('admin_ai') }}">
-<section class="admin-panel translation-status"><ul class="translation-status__list">
-{% for l in locales %}{% set row = texts[l.code]|default({}) %}{% set done = row.name|default('') != '' and (kind == 'category' or row.description|default('') != '') %}<li class="translation-status__item {{ done ? 'is-done' : 'is-missing' }}" data-status-locale="{{ l.code }}" data-complete="{{ done ? '1' : '0' }}"><a href="#lang-{{ l.code }}">{{ ui_icon(done ? 'check' : 'circle-alert', 14) }} {{ l.name }} <small>{{ l.code }}</small></a></li>{% endfor %}
-</ul>
+{% import '@storefront/admin/_lang_tabs.html.twig' as langs %}
+{% set required = kind == 'category' ? 'name' : 'name,description' %}
+{% set tabs = [] %}{% set initial = '' %}
+{% for l in locales %}{% set row = texts[l.code]|default({}) %}{% set done = row.name|default('') != '' and (kind == 'category' or row.description|default('') != '') %}{% set tabs = tabs|merge([{code: l.code, name: l.name, short: l.code|split('-')[0]|upper, is_default: l.is_default, current: false, done: done}]) %}{% if initial == '' and not l.is_default and not done %}{% set initial = l.code %}{% endif %}{% endfor %}
+{% if initial == '' and locales|length > 0 %}{% set initial = locales[0].code %}{% endif %}
+<div data-translate-page data-lang-scope data-ai-token="{{ csrf_token('admin_ai') }}">
+<section class="admin-panel translation-status">
+{{ langs.bar(tabs) }}
+{% if locales|length < 2 %}<p class="admin-card-note">{{ ui_text('admin.translations.only_one_language') }} <a href="{{ path('admin_system_localization') }}#locales">{{ ui_text('admin.lang_tabs.add') }}</a></p>{% endif %}
 {% if ai_providers() %}<div class="translation-status__ai"><label><span>{{ ui_text('admin.ai.provider') }}</span><select data-ai-provider>{% for pr in ai_providers() %}<option value="{{ pr.code }}">{{ pr.label }}</option>{% endfor %}</select></label><small>{{ ui_text('admin.translations.ai_hint') }}</small></div>{% else %}<small>{{ ui_text('admin.translations.ai_off') }}</small>{% endif %}</section>
 {% for l in locales %}{% set row = texts[l.code]|default({}) %}
-<section class="admin-panel translation-panel" id="lang-{{ l.code }}" data-translate-panel data-locale="{{ l.code }}"{% if l.is_default %} data-source{% endif %}>
+<section class="admin-panel translation-panel" id="lang-{{ l.code }}" data-translate-panel data-lang-panel="lang-{{ l.code }}" data-lang-required="{{ required }}" data-locale="{{ l.code }}"{% if l.is_default %} data-source data-lang-source{% endif %}{% if l.code == initial %} data-lang-initial{% endif %}>
 <form method="post" action="{{ path(kind == 'product' ? 'admin_catalog_product_translation_save' : 'admin_catalog_category_translation_save', {publicId: entity.public_id, locale: l.code}) }}" class="admin-form-stack">
 <input type="hidden" name="_token" value="{{ csrf_token(csrf_id) }}">
 <div class="admin-panel__header"><div><small>{{ l.is_default ? ui_text('admin.translations.source') : (row ? ui_text('admin.translations.exists') : ui_text('admin.translations.missing')) }}</small><h2>{{ l.name }} · {{ l.code }}</h2></div>
-{% if not l.is_default and ai_providers() %}<button type="button" class="admin-button" data-translate-from>{{ ui_icon('languages', 16) }}<span>{{ ui_text('admin.translations.translate') }}</span></button>{% endif %}</div>
+{% if not l.is_default %}<div class="admin-row-actions"><button type="button" class="admin-button" data-copy-default>{{ ui_icon('copy', 16) }}<span>{{ ui_text('admin.lang_tabs.copy_default') }}</span></button>{% if ai_providers() %}<button type="button" class="admin-button" data-translate-from>{{ ui_icon('languages', 16) }}<span>{{ ui_text('admin.translations.translate') }}</span></button>{% endif %}</div>{% endif %}</div>
 <div class="admin-form-grid">
 {% for f in fields %}<label{% if f in ['description', 'description_bottom'] %} class="admin-form-wide"{% endif %}><span>{{ ui_text('admin.translations.field.' ~ f) }}</span>{% if f in ['name', 'meta_title'] %}<input type="text" name="{{ f }}" value="{{ row[f]|default('') }}" maxlength="255" data-translate-field>{% elseif f in ['short_description', 'meta_description'] %}<textarea name="{{ f }}" rows="2" maxlength="1000" data-translate-field>{{ row[f]|default('') }}</textarea>{% else %}<textarea name="{{ f }}" rows="6" data-translate-field>{{ row[f]|default('') }}</textarea>{% endif %}</label>{% endfor %}
 </div>
-<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.translations.save') }}</button><small data-ai-status role="status"></small></div>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('save', 16) }}<span>{{ ui_text('admin.translations.save', {language: l.name, locale: l.code}) }}</span></button><small data-ai-status role="status"></small></div>
 </form></section>
 {% endfor %}
 </div>

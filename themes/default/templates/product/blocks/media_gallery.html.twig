@@ -1,21 +1,37 @@
-<commerce-product-gallery class="product-gallery">
-    <div class="product-gallery__stage">
-        <button class="gallery-nav gallery-nav--prev button button--secondary button--icon" type="button" data-gallery-prev aria-label="{{ ui_text('previous_photo') }}">{{ ui_icon('chevron-left', 20) }}</button>
+{% set gallery_count = product.images|length %}
+<commerce-product-gallery class="product-gallery{{ gallery_count < 2 ? ' product-gallery--single' : '' }}" data-count="{{ gallery_count }}">
+    <div class="product-gallery__stage" data-gallery-stage tabindex="0" aria-roledescription="carousel" aria-label="{{ ui_text('product_photos')|e('html_attr') }}">
+        {% if gallery_count > 1 %}<button class="gallery-nav gallery-nav--prev" type="button" data-gallery-prev aria-label="{{ ui_text('previous_photo') }}">{{ ui_icon('chevron-left', 20) }}</button>{% endif %}
         <button class="product-gallery__open" type="button" data-gallery-open aria-label="{{ ui_text('open_fullscreen_photo') }}">
             <img data-gallery-main src="{{ product.images[0].url }}"{% if product.images[0].srcset %} srcset="{{ product.images[0].srcset }}" sizes="{{ product.images[0].sizes }}"{% endif %} alt="{{ product.images[0].alt }}" width="{{ product.images[0].width|default(1200) }}" height="{{ product.images[0].height|default(1200) }}" fetchpriority="high" decoding="async">
         </button>
-        <button class="gallery-nav gallery-nav--next button button--secondary button--icon" type="button" data-gallery-next aria-label="{{ ui_text('next_photo') }}">{{ ui_icon('chevron-right', 20) }}</button>
-        <span class="product-gallery__counter" data-gallery-counter aria-live="polite">1 / {{ product.images|length }}</span>
+        {% if gallery_count > 1 %}<button class="gallery-nav gallery-nav--next" type="button" data-gallery-next aria-label="{{ ui_text('next_photo') }}">{{ ui_icon('chevron-right', 20) }}</button>{% endif %}
+        {% if gallery_count > 1 %}<span class="product-gallery__counter" data-gallery-counter aria-live="polite">1 / {{ gallery_count }}</span>{% endif %}
+        <span class="product-gallery__zoom" aria-hidden="true">{{ ui_icon('maximize-2', 16) }}</span>
     </div>
+    {% if gallery_count > 1 %}
     <div class="product-gallery__thumbs" role="list" aria-label="{{ ui_text('product_photos') }}">
         {% for image in product.images %}
             <button type="button" class="product-gallery__thumb{% if loop.first %} is-active{% endif %}" data-gallery-thumb data-index="{{ loop.index0 }}" data-src="{{ image.url }}" data-srcset="{{ image.srcset|default('') }}" data-sizes="{{ image.sizes|default('') }}" data-alt="{{ image.alt }}" aria-label="{{ ui_text('photo_number', {number: loop.index}) }}">
-                <img src="{{ image.url }}"{% if image.srcset %} srcset="{{ image.srcset }}" sizes="120px"{% endif %} alt="" width="120" height="120" loading="{% if loop.first %}eager{% else %}lazy{% endif %}" decoding="async">
+                <img src="{{ image.url }}"{% if image.srcset %} srcset="{{ image.srcset }}" sizes="80px"{% endif %} alt="" width="80" height="80" loading="{% if loop.first %}eager{% else %}lazy{% endif %}" decoding="async">
             </button>
         {% endfor %}
     </div>
-    <dialog class="gallery-lightbox" data-gallery-dialog>
-        <button class="gallery-lightbox__close button button--secondary button--icon" type="button" data-gallery-close aria-label="{{ ui_text('close') }}">{{ ui_icon('x',20) }}</button>
-        <img data-gallery-dialog-image alt="" width="1600" height="1600">
+    {% endif %}
+    <dialog class="gallery-lightbox" data-gallery-dialog aria-label="{{ ui_text('product_photos')|e('html_attr') }}">
+        <div class="gallery-lightbox__bar">
+            <span class="gallery-lightbox__counter" data-lightbox-counter aria-live="polite">1 / {{ gallery_count }}</span>
+            <div class="gallery-lightbox__tools">
+                <button class="gallery-lightbox__btn" type="button" data-lightbox-zoom-out aria-label="{{ ui_text('zoom_out')|e('html_attr') }}">{{ ui_icon('zoom-out', 20) }}</button>
+                <button class="gallery-lightbox__btn" type="button" data-lightbox-zoom-in aria-label="{{ ui_text('zoom_in')|e('html_attr') }}">{{ ui_icon('zoom-in', 20) }}</button>
+                <button class="gallery-lightbox__btn" type="button" data-gallery-close aria-label="{{ ui_text('close') }}">{{ ui_icon('x', 20) }}</button>
+            </div>
+        </div>
+        <div class="gallery-lightbox__stage" data-lightbox-stage>
+            {% if gallery_count > 1 %}<button class="gallery-lightbox__nav gallery-lightbox__nav--prev" type="button" data-lightbox-prev aria-label="{{ ui_text('previous_photo') }}">{{ ui_icon('chevron-left', 24) }}</button>{% endif %}
+            <img data-gallery-dialog-image alt="" width="1600" height="1600" draggable="false">
+            {% if gallery_count > 1 %}<button class="gallery-lightbox__nav gallery-lightbox__nav--next" type="button" data-lightbox-next aria-label="{{ ui_text('next_photo') }}">{{ ui_icon('chevron-right', 24) }}</button>{% endif %}
+        </div>
+        {% if gallery_count > 1 %}<div class="gallery-lightbox__thumbs" data-lightbox-thumbs></div>{% endif %}
     </dialog>
 </commerce-product-gallery>

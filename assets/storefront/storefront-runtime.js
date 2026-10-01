@@ -1,5 +1,8 @@
+import './cart-drawer.js';
 import { lucideIcon } from '../shared/lucide-icons.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
+import './lightbox.js';
+import './chrome.js';
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
 const q = (selector, root = document) => root.querySelector(selector);
 const qa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -196,7 +199,7 @@ function initLiveSearch() {
 function initMobileNavigation() {
   const nav = q('.reference-category-nav');
   const row = q('.reference-header__nav-row');
-  if (!nav || !row || q('[data-mobile-catalog-toggle]', row)) return;
+  if (!nav || !row || q('[data-mega]', row) || q('[data-mobile-catalog-toggle]', row)) return; // the mega-menu (chrome.js) is the mobile drawer
 
   const toggle = document.createElement('button');
   toggle.type = 'button';
@@ -271,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
   try { initProductCardCartActions(); } catch (_) {}
 });
 
+document.addEventListener('mc:toast', (event) => toast(event.detail?.message, event.detail?.type === 'error' ? 'error' : 'success', 6000));
 function initProductCardCartActions() {
   qa('[data-card-add-to-cart]').forEach((form) => {
     form.addEventListener('submit', async (event) => {
@@ -290,12 +294,8 @@ function initProductCardCartActions() {
         let payload = {};
         try { payload = await response.json(); } catch (_) {}
         if (!response.ok || !payload.ok) throw new Error(payload.message || t('js_add_failed'));
-        qa('[data-cart-count]').forEach((counter) => {
-          const count = Number(payload.cart?.count || 0);
-          counter.textContent = String(count);
-          counter.hidden = count < 1;
-        });
-        toast(payload.message || t('js_added_cart'));
+        document.dispatchEvent(new CustomEvent('mc:cart-updated', { detail: { count: Number(payload.cart?.count || 0), source: 'add' } }));
+        if (!window.matchMedia('(min-width: 1024px)').matches) toast(payload.message || t('js_added_cart')); // on desktop the cart drawer slides in instead
       } catch (error) {
         toast(error?.message || t('js_add_failed'), 'error', 6500);
       } finally {
@@ -308,7 +308,7 @@ let recentlyViewedDone = false;
 function initRecentlyViewed() {
   // "Recently viewed" is a personalisation feature: it stores data on the device only after "preferences" consent.
   const KEY = 'mc_recent';
-  let allowed = false;
+  let allowed;
   try { allowed = Boolean(JSON.parse(localStorage.getItem('mc_consent_v1') || 'null')?.preferences); } catch { allowed = false; }
   if (!allowed) {
     try { localStorage.removeItem(KEY); } catch { /* storage unavailable */ }
@@ -339,7 +339,13 @@ function initRecentlyViewed() {
     if (safeUrl(item.image) || /^https:\/\//.test(item.image || '')) {
       const img = document.createElement('img');
       img.src = item.image; img.alt = ''; img.width = 96; img.height = 96; img.loading = 'lazy'; img.decoding = 'async';
+      img.addEventListener('error', () => { const ph = document.createElement('span'); ph.className = 'recent-viewed__ph'; ph.setAttribute('aria-hidden', 'true'); img.replaceWith(ph); }, { once: true });
       link.append(img);
+    } else {
+      const ph = document.createElement('span');
+      ph.className = 'recent-viewed__ph';
+      ph.setAttribute('aria-hidden', 'true');
+      link.append(ph);
     }
     const name = document.createElement('span');
     name.className = 'recent-viewed__name';
@@ -624,7 +630,7 @@ function initPush() {
   const button = document.querySelector('[data-push-subscribe]');
   if (!button || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
   const label = button.querySelector('span');
-  const key = (b64) => { const pad = '='.repeat((4 - (b64.length % 4)) % 4); const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
+  const key = (b64) => { const pad = '='.repeat((4 - (b64.length % 4)) % 4); const raw = window.atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
   const setState = (subscribed) => { button.dataset.state = subscribed ? 'on' : 'off'; label.textContent = t(subscribed ? 'push_unsubscribe' : 'push_subscribe'); };
   const post = (path, body) => fetch(path, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   button.hidden = false;
@@ -639,14 +645,14 @@ function initPush() {
         await post('/push/unsubscribe', { endpoint: existing.endpoint });
         await existing.unsubscribe();
         setState(false);
-      } else if ((await Notification.requestPermission()) === 'granted') {
+      } else if ((await window.Notification.requestPermission()) === 'granted') {
         const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key(button.dataset.pushKey) });
         const json = subscription.toJSON();
         const response = await post('/push/subscribe', { endpoint: json.endpoint, keys: json.keys });
         if (!response.ok) { await subscription.unsubscribe(); throw new Error('push subscribe failed'); }
         setState(true);
       }
-    } catch (error) {
+    } catch (_error) {
       setState(false);
     } finally {
       button.disabled = false;

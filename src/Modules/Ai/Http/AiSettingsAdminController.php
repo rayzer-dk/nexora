@@ -6,6 +6,8 @@ namespace Commerce\Modules\Ai\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\Admin\Http\AdminContextResolver;
+use Commerce\Modules\Ai\Application\AiModelCatalog;
+use Commerce\Modules\Ai\Application\AiModelCatalogException;
 use Commerce\Modules\Ai\Application\AiSettings;
 use Commerce\Modules\Ai\Application\AiTaskService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,7 +18,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AiSettingsAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly AiSettings $settings, private readonly AiTaskService $tasks)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly AiSettings $settings, private readonly AiTaskService $tasks, private readonly AiModelCatalog $models)
     {
     }
 
@@ -28,6 +30,7 @@ final class AiSettingsAdminController extends AbstractController
         foreach ($providers as $code => &$p) {
             $p['label'] = AiSettings::PROVIDERS[$code];
             unset($p['key']); // the key never reaches the page
+            $p['models'] = $this->models->options($storeId, $code, $p['model']);
         }
         unset($p);
 
@@ -50,7 +53,7 @@ final class AiSettingsAdminController extends AbstractController
             if ($r->has('daily_limit')) {
                 $this->settings->saveDailyLimit($storeId, $r->getInt('daily_limit'));
             } else {
-                $this->settings->saveProvider($storeId, (string) $r->get('provider', ''), $r->has('enabled'), (string) $r->get('model', ''), (string) $r->get('api_key', ''));
+                $this->settings->saveProvider($storeId, (string) $r->get('provider', ''), $r->has('enabled'), trim((string) $r->get('model_custom', '')) !== '' ? (string) $r->get('model_custom', '') : (string) $r->get('model', ''), (string) $r->get('api_key', ''));
             }
             $this->addFlash('success', CanonicalUiText::get('admin.ai.saved'));
         } catch (\InvalidArgumentException) {
@@ -66,6 +69,21 @@ final class AiSettingsAdminController extends AbstractController
         $this->guard($request);
         $this->settings->removeKey($this->contexts->resolve($request)->storeId, (string) $request->request->get('provider', ''));
         $this->addFlash('success', CanonicalUiText::get('admin.ai.key_removed'));
+
+        return $this->redirectToRoute('admin_system_ai');
+    }
+
+    #[Route('/admin/system/ai/models-refresh', name: 'admin_system_ai_models_refresh', methods: ['POST'])]
+    public function refreshModels(Request $request): RedirectResponse
+    {
+        $this->guard($request);
+        $provider = (string) $request->request->get('provider', '');
+        try {
+            $count = count($this->models->refresh($this->contexts->resolve($request)->storeId, $provider));
+            $this->addFlash('success', CanonicalUiText::get('admin.ai.models_refreshed', ['count' => $count, 'provider' => AiSettings::PROVIDERS[$provider] ?? $provider]));
+        } catch (AiModelCatalogException $e) {
+            $this->addFlash('error', CanonicalUiText::get('admin.ai.models_error.' . $e->getMessage(), ['provider' => AiSettings::PROVIDERS[$provider] ?? $provider]));
+        }
 
         return $this->redirectToRoute('admin_system_ai');
     }

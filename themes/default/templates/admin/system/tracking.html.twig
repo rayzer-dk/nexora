@@ -1,11 +1,11 @@
-{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}
 {{ shell.start(ui_text('admin.tracking.title'),'tracking') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.tracking.title') }}</span></nav><h1>{{ ui_text('admin.tracking.title') }}</h1><p>{{ ui_text('admin.tracking.intro') }}</p></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
 <section class="admin-panel"><form method="post" action="{{ path('admin_system_tracking') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_tracking') }}">
-<label>{{ ui_text('admin.tracking.ga4') }}<input type="text" name="ga4_id" value="{{ s.ga4_id }}" maxlength="16" placeholder="G-XXXXXXXXXX" autocomplete="off"><small>{{ ui_text('admin.tracking.ga4_hint') }}</small></label>
-<label>{{ ui_text('admin.tracking.gtm') }}<input type="text" name="gtm_id" value="{{ s.gtm_id }}" maxlength="14" placeholder="GTM-XXXXXXX" autocomplete="off"><small>{{ ui_text('admin.tracking.gtm_hint') }}</small></label>
-<label>{{ ui_text('admin.tracking.pixel') }}<input type="text" name="meta_pixel_id" value="{{ s.meta_pixel_id }}" maxlength="20" placeholder="1234567890" autocomplete="off" inputmode="numeric"><small>{{ ui_text('admin.tracking.pixel_hint') }}</small></label>
-<div class="admin-form-wide"><small>{{ ui_text('admin.tracking.consent_note') }}</small></div>
+<label>{{ ui_text('admin.tracking.ga4') }}<input type="text" name="ga4_id" value="{{ s.ga4_id }}" maxlength="16" placeholder="G-XXXXXXXXXX" autocomplete="off">{{ help.hint(ui_text('admin.tracking.ga4_hint'), 'https://support.google.com/analytics/answer/9539598', ui_text('admin.help.tracking.ga4_link'), 'G-ABCDE12345') }}</label>
+<label>{{ ui_text('admin.tracking.gtm') }}<input type="text" name="gtm_id" value="{{ s.gtm_id }}" maxlength="14" placeholder="GTM-XXXXXXX" autocomplete="off">{{ help.hint(ui_text('admin.tracking.gtm_hint'), 'https://support.google.com/tagmanager/answer/6103696', ui_text('admin.help.tracking.gtm_link'), 'GTM-AB12CD3') }}</label>
+<label>{{ ui_text('admin.tracking.pixel') }}<input type="text" name="meta_pixel_id" value="{{ s.meta_pixel_id }}" maxlength="20" placeholder="1234567890" autocomplete="off" inputmode="numeric">{{ help.hint(ui_text('admin.tracking.pixel_hint'), 'https://www.facebook.com/business/help/952192354843755', ui_text('admin.help.tracking.pixel_link'), '1234567890123456') }}</label>
+<div class="admin-form-wide">{{ help.hint(ui_text('admin.tracking.consent_note') ~ ' ' ~ ui_text('admin.help.tracking.reco')) }}</div>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div></form></section>
 {{ shell.end() }}

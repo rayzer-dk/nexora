@@ -1,19 +1,25 @@
 {% extends '@storefront/base.html.twig' %}
+{% block head %}<script type="module" src="{{ vite_asset('assets/storefront/catalog-page.js', '/assets/catalog-page.js') }}"></script>{% endblock %}
 {% block body %}
 <section class="catalog-page shell">
-    <header class="catalog-heading"><div><p class="eyebrow">{{ ui_text('catalog_title') }}</p><h1>{% if search_query|default('') %}{{ ui_text('catalog_search_title', {query: search_query}) }}{% else %}{{ ui_text('catalog_products') }}{% endif %}</h1></div><p>{{ ui_text('catalog_total', {count: products.total}) }}</p></header>
+    <header class="catalog-heading"><div><p class="eyebrow">{{ ui_text('catalog_title') }}</p><h1>{% if search_query|default('') %}{{ ui_text('catalog_search_title', {query: search_query}) }}{% else %}{{ ui_text('catalog_products') }}{% endif %}</h1></div></header>
     {% if categories %}
     <nav class="category-chips" aria-label="{{ ui_text('categories') }}">
         {% for category in categories %}<a href="{{ category.url }}">{{ category.name }}</a>{% endfor %}
     </nav>
     {% endif %}
-    {% include '@storefront/components/catalog_filters.html.twig' %}
     {% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}
     {% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
-    {% if products.items %}
-        <div class="product-grid">{% for product in products.items %}{% include '@storefront/components/product_card.html.twig' with {product:product} only %}{% endfor %}</div>
-        {% if products.pages > 1 %}<nav class="pager" aria-label="{{ ui_text('pagination') }}">{% if products.page > 1 %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page-1 }}">{{ ui_icon('chevron-left', 16) }}{{ ui_text('previous') }}</a>{% endif %}<span>{{ ui_text('page_of', {page: products.page, pages: products.pages}) }}</span>{% if products.page < products.pages %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page+1 }}">{{ ui_text('next') }}{{ ui_icon('chevron-right', 16) }}</a>{% endif %}</nav>{% endif %}
-    {% else %}<div class="empty-state"><h2>{{ ui_text('no_products_title') }}</h2><p>{{ ui_text('no_products_text') }}</p></div>{% endif %}
+    <div class="catalog-layout" data-catalog-layout>
+        {% include '@storefront/components/catalog_filters.html.twig' %}
+        <div class="catalog-main">
+            {% include '@storefront/components/catalog_toolbar.html.twig' %}
+            {% if products.items %}
+                <div class="product-grid">{% for product in products.items %}{% include '@storefront/components/product_card.html.twig' with {product:product} only %}{% endfor %}</div>
+                {% if products.pages > 1 %}<nav class="pager" aria-label="{{ ui_text('pagination') }}">{% if products.page > 1 %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page-1 }}">{{ ui_icon('chevron-left', 16) }}{{ ui_text('previous') }}</a>{% endif %}<span>{{ ui_text('page_of', {page: products.page, pages: products.pages}) }}</span>{% if products.page < products.pages %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page+1 }}">{{ ui_text('next') }}{{ ui_icon('chevron-right', 16) }}</a>{% endif %}</nav>{% endif %}
+            {% else %}<div class="empty-state"><h2>{{ ui_text('no_products_title') }}</h2><p>{{ ui_text('no_products_text') }}</p></div>{% endif %}
+        </div>
+    </div>
 </section>
 {% include '@storefront/components/recently_viewed.html.twig' %}
 {% endblock %}

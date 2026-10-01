@@ -98,7 +98,7 @@ final class BlogService
         }
         $publicId = Uuid::fromBinary((string) $entry['public_id'])->toRfc4122();
         $tr = $this->db->fetchAssociative('SELECT title, excerpt, body_html, meta_title, meta_description FROM mc_content_translation WHERE content_id = ? AND locale = ?', [$id, $locale]);
-        $meta = $this->db->fetchAssociative('SELECT category_id, cover_url, cover_alt, author_name, featured, noindex, canonical_url, reading_minutes FROM mc_blog_article_meta WHERE content_id = ?', [$id]);
+        $meta = $this->db->fetchAssociative('SELECT category_id, cover_url, cover_alt, image_size, image_align, author_name, featured, noindex, canonical_url, reading_minutes FROM mc_blog_article_meta WHERE content_id = ?', [$id]);
         $route = $this->routes->findByEntity($storeId, $locale, SeoEntityType::BlogArticle, $publicId);
         $tags = $this->db->fetchFirstColumn('SELECT tag_name FROM mc_blog_article_tag WHERE content_id = ? ORDER BY tag_name', [$id]);
         return [
@@ -117,6 +117,8 @@ final class BlogService
             'category_id' => (int) ($meta['category_id'] ?? 0),
             'cover_url' => (string) ($meta['cover_url'] ?? ''),
             'cover_alt' => (string) ($meta['cover_alt'] ?? ''),
+            'image_size' => in_array((string) ($meta['image_size'] ?? ''), ['s', 'm', 'l'], true) ? (string) $meta['image_size'] : 'm',
+            'image_align' => in_array((string) ($meta['image_align'] ?? ''), ['none', 'left', 'right', 'hide'], true) ? (string) $meta['image_align'] : 'none',
             'author_name' => (string) ($meta['author_name'] ?? ''),
             'featured' => (int) ($meta['featured'] ?? 0) === 1,
             'noindex' => (int) ($meta['noindex'] ?? 0) === 1,
@@ -205,6 +207,8 @@ final class BlogService
                 'category_id' => $categoryId > 0 ? $categoryId : null,
                 'cover_url' => $cover === '' ? null : $cover,
                 'cover_alt' => $this->nullable((string) ($in['cover_alt'] ?? ''), 255),
+                'image_size' => in_array((string) ($in['image_size'] ?? ''), ['s', 'm', 'l'], true) ? (string) $in['image_size'] : 'm',
+                'image_align' => in_array((string) ($in['image_align'] ?? ''), ['none', 'left', 'right', 'hide'], true) ? (string) $in['image_align'] : 'none',
                 'author_name' => $this->nullable((string) ($in['author_name'] ?? ''), 190),
                 'featured' => !empty($in['featured']) ? 1 : 0,
                 'noindex' => !empty($in['noindex']) ? 1 : 0,

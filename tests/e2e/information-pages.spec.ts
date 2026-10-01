@@ -41,7 +41,7 @@ test('cookie policy documents the cookies the storefront really sets and the foo
 test('product page lists curated technical specifications', async ({ page }) => {
   await page.goto('/iphone-13-pro', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const text = await page.locator('main').innerText();
+  const text = await page.locator('main').textContent() ?? '';
   for (const label of ['Дисплей', 'Процесор', 'Камера']) {
     expect(text).toContain(label);
   }

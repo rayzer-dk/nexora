@@ -1,1 +1,17 @@
-<aside class="order-summary checkout-builder-block" data-checkout-block="summary"><div class="order-summary__head"><span>{{ block.props.title|default(ui_text('order_summary')) }}</span><strong>{{ ui_text('items_count', {count: cart.count}) }}</strong></div>{% for item in cart.items %}<div class="summary-item"><img class="summary-image" src="{{ item.image }}" alt="" width="64" height="64"><div><strong>{{ item.name }}</strong><span>{{ item.quantity }} {{ item.unit_code }}</span></div><b>{{ item.line_total }}</b></div>{% endfor %}<div class="summary-total"><span>{{ ui_text('products_sum') }}</span><strong data-summary-subtotal>{{ cart.subtotal }}</strong></div>{% if cart.discount_minor > 0 %}<div class="summary-total" data-discount-row><span>{{ ui_text('discount') }}</span><strong data-summary-discount>−{{ cart.discount }}</strong></div>{% else %}<div class="summary-total" data-discount-row hidden><span>{{ ui_text('discount') }}</span><strong data-summary-discount></strong></div>{% endif %}<div class="summary-total summary-total--grand"><span>{{ ui_text('amount_due') }}</span><strong data-summary-total>{{ cart.total }}</strong></div><button class="button button--primary button--lg button--block place-order" type="submit">{{ block.props.button_label|default(ui_text('place_order')) }}</button></aside>
+<aside class="order-summary checkout-builder-block" data-checkout-block="summary" aria-label="{{ block.props.title|default(ui_text('order_summary')) }}">
+  <div class="order-summary__head"><span>{{ block.props.title|default(ui_text('order_summary')) }}</span><strong>{{ ui_text('items_count', {count: cart.count}) }}</strong></div>
+  <ul class="summary-items">
+  {% for item in cart.items %}
+    <li class="summary-item"><a class="summary-item__img" href="{{ item.url }}" tabindex="-1" aria-hidden="true"><img class="summary-image" src="{{ item.image }}" alt="" width="64" height="64" loading="lazy" decoding="async"></a><div class="summary-item__info"><strong>{{ item.name }}</strong><span>{% if item.options %}{{ item.options }} · {% endif %}{{ item.quantity }} {{ item.unit_code }} × {{ item.unit_price }}</span></div><b>{{ item.line_total }}</b></li>
+  {% endfor %}
+  </ul>
+  <div class="summary-totals">
+    <div class="summary-total"><span>{{ ui_text('products_sum') }}</span><strong data-summary-subtotal>{{ cart.subtotal }}</strong></div>
+    {% if cart.discount_minor > 0 %}<div class="summary-total is-discount" data-discount-row><span>{{ ui_text('discount') }}</span><strong data-summary-discount>−{{ cart.discount }}</strong></div>{% else %}<div class="summary-total is-discount" data-discount-row hidden><span>{{ ui_text('discount') }}</span><strong data-summary-discount></strong></div>{% endif %}
+    <div class="summary-total summary-total--grand"><span>{{ ui_text('amount_due') }}</span><strong data-summary-total>{{ cart.total }}</strong></div>
+  </div>
+  <div class="checkout-bar">
+    <div class="checkout-bar__total"><span>{{ ui_text('amount_due') }}</span><strong data-summary-total>{{ cart.total }}</strong></div>
+    <button class="button button--primary button--lg place-order" type="submit" data-place-order>{{ block.props.button_label|default(ui_text('place_order')) }}</button>
+  </div>
+</aside>

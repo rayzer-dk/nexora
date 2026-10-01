@@ -17,6 +17,11 @@ use DomainException;
  */
 final class StoreLocalizationSettings
 {
+    /** Values of mc_store_currency.rate_source: official rates ("auto" = ECB, then NBU), one central bank, a keyed API, or typed by hand. */
+    public const RATE_SOURCES = ['auto', 'ecb', 'nbu', 'nbp', 'cnb', 'api', 'manual'];
+    /** Upper bound of the safety markup added to converted prices, in basis points (20%). */
+    public const MAX_MARKUP_BPS = 2000;
+
     public function __construct(private readonly Connection $db, private readonly string $projectDir)
     {
     }
@@ -56,7 +61,7 @@ final class StoreLocalizationSettings
 
         $currencies = $this->db->fetchAllAssociative(
             "SELECT c.code,c.name,c.symbol,c.minor_units,COALESCE(sc.enabled,0) enabled,COALESCE(sc.auto_convert,0) auto_convert,
-                    COALESCE(sc.rate_source,'nbu') rate_source,COALESCE(sc.rounding_increment_minor,1) rounding_increment_minor,COALESCE(sc.sort_order,100) sort_order
+                    COALESCE(sc.rate_source,'auto') rate_source,COALESCE(sc.rate_markup_bps,0) rate_markup_bps,COALESCE(sc.rounding_increment_minor,1) rounding_increment_minor,COALESCE(sc.sort_order,100) sort_order
              FROM mc_currency c LEFT JOIN mc_store_currency sc ON sc.currency_code=c.code AND sc.store_id=?
              WHERE c.enabled=1 ORDER BY COALESCE(sc.sort_order,100),c.code",
             [$storeId],
@@ -119,7 +124,7 @@ final class StoreLocalizationSettings
         return $code;
     }
 
-    /** @param array<string,array{enabled?:mixed,auto_convert?:mixed,rate_source?:mixed,rounding_increment_minor?:mixed,sort_order?:mixed}> $rows */
+    /** @param array<string,array{enabled?:mixed,auto_convert?:mixed,rate_source?:mixed,rate_markup?:mixed,rounding_increment_minor?:mixed,sort_order?:mixed}> $rows */
     public function saveCurrencies(int $storeId, array $rows): void
     {
         $default = strtoupper((string) $this->db->fetchOne('SELECT default_currency FROM mc_store WHERE id=?', [$storeId]));
@@ -131,16 +136,26 @@ final class StoreLocalizationSettings
                     continue;
                 }
                 $isDefault = $code === $default;
-                $source = ($row['rate_source'] ?? 'nbu') === 'manual' ? 'manual' : 'nbu';
+                $source = strtolower(trim((string) ($row['rate_source'] ?? 'auto')));
+                $source = in_array($source, self::RATE_SOURCES, true) ? $source : 'auto';
+                $markupBps = self::markupToBps($row['rate_markup'] ?? 0);
                 $rounding = (int) ($row['rounding_increment_minor'] ?? 1);
                 $rounding = in_array($rounding, [1, 5, 10, 50, 100], true) ? $rounding : 1;
                 $db->executeStatement(
-                    'INSERT INTO mc_store_currency (store_id,currency_code,enabled,is_default,auto_convert,rate_source,rounding_increment_minor,sort_order) VALUES (?,?,?,?,?,?,?,?)
-                     ON DUPLICATE KEY UPDATE enabled=VALUES(enabled),auto_convert=VALUES(auto_convert),rate_source=VALUES(rate_source),rounding_increment_minor=VALUES(rounding_increment_minor),sort_order=VALUES(sort_order)',
-                    [$storeId, $code, $isDefault || !empty($row['enabled']) ? 1 : 0, $isDefault ? 1 : 0, !$isDefault && !empty($row['auto_convert']) ? 1 : 0, $source, $rounding, max(0, min(9999, (int) ($row['sort_order'] ?? 100)))],
+                    'INSERT INTO mc_store_currency (store_id,currency_code,enabled,is_default,auto_convert,rate_source,rate_markup_bps,rounding_increment_minor,sort_order) VALUES (?,?,?,?,?,?,?,?,?)
+                     ON DUPLICATE KEY UPDATE enabled=VALUES(enabled),auto_convert=VALUES(auto_convert),rate_source=VALUES(rate_source),rate_markup_bps=VALUES(rate_markup_bps),rounding_increment_minor=VALUES(rounding_increment_minor),sort_order=VALUES(sort_order)',
+                    [$storeId, $code, $isDefault || !empty($row['enabled']) ? 1 : 0, $isDefault ? 1 : 0, !$isDefault && !empty($row['auto_convert']) ? 1 : 0, $source, $isDefault ? 0 : $markupBps, $rounding, max(0, min(9999, (int) ($row['sort_order'] ?? 100)))],
                 );
             }
         });
+    }
+
+    /** "2.5" or "2,5" (percent) to basis points, clamped to 0..MAX_MARKUP_BPS. */
+    public static function markupToBps(mixed $percent): int
+    {
+        $value = (float) str_replace(',', '.', trim((string) $percent));
+
+        return max(0, min(self::MAX_MARKUP_BPS, (int) round($value * 100)));
     }
 
     public function addCurrency(string $code, string $name, string $symbol, int $minorUnits): string
@@ -171,9 +186,9 @@ final class StoreLocalizationSettings
         }
         $row = $this->db->fetchAssociative(
             'SELECT base_currency,rate,provider,observed_at,expires_at FROM mc_exchange_rate
-             WHERE ((base_currency=? AND quote_currency=?) OR (base_currency=? AND quote_currency=?)) AND ' . ($source === 'manual' ? "provider='manual'" : "provider<>'manual'") . '
+             WHERE ((base_currency=? AND quote_currency=?) OR (base_currency=? AND quote_currency=?)) AND ' . ($source === 'manual' ? "provider='manual'" : ($source === 'auto' ? "provider<>'manual'" : 'provider=?')) . '
              ORDER BY observed_at DESC,id DESC LIMIT 1',
-            [$base, $quote, $quote, $base],
+            in_array($source, ['manual', 'auto'], true) ? [$base, $quote, $quote, $base] : [$base, $quote, $quote, $base, $source],
         );
         if (!is_array($row)) {
             return null;
