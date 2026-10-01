@@ -30,33 +30,43 @@ final class MediaImageProfileTest extends TestCase
     {
         $p = MediaImageProfile::normalize([]);
         self::assertSame('webp', $p['format']);
-        self::assertSame([640, 960, 1280], $p['widths']);
+        self::assertSame(['thumb' => 160, 'card' => 480, 'product' => 960, 'zoom' => 1600], $p['presets']);
         self::assertTrue($p['keep_source']);
-        self::assertFalse($p['jpeg_fallback']);
+        self::assertSame(1, $p['generation']);
         self::assertSame('recommended', MediaImageProfile::detect([]));
     }
 
     public function testPresetsAndDetection(): void
     {
-        self::assertTrue(MediaImageProfile::fromPreset('compatible')['jpeg_fallback']);
+        self::assertSame('jpeg', MediaImageProfile::fromPreset('compatible')['format']);
         self::assertSame('avif', MediaImageProfile::fromPreset('modern')['format']);
         foreach (['recommended', 'compatible', 'modern'] as $preset) {
             self::assertSame($preset, MediaImageProfile::detect(MediaImageProfile::fromPreset($preset)));
         }
-        self::assertSame('custom', MediaImageProfile::detect(['format' => 'jpeg', 'widths' => [640], 'quality' => 70]));
+        self::assertSame('custom', MediaImageProfile::detect(['format' => 'jpeg', 'quality' => 70]));
+        self::assertSame('recommended', MediaImageProfile::detect(['generation' => 7] + MediaImageProfile::RECOMMENDED), 'the generation never changes which preset a profile is');
     }
 
     public function testCustomInputIsClamped(): void
     {
-        $p = MediaImageProfile::fromPreset('custom', ['format' => 'bmp', 'widths' => [1, 640, 640, 5000, 1920], 'quality' => 500, 'include_original' => false]);
+        $p = MediaImageProfile::fromPreset('custom', ['format' => 'bmp', 'presets' => ['thumb' => 1, 'card' => 640, 'product' => 5000, 'zoom' => 1920], 'quality' => 500]);
         self::assertSame('webp', $p['format']);
-        self::assertSame([640, 1920], $p['widths']);
+        self::assertSame(['thumb' => 160, 'card' => 640, 'product' => 960, 'zoom' => 1920], $p['presets'], 'a width outside the allowed set falls back to the default');
         self::assertSame(95, $p['quality']);
-        self::assertFalse($p['include_original']);
-        self::assertFalse(MediaImageProfile::normalize(['format' => 'webp'])['keep_source'], 'a payload saved before 3.23 keeps not storing originals');
     }
 
-    public function testDerivativesAreWebpCappedAndSourceAndFallbackAreMarked(): void
+    public function testGenerationRisesOnlyWhenSizesOrQualityChange(): void
+    {
+        $base = MediaImageProfile::RECOMMENDED;
+        self::assertSame(1, MediaImageProfile::withGeneration($base, $base)['generation']);
+        self::assertSame(1, MediaImageProfile::withGeneration($base, ['keep_source' => false] + $base)['generation'], 'keeping the original does not change any file name');
+        $wider = ['presets' => ['card' => 640] + $base['presets']] + $base;
+        $next = MediaImageProfile::withGeneration($base, $wider);
+        self::assertSame(2, $next['generation']);
+        self::assertSame(3, MediaImageProfile::withGeneration($next, ['quality' => 70] + $next)['generation']);
+    }
+
+    public function testUploadWritesOneMasterCappedAt1920AndTheSourceIsMarked(): void
     {
         $service = (new \ReflectionClass(MediaImageService::class))->newInstanceWithoutConstructor();
         (new \ReflectionProperty($service, 'projectDir'))->setValue($service, $this->dir);
@@ -64,34 +74,21 @@ final class MediaImageProfileTest extends TestCase
         imagealphablending($img, false);
         imagesavealpha($img, true);
         imagefill($img, 0, 0, (int) imagecolorallocatealpha($img, 10, 120, 200, 64));
-        $profile = MediaImageProfile::fromPreset('compatible');
         $generate = new \ReflectionMethod($service, 'generateDerivatives');
-        $list = $generate->invoke($service, $img, 2400, 1200, 'catalog/t/abc', 'image/png', $profile);
-        $byWidth = [];
-        foreach ($list as $d) {
-            if (!isset($d['role'])) {
-                self::assertSame('webp', $d['format']);
-                self::assertFileExists($this->dir . '/public/media/' . $d['key']);
-                $byWidth[] = $d['width'];
-            }
-        }
-        self::assertSame([640, 960, 1280, 1920], $byWidth, 'full size copy is capped at 1920');
-        $fallback = array_values(array_filter($list, static fn (array $d): bool => ($d['role'] ?? '') === 'fallback'))[0];
-        self::assertSame('jpeg', $fallback['format']);
-        self::assertSame(1280, $fallback['width']);
-        $px = imagecreatefromjpeg($this->dir . '/public/media/' . $fallback['key']);
-        $rgb = imagecolorat($px, 5, 5);
-        self::assertGreaterThan(100, ($rgb >> 16) & 255, 'transparent areas are flattened onto white, not black');
+        $list = $generate->invoke($service, $img, 2400, 1200, 'catalog/t/abc', 'image/png', MediaImageProfile::RECOMMENDED);
+        self::assertCount(1, $list, 'one master file, not one file per size');
+        self::assertSame('webp', $list[0]['format']);
+        self::assertSame(1920, $list[0]['width']);
+        self::assertSame('catalog/t/abc.webp', $list[0]['key']);
+        self::assertFileExists($this->dir . '/public/media/catalog/t/abc.webp');
 
         $keep = new \ReflectionMethod($service, 'keepSource');
         $source = $keep->invoke($service, 'RAWBYTES', 'catalog/t/abc', 'image/png', 2400, 1200);
         self::assertSame('source', $source['role']);
-        self::assertStringEndsWith('-source.png', $source['key']);
+        self::assertSame('catalog/t/abc.source.png', $source['key']);
         self::assertSame('RAWBYTES', file_get_contents($this->dir . '/public/media/' . $source['key']));
 
         $preferred = new \ReflectionMethod($service, 'preferredDerivative');
-        $picked = $preferred->invoke($service, [...$list, $source]);
-        self::assertSame(1920, $picked['width']);
-        self::assertArrayNotHasKey('role', $picked);
+        self::assertSame('catalog/t/abc.webp', $preferred->invoke($service, [...$list, $source])['key'], 'the asset points at the master, never at the source');
     }
 }

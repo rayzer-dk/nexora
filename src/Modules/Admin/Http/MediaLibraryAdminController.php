@@ -106,12 +106,12 @@ final class MediaLibraryAdminController extends AbstractController
         $r=$request->request;
         $profile=MediaImageProfile::fromPreset((string)$r->get('preset','recommended'),[
             'format'=>(string)$r->get('format','webp'),
-            'widths'=>array_map('intval',(array)$r->all('widths')),
-            'include_original'=>$r->has('include_original'),
+            'presets'=>array_map('intval',(array)$r->all('presets')),
             'quality'=>(int)$r->get('quality',82),
             'keep_source'=>$r->has('keep_source'),
-            'jpeg_fallback'=>$r->has('jpeg_fallback'),
         ]);
+        $previous=$this->revisions->latestValidPayload($ctx->storeId,'media','image_processing');
+        $profile=MediaImageProfile::withGeneration(is_array($previous)?$previous:[],$profile);
         try{
             $this->revisions->activateStoreJson($ctx->storeId,'media','image_processing',$profile,$actor);
             $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.media.library.processing_saved'));
@@ -145,7 +145,7 @@ final class MediaLibraryAdminController extends AbstractController
     }
 
 
-    /** @return array{format:string,widths:list<int>,include_original:bool,quality:int,keep_source:bool,jpeg_fallback:bool,preset:string} */
+    /** @return array{format:string,quality:int,keep_source:bool,presets:array<string,int>,generation:int,preset:string} */
     private function processing(int $storeId): array
     {
         $input=$this->revisions->latestValidPayload($storeId,'media','image_processing');

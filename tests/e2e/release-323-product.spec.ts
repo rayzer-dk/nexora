@@ -190,7 +190,8 @@ test('admin product form edits the SEO title/description and the old price shown
     page.locator('button[type="submit"]').click(),
   ]);
   await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
-  const edit = page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first();
+  // Other specs create draft products that sort first; this one needs a published demo product.
+  const edit = page.locator('tr').filter({ hasNotText: /Picked|E2E|Warm/i }).locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first();
   await edit.click();
   await page.waitForURL(/\/edit/);
   const form = page.locator('#product-form');

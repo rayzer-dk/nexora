@@ -18,6 +18,10 @@ final readonly class MarketingAttributionService
     {
         if(!$request->hasSession() || !$request->isMethodSafe()) return;
         if(str_starts_with($request->getPathInfo(),'/admin') || str_starts_with($request->getPathInfo(),'/api')) return;
+        // Only page views are touches. Pictures, scripts, captcha images and feeds must never start a session or set a cookie:
+        // a cookie on a static-looking URL keeps it out of every shared cache and creates a session file per image request.
+        foreach(['/media/','/assets/','/build/','/captcha/'] as $prefix){if(str_starts_with($request->getPathInfo(),$prefix)) return;}
+        if(!str_contains((string)$request->headers->get('Accept',''),'text/html')) return;
         $q=$request->query;
         $hasCampaign=false; foreach(['utm_source','utm_medium','utm_campaign','utm_content','utm_term'] as $k){if(trim((string)$q->get($k))!==''){$hasCampaign=true;break;}}
         $session=$request->getSession(); $existing=$session->get(self::SESSION,[]); if(!is_array($existing))$existing=[];

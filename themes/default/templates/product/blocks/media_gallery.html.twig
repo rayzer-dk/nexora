@@ -3,7 +3,7 @@
     <div class="product-gallery__stage" data-gallery-stage tabindex="0" aria-roledescription="carousel" aria-label="{{ ui_text('product_photos')|e('html_attr') }}">
         {% if gallery_count > 1 %}<button class="gallery-nav gallery-nav--prev" type="button" data-gallery-prev aria-label="{{ ui_text('previous_photo') }}">{{ ui_icon('chevron-left', 20) }}</button>{% endif %}
         <button class="product-gallery__open" type="button" data-gallery-open aria-label="{{ ui_text('open_fullscreen_photo') }}">
-            <img data-gallery-main src="{{ product.images[0].url }}"{% if product.images[0].srcset %} srcset="{{ product.images[0].srcset }}" sizes="{{ product.images[0].sizes }}"{% endif %} alt="{{ product.images[0].alt }}" width="{{ product.images[0].width|default(1200) }}" height="{{ product.images[0].height|default(1200) }}" fetchpriority="high" decoding="async">
+            <img data-gallery-main data-full="{{ product.images[0].full|default(product.images[0].url) }}" data-thumb="{{ product.images[0].thumb|default(product.images[0].url) }}" src="{{ product.images[0].url }}"{% if product.images[0].srcset %} srcset="{{ product.images[0].srcset }}" sizes="{{ product.images[0].sizes }}"{% endif %} alt="{{ product.images[0].alt }}" width="{{ product.images[0].width|default(1200) }}" height="{{ product.images[0].height|default(1200) }}" fetchpriority="high" decoding="async">
         </button>
         {% if gallery_count > 1 %}<button class="gallery-nav gallery-nav--next" type="button" data-gallery-next aria-label="{{ ui_text('next_photo') }}">{{ ui_icon('chevron-right', 20) }}</button>{% endif %}
         {% if gallery_count > 1 %}<span class="product-gallery__counter" data-gallery-counter aria-live="polite">1 / {{ gallery_count }}</span>{% endif %}
@@ -12,8 +12,8 @@
     {% if gallery_count > 1 %}
     <div class="product-gallery__thumbs" role="list" aria-label="{{ ui_text('product_photos') }}">
         {% for image in product.images %}
-            <button type="button" class="product-gallery__thumb{% if loop.first %} is-active{% endif %}" data-gallery-thumb data-index="{{ loop.index0 }}" data-src="{{ image.url }}" data-srcset="{{ image.srcset|default('') }}" data-sizes="{{ image.sizes|default('') }}" data-alt="{{ image.alt }}" aria-label="{{ ui_text('photo_number', {number: loop.index}) }}">
-                <img src="{{ image.url }}"{% if image.srcset %} srcset="{{ image.srcset }}" sizes="80px"{% endif %} alt="" width="80" height="80" loading="{% if loop.first %}eager{% else %}lazy{% endif %}" decoding="async">
+            <button type="button" class="product-gallery__thumb{% if loop.first %} is-active{% endif %}" data-gallery-thumb data-index="{{ loop.index0 }}" data-src="{{ image.url }}" data-thumb="{{ image.thumb|default(image.url) }}" data-full="{{ image.full|default(image.url) }}" data-srcset="{{ image.srcset|default('') }}" data-sizes="{{ image.sizes|default('') }}" data-alt="{{ image.alt }}" aria-label="{{ ui_text('photo_number', {number: loop.index}) }}">
+                <img src="{{ image.thumb|default(image.url) }}" alt="" width="80" height="80" loading="{% if loop.first %}eager{% else %}lazy{% endif %}" decoding="async">
             </button>
         {% endfor %}
     </div>

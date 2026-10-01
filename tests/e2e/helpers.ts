@@ -11,9 +11,21 @@ export async function expectNoHorizontalOverflow(page: Page): Promise<void> {
 }
 
 export async function expectNoBrokenImages(page: Page): Promise<void> {
-  const broken = await page.locator('img').evaluateAll((images) => images
-    .filter((image) => image.complete && image.naturalWidth === 0)
-    .map((image) => image.getAttribute('src') || ''));
+  // With a srcset the browser reports naturalWidth divided by the chosen density, so a tiny real picture (a 4 px fixture
+  // chosen for a 960w candidate) reads as 0. decode() settles that: it resolves for a real picture and rejects for a broken one.
+  const read = () => page.locator('img').evaluateAll(async (images) => {
+    const broken: string[] = [];
+    for (const image of images as HTMLImageElement[]) {
+      if (!image.complete || image.naturalWidth !== 0) continue;
+      try { await image.decode(); } catch { broken.push(image.getAttribute('src') || ''); }
+    }
+    return broken;
+  });
+  let broken = await read();
+  for (let attempt = 0; attempt < 5 && broken.length > 0; attempt += 1) {
+    await page.waitForTimeout(400);
+    broken = await read();
+  }
   expect(broken, `broken images: ${broken.join(', ')}`).toEqual([]);
 }
 

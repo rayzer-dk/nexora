@@ -546,6 +546,14 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
+    Commerce\Modules\Media\Application\MediaVariantService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Media\Application\MediaOrphanService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     Commerce\Modules\Media\Application\MediaVideoService:
         arguments:
             $projectDir: '%kernel.project_dir%'

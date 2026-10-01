@@ -29,8 +29,8 @@ class CommerceProductGallery extends HTMLElement {
         if (!(main instanceof HTMLImageElement)) return;
         // Single-image products still open the viewer; a list of one keeps the code path uniform.
         const items = thumbs.length > 0
-            ? thumbs.map((button) => ({ src: button.getAttribute('data-src') || '', srcset: button.getAttribute('data-srcset') || '', sizes: button.getAttribute('data-sizes') || '', alt: button.getAttribute('data-alt') || '' }))
-            : [{ src: main.getAttribute('src') || '', srcset: main.getAttribute('srcset') || '', sizes: main.getAttribute('sizes') || '', alt: main.alt }];
+            ? thumbs.map((button) => ({ src: button.getAttribute('data-src') || '', srcset: button.getAttribute('data-srcset') || '', sizes: button.getAttribute('data-sizes') || '', alt: button.getAttribute('data-alt') || '', thumb: button.getAttribute('data-thumb') || button.getAttribute('data-src') || '', full: button.getAttribute('data-full') || button.getAttribute('data-src') || '' }))
+            : [{ src: main.getAttribute('src') || '', srcset: main.getAttribute('srcset') || '', sizes: main.getAttribute('sizes') || '', alt: main.alt, thumb: main.getAttribute('data-thumb') || main.getAttribute('src') || '', full: main.getAttribute('data-full') || main.getAttribute('src') || '' }];
         const total = items.length;
         let index = Math.max(0, thumbs.findIndex((item) => item.classList.contains('is-active')));
         let lightbox = null;
@@ -112,7 +112,7 @@ function createLightbox(dialog, items, getIndex, setIndex) {
             button.className = 'gallery-lightbox__thumb';
             button.setAttribute('aria-label', t('js_photo_number', { number: i + 1 }));
             const img = document.createElement('img');
-            img.src = item.src; img.alt = ''; img.loading = 'lazy'; img.width = 64; img.height = 64; img.decoding = 'async';
+            img.src = item.thumb || item.src; img.alt = ''; img.loading = 'lazy'; img.width = 64; img.height = 64; img.decoding = 'async';
             button.appendChild(img);
             button.addEventListener('click', () => go(i));
             thumbBox.appendChild(button);
@@ -141,9 +141,9 @@ function createLightbox(dialog, items, getIndex, setIndex) {
     const render = () => {
         const item = items[index];
         reset();
-        image.src = item.src;
-        if (item.srcset) image.srcset = item.srcset; else image.removeAttribute('srcset');
-        image.sizes = '100vw';
+        image.src = item.full || item.src;
+        image.removeAttribute('srcset');
+        image.removeAttribute('sizes');
         image.alt = item.alt;
         if (counter) counter.textContent = `${index + 1} / ${total}`;
         thumbButtons.forEach((button, i) => { button.classList.toggle('is-active', i === index); if (i === index) button.scrollIntoView({ block: 'nearest', inline: 'center' }); });

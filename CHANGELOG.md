@@ -2,6 +2,26 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.24.0 — 2026-10-01
+
+Images are reworked at the root (no compatibility with the earlier naming: the platform is not installed anywhere yet).
+
+- One master file per picture (WebP, up to 1920 px, upright, no metadata) instead of five eager sizes per photo. Named
+  sizes `thumb`, `card`, `product`, `zoom` are made from it: at once for the main product photo, on the first request for
+  everything else, then served as plain files with a one-year immutable cache. See `docs/IMAGES.md`.
+- Catalog cards, cart, mega menu, checkout summary, blog, wishlist, compare and sliders now load the size they show
+  (`srcset` and `sizes`) instead of the largest file; the product gallery strip uses thumbs and the full-screen viewer the master.
+- Size names carry a generation. Changing a size or the quality in the media settings starts a new generation without
+  re-uploading; old files are collected by the nightly `commerce:media:gc`.
+- Safe cleanup: the old orphan removal ignored category images, page share images, blog and rich-text references and the
+  media library, so it could delete pictures in use. The new one checks every id reference (also discovered from the
+  database), every file name in text and settings columns, applies a 30-day grace period, moves files to `var/media-trash`
+  and purges them after 30 days. Dry-run by default.
+- New scheduled tasks: `commerce:media:warm` and `commerce:media:gc`.
+- Fix: media requests started a PHP session and set a cookie (the marketing attribution touched every GET), which kept
+  every image out of shared caches and created a session file per image. Only page views are touches now.
+- If a size cannot be made on a server without rewrite support, the picture falls back to the master instead of breaking.
+
 ## 3.23.1 — 2026-10-01
 
 - Fix: the catalog mega-menu was empty (no categories) on any storefront language that had no category translations yet. The tree now falls back to the store default language for name and URL, so categories always open.

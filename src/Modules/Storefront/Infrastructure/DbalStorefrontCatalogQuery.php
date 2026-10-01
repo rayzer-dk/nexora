@@ -19,6 +19,7 @@ final readonly class DbalStorefrontCatalogQuery
         private SearchSynonymService $synonyms,
         private SearchCandidateProviderInterface $searchCandidates,
         private \Commerce\Modules\Catalog\Application\ProductBadgeService $badges,
+        private \Commerce\Modules\Media\Application\MediaVariantService $variants,
     ) {
     }
 
@@ -851,33 +852,27 @@ final readonly class DbalStorefrontCatalogQuery
         return $ordered;
     }
 
-    /** @return list<array{url:string,alt:string,srcset:string,sizes:string,width:int,height:int}> */
+    /**
+     * Photos of a product. "url"/"srcset" are the page-size variants (product, zoom), "thumb" is the small one for the strip
+     * under the gallery and "full" is the stored master used by the full-screen viewer; all variants are made on demand.
+     *
+     * @return list<array{url:string,alt:string,srcset:string,sizes:string,width:int,height:int,thumb:string,full:string}>
+     */
     private function productImages(int $productId, string $name): array
     {
-        $rows=$this->connection->fetchAllAssociative("SELECT ma.storage_key,ma.metadata,ma.width,ma.height,pm.alt_text FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=? AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC",[$productId]);
-        if ($rows===[]) { return [['url'=>'/assets/product-placeholder.svg','alt'=>$name,'srcset'=>'','sizes'=>'(max-width: 900px) 100vw, 50vw','width'=>640,'height'=>640]]; }
+        $rows=$this->connection->fetchAllAssociative("SELECT ma.storage_key,ma.width,ma.height,pm.alt_text FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=? AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC",[$productId]);
+        if ($rows===[]) { return [['url'=>'/assets/product-placeholder.svg','alt'=>$name,'srcset'=>'','sizes'=>'(max-width: 900px) 100vw, 50vw','width'=>640,'height'=>640,'thumb'=>'/assets/product-placeholder.svg','full'=>'/assets/product-placeholder.svg']]; }
         return array_map(function(array $r) use ($name): array {
-            $metadata=[];
-            if(is_string($r['metadata']??null) && trim((string)$r['metadata'])!==''){
-                try{$decoded=json_decode((string)$r['metadata'],true,64,JSON_THROW_ON_ERROR); if(is_array($decoded)){$metadata=$decoded;}}catch(\JsonException){}
-            }
-            $derivatives=is_array($metadata['derivatives']??null)?$metadata['derivatives']:[];
-            // One srcset from the responsive derivatives of a single format (WebP first, then AVIF, JPEG, PNG); the untouched
-            // original ("source") and the JPEG copy for e-mails/feeds ("fallback") are never part of it.
-            $byFormat=[];
-            foreach($derivatives as $d){
-                if(!is_array($d)||!is_string($d['key']??null)||!isset($d['width'])||isset($d['role'])){continue;}
-                $byFormat[(string)($d['format']??'')][]=$this->mediaUrl((string)$d['key']).' '.(int)$d['width'].'w';
-            }
-            $set=[];
-            foreach(['webp','avif','jpeg','png'] as $format){if(isset($byFormat[$format])){$set=$byFormat[$format];break;}}
+            $master=$this->mediaUrl($r['storage_key']);
             return [
-                'url'=>$this->mediaUrl($r['storage_key']),
+                'url'=>$this->variants->url($master,'product'),
                 'alt'=>(string)($r['alt_text']?:$name),
-                'srcset'=>implode(', ',$set),
+                'srcset'=>$this->variants->srcset($master,['product','zoom']),
                 'sizes'=>'(max-width: 900px) 100vw, 50vw',
                 'width'=>(int)($r['width']?:1200),
                 'height'=>(int)($r['height']?:1200),
+                'thumb'=>$this->variants->url($master,'thumb'),
+                'full'=>$master,
             ];
         },$rows);
     }

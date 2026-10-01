@@ -4,7 +4,7 @@
     <div class="reference-categories">
     {% for category in categories %}
     <a class="reference-category" href="{{ category.url }}">
-        <span class="reference-category__image"><img src="{{ category.image|default('/assets/product-placeholder.svg') }}" alt="" width="480" height="360" loading="lazy" decoding="async"></span>
+        <span class="reference-category__image"><img {{ media_attrs(category.image|default('/assets/product-placeholder.svg'), 'card', ['card', 'product'], '(min-width: 1024px) 20vw, 50vw') }} alt="" width="480" height="360" loading="lazy" decoding="async"></span>
         <span class="reference-category__copy"><strong>{{ category.name }}</strong>{% if category.subtitle is defined %}<small>{{ category.subtitle }}</small>{% endif %}</span>
         <span class="reference-category__arrow" aria-hidden="true">{{ ui_icon('arrow-right', 16) }}</span>
     </a>

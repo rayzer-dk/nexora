@@ -14,3 +14,10 @@ pw.local.config.ts
 /phpstan.phar
 /build/
 /public/media/demo/dummyjson/
+# Image sizes are made on demand from the master file and are never part of the source tree
+/public/media/**/*.thumb-g*
+/public/media/**/*.card-g*
+/public/media/**/*.product-g*
+/public/media/**/*.zoom-g*
+/var/media-locks/
+/var/media-trash/

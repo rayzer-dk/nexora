@@ -9,7 +9,7 @@
   <div class="cart-drawer__lines" data-cart-drawer-lines>
     {% for item in cart.items %}
     <article class="drawer-line" data-drawer-item="{{ item.id }}">
-      <a class="drawer-line__img" href="{{ item.url }}"><img src="{{ item.image }}" alt="" width="72" height="72" loading="lazy" decoding="async"></a>
+      <a class="drawer-line__img" href="{{ item.url }}"><img {{ media_attrs(item.image, 'thumb') }} alt="" width="72" height="72" loading="lazy" decoding="async"></a>
       <div class="drawer-line__info">
         <a class="drawer-line__name" href="{{ item.url }}">{{ item.name }}</a>
         {% if item.options %}<small class="drawer-line__meta">{{ item.options }}</small>{% else %}<small class="drawer-line__meta">SKU {{ item.sku }}</small>{% endif %}

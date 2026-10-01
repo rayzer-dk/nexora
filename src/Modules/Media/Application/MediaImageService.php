@@ -18,12 +18,12 @@ final readonly class MediaImageService
     private const MAX_UPLOAD_BYTES = 20971520;
     private const MAX_DIMENSION = 12000;
     private const MAX_PIXELS = 48000000;
-    private const WIDTHS = [320, 640, 960, 1280, 1920];
 
     public function __construct(
         private Connection $connection,
         private PublicIdFactory $publicIds,
         private ConfigurationRevisionStore $revisions,
+        private MediaVariantService $variants,
         private string $projectDir,
     ) {
     }
@@ -74,6 +74,9 @@ final readonly class MediaImageService
         }
 
         try {
+            if (!$fromHeic && $mime === 'image/jpeg') {
+                $source = $this->orientedUpright($source, $raw, $width, $height);
+            }
             $checksum = hash('sha256', $raw);
             $relativeBase = 'catalog/' . gmdate('Y/m') . '/' . substr($checksum, 0, 2) . '/' . $checksum;
             $profile = $storeId !== null ? $this->processingProfile($storeId) : MediaImageProfile::RECOMMENDED;
@@ -172,6 +175,19 @@ final readonly class MediaImageService
                 $db->executeStatement("UPDATE mc_product_media SET role='primary' WHERE product_id=? AND media_asset_id=? AND role='gallery'", [$productId, $assetId]);
             }
         });
+        $this->warmPrimary($productId);
+    }
+
+    /** The main photo of a product gets its everyday sizes right away; a failure here never blocks saving the product. */
+    private function warmPrimary(int $productId): void
+    {
+        try {
+            $key = $this->connection->fetchOne("SELECT ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=? AND pm.role='primary' LIMIT 1", [$productId]);
+            if (is_string($key) && $key !== '') {
+                $this->variants->warm($key);
+            }
+        } catch (\Throwable) {
+        }
     }
 
     public function detachFromProduct(int $productId, int $assetId): void
@@ -186,6 +202,7 @@ final readonly class MediaImageService
                 }
             }
         });
+        $this->warmPrimary($productId);
     }
 
     public function setPrimary(int $productId, int $assetId): void
@@ -197,6 +214,7 @@ final readonly class MediaImageService
             $db->executeStatement("UPDATE mc_product_media SET role='gallery' WHERE product_id=? AND role='primary'", [$productId]);
             $db->executeStatement("UPDATE mc_product_media SET role='primary' WHERE product_id=? AND media_asset_id=?", [$productId, $assetId]);
         });
+        $this->warmPrimary($productId);
     }
 
     public function updateProductImage(
@@ -254,58 +272,43 @@ final readonly class MediaImageService
         }, $rows);
     }
 
-    /** @return array{deleted_assets:int,deleted_files:int} */
-    public function cleanupOrphans(bool $dryRun = true, int $limit = 500): array
-    {
-        $limit = max(1, min(5000, $limit));
-        $rows = $this->connection->fetchAllAssociative(
-            "SELECT ma.id,ma.storage_key,ma.metadata FROM mc_media_asset ma LEFT JOIN mc_product_media pm ON pm.media_asset_id=ma.id LEFT JOIN mc_product_document pd ON pd.media_id=ma.id WHERE pm.media_asset_id IS NULL AND pd.media_id IS NULL AND JSON_EXTRACT(COALESCE(ma.metadata, JSON_OBJECT()), '$.demo') IS NULL ORDER BY ma.id LIMIT {$limit}"
-        );
-        $deletedAssets = 0; $deletedFiles = 0;
-        foreach ($rows as $row) {
-            $metadata = $this->decodeMetadata($row['metadata'] ?? null);
-            $keys = [(string) $row['storage_key']];
-            foreach ((array) ($metadata['derivatives'] ?? []) as $derivative) {
-                if (is_array($derivative) && is_string($derivative['key'] ?? null)) {
-                    $keys[] = $derivative['key'];
-                }
-            }
-            if (!$dryRun) {
-                foreach (array_unique($keys) as $key) {
-                    $path = $this->publicMediaPath($key);
-                    if (is_file($path) && @unlink($path)) {
-                        $deletedFiles++;
-                    }
-                }
-                $this->connection->delete('mc_media_asset', ['id' => (int) $row['id']]);
-            }
-            $deletedAssets++;
-        }
-        return ['deleted_assets' => $deletedAssets, 'deleted_files' => $dryRun ? 0 : $deletedFiles];
-    }
-
-    /** @param array{format:string,widths:list<int>,include_original:bool,quality:int,keep_source:bool,jpeg_fallback:bool} $profile
+    /**
+     * Writes the one MASTER file of an upload (at most MASTER_WIDTH px wide). Every other size is made from it later:
+     * the main product photo right away, everything else on the first request (see MediaVariantService).
+     *
+     * @param array{format:string,quality:int,keep_source:bool,presets:array<string,int>,generation:int} $profile
      * @return list<array{format:string,width:int,height:int,key:string,mime:string,bytes:int,role?:string}>
      */
     private function generateDerivatives(GdImage $source, int $sourceWidth, int $sourceHeight, string $relativeBase, string $sourceMime, array $profile): array
     {
-        $cap = MediaImageProfile::MAX_DERIVATIVE_WIDTH;
-        $targets = array_values(array_filter($profile['widths'], static fn (int $w): bool => $w > 0 && $w < $sourceWidth));
-        // The full-size copy is capped: a 6000 px photo is never served as a 6000 px file (the untouched original is kept separately).
-        if ($profile['include_original'] || $targets === []) $targets[] = min($sourceWidth, $cap);
-        $targets = array_values(array_unique($targets)); sort($targets);
         $format = $profile['format'] === 'original' ? $this->formatFromMime($sourceMime) : $profile['format'];
-        $derivatives=[];
-        foreach($targets as $width){
-            $derivatives[]=$this->resizeAndWrite($source,$sourceWidth,$sourceHeight,$width,$relativeBase.'-'.$width,$format,$profile['quality']);
+        $width = min($sourceWidth, MediaImageProfile::MASTER_WIDTH);
+
+        return [$this->resizeAndWrite($source, $sourceWidth, $sourceHeight, $width, $relativeBase, $format, $profile['quality'])];
+    }
+
+    /** Applies the EXIF orientation of a phone photo, so the master is upright and the variants need no rotation. */
+    private function orientedUpright(GdImage $image, string $raw, int &$width, int &$height): GdImage
+    {
+        if (!function_exists('exif_read_data')) {
+            return $image;
         }
-        if ($profile['jpeg_fallback'] && $format !== 'jpeg') {
-            $width = min($sourceWidth, 1280);
-            $fallback = $this->resizeAndWrite($source,$sourceWidth,$sourceHeight,$width,$relativeBase.'-fallback','jpeg',85);
-            $fallback['role'] = 'fallback';
-            $derivatives[] = $fallback;
+        $exif = @exif_read_data('data://image/jpeg;base64,' . base64_encode(substr($raw, 0, 65536)));
+        $orientation = is_array($exif) ? (int) ($exif['Orientation'] ?? 1) : 1;
+        $angle = match ($orientation) { 3 => 180, 6 => -90, 8 => 90, default => 0 };
+        if ($angle === 0) {
+            return $image;
         }
-        return $derivatives;
+        $rotated = imagerotate($image, $angle, 0);
+        if (!$rotated instanceof GdImage) {
+            return $image;
+        }
+        imagedestroy($image);
+        if ($angle !== 180) {
+            [$width, $height] = [$height, $width];
+        }
+
+        return $rotated;
     }
 
     /** @return array{format:string,width:int,height:int,key:string,mime:string,bytes:int} */
@@ -329,7 +332,7 @@ final readonly class MediaImageService
     private function keepSource(string $raw,string $relativeBase,string $mime,int $width,int $height): array
     {
         $extension=match($mime){'image/png'=>'png','image/webp'=>'webp','image/avif'=>'avif',default=>'jpg'};
-        $key=$relativeBase.'-source.'.$extension;
+        $key=$relativeBase.'.source.'.$extension;
         $path=$this->publicMediaPath($key); $this->ensureDirectory(dirname($path));
         if(@file_put_contents($path,$raw)===false) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
         @chmod($path,0644);
@@ -393,7 +396,7 @@ final readonly class MediaImageService
     }
 
 
-    /** @return array{format:string,widths:list<int>,include_original:bool,quality:int,keep_source:bool,jpeg_fallback:bool} */
+    /** @return array{format:string,quality:int,keep_source:bool,presets:array<string,int>,generation:int} */
     private function processingProfile(int $storeId): array
     {
         $saved=$this->revisions->latestValidPayload($storeId,'media','image_processing');
