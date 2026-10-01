@@ -2,6 +2,11 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.23.1 — 2026-10-01
+
+- Fix: the catalog mega-menu was empty (no categories) on any storefront language that had no category translations yet. The tree now falls back to the store default language for name and URL, so categories always open.
+- Test: every mega-menu category opens on desktop and phone.
+
 ## 3.23.0 — 2026-10-01
 
 Schema 70. Storefront cart/checkout, header and catalog navigation, product page, content pages, admin content tools, cron, media.

@@ -59,15 +59,17 @@ final class StorefrontLayoutExtension extends AbstractExtension
         }
         try {
             $rows = $this->db->fetchAllAssociative(
-                "SELECT c.id,c.parent_id,ct.name,sr.path,(SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id LIMIT 1) AS image_key
+                "SELECT c.id,c.parent_id,COALESCE(ct.name,dt.name) AS name,COALESCE(sr.path,dr.path) AS path,(SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id LIMIT 1) AS image_key
                  FROM mc_category c
                  JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active'
                  JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active'
-                 JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=?
-                 JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id
-                 WHERE c.status='active'
+                 LEFT JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=?
+                 LEFT JOIN mc_category_translation dt ON dt.category_id=c.id AND dt.store_id=? AND dt.locale=(SELECT default_locale FROM mc_store WHERE id=?)
+                 LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id
+                 LEFT JOIN mc_seo_route dr ON dr.store_id=? AND dr.locale=(SELECT default_locale FROM mc_store WHERE id=?) AND dr.entity_type='category' AND dr.entity_public_id=c.public_id
+                 WHERE c.status='active' AND COALESCE(ct.name,dt.name) IS NOT NULL AND COALESCE(sr.path,dr.path) IS NOT NULL
                  ORDER BY sc.sort_order ASC,c.sort_order ASC,c.id ASC LIMIT 600",
-                [$ctx->storeId, $ctx->marketId, $ctx->storeId, $ctx->locale, $ctx->storeId, $ctx->locale],
+                [$ctx->storeId, $ctx->marketId, $ctx->storeId, $ctx->locale, $ctx->storeId, $ctx->storeId, $ctx->storeId, $ctx->locale, $ctx->storeId, $ctx->storeId],
             );
         } catch (\Throwable) {
             return [];
