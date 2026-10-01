@@ -35,6 +35,14 @@ test('product list: actions header, copy button, quick price', async ({ page }) 
   expect((await copied).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
   await expectNoServerError(page);
+
+  // The copy opens in its editor; remove it again so that other specs still find a published first product.
+  await page.waitForURL(/\/admin\/catalog\/products\/[0-9a-f-]{36}\/edit/);
+  const copyId = page.url().match(/products\/([0-9a-f-]{36})\/edit/)?.[1] ?? '';
+  await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
+  const removed = page.waitForResponse((r) => r.request().method() === 'POST' && r.url().endsWith(`/${copyId}/delete`));
+  await page.locator(`form[action="/admin/catalog/products/${copyId}/delete"]`).evaluate((form: HTMLFormElement) => form.requestSubmit());
+  expect((await removed).status()).toBeLessThan(400);
 });
 
 test('sort keeps the current page', async ({ page }) => {

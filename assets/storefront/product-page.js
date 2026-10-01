@@ -378,7 +378,7 @@ function initProductTabs() {
     if (!(root instanceof HTMLElement)) return;
     const tabs = [...root.querySelectorAll('[data-tab]')];
     const panels = [...root.querySelectorAll('[data-tab-panel]')];
-    if (tabs.length === 0) return;
+    if (tabs.length === 0 || root.dataset.mode === 'list') return;
     root.classList.add('is-enhanced');
 
     const activate = (id, { focus = false, scroll = false, updateHash = true } = {}) => {

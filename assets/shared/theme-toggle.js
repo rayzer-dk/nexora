@@ -6,9 +6,10 @@
 export function initThemeToggle(storageKey) {
   const root = document.documentElement;
   const buttons = Array.from(document.querySelectorAll('[data-theme-toggle]'));
-  if (buttons.length === 0 || root.dataset.colorScheme !== 'auto') return;
+  if (buttons.length === 0) return;
   const media = window.matchMedia('(prefers-color-scheme: dark)');
-  const effective = () => root.dataset.theme || (media.matches ? 'dark' : 'light');
+  const base = () => (root.dataset.colorScheme === 'dark' ? 'dark' : root.dataset.colorScheme === 'auto' && media.matches ? 'dark' : 'light');
+  const effective = () => root.dataset.theme || base();
   const sync = () => buttons.forEach((button) => button.setAttribute('aria-pressed', effective() === 'dark' ? 'true' : 'false'));
   buttons.forEach((button) => button.addEventListener('click', () => {
     const next = effective() === 'dark' ? 'light' : 'dark';

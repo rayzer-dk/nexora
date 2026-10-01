@@ -38,7 +38,7 @@ final class AiAdminController extends AbstractController
             return $this->json(['ok' => false, 'message' => CanonicalUiText::get('common.security.invalid_csrf')], 403);
         }
         $r = $request->request;
-        $response = $this->execute($request, 'product_draft', ['name' => (string) $r->get('name', ''), 'sku' => (string) $r->get('sku', ''), 'current' => (string) $r->get('description', '')]);
+        $response = $this->execute($request, 'product_draft', ['name' => (string) $r->get('name', ''), 'sku' => (string) $r->get('sku', ''), 'brand' => (string) $r->get('brand', ''), 'categories' => (string) $r->get('categories', ''), 'attributes' => (string) $r->get('attributes', ''), 'short' => (string) $r->get('short', ''), 'current' => (string) $r->get('description', '')]);
         $data = json_decode((string) $response->getContent(), true);
         if (is_array($data) && ($data['ok'] ?? false) === true) {
             return $this->json(['ok' => true, 'short_description' => $data['fields']['short_description'] ?? '', 'description' => $data['fields']['description'] ?? '']);

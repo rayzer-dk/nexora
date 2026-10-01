@@ -49,9 +49,11 @@ test('admin catalog create, publish, stock-price update and delete are reflected
   await productForm.locator('input[name="price"]').fill('123.45');
   await productForm.locator('input[name="stock_quantity"]').fill('3');
   await openProductTab(page, 'general');
+  await productForm.locator('.admin-multiselect summary').first().click();
   const categoryCheckbox = productForm.locator('label').filter({ hasText: categoryName }).locator('input[name="category_ids[]"]');
   await expect(categoryCheckbox).toBeVisible();
   await categoryCheckbox.check();
+  await page.keyboard.press('Escape');
 
   const productCreate = page.waitForResponse((response) =>
     response.url().endsWith('/admin/catalog/products/new') && response.request().method() === 'POST'
@@ -100,7 +102,7 @@ test('admin catalog create, publish, stock-price update and delete are reflected
   await page.goto('/admin/catalog/products?search=' + encodeURIComponent(sku), { waitUntil: 'domcontentloaded' });
   const productRow = page.locator('table tbody tr').filter({ hasText: sku }).first();
   await expect(productRow).toBeVisible();
-  const deleteProduct = productRow.locator(`form[action="/admin/catalog/products/${productPublicId}/delete"]`);
+  const deleteProduct = page.locator(`form[action="/admin/catalog/products/${productPublicId}/delete"]`);
   const productDeleteResponse = page.waitForResponse((response) =>
     response.url().endsWith(`/admin/catalog/products/${productPublicId}/delete`) && response.request().method() === 'POST'
   );

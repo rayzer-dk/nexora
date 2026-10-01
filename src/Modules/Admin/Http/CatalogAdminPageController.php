@@ -35,6 +35,7 @@ final class CatalogAdminPageController extends AbstractController
         private readonly \Commerce\Modules\CustomField\Application\CustomFieldService $customFields,
         private readonly \Commerce\Modules\ProductInfo\Application\ProductInfoService $productInfo,
         private readonly ProductWriter $products,
+        private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus,
         private readonly CatalogMaintenanceService $maintenance,
         private readonly MediaImageService $media,
         private readonly ProductVariantService $variants,
@@ -136,7 +137,7 @@ final class CatalogAdminPageController extends AbstractController
                     $categoryIds = array_values(array_filter(array_map('intval', $request->request->all('category_ids')), static fn (int $id): bool => $id > 0));
                     $created = $this->products->create(new CreateProductCommand(
                         storeId: $context->storeId, marketId: $context->marketId, locale: $context->locale,
-                        name: (string) $request->request->get('name', ''), sku: (string) $request->request->get('sku', ''),
+                        name: (string) $request->request->get('name', ''), sku: trim((string) $request->request->get('sku', '')) !== '' ? (string) $request->request->get('sku', '') : $this->skus->next(),
                         priceMinor: $this->moneyMinor((string) $request->request->get('price', '0')), currency: $context->currency,
                         stockQuantity: $this->quantity((string) $request->request->get('stock_quantity', '0')),
                         unitCode: (string) $request->request->get('unit_code', 'item'), productType: (string) $request->request->get('product_type', 'physical'),
@@ -163,7 +164,7 @@ final class CatalogAdminPageController extends AbstractController
         }
         $categories = $this->query->categories($context->storeId, $context->locale, 1, 100, '')['items'];
         $brands = $this->query->brands($context->storeId);
-        return $this->render('@storefront/admin/catalog/product_form.html.twig', ['categories' => $categories, 'brands' => $brands, 'product' => null, 'images' => [], 'videos' => [], 'media_items' => [], 'media_folders' => $this->mediaFolderChoices($context->storeId), 'upload_folder' => $this->uploadFolder($request, $context->storeId), 'currency' => $context->currency, 'csrf_id' => 'admin_product_create']);
+        return $this->render('@storefront/admin/catalog/product_form.html.twig', ['categories' => $categories, 'brands' => $brands, 'product' => null, 'images' => [], 'videos' => [], 'media_items' => [], 'media_folders' => $this->mediaFolderChoices($context->storeId), 'upload_folder' => $this->uploadFolder($request, $context->storeId), 'currency' => $context->currency, 'csrf_id' => 'admin_product_create', 'sku_template' => $this->skus->template()]);
     }
 
     #[Route('/admin/catalog/categories/{publicId}/edit', name: 'admin_catalog_category_edit', methods: ['GET', 'POST'])]
@@ -300,6 +301,7 @@ final class CatalogAdminPageController extends AbstractController
         $categories = $this->query->categories($context->storeId, $context->locale, 1, 100, '')['items'];
         $brands = $this->query->brands($context->storeId);
         return $this->render('@storefront/admin/catalog/product_form.html.twig', [
+            'sku_template' => $this->skus->template(),
             'categories' => $categories,
             'brands' => $brands,
             'product' => $product,

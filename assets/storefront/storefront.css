@@ -467,6 +467,7 @@ legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-
 .rich-text h2, .rich-content h2, .article-body h2 { margin-top: var(--mc-space-8); font-size: var(--mc-font-size-xl); }
 .rich-text h3, .rich-content h3, .article-body h3 { margin-top: var(--mc-space-6); }
 .rich-text ul, .rich-text ol, .rich-content ul, .rich-content ol, .article-body ul, .article-body ol { padding-left: var(--mc-space-6); }
+.rte-video { display: block; width: 100%; max-width: 48rem; aspect-ratio: 16 / 9; border: 0; border-radius: var(--mc-radius-md); }
 .rich-text li + li, .rich-content li + li, .article-body li + li { margin-top: var(--mc-space-1); }
 .rich-text img, .rich-content img, .article-body img { border-radius: var(--mc-radius-md); }
 .rich-text a, .rich-content a, .article-body a, .forum-post__body a { text-decoration: underline; }
@@ -830,8 +831,10 @@ commerce-slider, .slider-shell { display: block; min-width: 0; }
 .reference-theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: var(--mc-control-height-md); height: var(--mc-control-height-md); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-full); background: var(--mc-color-background); color: var(--mc-color-text); cursor: pointer; }
 .reference-theme-toggle:hover { border-color: var(--mc-color-border-strong); background: var(--mc-color-surface); }
 .reference-theme-toggle__sun { display: none; }
-:root[data-theme="dark"] .reference-theme-toggle__moon { display: none; }
-:root[data-theme="dark"] .reference-theme-toggle__sun { display: inline-flex; }
+:root[data-theme="dark"] .reference-theme-toggle__moon,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .reference-theme-toggle__moon { display: none; }
+:root[data-theme="dark"] .reference-theme-toggle__sun,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .reference-theme-toggle__sun { display: inline-flex; }
 @media (prefers-color-scheme: dark) {
   :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__moon { display: none; }
   :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__sun { display: inline-flex; }

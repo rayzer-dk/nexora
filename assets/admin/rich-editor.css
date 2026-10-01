@@ -69,3 +69,8 @@
 .rich-editor__content [align="right"] { text-align: right; }
 .rich-editor__content [align="justify"] { text-align: justify; }
 .rich-editor__toolbar .rich-editor__select { width: auto; min-width: 9rem; max-width: 12rem; }
+
+.rich-editor__toolbar .rich-editor__select--narrow { min-width: 4.5rem; max-width: 6.5rem; }
+.rich-editor__color { position: relative; display: inline-flex; align-items: center; gap: var(--mc-space-1); min-height: var(--mc-control-height-sm); padding: 0 var(--mc-space-2); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-xs); background: var(--mc-color-surface-raised); color: var(--mc-color-text); cursor: pointer; }
+.rich-editor__color input[type="color"] { width: 1.25rem; height: 1.25rem; padding: 0; border: 0; background: none; cursor: pointer; }
+.rich-editor__content .rte-video, .rich-text .rte-video { display: block; width: 100%; max-width: 48rem; aspect-ratio: 16 / 9; border: 0; }

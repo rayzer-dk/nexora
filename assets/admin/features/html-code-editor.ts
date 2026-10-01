@@ -1,13 +1,18 @@
-import { EditorState } from '@codemirror/state';
+import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, drawSelection, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { html } from '@codemirror/lang-html';
 import { HighlightStyle, bracketMatching, foldGutter, indentOnInput, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 
+type Palette = typeof monokai;
+
 /** Monokai palette, the same look as the OpenCart source view. */
 const monokai = {
+  dark: true,
   background: '#272822',
+  gutter: '#1e1f1c',
+  gutterText: '#90908a',
   foreground: '#f8f8f2',
   selection: '#49483e',
   cursor: '#f8f8f0',
@@ -20,41 +25,94 @@ const monokai = {
   number: '#ae81ff',
 };
 
-const theme = EditorView.theme(
-  {
-    '&': { color: monokai.foreground, backgroundColor: monokai.background, fontSize: '13px' },
-    '.cm-content': { caretColor: monokai.cursor, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', padding: '8px 0' },
-    '.cm-cursor, .cm-dropCursor': { borderLeftColor: monokai.cursor },
-    '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': { backgroundColor: monokai.selection },
-    '.cm-activeLine': { backgroundColor: monokai.line },
-    '.cm-gutters': { backgroundColor: '#1e1f1c', color: '#90908a', border: 'none' },
-    '.cm-activeLineGutter': { backgroundColor: monokai.line, color: monokai.foreground },
-    '&.cm-focused': { outline: 'none' },
-    '.cm-scroller': { overflow: 'auto', maxHeight: '60vh', minHeight: '240px' },
-    '.cm-matchingBracket, .cm-matchingTag': { backgroundColor: '#49483e', outline: '1px solid #75715e' },
-  },
-  { dark: true },
-);
+const github: Palette = {
+  dark: false,
+  background: '#ffffff',
+  gutter: '#f6f8fa',
+  gutterText: '#6e7781',
+  foreground: '#24292f',
+  selection: '#b6d6fd',
+  cursor: '#24292f',
+  line: '#f3f6fa',
+  comment: '#6e7781',
+  tag: '#116329',
+  attribute: '#0550ae',
+  string: '#0a3069',
+  keyword: '#cf222e',
+  number: '#0550ae',
+};
 
-const highlight = HighlightStyle.define([
-  { tag: [tags.tagName, tags.angleBracket], color: monokai.tag },
-  { tag: tags.attributeName, color: monokai.attribute },
-  { tag: [tags.attributeValue, tags.string], color: monokai.string },
-  { tag: [tags.comment, tags.blockComment], color: monokai.comment, fontStyle: 'italic' },
-  { tag: [tags.keyword, tags.operator], color: monokai.keyword },
-  { tag: [tags.number, tags.bool, tags.atom], color: monokai.number },
-  { tag: tags.content, color: monokai.foreground },
-  { tag: tags.invalid, color: '#f8f8f0', backgroundColor: '#f92672' },
-]);
+const dracula: Palette = {
+  dark: true,
+  background: '#282a36',
+  gutter: '#21222c',
+  gutterText: '#6272a4',
+  foreground: '#f8f8f2',
+  selection: '#44475a',
+  cursor: '#f8f8f0',
+  line: '#343746',
+  comment: '#6272a4',
+  tag: '#ff79c6',
+  attribute: '#50fa7b',
+  string: '#f1fa8c',
+  keyword: '#8be9fd',
+  number: '#bd93f9',
+};
+
+export const CODE_THEMES = { monokai, github, dracula } as const;
+export type CodeThemeName = keyof typeof CODE_THEMES;
+
+const themeExtension = (name: CodeThemeName) => {
+  const palette = CODE_THEMES[name];
+  const view = EditorView.theme(
+    {
+      '&': { color: palette.foreground, backgroundColor: palette.background, fontSize: '13px' },
+      '.cm-content': { caretColor: palette.cursor, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', padding: '8px 0' },
+      '.cm-cursor, .cm-dropCursor': { borderLeftColor: palette.cursor },
+      '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': { backgroundColor: palette.selection },
+      '.cm-activeLine': { backgroundColor: palette.line },
+      '.cm-gutters': { backgroundColor: palette.gutter, color: palette.gutterText, border: 'none' },
+      '.cm-activeLineGutter': { backgroundColor: palette.line, color: palette.foreground },
+      '&.cm-focused': { outline: 'none' },
+      '.cm-scroller': { overflow: 'auto', maxHeight: '60vh', minHeight: '240px' },
+      '.cm-matchingBracket, .cm-matchingTag': { backgroundColor: palette.selection, outline: `1px solid ${palette.comment}` },
+    },
+    { dark: palette.dark },
+  );
+  const highlight = HighlightStyle.define([
+    { tag: [tags.tagName, tags.angleBracket], color: palette.tag },
+    { tag: tags.attributeName, color: palette.attribute },
+    { tag: [tags.attributeValue, tags.string], color: palette.string },
+    { tag: [tags.comment, tags.blockComment], color: palette.comment, fontStyle: 'italic' },
+    { tag: [tags.keyword, tags.operator], color: palette.keyword },
+    { tag: [tags.number, tags.bool, tags.atom], color: palette.number },
+    { tag: tags.content, color: palette.foreground },
+    { tag: tags.invalid, color: '#f8f8f0', backgroundColor: '#f92672' },
+  ]);
+  return [view, syntaxHighlighting(highlight)];
+};
+
+const THEME_KEY = 'mc_code_theme';
+
+/** The theme the admin chose last time (kept in the browser only). */
+export function savedCodeTheme(): CodeThemeName {
+  try {
+    const value = localStorage.getItem(THEME_KEY);
+    if (value !== null && value in CODE_THEMES) return value as CodeThemeName;
+  } catch { /* storage blocked: the default theme */ }
+  return 'monokai';
+}
 
 export interface HtmlCodeEditor {
   getValue(): string;
   setValue(value: string): void;
   focus(): void;
+  setTheme(name: CodeThemeName): void;
   destroy(): void;
 }
 
 export function createHtmlCodeEditor(parent: HTMLElement, value: string, onChange: (value: string) => void, label: string, readOnly = false): HtmlCodeEditor {
+  const themeSlot = new Compartment();
   const view = new EditorView({
     parent,
     state: EditorState.create({
@@ -69,8 +127,7 @@ export function createHtmlCodeEditor(parent: HTMLElement, value: string, onChang
         bracketMatching(),
         highlightActiveLine(),
         html({ autoCloseTags: true, matchClosingTags: true }),
-        syntaxHighlighting(highlight),
-        theme,
+        themeSlot.of(themeExtension(savedCodeTheme())),
         EditorView.lineWrapping,
         ...(readOnly ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : []),
         EditorView.contentAttributes.of({ 'aria-label': label, spellcheck: 'false' }),
@@ -85,6 +142,10 @@ export function createHtmlCodeEditor(parent: HTMLElement, value: string, onChang
     getValue: () => view.state.doc.toString(),
     setValue: (next: string) => view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: next } }),
     focus: () => view.focus(),
+    setTheme: (name: CodeThemeName) => {
+      try { localStorage.setItem(THEME_KEY, name); } catch { /* the choice lasts for this page only */ }
+      view.dispatch({ effects: themeSlot.reconfigure(themeExtension(name)) });
+    },
     destroy: () => view.destroy(),
   };
 }

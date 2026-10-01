@@ -7,3 +7,12 @@ framework:
                 allow_relative_links: true
                 allow_relative_medias: true
                 max_input_length: 250000
+                # Colour, font and line-height from the editor (values are checked by RichTextAttributeSanitizer), anchors and video embeds.
+                allow_elements:
+                    iframe: ['src', 'title', 'allowfullscreen', 'loading', 'class']
+                allow_attributes:
+                    style: ['span', 'p', 'h1', 'h2', 'h3', 'h4', 'li', 'td', 'th']
+                    id: ['h1', 'h2', 'h3', 'h4', 'p']
+                    class: ['iframe']
+                with_attribute_sanitizers:
+                    - 'Commerce\Core\Text\RichTextAttributeSanitizer'

@@ -20,7 +20,7 @@ final class AiTaskService
 {
     /** task => [required input names, output field => max length, instruction] */
     private const TASKS = [
-        'product_draft' => [['name'], ['short_description' => 300, 'description' => 12000], 'Write a short product teaser (plain text, at most 2 sentences) and a full product description as clean HTML using only p, ul, li, strong, h2, h3. Use only facts present in the data; never invent specifications, prices, certifications or guarantees. No H1.'],
+        'product_draft' => [['name'], ['short_description' => 300, 'description' => 12000], 'Write a short product teaser (plain text, at most 2 sentences) and a full product description as clean HTML using only p, ul, li, strong, h2, h3. Use the product name, SKU, brand, categories, attributes and any existing text from the data as the source. Use only facts present in the data; never invent specifications, prices, certifications or guarantees. No H1.'],
         'category_text' => [['name'], ['top' => 1500, 'bottom' => 6000], 'Write an introduction for a product category page (top: 1-2 short paragraphs, HTML with p only) and an SEO text (bottom: HTML using p, h2, ul, li). Natural language, no keyword stuffing, no invented facts, no prices.'],
         'seo_meta' => [['title'], ['meta_title' => 70, 'meta_description' => 170], 'Write an SEO title (at most 60 characters) and a meta description (at most 155 characters) for the page. Plain text, no quotes, no invented facts.'],
         'translate' => [['text', 'target'], ['text' => 20000], 'Translate the text into the target language. Keep every HTML tag and attribute exactly as it is, keep numbers, SKUs and brand names unchanged. Return only the translation.'],
@@ -134,10 +134,15 @@ final class AiTaskService
     private function parse(string $raw, array $outputs): array
     {
         $raw = trim((string) preg_replace('/^```(?:json)?\s*|\s*```$/u', '', trim($raw)));
-        try {
-            $data = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
-            $data = null;
+        $start = strpos($raw, '{');
+        $end = strrpos($raw, '}');
+        if ($start !== false && $end !== false && $end > $start) {
+            $raw = substr($raw, $start, $end - $start + 1);
+        }
+        $data = $this->decode($raw);
+        if ($data === null) {
+            // Models often put raw line breaks inside the JSON strings of a long HTML text; escape them and try once more.
+            $data = $this->decode((string) preg_replace_callback('/"(?:[^"\\\\]|\\\\.)*"/s', static fn (array $m): string => str_replace(["\r", "\n", "\t"], ['\\r', '\\n', '\\t'], $m[0]), $raw));
         }
         if (!is_array($data)) {
             throw new \DomainException(CanonicalUiText::get('admin.ai.error_response'));
@@ -153,6 +158,18 @@ final class AiTaskService
         }
 
         return $fields;
+    }
+
+    /** @return array<mixed>|null */
+    private function decode(string $raw): ?array
+    {
+        try {
+            $data = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        return is_array($data) ? $data : null;
     }
 
     private function languageName(string $locale): string

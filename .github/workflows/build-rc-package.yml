@@ -47,7 +47,7 @@ jobs:
       - name: Validate one-upload runtime package
         run: php bin/release-check.php
 
-      - name: Build production and 3.29.0 update archives
+      - name: Build production and 3.30.0 update archives
         shell: bash
         run: |
           set -euo pipefail
@@ -61,8 +61,8 @@ jobs:
             --exclude 'node_modules/' \
             --exclude 'package-root/' \
             --exclude 'update-root/' \
-            --exclude 'Nexora_Commerce_v3.29.0_Production_CI.zip' \
-            --exclude 'Nexora_v3.22.0_to_v3.29.0_Update.zip'
+            --exclude 'Nexora_Commerce_v3.30.0_Production_CI.zip' \
+            --exclude 'Nexora_v3.22.0_to_v3.30.0_Update.zip'
 
           git diff --name-status "$BASE_PREV"..HEAD > CHANGES_FROM_3.22.0.txt
           git diff --name-only --diff-filter=ACMRT "$BASE_PREV"..HEAD > CHANGED_FILES.txt
@@ -96,35 +96,35 @@ jobs:
             '6. Verify storefront, admin login, cart, checkout and scheduled tasks.' \
             '' \
             'This package includes the complete vendor directory and compiled public/build assets' \
-            'so runtime dependencies match Nexora Commerce 3.29.0.' \
+            'so runtime dependencies match Nexora Commerce 3.30.0.' \
             > update-root/UPDATE_FROM_3.16.0.txt
 
           (
             cd package-root
-            zip -qr ../Nexora_Commerce_v3.29.0_Production_CI.zip .
+            zip -qr ../Nexora_Commerce_v3.30.0_Production_CI.zip .
           )
           (
             cd update-root
-            zip -qr ../Nexora_v3.22.0_to_v3.29.0_Update.zip .
+            zip -qr ../Nexora_v3.22.0_to_v3.30.0_Update.zip .
           )
 
-          sha256sum Nexora_Commerce_v3.29.0_Production_CI.zip > Nexora_Commerce_v3.29.0_Production_CI.zip.sha256
-          sha256sum Nexora_v3.22.0_to_v3.29.0_Update.zip > Nexora_v3.22.0_to_v3.29.0_Update.zip.sha256
+          sha256sum Nexora_Commerce_v3.30.0_Production_CI.zip > Nexora_Commerce_v3.30.0_Production_CI.zip.sha256
+          sha256sum Nexora_v3.22.0_to_v3.30.0_Update.zip > Nexora_v3.22.0_to_v3.30.0_Update.zip.sha256
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Nexora_Commerce_v3.29.0_Production_CI
+          name: Nexora_Commerce_v3.30.0_Production_CI
           path: |
-            Nexora_Commerce_v3.29.0_Production_CI.zip
-            Nexora_Commerce_v3.29.0_Production_CI.zip.sha256
+            Nexora_Commerce_v3.30.0_Production_CI.zip
+            Nexora_Commerce_v3.30.0_Production_CI.zip.sha256
           if-no-files-found: error
           retention-days: 7
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Nexora_v3.22.0_to_v3.29.0_Update
+          name: Nexora_v3.22.0_to_v3.30.0_Update
           path: |
-            Nexora_v3.22.0_to_v3.29.0_Update.zip
-            Nexora_v3.22.0_to_v3.29.0_Update.zip.sha256
+            Nexora_v3.22.0_to_v3.30.0_Update.zip
+            Nexora_v3.22.0_to_v3.30.0_Update.zip.sha256
           if-no-files-found: error
           retention-days: 7

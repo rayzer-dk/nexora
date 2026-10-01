@@ -62,6 +62,14 @@ final class AiTaskServiceTest extends TestCase
         self::assertStringContainsString('Ukrainian', $this->stub->lastPrompt);
     }
 
+    public function testDraftWithChatterAndRawLineBreaksIsStillParsed(): void
+    {
+        $this->stub->reply = "Here is the draft:\n{\"short_description\":\"Short\",\"description\":\"<p>Line one</p>\n<p>Line two</p>\"}\nHope it helps!";
+        $result = $this->service->run(1, 'a', 'product_draft', 'stub', ['name' => 'Laptop', 'brand' => 'Acme', 'categories' => 'Guitars'], 'en-US');
+        self::assertStringContainsString('Line two', $result['fields']['description']);
+        self::assertStringContainsString('Acme', $this->stub->lastPrompt);
+    }
+
     public function testCustomerTextCannotCloseTheDataBlock(): void
     {
         $this->stub->reply = '{"reply":"Thanks"}';

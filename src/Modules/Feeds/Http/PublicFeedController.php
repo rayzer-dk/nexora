@@ -22,7 +22,7 @@ final class PublicFeedController extends AbstractController
         $platform=$platform==='facebook'?'meta':$platform;
         $store=$this->db->fetchAssociative("SELECT id,default_locale,default_currency FROM mc_store WHERE code=? AND status='active' LIMIT 1",[$storeCode]);if(!is_array($store))throw $this->createNotFoundException();
         $locale=trim((string)$request->query->get('locale',(string)$store['default_locale']));
-        $stored=$this->storage->latest($storeCode,$platform,$locale);if($stored===null){$response=new Response('Feed is not generated yet.',Response::HTTP_SERVICE_UNAVAILABLE);$response->headers->set('Retry-After','60');$response->headers->set('Cache-Control','no-store');return $response;}
+        $currency=strtoupper(trim((string)$request->query->get('currency','')));if(preg_match('/^[A-Z]{3}$/D',$currency)!==1||$currency===strtoupper((string)$store['default_currency']))$currency='';$stored=$this->storage->latest($storeCode,$platform,$locale,$currency);if($stored===null){$response=new Response('Feed is not generated yet.',Response::HTTP_SERVICE_UNAVAILABLE);$response->headers->set('Retry-After','60');$response->headers->set('Cache-Control','no-store');return $response;}
         $response=new BinaryFileResponse($stored['path']);$response->headers->set('Content-Type',(string)($stored['meta']['content_type']??'application/octet-stream'));$response->headers->set('Cache-Control','public, max-age=300, stale-while-revalidate=600');$response->headers->set('X-Feed-Items',(string)($stored['meta']['count']??0));$response->headers->set('X-Feed-Skipped',(string)($stored['meta']['skipped']??0));$response->headers->set('X-Content-Type-Options','nosniff');return $response;
     }
 }

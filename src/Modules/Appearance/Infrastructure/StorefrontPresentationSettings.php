@@ -79,6 +79,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'shadow' => 'medium',
                 'density' => 'comfortable',
                 'color_scheme' => 'light',
+                'toggle' => '1',
                 'container' => '1408',
                 'font' => 'system',
             ],
@@ -89,6 +90,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'card_actions' => 'visible',
                 'category_style' => 'classic',
                 'product_layout' => 'classic',
+                'product_details' => 'tabs',
                 'sticky_header' => false,
                 'back_to_top' => true,
                 'sale_timer' => true,
@@ -145,7 +147,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $radius=(int)($input['theme']['radius']??$defaults['theme']['radius']); $out['theme']['radius']=(string)max(4,min(32,$radius));
         $shadow=(string)($input['theme']['shadow']??$defaults['theme']['shadow']); $out['theme']['shadow']=in_array($shadow,['none','soft','medium','strong'],true)?$shadow:$defaults['theme']['shadow'];
         $density=(string)($input['theme']['density']??$defaults['theme']['density']); $out['theme']['density']=in_array($density,['compact','comfortable','spacious'],true)?$density:$defaults['theme']['density'];
-        $scheme=(string)($input['theme']['color_scheme']??$defaults['theme']['color_scheme']); $out['theme']['color_scheme']=in_array($scheme,['light','auto','dark'],true)?$scheme:$defaults['theme']['color_scheme'];
+        $scheme=(string)($input['theme']['color_scheme']??$defaults['theme']['color_scheme']); $out['theme']['color_scheme']=in_array($scheme,['light','auto','dark'],true)?$scheme:$defaults['theme']['color_scheme'];$out['theme']['toggle']=(string)($input['theme']['toggle']??$defaults['theme']['toggle'])==='0'?'0':'1';
         $container=(int)($input['theme']['container']??$defaults['theme']['container']); $out['theme']['container']=(string)max(960,min(1680,$container));
         $font=(string)($input['theme']['font']??$defaults['theme']['font']); $out['theme']['font']=in_array($font,['system','inter','manrope'],true)?$font:$defaults['theme']['font'];
         $choice = static fn (mixed $v, array $allowed, string $fallback): string => in_array((string) $v, $allowed, true) ? (string) $v : $fallback;
@@ -156,6 +158,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $out['display']['card_ratio'] = $choice($in['card_ratio'] ?? $d['card_ratio'], ['square', 'portrait', 'landscape'], $d['card_ratio']);
         $out['display']['card_actions'] = $choice($in['card_actions'] ?? $d['card_actions'], ['visible', 'hover'], $d['card_actions']);
         $out['display']['category_style'] = $choice($in['category_style'] ?? $d['category_style'], ['classic', 'overlay', 'chips'], $d['category_style']);
+        $out['display']['product_details'] = $choice($in['product_details'] ?? $d['product_details'], ['tabs', 'list'], $d['product_details']);
         $out['display']['product_layout'] = $choice($in['product_layout'] ?? $d['product_layout'], ['classic', 'wide', 'stacked', 'split'], $d['product_layout']);
         foreach (['sticky_header', 'back_to_top', 'sale_timer', 'quick_order'] as $flag) {
             $out['display'][$flag] = (bool) ($in[$flag] ?? $d[$flag]);

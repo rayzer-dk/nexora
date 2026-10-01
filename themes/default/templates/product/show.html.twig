@@ -37,12 +37,23 @@
     </section>{% endset %}
     {% set panels = panels|merge({delivery: html ~ (panels.delivery|default(''))}) %}
 {% endif %}
+{% set info_extras = [] %}
+{% for b in product_info_blocks(product.internal_id) %}
+    {% if b.title %}
+        {% set html %}{% include '@storefront/product/_info_block.html.twig' with {b: b|merge({title: ''})} only %}{% endset %}
+        {% set panels = panels|merge({('info' ~ loop.index): html}) %}
+        {% set info_tabs = (info_tabs|default([]))|merge([{id: 'info' ~ loop.index, label: b.title, count: null}]) %}
+    {% else %}
+        {% set info_extras = info_extras|merge([b]) %}
+    {% endif %}
+{% endfor %}
 {% set tabs = [] %}
 {% if panels.description is defined %}{% set tabs = tabs|merge([{id:'description', label:ui_text('description'), count:null}]) %}{% endif %}
 {% if panels.specs is defined %}{% set tabs = tabs|merge([{id:'specs', label:ui_text('attributes'), count:null}]) %}{% endif %}
 {% if panels.reviews is defined %}{% set tabs = tabs|merge([{id:'reviews', label:ui_text('reviews'), count:product.rating.count|default(0)}]) %}{% endif %}
 {% if panels.questions is defined %}{% set tabs = tabs|merge([{id:'questions', label:ui_text('qa_title'), count:product.questions|length}]) %}{% endif %}
 {% if panels.delivery is defined %}{% set tabs = tabs|merge([{id:'delivery', label:ui_text('shipping_payment'), count:null}]) %}{% endif %}
+{% for tab in info_tabs|default([]) %}{% set tabs = tabs|merge([tab]) %}{% endfor %}
 <article class="product-page">
     <div class="shell">{% include '@storefront/components/breadcrumbs.html.twig' with {items: product.breadcrumbs|default([])} only %}</div>
     <div class="shell product-hero">
@@ -62,12 +73,13 @@
 
     {% if tabs %}
     <div class="shell">
-        <section class="pp-tabs" data-product-tabs aria-label="{{ ui_text('ui.product.show.product_details')|e('html_attr') }}">
+        <section class="pp-tabs" data-product-tabs data-mode="{{ presentation.display.product_details|default('tabs') }}" aria-label="{{ ui_text('ui.product.show.product_details')|e('html_attr') }}">
             <div class="pp-tabs__bar" role="tablist">
                 {% for tab in tabs %}<a class="pp-tabs__tab{{ loop.first ? ' is-active' : '' }}" role="tab" id="tab-btn-{{ tab.id }}" href="#tab-{{ tab.id }}" data-tab="{{ tab.id }}" aria-controls="tab-{{ tab.id }}" aria-selected="{{ loop.first ? 'true' : 'false' }}">{{ tab.label }}{% if tab.count %}<span class="pp-tabs__count">{{ tab.count }}</span>{% endif %}</a>{% endfor %}
             </div>
             {% for tab in tabs %}
             <div class="pp-tabs__panel{{ loop.first ? ' is-active' : '' }}" role="tabpanel" id="tab-{{ tab.id }}" aria-labelledby="tab-btn-{{ tab.id }}" data-tab-panel="{{ tab.id }}">
+                <h2 class="pp-tabs__panel-title">{{ tab.label }}</h2>
                 {% if tab.id == 'description' and product.attributes|default([]) %}
                     <div class="pp-split">
                         <div class="pp-split__main">{{ panels.description|raw }}</div>
@@ -87,7 +99,7 @@
 
     <div class="shell product-extras">
         {% for block in extras %}{% include '@storefront/product/_block.html.twig' with {product: product, block: block} only %}{% endfor %}
-        {% for b in product_info_blocks(product.internal_id) %}<section class="product-info-block product-info-block--{{ b.type }}">{% if b.title %}<h2>{{ b.title }}</h2>{% endif %}{% if b.type == 'info' %}<div class="product-info-block__body">{{ b.html|raw }}</div>{% elseif b.type == 'list' %}<ul class="product-info-block__list">{% for item in b.items %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<div class="product-info-block__table"><table><thead><tr>{% for c in b.columns %}<th scope="col">{{ c }}</th>{% endfor %}</tr></thead><tbody>{% for row in b.rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% endif %}</section>{% endfor %}
+        {% for b in info_extras %}{% include '@storefront/product/_info_block.html.twig' with {b: b} only %}{% endfor %}
         {% set product_articles_list = product_articles(product.internal_id) %}{% if product_articles_list %}<section class="product-articles detail-card"><h2>{{ ui_text('product_articles') }}</h2><ul class="product-articles__list">{% for a in product_articles_list %}<li><a href="{{ a.path }}">{{ a.title }}</a></li>{% endfor %}</ul></section>{% endif %}
     </div>
 

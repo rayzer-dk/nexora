@@ -9,14 +9,17 @@ import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
 import { TableKit } from '@tiptap/extension-table';
 import { Placeholder } from '@tiptap/extensions';
+import { TextStyleKit } from '@tiptap/extension-text-style';
 import {
   Bold, Italic, Underline, Strikethrough, Subscript as SubIcon, Superscript as SupIcon, Highlighter, List, ListOrdered, Quote, Minus, Table2,
   ImagePlus, Link2, Unlink, RemoveFormatting, Code, Undo2, Redo2, Maximize2, Minimize2, X, FolderOpen,
+  Palette, PaintBucket, Anchor as AnchorIcon, Video as VideoIcon,
   TextAlignStart, TextAlignCenter, TextAlignEnd, TextAlignJustify, Rows3, Columns3, Trash2,
 } from '@lucide/vue';
 import { BlockAlign } from '../features/editor-align';
+import { BlockAnchor, Video, videoEmbedUrl } from '../features/editor-extras';
 import { pickMedia } from '../features/media-picker';
-import type { HtmlCodeEditor } from '../features/html-code-editor';
+import type { CodeThemeName, HtmlCodeEditor } from '../features/html-code-editor';
 
 const props = withDefaults(defineProps<{ modelValue: string; placeholder?: string }>(), { placeholder: t('vue.components.richtexteditor.pochnit_vvodyty_tekst') });
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
@@ -31,6 +34,9 @@ const editor = new Editor({
     Subscript,
     Superscript,
     BlockAlign,
+    BlockAnchor,
+    Video,
+    TextStyleKit,
     TableKit.configure({ table: { resizable: false } }),
     Placeholder.configure({ placeholder: props.placeholder }),
   ],
@@ -49,7 +55,7 @@ const setFullscreen = (value: boolean) => {
   document.body.classList.toggle('has-admin-modal', value);
 };
 const onKey = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && fullscreen.value && !linkDialog.open && !imageDialog.open) setFullscreen(false);
+  if (event.key === 'Escape' && fullscreen.value && !linkDialog.open && !imageDialog.open && !anchorDialog.open && !videoDialog.open) setFullscreen(false);
 };
 onMounted(() => document.addEventListener('keydown', onKey));
 
@@ -57,12 +63,18 @@ onMounted(() => document.addEventListener('keydown', onKey));
 const sourceMode = ref(false);
 const sourceHost = ref<HTMLElement | null>(null);
 let code: HtmlCodeEditor | null = null;
+const codeTheme = ref<CodeThemeName>('monokai');
+const changeCodeTheme = (event: Event) => {
+  codeTheme.value = (event.target as HTMLSelectElement).value as CodeThemeName;
+  code?.setTheme(codeTheme.value);
+};
 const toggleSource = async () => {
   if (!sourceMode.value) {
     sourceMode.value = true;
     await nextTick();
     if (!sourceHost.value) return;
-    const { createHtmlCodeEditor } = await import('../features/html-code-editor');
+    const { createHtmlCodeEditor, savedCodeTheme } = await import('../features/html-code-editor');
+    codeTheme.value = savedCodeTheme();
     code = createHtmlCodeEditor(sourceHost.value, editor.getHTML(), (value) => emit('update:modelValue', value), tr('html'));
     code.focus();
     return;
@@ -104,7 +116,7 @@ const align = (value: 'left' | 'center' | 'right' | 'justify') => {
 const isAligned = (value: string) => (editor.getAttributes('paragraph').align ?? editor.getAttributes('heading').align ?? editor.getAttributes('image').align ?? null) === value;
 
 // ---- link dialog ----
-const linkDialog = reactive({ open: false, url: '', text: '', blank: false, nofollow: false, hasLink: false, hasSelection: false });
+const linkDialog = reactive({ open: false, url: '', text: '', blank: false, nofollow: false, sponsored: false, ugc: false, hasLink: false, hasSelection: false });
 const linkUrlInput = ref<HTMLInputElement | null>(null);
 const openLink = async () => {
   const attrs = editor.getAttributes('link') as { href?: string; target?: string | null; rel?: string | null };
@@ -113,6 +125,8 @@ const openLink = async () => {
   linkDialog.url = attrs.href ?? '';
   linkDialog.blank = attrs.target === '_blank';
   linkDialog.nofollow = (attrs.rel ?? '').includes('nofollow');
+  linkDialog.sponsored = (attrs.rel ?? '').includes('sponsored');
+  linkDialog.ugc = (attrs.rel ?? '').includes('ugc');
   linkDialog.hasSelection = from !== to || linkDialog.hasLink;
   linkDialog.text = linkDialog.hasLink ? '' : editor.state.doc.textBetween(from, to, ' ');
   linkDialog.open = true;
@@ -123,7 +137,7 @@ const closeLink = () => { linkDialog.open = false; editor.commands.focus(); };
 const applyLink = () => {
   const url = linkDialog.url.trim();
   if (url === '') { removeLink(); return; }
-  const rel = [linkDialog.blank ? 'noopener' : '', linkDialog.blank ? 'noreferrer' : '', linkDialog.nofollow ? 'nofollow' : ''].filter(Boolean).join(' ') || null;
+  const rel = [linkDialog.blank ? 'noopener' : '', linkDialog.blank ? 'noreferrer' : '', linkDialog.nofollow ? 'nofollow' : '', linkDialog.sponsored ? 'sponsored' : '', linkDialog.ugc ? 'ugc' : ''].filter(Boolean).join(' ') || null;
   const attrs = { href: url, target: linkDialog.blank ? '_blank' : null, rel };
   if (linkDialog.hasSelection) {
     editor.chain().focus().extendMarkRange('link').setLink(attrs).run();
@@ -160,6 +174,72 @@ const insertFromUrl = () => {
   imageDialog.open = false;
 };
 
+
+// ---- colour, font, size, line height ----
+const FONTS = ['Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma', 'Trebuchet MS'];
+const SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 40, 48];
+const LINE_HEIGHTS = ['1', '1.15', '1.3', '1.5', '1.8', '2'];
+const textStyle = (name: string): string => String((editor.getAttributes('textStyle') as Record<string, unknown>)[name] ?? '');
+const fontValue = (): string => textStyle('fontFamily').replace(/["']/g, '').split(',')[0]?.trim() ?? '';
+const normalizeHex = (value: string): string => (/^#[0-9a-fA-F]{6}$/.test(value) ? value : '#000000');
+const setColor = (event: Event) => { editor.chain().focus().setColor((event.target as HTMLInputElement).value).run(); };
+const setBackground = (event: Event) => { editor.chain().focus().setBackgroundColor((event.target as HTMLInputElement).value).run(); };
+const clearColors = () => { editor.chain().focus().unsetColor().unsetBackgroundColor().run(); };
+const setFont = (event: Event) => {
+  const value = (event.target as HTMLSelectElement).value;
+  if (value === '') editor.chain().focus().unsetFontFamily().run();
+  else editor.chain().focus().setFontFamily(value).run();
+};
+const setSize = (event: Event) => {
+  const value = (event.target as HTMLSelectElement).value;
+  if (value === '') editor.chain().focus().unsetFontSize().run();
+  else editor.chain().focus().setFontSize(`${value}px`).run();
+};
+const setLineHeight = (event: Event) => {
+  const value = (event.target as HTMLSelectElement).value;
+  if (value === '') editor.chain().focus().unsetLineHeight().run();
+  else editor.chain().focus().setLineHeight(value).run();
+};
+
+// ---- anchor dialog ----
+const anchorDialog = reactive({ open: false, id: '', has: false });
+const anchorInput = ref<HTMLInputElement | null>(null);
+const openAnchor = async () => {
+  const current = (editor.getAttributes('heading').id ?? editor.getAttributes('paragraph').id ?? '') as string;
+  anchorDialog.id = current;
+  anchorDialog.has = current !== '';
+  anchorDialog.open = true;
+  await nextTick();
+  anchorInput.value?.focus();
+};
+const closeAnchor = () => { anchorDialog.open = false; editor.commands.focus(); };
+const anchorValid = () => /^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(anchorDialog.id.trim());
+const applyAnchor = () => {
+  if (!anchorValid()) return;
+  editor.chain().focus().setBlockAnchor(anchorDialog.id.trim()).run();
+  anchorDialog.open = false;
+};
+const removeAnchor = () => {
+  editor.chain().focus().unsetBlockAnchor().run();
+  anchorDialog.open = false;
+};
+
+// ---- video dialog ----
+const videoDialog = reactive({ open: false, url: '' });
+const videoInput = ref<HTMLInputElement | null>(null);
+const openVideo = async () => {
+  videoDialog.url = '';
+  videoDialog.open = true;
+  await nextTick();
+  videoInput.value?.focus();
+};
+const closeVideo = () => { videoDialog.open = false; editor.commands.focus(); };
+const insertVideo = () => {
+  if (videoEmbedUrl(videoDialog.url) === null) return;
+  editor.chain().focus().setVideo(videoDialog.url).run();
+  videoDialog.open = false;
+};
+
 const insertTable = () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
 const words = (): number => {
   const text = editor.getText().trim();
@@ -182,6 +262,22 @@ const words = (): number => {
         <option value="pre">{{ tr('code_block') }}</option>
       </select>
       <span class="rich-editor__sep" aria-hidden="true"></span>
+      <select class="rich-editor__select" :aria-label="tr('font_family')" :title="tr('font_family')" :disabled="sourceMode" :value="fontValue()" @change="setFont">
+        <option value="">{{ tr('font_default') }}</option>
+        <option v-for="font in FONTS" :key="font" :value="font">{{ font }}</option>
+      </select>
+      <select class="rich-editor__select rich-editor__select--narrow" :aria-label="tr('font_size')" :title="tr('font_size')" :disabled="sourceMode" :value="textStyle('fontSize').replace('px', '')" @change="setSize">
+        <option value="">{{ tr('font_size') }}</option>
+        <option v-for="size in SIZES" :key="size" :value="String(size)">{{ size }}</option>
+      </select>
+      <select class="rich-editor__select rich-editor__select--narrow" :aria-label="tr('line_height')" :title="tr('line_height')" :disabled="sourceMode" :value="textStyle('lineHeight')" @change="setLineHeight">
+        <option value="">{{ tr('line_height') }}</option>
+        <option v-for="height in LINE_HEIGHTS" :key="height" :value="height">{{ height }}</option>
+      </select>
+      <label class="rich-editor__color" :title="tr('text_color')"><Palette :size="16" /><input type="color" :aria-label="tr('text_color')" :disabled="sourceMode" :value="normalizeHex(textStyle('color'))" @input="setColor"></label>
+      <label class="rich-editor__color" :title="tr('bg_color')"><PaintBucket :size="16" /><input type="color" :aria-label="tr('bg_color')" :disabled="sourceMode" :value="normalizeHex(textStyle('backgroundColor') || '#ffff00')" @input="setBackground"></label>
+      <button type="button" :title="tr('color_reset')" :aria-label="tr('color_reset')" :disabled="sourceMode" @click="clearColors"><X :size="14" /></button>
+      <span class="rich-editor__sep" aria-hidden="true"></span>
       <button type="button" :title="tr('bold')" :aria-label="tr('bold')" :disabled="sourceMode" :class="{ active: editor.isActive('bold') }" @click="editor.chain().focus().toggleBold().run()"><Bold :size="16" /></button>
       <button type="button" :title="tr('italic')" :aria-label="tr('italic')" :disabled="sourceMode" :class="{ active: editor.isActive('italic') }" @click="editor.chain().focus().toggleItalic().run()"><Italic :size="16" /></button>
       <button type="button" :title="tr('underline')" :aria-label="tr('underline')" :disabled="sourceMode" :class="{ active: editor.isActive('underline') }" @click="editor.chain().focus().toggleUnderline().run()"><Underline :size="16" /></button>
@@ -202,11 +298,14 @@ const words = (): number => {
       <span class="rich-editor__sep" aria-hidden="true"></span>
       <button type="button" :title="tr('link')" :aria-label="tr('link')" :disabled="sourceMode" :class="{ active: editor.isActive('link') }" @click="openLink"><Link2 :size="16" /></button>
       <button type="button" :title="tr('unlink')" :aria-label="tr('unlink')" :disabled="sourceMode || !editor.isActive('link')" @click="removeLink"><Unlink :size="16" /></button>
+      <button type="button" :title="tr('anchor')" :aria-label="tr('anchor')" :disabled="sourceMode" :class="{ active: editor.getAttributes('heading').id || editor.getAttributes('paragraph').id }" @click="openAnchor"><AnchorIcon :size="16" /></button>
       <button type="button" :title="tr('image')" :aria-label="tr('image')" :disabled="sourceMode" @click="openImage"><ImagePlus :size="16" /></button>
+      <button type="button" :title="tr('video')" :aria-label="tr('video')" :disabled="sourceMode" @click="openVideo"><VideoIcon :size="16" /></button>
       <button type="button" :title="tr('table')" :aria-label="tr('table')" :disabled="sourceMode" @click="insertTable"><Table2 :size="16" /></button>
       <button type="button" :title="tr('clear')" :aria-label="tr('clear')" :disabled="sourceMode" @click="editor.chain().focus().clearNodes().unsetAllMarks().run()"><RemoveFormatting :size="16" /></button>
       <span class="rich-editor__spacer" aria-hidden="true"></span>
       <button type="button" :title="fullscreen ? tr('exit_fullscreen') : tr('fullscreen')" :aria-label="fullscreen ? tr('exit_fullscreen') : tr('fullscreen')" :aria-pressed="fullscreen" @click="setFullscreen(!fullscreen)"><Minimize2 v-if="fullscreen" :size="16" /><Maximize2 v-else :size="16" /></button>
+      <select v-if="sourceMode" class="rich-editor__select rich-editor__select--narrow" :aria-label="tr('code_theme')" :title="tr('code_theme')" :value="codeTheme" @change="changeCodeTheme"><option value="monokai">Monokai</option><option value="dracula">Dracula</option><option value="github">GitHub</option></select>
       <button type="button" class="rich-editor__source-toggle" :title="tr('html')" :aria-label="tr('html')" :aria-pressed="sourceMode" :class="{ active: sourceMode }" @click="toggleSource"><Code :size="16" /> <span>HTML</span></button>
     </div>
     <div v-if="!sourceMode && editor.isActive('table')" class="rich-editor__toolbar rich-editor__toolbar--table" role="toolbar" :aria-label="tr('table')">
@@ -229,6 +328,8 @@ const words = (): number => {
         <label v-if="!linkDialog.hasSelection"><span>{{ tr('link_text') }}</span><input v-model="linkDialog.text" type="text" autocomplete="off"></label>
         <label class="rich-editor__check"><input v-model="linkDialog.blank" type="checkbox"><span>{{ tr('link_blank') }}</span></label>
         <label class="rich-editor__check"><input v-model="linkDialog.nofollow" type="checkbox"><span>{{ tr('link_nofollow') }}</span></label>
+        <label class="rich-editor__check"><input v-model="linkDialog.sponsored" type="checkbox"><span>{{ tr('link_sponsored') }}</span></label>
+        <label class="rich-editor__check"><input v-model="linkDialog.ugc" type="checkbox"><span>{{ tr('link_ugc') }}</span></label>
         <div class="rich-editor__dialog-actions">
           <button v-if="linkDialog.hasLink" type="button" class="admin-button is-danger" @click="removeLink">{{ tr('link_remove') }}</button>
           <button type="button" class="admin-button" @click="closeLink">{{ tr('cancel') }}</button>
@@ -248,6 +349,31 @@ const words = (): number => {
         <div class="rich-editor__dialog-actions">
           <button type="button" class="admin-button" @click="closeImage">{{ tr('cancel') }}</button>
           <button type="submit" class="admin-button is-primary" :disabled="imageDialog.url.trim() === ''">{{ tr('image_insert') }}</button>
+        </div>
+      </form>
+    </div>
+
+    <div v-if="anchorDialog.open" class="rich-editor__modal" role="presentation" @mousedown.self="closeAnchor">
+      <form class="rich-editor__dialog" role="dialog" aria-modal="true" :aria-label="tr('anchor_title')" @submit.prevent="applyAnchor" @keydown.esc.stop="closeAnchor">
+        <button type="button" class="admin-modal__close" :title="tr('close')" :aria-label="tr('close')" @click="closeAnchor"><X :size="18" /></button>
+        <h3>{{ tr('anchor_title') }}</h3>
+        <label><span>{{ tr('anchor_name') }}</span><input ref="anchorInput" v-model="anchorDialog.id" type="text" maxlength="64" autocomplete="off" placeholder="specs"><small>{{ tr('anchor_help') }}</small></label>
+        <div class="rich-editor__dialog-actions">
+          <button v-if="anchorDialog.has" type="button" class="admin-button is-danger" @click="removeAnchor">{{ tr('link_remove') }}</button>
+          <button type="button" class="admin-button" @click="closeAnchor">{{ tr('cancel') }}</button>
+          <button type="submit" class="admin-button is-primary" :disabled="!anchorValid()">{{ tr('apply') }}</button>
+        </div>
+      </form>
+    </div>
+
+    <div v-if="videoDialog.open" class="rich-editor__modal" role="presentation" @mousedown.self="closeVideo">
+      <form class="rich-editor__dialog" role="dialog" aria-modal="true" :aria-label="tr('video_title')" @submit.prevent="insertVideo" @keydown.esc.stop="closeVideo">
+        <button type="button" class="admin-modal__close" :title="tr('close')" :aria-label="tr('close')" @click="closeVideo"><X :size="18" /></button>
+        <h3>{{ tr('video_title') }}</h3>
+        <label><span>{{ tr('video_url') }}</span><input ref="videoInput" v-model="videoDialog.url" type="text" inputmode="url" placeholder="https://www.youtube.com/watch?v=…" autocomplete="off"><small>{{ videoDialog.url.trim() !== '' && videoEmbedUrl(videoDialog.url) === null ? tr('video_invalid') : tr('video_help') }}</small></label>
+        <div class="rich-editor__dialog-actions">
+          <button type="button" class="admin-button" @click="closeVideo">{{ tr('cancel') }}</button>
+          <button type="submit" class="admin-button is-primary" :disabled="videoEmbedUrl(videoDialog.url) === null">{{ tr('image_insert') }}</button>
         </div>
       </form>
     </div>

@@ -215,6 +215,63 @@ function initThumbZoom() {
   document.addEventListener('scroll', hide, true);
 }
 
+/** Product code generator: asks the server for the next code by the template (the template is remembered on the server). */
+function initSkuGenerator() {
+  document.querySelectorAll('[data-sku-generate]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const field = button.closest('.admin-sku-field');
+      const input = field?.querySelector('input[name="sku"]');
+      const template = field?.querySelector('[data-sku-template]');
+      if (!input) return;
+      button.disabled = true;
+      try {
+        const body = new URLSearchParams({ _token: button.dataset.token || '', template: template?.value || '' });
+        const response = await fetch(button.dataset.url || '', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body });
+        const data = await response.json();
+        if (data.ok && data.sku) {
+          input.value = data.sku;
+          if (template && data.template) template.value = data.template;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        } else {
+          template?.focus();
+        }
+      } catch { /* the field stays as it was */ } finally {
+        button.disabled = false;
+      }
+    });
+  });
+}
+
+
+/** Product attributes: only the ones with a value are shown; others are found by typing a name (datalist) and added. */
+function initAttributePicker() {
+  const search = q('[data-attr-search]');
+  if (!search) return;
+  const rows = qa('[data-attr-row]');
+  const reveal = (row) => {
+    row.hidden = false;
+    const field = q('input, select', row);
+    field?.focus();
+  };
+  search.addEventListener('change', () => {
+    const needle = search.value.trim().toLowerCase();
+    if (needle === '') return;
+    const row = rows.find((candidate) => (candidate.dataset.attrName || '').toLowerCase() === needle);
+    if (!row) return;
+    reveal(row);
+    search.value = '';
+  });
+  rows.forEach((row) => {
+    q('[data-attr-remove]', row)?.addEventListener('click', () => {
+      const field = q('input, select', row);
+      if (field) field.value = '';
+      row.hidden = true;
+      row.closest('form')?.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
+}
+
+
 function initQuickPrice() {
   qa('[data-quick-price]').forEach((box) => {
     const input = q('[data-quick-price-input]', box);
@@ -264,11 +321,33 @@ function initMultiSelects() {
     else if (checked.length === 1) text.textContent = checked[0].closest('label')?.textContent?.trim() || '';
     else text.textContent = (box.dataset.multiselectMany || '%count%').replace('%count%', String(checked.length));
   };
+  const chips = (box) => {
+    const host = box.querySelector('[data-multiselect-chips]');
+    if (!host) return;
+    host.textContent = '';
+    box.querySelectorAll('input[type="checkbox"]:checked').forEach((input) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'admin-chip';
+      chip.title = input.closest('label')?.textContent?.trim() || '';
+      const label = document.createElement('span');
+      label.textContent = chip.title;
+      chip.append(label, lucideIconNode('x', 12));
+      chip.addEventListener('click', () => { input.checked = false; input.dispatchEvent(new Event('change', { bubbles: true })); });
+      host.append(chip);
+    });
+  };
   boxes.forEach((box) => {
-    box.addEventListener('change', () => refresh(box));
+    box.addEventListener('change', () => { refresh(box); chips(box); });
+    chips(box);
+    box.querySelector('[data-multiselect-search]')?.addEventListener('input', (event) => {
+      const needle = event.target.value.trim().toLowerCase();
+      box.querySelectorAll('.admin-multiselect__panel > label').forEach((label) => { label.hidden = needle !== '' && !(label.textContent || '').toLowerCase().includes(needle); });
+    });
     box.querySelector('[data-multiselect-clear]')?.addEventListener('click', () => {
       box.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; });
       refresh(box);
+      chips(box);
     });
   });
   document.addEventListener('click', (event) => {
@@ -1269,6 +1348,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initSlugGenerators();
   initMediaSortable();
   initMultiSelects();
+  initSkuGenerator();
+  initAttributePicker();
   initQuickPrice();
   initThumbZoom();
   initProductTabs();

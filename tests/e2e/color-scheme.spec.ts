@@ -30,10 +30,10 @@ test('color scheme configured in admin drives the storefront: light, auto with v
   const visitor = await page.context().browser()!.newContext({ colorScheme: 'dark', baseURL: testInfo.project.use.baseURL });
   const shop = await visitor.newPage();
   try {
-    // Default: light, no toggle, even on a dark device.
+    // Default: light even on a dark device; the visitor still gets a toggle.
     await shop.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(shop.locator('html')).toHaveAttribute('data-color-scheme', 'light');
-    await expect(shop.locator('[data-theme-toggle]')).toHaveCount(0);
+    await expect(shop.locator('[data-theme-toggle]')).toBeVisible();
     const light = await background(shop);
 
     // Auto: follows the dark device and offers a toggle that remembers the visitor's choice.
@@ -48,13 +48,14 @@ test('color scheme configured in admin drives the storefront: light, auto with v
     await shop.reload({ waitUntil: 'domcontentloaded' });
     await expect(shop.locator('html')).toHaveAttribute('data-theme', 'light');
 
-    // Dark: always dark unless the visitor explicitly chose light in auto mode (no toggle here).
+    // Dark: always dark unless the visitor explicitly chose light in auto mode (the toggle is still offered).
     await setScheme(page, 'dark');
     const fresh = await visitor.newPage();
+    await fresh.addInitScript(() => { try { localStorage.removeItem('mc_theme'); } catch { /* storage blocked */ } });
     await fresh.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(fresh.locator('html')).toHaveAttribute('data-color-scheme', 'dark');
     expect(await background(fresh)).not.toBe(light);
-    await expect(fresh.locator('[data-theme-toggle]')).toHaveCount(0);
+    await expect(fresh.locator('[data-theme-toggle]')).toBeVisible();
   } finally {
     await setScheme(page, 'light');
     await visitor.close();

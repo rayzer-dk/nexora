@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ProductWorkspaceAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly ProductWriter $writer, private readonly Connection $db, private readonly \Commerce\Modules\Catalog\Application\ProductBulkEditor $editor, private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo) {}
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly ProductWriter $writer, private readonly Connection $db, private readonly \Commerce\Modules\Catalog\Application\ProductBulkEditor $editor, private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo, private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus) {}
 
     #[Route('/admin/catalog/products/bulk-edit', name:'admin_catalog_products_bulk_edit', methods:['GET','POST'])]
     public function bulkEdit(Request $request): Response
@@ -33,6 +33,18 @@ final class ProductWorkspaceAdminController extends AbstractController
         return $this->render('@storefront/admin/catalog/bulk_edit.html.twig',['rows'=>$rows]);
     }
 
+
+    /** Next product code by the template (saves the template when one is sent). Answers JSON. */
+    #[Route('/admin/catalog/sku/next', name:'admin_catalog_sku_next', methods:['POST'])]
+    public function skuNext(Request $request): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        $this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('admin_sku',(string)$request->request->get('_token')))return $this->json(['ok'=>false],403);
+        $template=(string)$request->request->get('template','');
+        if(trim($template)!=='')$template=$this->skus->saveTemplate($template);
+        $sku=$this->skus->next($template);
+        return $this->json(['ok'=>$sku!=='','sku'=>$sku,'template'=>$template!==''?$template:$this->skus->template()]);
+    }
 
     /** Changes only the price of one product from the list (Enter or leaving the field). Answers JSON. */
     #[Route('/admin/catalog/products/{publicId}/quick-price', name:'admin_catalog_product_quick_price', methods:['POST'])]

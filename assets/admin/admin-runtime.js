@@ -18,7 +18,15 @@ if (aiDraftButton) {
     aiDraftButton.disabled = true;
     status.textContent = t('admin.ai.generating');
     try {
-      const body = new URLSearchParams({_token: token.value, provider: provider.value, name: name?.value || '', sku: sku?.value || '', description: description?.value || ''});
+      const brandSelect = form.querySelector('[name="brand_id"]');
+      const brand = brandSelect && brandSelect.value !== '0' ? (brandSelect.selectedOptions[0]?.textContent || '').trim() : '';
+      const categories = Array.from(form.querySelectorAll('[name="category_ids[]"]:checked')).map((box) => box.closest('label')?.textContent?.trim() || '').filter(Boolean).join(', ');
+      const attributes = Array.from(form.querySelectorAll('[name^="attribute["]')).map((input) => {
+        const value = input instanceof HTMLSelectElement ? (input.value === '' ? '' : (input.selectedOptions[0]?.textContent || '').trim()) : String(input.value || '').trim();
+        const label = input.closest('label')?.querySelector('span')?.textContent?.trim() || '';
+        return value !== '' && label !== '' ? `${label}: ${value}` : '';
+      }).filter(Boolean).join('; ');
+      const body = new URLSearchParams({_token: token.value, provider: provider.value, name: name?.value || '', sku: sku?.value || '', description: description?.value || '', short: shortDescription?.value || '', brand, categories, attributes});
       const response = await fetch('/admin/api/ai/product-draft', {method:'POST', headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body});
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'AI request failed');

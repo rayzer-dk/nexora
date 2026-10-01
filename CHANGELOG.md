@@ -2,6 +2,17 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.30.0 — 2026-10-01
+
+Admin editor, product form and storefront fixes.
+
+- Rich-text editor: text and background colour, font family, size, line spacing, YouTube/Vimeo video, anchors, rel sponsored/ugc on links, selectable HTML-code theme (Monokai/Dracula/GitHub). The server sanitizer keeps only checked style values, anchor ids and player addresses.
+- Product form: product code generator by template (GTR-###), empty code on create gets the next one; attributes are added by searching their name (only filled ones are shown); categories are a searchable dropdown with chips.
+- AI product description: tolerant parsing of the model answer, brand/categories/attributes are sent as context.
+- Feeds: all skip reasons listed per channel; per-currency feeds (`&currency=XXX`).
+- Storefront: light/dark toggle available in every colour mode (setting "show toggle"); product details can be shown as tabs or one list; titled product info blocks become tabs.
+- Media library: compact icon buttons with hover labels.
+
 ## 3.29.0 — 2026-10-01
 
 Admin product list fixes.

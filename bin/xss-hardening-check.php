@@ -18,6 +18,7 @@ foreach ($mustContain as $file => $needles) {
 
 $allowedRaw = [
     'themes/default/templates/product/show.html.twig',
+    'themes/default/templates/product/_info_block.html.twig',
     'themes/default/templates/product/blocks/description.html.twig',
     'themes/default/templates/blog/article.html.twig',
     'themes/default/templates/content/page.html.twig',
