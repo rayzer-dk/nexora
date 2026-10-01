@@ -1,0 +1,33 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{% import _self as m %}
+{{ shell.start(ui_text('admin.system.maintenance.title'),'maintenance') }}
+{% macro size(bytes) %}{{ (bytes / 1048576)|number_format(1, '.', ' ') }} MB{% endmacro %}
+{% macro action(name, tone, overview_note) %}
+<form method="post" action="{{ path('admin_system_maintenance_run', {action: name}) }}" class="admin-maintenance__action">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_maintenance') }}">
+    <div class="admin-maintenance__text"><strong>{{ ui_text('admin.system.maintenance.' ~ name ~ '.title') }}</strong><p>{{ ui_text('admin.system.maintenance.' ~ name ~ '.help') }}</p>{% if overview_note %}<small>{{ overview_note }}</small>{% endif %}</div>
+    <button type="submit" class="admin-button{{ tone == 'danger' ? ' is-danger' : '' }}" data-confirm="{{ ui_text('admin.system.maintenance.' ~ name ~ '.confirm') }}">{{ ui_text('admin.system.maintenance.run') }}</button>
+</form>
+{% endmacro %}
+<header class="admin-page-header">
+    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.system.maintenance.title') }}</span></nav><h1>{{ ui_text('admin.system.maintenance.title') }}</h1><p>{{ ui_text('admin.system.maintenance.intro') }}</p></div>
+</header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><h2>{{ ui_text('admin.system.maintenance.cache_section') }}</h2><p>{{ ui_text('admin.system.maintenance.auto_note') }}</p></div></div>
+    <div class="admin-maintenance">
+        {{ m.action('storefront', 'normal', null) }}
+        {{ m.action('templates', 'normal', overview.templates.files ~ ' · ' ~ m.size(overview.templates.bytes)) }}
+        {{ m.action('app', 'normal', null) }}
+        {{ m.action('opcache', 'normal', overview.opcache ? ui_text('admin.system.maintenance.opcache_on') : ui_text('admin.system.maintenance.opcache_off')) }}
+        {{ m.action('all', 'danger', null) }}
+    </div>
+</section>
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><h2>{{ ui_text('admin.system.maintenance.images_section') }}</h2><p>{{ ui_text('admin.system.maintenance.images_note') }}</p></div></div>
+    <div class="admin-maintenance">
+        {{ m.action('images', 'normal', overview.images.files ~ ' · ' ~ m.size(overview.images.bytes) ~ ' · ' ~ ui_text('admin.system.maintenance.generation') ~ ' ' ~ overview.generation ~ ' · ' ~ (overview.avif ? 'AVIF + WebP' : 'WebP/JPEG')) }}
+        {{ m.action('warm', 'normal', null) }}
+    </div>
+</section>
+{{ shell.end() }}

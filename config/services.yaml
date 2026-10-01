@@ -433,6 +433,15 @@ services:
             $secret: '%kernel.secret%'
             $cache: '@cache.app'
 
+    Commerce\Modules\System\Application\CacheMaintenance:
+        arguments:
+            $cacheDir: '%kernel.cache_dir%'
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\System\Application\ModuleCatalog:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     Commerce\Core\Runtime\ComponentInventory:
         arguments:
             $projectDir: '%kernel.project_dir%'

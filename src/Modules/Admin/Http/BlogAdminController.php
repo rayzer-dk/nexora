@@ -33,9 +33,9 @@ final class BlogAdminController extends AbstractController
     {
         $ctx = $this->contexts->resolve($request);
         $filters = [
-            'status' => (string) $request->query->get('status', ''),
+            'status' => AdminFilterValues::list($request, 'status', ['draft', 'published', 'scheduled']),
             'q' => (string) $request->query->get('q', ''),
-            'category' => (int) $request->query->get('category', 0),
+            'category' => array_map('intval', AdminFilterValues::list($request, 'category')),
         ];
         $list = $this->blog->list($ctx->storeId, $ctx->locale, $filters, max(1, (int) $request->query->get('page', 1)));
         return $this->render('@storefront/admin/content/blog.html.twig', [

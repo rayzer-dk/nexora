@@ -51,12 +51,9 @@ final class OrderAdminController extends AbstractController
         }
         $offset = ($page - 1) * $limit;
         $search = trim((string) $request->query->get('search', ''));
-        $status = trim((string) $request->query->get('status', ''));
-        $paymentStatus = trim((string) $request->query->get('payment_status', ''));
-        $fulfillmentStatus = trim((string) $request->query->get('fulfillment_status', ''));
-        if (!in_array($status, self::ORDER_STATUSES, true)) $status = '';
-        if (!in_array($paymentStatus, self::PAYMENT_STATUSES, true)) $paymentStatus = '';
-        if (!in_array($fulfillmentStatus, self::FULFILLMENT_STATUSES, true)) $fulfillmentStatus = '';
+        $status = AdminFilterValues::list($request, 'status', self::ORDER_STATUSES);
+        $paymentStatus = AdminFilterValues::list($request, 'payment_status', self::PAYMENT_STATUSES);
+        $fulfillmentStatus = AdminFilterValues::list($request, 'fulfillment_status', self::FULFILLMENT_STATUSES);
 
         $where = ['o.store_id=?'];
         $params = [$ctx->storeId];
@@ -65,18 +62,9 @@ final class OrderAdminController extends AbstractController
             $q = '%' . $search . '%';
             array_push($params, $q, $q, mb_strtolower($q), $q);
         }
-        if ($status !== '') {
-            $where[] = 'o.status=?';
-            $params[] = $status;
-        }
-        if ($paymentStatus !== '') {
-            $where[] = 'o.payment_status=?';
-            $params[] = $paymentStatus;
-        }
-        if ($fulfillmentStatus !== '') {
-            $where[] = 'o.fulfillment_status=?';
-            $params[] = $fulfillmentStatus;
-        }
+        AdminFilterValues::in('o.status', $status, $where, $params);
+        AdminFilterValues::in('o.payment_status', $paymentStatus, $where, $params);
+        AdminFilterValues::in('o.fulfillment_status', $fulfillmentStatus, $where, $params);
         $sqlWhere = implode(' AND ', $where);
 
         $count = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_sales_order o WHERE ' . $sqlWhere, $params);
@@ -142,7 +130,7 @@ final class OrderAdminController extends AbstractController
         $ctx=$this->contexts->resolve($request);
         if(!$this->isCsrfTokenValid('admin_order_saved_view_save',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
         $name=trim(strip_tags((string)$request->request->get('name','')));if($name===''||mb_strlen($name)>190){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.orderadmincontroller.vkazhit_nazvu_predstavlennia'));return $this->redirectToRoute('admin_orders');}
-        $filters=['search'=>mb_substr(trim((string)$request->request->get('search','')),0,190),'status'=>(string)$request->request->get('status',''),'payment_status'=>(string)$request->request->get('payment_status',''),'fulfillment_status'=>(string)$request->request->get('fulfillment_status',''),'limit'=>(int)$request->request->get('limit',25)];
+        $filters=['search'=>mb_substr(trim((string)$request->request->get('search','')),0,190),'status'=>AdminFilterValues::post($request,'status',self::ORDER_STATUSES),'payment_status'=>AdminFilterValues::post($request,'payment_status',self::PAYMENT_STATUSES),'fulfillment_status'=>AdminFilterValues::post($request,'fulfillment_status',self::FULFILLMENT_STATUSES),'limit'=>(int)$request->request->get('limit',25)];
         $allowed=['order','customer','payment','fulfillment','total','date'];$columns=array_values(array_intersect($allowed,array_map('strval',(array)$request->request->all('columns'))));if($columns===[])$columns=$allowed;
         $user=$this->getUser();$adminId=$user instanceof AdminUser?$user->id:null;$now=gmdate('Y-m-d H:i:s.u');
         $this->db->insert('mc_admin_saved_view',['store_id'=>$ctx->storeId,'admin_id'=>$adminId,'entity_type'=>'orders','name'=>$name,'filters_json'=>json_encode($filters,JSON_THROW_ON_ERROR),'columns_json'=>json_encode($columns,JSON_THROW_ON_ERROR),'is_default'=>0,'created_at'=>$now,'updated_at'=>$now]);

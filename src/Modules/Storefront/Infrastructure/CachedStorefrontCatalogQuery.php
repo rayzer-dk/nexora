@@ -16,6 +16,7 @@ final readonly class CachedStorefrontCatalogQuery
         private DbalStorefrontCatalogQuery $inner,
         private CacheInterface $cache,
         private StorefrontFacetProjectionStore $facetProjection,
+        private StorefrontCacheVersion $version,
     ) {
     }
 
@@ -46,7 +47,7 @@ final readonly class CachedStorefrontCatalogQuery
             'page' => $page,
             'limit' => $limit,
             'search' => $filter->search,
-            'brand' => $filter->brandId,
+            'brand' => $filter->brandIds,
             'stock' => $filter->inStockOnly,
             'min' => $filter->minPriceMinor,
             'max' => $filter->maxPriceMinor,
@@ -104,6 +105,7 @@ final readonly class CachedStorefrontCatalogQuery
     {
         $payload = [
             'scope' => $scope,
+            'version' => $this->version->current(),
             'store' => $context->storeId,
             'market' => $context->marketId,
             'locale' => $context->locale,

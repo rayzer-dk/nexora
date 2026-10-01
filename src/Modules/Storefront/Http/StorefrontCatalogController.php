@@ -430,7 +430,7 @@ final class StorefrontCatalogController extends AbstractController
     private function catalogFilter(Request $request): ProductCatalogFilter
     {
         $search = mb_substr(trim((string) $request->query->get('q', '')), 0, 120, 'UTF-8');
-        $brand = $request->query->getInt('brand', 0);
+        $brands = ProductCatalogFilter::ids($request->query->all()['brand'] ?? null);
         $sort = (string) $request->query->get('sort', ProductCatalogFilter::SORT_NEWEST);
         if (!in_array($sort, ProductCatalogFilter::SORTS, true)) {
             $sort = ProductCatalogFilter::SORT_NEWEST;
@@ -442,7 +442,7 @@ final class StorefrontCatalogController extends AbstractController
         }
         return new ProductCatalogFilter(
             search: $search,
-            brandId: $brand > 0 ? $brand : null,
+            brandIds: $brands,
             inStockOnly: $request->query->getBoolean('in_stock', false),
             minPriceMinor: $min,
             maxPriceMinor: $max,
@@ -476,7 +476,7 @@ final class StorefrontCatalogController extends AbstractController
     /** @return array<string,mixed> */
     private function filterQuery(Request $request): array
     {
-        $allowed = ['q', 'brand', 'in_stock', 'min_price', 'max_price', 'sort', 'rating', 'per_page'];
+        $allowed = ['q', 'in_stock', 'min_price', 'max_price', 'sort', 'rating', 'per_page'];
         $result = [];
         foreach ($allowed as $key) {
             $value = $request->query->get($key);
@@ -487,6 +487,10 @@ final class StorefrontCatalogController extends AbstractController
             if ($text !== '' && $text !== '0') {
                 $result[$key] = mb_substr($text, 0, 120, 'UTF-8');
             }
+        }
+        $brands = ProductCatalogFilter::ids($request->query->all()['brand'] ?? null);
+        if ($brands !== []) {
+            $result['brand'] = $brands;
         }
         $attributes = $this->attributeFilters($request);
         if ($attributes !== []) {

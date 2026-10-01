@@ -1,0 +1,26 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.system.modules.title'),'modules') }}
+<header class="admin-page-header">
+    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.system.modules.title') }}</span></nav><h1>{{ ui_text('admin.system.modules.title') }}</h1><p>{{ ui_text('admin.system.modules.intro') }}</p></div>
+    <a class="admin-button" href="{{ path('admin_system_extensions') }}">{{ ui_icon('puzzle', 16) }}<span>{{ ui_text('admin.system.modules.manage_extensions') }}</span></a>
+</header>
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><h2>{{ ui_text('admin.system.modules.extensions') }}</h2><p>{{ ui_text('admin.system.modules.extensions_help') }}</p></div><span class="admin-badge">{{ extensions|length }}</span></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.modules.name') }}</th><th>{{ ui_text('admin.system.modules.type') }}</th><th>{{ ui_text('admin.system.modules.version') }}</th><th>{{ ui_text('admin.system.modules.status') }}</th></tr></thead><tbody>
+    {% for extension in extensions %}<tr><td><strong>{{ extension.name }}</strong><small class="admin-cell-sub">{{ extension.code }}</small></td><td>{{ extension.extension_type }}</td><td>{{ extension.version }}</td><td><span class="admin-badge">{{ extension.status }}</span></td></tr>
+    {% else %}<tr><td colspan="4">{{ ui_text('admin.system.modules.no_extensions') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><h2>{{ ui_text('admin.system.modules.languages') }}</h2><p>{{ ui_text('admin.system.modules.languages_help') }}</p></div><span class="admin-badge">{{ languages|length }}</span></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.modules.language') }}</th><th>{{ ui_text('admin.system.modules.storefront') }}</th><th>{{ ui_text('admin.system.modules.admin_area') }}</th></tr></thead><tbody>
+    {% for language in languages %}<tr><td><code>{{ language.code }}</code></td><td>{{ language.storefront ? '✓' : '—' }}</td><td>{{ language.admin ? '✓' : '—' }}</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><h2>{{ ui_text('admin.system.modules.built_in') }}</h2><p>{{ ui_text('admin.system.modules.built_in_help') }}</p></div><span class="admin-badge">{{ modules|length }}</span></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.modules.name') }}</th><th>{{ ui_text('admin.system.modules.classes') }}</th><th>{{ ui_text('admin.system.modules.routes') }}</th><th>{{ ui_text('admin.system.modules.has_admin') }}</th></tr></thead><tbody>
+    {% for module in modules %}<tr><td><strong>{{ module.label }}</strong></td><td>{{ module.classes }}</td><td>{{ module.routes }}</td><td>{{ module.has_admin ? '✓' : '—' }}</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+{{ shell.end() }}

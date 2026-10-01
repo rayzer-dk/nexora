@@ -2,6 +2,21 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.27.0 — 2026-10-01
+
+- **The shop shows an admin change at once.** The stored catalogue data of the shop (product lists, product pages,
+  categories, filters) carries a version token that every saved admin change replaces, so a changed name, price or photo is
+  visible on the next page view instead of after the short lifetime of the stored data.
+- **Cache and maintenance** page (`/admin/system/maintenance`): clear shop data, compiled templates, the application
+  cache, the PHP code cache or everything at once; remove made picture sizes and make the main product photos now. Every
+  action asks for confirmation and only drops data that is rebuilt on demand.
+- **Installed modules** page (`/admin/system/modules`): extensions with status and version, the languages shipped with the
+  platform (they belong to the platform and serve every module) and the built-in modules.
+- **Several values in one filter.** Shop: any number of brands (`brand[]=`; the old `brand=` link still works, several
+  brands make the page `noindex` like every other filter, each one has its own removable chip). Admin: order status,
+  payment and delivery, blog status and category, page status and, new, product status, category and brand are picked with
+  a multi-select dropdown (`status[]=a&status[]=b`; old single-value links still work, saved order views keep lists).
+
 ## 3.26.0 — 2026-10-01
 
 - Pictures work like in a file manager: you upload the **original** into a real folder and everything else is made for

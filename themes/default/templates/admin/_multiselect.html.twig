@@ -1,0 +1,15 @@
+{# Several values in one filter: {{ ms.field('status', label, [{value:'a',label:'A'}], selected_values) }}. Submits name[]=a&name[]=b. #}
+{% macro field(name, label, options, selected) %}
+{% set chosen = selected is iterable ? selected : (selected ? [selected] : []) %}
+{% set picked = options|filter(o => (o.value ~ '') in chosen) %}
+<div class="admin-multiselect" data-multiselect data-multiselect-all="{{ ui_text('admin.filter.all') }}" data-multiselect-many="{{ ui_text('admin.filter.selected') }}">
+    <span class="admin-multiselect__label">{{ label }}</span>
+    <details>
+        <summary class="admin-multiselect__summary"><span data-multiselect-text>{% if picked|length == 0 %}{{ ui_text('admin.filter.all') }}{% elseif picked|length == 1 %}{{ (picked|first).label }}{% else %}{{ ui_text('admin.filter.selected', {count: picked|length}) }}{% endif %}</span>{{ ui_icon('chevron-down', 14) }}</summary>
+        <div class="admin-multiselect__panel">
+            {% for option in options %}<label><input type="checkbox" name="{{ name }}[]" value="{{ option.value }}"{{ (option.value ~ '') in chosen ? ' checked' : '' }}><span>{{ option.label }}</span></label>{% endfor %}
+            <button type="button" class="admin-multiselect__clear" data-multiselect-clear>{{ ui_text('admin.filter.clear') }}</button>
+        </div>
+    </details>
+</div>
+{% endmacro %}

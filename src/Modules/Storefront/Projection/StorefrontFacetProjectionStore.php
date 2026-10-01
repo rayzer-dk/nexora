@@ -48,4 +48,13 @@ final readonly class StorefrontFacetProjectionStore
             [$context->storeId,$context->marketId,$context->locale,$context->currency,$categoryId ?? 0,$json,$generated,$expires],
         );
     }
+
+    /** Forgets every stored filter list; they are rebuilt on the next visit. */
+    public function clear(): void
+    {
+        try {
+            $this->db->executeStatement('DELETE FROM mc_storefront_facet_projection');
+        } catch (\Throwable) {
+        }
+    }
 }

@@ -190,6 +190,36 @@ function initImagePreviews() {
 
 // The photos and videos of a product are one list that is ordered by dragging (or with the arrow buttons, which also work
 // on touch screens). The first photo is the main one. On a saved product every change is stored at once.
+function initMultiSelects() {
+  const boxes = document.querySelectorAll('[data-multiselect]');
+  if (boxes.length === 0) return;
+  const refresh = (box) => {
+    const checked = [...box.querySelectorAll('input[type="checkbox"]:checked')];
+    const text = box.querySelector('[data-multiselect-text]');
+    if (!text) return;
+    if (checked.length === 0) text.textContent = box.dataset.multiselectAll || '';
+    else if (checked.length === 1) text.textContent = checked[0].closest('label')?.textContent?.trim() || '';
+    else text.textContent = (box.dataset.multiselectMany || '%count%').replace('%count%', String(checked.length));
+  };
+  boxes.forEach((box) => {
+    box.addEventListener('change', () => refresh(box));
+    box.querySelector('[data-multiselect-clear]')?.addEventListener('click', () => {
+      box.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; });
+      refresh(box);
+    });
+  });
+  document.addEventListener('click', (event) => {
+    boxes.forEach((box) => {
+      const details = box.querySelector('details');
+      if (details?.open && !box.contains(event.target)) details.open = false;
+    });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    boxes.forEach((box) => { const details = box.querySelector('details'); if (details) details.open = false; });
+  });
+}
+
 function initMediaSortable() {
   qa('[data-media-sortable]').forEach((grid) => {
     let dragged = null;
@@ -1118,6 +1148,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMediaPickers();
   initSlugGenerators();
   initMediaSortable();
+  initMultiSelects();
   initCopyControls();
   initHealthCheck();
   initSiteProfilePreset();

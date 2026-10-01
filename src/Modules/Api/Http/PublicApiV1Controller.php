@@ -57,11 +57,11 @@ final class PublicApiV1Controller extends AbstractController
         try {
             $context = $contexts->resolve($request); $this->access->require($request, 'catalog:read', $context->storeId);
             [$page,$limit]=$this->paging($request); $search=mb_substr(trim((string)$request->query->get('q','')),0,120,'UTF-8');
-            $brandId=$this->positiveIntOrNull($request->query->get('brand')); $minPrice=$this->nonNegativeIntOrNull($request->query->get('min_price_minor')); $maxPrice=$this->nonNegativeIntOrNull($request->query->get('max_price_minor'));
+            $brandIds=ProductCatalogFilter::ids($request->query->all()['brand'] ?? null); $minPrice=$this->nonNegativeIntOrNull($request->query->get('min_price_minor')); $maxPrice=$this->nonNegativeIntOrNull($request->query->get('max_price_minor'));
             $sort=(string)$request->query->get('sort',ProductCatalogFilter::SORT_NEWEST);
             if(!in_array($sort,ProductCatalogFilter::SORTS,true))return $this->problem('invalid_sort',CanonicalUiText::get('api.error.invalid_sort'),400);
             if($minPrice!==null&&$maxPrice!==null&&$minPrice>$maxPrice)return $this->problem('invalid_price_range',CanonicalUiText::get('api.error.invalid_price_range'),400);
-            $filter=new ProductCatalogFilter(search:$search,brandId:$brandId,inStockOnly:filter_var($request->query->get('in_stock',false),FILTER_VALIDATE_BOOL),minPriceMinor:$minPrice,maxPriceMinor:$maxPrice,sort:$sort,attributeFilters:$this->attributeFilters($request));
+            $filter=new ProductCatalogFilter(search:$search,brandIds:$brandIds,inStockOnly:filter_var($request->query->get('in_stock',false),FILTER_VALIDATE_BOOL),minPriceMinor:$minPrice,maxPriceMinor:$maxPrice,sort:$sort,attributeFilters:$this->attributeFilters($request));
             $result=$catalog->products($context,null,$page,$limit,$search,$filter);
             return $this->collection(array_map([$this,'normalizeCard'],$result['items']),$result['total'],$result['page'],$result['pages'],$limit,$context->locale,$context->currency);
         } catch(ApiAccessException $e){return $this->problem($e->apiCode,$e->getMessage(),$e->status);}

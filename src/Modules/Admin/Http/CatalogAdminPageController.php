@@ -56,7 +56,12 @@ final class CatalogAdminPageController extends AbstractController
     public function products(Request $request): Response
     {
         $context = $this->context->resolve($request);
-        $result = $this->query->products($context->storeId, $context->marketId, $context->locale, (int) $request->query->get('page', 1), 25, (string) $request->query->get('search', ''), (string) $request->query->get('sort', ''), (string) $request->query->get('dir', 'desc'));
+        $listFilters = [
+            'status' => AdminFilterValues::list($request, 'status', ['draft', 'published', 'archived']),
+            'category' => array_map('intval', AdminFilterValues::list($request, 'category')),
+            'brand' => array_map('intval', AdminFilterValues::list($request, 'brand')),
+        ];
+        $result = $this->query->products($context->storeId, $context->marketId, $context->locale, (int) $request->query->get('page', 1), 25, (string) $request->query->get('search', ''), (string) $request->query->get('sort', ''), (string) $request->query->get('dir', 'desc'), $listFilters);
         foreach ($result['items'] as &$item) {
             $item['price_display'] = $item['amount_minor'] === null ? '—' : number_format(((int) $item['amount_minor']) / 100, 2, ',', ' ') . ' ' . ($item['currency'] ?? $context->currency);
         }
@@ -77,7 +82,7 @@ final class CatalogAdminPageController extends AbstractController
                 if($selectedView===(int)$row['id']){$activeColumns=$columns;}
             }
         } catch (\Throwable) {}
-        return $this->render('@storefront/admin/catalog/products.html.twig', ['result'=>$result,'search'=>(string)$request->query->get('search',''),'saved_views'=>$views,'active_columns'=>$activeColumns,'allowed_columns'=>$allowedColumns,'selected_view'=>$selectedView]);
+        return $this->render('@storefront/admin/catalog/products.html.twig', ['result'=>$result,'search'=>(string)$request->query->get('search',''),'list_filters'=>$listFilters,'filter_categories'=>$this->query->categories($context->storeId,$context->locale,1,100,'')['items'],'filter_brands'=>$this->query->brands($context->storeId),'saved_views'=>$views,'active_columns'=>$activeColumns,'allowed_columns'=>$allowedColumns,'selected_view'=>$selectedView]);
     }
 
     #[Route('/admin/catalog/categories', name: 'admin_catalog_categories', methods: ['GET'])]

@@ -70,9 +70,9 @@ final readonly class DbalStorefrontCatalogQuery
             $conditions[] = 'EXISTS (SELECT 1 FROM mc_product_category fpc WHERE fpc.product_id=p.id AND fpc.category_id=?)';
             $filterParams[] = $categoryId;
         }
-        if ($filter->brandId !== null) {
-            $conditions[] = 'p.brand_id=?';
-            $filterParams[] = $filter->brandId;
+        if ($filter->brandIds !== []) {
+            $conditions[] = 'p.brand_id IN (' . implode(',', array_fill(0, count($filter->brandIds), '?')) . ')';
+            array_push($filterParams, ...$filter->brandIds);
         }
 
         $stockExpression = "COALESCE((SELECT SUM(GREATEST(fsl.stocked_quantity-fsl.reserved_quantity-fsl.safety_stock,0)) FROM mc_variant_inventory_item fvii JOIN mc_stock_level fsl ON fsl.inventory_item_id=fvii.inventory_item_id JOIN mc_market_inventory_location fmil ON fmil.location_id=fsl.location_id AND fmil.market_id=? WHERE fvii.variant_id=v.id),0)";

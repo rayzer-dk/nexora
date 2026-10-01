@@ -15,7 +15,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     }
 
     /** @return array{items:list<array<string,mixed>>,total:int,page:int,limit:int} */
-    public function products(int $storeId, int $marketId, string $locale, int $page = 1, int $limit = 25, string $search = '', string $sort = '', string $dir = 'desc'): array
+    public function products(int $storeId, int $marketId, string $locale, int $page = 1, int $limit = 25, string $search = '', string $sort = '', string $dir = 'desc', array $filters = []): array
     {
         $page = max(1, $page); $limit = min(100, max(1, $limit)); $offset = ($page - 1) * $limit;
         $where = 'sp.store_id = ? AND pt.locale = ?'; $params = [$storeId, $locale];
@@ -48,6 +48,22 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
                 $where .= ' AND ' . $exact;
                 array_push($params, ...$exactParams);
             }
+        }
+        // List filters: several values per filter (statuses, categories, brands), all optional.
+        $statuses = array_values(array_intersect(array_map('strval', (array) ($filters['status'] ?? [])), ['draft', 'published', 'archived']));
+        if ($statuses !== []) {
+            $where .= ' AND p.status IN (' . implode(',', array_fill(0, count($statuses), '?')) . ')';
+            array_push($params, ...$statuses);
+        }
+        $brandIds = array_values(array_filter(array_map('intval', (array) ($filters['brand'] ?? [])), static fn (int $id): bool => $id > 0));
+        if ($brandIds !== []) {
+            $where .= ' AND p.brand_id IN (' . implode(',', array_fill(0, count($brandIds), '?')) . ')';
+            array_push($params, ...$brandIds);
+        }
+        $categoryIds = array_values(array_filter(array_map('intval', (array) ($filters['category'] ?? [])), static fn (int $id): bool => $id > 0));
+        if ($categoryIds !== []) {
+            $where .= ' AND EXISTS (SELECT 1 FROM mc_product_category fpc WHERE fpc.product_id=p.id AND fpc.category_id IN (' . implode(',', array_fill(0, count($categoryIds), '?')) . '))';
+            array_push($params, ...$categoryIds);
         }
         $total = (int) $this->connection->fetchOne(
             "SELECT COUNT(DISTINCT p.id) FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id LEFT JOIN mc_product_variant v ON v.product_id=p.id LEFT JOIN mc_brand b ON b.id=p.brand_id WHERE {$where}",

@@ -4,8 +4,11 @@
 {% set base_path = app.request.pathInfo %}
 {% set chips = [] %}
 {% if catalog_filter.search %}{% set chips = chips|merge([{label: '“' ~ catalog_filter.search ~ '”', href: base_path ~ '?' ~ (q|filter((v, k) => k != 'q')|url_encode)}]) %}{% endif %}
-{% if catalog_filter.brandId is not null %}
-    {% for brand in catalog_facets.brands|default([]) %}{% if brand.id == catalog_filter.brandId %}{% set chips = chips|merge([{label: ui_text('brand') ~ ': ' ~ brand.name, href: base_path ~ '?' ~ (q|filter((v, k) => k != 'brand')|url_encode)}]) %}{% endif %}{% endfor %}
+{% if catalog_filter.brandIds is not empty %}
+    {% for brand in catalog_facets.brands|default([]) %}{% if brand.id in catalog_filter.brandIds %}
+        {% set rest_brands = q.brand|default([])|filter(id => id != brand.id)|merge([]) %}
+        {% set chips = chips|merge([{label: ui_text('brand') ~ ': ' ~ brand.name, href: base_path ~ '?' ~ (q|merge({brand: rest_brands})|url_encode)}]) %}
+    {% endif %}{% endfor %}
 {% endif %}
 {% if catalog_filter.minPriceMinor is not null or catalog_filter.maxPriceMinor is not null %}
     {% set price_label = ui_text('price') ~ ': ' ~ (catalog_filter.minPriceMinor is not null ? (catalog_filter.minPriceMinor / 100)|round : '0') ~ ' – ' ~ (catalog_filter.maxPriceMinor is not null ? (catalog_filter.maxPriceMinor / 100)|round : '∞') %}

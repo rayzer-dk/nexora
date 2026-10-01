@@ -1,4 +1,4 @@
-{# Filter sidebar (desktop) / bottom sheet (mobile). Query parameters are unchanged: q, brand, min_price, max_price, in_stock, rating, sort, per_page, attr[code][]. #}
+{# Filter sidebar (desktop) / bottom sheet (mobile). Query parameters: q, brand[] (several allowed), min_price, max_price, in_stock, rating, sort, per_page, attr[code][]. #}
 {% set price_lo = catalog_facets.price_min_minor is not null ? (catalog_facets.price_min_minor / 100)|round(0, 'floor') : 0 %}
 {% set price_hi = catalog_facets.price_max_minor is not null ? (catalog_facets.price_max_minor / 100)|round(0, 'ceil') : 0 %}
 {% set cur_min = catalog_filter.minPriceMinor is not null ? (catalog_filter.minPriceMinor / 100)|number_format(2, '.', '') : '' %}
@@ -38,12 +38,11 @@
         </details>
 
         {% if catalog_facets.brands|default([]) is not empty %}
-        <details class="cf__group"{% if catalog_filter.brandId is not null or catalog_facets.brands|length <= 12 %} open{% endif %}>
-            <summary>{{ ui_text('brand') }}{% if catalog_filter.brandId is not null %}<span class="cf__badge">1</span>{% endif %}{{ ui_icon('chevron-down', 16) }}</summary>
+        <details class="cf__group"{% if catalog_filter.brandIds is not empty or catalog_facets.brands|length <= 12 %} open{% endif %}>
+            <summary>{{ ui_text('brand') }}{% if catalog_filter.brandIds is not empty %}<span class="cf__badge">{{ catalog_filter.brandIds|length }}</span>{% endif %}{{ ui_icon('chevron-down', 16) }}</summary>
             <div class="cf__content cf__list">
-                <label class="cf__option"><input type="radio" name="brand" value=""{% if catalog_filter.brandId is null %} checked{% endif %}><span>{{ ui_text('all_brands') }}</span></label>
                 {% for brand in catalog_facets.brands %}
-                    <label class="cf__option"><input type="radio" name="brand" value="{{ brand.id }}"{% if catalog_filter.brandId == brand.id %} checked{% endif %}><span>{{ brand.name }}</span><small>{{ brand.count }}</small></label>
+                    <label class="cf__option"><input type="checkbox" name="brand[]" value="{{ brand.id }}"{% if brand.id in catalog_filter.brandIds %} checked{% endif %}><span>{{ brand.name }}</span><small>{{ brand.count }}</small></label>
                 {% endfor %}
             </div>
         </details>

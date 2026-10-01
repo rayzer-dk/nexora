@@ -42,23 +42,27 @@ final class BlogService
     {
         $where = ["ce.store_id = ?", "ce.content_type = 'article'"];
         $params = [$locale, $storeId];
-        $status = (string) ($filters['status'] ?? '');
-        if ($status === 'draft') {
-            $where[] = "ce.status = 'draft'";
-        } elseif ($status === 'published') {
-            $where[] = "ce.status = 'published' AND (ce.published_at IS NULL OR ce.published_at <= UTC_TIMESTAMP(6))";
-        } elseif ($status === 'scheduled') {
-            $where[] = "ce.status = 'published' AND ce.published_at > UTC_TIMESTAMP(6)";
+        $states = array_values(array_intersect(array_map('strval', (array) ($filters['status'] ?? [])), ['draft', 'published', 'scheduled']));
+        if ($states !== [] && count($states) < 3) {
+            $parts = [];
+            foreach ($states as $state) {
+                $parts[] = match ($state) {
+                    'draft' => "ce.status = 'draft'",
+                    'published' => "(ce.status = 'published' AND (ce.published_at IS NULL OR ce.published_at <= UTC_TIMESTAMP(6)))",
+                    default => "(ce.status = 'published' AND ce.published_at > UTC_TIMESTAMP(6))",
+                };
+            }
+            $where[] = '(' . implode(' OR ', $parts) . ')';
         }
         $q = trim((string) ($filters['q'] ?? ''));
         if ($q !== '') {
             $where[] = 'ct.title LIKE ?';
             $params[] = '%' . addcslashes($q, '%_\\') . '%';
         }
-        $category = (int) ($filters['category'] ?? 0);
-        if ($category > 0) {
-            $where[] = 'bm.category_id = ?';
-            $params[] = $category;
+        $categories = array_values(array_filter(array_map('intval', (array) ($filters['category'] ?? [])), static fn (int $id): bool => $id > 0));
+        if ($categories !== []) {
+            $where[] = 'bm.category_id IN (' . implode(',', array_fill(0, count($categories), '?')) . ')';
+            array_push($params, ...$categories);
         }
         $from = "FROM mc_content_entry ce
                  LEFT JOIN mc_content_translation ct ON ct.content_id = ce.id AND ct.locale = ?

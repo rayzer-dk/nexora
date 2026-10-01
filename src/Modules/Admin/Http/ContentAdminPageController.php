@@ -32,7 +32,7 @@ final class ContentAdminPageController extends AbstractController
     public function index(Request $request): Response
     {
         $context = $this->context->resolve($request);
-        $filters = ['q' => trim((string) $request->query->get('q', '')), 'status' => (string) $request->query->get('status', '')];
+        $filters = ['q' => trim((string) $request->query->get('q', '')), 'status' => AdminFilterValues::list($request, 'status', ['draft', 'published'])];
 
         return $this->render('@storefront/admin/content/pages.html.twig', [
             'items' => $this->pages->list($context->storeId, $context->locale, $filters),

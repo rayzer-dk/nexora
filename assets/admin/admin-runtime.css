@@ -1653,3 +1653,21 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-media-handle { display: grid; place-items: center; }
 .admin-upload-target { display: grid; gap: var(--mc-space-1); margin-bottom: var(--mc-space-3); }
 .admin-upload-target label { display: grid; gap: var(--mc-space-1); max-width: 420px; font-size: var(--mc-font-size-sm); }
+
+/* Cache and maintenance page */
+.admin-maintenance { display: grid; gap: var(--mc-space-3); }
+.admin-maintenance__action { display: flex; align-items: center; justify-content: space-between; gap: var(--mc-space-4); flex-wrap: wrap; padding: var(--mc-space-3) 0; border-top: 1px solid var(--admin-line, rgba(127, 127, 127, 0.25)); }
+.admin-maintenance__action:first-child { border-top: 0; }
+.admin-maintenance__text { flex: 1 1 18rem; min-width: 0; }
+.admin-maintenance__text p { margin: var(--mc-space-1) 0 0; }
+
+/* Multi-select filter */
+.admin-multiselect { position: relative; min-width: 0; display: grid; gap: var(--mc-space-1); }
+.admin-multiselect__label { color: var(--mc-color-text); font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-semibold); }
+.admin-multiselect__summary { display: flex; align-items: center; justify-content: space-between; gap: var(--mc-space-2); min-height: var(--mc-control-height-md); padding: 0 var(--mc-control-padding-x); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-raised); cursor: pointer; list-style: none; }
+.admin-multiselect__summary::-webkit-details-marker { display: none; }
+.admin-multiselect__summary > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-multiselect__panel { position: absolute; z-index: var(--mc-z-dropdown); top: calc(100% + var(--mc-space-1)); left: 0; display: grid; gap: var(--mc-space-1); min-width: 100%; max-height: 18rem; overflow: auto; padding: var(--mc-space-2); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-raised); box-shadow: var(--mc-shadow-md, 0 8px 24px rgba(0, 0, 0, 0.18)); }
+.admin-multiselect__panel > label { display: flex; align-items: center; gap: var(--mc-space-2); padding: var(--mc-space-1) var(--mc-space-2); white-space: nowrap; cursor: pointer; }
+.admin-multiselect__clear { justify-self: start; margin-top: var(--mc-space-1); padding: var(--mc-space-1) var(--mc-space-2); border: 0; background: none; color: var(--mc-color-primary, inherit); font: inherit; text-decoration: underline; cursor: pointer; }
+.admin-toolbar .admin-multiselect { flex: 0 1 11rem; }

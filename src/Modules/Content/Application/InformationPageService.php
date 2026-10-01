@@ -59,10 +59,10 @@ final class InformationPageService
         $default = $this->defaultLocale($storeId);
         $where = ["ce.store_id = ?", "ce.content_type = 'page'"];
         $params = [$locale, $default, $storeId];
-        $status = (string) ($filters['status'] ?? '');
-        if (in_array($status, self::STATUSES, true)) {
-            $where[] = 'ce.status = ?';
-            $params[] = $status;
+        $statuses = array_values(array_intersect(array_map('strval', (array) ($filters['status'] ?? [])), self::STATUSES));
+        if ($statuses !== []) {
+            $where[] = 'ce.status IN (' . implode(',', array_fill(0, count($statuses), '?')) . ')';
+            array_push($params, ...$statuses);
         }
         $q = trim((string) ($filters['q'] ?? ''));
         if ($q !== '') {

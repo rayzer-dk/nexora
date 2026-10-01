@@ -1,10 +1,11 @@
+{% import '@storefront/admin/_multiselect.html.twig' as ms %}
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.content.pages.informatsiini_storinky'),'content') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.content.pages.informatsiini_storinky') }}</span></nav><h1>{{ ui_text('admin.content.pages.informatsiini_storinky') }}</h1><p>{{ ui_text('admin.pages.intro') }}</p></div>
 <div class="admin-page-actions"><a class="admin-button is-primary" href="{{ path('admin_content_page_new') }}">{{ ui_icon('plus', 18) }}<span>{{ ui_text('admin.pages.new') }}</span></a></div></header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type == 'success' ? 'success' : (type == 'warning' ? 'warning' : 'error') }}">{{ message }}</div>{% endfor %}{% endfor %}
 <section class="admin-toolbar"><form class="admin-filters" method="get">
   <label class="admin-filters__search"><span>{{ ui_text('admin.pages.search') }}</span><input type="search" name="q" value="{{ filters.q }}" placeholder="{{ ui_text('admin.pages.search_placeholder')|e('html_attr') }}"></label>
-  <label><span>{{ ui_text('admin.content.pages.status') }}</span><select name="status"><option value="">{{ ui_text('admin.pages.all') }}</option><option value="published"{{ filters.status == 'published' ? ' selected' : '' }}>{{ ui_text('admin.pages.state_published') }}</option><option value="draft"{{ filters.status == 'draft' ? ' selected' : '' }}>{{ ui_text('admin.pages.state_draft') }}</option></select></label>
+  {{ ms.field('status', ui_text('admin.content.pages.status'), [{value: 'published', label: ui_text('admin.pages.state_published')}, {value: 'draft', label: ui_text('admin.pages.state_draft')}], filters.status) }}
   <button type="submit">{{ ui_text('admin.pages.apply') }}</button>
 </form></section>
 <div class="admin-panel"><div class="admin-table-wrap"><table class="admin-table" data-pages-table><thead><tr><th>{{ ui_text('admin.content.pages.storinka') }}</th><th>URL</th><th>{{ ui_text('admin.pages.placement') }}</th><th>{{ ui_text('admin.content.pages.status') }}</th><th>{{ ui_text('admin.pages.languages') }}</th><th class="is-actions"></th></tr></thead><tbody>

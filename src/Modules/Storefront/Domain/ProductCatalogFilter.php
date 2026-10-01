@@ -25,7 +25,8 @@ final readonly class ProductCatalogFilter
 
     public function __construct(
         public string $search = '',
-        public ?int $brandId = null,
+        /** @var list<int> */
+        public array $brandIds = [],
         public bool $inStockOnly = false,
         public ?int $minPriceMinor = null,
         public ?int $maxPriceMinor = null,
@@ -37,8 +38,13 @@ final readonly class ProductCatalogFilter
         if ($minRating < 0 || $minRating > 5) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.product.error.min_rating'));
         }
-        if ($brandId !== null && $brandId < 1) {
+        if (count($brandIds) > 24) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.c26eae3e1518'));
+        }
+        foreach ($brandIds as $brandId) {
+            if (!is_int($brandId) || $brandId < 1) {
+                throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.c26eae3e1518'));
+            }
         }
         if ($minPriceMinor !== null && $minPriceMinor < 0) {
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.b261af7a89bf'));
@@ -70,7 +76,7 @@ final readonly class ProductCatalogFilter
     public function isFiltered(): bool
     {
         return $this->search !== ''
-            || $this->brandId !== null
+            || $this->brandIds !== []
             || $this->inStockOnly
             || $this->minPriceMinor !== null
             || $this->maxPriceMinor !== null
@@ -80,7 +86,25 @@ final readonly class ProductCatalogFilter
     }
     public function isFilteredExceptSearch(): bool
     {
-        return $this->brandId !== null || $this->inStockOnly || $this->minPriceMinor !== null || $this->maxPriceMinor !== null || $this->attributeFilters !== [] || $this->minRating > 0 || $this->sort !== self::SORT_NEWEST;
+        return $this->brandIds !== [] || $this->inStockOnly || $this->minPriceMinor !== null || $this->maxPriceMinor !== null || $this->attributeFilters !== [] || $this->minRating > 0 || $this->sort !== self::SORT_NEWEST;
     }
 
+    /**
+     * Turns "5", "5,7" or ["5","7"] into a sorted list of distinct positive ids (at most 24); anything else is dropped.
+     *
+     * @return list<int>
+     */
+    public static function ids(mixed $value): array
+    {
+        $parts = is_array($value) ? $value : (is_scalar($value) ? explode(',', (string) $value) : []);
+        $ids = [];
+        foreach ($parts as $part) {
+            if (is_scalar($part) && preg_match('/^\s*\d{1,10}\s*$/D', (string) $part) === 1 && (int) $part > 0) {
+                $ids[(int) $part] = (int) $part;
+            }
+        }
+        sort($ids);
+
+        return array_slice(array_values($ids), 0, 24);
+    }
 }

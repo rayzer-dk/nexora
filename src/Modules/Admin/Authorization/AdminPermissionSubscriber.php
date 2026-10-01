@@ -92,6 +92,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_system_cron')) return $get?AdminPermissionCatalog::SYSTEM_CRON_VIEW:AdminPermissionCatalog::SYSTEM_CRON_MANAGE;
         if (str_starts_with($route,'admin_system_integrations')) return AdminPermissionCatalog::INTEGRATIONS_MANAGE;
         if (in_array($route,['admin_system_site','admin_system_site_rollback','admin_system_store','admin_system_store_rollback','admin_system_localization','admin_system_localization_locales','admin_system_localization_currencies','admin_system_localization_rate','admin_system_localization_rate_api','admin_system_localization_refresh'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if (str_starts_with($route,'admin_system_maintenance')||$route==='admin_system_modules') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (in_array($route,['admin_system_stability','admin_system_components','admin_api_system_health'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_migration')) return AdminPermissionCatalog::SYSTEM_UPDATE;
         if ($route==='admin_ai_product_draft'||$route==='admin_ai_task') return AdminPermissionCatalog::CATALOG_MANAGE;
