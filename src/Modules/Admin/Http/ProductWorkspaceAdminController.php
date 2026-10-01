@@ -34,6 +34,21 @@ final class ProductWorkspaceAdminController extends AbstractController
     }
 
 
+    /** Changes only the price of one product from the list (Enter or leaving the field). Answers JSON. */
+    #[Route('/admin/catalog/products/{publicId}/quick-price', name:'admin_catalog_product_quick_price', methods:['POST'])]
+    public function quickPrice(string $publicId, Request $request): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        $ctx=$this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('admin_quick_price',(string)$request->request->get('_token')))return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false],403);
+        $raw=str_replace(',','.',trim((string)$request->request->get('price','')));
+        if(preg_match('/^\d{1,9}(?:\.\d{1,2})?$/D',$raw)!==1)return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false,'error'=>'format'],422);
+        $result=$this->editor->apply($ctx->storeId,$ctx->marketId,$ctx->locale,$ctx->currency,[$publicId=>['price'=>$raw]]);
+        if($result['failed']!==[])return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false,'error'=>'save'],422);
+        if($result['previous']!==[]&&$this->adminId()!==null){$this->undo->remember($ctx->storeId,(int)$this->adminId(),'product_bulk',sprintf(\Commerce\Core\I18n\CanonicalUiText::get('admin.undo.product_bulk'),1),['rows'=>$result['previous']]);}
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>true,'price'=>number_format((float)$raw,2,'.','')]);
+    }
+
+
     #[Route('/admin/catalog/products/{publicId}/preview', name:'admin_catalog_product_preview', methods:['GET'])]
     public function preview(string $publicId, Request $request): Response
     {

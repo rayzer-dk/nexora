@@ -3776,4 +3776,5 @@ return [
     'admin.product.tabs.files' => 'Files',
     'admin.product.tabs.seo' => 'SEO',
     'admin.product.tabs.own_save' => 'This block has its own Save button; the main Save button does not include it.',
+    'admin.catalog.bulk.duplicated' => 'Copies created: %count%, failed: %failed%. They are saved as drafts.',
 ];

@@ -190,6 +190,69 @@ function initImagePreviews() {
 
 // The photos and videos of a product are one list that is ordered by dragging (or with the arrow buttons, which also work
 // on touch screens). The first photo is the main one. On a saved product every change is stored at once.
+function initThumbZoom() {
+  let pop = null;
+  const hide = () => { pop?.remove(); pop = null; };
+  document.addEventListener('mouseover', (event) => {
+    const thumb = event.target instanceof Element ? event.target.closest('.admin-thumb[data-zoom]') : null;
+    if (!thumb) { hide(); return; }
+    if (pop && pop.dataset.src === thumb.dataset.zoom) return;
+    hide();
+    const rect = thumb.getBoundingClientRect();
+    pop = document.createElement('div');
+    pop.className = 'admin-thumb-pop';
+    pop.dataset.src = thumb.dataset.zoom || '';
+    const image = document.createElement('img');
+    image.src = thumb.dataset.zoom || '';
+    image.alt = '';
+    pop.append(image);
+    const top = Math.min(window.innerHeight - 250, Math.max(8, rect.top + rect.height / 2 - 120));
+    const left = rect.right + 8 + 240 > window.innerWidth ? Math.max(8, rect.left - 248) : rect.right + 8;
+    pop.style.top = `${top}px`;
+    pop.style.left = `${left}px`;
+    document.body.append(pop);
+  });
+  document.addEventListener('scroll', hide, true);
+}
+
+function initQuickPrice() {
+  qa('[data-quick-price]').forEach((box) => {
+    const input = q('[data-quick-price-input]', box);
+    if (!input) return;
+    let busy = false;
+    const save = async () => {
+      const value = input.value.trim().replace(',', '.');
+      if (busy || value === input.dataset.original) return;
+      if (!/^\d{1,9}(\.\d{1,2})?$/.test(value)) { input.setCustomValidity(t('js_price_invalid')); input.reportValidity(); return; }
+      input.setCustomValidity('');
+      busy = true;
+      box.classList.add('is-saving');
+      try {
+        const body = new URLSearchParams({ _token: box.dataset.token || '', price: value });
+        const response = await fetch(box.dataset.url || '', { method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' } });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error('price');
+        input.value = data.price;
+        input.dataset.original = data.price;
+        box.classList.add('is-saved');
+        window.setTimeout(() => box.classList.remove('is-saved'), 1500);
+        toast(t('js_price_saved'), 'success', 2000);
+      } catch (_) {
+        input.value = input.dataset.original || '';
+        toast(t('js_price_failed'), 'error', 4000);
+      } finally {
+        busy = false;
+        box.classList.remove('is-saving');
+      }
+    };
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); save(); input.blur(); }
+      if (event.key === 'Escape') { input.value = input.dataset.original || ''; input.blur(); }
+    });
+    input.addEventListener('change', save);
+  });
+}
+
 function initMultiSelects() {
   const boxes = document.querySelectorAll('[data-multiselect]');
   if (boxes.length === 0) return;
@@ -362,7 +425,6 @@ function enhanceTable(table) {
       const next = new URLSearchParams(location.search);
       next.set('sort', key);
       next.set('dir', params.get('sort') === key && params.get('dir') !== 'asc' ? 'asc' : (params.get('sort') === key ? 'desc' : 'asc'));
-      next.delete('page');
       location.assign(`${location.pathname}?${next.toString()}`);
     };
     th.addEventListener('click', (event) => { if (!event.target.closest('a, button, input, select, label')) go(); });
@@ -1207,6 +1269,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initSlugGenerators();
   initMediaSortable();
   initMultiSelects();
+  initQuickPrice();
+  initThumbZoom();
   initProductTabs();
   initCopyControls();
   initHealthCheck();

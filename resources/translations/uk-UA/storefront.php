@@ -609,7 +609,7 @@ return [
     'admin_store_context' => 'Контекст магазину',
     'admin_quick_jump' => 'Швидкий перехід',
     'admin_jump_placeholder' => 'Перейти до розділу…',
-    'admin_quick_preview' => 'Швидкий preview',
+    'admin_quick_preview' => 'Швидкий перегляд',
     'admin_close' => 'Закрити',
     'admin_loading' => 'Завантаження…',
     'admin_dashboard_title' => 'Панель керування',
@@ -1054,4 +1054,7 @@ return [
     'video_number' => 'Відео %number%',
     'js_media_order_saved' => 'Порядок збережено',
     'js_media_order_failed' => 'Не вдалося зберегти порядок. Оновіть сторінку й спробуйте ще раз.',
+    'js_price_saved' => 'Ціну збережено',
+    'js_price_failed' => 'Не вдалося зберегти ціну',
+    'js_price_invalid' => 'Введіть ціну на кшталт 1249.90',
 ];

@@ -2,6 +2,15 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.29.0 — 2026-10-01
+
+Admin product list fixes.
+
+- Copy and delete buttons in the list work (nested forms removed); new bulk action "duplicate".
+- Quick price edit directly in the list; product thumbnails with hover zoom; long names truncated with full text on hover.
+- "Actions" column has a header, icons in two rows; "Save view" moved into a compact popover.
+- Sorting keeps the current page; slug generate button icon visible; quick preview shows a swipe strip instead of overlapping photos; "preview" translated.
+
 ## 3.28.0 — 2026-10-01
 
 - **The product form is split into tabs**: Main, Price and variants, Photos and video, Specifications, Files and SEO. One

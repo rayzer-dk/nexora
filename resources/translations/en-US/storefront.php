@@ -1054,4 +1054,7 @@ return [
     'video_number' => 'Video %number%',
     'js_media_order_saved' => 'Order saved',
     'js_media_order_failed' => 'Could not save the order. Reload the page and try again.',
+    'js_price_saved' => 'Price saved',
+    'js_price_failed' => 'Could not save the price',
+    'js_price_invalid' => 'Enter a price like 1249.90',
 ];

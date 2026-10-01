@@ -27,6 +27,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class CommerceOperationsAdminController extends AbstractController
 {
     public function __construct(
+        private readonly \Commerce\Modules\Catalog\Application\CatalogMaintenanceService $catalogMaintenance,
         private readonly AdminContextResolver $contexts,
         private readonly Connection $db,
         private readonly PublicIdFactory $ids,
@@ -151,6 +152,12 @@ final class CommerceOperationsAdminController extends AbstractController
     {
         $context=$this->contexts->resolve($request); if(!$this->isCsrfTokenValid('products_bulk',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
         $ids=array_values(array_filter(array_map('strval',$request->request->all('product_ids'))));$action=(string)$request->request->get('action');$status=match($action){'publish'=>'published','draft'=>'draft','archive'=>'archived',default=>null};
+        if($action==='duplicate'){
+            $made=0;$failed=0;
+            foreach(array_slice($ids,0,50) as $id){try{$this->catalogMaintenance->duplicateProductDraft($context->storeId,$context->marketId,$context->locale,$id);++$made;}catch(\Throwable){++$failed;}}
+            $this->addFlash($failed>0?'warning':'success',\Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.bulk.duplicated',['count'=>$made,'failed'=>$failed]));
+            return $this->redirectToRoute('admin_catalog_products');
+        }
         if($status===null){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.oberit_masovu_diiu'));return $this->redirectToRoute('admin_catalog_products');}
         try{$r=$this->bulk->setStatus($context->storeId,$context->marketId,$context->locale,$ids,$status);$this->addFlash($r['failed']>0?'error':'success',sprintf(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.onovleno_d_z_d_tovariv_pomylok_d'),$r['updated'],$r['requested'],$r['failed']));foreach($r['errors'] as $e)$this->addFlash('error',$e);}catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         return $this->redirectToRoute('admin_catalog_products');
