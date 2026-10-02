@@ -37,12 +37,14 @@
     </section>{% endset %}
     {% set panels = panels|merge({delivery: html ~ (panels.delivery|default(''))}) %}
 {% endif %}
+{# Declared before the loop: a variable first assigned inside a Twig loop is dropped when the loop ends. #}
 {% set info_extras = [] %}
+{% set info_tabs = [] %}
 {% for b in product_info_blocks(product.internal_id) %}
     {% if b.title %}
         {% set html %}{% include '@storefront/product/_info_block.html.twig' with {b: b|merge({title: ''})} only %}{% endset %}
         {% set panels = panels|merge({('info' ~ loop.index): html}) %}
-        {% set info_tabs = (info_tabs|default([]))|merge([{id: 'info' ~ loop.index, label: b.title, count: null}]) %}
+        {% set info_tabs = info_tabs|merge([{id: 'info' ~ loop.index, label: b.title, count: null}]) %}
     {% else %}
         {% set info_extras = info_extras|merge([b]) %}
     {% endif %}
@@ -53,7 +55,7 @@
 {% if panels.reviews is defined %}{% set tabs = tabs|merge([{id:'reviews', label:ui_text('reviews'), count:product.rating.count|default(0)}]) %}{% endif %}
 {% if panels.questions is defined %}{% set tabs = tabs|merge([{id:'questions', label:ui_text('qa_title'), count:product.questions|length}]) %}{% endif %}
 {% if panels.delivery is defined %}{% set tabs = tabs|merge([{id:'delivery', label:ui_text('shipping_payment'), count:null}]) %}{% endif %}
-{% for tab in info_tabs|default([]) %}{% set tabs = tabs|merge([tab]) %}{% endfor %}
+{% for tab in info_tabs %}{% set tabs = tabs|merge([tab]) %}{% endfor %}
 <article class="product-page">
     <div class="shell">{% include '@storefront/components/breadcrumbs.html.twig' with {items: product.breadcrumbs|default([])} only %}</div>
     <div class="shell product-hero">

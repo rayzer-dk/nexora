@@ -127,15 +127,17 @@ test('a product picks an already uploaded image and a category gets a cover imag
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
   const upload = page.locator('form[action="/admin/media/upload"]');
   const picked = page.waitForResponse((r) => r.url().endsWith('/admin/media/upload') && r.request().method() === 'POST');
+  // The upload form submits itself and redirects back to the library; wait for that page, not the old one that already matches.
+  const reloaded = page.waitForResponse((r) => r.request().isNavigationRequest() && r.request().method() === 'GET' && new URL(r.url()).pathname === '/admin/media');
   await upload.locator('input[type="file"]').setInputFiles({
     name: 'e2e-pick.png',
     mimeType: 'image/png',
     buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGPkqrjDAANMDEgANwcARI4BZoWJLsMAAAAASUVORK5CYII=', 'base64'),
   });
   await picked;
-  await page.waitForURL(/\/admin\/media/);
-  await expect(page.locator('.media-card').first()).toBeVisible();
+  await reloaded;
   await page.waitForLoadState('load');
+  await expect(page.locator('.media-card').first()).toBeVisible();
 
   // Category: choose the cover from the library and keep it after saving.
   await page.goto('/admin/catalog/categories/new', { waitUntil: 'domcontentloaded' });
