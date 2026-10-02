@@ -116,6 +116,8 @@ test('every static public HTML route renders with no runtime failure', async ({ 
     // Guarded JSON endpoints intentionally return 404 without a token or feature flag.
     '/__health/core-update',
     '/.well-known/ucp',
+    // The OAuth callback answers 404 while Google sign-in is not configured.
+    '/account/login/google/callback',
   ]);
   const failures: string[] = [];
   let runtimeErrors: string[] = [];

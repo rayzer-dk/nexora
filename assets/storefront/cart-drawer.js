@@ -89,11 +89,25 @@ async function load({ keepScroll = false, focusSelector = '' } = {}) {
   const run = ++loadRun;
   const scroller = panel.querySelector('[data-cart-drawer-lines]');
   const scrollTop = keepScroll && scroller ? scroller.scrollTop : 0;
+  let html = '';
+  let httpFailed;
   try {
     const response = await fetch('/cart/drawer', { credentials: 'same-origin', headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' } });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const html = await response.text();
-    if (run !== loadRun) return;
+    httpFailed = !response.ok;
+    if (!httpFailed) html = await response.text();
+  } catch (_) {
+    // Offline, or the browser aborted the request because the visitor is already leaving the page. Never start a
+    // navigation of our own here: it would hijack the one in progress. Only an HTTP error falls back to /cart.
+    if (run === loadRun) { panel.removeAttribute('aria-busy'); toast(t('js_cart_update_failed')); close(); }
+    return;
+  }
+  if (run !== loadRun) return;
+  if (httpFailed) {
+    panel.removeAttribute('aria-busy');
+    window.location.assign('/cart');
+    return;
+  }
+  try {
     panel.innerHTML = html;
     panel.removeAttribute('aria-busy');
     const body = panel.querySelector('[data-cart-drawer-body]');

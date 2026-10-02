@@ -28,14 +28,18 @@ test('options create variants and the storefront price follows the chosen value'
   const editHref = await page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().getAttribute('href');
   await page.goto(editHref!, { waitUntil: 'domcontentloaded' });
   const slug = await page.locator('input[name="slug"]').inputValue();
+  // The three browser projects share one store and this product: unique labels keep every run independent of earlier ones.
+  const stamp = Date.now().toString(36);
+  const red = `Red ${stamp}`;
+  const blackLabel = `Black ${stamp}`;
 
   await openProductTab(page, 'sales');
   if (!(await page.locator('#options input[name="new_option[name]"]').isVisible())) await page.locator('#options .admin-inline-create summary').click();
-  await page.locator('#options input[name="new_option[name]"]').fill('Colour');
-  await page.locator('#options input[name="new_option[values]"]').fill('Red, Black');
+  await page.locator('#options input[name="new_option[name]"]').fill(`Colour ${stamp}`);
+  await page.locator('#options input[name="new_option[values]"]').fill(`${red}, ${blackLabel}`);
   await submitOptions(page, 'save');
   await openProductTab(page, 'sales');
-  const black = page.locator('#options .admin-option__row').filter({ has: page.locator('input[value="Black"]') });
+  const black = page.locator('#options .admin-option__row').filter({ has: page.locator(`input[value="${blackLabel}"]`) });
   await black.locator('input[name$="[delta]"]').fill('50.00');
   await submitOptions(page, 'save');
   await openProductTab(page, 'sales');
@@ -50,17 +54,17 @@ test('options create variants and the storefront price follows the chosen value'
   const before = await price.textContent();
   const variantInput = page.locator('input[name="variant_id"]').first();
   const variantBefore = await variantInput.inputValue();
-  await picker.locator('[data-option-value]').filter({ hasText: 'Black' }).click();
+  await picker.locator('[data-option-value]').filter({ hasText: blackLabel }).click();
   await expect(variantInput).not.toHaveValue(variantBefore);
   await expect(price).not.toHaveText(before ?? '');
 
   // A new combination has no stock yet, so it cannot be bought; the main one can, and its value is shown in the cart.
   await expect(page.locator('form[data-buy-actions] button[type="submit"]').first()).toBeDisabled();
-  await picker.locator('[data-option-value]').filter({ hasText: 'Red' }).click();
+  await picker.locator('[data-option-value]').filter({ hasText: red }).click();
   const added = page.waitForResponse((r) => r.request().method() === 'POST' && /\/cart/.test(new URL(r.url()).pathname));
   await page.locator('form[data-buy-actions] button[type="submit"]').first().click();
   expect((await added).status()).toBeLessThan(400);
   await page.goto('/cart', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  await expect(page.locator('main')).toContainText('Red');
+  await expect(page.locator('main')).toContainText(red);
 });
