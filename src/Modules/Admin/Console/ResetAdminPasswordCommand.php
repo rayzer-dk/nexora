@@ -33,7 +33,9 @@ final class ResetAdminPasswordCommand extends Command
             $question = new Question('New password (min 12 characters): ');
             $question->setHidden(true);
             $helper = $this->getHelper('question');
-            \assert($helper instanceof QuestionHelper);
+            if (!$helper instanceof QuestionHelper) {
+                throw new \LogicException('The console question helper is not available.');
+            }
             $password = (string) $helper->ask($input, $output, $question);
         }
         try {
