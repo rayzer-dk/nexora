@@ -4,6 +4,7 @@ import vue from '@vitejs/plugin-vue';
 export default defineConfig({
   plugins: [vue()],
   base: '/build/', // chunk preloads must resolve to /build/assets, not the static /assets folder
+  publicDir: false, // outDir is inside public/: the default copy would duplicate index.php, setup.php, upgrade.php and the static assets into the web-served build folder
   build: {
     outDir: 'public/build',
     emptyOutDir: true,

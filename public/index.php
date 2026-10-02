@@ -35,6 +35,15 @@ if (!is_file($projectDir . '/.env')) {
     $_SERVER['APP_RUNTIME_OPTIONS'] = $runtimeOptions;
 }
 
+// With variables_order="GPCS" (the php.ini-production default) the PHP built-in server and some other SAPIs keep the process
+// environment out of $_SERVER. Symfony Runtime would then silently fall back to APP_ENV=dev with debug on, ignoring APP_ENV=prod
+// and APP_DEBUG=0 set for the process. Take the two switches from the real environment first.
+foreach (['APP_ENV', 'APP_DEBUG'] as $switch) {
+    if (!isset($_SERVER[$switch]) && !isset($_ENV[$switch]) && ($value = getenv($switch)) !== false) {
+        $_SERVER[$switch] = $_ENV[$switch] = $value;
+    }
+}
+
 require_once $projectDir . '/vendor/autoload_runtime.php';
 
 return static function (array $context): Kernel {
