@@ -1519,7 +1519,7 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 .admin-media-picked { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); margin-top: var(--mc-space-2); }
 .admin-media-picked figure { position: relative; width: 96px; margin: 0; }
 .admin-media-picked img { display: block; width: 96px; height: 96px; object-fit: cover; border-radius: var(--mc-radius-sm); border: 1px solid var(--mc-color-border); }
-.admin-media-picked button { position: absolute; top: 2px; right: 2px; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: var(--mc-color-ink); color: #fff; cursor: pointer; }
+.admin-media-picked button { position: absolute; top: 2px; right: 2px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: var(--mc-color-ink); color: #fff; cursor: pointer; }
 .admin-media-actions-row { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); align-items: center; margin-top: var(--mc-space-2); }
 
 .admin-field-label { display: block; margin-bottom: var(--mc-space-1); font-weight: var(--mc-font-weight-semibold); }
@@ -1731,3 +1731,9 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 
 .notice-close { margin-left: auto; align-self: flex-start; flex: none; display: inline-grid; place-items: center; width: var(--mc-control-height-sm); height: var(--mc-control-height-sm); padding: 0; border: 0; border-radius: var(--mc-radius-sm); background: transparent; color: inherit; font-size: var(--mc-font-size-lg); line-height: 1; cursor: pointer; opacity: .7; }
 .notice-close:hover, .notice-close:focus-visible { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
+
+/* Visitors who ask for less motion get none: same rule as the storefront stylesheet. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; animation-iteration-count: 1 !important; }
+}
