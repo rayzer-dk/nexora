@@ -22,11 +22,27 @@ async function submitOptions(page: Page, action: string): Promise<void> {
   await expectNoServerError(page);
 }
 
+// The three browser projects share one store. Generating variants binds the main variant to the first combination only
+// while it has no option values yet, so every run needs a published, in-stock product that no earlier run has touched.
+async function openProductWithoutOptions(page: Page): Promise<void> {
+  await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
+  const hrefs = await page
+    .locator('a[href*="/admin/catalog/products/"][href$="/edit"]')
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('href') ?? ''));
+  for (const href of [...new Set(hrefs)].filter(Boolean)) {
+    await page.goto(href, { waitUntil: 'domcontentloaded' });
+    const status = await page.locator('select[name="status"]').inputValue();
+    const stock = Number((await page.locator('input[name="stock_quantity"]').inputValue()).replace(',', '.'));
+    await openProductTab(page, 'sales');
+    const hasOptions = (await page.locator('#options .admin-option').count()) > 0;
+    if (status === 'published' && stock > 0 && !hasOptions) return;
+  }
+  throw new Error('No published, in-stock product without options is available for this test.');
+}
+
 test('options create variants and the storefront price follows the chosen value', async ({ page }) => {
   await login(page);
-  await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
-  const editHref = await page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().getAttribute('href');
-  await page.goto(editHref!, { waitUntil: 'domcontentloaded' });
+  await openProductWithoutOptions(page);
   const slug = await page.locator('input[name="slug"]').inputValue();
   // The three browser projects share one store and this product: unique labels keep every run independent of earlier ones.
   const stamp = Date.now().toString(36);

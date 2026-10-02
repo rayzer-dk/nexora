@@ -182,7 +182,8 @@ if (checkout) {
   cityInput?.addEventListener('input', () => { clearTimeout(cityTimer); cityTimer = setTimeout(searchCities, 250); });
   pointInput?.addEventListener('input', () => { clearTimeout(pointTimer); pointTimer = setTimeout(searchPoints, 250); });
   pointInput?.addEventListener('focus', () => { if (selectedCity && !pointInput.value && !pointId?.value) searchPoints(); });
-  manualToggle?.addEventListener('click', () => showManual(fallback?.hidden !== false, true));
+  // "Enter the address manually" only ever opens the field: a city lookup may already have opened it on its own, and a toggle would then close it.
+  manualToggle?.addEventListener('click', () => showManual(true, true));
   [cityInput, pointInput].forEach((input) => input?.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') { clearResults(cityResults, cityInput); clearResults(pointResults, pointInput); }
     if (event.key === 'ArrowDown') { const box = input === cityInput ? cityResults : pointResults; const first = box?.querySelector('button'); if (first) { event.preventDefault(); first.focus(); } }

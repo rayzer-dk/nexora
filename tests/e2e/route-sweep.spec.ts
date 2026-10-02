@@ -13,6 +13,12 @@ function routes(): RouteDump {
   })) as RouteDump;
 }
 
+/** An assertion message can embed the whole rendered page; keep a failed route to a few readable lines. */
+function briefError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.split('\n').map((line) => line.trim()).filter(Boolean).slice(0, 4).join(' | ').slice(0, 400);
+}
+
 function escapeRegex(value: string): string {
   const special = '\\.^$*+?()[]{}|';
   let result = '';
@@ -92,7 +98,7 @@ test('every static admin HTML route renders after authentication', async ({ page
         }
       }
     } catch (error) {
-      failures.push(route.name + ' ' + route.path + ': ' + (error instanceof Error ? error.message : String(error)));
+      failures.push(route.name + ' ' + route.path + ': ' + briefError(error));
     }
   }
 
@@ -144,7 +150,7 @@ test('every static public HTML route renders with no runtime failure', async ({ 
         }
       }
     } catch (error) {
-      failures.push(route.name + ' ' + route.path + ': ' + (error instanceof Error ? error.message : String(error)));
+      failures.push(route.name + ' ' + route.path + ': ' + briefError(error));
     }
   }
 
