@@ -230,9 +230,10 @@ test('product info blocks render on the product page and articles link to produc
   const productLink = page.locator('.article-rail .aside-links a').first();
   await expect(productLink).toBeVisible();
   await Promise.all([page.waitForURL((u) => !u.pathname.startsWith('/blog/')), productLink.click()]);
-  const chart = page.locator('.product-info-block--table', { hasText: `Size chart ${suffix}` });
+  // Since 3.30 a titled block is a tab of the product details: its title is the panel heading, the block holds the table only.
+  const chart = page.locator('[data-tab-panel^="info"]', { hasText: `Size chart ${suffix}` });
   await expect(chart).toHaveCount(1);
-  await expect(chart.locator('td').first()).toHaveText('S');
+  await expect(chart.locator('.product-info-block--table td').first()).toHaveText('S');
   await expect(page.locator('.product-articles__list a', { hasText: title })).toBeVisible();
 });
 

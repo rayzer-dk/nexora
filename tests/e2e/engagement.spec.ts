@@ -54,6 +54,8 @@ test('floating contact buttons: admin configures them, storefront shows them, ca
     await expect(dialog).toBeVisible();
     await dialog.locator('input[name="name"]').fill('E2E Callback Customer');
     await dialog.locator('input[name="phone"]').fill('+380671112233');
+    // The anti-spam gate rejects a form submitted less than a second after the page was rendered.
+    await page.waitForTimeout(1200);
     await dialog.locator('button[type="submit"]').click();
     await expect(dialog).toBeHidden();
 
