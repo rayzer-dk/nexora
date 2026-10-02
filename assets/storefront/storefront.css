@@ -476,10 +476,6 @@ legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-
 .rich-text th, .rich-text td, .rich-content th, .rich-content td, .article-body th, .article-body td { padding: var(--mc-space-2) var(--mc-space-3); border: 1px solid var(--mc-color-border); text-align: left; }
 .rich-text code, .rich-content code, .article-body code { padding: 0 var(--mc-space-1); border-radius: var(--mc-radius-xs); background: var(--mc-color-surface-subtle); font-family: var(--mc-font-mono); font-size: var(--mc-font-size-sm); }
 
-@media (min-width: 768px) {
-}
-@media (min-width: 1024px) {
-}
 
 /* ========== 12. Cart ========== */
 .cart-page > * + * { margin-top: var(--mc-space-5); }

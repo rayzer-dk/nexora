@@ -546,6 +546,7 @@ final readonly class DemoCommerceSeeder
                 $paymentStatus = 'pending';
                 $paymentRowStatus = 'pending';
             }
+            /** @var int $buyerIx */
             $isB2b = ($extra['b2b'] ?? false) === true && $b2b !== null;
             $customer = $buyerIx >= 0 ? ($customers[$buyerIx] ?? null) : null;
             $guest = $buyerIx < 0 ? self::GUESTS[-$buyerIx - 1] : null;
@@ -587,7 +588,7 @@ final readonly class DemoCommerceSeeder
             $giftIx = null;
             if (isset($extra['gift']) && isset($giftCards[$extra['gift'][0]])) {
                 $giftIx = (int) $extra['gift'][0];
-                $gift = min((int) $extra['gift'][1], $giftCards[$giftIx]['balance'], $subtotal - $discount);
+                $gift = (int) min((int) $extra['gift'][1], $giftCards[$giftIx]['balance'], $subtotal - $discount);
             }
             $points = 0;
             if (isset($extra['points']) && $customer !== null && $loyaltyEnabled && ($accounts[$customer['id']]['bal'] ?? 0) >= (int) $extra['points']) {

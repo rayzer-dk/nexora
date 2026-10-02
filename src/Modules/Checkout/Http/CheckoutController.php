@@ -25,6 +25,8 @@ use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class CheckoutController extends AbstractController
@@ -71,7 +73,7 @@ final class CheckoutController extends AbstractController
         usort($methods,static fn($a,$b):int=>[$a->code==='cash_on_delivery'?0:1]<=>[$b->code==='cash_on_delivery'?0:1]);
         $deliveryOptions=array_values(array_filter(CheckoutMethodSettings::DELIVERY,fn(string $code):bool=>$this->methodSettings->isEnabled($context->storeId,$code)));
         $pickupPoints=in_array('self_pickup',$deliveryOptions,true)?$this->pickupPoints->forCheckout($context->storeId,$context->storeName):[];
-        $old=$request->getSession()->getFlashBag()->get('checkout_old'); $old=is_array($old[0]??null)?$old[0]:[];
+        $old=$this->flashBag($request)?->get('checkout_old')??[]; $old=is_array($old[0]??null)?$old[0]:[];
         $response = $this->render('@storefront/checkout/show.html.twig', [
             'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.oformlennia_zamovlennia'),'store_name'=>$context->storeName,'cart'=>$summary,'country_code'=>$context->countryCode,'delivery_regions'=>$this->shippingCountries->enabledRegions($context->storeId,$context->countryCode),'checkout_layout'=>$layout,
             'payment_methods'=>$methods,'checkout_key'=>$key,'delivery_options'=>$deliveryOptions,'pickup_points'=>$pickupPoints,'old'=>$old,'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
@@ -113,7 +115,7 @@ final class CheckoutController extends AbstractController
             $this->addFlash('checkout_error',$e->getMessage());
             // Keep what the buyer typed (never the card/gift codes) so a validation error does not wipe the form.
             $keep=[]; foreach(['name','phone','email','customer_comment','company_name','company_tax_id','carrier','city_id','city_name','point_id','point_name','delivery_manual','delivery_region','payment_method','coupon_code','purchase_order_number'] as $field){$keep[$field]=mb_substr((string)$request->request->get($field,''),0,500);}
-            $request->getSession()->getFlashBag()->set('checkout_old',[$keep]);
+            $this->flashBag($request)?->set('checkout_old',[$keep]);
             return $this->redirectToRoute('storefront_checkout');
         }
         try { $flow=$this->paymentFlow->afterOrderPlaced($order['public_id']); }
@@ -131,5 +133,12 @@ final class CheckoutController extends AbstractController
     {
         $context=$this->contexts->resolve($request);
         return $this->render('@storefront/checkout/success.html.twig',['page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.zamovlennia_pryiniato'),'order_public_id'=>$order,'order_info'=>$this->confirmation->find($order,$context->storeId,$context->locale),'seo_head'=>['robots'=>'noindex,nofollow']]);
+    }
+
+    private function flashBag(Request $request): ?FlashBagInterface
+    {
+        $session = $request->getSession();
+
+        return $session instanceof FlashBagAwareSessionInterface ? $session->getFlashBag() : null;
     }
 }

@@ -326,7 +326,7 @@ final class FormService
         if (!$file->isValid() || $file->getSize() < 1 || $file->getSize() > self::MAX_FILE_BYTES) {
             throw $fail();
         }
-        $name = trim((string) preg_replace('/[\x00-\x1f\x7f\/\\]+/u', '', basename(str_replace('\\', '/', $file->getClientOriginalName()))));
+        $name = trim((string) preg_replace('/[\x00-\x1f\x7f\/\\\\]+/u', '', basename(str_replace('\\', '/', $file->getClientOriginalName()))));
         $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
         if ($name === '' || !isset(self::FILE_TYPES[$extension])) {
             throw $fail();

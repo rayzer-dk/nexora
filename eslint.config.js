@@ -82,4 +82,12 @@ export default [
       'vue/multi-word-component-names': 'off',
     },
   },
+  {
+    // Playwright reads the fixture names from the first parameter's destructuring pattern,
+    // so `async ({}, testInfo) => ...` is required and cannot be replaced by a plain name.
+    files: ['tests/e2e/**/*.ts'],
+    rules: {
+      'no-empty-pattern': ['error', { allowObjectPatternsAsParameters: true }],
+    },
+  },
 ];

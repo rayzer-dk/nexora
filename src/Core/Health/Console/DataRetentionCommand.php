@@ -137,7 +137,6 @@ final class DataRetentionCommand extends Command
         return Command::SUCCESS;
     }
 
-    /** @param list<string> $params */
     private function sweepFormFiles(): int
     {
         $root = $this->projectDir . '/var/forms';

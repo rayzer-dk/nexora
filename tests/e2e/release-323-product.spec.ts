@@ -198,7 +198,6 @@ test('admin product form edits the SEO title/description and the old price shown
   const oldMeta = await form.locator('input[name="meta_title"]').inputValue();
   const oldCompare = await form.locator('input[name="compare_at_price"]').inputValue();
   const price = Number((await form.locator('input[name="price"]').inputValue()).replace(/[^\d,.]/g, '').replace(',', '.'));
-  const url = page.url();
   const productUrl = await page.evaluate(() => document.querySelector<HTMLAnchorElement>('a[href^="/"][target="_blank"], a[data-view-on-store]')?.getAttribute('href') || '');
 
   const title = `E2E SEO title ${Date.now()}`;

@@ -7,6 +7,7 @@ namespace Commerce\Modules\Admin\Console;
 use Commerce\Modules\Admin\Security\AdminPasswordResetService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -31,7 +32,9 @@ final class ResetAdminPasswordCommand extends Command
         if ($password === '') {
             $question = new Question('New password (min 12 characters): ');
             $question->setHidden(true);
-            $password = (string) $this->getHelper('question')->ask($input, $output, $question);
+            $helper = $this->getHelper('question');
+            \assert($helper instanceof QuestionHelper);
+            $password = (string) $helper->ask($input, $output, $question);
         }
         try {
             $ok = $this->resets->setPasswordForEmail((string) $input->getArgument('email'), $password);
