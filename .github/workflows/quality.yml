@@ -113,8 +113,8 @@ jobs:
         shell: bash
         run: |
           if ! npm run e2e; then
-            echo '--- Nexora E2E server log ---'
-            cat var/log/e2e-web.log || true
+            echo '--- Nexora E2E server log (last 200 lines; the full log is in the playwright-report artifact) ---'
+            tail -n 200 var/log/e2e-web.log || true
             exit 1
           fi
       - name: Audit application error logs
