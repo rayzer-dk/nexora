@@ -97,6 +97,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'quick_order' => false,
                 'benefits' => '',
             ],
+            // Empty title/text mean "use the translated default", so every language keeps a correct notice until the owner writes their own.
+            'consent' => ['title' => '', 'text' => '', 'position' => 'bar', 'tone' => 'light', 'show_icon' => true],
             'header' => [
                 'search_placeholder' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.poshuk_tovariv_katehorii_brendiv'),
                 'show_category_nav' => true,
@@ -165,6 +167,12 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         }
         $lines = array_slice(array_values(array_filter(array_map(fn (string $l): string => $this->text($l, 90), preg_split('/\R/u', (string) ($in['benefits'] ?? '')) ?: []), static fn (string $l): bool => $l !== '')), 0, 4);
         $out['display']['benefits'] = implode("\n", $lines);
+        $c = is_array($input['consent'] ?? null) ? $input['consent'] : [];
+        $out['consent']['title'] = $this->text($c['title'] ?? '', 80);
+        $out['consent']['text'] = $this->text($c['text'] ?? '', 400);
+        $out['consent']['position'] = $choice($c['position'] ?? 'bar', ['bar', 'card_left', 'card_right'], 'bar');
+        $out['consent']['tone'] = $choice($c['tone'] ?? 'light', ['light', 'dark', 'brand'], 'light');
+        $out['consent']['show_icon'] = (bool) ($c['show_icon'] ?? $defaults['consent']['show_icon']);
         $out['header']['search_placeholder'] = $this->text($input['header']['search_placeholder'] ?? '', 160);
         $out['header']['show_category_nav'] = (bool) ($input['header']['show_category_nav'] ?? false);
         foreach (array_keys($defaults['home']) as $key) {

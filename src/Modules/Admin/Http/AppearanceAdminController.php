@@ -76,6 +76,13 @@ final class AppearanceAdminController extends AbstractController
                         'quick_order' => $bool('display_quick_order'),
                         'benefits' => $request->request->get('display_benefits',''),
                     ],
+                    'consent' => [
+                        'title' => $request->request->get('consent_title',''),
+                        'text' => $request->request->get('consent_text',''),
+                        'position' => $request->request->get('consent_position','bar'),
+                        'tone' => $request->request->get('consent_tone','light'),
+                        'show_icon' => $bool('consent_show_icon'),
+                    ],
                     'header' => [
                         'search_placeholder' => $request->request->get('search_placeholder',''),
                         'show_category_nav' => $bool('show_category_nav'),
