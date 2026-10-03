@@ -18,8 +18,8 @@
     </div>
     <div class="buy-actions__buttons">
         <button class="button button--primary button--lg" type="submit" data-primary-buy>{{ ui_icon('shopping-cart', 20) }}<span>{{ product.purchase_button_label|default(ui_text('add_cart')) }}</span></button>
-        {% if capabilities.features.checkout|default(false) %}<button class="button button--secondary button--lg" type="submit" name="next" value="checkout">{{ ui_text('buy_now') }}</button>{% endif %}
     </div>
+    {% if capabilities.features.checkout|default(false) and display.buy_now|default(false) %}<div class="buy-actions__more"><button class="button button--secondary" type="submit" name="next" value="checkout">{{ ui_icon('arrow-right', 16) }}<span>{{ ui_text('buy_now') }}</span></button></div>{% endif %}
 </form>
 {% if display.quick_order %}
 <button class="pp-quick-link quick-order-open" type="button" data-quick-order-open>{{ ui_icon('zap', 18) }}<span>{{ ui_text('quick_order') }}</span></button>

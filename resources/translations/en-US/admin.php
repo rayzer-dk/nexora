@@ -3864,4 +3864,7 @@ return [
     'admin.colors.primary_active' => 'Main buttons: when pressed',
     'admin.colors.buy_hover' => '“Buy”: on hover',
     'admin.colors.buy_active' => '“Buy”: when pressed',
+    'admin.display.buy_now' => '“Buy now” button on the product page (goes straight to checkout)',
+    'admin.display.key_features_limit' => 'How many specifications to show near the “Buy” button',
+    'admin.display.key_features_limit_hint' => '0 hides them; up to 12. The first attributes of the product are used.',
 ];

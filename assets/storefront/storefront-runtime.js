@@ -323,8 +323,8 @@ function initRecentlyViewed() {
   const track = document.querySelector('[data-recent-track]');
   const currentId = track?.dataset.id ?? '';
   if (track && currentId) {
-    const { id, name, url, image, price } = track.dataset;
-    items = [{ id, name, url, image, price }, ...items.filter((item) => item && item.id !== id)].slice(0, 12);
+    const { id, name, url, image, price, variant } = track.dataset;
+    items = [{ id, name, url, image, price, variant }, ...items.filter((item) => item && item.id !== id)].slice(0, 12);
     try { localStorage.setItem(KEY, JSON.stringify(items)); } catch { /* storage unavailable */ }
   }
   const box = document.querySelector('[data-recent-list]');
@@ -358,6 +358,21 @@ function initRecentlyViewed() {
       link.append(price);
     }
     li.append(link);
+    const cartToken = document.querySelector('meta[name="mc-cart-token"]')?.content;
+    if (cartToken && /^[0-9a-f-]{32,36}$/i.test(item.variant || '')) {
+      const form = document.createElement('form');
+      form.className = 'recent-viewed__cart';
+      form.method = 'post'; form.action = '/cart/add'; form.dataset.cardAddToCart = '';
+      [['_token', cartToken], ['variant_id', item.variant], ['quantity', '1']].forEach(([name, value]) => {
+        const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; form.append(input);
+      });
+      const button = document.createElement('button');
+      button.type = 'submit'; button.className = 'button button--primary catalog-card__buy';
+      button.innerHTML = '<svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+      const label = document.createElement('span'); label.textContent = t('js_add_to_cart'); button.append(label);
+      form.append(button);
+      li.append(form);
+    }
     list.append(li);
   });
   box.hidden = false;

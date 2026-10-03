@@ -812,4 +812,5 @@ return [
     'status.delivered' => 'Dostarczono',
     'status.partial' => 'Częściowo',
     'status.returned' => 'Zwrócono',
+    'js_add_to_cart' => 'Do koszyka',
 ];

@@ -3859,4 +3859,7 @@ return [
     'admin.colors.primary_active' => 'Основні кнопки: при натисканні',
     'admin.colors.buy_hover' => '«Купити»: при наведенні',
     'admin.colors.buy_active' => '«Купити»: при натисканні',
+    'admin.display.buy_now' => 'Кнопка «Купити зараз» на сторінці товару (веде одразу до оформлення)',
+    'admin.display.key_features_limit' => 'Скільки характеристик показувати біля кнопки «Купити»',
+    'admin.display.key_features_limit_hint' => '0 — не показувати; до 12. Беруться перші характеристики товару.',
 ];

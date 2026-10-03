@@ -812,4 +812,5 @@ return [
     'status.delivered' => 'Zugestellt',
     'status.partial' => 'Teilweise',
     'status.returned' => 'Retourniert',
+    'js_add_to_cart' => 'In den Warenkorb',
 ];

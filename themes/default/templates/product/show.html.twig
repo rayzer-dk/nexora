@@ -109,6 +109,6 @@
         {% include block.template with {product: product, block: block} only %}
     {% endfor %}
 </article>
-<span hidden data-recent-track data-id="{{ product.id }}" data-name="{{ product.name|e('html_attr') }}" data-url="{{ product.url|e('html_attr') }}" data-image="{{ product.image|default('')|e('html_attr') }}" data-price="{{ product.price|default('')|e('html_attr') }}" data-sku="{{ product.sku|default('')|e('html_attr') }}" data-price-minor="{{ product.price_minor|default(0) }}" data-currency="{{ product.currency|default('')|e('html_attr') }}"></span>
+<span hidden data-recent-track data-id="{{ product.id }}" data-name="{{ product.name|e('html_attr') }}" data-url="{{ product.url|e('html_attr') }}" data-image="{{ product.image|default('')|e('html_attr') }}" data-price="{{ product.price|default('')|e('html_attr') }}" data-sku="{{ product.sku|default('')|e('html_attr') }}" data-price-minor="{{ product.price_minor|default(0) }}" data-currency="{{ product.currency|default('')|e('html_attr') }}"{% if product.purchase_allowed|default(false) and product.variant_id|default('') %} data-variant="{{ product.variant_id }}"{% endif %}></span>
 {% include '@storefront/components/recently_viewed.html.twig' %}
 {% endblock %}

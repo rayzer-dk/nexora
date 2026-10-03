@@ -1081,4 +1081,5 @@ return [
     'status.delivered' => 'Delivered',
     'status.partial' => 'Partial',
     'status.returned' => 'Returned',
+    'js_add_to_cart' => 'Add to cart',
 ];

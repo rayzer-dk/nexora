@@ -1,6 +1,8 @@
-{% set limit = block.settings.limit|default(5) %}
+{% set limit = block.settings.limit|default(storefront_presentation().display.key_features_limit|default(5)) %}
+{% if limit > 0 and product.features %}
 <ul class="key-features">
     {% for feature in product.features|slice(0, limit) %}
         <li>{{ feature }}</li>
     {% endfor %}
 </ul>
+{% endif %}

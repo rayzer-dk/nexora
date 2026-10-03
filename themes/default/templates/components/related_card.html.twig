@@ -1,0 +1,13 @@
+{# Compact product tile for carousels: photo, name, availability, price and a buy button. Expects item and eager. #}
+{% set capabilities = site_capabilities() %}
+<article class="related-card">
+    <a class="related-card__link" href="{{ item.url }}">{{ media_picture(item.image, 'card', ['thumb', 'card'], '(min-width: 1024px) 18vw, 45vw', {alt: (item.name), width: '360', height: '360', loading: (eager ? 'eager' : 'lazy'), decoding: 'async'}) }}<span><strong>{{ item.name }}</strong><small>{{ item.availability_label }}</small><b>{{ item.price }}</b></span></a>
+    {% if capabilities.features.cart|default(false) and item.purchase_allowed|default(false) and item.variant_id|default('') %}
+    <form class="related-card__cart" action="/cart/add" method="post" data-card-add-to-cart>
+        <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
+        <input type="hidden" name="variant_id" value="{{ item.variant_id }}">
+        <input type="hidden" name="quantity" value="1">
+        <button class="button button--primary catalog-card__buy" type="submit">{{ ui_icon('shopping-cart', 16) }}<span>{{ ui_text('add_cart') }}</span></button>
+    </form>
+    {% endif %}
+</article>

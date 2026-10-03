@@ -813,4 +813,5 @@ return [
     'status.delivered' => 'Доставлено',
     'status.partial' => 'Частично',
     'status.returned' => 'Возвращено',
+    'js_add_to_cart' => 'В корзину',
 ];

@@ -9,6 +9,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    {% if capabilities.features.cart|default(false) %}<meta name="mc-cart-token" content="{{ csrf_token('cart_mutation') }}">{% endif %}
     <meta name="color-scheme" content="{{ presentation.theme.color_scheme|default('light') == 'light' ? 'light' : (presentation.theme.color_scheme == 'dark' ? 'dark' : 'light dark') }}">
     <title>{% block title %}{{ seo_head.title|default('') ?: page_title|default(store_name|default(ui_text('store'))) }}{% endblock %}</title>
     {% if seo_head is defined and seo_head.description|default('') %}<meta name="description" content="{{ seo_head.description }}">{% endif %}

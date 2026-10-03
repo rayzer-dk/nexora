@@ -495,7 +495,7 @@ final readonly class DbalStorefrontCatalogQuery
         // The detail query has no card image column: use the first gallery image (feeds JSON-LD, sharing and the "recently viewed" cards).
         if (($product['images'][0]['url'] ?? '') !== '') { $product['image'] = (string) $product['images'][0]['url']; }
         $product['attributes'] = $this->productAttributes((int)$row['id'], $context->locale);
-        $product['features'] = array_map(static fn(array $a): string => $a['name'] . ': ' . $a['value'], array_slice($product['attributes'], 0, 5));
+        $product['features'] = array_map(static fn(array $a): string => $a['name'] . ': ' . $a['value'], array_slice($product['attributes'], 0, 12));
         $product['documents'] = $this->productDocuments((int)$row['id'], $context->locale);
         $product['rating'] = $this->rating((int)$row['id']);
         $product['reviews'] = $this->reviews((int)$row['id'], $context);
@@ -811,6 +811,7 @@ final readonly class DbalStorefrontCatalogQuery
             'price'=>$this->money->format((int)$r['amount_minor'],(string)$r['currency'],$context->locale),
             'currency'=>(string)$r['currency'],'image'=>$this->mediaUrl($r['image_key']??null),
             'availability_label'=>\Commerce\Core\I18n\CanonicalUiText::get((float)$r['available_quantity']>0?'catalog.in_stock':'catalog.out_of_stock'),
+            'purchase_allowed'=>(float)$r['available_quantity']>0,
         ], array_slice($rows, 0, $limit));
     }
 

@@ -21,7 +21,7 @@ test('product page: compact buy box, tabs with anchors, share popover', async ({
   const buttons = page.locator('.buy-actions__buttons > .button');
   await expect(buttons.first()).toBeVisible();
   expect(await buttons.count()).toBeGreaterThanOrEqual(1);
-  // Add to cart and Buy now share one row.
+  // When a second button exists (Buy now is optional) it shares the row with Add to cart.
   if ((await buttons.count()) === 2) {
     const a = await buttons.nth(0).boundingBox();
     const b = await buttons.nth(1).boundingBox();

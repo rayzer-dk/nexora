@@ -97,6 +97,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'back_to_top' => true,
                 'sale_timer' => true,
                 'quick_order' => false,
+                'buy_now' => false,
+                'key_features_limit' => '5',
                 'benefits' => '',
             ],
             // Empty title/text mean "use the translated default", so every language keeps a correct notice until the owner writes their own.
@@ -169,7 +171,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $out['display']['category_style'] = $choice($in['category_style'] ?? $d['category_style'], ['classic', 'overlay', 'chips'], $d['category_style']);
         $out['display']['product_details'] = $choice($in['product_details'] ?? $d['product_details'], ['tabs', 'list'], $d['product_details']);
         $out['display']['product_layout'] = $choice($in['product_layout'] ?? $d['product_layout'], ['classic', 'wide', 'stacked', 'split'], $d['product_layout']);
-        foreach (['sticky_header', 'back_to_top', 'sale_timer', 'quick_order'] as $flag) {
+        $out['display']['key_features_limit'] = (string) max(0, min(12, (int) ($in['key_features_limit'] ?? $d['key_features_limit'])));
+        foreach (['sticky_header', 'back_to_top', 'sale_timer', 'quick_order', 'buy_now'] as $flag) {
             $out['display'][$flag] = (bool) ($in[$flag] ?? $d[$flag]);
         }
         $lines = array_slice(array_values(array_filter(array_map(fn (string $l): string => $this->text($l, 90), preg_split('/\R/u', (string) ($in['benefits'] ?? '')) ?: []), static fn (string $l): bool => $l !== '')), 0, 4);

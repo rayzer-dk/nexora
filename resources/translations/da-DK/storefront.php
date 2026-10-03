@@ -879,4 +879,5 @@ return [
     'status.delivered' => 'Leveret',
     'status.partial' => 'Delvis',
     'status.returned' => 'Returneret',
+    'js_add_to_cart' => 'Læg i kurv',
 ];
