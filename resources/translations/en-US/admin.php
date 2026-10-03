@@ -3858,6 +3858,10 @@ return [
     'admin.colors.heading' => 'Heading colour',
     'admin.colors.header_bg' => 'Header background',
     'admin.colors.footer_bg' => 'Footer and top bar background',
-    'admin.colors.buy_button' => '“Buy” button',
+    'admin.colors.buy_button' => '“Buy” button: normal state',
     'admin.colors.use' => 'Apply',
+    'admin.colors.primary_hover' => 'Main buttons: on hover',
+    'admin.colors.primary_active' => 'Main buttons: when pressed',
+    'admin.colors.buy_hover' => '“Buy”: on hover',
+    'admin.colors.buy_active' => '“Buy”: when pressed',
 ];

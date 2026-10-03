@@ -84,7 +84,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'font' => 'system',
             ],
             // Optional overrides of single colours; an empty value keeps the colour of the chosen preset and colour scheme.
-            'colors' => ['background' => '', 'text' => '', 'heading' => '', 'header_bg' => '', 'footer_bg' => '', 'buy_button' => ''],
+            'colors' => ['background' => '', 'text' => '', 'heading' => '', 'header_bg' => '', 'footer_bg' => '', 'primary_hover' => '', 'primary_active' => '', 'buy_button' => '', 'buy_hover' => '', 'buy_active' => ''],
             'display' => [
                 'card_style' => 'classic',
                 'card_columns' => '4',

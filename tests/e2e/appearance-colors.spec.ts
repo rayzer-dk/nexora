@@ -13,7 +13,7 @@ async function loginAdmin(page: Page): Promise<void> {
   ]);
 }
 
-const KEYS = ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'buy_button'] as const;
+const KEYS = ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'primary_hover', 'primary_active', 'buy_button', 'buy_hover', 'buy_active'] as const;
 
 async function saveColors(page: Page, values: Partial<Record<(typeof KEYS)[number], string>>) {
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
@@ -44,7 +44,7 @@ test('extra colours set in Appearance reach the storefront and can be reset to t
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating settings run once.');
   await loginAdmin(page);
   try {
-    await saveColors(page, { background: '#FFF7ED', heading: '#9A3412', header_bg: '#7C2D12', footer_bg: '#431407', buy_button: '#16A34A' });
+    await saveColors(page, { background: '#FFF7ED', heading: '#9A3412', header_bg: '#7C2D12', footer_bg: '#431407', buy_button: '#16A34A', buy_hover: '#15803D' });
     const ctx = await browser.newContext({ baseURL: testInfo.project.use.baseURL, locale: 'uk-UA' });
     const shop = await ctx.newPage();
     await shop.goto('/catalog', { waitUntil: 'domcontentloaded' });
@@ -54,6 +54,8 @@ test('extra colours set in Appearance reach the storefront and can be reset to t
     await expect(shop.locator('.site-footer')).toHaveCSS('background-color', rgb('#431407'));
     await expect(shop.locator('main h1').first()).toHaveCSS('color', rgb('#9A3412'));
     await expect(shop.locator('.catalog-card__buy').first()).toHaveCSS('background-color', rgb('#16A34A'));
+    await shop.locator('.catalog-card__buy').first().hover();
+    await expect(shop.locator('.catalog-card__buy').first()).toHaveCSS('background-color', rgb('#15803D'));
     await ctx.close();
   } finally {
     await saveColors(page, {});

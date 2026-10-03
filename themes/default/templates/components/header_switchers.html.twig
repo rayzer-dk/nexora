@@ -5,7 +5,7 @@
 <div class="store-switchers" data-store-switchers>
     {% if lang_switch %}
     <details class="store-switcher" data-switcher data-lang-switch>
-        <summary class="store-switcher__button" aria-label="{{ ui_text('language') }}: {{ lang_switch.current.name }}" title="{{ ui_text('language') }}: {{ lang_switch.current.name }}"><span class="store-switcher__flag">{% include '@storefront/components/flag.html.twig' with {region: lang_switch.current.flag} only %}</span><span class="store-switcher__code">{{ lang_switch.current.short }}</span>{{ ui_icon('chevron-down', 14) }}</summary>
+        <summary class="store-switcher__button" aria-label="{{ ui_text('language') }}: {{ lang_switch.current.name }}" title="{{ ui_text('language') }}: {{ lang_switch.current.name }}"><span class="store-switcher__flag">{% include '@storefront/components/flag.html.twig' with {region: lang_switch.current.flag} only %}</span><span class="sr-only">{{ lang_switch.current.short }}</span>{{ ui_icon('chevron-down', 14) }}</summary>
         <ul class="store-switcher__menu" aria-label="{{ ui_text('language') }}">
             {% for option in lang_switch.options %}<li><a class="store-switcher__option{{ option.current ? ' is-current' : '' }}" href="{{ option.url }}" hreflang="{{ option.code }}" lang="{{ option.code }}" data-lang-option="{{ option.code }}"{% if option.current %} aria-current="true"{% endif %}><span class="store-switcher__flag">{% include '@storefront/components/flag.html.twig' with {region: option.flag} only %}</span><span class="store-switcher__name">{{ option.name }}</span><small>{{ option.short }}</small>{% if option.current %}{{ ui_icon('check', 16) }}{% endif %}</a></li>{% endfor %}
         </ul>

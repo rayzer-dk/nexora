@@ -3853,6 +3853,10 @@ return [
     'admin.colors.heading' => 'Колір заголовків',
     'admin.colors.header_bg' => 'Фон шапки',
     'admin.colors.footer_bg' => 'Фон футера і верхньої смуги',
-    'admin.colors.buy_button' => 'Кнопка «Купити»',
+    'admin.colors.buy_button' => 'Кнопка «Купити»: звичайний стан',
     'admin.colors.use' => 'Застосувати',
+    'admin.colors.primary_hover' => 'Основні кнопки: при наведенні',
+    'admin.colors.primary_active' => 'Основні кнопки: при натисканні',
+    'admin.colors.buy_hover' => '«Купити»: при наведенні',
+    'admin.colors.buy_active' => '«Купити»: при натисканні',
 ];

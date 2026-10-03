@@ -77,10 +77,10 @@ final class AppearanceAdminController extends AbstractController
                         'benefits' => $request->request->get('display_benefits',''),
                     ],
                     'colors' => array_combine(
-                        ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'buy_button'],
+                        ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'primary_hover', 'primary_active', 'buy_button', 'buy_hover', 'buy_active'],
                         array_map(
                             static fn (string $key): string => $request->request->getBoolean('colors_' . $key . '_on') ? (string) $request->request->get('colors_' . $key, '') : '',
-                            ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'buy_button'],
+                            ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'primary_hover', 'primary_active', 'buy_button', 'buy_hover', 'buy_active'],
                         ),
                     ),
                     'consent' => [
