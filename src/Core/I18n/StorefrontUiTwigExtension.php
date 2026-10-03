@@ -32,7 +32,10 @@ final class StorefrontUiTwigExtension extends AbstractExtension
 
     public function getFilters(): array
     {
-        return [new TwigFilter('forum_ugc', $this->forumUgc(...), ['is_safe' => ['html']])];
+        return [
+            new TwigFilter('forum_ugc', $this->forumUgc(...), ['is_safe' => ['html']]),
+            new TwigFilter('status_label', $this->statusLabel(...), ['needs_context' => true]),
+        ];
     }
 
     public function icon(string $name, int $size = 20, string $class = ''): string
@@ -131,6 +134,19 @@ final class StorefrontUiTwigExtension extends AbstractExtension
     }
 
     /** @param array<string,mixed> $context */
+    /** Human label for an order/payment/fulfilment status code; unknown codes fall back to a readable form of the code. @param array<string,mixed> $context */
+    public function statusLabel(array $context, mixed $code): string
+    {
+        $code = trim((string) $code);
+        if ($code === '') {
+            return '—';
+        }
+        $key = 'status.' . $code;
+        $label = $this->text($context, $key);
+
+        return $label !== $key ? $label : ucfirst(str_replace('_', ' ', $code));
+    }
+
     public function text(array $context, string $key, array $replace = []): string
     {
         $locale = is_string($context['locale'] ?? null) ? trim($context['locale']) : ''; // a template loop variable named `locale` must not shadow the UI locale

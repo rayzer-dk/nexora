@@ -3,8 +3,8 @@
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
 
 <section class="admin-stats">
-  <article><span>{{ ui_text('admin.orders.view.status') }}</span><strong>{{ order.status }}</strong><small>{{ order.fulfillment_status }}</small></article>
-  <article><span>{{ ui_text('admin.orders.view.oplata') }}</span><strong>{{ order.payment_status }}</strong><small>{{ payment_label|default(payment.provider_code|default('—')) }}</small></article>
+  <article><span>{{ ui_text('admin.orders.view.status') }}</span><strong>{{ order.status|status_label }}</strong><small>{{ order.fulfillment_status|status_label }}</small></article>
+  <article><span>{{ ui_text('admin.orders.view.oplata') }}</span><strong>{{ order.payment_status|status_label }}</strong><small>{{ payment_label|default(payment.provider_code|default('—')) }}</small></article>
   <article><span>{{ ui_text('admin.orders.view.suma') }}</span><strong>{{ order.total_display }}</strong><small>{% if order.refundable_minor > 0 %}{{ ui_text('admin.orders.view.dostupno_do_povernennia') }} {{ order.refundable_display }}{% else %}{{ ui_text('admin.orders.view.povernennia_nedostupne') }}{% endif %}</small></article>
   <article><span>{{ ui_text('admin.orders.view.kliient') }}</span><strong>{% if admin_can('personal_data.view') %}{{ order.customer_name }}{% else %}{{ ui_text('admin.orders.view.prykhovano') }}{% endif %}</strong><small>{% if admin_can('personal_data.view') %}{{ order.customer_phone }}{% if order.customer_email %} · {{ order.customer_email }}{% endif %}{% else %}{{ ui_text('admin.orders.view.personalni_dani_nedostupni_dlia_tsiiei_roli') }}{% endif %}</small></article>
 </section>
