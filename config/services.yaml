@@ -5,6 +5,7 @@ parameters:
     env(ERROR_WEBHOOK_URL): ''
     env(ADMIN_REQUIRE_MFA): '0'
     env(TELEGRAM_BOT_TOKEN): ''
+    env(TELEGRAM_API_BASE): 'https://api.telegram.org'
     env(TELEGRAM_DEFAULT_CHAT_ID): ''
     env(SMS_NOTIFICATIONS_ENABLED): '0'
     env(SMS_GATEWAY_ENDPOINT): ''

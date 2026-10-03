@@ -1,9 +1,12 @@
 {% set cw = contact_widget() %}
 {% set chat = chat_widget() %}
+{% set support = support_chat() %}
 {% if chat %}<div hidden data-chat-widget data-provider="{{ chat.provider }}" data-id="{{ chat.id }}" data-base="{{ chat.base }}"></div>{% endif %}
 {% if cw %}
 <div class="cw" data-contact-widget data-position="{{ cw.position }}">
   <ul class="cw__list" id="cw-list" hidden>
+    {% if support and support.site_chat %}<li><button class="cw__action" type="button" data-cw-support>{{ ui_icon('message-square', 20) }}<span>{{ ui_text('support_chat.widget_title') }}</span></button></li>{% endif %}
+    {% if support and support.direct_url and not (cw.actions|filter(a => a.code == 'telegram')|length) %}<li><a class="cw__action" data-cw-action="telegram" href="{{ support.direct_url }}" target="_blank" rel="noopener noreferrer">{{ ui_icon('send', 20) }}<span>Telegram</span></a></li>{% endif %}
     {% if chat %}<li><button class="cw__action" type="button" data-cw-chat>{{ ui_icon('message-square', 20) }}<span>{{ ui_text('cw_chat') }}</span></button></li>{% endif %}
     {% if cw.callback %}<li><button class="cw__action" type="button" data-cw-callback>{{ ui_icon('phone-call', 20) }}<span>{{ ui_text('cw_callback') }}</span></button></li>{% endif %}
     {% for a in cw.actions %}<li><a class="cw__action" href="{{ a.href }}"{% if a.external %} target="_blank" rel="noopener noreferrer"{% endif %} data-cw-action="{{ a.code }}">{% if a.code == 'write' %}{{ ui_icon('mail', 20) }}{% elseif a.code == 'call' %}{{ ui_icon('phone', 20) }}{% elseif a.code == 'telegram' %}{{ ui_icon('send', 20) }}{% elseif a.code == 'messenger' %}{{ ui_icon('messages-square', 20) }}{% else %}{{ ui_icon('message-circle', 20) }}{% endif %}<span>{% if a.code == 'write' %}{{ ui_text('cw_write') }}{% elseif a.code == 'call' %}{{ ui_text('cw_call') }}{% elseif a.code == 'viber' %}Viber{% elseif a.code == 'messenger' %}Messenger{% else %}Telegram{% endif %}</span></a></li>{% endfor %}
@@ -22,6 +25,20 @@
       <button class="button button--primary" type="submit">{{ ui_icon('phone-call', 16) }} {{ ui_text('cw_callback') }}</button>
     </form>
   </dialog>
+  {% endif %}
+  {% if support and support.site_chat %}
+  <dialog class="cw-dialog support-chat" data-support-chat data-poll="/support/chat/poll" data-send="/support/chat/send" data-error="{{ ui_text('support_chat.widget_error')|e('html_attr') }}" data-wait="{{ ui_text('support_chat.widget_wait')|e('html_attr') }}" aria-labelledby="support-chat-title">
+    <div class="cw-dialog__head"><h2 id="support-chat-title">{{ ui_text('support_chat.widget_title') }}</h2><button class="cw-dialog__close" type="button" data-support-close aria-label="{{ ui_text('support_chat.widget_close') }}">{{ ui_icon('x', 20) }}</button></div>
+    <div class="support-chat__log" data-support-log role="log" aria-live="polite"><p class="support-chat__note">{{ support.welcome ?: ui_text('support_chat.widget_welcome') }}</p></div>
+    <form method="post" action="/support/chat/send" data-support-form>
+      <input type="hidden" name="_token" value="{{ csrf_token('support_chat') }}">{% include '@storefront/components/spam_fields.html.twig' %}
+      <div class="support-chat__intro" data-support-intro><input name="name" maxlength="120" autocomplete="name" placeholder="{{ ui_text('support_chat.widget_name')|e('html_attr') }}" aria-label="{{ ui_text('support_chat.widget_name')|e('html_attr') }}"><input name="contact" maxlength="190" autocomplete="tel" placeholder="{{ ui_text('support_chat.widget_contact')|e('html_attr') }}" aria-label="{{ ui_text('support_chat.widget_contact')|e('html_attr') }}"><small>{{ support.offline ?: ui_text('support_chat.widget_offline') }}</small></div>
+      <p class="support-chat__status" data-support-status role="alert" hidden></p>
+      <div class="support-chat__row"><textarea name="message" rows="1" required maxlength="2000" placeholder="{{ ui_text('support_chat.widget_placeholder')|e('html_attr') }}" aria-label="{{ ui_text('support_chat.widget_placeholder')|e('html_attr') }}"></textarea><button class="button button--primary support-chat__send" type="submit" aria-label="{{ ui_text('support_chat.widget_send')|e('html_attr') }}" title="{{ ui_text('support_chat.widget_send')|e('html_attr') }}">{{ ui_icon('send', 18) }}</button></div>
+      {% if support.direct_url %}<a class="support-chat__tg" href="{{ support.direct_url }}" target="_blank" rel="noopener noreferrer">{{ ui_icon('send', 14) }}<span>{{ ui_text('support_chat.widget_telegram') }}</span></a>{% endif %}
+    </form>
+  </dialog>
+  <script type="module" src="{{ vite_asset('assets/storefront/support-chat.js', '/assets/support-chat.js') }}"></script>
   {% endif %}
 </div>
 {% endif %}

@@ -59,3 +59,7 @@
 .admin-color-option > span:first-child { font-weight: var(--mc-font-weight-semibold); }
 .admin-color-option input[type="color"] { width: 100%; height: var(--mc-control-height-md); padding: 2px; }
 .admin-color-option__use { display: flex; align-items: center; gap: var(--mc-space-2); font-size: var(--mc-font-size-sm); }
+
+/* Support chat: setup steps */
+.admin-steps { display: grid; gap: var(--mc-space-2); margin: 0; padding-left: var(--mc-space-6); }
+.admin-steps li { line-height: var(--mc-line-height-snug); }

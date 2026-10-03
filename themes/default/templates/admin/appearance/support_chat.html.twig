@@ -1,0 +1,40 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.support_chat.title'),'support_chat') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.support_chat.title') }}</span></nav><h1>{{ ui_text('admin.support_chat.title') }}</h1><p>{{ ui_text('admin.support_chat.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.support_chat.steps_kicker') }}</small><h2>{{ ui_text('admin.support_chat.steps_title') }}</h2></div></div>
+<ol class="admin-steps">
+  <li>{{ ui_text('admin.support_chat.step1') }} <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer">@BotFather</a> → <code>/newbot</code></li>
+  <li>{{ ui_text('admin.support_chat.step2') }}</li>
+  <li>{{ ui_text('admin.support_chat.step3') }}</li>
+  <li>{{ ui_text('admin.support_chat.step4') }}</li>
+  <li>{{ ui_text('admin.support_chat.step5') }}</li>
+  <li>{{ ui_text('admin.support_chat.step6') }}</li>
+</ol>
+<p class="admin-card-note">{{ ui_text('admin.support_chat.how_it_works') }}</p>
+</section>
+
+<section class="admin-panel"><form method="post" action="{{ path('admin_appearance_support_chat') }}" class="admin-form-grid" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_support_chat') }}">
+<div class="admin-check-grid admin-form-wide"><label><input type="checkbox" name="enabled" value="1"{{ s.enabled ? ' checked' : '' }}> {{ ui_text('admin.support_chat.enabled') }}</label><label><input type="checkbox" name="site_chat_enabled" value="1"{{ s.site_chat_enabled ? ' checked' : '' }}> {{ ui_text('admin.support_chat.site_chat') }}</label><label><input type="checkbox" name="direct_enabled" value="1"{{ s.direct_enabled ? ' checked' : '' }}> {{ ui_text('admin.support_chat.direct') }}</label></div>
+<label>{{ ui_text('admin.support_chat.token') }}<input type="password" name="bot_token" autocomplete="off" placeholder="{{ s.has_token ? ui_text('admin.support_chat.token_saved') : '123456789:AA…' }}"><small>{{ ui_text('admin.support_chat.token_hint') }}</small></label>
+<label>{{ ui_text('admin.support_chat.group') }}
+  {% if s.seen_chats %}<select name="group_chat_pick"><option value="">{{ ui_text('admin.support_chat.group_pick') }}</option>{% for c in s.seen_chats %}<option value="{{ c.id }}"{{ s.group_chat_id == c.id ? ' selected' : '' }}>{{ c.title }} ({{ c.id }}){{ c.is_forum ? '' : ' — ' ~ ui_text('admin.support_chat.no_topics') }}</option>{% endfor %}</select>{% endif %}
+  <input name="group_chat_id" value="{{ s.group_chat_id }}" placeholder="-1001234567890" inputmode="numeric"><small>{{ ui_text('admin.support_chat.group_hint') }}</small></label>
+<label class="admin-form-wide">{{ ui_text('admin.support_chat.welcome') }}<input name="welcome_text" maxlength="500" value="{{ s.welcome_text }}" placeholder="{{ ui_text('support_chat.widget_welcome') }}"></label>
+<label class="admin-form-wide">{{ ui_text('admin.support_chat.offline') }}<input name="offline_text" maxlength="500" value="{{ s.offline_text }}" placeholder="{{ ui_text('support_chat.widget_offline') }}"></label>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.support_chat.save') }}</button></div></form></section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.support_chat.connection_kicker') }}</small><h2>{{ ui_text('admin.support_chat.connection_title') }}</h2></div>{% if s.bot_username %}<span class="admin-badge is-active">@{{ s.bot_username }}</span>{% endif %}</div>
+<p class="admin-card-note">{{ ui_text('admin.support_chat.connection_help') }}{% if webhook_url %} <code>{{ webhook_url }}</code>{% endif %}</p>
+<div class="admin-inline-actions">
+<form method="post" action="{{ path('admin_appearance_support_chat_connect') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_support_chat') }}"><button class="admin-button is-primary" type="submit">{{ ui_icon('plug', 16) }} {{ ui_text('admin.support_chat.connect') }}</button></form>
+<form method="post" action="{{ path('admin_appearance_support_chat_check') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_support_chat') }}"><button class="admin-button" type="submit">{{ ui_icon('check-circle', 16) }} {{ ui_text('admin.support_chat.check') }}</button></form>
+<form method="post" action="{{ path('admin_appearance_support_chat_disconnect') }}" data-confirm="{{ ui_text('admin.support_chat.disconnect_confirm')|e('html_attr') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_support_chat') }}"><button class="admin-button is-danger" type="submit">{{ ui_icon('ban', 16) }} {{ ui_text('admin.support_chat.disconnect') }}</button></form>
+</div></section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.support_chat.threads_kicker') }}</small><h2>{{ ui_text('admin.support_chat.threads_title') }}</h2></div></div>
+{% if threads %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>#</th><th>{{ ui_text('admin.support_chat.col_customer') }}</th><th>{{ ui_text('admin.support_chat.col_channel') }}</th><th>{{ ui_text('admin.support_chat.col_messages') }}</th><th>{{ ui_text('admin.support_chat.col_last') }}</th><th>{{ ui_text('admin.support_chat.col_status') }}</th></tr></thead><tbody>
+{% for t in threads %}<tr><td>{{ t.id }}</td><td><strong>{{ t.customer_name ?: '—' }}</strong>{% if t.customer_contact %}<br><small>{{ t.customer_contact }}</small>{% endif %}</td><td>{{ t.channel == 'web' ? ui_text('admin.support_chat.channel_web') : 'Telegram' }}</td><td>{{ t.messages }}</td><td>{{ t.last_message_at }}</td><td><span class="admin-badge {{ t.status == 'open' ? 'is-active' : '' }}">{{ t.status == 'open' ? ui_text('admin.support_chat.status_open') : ui_text('admin.support_chat.status_closed') }}</span></td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p class="admin-card-note">{{ ui_text('admin.support_chat.threads_empty') }}</p>{% endif %}</section>
+{{ shell.end() }}

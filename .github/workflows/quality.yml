@@ -53,6 +53,7 @@ jobs:
       LOCK_DSN: flock
       MAILER_DSN: null://null
       E2E_BASE_URL: http://127.0.0.1:8000
+      TELEGRAM_API_BASE: http://127.0.0.1:8099
       APP_PUBLIC_URL: http://127.0.0.1:8000
       E2E_ADMIN_EMAIL: e2e-admin@example.test
       E2E_ADMIN_PASSWORD: Nexora-E2E-2026-Strong!
@@ -91,6 +92,7 @@ jobs:
           --demo
       - name: Start storefront
         run: |
+          php -S 127.0.0.1:8099 tests/e2e/fixtures/telegram-mock.php > var/log/e2e-telegram.log 2>&1 &
           php -S 127.0.0.1:8000 -t public tests/e2e/router.php > var/log/e2e-web.log 2>&1 &
           echo $! > var/e2e-server.pid
           for i in {1..30}; do
