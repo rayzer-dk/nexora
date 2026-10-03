@@ -71,15 +71,17 @@ test('website visitors chat with the staff through one Telegram topic each', asy
     const topicId = Number(forwarded?.payload.message_thread_id);
     expect(topicId).toBeGreaterThan(0);
 
+    // Telegram update ids are stored for de-duplication, so a re-run against the same database needs fresh ones.
+    const base = Math.floor(Date.now() / 1000);
     // A staff member answers inside that topic; a message in some other topic must not reach this visitor.
     const update = (id: number, thread: number, text: string) => ({
       update_id: id,
       message: { message_id: id, is_topic_message: true, message_thread_id: thread, chat: { id: Number(GROUP), type: 'supergroup', is_forum: true, title: 'E2E staff' }, from: { id: 42, is_bot: false }, text },
     });
     const post = (body: unknown, token = secret) => request.post(`/support/telegram/webhook/${secret}`, { data: body, headers: { 'X-Telegram-Bot-Api-Secret-Token': token } });
-    expect((await post(update(9001, topicId + 50, 'for someone else'))).ok()).toBeTruthy();
-    expect((await post(update(9002, topicId, 'Yes, we ship to Lviv.'))).ok()).toBeTruthy();
-    expect((await post(update(9003, topicId, 'wrong secret'), 'nope')).status()).toBe(404);
+    expect((await post(update(base + 1, topicId + 50, 'for someone else'))).ok()).toBeTruthy();
+    expect((await post(update(base + 2, topicId, 'Yes, we ship to Lviv.'))).ok()).toBeTruthy();
+    expect((await post(update(base + 3, topicId, 'wrong secret'), 'nope')).status()).toBe(404);
 
     await expect(dialog.locator('.support-chat__msg.is-staff')).toHaveCount(1, { timeout: 15_000 });
     await expect(dialog.locator('.support-chat__msg.is-staff')).toContainText('Yes, we ship to Lviv.');
@@ -88,5 +90,10 @@ test('website visitors chat with the staff through one Telegram topic each', asy
     await page.goto('/admin/appearance/support-chat', { waitUntil: 'domcontentloaded' });
     await settingsForm().locator('input[name="enabled"]').uncheck();
     await Promise.all([page.waitForURL(/support-chat/), settingsForm().locator('button[type="submit"]').click()]);
+    // The widget and its callback form are shared storefront state: leave them off for the specs that follow.
+    await page.goto('/admin/appearance/contact-widget', { waitUntil: 'domcontentloaded' });
+    await widget.locator('input[name="callback_enabled"]').uncheck();
+    await widget.locator('input[name="enabled"]').uncheck();
+    await Promise.all([page.waitForURL(/contact-widget/), widget.locator('button[type="submit"]').click()]);
   }
 });
