@@ -36,7 +36,7 @@ test('admin two-factor: enrolment, challenge gate, replay protection, recovery c
   let recovery: string[] = [];
   try {
     await signIn(page);
-    await page.waitForURL(/\/admin(?:\/|$)/);
+    await page.waitForURL(/\/admin(?:\/(?!login)|$)/);
     await page.goto('/admin/account/security?setup=1', { waitUntil: 'domcontentloaded' });
     await expectNoServerError(page);
     const secret = (await page.locator('[data-mfa-secret] code').innerText()).replace(/\s+/g, '');

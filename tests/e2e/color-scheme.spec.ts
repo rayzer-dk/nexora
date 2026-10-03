@@ -7,7 +7,7 @@ async function loginAdmin(page: Page): Promise<void> {
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
   await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
   await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/|$)/), page.locator('button[type="submit"]').click()]);
+  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
 }
 
 async function setScheme(page: Page, scheme: 'light' | 'auto' | 'dark'): Promise<void> {

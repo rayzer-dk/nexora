@@ -8,7 +8,7 @@ test('admin pages fit a 390px phone screen without sideways scrolling', async ({
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
   await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
   await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/|$)/), page.locator('button[type="submit"]').click()]);
+  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
   await page.goto('/admin', { waitUntil: 'load' });
   const links = await page.$$eval('.admin-nav a[href^="/admin"]', (anchors) => Array.from(new Set(anchors.map((a) => a.getAttribute('href') || ''))));
   expect(links.length).toBeGreaterThan(20);

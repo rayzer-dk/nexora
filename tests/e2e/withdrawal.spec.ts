@@ -45,7 +45,7 @@ test('EU withdrawal function: footer link, two-step flow, acknowledgement and ad
   await admin.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
   await admin.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
   await admin.locator('button[type="submit"]').click();
-  await admin.waitForURL(/\/admin(?:\/|$)/);
+  await admin.waitForURL(/\/admin(?:\/(?!login)|$)/);
   await admin.goto('/admin/customer-experience', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(admin);
   await expect(admin.locator('[data-withdrawal-notices]')).toContainText(order);

@@ -17,7 +17,7 @@ test('admin authentication works when CI credentials are provided', async ({ pag
   await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
   await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
   await Promise.all([
-    page.waitForURL(/\/admin(?:\/|$)/),
+    page.waitForURL(/\/admin(?:\/(?!login)|$)/),
     page.locator('button[type="submit"]').click(),
   ]);
   await expectNoServerError(page);

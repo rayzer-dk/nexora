@@ -6,7 +6,7 @@ async function login(page: Page, email: string, password: string): Promise<void>
   await page.locator('input[name="_username"]').fill(email);
   await page.locator('input[name="_password"]').fill(password);
   await Promise.all([
-    page.waitForURL(/\/admin(?:\/|$)/),
+    page.waitForURL(/\/admin(?:\/(?!login)|$)/),
     page.locator('button[type="submit"]').click(),
   ]);
 }
