@@ -129,23 +129,30 @@ final class CronRunner
         $this->store->setArray('cron.last_run', ['at' => $this->now(), 'source' => $source, 'ran' => count($result['ran']), 'failed' => count($result['failed'])]);
     }
 
-    /** @param array{label:string,command:string,args:array<string,string|bool|int>,interval:int,group:string,description:string} $task */
+    /** @param array{label:string,command:string,args:array<string,string|bool|int>,interval:int,group:string,description:string,handler?:callable} $task */
     private function runTask(Application $application, string $code, array $task, ?callable $progress): bool
     {
         $started = microtime(true);
         $this->upsert($code, ['last_started_at' => $this->now(), 'last_status' => 'running', 'last_message' => null]);
         $buffer = new BufferedOutput();
         try {
-            $command = $application->find($task['command']);
-            $args = ['command' => $task['command']];
-            foreach ($task['args'] as $k => $v) {
-                $args[$k] = $v;
+            if (isset($task['handler'])) {
+                // a task of a trusted extension: success unless the handler throws
+                $returned = ($task['handler'])();
+                $message = $this->clean(is_string($returned) ? $returned : '');
+                $ok = true;
+            } else {
+                $command = $application->find($task['command']);
+                $args = ['command' => $task['command']];
+                foreach ($task['args'] as $k => $v) {
+                    $args[$k] = $v;
+                }
+                $child = new ArrayInput($args);
+                $child->setInteractive(false);
+                $exit = $command->run($child, $buffer);
+                $message = $this->clean($buffer->fetch());
+                $ok = $exit === Command::SUCCESS;
             }
-            $child = new ArrayInput($args);
-            $child->setInteractive(false);
-            $exit = $command->run($child, $buffer);
-            $message = $this->clean($buffer->fetch());
-            $ok = $exit === Command::SUCCESS;
             $this->upsert($code, ['last_finished_at' => $this->now(), 'last_status' => $ok ? 'success' : 'failed', 'last_message' => $message, 'last_duration_ms' => (int) round((microtime(true) - $started) * 1000), 'next_due_at' => $this->next($task['interval'])], true, !$ok);
             if ($progress !== null) {
                 $progress(sprintf('%s: %s%s', $code, $ok ? 'OK' : 'FAILED', $message !== '' ? ' · ' . $message : ''), !$ok);

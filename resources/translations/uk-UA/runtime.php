@@ -2052,4 +2052,7 @@ return [
     'runtime.support_chat.bad_token' => 'Некоректний формат токена бота.',
     'runtime.support_chat.bad_group' => 'Некоректний id групи.',
     'runtime.console.no_question_helper' => 'Помічник запитань консолі недоступний.',
+    'extension.sdk.task_duplicate' => 'Trusted-розширення зареєструвало одну заплановану задачу двічі: ',
+    'extension.sdk.task_undeclared' => 'Trusted-розширення намагалося зареєструвати неоголошену заплановану задачу: ',
+    'extension.scheduled_task.invalid' => 'scheduled_tasks — до 16 задач розширення trusted_release, кожна з кодом (a-z, 0-9, _), інтервалом 300–604800 секунд і назвою.',
 ];

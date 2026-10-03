@@ -4,10 +4,35 @@ declare(strict_types=1);
 
 namespace Commerce\Core\Scheduler;
 
+use Commerce\Core\Extension\TrustedExtensionRuntimeLoader;
+use Commerce\Core\Extension\TrustedExtensionRuntimeRegistry;
+
 final class ScheduledTaskRegistry
 {
-    /** @return array<string,array{label:string,command:string,args:array<string,string|bool|int>,interval:int,group:string,description:string}> */
+    public function __construct(private readonly TrustedExtensionRuntimeLoader $extensions, private readonly TrustedExtensionRuntimeRegistry $extensionTasks)
+    {
+    }
+
+    /** @return array<string,array{label:string,command:string,args:array<string,string|bool|int>,interval:int,group:string,description:string,handler?:callable}> */
     public function all(): array
+    {
+        return $this->core() + $this->fromExtensions();
+    }
+
+    /** Tasks of active trusted extensions: they have a handler instead of a console command. */
+    private function fromExtensions(): array
+    {
+        $this->extensions->bootActive();
+        $tasks = [];
+        foreach ($this->extensionTasks->tasks() as $code => $task) {
+            $tasks[$code] = ['label' => $task['label'], 'command' => '', 'args' => [], 'interval' => $task['interval'], 'group' => 'extensions', 'description' => $task['description'], 'handler' => $task['handler']];
+        }
+
+        return $tasks;
+    }
+
+    /** @return array<string,array{label:string,command:string,args:array<string,string|bool|int>,interval:int,group:string,description:string}> */
+    private function core(): array
     {
         return [
             'events' => ['label'=>\Commerce\Core\I18n\CanonicalUiText::get('php.core.scheduler.scheduledtaskregistry.podii_domenu'),'command'=>'commerce:events:work','args'=>['--limit'=>200],'interval'=>300,'group'=>'critical','description'=>\Commerce\Core\I18n\CanonicalUiText::get('php.core.scheduler.scheduledtaskregistry.dostavliaie_tranzaktsiini_podii_moduliv')],

@@ -59,7 +59,8 @@ final class TrustedExtensionRuntimeLoader
         if (!$instance instanceof TrustedExtensionEntrypointInterface) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.88ae161799ff'));
         $declaredRoutes=[];foreach((array)($manifest['routes']??[]) as $route){if(is_array($route)&&is_string($route['name']??null))$declaredRoutes[]=(string)$route['name'];}
         $declaredEvents=array_values(array_filter((array)($manifest['events']??[]),'is_string'));
-        $instance->boot(new TrustedExtensionContext((string)$row['code'],(string)$row['version'],$path,$this->runtime,$this->payments,$this->shipping,$this->productBlocks,$this->ai,$declaredRoutes,$declaredEvents,array_values(array_filter((array)($manifest['capabilities']??[]),'is_string'))));
+        $declaredTasks=[];foreach((array)($manifest['scheduled_tasks']??[]) as $task){if(is_array($task)&&is_string($task['code']??null))$declaredTasks[(string)$task['code']]=['interval'=>(int)($task['interval']??3600),'label'=>(string)($task['label']??$task['code']),'description'=>(string)($task['description']??'')];}
+        $instance->boot(new TrustedExtensionContext((string)$row['code'],(string)$row['version'],$path,$this->runtime,$this->payments,$this->shipping,$this->productBlocks,$this->ai,$declaredRoutes,$declaredEvents,array_values(array_filter((array)($manifest['capabilities']??[]),'is_string')),$declaredTasks));
     }
 
     /** @param array<string,mixed> $row */

@@ -15,7 +15,7 @@ use Commerce\Modules\Shipping\Contract\DeliveryProviderInterface;
 
 final readonly class TrustedExtensionContext
 {
-    /** @param list<string> $declaredRoutes @param list<string> $declaredEvents @param list<string> $declaredCapabilities */
+    /** @param list<string> $declaredRoutes @param list<string> $declaredEvents @param list<string> $declaredCapabilities @param array<string,array{interval:int,label:string,description:string}> $declaredTasks */
     public function __construct(
         public string $code,
         public string $version,
@@ -28,6 +28,7 @@ final readonly class TrustedExtensionContext
         private array $declaredRoutes = [],
         private array $declaredEvents = [],
         private array $declaredCapabilities = [],
+        private array $declaredTasks = [],
     ) {
     }
 
@@ -45,6 +46,15 @@ final readonly class TrustedExtensionContext
             throw new \LogicException(\Commerce\Core\I18n\CanonicalUiText::get('extension.sdk.event_undeclared') . $eventName);
         }
         $this->runtime->registerEvent($this->code, $eventName, $handler);
+    }
+
+    /** Registers the handler of a task declared in the manifest `scheduled_tasks`; the handler may return a short status line. */
+    public function scheduledTask(string $task, callable $handler): void
+    {
+        if (!isset($this->declaredTasks[$task])) {
+            throw new \LogicException(\Commerce\Core\I18n\CanonicalUiText::get('extension.sdk.task_undeclared') . $task);
+        }
+        $this->runtime->registerTask($this->code, $task, $this->declaredTasks[$task], $handler);
     }
 
     public function paymentProvider(PaymentProviderInterface $provider): void

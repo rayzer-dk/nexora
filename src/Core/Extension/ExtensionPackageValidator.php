@@ -287,6 +287,7 @@ final class ExtensionPackageValidator
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.localization.path_invalid'));
             }
         }
+        $this->validateScheduledTasks($manifest);
         foreach (['events', 'ui_slots', 'capabilities'] as $listField) {
             if (!isset($manifest[$listField])) {
                 continue;
@@ -299,6 +300,31 @@ final class ExtensionPackageValidator
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.5f349ed1628c') . $listField . '.');
                 }
             }
+        }
+    }
+
+    /** @param array<string,mixed> $manifest */
+    private function validateScheduledTasks(array $manifest): void
+    {
+        if (!isset($manifest['scheduled_tasks'])) {
+            return;
+        }
+        $tasks = $manifest['scheduled_tasks'];
+        if (!is_array($tasks) || count($tasks) > 16 || (string) ($manifest['execution'] ?? '') !== 'trusted_release') {
+            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.scheduled_task.invalid'));
+        }
+        $seen = [];
+        foreach ($tasks as $task) {
+            $code = is_array($task) ? $task['code'] ?? null : null;
+            $interval = is_array($task) ? $task['interval'] ?? null : null;
+            $label = is_array($task) ? $task['label'] ?? '' : '';
+            $description = is_array($task) ? $task['description'] ?? '' : '';
+            if (!is_string($code) || preg_match('/^[a-z][a-z0-9_]{0,39}$/D', $code) !== 1 || isset($seen[$code])
+                || !is_int($interval) || $interval < 300 || $interval > 604800
+                || !is_string($label) || $label === '' || mb_strlen($label) > 120 || !is_string($description) || mb_strlen($description) > 300) {
+                throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.scheduled_task.invalid'));
+            }
+            $seen[$code] = true;
         }
     }
 

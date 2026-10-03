@@ -12,6 +12,8 @@ final class TrustedExtensionRuntimeRegistry
     private array $routeHandlers = [];
     /** @var array<string,list<callable>> */
     private array $eventHandlers = [];
+    /** @var array<string,array{handler:callable,interval:int,label:string,description:string}> */
+    private array $tasks = [];
 
     public function registerRoute(string $extensionCode, string $routeName, callable $handler): void
     {
@@ -30,6 +32,22 @@ final class TrustedExtensionRuntimeRegistry
             throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.c0ea847cc6b3'));
         }
         $this->eventHandlers[$eventName][] = $handler;
+    }
+
+    /** @param array{interval:int,label:string,description:string} $meta */
+    public function registerTask(string $extensionCode, string $task, array $meta, callable $handler): void
+    {
+        $name = 'extension.' . str_replace(['.', '-'], '_', $extensionCode) . '.' . $task;
+        if (isset($this->tasks[$name])) {
+            throw new \LogicException(\Commerce\Core\I18n\CanonicalUiText::get('extension.sdk.task_duplicate') . $name);
+        }
+        $this->tasks[$name] = ['handler' => $handler, 'interval' => $meta['interval'], 'label' => $meta['label'], 'description' => $meta['description']];
+    }
+
+    /** @return array<string,array{handler:callable,interval:int,label:string,description:string}> */
+    public function tasks(): array
+    {
+        return $this->tasks;
     }
 
     public function routeHandler(string $routeName): ?callable

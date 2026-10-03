@@ -69,6 +69,23 @@ Extension data is retained on disable/uninstall by default. Destructive data pur
 
 ## Assets
 
+## Scheduled tasks (cron)
+
+A signed `trusted_release` module can run periodic work from Nexora's own scheduler. Declare each task in `manifest.json`:
+
+    "scheduled_tasks": [
+      {"code": "sync", "interval": 3600, "label": "Sync with the CRM", "description": "Pushes new orders."}
+    ]
+
+`code` is `a-z`, `0-9`, `_` (up to 40 characters, unique in the module), `interval` is 300 to 604800 seconds, at most 16 tasks. Register the handler in the trusted entrypoint:
+
+    $context->scheduledTask('sync', function (): ?string {
+        // do the work; throw to mark the run as failed; return a short status line to show in Cron
+        return 'Sent 12 orders';
+    });
+
+The task appears in Admin → System → Cron as `extension.<module_code>.<code>` (group `extensions`), runs with the server cron, web cron or pseudo-cron like core tasks, and disappears while the module is disabled. Declarative modules cannot declare tasks. A task that was not declared cannot be registered.
+
 Assets are declared with path, type (`css` or `js`) and scopes. JavaScript requires a trusted signed module. Declared assets are copied only to the extension's versioned public directory and are exposed through `extension_assets()` for `storefront.global` and exact route scopes such as `route:storefront_product_show`.
 
 Extensions cannot inject arbitrary script tags into Core templates.
