@@ -4083,4 +4083,13 @@ return [
     'admin.subscribers.empty' => 'No subscribers.',
     'admin.forms.translate_hint' => 'The translation takes the form texts from the main language and is saved together with the form.',
     'admin.navigation.translate_labels' => 'Translate labels into the other languages',
+    'admin.builder.category' => 'Category page',
+    'admin.builder.category_nav' => 'Category Builder',
+    'admin.builder.category_hint' => 'Order and visibility of the category page sections: heading, filters, sorting, recommended, products, bottom text.',
+    'admin.builder.category_heading' => 'Heading and description',
+    'admin.builder.category_filters' => 'Filters',
+    'admin.builder.category_toolbar' => 'Sorting',
+    'admin.builder.category_recommended' => 'Recommended',
+    'admin.builder.category_grid' => 'Products',
+    'admin.builder.category_description' => 'Bottom text',
 ];

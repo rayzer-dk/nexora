@@ -6,6 +6,7 @@ namespace Commerce\Modules\Storefront\Http;
 
 use Commerce\Core\Extension\ExtensionRouteController;
 use Commerce\Core\Site\SiteCapabilitySettings;
+use Commerce\Modules\Storefront\Application\CategoryLayoutService;
 use Commerce\Modules\ProductPage\Application\ProductPageComposer;
 use Commerce\Modules\Content\Infrastructure\DbalBlogQuery;
 use Commerce\Modules\Seo\StructuredData\ArticleStructuredDataBuilder;
@@ -34,6 +35,7 @@ final class StorefrontCatalogController extends AbstractController
         private readonly CachedStorefrontCatalogQuery $catalog,
         private readonly SeoRouteResolver $seo,
         private readonly ProductPageLayoutLoader $layoutLoader,
+        private readonly CategoryLayoutService $categoryLayout,
         private readonly ProductPageComposer $composer,
         private readonly ProductMerchantListingBuilder $productSchema,
         private readonly BreadcrumbListBuilder $breadcrumbsSchema,
@@ -213,6 +215,7 @@ final class StorefrontCatalogController extends AbstractController
             'category' => $category,
             'products' => $products,
             'recommended_products' => $recommended,
+            'category_layout' => $this->categoryLayout->active($context->storeId),
             'search_query' => $filter->search,
             'catalog_filter' => $filter,
             'catalog_facets' => $facets,

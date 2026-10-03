@@ -4078,4 +4078,13 @@ return [
     'admin.subscribers.empty' => 'Підписників немає.',
     'admin.forms.translate_hint' => 'Переклад бере тексти форми з основної мови; зберігається разом із формою.',
     'admin.navigation.translate_labels' => 'Перекласти назви на інші мови',
+    'admin.builder.category' => 'Сторінка категорії',
+    'admin.builder.category_nav' => 'Конструктор категорії',
+    'admin.builder.category_hint' => 'Порядок і видимість розділів сторінки категорії: заголовок, фільтри, сортування, добірка, товари, текст внизу.',
+    'admin.builder.category_heading' => 'Заголовок і опис',
+    'admin.builder.category_filters' => 'Фільтри',
+    'admin.builder.category_toolbar' => 'Сортування',
+    'admin.builder.category_recommended' => 'Рекомендовані',
+    'admin.builder.category_grid' => 'Товари',
+    'admin.builder.category_description' => 'Текст внизу',
 ];

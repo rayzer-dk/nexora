@@ -3,23 +3,32 @@
 {% block body %}
 <section class="catalog-page shell">
     {% include '@storefront/components/breadcrumbs.html.twig' with {items: [{name: ui_text('home'), url: '/'}, {name: ui_text('catalog'), url: '/catalog'}, {name: category.name}]} only %}
+{% set cl = category_layout|default({main: ['toolbar','recommended','grid'], show: {heading:true,filters:true,description:true,toolbar:true,recommended:true,grid:true}, classes: {}}) %}
+    {% if cl.show.heading %}<div class="{{ cl.classes.heading|default('') }}">
     <header class="catalog-heading"><div><p class="eyebrow">{{ ui_text('category') }}</p><h1>{{ category.name }}</h1>{% if category.cover|default(null) %}{{ media_picture(category.cover, 'product', ['product', 'zoom'], '(min-width: 1024px) 960px, 100vw', {class: 'category-cover', alt: (category.cover_alt|default(category.name)), width: '960', height: '320', loading: 'eager', decoding: 'async'}) }}{% endif %}{% if category.description %}<div class="category-description">{{ category.description|category_html }}</div>{% endif %}</div></header>
-    <div class="catalog-layout" data-catalog-layout>
-    {% include '@storefront/components/catalog_filters.html.twig' %}
+    </div>{% else %}<h1 class="sr-only">{{ category.name }}</h1>{% endif %}
+    <div class="catalog-layout{{ cl.show.filters ? '' : ' catalog-layout--no-filters' }}" data-catalog-layout>
+    {% if cl.show.filters %}{% include '@storefront/components/catalog_filters.html.twig' %}{% endif %}
     <div class="catalog-main">
-    {% include '@storefront/components/catalog_toolbar.html.twig' %}
-    {% include '@storefront/extension/slot.html.twig' with {slot:'category.before_grid'} only %}
+    {% for section in cl.main %}
+    {% if section == 'toolbar' %}<div class="{{ cl.classes.toolbar|default('') }}">{% include '@storefront/components/catalog_toolbar.html.twig' %}</div>
+    {% elseif section == 'recommended' %}<div class="{{ cl.classes.recommended|default('') }}">
     {% if recommended_products|default([]) %}
     <section class="category-recommended" aria-labelledby="category-recommended-title" data-category-recommended>
         <h2 id="category-recommended-title" class="category-recommended__title">{{ ui_icon('sparkles', 20) }}<span>{{ ui_text('category_recommended') }}</span></h2>
         <div class="product-grid">{% for product in recommended_products %}{% include '@storefront/components/product_card.html.twig' with {product:product} only %}{% endfor %}</div>
     </section>
     {% endif %}
+    </div>
+    {% elseif section == 'grid' %}
+    {% include '@storefront/extension/slot.html.twig' with {slot:'category.before_grid'} only %}
     {% if products.items %}<div class="product-grid">{% for product in products.items %}{% include '@storefront/components/product_card.html.twig' with {product:product} only %}{% endfor %}</div>{% else %}<div class="empty-state"><h2>{{ ui_text('no_products_conditions') }}</h2><p>{{ ui_text('change_or_reset_filters') }}</p></div>{% endif %}
     {% include '@storefront/extension/slot.html.twig' with {slot:'category.after_grid'} only %}
     {% if products.pages > 1 %}<nav class="pager" aria-label="{{ ui_text('pagination') }}">{% if products.page > 1 %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page-1 }}">{{ ui_icon('chevron-left', 16) }}{{ ui_text('back') }}</a>{% endif %}<span>{{ ui_text('page_of')|replace({'%page%': products.page, '%pages%': products.pages}) }}</span>{% if products.page < products.pages %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page+1 }}">{{ ui_text('next') }}{{ ui_icon('chevron-right', 16) }}</a>{% endif %}</nav>{% endif %}
+    {% endif %}
+    {% endfor %}
     </div>
     </div>
-    {% if category.description_bottom %}<div class="category-description category-description--bottom">{{ category.description_bottom|category_html|with_forms }}</div>{% endif %}
+    {% if cl.show.description and category.description_bottom %}<div class="category-description category-description--bottom">{{ category.description_bottom|category_html|with_forms }}</div>{% endif %}
 </section>
 {% endblock %}

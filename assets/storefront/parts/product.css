@@ -416,3 +416,8 @@
 .option-value--swatch { padding: 0 var(--mc-space-3); }
 .option-value__dot { width: var(--mc-space-5); height: var(--mc-space-5); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-full); }
 .option-value__label { white-space: nowrap; }
+
+/* Category Builder: the filter column switched off */
+@media (min-width: 1024px) {
+  .catalog-layout.catalog-layout--no-filters { grid-template-columns: minmax(0, 1fr); }
+}

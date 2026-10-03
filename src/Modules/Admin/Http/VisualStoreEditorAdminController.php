@@ -20,8 +20,8 @@ final class VisualStoreEditorAdminController extends AbstractController
     {
         $ctx=$this->contexts->resolve($request);
         $type=(string)$request->query->get('type','home');
-        if(!in_array($type,['home','product','checkout'],true))$type='home';
-        $preview=match($type){'checkout'=>'/checkout','product'=>'/catalog',default=>'/'};
+        if(!in_array($type,['home','product','checkout','category'],true))$type='home';
+        $preview=match($type){'checkout'=>'/checkout','product'=>'/catalog','category'=>'/catalog',default=>'/'};
         return $this->render('@storefront/admin/appearance/editor.html.twig',[
             'type'=>$type,
             'preview_url'=>$preview,
