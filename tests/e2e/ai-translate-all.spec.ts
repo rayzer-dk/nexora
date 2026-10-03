@@ -54,7 +54,9 @@ test('translate every language with one click, one field with its own button, th
     await expect(name('en-US')).toHaveValue(/^TR-en-US-/);
     await expect(name('de-DE')).toHaveValue(/^TR-de-DE-/);
 
-    await Promise.all([page.waitForLoadState('load'), page.locator('[data-save-all]').click()]);
+    // saving every language ends with a reload of the page: let the page settle first so that 'load' is the reload
+    await page.waitForLoadState('load');
+    await Promise.all([page.waitForEvent('load'), page.locator('[data-save-all]').click()]);
     await expectNoServerError(page);
     await expect(name('en-US')).toHaveValue(/^TR-en-US-/);
     await expect(name('de-DE')).toHaveValue(/^TR-de-DE-/);
