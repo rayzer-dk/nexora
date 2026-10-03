@@ -24,6 +24,8 @@ test('Media Library upload, metadata, search and store removal form one real lif
   const uploadResponse = page.waitForResponse((response) =>
     response.url().endsWith('/admin/media/upload') && response.request().method() === 'POST'
   );
+  // the upload is an XHR followed by window.location.reload(); wait for that reload so no step runs on the old page
+  const reloaded = page.waitForEvent('load');
   await upload.locator('input[type="file"]').setInputFiles({
     name: 'e2e-media.png',
     mimeType: 'image/png',
@@ -38,7 +40,7 @@ test('Media Library upload, metadata, search and store removal form one real lif
   });
 
   expect((await uploadResponse).status()).toBeLessThan(400);
-  await page.waitForLoadState('domcontentloaded');
+  await reloaded;
   await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
 
   const card = page.locator('.media-card').first();
