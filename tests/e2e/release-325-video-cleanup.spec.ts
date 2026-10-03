@@ -135,6 +135,8 @@ test('unused pictures are reviewed by hand: deselect, move to the trash, restore
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
   await login(page);
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
+  // let this page finish loading first: its own late load event must not be mistaken for the reload after the upload
+  await page.waitForLoadState('load');
   // choosing a file submits the upload form by itself
   await Promise.all([
     page.waitForEvent('load', { timeout: 60000 }), // the page reloads itself after the upload

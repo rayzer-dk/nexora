@@ -17,6 +17,7 @@ test('Media Library upload, metadata, search and store removal form one real lif
 
   await loginAdmin(page);
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
+  await page.waitForLoadState('load');
   await expectNoServerError(page);
 
   const marker = `E2E media ${Date.now()}`;

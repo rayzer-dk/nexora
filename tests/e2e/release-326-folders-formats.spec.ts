@@ -48,7 +48,8 @@ test('a picture is stored as an original in the real folder chosen at upload; si
   await apple.click();
   await page.waitForLoadState('domcontentloaded');
 
-  // upload into the open folder
+  // upload into the open folder (the page's own load event must not be mistaken for the reload after the upload)
+  await page.waitForLoadState('load');
   await Promise.all([
     page.waitForEvent('load'),
     page.waitForResponse((r) => r.request().method() === 'POST' && new URL(r.url()).pathname === '/admin/media/upload'),
