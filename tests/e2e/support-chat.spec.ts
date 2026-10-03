@@ -58,6 +58,7 @@ test('website visitors chat with the staff through one Telegram topic each', asy
     await shop.locator('[data-cw-support]').click();
     const dialog = shop.locator('[data-support-chat]');
     await expect(dialog).toBeVisible();
+    await shop.waitForTimeout(1500); // the spam guard rejects a form that is sent faster than a person can fill it
     await dialog.locator('input[name="name"]').fill('E2E Visitor');
     await dialog.locator('textarea[name="message"]').fill('Do you ship to Lviv?');
     await dialog.locator('.support-chat__send').click();
