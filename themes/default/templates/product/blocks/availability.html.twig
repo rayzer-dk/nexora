@@ -1,4 +1,4 @@
-<div class="availability availability--{{ product.availability|default('') == 'https://schema.org/InStock' ? 'in-stock' : 'out-of-stock' }}">
+<div class="availability availability--{{ {'https://schema.org/InStock': 'in-stock', 'https://schema.org/BackOrder': 'on-order', 'https://schema.org/PreOrder': 'on-order'}[product.availability|default('')]|default('out-of-stock') }}">
     <span class="availability__dot" aria-hidden="true"></span>
     <span>{{ product.availability_label }}</span>
 </div>

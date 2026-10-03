@@ -208,6 +208,7 @@
 .availability { display: inline-flex; align-items: center; gap: var(--mc-space-2); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); }
 .availability__dot { width: var(--mc-space-2); height: var(--mc-space-2); border-radius: 50%; background: currentColor; }
 .availability--in-stock { color: var(--mc-color-success); }
+.availability--on-order { color: var(--mc-color-warning); }
 .availability--out-of-stock { color: var(--mc-color-danger); }
 
 /* Variant chips (with price) and colour swatches (with name) */

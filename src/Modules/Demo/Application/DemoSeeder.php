@@ -468,7 +468,7 @@ final readonly class DemoSeeder
                 'compare' => $compare,
                 'stock' => in_array((int)($product['source_id'] ?? 0), [99,101,103], true) ? 0 : (int) ($product['stock'] ?? 0),
                 'purchase_mode' => match ((int)($product['source_id'] ?? 0)) { 99 => 'notify', 101 => 'backorder', 103 => 'coming_soon', default => 'auto' },
-                'purchase_eta' => match ((int)($product['source_id'] ?? 0)) { 101 => $this->localized(['uk-UA'=>'Постачання під замовлення','ru-RU'=>'Поставка под заказ','en-US'=>'Available on backorder'], $locale), 103 => $this->localized(['uk-UA'=>'Очікуємо нову партію','ru-RU'=>'Ожидаем новую партию','en-US'=>'New stock coming soon'], $locale), default => null },
+                'purchase_eta' => match ((int)($product['source_id'] ?? 0)) { 101 => $this->localized(['uk-UA'=>'відправлення за 5–7 днів','ru-RU'=>'отправка через 5–7 дней','en-US'=>'ships in 5–7 days'], $locale), 103 => $this->localized(['uk-UA'=>'Очікуємо нову партію','ru-RU'=>'Ожидаем новую партию','en-US'=>'New stock coming soon'], $locale), default => null },
                 'short' => $this->localized($product['short'] ?? [], $locale),
                 'description' => $this->localized($product['description'] ?? [], $locale),
                 'image_url' => (string) ($product['image_url'] ?? ''),
