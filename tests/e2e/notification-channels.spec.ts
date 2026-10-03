@@ -114,3 +114,80 @@ test('the order-alert Telegram bot is set in the admin and its test message reac
     await Promise.all([page.waitForURL(/notification-channels/), form.locator('button[type="submit"]').click()]);
   }
 });
+
+test('e-mail colours are chosen in the admin and reach the rendered e-mails; reset restores the built-in look', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating settings run once.');
+  await loginAdmin(page);
+  const preview = async () => (await page.request.get('/admin/commerce/email-preview/render/order_created')).text();
+  const designForm = () => page.locator('form[action$="/notification-channels/design"]');
+  try {
+    await page.goto('/admin/commerce/notification-channels', { waitUntil: 'domcontentloaded' });
+    await designForm().locator('input[name="header_bg"]').fill('#7c2d12');
+    await designForm().locator('input[name="accent"]').fill('#15803d');
+    await designForm().locator('input[name="footer"]').fill('E2E footer line');
+    await Promise.all([page.waitForURL(/notification-channels/), designForm().locator('button[type="submit"]:not([name="reset"])').click()]);
+    const html = await preview();
+    expect(html).toContain('background:#7c2d12');
+    expect(html).toContain('color:#15803d');
+    expect(html).toContain('E2E footer line');
+  } finally {
+    await page.goto('/admin/commerce/notification-channels', { waitUntil: 'domcontentloaded' });
+    await Promise.all([page.waitForURL(/notification-channels/), designForm().locator('button[name="reset"]').click()]);
+  }
+  const html = await preview();
+  expect(html).toContain('background:#0b63f6');
+  expect(html).not.toContain('E2E footer line');
+});
+
+test("a campaign can carry the shop's own HTML (cleaned, sent through the real template) and the customer and subscriber lists export", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating settings run once.');
+  const sink = await smtpSink();
+  await loginAdmin(page);
+  const channels = page.locator('form:has(input[name="smtp_enabled"])');
+  const setSmtp = async (enabled: boolean) => {
+    await page.goto('/admin/commerce/notification-channels', { waitUntil: 'domcontentloaded' });
+    await channels.locator('input[name="smtp_enabled"]').setChecked(enabled);
+    await channels.locator('input[name="smtp_host"]').fill(enabled ? '127.0.0.1' : '');
+    await channels.locator('input[name="smtp_port"]').fill(String(enabled ? sink.port : 587));
+    await channels.locator('select[name="smtp_encryption"]').selectOption('none');
+    await Promise.all([page.waitForURL(/notification-channels/), channels.locator('button[type="submit"]').click()]);
+  };
+  const sendTest = async (format: string, body: string) => {
+    await page.goto('/admin/commerce/campaigns', { waitUntil: 'domcontentloaded' });
+    const form = page.locator('form:has(select[name="format"])');
+    await form.locator('select[name="format"]').selectOption(format);
+    await form.locator('input[name="subject"]').fill('E2E campaign');
+    await form.locator('textarea[name="body"]').fill(body);
+    await form.locator('input[name="test_to"]').fill('reader@e2e.test');
+    await Promise.all([page.waitForURL(/campaigns/), form.locator('button[formaction$="/campaigns/test"]').click()]);
+  };
+  const own = '<table role="presentation" width="100%" style="background:#112233"><tr><td style="padding:20px;color:#ffffff;font-size:18px">Own layout <a href="https://example.com/x">link</a><script>alert(1)</script><img src="http://insecure.test/a.png" onerror="x()"></td></tr></table>';
+  try {
+    await setSmtp(true);
+
+    await sendTest('html', own);
+    await expect.poll(() => sink.mails.length, { timeout: 10_000 }).toBe(1);
+    const inTemplate = sink.mails[0];
+    expect(inTemplate).toContain('Own layout');
+    expect(inTemplate).not.toContain('<script');
+    expect(inTemplate).not.toContain('onerror');
+    expect(inTemplate).toContain('background:#0b63f6'); // the shop template's header is still there
+
+    await sendTest('html_raw', own);
+    await expect.poll(() => sink.mails.length, { timeout: 10_000 }).toBe(2);
+    const raw = sink.mails[1];
+    expect(raw).toContain('Own layout');
+    expect(raw).not.toContain('<script');
+    expect(raw).not.toContain('background:#0b63f6'); // no shop header around a full custom layout
+  } finally {
+    await setSmtp(false);
+    sink.server.close();
+  }
+
+  for (const [path, header] of [['/admin/commerce/customers/export.csv', 'id,name,email'], ['/admin/commerce/subscribers/export.csv', 'email,language,status']] as const) {
+    const response = await page.request.get(path);
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toContain('text/csv');
+    expect((await response.text()).replace(/^\uFEFF/, '')).toMatch(new RegExp(`^${header}`));
+  }
+});

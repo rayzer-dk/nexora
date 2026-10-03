@@ -9,6 +9,7 @@ $mustContain = [
     'src/Modules/Catalog/Application/ProductWriter.php' => ['HtmlSanitizerInterface', 'richTextSanitizer'],
     'src/Modules/Content/Application/InformationPageService.php' => ['HtmlSanitizerInterface', 'sanitize('],
     'src/Modules/Appearance/Builder/LayoutSchemaValidator.php' => ['strip_tags(', 'sanitizeNested('],
+    'src/Modules/Marketing/Application/NewsletterCampaignService.php' => ['HtmlSanitizerInterface', 'commerce.email_html'],
 ];
 foreach ($mustContain as $file => $needles) {
     $content = @file_get_contents($root . '/' . $file);
@@ -23,6 +24,9 @@ $allowedRaw = [
     'themes/default/templates/blog/article.html.twig',
     'themes/default/templates/content/page.html.twig',
     'themes/default/templates/base.html.twig',
+    // The shop owner's own e-mail HTML: sanitized (commerce.email_html) when the campaign is saved, never raw from the request.
+    'themes/default/templates/email/campaign.html.twig',
+    'themes/default/templates/email/campaign_raw.html.twig',
 ];
 
 $baseTemplate = @file_get_contents($root . '/themes/default/templates/base.html.twig');

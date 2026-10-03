@@ -90,6 +90,42 @@ final readonly class NotificationChannelSettings
         }
     }
 
+    public const DESIGN_DEFAULTS = ['header_bg' => '#0b63f6', 'header_text' => '#ffffff', 'accent' => '#0b63f6', 'page_bg' => '#f4f7fb', 'card_bg' => '#ffffff', 'text' => '#172033'];
+
+    /** @return array{header_bg:string,header_text:string,accent:string,page_bg:string,card_bg:string,text:string,footer:string} colours of the e-mails, with the built-in look filled in where nothing is chosen */
+    public function design(?int $storeId = null): array
+    {
+        try {
+            $row = $storeId !== null
+                ? $this->db->fetchAssociative('SELECT * FROM mc_notification_channel_settings WHERE store_id=?', [$storeId])
+                : $this->db->fetchAssociative("SELECT * FROM mc_notification_channel_settings WHERE mail_header_bg<>'' OR mail_accent<>'' OR mail_page_bg<>'' OR mail_card_bg<>'' OR mail_text<>'' OR mail_header_text<>'' OR mail_footer<>'' ORDER BY store_id LIMIT 1");
+        } catch (\Throwable) {
+            $row = false;
+        }
+        $out = ['footer' => is_array($row) ? (string) ($row['mail_footer'] ?? '') : ''];
+        foreach (self::DESIGN_DEFAULTS as $key => $default) {
+            $value = is_array($row) ? (string) ($row['mail_' . $key] ?? '') : '';
+            $out[$key] = preg_match('/^#[0-9a-fA-F]{6}$/D', $value) === 1 ? strtolower($value) : $default;
+        }
+
+        return $out;
+    }
+
+    /** @param array<string,mixed> $input colours as #rrggbb; empty or invalid values return to the built-in look */
+    public function saveDesign(int $storeId, array $input): void
+    {
+        $row = ['mail_footer' => mb_substr(trim(strip_tags((string) ($input['footer'] ?? ''))), 0, 300), 'updated_at' => gmdate('Y-m-d H:i:s')];
+        foreach (array_keys(self::DESIGN_DEFAULTS) as $key) {
+            $value = trim((string) ($input[$key] ?? ''));
+            $row['mail_' . $key] = preg_match('/^#[0-9a-fA-F]{6}$/D', $value) === 1 ? strtolower($value) : '';
+        }
+        if ($this->row($storeId) !== null) {
+            $this->db->update('mc_notification_channel_settings', $row, ['store_id' => $storeId]);
+        } else {
+            $this->db->insert('mc_notification_channel_settings', ['store_id' => $storeId] + $row);
+        }
+    }
+
     /** DSN for the configured SMTP server, or null when the admin has not switched it on. */
     public function smtpDsn(array $s): ?string
     {

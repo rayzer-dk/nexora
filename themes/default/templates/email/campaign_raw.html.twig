@@ -1,0 +1,9 @@
+{# The shop's own HTML layout: sanitized on save, only the unsubscribe line is added. #}
+<!doctype html>
+<html lang="{{ locale|default('uk-UA') }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ notification_subject }}</title></head>
+<body style="margin:0;padding:0">
+{{ notification_text|raw }}
+{% if unsubscribe_url is defined and unsubscribe_url %}<p style="margin:24px 0;text-align:center;color:#667085;font-size:12px;font-family:Arial,sans-serif">{{ ui_text('marketing_unsubscribe_question') }} <a href="{{ unsubscribe_url }}" style="color:#475467">{{ ui_text('unsubscribe') }}</a>.</p>{% endif %}
+</body>
+</html>

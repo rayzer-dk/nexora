@@ -28,6 +28,15 @@
 </div></section>
 </form>
 
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.notify_channels.design_kicker') }}</small><h2>{{ ui_text('admin.notify_channels.design_title') }}</h2></div><a class="admin-button" href="{{ path('admin_email_preview') }}">{{ ui_icon('eye', 16) }} {{ ui_text('admin.notify_channels.design_preview') }}</a></div>
+<p class="admin-card-note">{{ ui_text('admin.notify_channels.design_help') }}</p>
+<form method="post" action="{{ path('admin_commerce_notification_design') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}">
+{% for key, label in {header_bg: ui_text('admin.notify_channels.design_header_bg'), header_text: ui_text('admin.notify_channels.design_header_text'), accent: ui_text('admin.notify_channels.design_accent'), page_bg: ui_text('admin.notify_channels.design_page_bg'), card_bg: ui_text('admin.notify_channels.design_card_bg'), text: ui_text('admin.notify_channels.design_text')} %}<label>{{ label }}<input type="color" name="{{ key }}" value="{{ design[key] }}"></label>{% endfor %}
+<label class="admin-form-wide">{{ ui_text('admin.notify_channels.design_footer') }}<input name="footer" maxlength="300" value="{{ design.footer }}" placeholder="{{ ui_text('admin.notify_channels.design_footer_hint') }}"></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.notify_channels.save') }}</button><button class="admin-button" type="submit" name="reset" value="1">{{ ui_icon('rotate-ccw', 16) }} {{ ui_text('admin.notify_channels.design_reset') }}</button></div></form>
+<iframe class="admin-email-frame" title="{{ ui_text('admin.notify_channels.design_preview')|e('html_attr') }}" src="{{ path('admin_email_preview_render', {template: 'order_created'}) }}" loading="lazy"></iframe>
+</section>
+
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.notify_channels.test_kicker') }}</small><h2>{{ ui_text('admin.notify_channels.test_title') }}</h2></div></div>
 <p class="admin-card-note">{{ ui_text('admin.notify_channels.test_help') }}</p>
 <div class="admin-inline-actions">

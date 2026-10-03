@@ -66,6 +66,8 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_catalog_search')) return $get?AdminPermissionCatalog::SEARCH_VIEW:AdminPermissionCatalog::SEARCH_MANAGE;
         if (preg_match('/^admin_catalog_(?:product|category)_(?:edit|new|translations|translation_save)$/D',$route)===1 || str_contains($route,'products_bulk_edit')) return AdminPermissionCatalog::CATALOG_MANAGE;
         if (str_starts_with($route,'admin_catalog_')) return $get?AdminPermissionCatalog::CATALOG_VIEW:AdminPermissionCatalog::CATALOG_MANAGE;
+        if (in_array($route,['admin_commerce_customers_export','admin_commerce_subscribers_export'],true)) return AdminPermissionCatalog::CUSTOMERS_EXPORT;
+        if ($route==='admin_commerce_campaign_test') return AdminPermissionCatalog::MARKETING_MANAGE;
         if ($route==='admin_commerce_customers') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if ($route==='admin_content_page_edit'||$route==='admin_content_page_new') return AdminPermissionCatalog::CONTENT_MANAGE;
         if (str_starts_with($route,'admin_content_')) return $get?AdminPermissionCatalog::CONTENT_VIEW:(str_contains($route,'delete')?AdminPermissionCatalog::CONTENT_DELETE:AdminPermissionCatalog::CONTENT_MANAGE);
@@ -75,7 +77,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_forum')) return $get?AdminPermissionCatalog::FORUM_VIEW:AdminPermissionCatalog::FORUM_MANAGE;
         if (in_array($route,['admin_commerce_promotions','admin_commerce_campaigns','admin_commerce_marketing_automation'],true)||str_contains($route,'promotion_toggle')) return $get?AdminPermissionCatalog::MARKETING_VIEW:AdminPermissionCatalog::MARKETING_MANAGE;
         if (str_starts_with($route,'admin_commerce_feed')) return $get?AdminPermissionCatalog::FEEDS_VIEW:AdminPermissionCatalog::FEEDS_MANAGE;
-        if (in_array($route,['admin_commerce_notifications','admin_commerce_notification_channels','admin_commerce_notification_channels_test','admin_commerce_notification_templates','admin_commerce_notification_templates_save','admin_commerce_notification_templates_preview','admin_email_preview','admin_email_preview_render'],true)) return $get?AdminPermissionCatalog::NOTIFICATIONS_VIEW:AdminPermissionCatalog::NOTIFICATIONS_MANAGE;
+        if (in_array($route,['admin_commerce_notifications','admin_commerce_notification_channels','admin_commerce_notification_channels_test','admin_commerce_notification_design','admin_commerce_notification_templates','admin_commerce_notification_templates_save','admin_commerce_notification_templates_preview','admin_email_preview','admin_email_preview_render'],true)) return $get?AdminPermissionCatalog::NOTIFICATIONS_VIEW:AdminPermissionCatalog::NOTIFICATIONS_MANAGE;
         if ($route==='admin_commerce_inquiries') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if ($route==='admin_commerce_import_export') return $get?AdminPermissionCatalog::CATALOG_VIEW:AdminPermissionCatalog::CATALOG_MANAGE;
         if (str_starts_with($route,'admin_nova_post_')) return $get?AdminPermissionCatalog::ORDERS_VIEW:AdminPermissionCatalog::ORDERS_MANAGE;

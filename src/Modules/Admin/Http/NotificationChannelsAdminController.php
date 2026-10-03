@@ -67,7 +67,27 @@ final class NotificationChannelsAdminController extends AbstractController
             's' => $s,
             'env_mail_is_null' => str_starts_with(trim($this->envDsn), 'null:'),
             'env_from' => $this->envFrom,
+            'design' => $this->settings->design($storeId),
         ]);
+    }
+
+    #[Route('/admin/commerce/notification-channels/design', name: 'admin_commerce_notification_design', methods: ['POST'])]
+    public function design(Request $request): Response
+    {
+        $this->guard($request);
+        $storeId = $this->contexts->resolve($request)->storeId;
+        $in = $request->request;
+        if ($in->has('reset')) {
+            $this->settings->saveDesign($storeId, []);
+        } else {
+            $this->settings->saveDesign($storeId, [
+                'header_bg' => $in->get('header_bg'), 'header_text' => $in->get('header_text'), 'accent' => $in->get('accent'),
+                'page_bg' => $in->get('page_bg'), 'card_bg' => $in->get('card_bg'), 'text' => $in->get('text'), 'footer' => $in->get('footer'),
+            ]);
+        }
+        $this->addFlash('success', CanonicalUiText::get('admin.notify_channels.design_saved'));
+
+        return $this->redirectToRoute('admin_commerce_notification_channels');
     }
 
     #[Route('/admin/commerce/notification-channels/test', name: 'admin_commerce_notification_channels_test', methods: ['POST'])]

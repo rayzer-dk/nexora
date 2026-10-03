@@ -170,7 +170,7 @@ final class CommerceOperationsAdminController extends AbstractController
         $context=$this->contexts->resolve($request);
         if($request->isMethod('POST')){
             if(!$this->isCsrfTokenValid('campaign_send',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
-            try{$r=$this->campaigns->createAndEnqueue($context->storeId,(string)$request->request->get('subject'),(string)$request->request->get('body'),(string)$request->request->get('segment','all_subscribers'));$this->addFlash('success',sprintf(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kampaniiu_dodano_v_cherhu_dlia_d_pidtverdzhenykh_pid'),$r['recipients']));}
+            try{$r=$this->campaigns->createAndEnqueue($context->storeId,(string)$request->request->get('subject'),(string)$request->request->get('body'),(string)$request->request->get('segment','all_subscribers'),5000,(string)$request->request->get('format','text'));$this->addFlash('success',sprintf(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kampaniiu_dodano_v_cherhu_dlia_d_pidtverdzhenykh_pid'),$r['recipients']));}
             catch(\Throwable $e){$this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kampaniiu_ne_vdalosia_stvoryty'));}
             return $this->redirectToRoute('admin_commerce_campaigns');
         }

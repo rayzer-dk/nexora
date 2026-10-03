@@ -16,3 +16,27 @@ framework:
                     class: ['iframe']
                 with_attribute_sanitizers:
                     - 'Commerce\Core\Text\RichTextAttributeSanitizer'
+            # The shop owner's own HTML e-mails: https links and images only, layout tables and a fixed set of inline CSS.
+            commerce.email_html:
+                allow_safe_elements: true
+                allow_relative_links: false
+                allow_relative_medias: false
+                force_https_urls: true
+                allowed_link_schemes: ['https', 'mailto', 'tel']
+                allowed_media_schemes: ['https']
+                max_input_length: 200000
+                allow_attributes:
+                    style: ['*']
+                    width: ['table', 'td', 'th', 'img']
+                    height: ['td', 'th', 'img']
+                    align: ['table', 'td', 'th', 'p', 'div', 'img', 'h1', 'h2', 'h3']
+                    valign: ['td', 'th', 'tr']
+                    bgcolor: ['table', 'td', 'th', 'tr']
+                    cellpadding: ['table']
+                    cellspacing: ['table']
+                    border: ['table', 'img']
+                    colspan: ['td', 'th']
+                    rowspan: ['td', 'th']
+                    role: ['table']
+                with_attribute_sanitizers:
+                    - 'Commerce\Core\Text\EmailHtmlAttributeSanitizer'

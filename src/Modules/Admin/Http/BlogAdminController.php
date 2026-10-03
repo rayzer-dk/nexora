@@ -25,6 +25,7 @@ final class BlogAdminController extends AbstractController
         private readonly Connection $db,
         private readonly \Commerce\Modules\Localization\Application\ContentPolicyService $contentPolicy,
         private readonly \Commerce\Modules\Admin\Application\ContentLanguageTabs $languageTabs,
+        private readonly \Commerce\Modules\Ai\Application\AiTaskService $ai,
     ) {
     }
 
@@ -73,6 +74,50 @@ final class BlogAdminController extends AbstractController
                 }
             }
         }
+        return $this->form($ctx->storeId, $ctx->locale, $id, $article);
+    }
+
+    /** Fills a language that has no text yet with an AI translation of the default language; nothing is saved until the editor presses Save. */
+    #[Route('/admin/content/blog/{id}/translate', name: 'admin_content_blog_translate', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function translate(Request $request, int $id): Response
+    {
+        $ctx = $this->contexts->resolve($request);
+        $article = $this->blog->find($ctx->storeId, $id, $ctx->locale);
+        if ($article === null) {
+            throw $this->createNotFoundException();
+        }
+        if (!$this->isCsrfTokenValid('admin_content_blog', (string) $request->request->get('_token'))) {
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
+
+            return $this->redirectToRoute('admin_content_blog_edit', ['id' => $id, 'locale' => $ctx->locale]);
+        }
+        $source = null;
+        foreach ($this->languageTabs->tabs($ctx->storeId, $ctx->locale) as $tab) {
+            $candidate = $tab['is_default'] ? $this->blog->find($ctx->storeId, $id, $tab['code']) : null;
+            if ($candidate !== null && $candidate['has_translation']) {
+                $source = $candidate;
+            }
+        }
+        $provider = (string) $request->request->get('provider', '');
+        if ($source === null || $provider === '') {
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('admin.ai.error_input'));
+
+            return $this->redirectToRoute('admin_content_blog_edit', ['id' => $id, 'locale' => $ctx->locale]);
+        }
+        $admin = $this->getUser();
+        try {
+            foreach (['title', 'excerpt', 'body_html', 'meta_title', 'meta_description'] as $field) {
+                $text = trim((string) ($source[$field] ?? ''));
+                $article[$field] = $text === '' ? '' : (string) ($this->ai->run($ctx->storeId, $admin !== null ? $admin->getUserIdentifier() : 'admin', 'translate', $provider, ['text' => $text, 'target' => $ctx->locale], $ctx->locale)['fields']['text'] ?? '');
+            }
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+
+            return $this->redirectToRoute('admin_content_blog_edit', ['id' => $id, 'locale' => $ctx->locale]);
+        }
+        $article['prefilled'] = 'ai';
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.pages.translated_draft'));
+
         return $this->form($ctx->storeId, $ctx->locale, $id, $article);
     }
 

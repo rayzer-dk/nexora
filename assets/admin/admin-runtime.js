@@ -137,3 +137,87 @@ document.querySelectorAll('[data-translate-from]').forEach((button) => {
     }
   });
 });
+
+// Translation editor, one-click variants: a single field, or every language at once (then one "save all"). Nothing is saved before a save button is pressed.
+async function translateText(page, text, target) {
+  const provider = page.querySelector('[data-ai-provider]');
+  const body = new URLSearchParams({ _token: page.dataset.aiToken || '', task: 'translate', provider: provider?.value || '' });
+  body.append('fields[text]', text);
+  body.append('fields[target]', target);
+  const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
+  const data = await response.json();
+  if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
+  return data.fields?.text || '';
+}
+function translateSource(page, name) {
+  return page.querySelector('[data-translate-panel][data-source]')?.querySelector(`[data-translate-field][name="${name}"]`)?.value?.trim() || '';
+}
+document.querySelectorAll('[data-translate-one]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const page = button.closest('[data-translate-page]');
+    const panel = button.closest('[data-translate-panel]');
+    const field = button.closest('label')?.querySelector('[data-translate-field]');
+    const status = panel?.querySelector('[data-ai-status]');
+    if (!page || !panel || !field || !status) return;
+    const text = translateSource(page, field.getAttribute('name') || '');
+    if (!text) return;
+    button.disabled = true;
+    status.textContent = t('admin.ai.generating');
+    try {
+      field.value = await translateText(page, text, panel.dataset.locale || '');
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      status.textContent = t('admin.ai.draft_inserted');
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+    } finally {
+      button.disabled = false;
+    }
+  });
+});
+document.querySelectorAll('[data-translate-all]').forEach((button) => {
+  const page = button.closest('[data-translate-page]');
+  const status = page?.querySelector('[data-bulk-status]');
+  const saveAll = page?.querySelector('[data-save-all]');
+  if (!page || !status) return;
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    let failed = false;
+    try {
+      for (const panel of page.querySelectorAll('[data-translate-panel]:not([data-source])')) {
+        for (const field of panel.querySelectorAll('[data-translate-field]')) {
+          const text = translateSource(page, field.getAttribute('name') || '');
+          if (!text) continue;
+          status.textContent = `${t('admin.ai.generating')} ${panel.dataset.locale} · ${field.getAttribute('name')}`;
+          field.value = await translateText(page, text, panel.dataset.locale || '');
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+    } catch (error) {
+      failed = true;
+      status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+    } finally {
+      button.disabled = false;
+    }
+    if (!failed) {
+      status.textContent = t('admin.ai.translate_all_done');
+      if (saveAll) saveAll.hidden = false;
+    }
+  });
+  saveAll?.addEventListener('click', async () => {
+    saveAll.disabled = true;
+    try {
+      for (const panel of page.querySelectorAll('[data-translate-panel]:not([data-source])')) {
+        const form = panel.querySelector('form');
+        if (!form) continue;
+        status.textContent = `${t('admin.ai.saving')} ${panel.dataset.locale}`;
+        const response = await fetch(form.action, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: new FormData(form), redirect: 'follow' });
+        if (!response.ok) throw new Error(t('admin.ai.draft_failed'));
+      }
+      window.location.reload();
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+      saveAll.disabled = false;
+    }
+  });
+  if (new URLSearchParams(window.location.search).get('auto') === '1') button.click();
+});
