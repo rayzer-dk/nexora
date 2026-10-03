@@ -74,7 +74,7 @@ test('captcha: admin picks provider and forms; built-in captcha gates the newsle
     await form.locator('input[name="email"]').fill(email);
     await form.locator('input[name="mc_captcha_answer"]').fill('WRONG');
     await form.locator('button[type="submit"]').click();
-    await expect(shop.locator('.store-notice.is-error')).toHaveCount(1);
+    await expect(shop.locator('.storefront-toast.is-error')).toHaveCount(1);
 
     // correct answer passes; the same token cannot be replayed
     await shop.waitForTimeout(1200);
@@ -82,7 +82,7 @@ test('captcha: admin picks provider and forms; built-in captcha gates the newsle
     await shop.locator('form.newsletter-signup__form input[name="email"]').fill(email);
     await shop.locator('form.newsletter-signup__form input[name="mc_captcha_answer"]').fill(builtinAnswer(fresh));
     await shop.locator('form.newsletter-signup__form button[type="submit"]').click();
-    await expect(shop.locator('.store-notice.is-success')).toHaveCount(1);
+    await expect(shop.locator('.storefront-toast:not(.is-error)')).toHaveCount(1);
     const replay = await shop.request.post('/newsletter/subscribe', { form: { _token: 'x', email, mc_captcha_token: fresh, mc_captcha_answer: builtinAnswer(fresh) }, maxRedirects: 0 });
     expect([302, 403]).toContain(replay.status());
 

@@ -110,6 +110,7 @@ test('admin lists take several values in one filter', async ({ page }, testInfo)
   await options.nth(0).check();
   await options.nth(1).check();
   await expect(box.locator('[data-multiselect-text]')).toContainText('2');
+  await box.locator('summary').click(); // close the list: the date fields moved the Apply button under the open panel
   await Promise.all([page.waitForURL((url) => url.searchParams.getAll('status[]').length === 2), page.locator('.admin-filters button[type="submit"]').click()]);
   await expectNoServerError(page);
   await expect(page.locator('[data-multiselect]').first().locator('input:checked')).toHaveCount(2);

@@ -83,6 +83,10 @@ function initAjaxForms() {
         });
         if (notices.length === 0 && form.dataset.ajaxOk) toast(form.dataset.ajaxOk, 'success');
         if (!failed && form.hasAttribute('data-ajax-reset')) form.reset();
+        // a captcha challenge is single-use: the page is not reloaded, so ask for a fresh one
+        form.querySelector('[data-captcha-refresh]')?.click();
+        const answer = form.querySelector('input[name="mc_captcha_answer"]');
+        if (answer) answer.value = '';
       } catch (_) {
         form.submit();
         return;

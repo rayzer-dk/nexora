@@ -954,7 +954,6 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
   background: var(--admin-info-soft);
 }
 .admin-ai-helper strong, .admin-ai-helper small { display: block; }
-.admin-pager { display: flex; align-items: center; justify-content: center; gap: var(--mc-space-3); margin-top: var(--mc-space-3); }
 .campaign-tools { display: flex; flex-wrap: wrap; align-items: end; gap: var(--mc-space-2); padding: var(--mc-space-3); border: 1px dashed var(--mc-color-border); border-radius: var(--mc-radius-md); }
 .campaign-tools label { display: grid; gap: var(--mc-space-1); }
 .admin-email-frame { width: 100%; height: 560px; margin-top: var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-background); }

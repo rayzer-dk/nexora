@@ -65,20 +65,20 @@ test.describe('spam protection', () => {
     await page.evaluate(() => { (document.querySelector('.newsletter-signup__form input[name="_website"]') as HTMLInputElement).value = 'http://spam.example'; });
     await form.locator('input[name="email"]').fill(email);
     await form.locator('button[type="submit"]').click();
-    await expect(page.locator('.store-notice.is-error')).toHaveCount(1);
+    await expect(page.locator('.storefront-toast.is-error')).toHaveCount(1);
 
     // missing render timestamp -> rejected
     await page.goto('/', { waitUntil: 'networkidle' });
     await page.evaluate(() => { document.querySelector('.newsletter-signup__form input[name="_rendered_at"]')?.remove(); });
     await form.locator('input[name="email"]').fill(email);
     await form.locator('button[type="submit"]').click();
-    await expect(page.locator('.store-notice.is-error')).toHaveCount(1);
+    await expect(page.locator('.storefront-toast.is-error')).toHaveCount(1);
 
     // a normal submission passes the gate (success or an already-subscribed notice, never the spam error)
     await page.goto('/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(1200);
     await form.locator('input[name="email"]').fill(email);
     await form.locator('button[type="submit"]').click();
-    await expect(page.locator('.store-notice.is-success')).toHaveCount(1);
+    await expect(page.locator('.storefront-toast:not(.is-error)')).toHaveCount(1);
   });
 });
