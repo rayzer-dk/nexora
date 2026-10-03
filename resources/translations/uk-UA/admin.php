@@ -4087,4 +4087,12 @@ return [
     'admin.builder.category_recommended' => 'Рекомендовані',
     'admin.builder.category_grid' => 'Товари',
     'admin.builder.category_description' => 'Текст внизу',
+    'admin.builder.cart' => 'Кошик',
+    'admin.builder.cart_nav' => 'Конструктор кошика',
+    'admin.builder.cart_hint' => 'Заголовок, збережені кошики і нещодавно переглянуті: порядок і видимість. Список товарів і підсумок лишаються завжди.',
+    'admin.builder.cart_heading' => 'Заголовок',
+    'admin.builder.cart_lines' => 'Товари в кошику',
+    'admin.builder.cart_summary' => 'Підсумок і оформлення',
+    'admin.builder.cart_saved' => 'Зберегти кошик',
+    'admin.builder.cart_recent' => 'Нещодавно переглянуті',
 ];

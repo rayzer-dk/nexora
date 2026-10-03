@@ -19,7 +19,7 @@ final class LayoutBuilderAdminController extends AbstractController
     {
     }
 
-    #[Route('/admin/appearance/builder/{type}', name: 'admin_appearance_builder', methods: ['GET','POST'], requirements: ['type'=>'home|product|checkout|category'])]
+    #[Route('/admin/appearance/builder/{type}', name: 'admin_appearance_builder', methods: ['GET','POST'], requirements: ['type'=>'home|product|checkout|category|cart'])]
     public function index(Request $request, string $type): Response
     {
         $context = $this->contexts->resolve($request);
@@ -59,7 +59,7 @@ final class LayoutBuilderAdminController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/appearance/builder/{type}/rollback/{revisionId}', name: 'admin_appearance_builder_rollback', methods: ['POST'], requirements: ['type'=>'home|product|checkout|category','revisionId'=>'\d+'])]
+    #[Route('/admin/appearance/builder/{type}/rollback/{revisionId}', name: 'admin_appearance_builder_rollback', methods: ['POST'], requirements: ['type'=>'home|product|checkout|category|cart','revisionId'=>'\d+'])]
     public function rollback(Request $request, string $type, int $revisionId): Response
     {
         $context=$this->contexts->resolve($request);
@@ -77,7 +77,7 @@ final class LayoutBuilderAdminController extends AbstractController
     }
 
 
-    #[Route('/admin/appearance/builder/{type}/snippet/{id}/delete', name: 'admin_appearance_builder_snippet_delete', methods: ['POST'], requirements: ['type'=>'home|product|checkout|category','id'=>'\d+'])]
+    #[Route('/admin/appearance/builder/{type}/snippet/{id}/delete', name: 'admin_appearance_builder_snippet_delete', methods: ['POST'], requirements: ['type'=>'home|product|checkout|category|cart','id'=>'\d+'])]
     public function deleteSnippet(Request $request,string $type,int $id): Response
     {
         $context=$this->contexts->resolve($request);

@@ -4092,4 +4092,12 @@ return [
     'admin.builder.category_recommended' => 'Recommended',
     'admin.builder.category_grid' => 'Products',
     'admin.builder.category_description' => 'Bottom text',
+    'admin.builder.cart' => 'Cart',
+    'admin.builder.cart_nav' => 'Cart Builder',
+    'admin.builder.cart_hint' => 'Heading, saved carts and recently viewed: order and visibility. The cart lines and the summary always stay.',
+    'admin.builder.cart_heading' => 'Heading',
+    'admin.builder.cart_lines' => 'Cart items',
+    'admin.builder.cart_summary' => 'Summary and checkout',
+    'admin.builder.cart_saved' => 'Save cart',
+    'admin.builder.cart_recent' => 'Recently viewed',
 ];

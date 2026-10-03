@@ -24,6 +24,7 @@ final class CartController extends AbstractController
         private readonly CartMutationService $mutations,
         private readonly DbalCartQuery $query,
         private readonly LoggerInterface $logger,
+        private readonly \Commerce\Modules\Storefront\Application\CartLayoutService $layout,
     ) {
     }
 
@@ -33,7 +34,7 @@ final class CartController extends AbstractController
         // Viewing the cart must not create one: crawlers and first-time visitors follow the header link.
         $context=$this->contexts->resolve($request); $cart=$this->mutations->find($context,$request->cookies->get('mc_cart'));
         if($cart!==null){$this->bind($cart['id'],$context->storeId); $context=$this->mutations->contextFor($context,$cart);}
-        $response=$this->render('@storefront/cart/show.html.twig',['page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.cart.http.cartcontroller.koshyk'),'store_name'=>$context->storeName,'cart'=>$cart!==null?$this->query->summary($cart['id'],$context):$this->query->emptySummary($context),'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/cart','robots'=>'noindex,follow']]);
+        $response=$this->render('@storefront/cart/show.html.twig',['cart_layout'=>$this->layout->active($context->storeId),'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.cart.http.cartcontroller.koshyk'),'store_name'=>$context->storeName,'cart'=>$cart!==null?$this->query->summary($cart['id'],$context):$this->query->emptySummary($context),'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/cart','robots'=>'noindex,follow']]);
         if($cart!==null){$this->attachCookie($response,$request,$cart);} return $response;
     }
 

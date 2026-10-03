@@ -2,8 +2,11 @@
 {% block head %}<script type="module" src="{{ vite_asset('assets/storefront/cart.js', '/assets/cart.js') }}"></script>{% endblock %}
 {% block body %}
 {% set capabilities = site_capabilities() %}
+{% set cl = cart_layout|default({below: ['saved','recent'], show: {heading:true,saved:true,recent:true}, classes: {}}) %}
 <section class="cart-page shell" data-cart-page data-i18n-update-failed="{{ ui_text('cart_update_failed') }}" data-i18n-item-removed="{{ ui_text('cart_item_removed') }}">
+    {% if cl.show.heading %}<div class="{{ cl.classes.heading|default('') }}">
     <header class="catalog-heading"><div><p class="eyebrow">{{ ui_text('cart') }}</p><h1>{{ ui_text('your_order') }}</h1></div><a class="section-link" href="/catalog">{{ ui_icon('arrow-left', 16) }}{{ ui_text('continue_shopping') }}</a></header>
+    </div>{% else %}<h1 class="sr-only">{{ ui_text('your_order') }}</h1>{% endif %}
     {% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}{% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
     <div data-cart-content {% if not cart.items %}hidden{% endif %}>
     {% include '@storefront/extension/slot.html.twig' with {slot:'cart.before_summary'} only %}
@@ -19,6 +22,5 @@
     {% include '@storefront/extension/slot.html.twig' with {slot:'cart.after_summary'} only %}
     <div class="empty-state" data-cart-empty {% if cart.items %}hidden{% endif %}><h2>{{ ui_text('cart_empty') }}</h2><p>{{ ui_text('cart_empty_text') }}</p><a class="button button--primary" href="/catalog">{{ ui_text('go_catalog') }}{{ ui_icon('arrow-right', 16) }}</a></div>
 </section>
-{% if app.user and is_granted('ROLE_CUSTOMER') and cart.items %}<section class="cart-save shell"><form method="post" action="{{ path('customer_saved_cart_save') }}" class="feedback-form"><input type="hidden" name="_token" value="{{ csrf_token('saved_cart_save') }}"><label>{{ ui_text('save_cart_later') }}<input type="text" name="name" maxlength="190" placeholder="{{ ui_text('save_cart_placeholder') }}"></label><button class="button button--secondary" type="submit">{{ ui_text('save_cart') }}</button></form></section>{% endif %}
-{% include '@storefront/components/recently_viewed.html.twig' %}
+{% for section in cl.below %}{% if section == 'saved' and cl.show.saved %}<div class="{{ cl.classes.saved|default('') }}">{% if app.user and is_granted('ROLE_CUSTOMER') and cart.items %}<section class="cart-save shell"><form method="post" action="{{ path('customer_saved_cart_save') }}" class="feedback-form"><input type="hidden" name="_token" value="{{ csrf_token('saved_cart_save') }}"><label>{{ ui_text('save_cart_later') }}<input type="text" name="name" maxlength="190" placeholder="{{ ui_text('save_cart_placeholder') }}"></label><button class="button button--secondary" type="submit">{{ ui_text('save_cart') }}</button></form></section>{% endif %}</div>{% elseif section == 'recent' and cl.show.recent %}<div class="{{ cl.classes.recent|default('') }}">{% include '@storefront/components/recently_viewed.html.twig' %}</div>{% endif %}{% endfor %}
 {% endblock %}

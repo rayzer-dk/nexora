@@ -27,7 +27,7 @@ final readonly class LayoutRevisionStore
             }
         } catch (\Throwable) {
         }
-        return match ($type) { 'product' => $this->safe->product(), 'checkout' => $this->safe->checkout(), 'category' => $this->safe->category(), default => $this->safe->storefront() };
+        return match ($type) { 'product' => $this->safe->product(), 'checkout' => $this->safe->checkout(), 'category' => $this->safe->category(), 'cart' => $this->safe->cart(), default => $this->safe->storefront() };
     }
 
 
@@ -106,7 +106,7 @@ final readonly class LayoutRevisionStore
 
     private function assertType(string $type): void
     {
-        if (!in_array($type, ['home','product','checkout','category'], true)) {
+        if (!in_array($type, ['home','product','checkout','category','cart'], true)) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.6b74c5d04543'));
         }
     }

@@ -18,6 +18,16 @@ final class SafeLayoutProvider
     }
 
     /** @return array<string,mixed> */
+    public function cart(): array
+    {
+        $blocks = [];
+        foreach (['cart_heading','cart_lines','cart_summary','cart_saved','cart_recent'] as $component) {
+            $blocks[] = ['id'=>$component,'component'=>$component,'enabled'=>true,'props'=>[],'style'=>[],'visibility'=>[]];
+        }
+        return ['schema_version' => 1, 'blocks' => $blocks];
+    }
+
+    /** @return array<string,mixed> */
     public function category(): array
     {
         $blocks = [];
