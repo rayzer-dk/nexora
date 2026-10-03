@@ -1,0 +1,17 @@
+{# Shown for every 404 on the storefront and in the admin area; the site layout, search and footer stay available. #}
+{% extends '@storefront/base.html.twig' %}
+{% block title %}{{ ui_text('error_404_title') }}{% endblock %}
+{% block head %}<meta name="robots" content="noindex">{% endblock %}
+{% block body %}
+<section class="shell content-shell">
+    <div class="empty-state" data-error-page="404">
+        <p class="eyebrow">404</p>
+        <h1>{{ ui_text('error_404_title') }}</h1>
+        <p>{{ ui_text('error_404_text') }}</p>
+        <div class="empty-state__actions">
+            <a class="button button--primary" href="/catalog">{{ ui_text('go_catalog') }}{{ ui_icon('arrow-right', 16) }}</a>
+            <a class="button" href="/">{{ ui_text('home') }}</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

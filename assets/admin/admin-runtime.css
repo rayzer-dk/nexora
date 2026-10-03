@@ -1186,7 +1186,7 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 @media (max-width: 768px) {
   .admin-form-grid,
   .admin-form-grid--dense { grid-template-columns: minmax(0, 1fr); }
-  .admin-context { width: 100%; margin-left: 0; }
+  .admin-context { flex: 1 1 180px; width: auto; margin-left: 0; }
   .admin-context form { width: 100%; }
   .admin-context label { flex: 1 1 140px; }
   .admin-context select { width: 100%; }
@@ -1287,9 +1287,12 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 .dash-kpi { display: grid; gap: var(--mc-space-1); align-content: start; padding: var(--mc-space-3) var(--admin-pad); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-lg); background: var(--mc-color-surface-raised); box-shadow: var(--mc-shadow-xs); }
 .dash-kpi__label { display: inline-flex; align-items: center; gap: var(--mc-space-2); color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-semibold); letter-spacing: var(--mc-letter-spacing-caps); text-transform: uppercase; }
 .dash-kpi__value { font-size: var(--mc-font-size-xl); font-weight: var(--mc-font-weight-bold); line-height: var(--mc-line-height-tight); letter-spacing: var(--mc-letter-spacing-tight); overflow-wrap: anywhere; }
-.dash-kpi__value small { color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); }
-.dash-delta { display: inline-flex; align-items: center; gap: var(--mc-space-1); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); }
-.dash-delta small { color: var(--mc-color-muted); font-weight: var(--mc-font-weight-regular); }
+.dash-kpi__value small { white-space: nowrap; color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); }
+/* Five or six cards in a row leave about 150px for the figure: step the size down so a value and its currency stay on one line. */
+@media (min-width: 1280px) { .dash-kpi__value { font-size: var(--mc-font-size-lg); } }
+@media (min-width: 1536px) { .dash-kpi__value { font-size: var(--mc-font-size-xl); } }
+.dash-delta { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 var(--mc-space-1); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); }
+.dash-delta small { flex: 0 1 auto; color: var(--mc-color-muted); font-weight: var(--mc-font-weight-regular); }
 .dash-delta.is-up { color: var(--mc-color-success); }
 .dash-delta.is-down { color: var(--mc-color-danger); }
 .dash-delta.is-flat { color: var(--mc-color-muted); font-weight: var(--mc-font-weight-regular); }
@@ -1736,4 +1739,12 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* A placeholder that does not fit ends with an ellipsis instead of being cut mid-word. */
+.admin-app :where(input, textarea)::placeholder { text-overflow: ellipsis; }
+
+/* On a phone the topbar keeps menu, search, language, theme and account in two rows: the account shows its icon only. */
+@media (max-width: 480px) {
+  .admin-user__name { display: none; }
 }

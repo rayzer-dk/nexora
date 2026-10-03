@@ -104,7 +104,8 @@ main:has(> .checkout-page) { padding-top: 0; padding-bottom: 0; }
   color: var(--mc-color-muted);
   text-align: center;
 }
-.empty-state strong, .empty-state h2 { color: var(--mc-color-text); font-size: var(--mc-font-size-xl); }
+.empty-state strong, .empty-state h1, .empty-state h2 { color: var(--mc-color-text); font-size: var(--mc-font-size-xl); }
+.empty-state__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--mc-space-3); }
 .empty-state p { max-width: 48ch; }
 .breadcrumbs, .forum-breadcrumbs { margin-bottom: var(--mc-space-4); font-size: var(--mc-font-size-sm); color: var(--mc-color-muted); }
 .breadcrumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-1); margin: 0; padding: 0; list-style: none; }
@@ -1086,3 +1087,6 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 
 .notice-close { margin-left: auto; align-self: flex-start; flex: none; display: inline-grid; place-items: center; width: var(--mc-control-height-sm); height: var(--mc-control-height-sm); padding: 0; border: 0; border-radius: var(--mc-radius-sm); background: transparent; color: inherit; font-size: var(--mc-font-size-lg); line-height: 1; cursor: pointer; opacity: .7; }
 .notice-close:hover, .notice-close:focus-visible { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
+
+/* A placeholder that does not fit (search box on a phone) ends with an ellipsis instead of being cut mid-word. */
+:where(input, textarea)::placeholder { text-overflow: ellipsis; }

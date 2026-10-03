@@ -1,0 +1,31 @@
+{# Every other error (403, 500, ...). Standalone on purpose (no site layout): it must still render when the layout itself is what failed. #}
+{% set forbidden = status_code == 403 %}
+<!doctype html>
+<html lang="{{ app.request.locale|default('uk')|slice(0, 2) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{{ ui_text(forbidden ? 'error_403_title' : 'error_generic_title') }}</title>
+    <style>
+        :root { color-scheme: light dark; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #111827; background: #f6f8fb; }
+        main { width: 100%; max-width: 480px; padding: 32px 28px; border: 1px solid #e2e7ef; border-radius: 16px; background: #fff; text-align: center; }
+        small { display: block; margin: 0 0 8px; color: #0b63f6; font-size: 14px; font-weight: 700; letter-spacing: .08em; }
+        h1 { margin: 0 0 12px; font-size: 24px; line-height: 1.25; }
+        p { margin: 0 0 24px; color: #5b6474; }
+        a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 24px; border-radius: 8px; background: #0b63f6; color: #fff; font-weight: 600; text-decoration: none; }
+        a:focus-visible { outline: 3px solid #0b63f6; outline-offset: 2px; }
+        @media (prefers-color-scheme: dark) { body { color: #e7ecf6; background: #0b1220; } main { border-color: #25324b; background: #111a2b; } p { color: #9aa7bd; } small { color: #8db4fb; } a { background: #4f8ff9; color: #0b1220; } a:focus-visible { outline-color: #8db4fb; } }
+    </style>
+</head>
+<body>
+    <main data-error-page="{{ status_code }}">
+        <small>{{ status_code }}</small>
+        <h1>{{ ui_text(forbidden ? 'error_403_title' : 'error_generic_title') }}</h1>
+        <p>{{ ui_text(forbidden ? 'error_403_text' : 'error_generic_text') }}</p>
+        <a href="/">{{ ui_text('home') }}</a>
+    </main>
+</body>
+</html>
