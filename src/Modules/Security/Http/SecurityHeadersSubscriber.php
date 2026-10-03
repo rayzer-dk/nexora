@@ -6,14 +6,26 @@ namespace Commerce\Modules\Security\Http;
 
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 
 final class SecurityHeadersSubscriber
 {
+    public function __construct(private readonly RequestStack $requests)
+    {
+    }
+
     #[AsEventListener(event: 'kernel.request', priority: 32)]
     public function onRequest(RequestEvent $event): void
     {
         if (!$event->isMainRequest()) {
+            // Sub-requests (the error page after an exception) are built without the main request's attributes;
+            // they render templates, so they must print the nonce the response header will announce.
+            $nonce = $this->requests->getMainRequest()?->attributes->get('_csp_nonce');
+            if (is_string($nonce) && $nonce !== '') {
+                $event->getRequest()->attributes->set('_csp_nonce', $nonce);
+            }
+
             return;
         }
 
