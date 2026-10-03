@@ -85,12 +85,12 @@ final readonly class SupportChatSettings
         $current = $this->get($storeId);
         $token = trim((string) ($input['bot_token'] ?? ''));
         if ($token !== '' && !preg_match('/^\d{5,}:[A-Za-z0-9_-]{20,}$/D', $token)) {
-            throw new \InvalidArgumentException('Invalid bot token format.');
+            throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.support_chat.bad_token'));
         }
         $token = $token !== '' ? $token : $current['bot_token'];
         $group = trim((string) ($input['group_chat_id'] ?? $current['group_chat_id']));
         if ($group !== '' && !preg_match('/^-?\d{5,20}$/D', $group)) {
-            throw new \InvalidArgumentException('Invalid group id.');
+            throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.support_chat.bad_group'));
         }
         $secret = $current['webhook_secret'] !== '' ? $current['webhook_secret'] : bin2hex(random_bytes(24));
         $row = [

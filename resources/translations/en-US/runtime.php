@@ -2042,4 +2042,12 @@ return [
     'media.video_link_invalid' => 'Enter a YouTube or Vimeo link, or an https link to an mp4/webm file.',
     'media.video_limit' => 'A product can have at most %max% videos.',
     'media.video_duplicate' => 'This video is already added to the product.',
+    'runtime.support_chat.invalid_call' => 'Invalid Telegram call.',
+    'runtime.support_chat.unreachable' => 'Telegram is unreachable: %error%',
+    'runtime.support_chat.error' => 'Telegram: %error%',
+    'runtime.support_chat.unknown_error' => 'unknown error',
+    'runtime.support_chat.no_topic' => 'Telegram did not return a topic id.',
+    'runtime.support_chat.bad_token' => 'Invalid bot token format.',
+    'runtime.support_chat.bad_group' => 'Invalid group id.',
+    'runtime.console.no_question_helper' => 'The console question helper is not available.',
 ];

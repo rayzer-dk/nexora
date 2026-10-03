@@ -222,7 +222,7 @@ final class SupportChatService
         $topic = $this->bot->call($s['bot_token'], 'createForumTopic', ['chat_id' => $s['group_chat_id'], 'name' => mb_substr($label . ' · #' . (int) $thread['id'], 0, 120)]);
         $topicId = (int) ($topic['message_thread_id'] ?? 0);
         if ($topicId <= 0) {
-            throw new \RuntimeException('Telegram did not return a topic id.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.support_chat.no_topic'));
         }
         $this->db->update('mc_support_thread', ['tg_topic_id' => $topicId], ['id' => (int) $thread['id']]);
         $lines = [CanonicalUiText::get('support_chat.new_chat') . ' #' . (int) $thread['id'] . ' (' . ($thread['channel'] === 'web' ? CanonicalUiText::get('support_chat.channel_web') : 'Telegram') . ')'];

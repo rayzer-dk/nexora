@@ -23,16 +23,16 @@ final readonly class TelegramBotClient
     public function call(string $token, string $method, array $payload = []): array
     {
         if (!preg_match('/^\d{5,}:[A-Za-z0-9_-]{20,}$/D', $token) || !preg_match('/^[A-Za-z]{3,40}$/D', $method)) {
-            throw new TelegramApiException('Invalid Telegram call.');
+            throw new TelegramApiException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.support_chat.invalid_call'));
         }
         try {
             $response = $this->http->request('POST', rtrim($this->apiBase, '/') . '/bot' . $token . '/' . $method, ['json' => $payload, 'timeout' => 8.0]);
             $data = $response->toArray(false);
         } catch (\Throwable $e) {
-            throw new TelegramApiException('Telegram is unreachable: ' . $this->scrub($e->getMessage(), $token));
+            throw new TelegramApiException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.support_chat.unreachable', ['error' => $this->scrub($e->getMessage(), $token)]));
         }
         if (($data['ok'] ?? false) !== true) {
-            throw new TelegramApiException('Telegram: ' . (string) ($data['description'] ?? 'unknown error'));
+            throw new TelegramApiException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.support_chat.error', ['error' => (string) ($data['description'] ?? \Commerce\Core\I18n\CanonicalUiText::get('runtime.support_chat.unknown_error'))]));
         }
         $result = $data['result'] ?? [];
 

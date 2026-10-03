@@ -34,7 +34,7 @@ final class ResetAdminPasswordCommand extends Command
             $question->setHidden(true);
             $helper = $this->getHelper('question');
             if (!$helper instanceof QuestionHelper) {
-                throw new \LogicException('The console question helper is not available.');
+                throw new \LogicException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.console.no_question_helper'));
             }
             $password = (string) $helper->ask($input, $output, $question);
         }

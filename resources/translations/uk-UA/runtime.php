@@ -2044,4 +2044,12 @@ return [
     'media.video_link_invalid' => 'Вкажіть посилання на YouTube або Vimeo, чи https-посилання на файл mp4/webm.',
     'media.video_limit' => 'У товару може бути не більше %max% відео.',
     'media.video_duplicate' => 'Це відео вже додано до товару.',
+    'runtime.support_chat.invalid_call' => 'Некоректний виклик Telegram.',
+    'runtime.support_chat.unreachable' => 'Telegram недоступний: %error%',
+    'runtime.support_chat.error' => 'Telegram: %error%',
+    'runtime.support_chat.unknown_error' => 'невідома помилка',
+    'runtime.support_chat.no_topic' => 'Telegram не повернув id теми.',
+    'runtime.support_chat.bad_token' => 'Некоректний формат токена бота.',
+    'runtime.support_chat.bad_group' => 'Некоректний id групи.',
+    'runtime.console.no_question_helper' => 'Помічник запитань консолі недоступний.',
 ];
