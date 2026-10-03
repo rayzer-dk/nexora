@@ -2,7 +2,7 @@
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_content_forms') }}">{{ ui_text('admin.forms.title') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ form.id ? form.name : ui_text('admin.forms.new') }}</span></nav><h1>{{ form.id ? form.name : ui_text('admin.forms.new') }}</h1></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
 {% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
-<form method="post" action="{{ path('admin_content_form_save') }}" class="admin-form-stack" data-form-editor>
+<form method="post" action="{{ path('admin_content_form_save') }}" class="admin-form-stack" data-form-editor{% if ai_providers() %} data-translate-page data-ai-token="{{ csrf_token('admin_ai') }}"{% endif %}>
 <input type="hidden" name="_token" value="{{ csrf_token('admin_forms') }}"><input type="hidden" name="id" value="{{ form.id }}">
 <section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.forms.settings') }}</h2></div>{{ ui_icon('clipboard-list', 20) }}</div>
 <div class="admin-form-grid">
@@ -32,18 +32,19 @@
 <p><small>{{ ui_text('admin.forms.fields_note') }}</small></p>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.forms.save') }}</button>{% if form.id and form.status == 'active' %}<a class="admin-button" href="/forms/{{ form.slug }}" target="_blank" rel="noopener">{{ ui_icon('external-link', 16) }}<span>{{ ui_text('admin.forms.open') }}</span></a>{% endif %}</div>
 </section>
+{% if form.id and ai_providers() and locales|length > 1 %}<section class="admin-panel translation-status"><div class="translation-status__ai"><label><span>{{ ui_text('admin.ai.provider') }}</span><select data-ai-provider>{% for pr in ai_providers() %}<option value="{{ pr.code }}">{{ pr.label }}</option>{% endfor %}</select></label><small>{{ ui_text('admin.forms.translate_hint') }}</small><div class="translation-status__bulk"><button type="button" class="admin-button is-primary" data-translate-all>{{ ui_icon('languages', 16) }}<span>{{ ui_text('admin.translations.translate_all') }}</span></button><small data-bulk-status role="status"></small></div></div></section>{% endif %}
 {% if form.id %}{% for l in locales %}{% if l.code != form.locale %}
-<section class="admin-panel form-translation" data-form-translation="{{ l.code }}"><div class="admin-panel__header"><div><small>{{ ui_text('admin.forms.translation_hint') }}</small><h2>{{ ui_text('admin.forms.translation') }}: {{ l.native_name }} · {{ l.code }}</h2></div>{{ ui_icon('languages', 20) }}</div>
+<section class="admin-panel form-translation" data-form-translation="{{ l.code }}" data-translate-panel data-locale="{{ l.code }}"><div class="admin-panel__header"><div><small>{{ ui_text('admin.forms.translation_hint') }}</small><h2>{{ ui_text('admin.forms.translation') }}: {{ l.native_name }} · {{ l.code }}</h2></div>{% if ai_providers() %}<div class="admin-row-actions"><button type="button" class="admin-button" data-translate-from>{{ ui_icon('languages', 16) }}<span>{{ ui_text('admin.translations.translate') }}</span></button><small data-ai-status role="status"></small></div>{% else %}{{ ui_icon('languages', 20) }}{% endif %}</div>
 {% set tr = form.translations[l.code]|default({}) %}
 <div class="admin-form-grid">
-<label><span>{{ ui_text('admin.forms.submit_label') }}</span><input type="text" name="translations[{{ l.code }}][submit_label]" value="{{ tr.submit_label|default('') }}" maxlength="80"></label>
-<label><span>{{ ui_text('admin.forms.success_message') }}</span><input type="text" name="translations[{{ l.code }}][success_message]" value="{{ tr.success_message|default('') }}" maxlength="500"></label>
-<label class="admin-form-wide"><span>{{ ui_text('admin.forms.intro_label') }}</span><textarea name="translations[{{ l.code }}][intro]" rows="2" maxlength="2000">{{ tr.intro|default('') }}</textarea></label>
+<label><span>{{ ui_text('admin.forms.submit_label') }}</span><input type="text" name="translations[{{ l.code }}][submit_label]" data-translate-field data-translate-source="{{ '[name="submit_label"]'|e('html_attr') }}" value="{{ tr.submit_label|default('') }}" maxlength="80"></label>
+<label><span>{{ ui_text('admin.forms.success_message') }}</span><input type="text" name="translations[{{ l.code }}][success_message]" data-translate-field data-translate-source="{{ '[name="success_message"]'|e('html_attr') }}" value="{{ tr.success_message|default('') }}" maxlength="500"></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.forms.intro_label') }}</span><textarea name="translations[{{ l.code }}][intro]" data-translate-field data-translate-source="{{ '[name="intro"]'|e('html_attr') }}" rows="2" maxlength="2000">{{ tr.intro|default('') }}</textarea></label>
 </div>
 {% for f in form.fields %}{% set ft = tr.fields[f.key]|default({}) %}
 <fieldset class="form-field-row admin-info-block"><legend>{{ f.label }}</legend>
-<label><span>{{ ui_text('admin.forms.field_label') }}</span><input type="text" name="translations[{{ l.code }}][fields][{{ f.key }}][label]" value="{{ ft.label|default('') }}" maxlength="190"></label>
-<label><span>{{ ui_text('admin.forms.field_placeholder') }}</span><input type="text" name="translations[{{ l.code }}][fields][{{ f.key }}][placeholder]" value="{{ ft.placeholder|default('') }}" maxlength="120"></label>
+<label><span>{{ ui_text('admin.forms.field_label') }}</span><input type="text" name="translations[{{ l.code }}][fields][{{ f.key }}][label]" data-translate-field data-translate-source="{{ ('[name="fields[' ~ loop.index0 ~ '][label]"]')|e('html_attr') }}" value="{{ ft.label|default('') }}" maxlength="190"></label>
+<label><span>{{ ui_text('admin.forms.field_placeholder') }}</span><input type="text" name="translations[{{ l.code }}][fields][{{ f.key }}][placeholder]" data-translate-field data-translate-source="{{ ('[name="fields[' ~ loop.index0 ~ '][placeholder]"]')|e('html_attr') }}" value="{{ ft.placeholder|default('') }}" maxlength="120"></label>
 {% if f.type in ['select', 'radio'] %}<label class="admin-form-wide"><span>{{ ui_text('admin.forms.field_options') }}</span><textarea name="translations[{{ l.code }}][fields][{{ f.key }}][options]" rows="2" maxlength="4000">{{ ft.options|default([])|join("\n") }}</textarea><small>{{ ui_text('admin.forms.translation_options_hint') }}</small></label>{% endif %}
 </fieldset>
 {% endfor %}

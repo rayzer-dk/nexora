@@ -34,3 +34,18 @@ test('orders export to CSV and filter by a date range', async ({ page }, testInf
   await expect(page.locator('a[href*="/admin/orders/export.csv"]')).toHaveAttribute('href', /date_from=2999-01-01/);
   await expect(page.locator('input[name="order_ids[]"]')).toHaveCount(0);
 });
+
+test('an order note is added in place: the page is not reloaded and the note shows up', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating data runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/orders', { waitUntil: 'domcontentloaded' });
+  const href = await page.locator('a[href^="/admin/orders/"]:not([href*="export"]):not([href*="manual"]):not([href*="preview"])').first().getAttribute('href');
+  await page.goto(href!, { waitUntil: 'load' });
+  await page.evaluate(() => { (window as unknown as { __kept: boolean }).__kept = true; });
+  const note = `in-place note ${Date.now()}`;
+  const form = page.locator('form[action$="/note"]');
+  await form.locator('textarea[name="note"]').fill(note);
+  await form.locator('button[type="submit"]').click();
+  await expect(page.locator('main.admin-content')).toContainText(note, { timeout: 15_000 });
+  expect(await page.evaluate(() => (window as unknown as { __kept?: boolean }).__kept)).toBe(true);
+});

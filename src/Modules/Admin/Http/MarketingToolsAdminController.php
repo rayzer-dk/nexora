@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Modules\Marketing\Application\CampaignTemplateService;
 use Commerce\Modules\Marketing\Application\NewsletterCampaignService;
 use Commerce\Modules\Notification\Channel\Email\EmailNotificationSender;
 use Commerce\Modules\Notification\Domain\NotificationMessage;
 use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -25,6 +27,7 @@ final class MarketingToolsAdminController extends AbstractController
         private readonly AdminContextResolver $contexts,
         private readonly Connection $db,
         private readonly NewsletterCampaignService $campaigns,
+        private readonly CampaignTemplateService $templates,
         private readonly EmailNotificationSender $mail,
         private readonly LoggerInterface $logger,
     ) {
@@ -96,6 +99,123 @@ final class MarketingToolsAdminController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_commerce_campaigns');
+    }
+
+    #[Route('/admin/commerce/campaigns/templates/{id}.json', name: 'admin_commerce_campaign_template_show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function templateShow(Request $request, int $id): Response
+    {
+        $row = $this->templates->find($this->contexts->resolve($request)->storeId, $id);
+
+        return $row === null ? new JsonResponse(['ok' => false], Response::HTTP_NOT_FOUND) : new JsonResponse(['ok' => true] + $row);
+    }
+
+    #[Route('/admin/commerce/campaigns/templates', name: 'admin_commerce_campaign_template_save', methods: ['POST'])]
+    public function templateSave(Request $request): Response
+    {
+        $this->guardCampaign($request);
+        try {
+            $saved = $this->templates->save($this->contexts->resolve($request)->storeId, (string) $request->request->get('template_name', ''), (string) $request->request->get('subject', ''), (string) $request->request->get('body', ''), (string) $request->request->get('format', 'text'));
+
+            return new JsonResponse(['ok' => true, 'message' => CanonicalUiText::get('admin.campaigns.template_saved', ['name' => $saved['name']])] + $saved);
+        } catch (\InvalidArgumentException) {
+            return new JsonResponse(['ok' => false, 'message' => CanonicalUiText::get('admin.campaigns.template_invalid')], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    #[Route('/admin/commerce/campaigns/templates/{id}/delete', name: 'admin_commerce_campaign_template_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function templateDelete(Request $request, int $id): Response
+    {
+        $this->guardCampaign($request);
+        $done = $this->templates->delete($this->contexts->resolve($request)->storeId, $id);
+
+        return new JsonResponse(['ok' => $done, 'message' => CanonicalUiText::get($done ? 'admin.campaigns.template_deleted' : 'admin.campaigns.template_missing')], $done ? 200 : Response::HTTP_NOT_FOUND);
+    }
+
+    /** The e-mail as it will look, rendered from the text typed in the form (nothing is sent or stored). */
+    #[Route('/admin/commerce/campaigns/preview', name: 'admin_commerce_campaign_preview', methods: ['POST'])]
+    public function preview(Request $request): Response
+    {
+        $this->guardCampaign($request);
+        $format = (string) $request->request->get('format', 'text');
+        if (!in_array($format, NewsletterCampaignService::FORMATS, true)) {
+            $format = 'text';
+        }
+        $response = $this->render('@storefront/email/' . ($format === 'html_raw' ? 'campaign_raw' : 'campaign') . '.html.twig', [
+            'notification_subject' => trim((string) $request->request->get('subject', '')),
+            'notification_text' => $this->campaigns->cleanBody((string) $request->request->get('body', ''), $format),
+            'body_html' => $format !== 'text',
+            'unsubscribe_url' => '#',
+            'footer_text' => CanonicalUiText::get('php.modules.marketing.application.newslettercampaignqueueprocessor.vy_otrymaly_tsei_lyst_tomu_shcho_pidtverdyly_markety'),
+            'locale' => $request->getLocale(),
+        ]);
+        $response->headers->set('Cache-Control', 'no-store');
+
+        return $response;
+    }
+
+    #[Route('/admin/commerce/campaigns/{id}.json', name: 'admin_commerce_campaign_show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function campaignShow(Request $request, int $id): Response
+    {
+        $row = $this->db->fetchAssociative('SELECT subject,body_text,body_format FROM mc_marketing_campaign WHERE store_id=? AND id=?', [$this->contexts->resolve($request)->storeId, $id]);
+
+        return is_array($row) ? new JsonResponse(['ok' => true, 'subject' => (string) $row['subject'], 'body' => (string) $row['body_text'], 'body_format' => (string) $row['body_format']]) : new JsonResponse(['ok' => false], Response::HTTP_NOT_FOUND);
+    }
+
+    /** A finished or failed campaign leaves the history; one that is still being queued stays. */
+    #[Route('/admin/commerce/campaigns/{id}/delete', name: 'admin_commerce_campaign_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function campaignDelete(Request $request, int $id): Response
+    {
+        $this->guardCampaign($request);
+        $done = $this->db->executeStatement("DELETE FROM mc_marketing_campaign WHERE store_id=? AND id=? AND status NOT IN ('queued','enqueuing')", [$this->contexts->resolve($request)->storeId, $id]) > 0;
+
+        return new JsonResponse(['ok' => $done, 'message' => CanonicalUiText::get($done ? 'admin.campaigns.deleted' : 'admin.campaigns.delete_busy')], $done ? 200 : Response::HTTP_CONFLICT);
+    }
+
+    #[Route('/admin/commerce/subscribers', name: 'admin_commerce_subscribers', methods: ['GET'])]
+    public function subscriberList(Request $request): Response
+    {
+        $storeId = $this->contexts->resolve($request)->storeId;
+        $search = trim((string) $request->query->get('search', ''));
+        $status = (string) $request->query->get('status', '');
+        $status = in_array($status, ['active', 'pending', 'unsubscribed'], true) ? $status : '';
+        $page = max(1, (int) $request->query->get('page', 1));
+        $where = ['store_id=?'];
+        $params = [$storeId];
+        if ($search !== '') {
+            $where[] = 'email_normalized LIKE ?';
+            $params[] = '%' . mb_strtolower($search) . '%';
+        }
+        if ($status !== '') {
+            $where[] = 'status=?';
+            $params[] = $status;
+        }
+        $sql = implode(' AND ', $where);
+        $count = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_marketing_subscriber WHERE ' . $sql, $params);
+        $pages = max(1, (int) ceil($count / 50));
+        $page = min($page, $pages);
+        $rows = $this->db->fetchAllAssociative('SELECT id,email,locale,status,consent_source,confirmed_at,unsubscribed_at,created_at FROM mc_marketing_subscriber WHERE ' . $sql . ' ORDER BY id DESC LIMIT 50 OFFSET ' . (($page - 1) * 50), $params);
+        $totals = $this->db->fetchAllKeyValue('SELECT status, COUNT(*) FROM mc_marketing_subscriber WHERE store_id=? GROUP BY status', [$storeId]);
+
+        return $this->render('@storefront/admin/commerce/subscribers.html.twig', [
+            'rows' => $rows, 'search' => $search, 'status' => $status, 'page' => $page, 'pages' => $pages, 'count' => $count,
+            'totals' => array_map('intval', $totals),
+        ]);
+    }
+
+    #[Route('/admin/commerce/subscribers/{id}/delete', name: 'admin_commerce_subscriber_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function subscriberDelete(Request $request, int $id): Response
+    {
+        $this->guardCampaign($request);
+        $done = $this->db->delete('mc_marketing_subscriber', ['store_id' => $this->contexts->resolve($request)->storeId, 'id' => $id]) > 0;
+
+        return new JsonResponse(['ok' => $done, 'message' => CanonicalUiText::get($done ? 'admin.subscribers.deleted' : 'admin.campaigns.template_missing')], $done ? 200 : Response::HTTP_NOT_FOUND);
+    }
+
+    private function guardCampaign(Request $request): void
+    {
+        if (!$this->isCsrfTokenValid('campaign_send', (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException(CanonicalUiText::get('common.security.invalid_csrf'));
+        }
     }
 
     /** @param list<string> $header @param callable():\Generator<int,list<mixed>> $rows */

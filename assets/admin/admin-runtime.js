@@ -106,17 +106,16 @@ document.querySelectorAll('[data-translate-from]').forEach((button) => {
   button.addEventListener('click', async () => {
     const page = button.closest('[data-translate-page]');
     const panel = button.closest('[data-translate-panel]');
-    const source = page?.querySelector('[data-translate-panel][data-source]');
     const provider = page?.querySelector('[data-ai-provider]');
     const status = panel?.querySelector('[data-ai-status]');
-    if (!page || !panel || !source || !provider || !status) return;
+    if (!page || !panel || !provider || !status) return;
     const target = panel.dataset.locale || '';
     button.disabled = true;
     let done = 0;
     try {
       for (const field of panel.querySelectorAll('[data-translate-field]')) {
         const name = field.getAttribute('name');
-        const text = source.querySelector(`[data-translate-field][name="${name}"]`)?.value?.trim() || '';
+        const text = translateSource(page, field);
         if (!text) continue;
         status.textContent = t('admin.ai.generating') + ' ' + name;
         const body = new URLSearchParams({ _token: page.dataset.aiToken || '', task: 'translate', provider: provider.value });
@@ -174,8 +173,11 @@ async function translateText(page, text, target) {
   if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
   return data.fields?.text || '';
 }
-function translateSource(page, name) {
-  return page.querySelector('[data-translate-panel][data-source]')?.querySelector(`[data-translate-field][name="${name}"]`)?.value?.trim() || '';
+// The text a field is translated from: the field named by data-translate-source, else the same-named field of the default-language panel.
+function translateSource(page, field) {
+  const selector = field.dataset.translateSource;
+  if (selector) return document.querySelector(selector)?.value?.trim() || '';
+  return page.querySelector('[data-translate-panel][data-source]')?.querySelector(`[data-translate-field][name="${field.getAttribute('name')}"]`)?.value?.trim() || '';
 }
 document.querySelectorAll('[data-translate-one]').forEach((button) => {
   button.addEventListener('click', async () => {
@@ -184,7 +186,7 @@ document.querySelectorAll('[data-translate-one]').forEach((button) => {
     const field = button.closest('label')?.querySelector('[data-translate-field]');
     const status = panel?.querySelector('[data-ai-status]');
     if (!page || !panel || !field || !status) return;
-    const text = translateSource(page, field.getAttribute('name') || '');
+    const text = translateSource(page, field);
     if (!text) return;
     button.disabled = true;
     status.textContent = t('admin.ai.generating');
@@ -210,7 +212,7 @@ document.querySelectorAll('[data-translate-all]').forEach((button) => {
     try {
       for (const panel of page.querySelectorAll('[data-translate-panel]:not([data-source])')) {
         for (const field of panel.querySelectorAll('[data-translate-field]')) {
-          const text = translateSource(page, field.getAttribute('name') || '');
+          const text = translateSource(page, field);
           if (!text) continue;
           status.textContent = `${t('admin.ai.generating')} ${panel.dataset.locale} · ${field.getAttribute('name')}`;
           field.value = await translateText(page, text, panel.dataset.locale || '');
@@ -245,4 +247,89 @@ document.querySelectorAll('[data-translate-all]').forEach((button) => {
     }
   });
   if (new URLSearchParams(window.location.search).get('auto') === '1') button.click();
+});
+
+// Admin helpers that talk to JSON endpoints and leave the page where it is.
+const adminNotify = (message, type = 'success') => {
+  if (typeof window.mcAdminToast === 'function') window.mcAdminToast(message, type);
+};
+async function adminJson(url, body) {
+  const response = await fetch(url, { method: body ? 'POST' : 'GET', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: body || undefined });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data || data.ok === false) throw new Error(data?.message || t('admin.ai.draft_failed'));
+  return data;
+}
+
+// Campaigns: saved templates (load / save / delete), a preview of the e-mail, and "use again" / "delete" for the history. All in place.
+const campaignTools = document.querySelector('[data-campaign-tools]');
+const campaignForm = campaignTools?.closest('form') || null;
+if (campaignTools && campaignForm) {
+  const token = campaignForm.querySelector('input[name="_csrf_token"]')?.value || '';
+  const status = campaignTools.querySelector('[data-campaign-status]');
+  const select = campaignTools.querySelector('[data-template-select]');
+  const frame = campaignForm.querySelector('[data-campaign-frame]');
+  const base = campaignTools.dataset.urlTemplates || '';
+  const post = (extra) => { const body = new FormData(); body.append('_csrf_token', token); for (const [k, v] of Object.entries(extra)) body.append(k, v); return body; };
+  const say = (message) => { if (status) status.textContent = message; };
+  const run = async (action) => { try { await action(); } catch (error) { adminNotify(error instanceof Error ? error.message : t('admin.ai.draft_failed'), 'error'); } };
+  campaignTools.querySelector('[data-template-load]')?.addEventListener('click', () => run(async () => {
+    if (!select?.value) return;
+    const data = await adminJson(`${base}/${select.value}.json`);
+    window.mcFillCampaign(data);
+    say('');
+  }));
+  campaignTools.querySelector('[data-template-save]')?.addEventListener('click', () => run(async () => {
+    const name = campaignTools.querySelector('[data-template-name]');
+    const data = await adminJson(base, post({ template_name: name?.value || '', subject: campaignForm.elements.subject.value, body: campaignForm.elements.body.value, format: campaignForm.elements.format.value }));
+    let option = Array.from(select?.options || []).find((o) => o.value === String(data.id));
+    if (!option && select) { option = document.createElement('option'); option.value = String(data.id); select.append(option); }
+    if (option) { option.textContent = data.name; if (select) select.value = option.value; }
+    adminNotify(data.message);
+  }));
+  const del = campaignTools.querySelector('[data-template-delete]');
+  del?.addEventListener('click', () => run(async () => {
+    if (!select?.value || !window.confirm(del.dataset.confirmText || '')) return;
+    const data = await adminJson(`${base}/${select.value}/delete`, post({}));
+    select.querySelector(`option[value="${select.value}"]`)?.remove();
+    select.value = '';
+    adminNotify(data.message);
+  }));
+  campaignTools.querySelector('[data-campaign-preview]')?.addEventListener('click', () => run(async () => {
+    const response = await fetch(campaignTools.dataset.urlPreview || '', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: post({ subject: campaignForm.elements.subject.value, body: campaignForm.elements.body.value, format: campaignForm.elements.format.value }) });
+    if (!response.ok) throw new Error(t('admin.ai.draft_failed'));
+    if (frame) { frame.srcdoc = await response.text(); frame.hidden = false; frame.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+  }));
+  window.mcFillCampaign = (data) => {
+    campaignForm.elements.subject.value = data.subject || '';
+    campaignForm.elements.body.value = data.body || '';
+    campaignForm.elements.format.value = data.body_format || 'text';
+    campaignForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  document.querySelectorAll('[data-campaign-reuse]').forEach((button) => button.addEventListener('click', () => run(async () => {
+    window.mcFillCampaign(await adminJson(button.dataset.show || ''));
+  })));
+  document.querySelectorAll('[data-campaign-delete]').forEach((button) => button.addEventListener('click', () => run(async () => {
+    if (!window.confirm(button.dataset.confirmText || '')) return;
+    const data = await adminJson(button.dataset.delete || '', post({}));
+    button.closest('tr')?.remove();
+    adminNotify(data.message);
+  })));
+}
+
+// Any row action that deletes through JSON: data-ajax-delete="<url>" data-token="<csrf>" [data-confirm-text].
+document.querySelectorAll('[data-ajax-delete]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    if (!window.confirm(button.dataset.confirmText || '')) return;
+    const body = new FormData();
+    body.append('_csrf_token', button.dataset.token || '');
+    button.disabled = true;
+    try {
+      const data = await adminJson(button.dataset.ajaxDelete || '', body);
+      button.closest('tr')?.remove();
+      adminNotify(data.message);
+    } catch (error) {
+      adminNotify(error instanceof Error ? error.message : t('admin.ai.draft_failed'), 'error');
+      button.disabled = false;
+    }
+  });
 });

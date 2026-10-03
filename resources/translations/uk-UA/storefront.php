@@ -1106,4 +1106,5 @@ return [
     'support_chat.widget_you' => 'Ви',
     'support_chat.widget_staff' => 'Магазин',
     'compare_added' => 'Додано до порівняння',
+    'view_order' => 'Переглянути замовлення',
 ];

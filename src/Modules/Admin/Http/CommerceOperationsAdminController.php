@@ -37,6 +37,7 @@ final class CommerceOperationsAdminController extends AbstractController
         private readonly NotificationOutbox $notifications,
         private readonly NewsletterCampaignService $campaigns,
         private readonly MarketingSegmentService $segments,
+        private readonly \Commerce\Modules\Marketing\Application\CampaignTemplateService $campaignTemplates,
     ) {}
 
     #[Route('/admin/commerce/promotions', name:'admin_commerce_promotions', methods:['GET','POST'])]
@@ -174,9 +175,9 @@ final class CommerceOperationsAdminController extends AbstractController
             catch(\Throwable $e){$this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kampaniiu_ne_vdalosia_stvoryty'));}
             return $this->redirectToRoute('admin_commerce_campaigns');
         }
-        $rows=$this->db->fetchAllAssociative('SELECT id,subject,segment_code,status,recipient_count,created_at,enqueued_at FROM mc_marketing_campaign WHERE store_id=? ORDER BY id DESC LIMIT 500',[$context->storeId]);
+        $rows=$this->db->fetchAllAssociative('SELECT id,subject,segment_code,status,recipient_count,created_at,enqueued_at FROM mc_marketing_campaign WHERE store_id=? ORDER BY id DESC LIMIT 100',[$context->storeId]);
         $subscribers=(int)$this->db->fetchOne("SELECT COUNT(*) FROM mc_marketing_subscriber WHERE store_id=? AND status='active'",[$context->storeId]);
-        return $this->render('@storefront/admin/commerce/campaigns.html.twig',['rows'=>$rows,'subscribers'=>$subscribers,'segments'=>$this->segments->labels()]);
+        return $this->render('@storefront/admin/commerce/campaigns.html.twig',['rows'=>$rows,'subscribers'=>$subscribers,'segments'=>$this->segments->labels(),'templates'=>$this->campaignTemplates->list($context->storeId)]);
     }
 
     #[Route('/admin/commerce/notifications', name:'admin_commerce_notifications', methods:['GET','POST'])]

@@ -156,6 +156,8 @@
   .media-search,
   .media-folder-form { flex-direction: column; }
   .media-search select { max-width: none; }
+  .media-folder-form select,
+  .media-folder-form input { width: 100%; min-width: 0; }
   .media-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
 
@@ -211,3 +213,10 @@
 .media-folder-form { flex-wrap: wrap; }
 .media-folder-form input { flex: 1 1 100%; }
 .media-folder-form select { flex: 1 1 0; min-width: 0; }
+
+/* phones: the folder form is a plain column; wrapping a column made the select a second column beside the name field */
+@media (max-width: 768px) {
+  .media-folder-form { flex-direction: column; flex-wrap: nowrap; }
+  .media-folder-form input,
+  .media-folder-form select { flex: 0 0 auto; width: 100%; }
+}

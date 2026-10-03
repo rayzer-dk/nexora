@@ -90,3 +90,47 @@ test('translate every language with one click, one field with its own button, th
     await setLocale(page, 'en-US', false);
   }
 });
+
+test('forms and navigation labels translate with one click and are saved only with the form', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating settings run once.');
+  await loginAdmin(page);
+  await page.route('**/admin/api/ai/task', async (route) => {
+    const body = new URLSearchParams(route.request().postData() || '');
+    await route.fulfill({ json: { ok: true, fields: { text: `TR-${body.get('fields[target]')}-${(body.get('fields[text]') || '').slice(0, 10)}` } } });
+  });
+  try {
+    await setLocale(page, 'en-US', true);
+    await setAi(page, true);
+
+    // navigation: the labels of the other languages come from the main one
+    await page.goto('/admin/appearance/navigation', { waitUntil: 'load' });
+    await page.locator('form[action$="/navigation/save"] input[name="label[uk-UA]"]').fill('Головна');
+    await page.evaluate(() => { (window as unknown as { __kept: boolean }).__kept = true; });
+    await page.locator('[data-translate-all]').click();
+    await expect(page.locator('form[action$="/navigation/save"] input[name="label[en-US]"]')).toHaveValue(/^TR-en-US-/, { timeout: 15_000 });
+    expect(await page.evaluate(() => (window as unknown as { __kept?: boolean }).__kept)).toBe(true);
+
+    // forms: one button per language fills every text of that language; nothing is stored before the form is saved
+    await page.goto('/admin/content/forms/new', { waitUntil: 'load' });
+    const editor = page.locator('form[data-form-editor]');
+    await editor.locator('input[name="name"]').fill(`E2E translate form ${Date.now()}`);
+    await editor.locator('input[name="submit_label"]').fill('Send request');
+    await editor.locator('input[name="fields[0][label]"]').fill('Your name');
+    await Promise.all([page.waitForURL(/\/admin\/content\/forms\/\d+/), editor.locator('button[type="submit"]').first().click()]);
+    const panel = page.locator('[data-form-translation="en-US"]');
+    await panel.locator('[data-translate-from]').click();
+    const submitLabel = panel.locator('input[name$="[submit_label]"]');
+    await expect(submitLabel).toHaveValue(/^TR-en-US-/, { timeout: 15_000 });
+    await expect(panel.locator('input[name$="[label]"]').first()).toHaveValue(/^TR-en-US-/);
+    await page.reload({ waitUntil: 'load' });
+    await expect(page.locator('[data-form-translation="en-US"] input[name$="[submit_label]"]')).toHaveValue(''); // not saved yet
+    await panel.locator('[data-translate-from]').click();
+    await expect(page.locator('[data-form-translation="en-US"] input[name$="[submit_label]"]')).toHaveValue(/^TR-en-US-/, { timeout: 15_000 });
+    await Promise.all([page.waitForResponse((r) => r.request().method() === 'POST' && r.url().includes('/admin/content/forms/save')), page.locator('form[data-form-editor] button[type="submit"]').first().click()]);
+    await page.reload({ waitUntil: 'load' });
+    await expect(page.locator('[data-form-translation="en-US"] input[name$="[submit_label]"]')).toHaveValue(/^TR-en-US-/); // saved with the form
+  } finally {
+    await setAi(page, false);
+    await setLocale(page, 'en-US', false);
+  }
+});

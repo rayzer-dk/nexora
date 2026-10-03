@@ -838,4 +838,5 @@ return [
     'support_chat.widget_you' => 'Вы',
     'support_chat.widget_staff' => 'Магазин',
     'compare_added' => 'Добавлено к сравнению',
+    'view_order' => 'Посмотреть заказ',
 ];

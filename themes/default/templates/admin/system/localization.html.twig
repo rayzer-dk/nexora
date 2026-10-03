@@ -73,9 +73,9 @@
     <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.localization.currencies.save') }}</button></div>
 </form>
 
-<section class="admin-panel">
+<section class="admin-panel" data-rates-panel>
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.localization.rates.eyebrow') }}</small><h2>{{ ui_text('admin.localization.rates.title') }}</h2></div>
-        <form method="post" action="{{ path('admin_system_localization_refresh') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_refresh') }}"><button type="submit" class="admin-button">{{ ui_text('admin.localization.rates.refresh') }}</button></form>
+        <form method="post" action="{{ path('admin_system_localization_refresh') }}" data-admin-ajax data-admin-ajax-replace="[data-rates-panel]"><input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_refresh') }}"><button type="submit" class="admin-button">{{ ui_text('admin.localization.rates.refresh') }}</button></form>
     </div>
     <p class="admin-card-note">{{ ui_text('admin.localization.rates.help') }}</p>
     <div class="admin-table-wrap"><table class="admin-table">
@@ -88,7 +88,7 @@
                 <td>{{ ui_text('admin.localization.rate_source.' ~ currency.rate_source) }}{% if currency.rate and currency.rate.provider != 'manual' and currency.rate_source == 'auto' %} <small>({{ currency.rate.provider|upper }})</small>{% endif %}</td>
                 <td>{{ currency.rate ? currency.rate.observed_at : '—' }}</td>
                 <td>{% if currency.rate_source == 'manual' %}
-                    <form method="post" action="{{ path('admin_system_localization_rate') }}" class="admin-rate-form">
+                    <form method="post" action="{{ path('admin_system_localization_rate') }}" class="admin-rate-form" data-admin-ajax data-admin-ajax-replace="[data-rates-panel]">
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_rate') }}"><input type="hidden" name="base" value="{{ data.default_currency }}"><input type="hidden" name="quote" value="{{ currency.code }}">
                         <label><span class="visually-hidden">{{ ui_text('admin.localization.rates.value_label', {quote: currency.code, base: data.default_currency}) }}</span><input type="text" inputmode="decimal" name="value" value="{{ currency.rate ? currency.rate.per_quote }}" required class="admin-input-narrow"> {{ data.default_currency }}</label>
                         <button type="submit">{{ ui_text('admin.localization.rates.save') }}</button>

@@ -837,4 +837,5 @@ return [
     'support_chat.widget_you' => 'Ty',
     'support_chat.widget_staff' => 'Sklep',
     'compare_added' => 'Dodano do porównania',
+    'view_order' => 'Zobacz zamówienie',
 ];

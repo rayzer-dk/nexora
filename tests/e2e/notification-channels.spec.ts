@@ -137,6 +137,7 @@ test('e-mail colours are chosen in the admin and reach the rendered e-mails; res
     const html = await preview();
     expect(html).toContain('background:#7c2d12');
     expect(html).toContain('color:#15803d');
+    expect(html).toContain('background:#15803d;color:#ffffff'); // the "view order" button follows the accent colour
     expect(html).toContain('E2E footer line');
   } finally {
     await page.goto('/admin/commerce/notification-channels', { waitUntil: 'domcontentloaded' });

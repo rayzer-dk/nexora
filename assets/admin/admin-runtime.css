@@ -619,6 +619,8 @@ dl.admin-definition-list:not(:has(> div)) dd { margin: 0; }
   border-radius: var(--mc-radius-md);
   background: var(--mc-color-surface-raised);
   -webkit-overflow-scrolling: touch;
+  /* a wide table scrolls inside its frame and never widens the page */
+  contain: paint;
 }
 .admin-table { width: 100%; min-width: 560px; border-collapse: separate; border-spacing: 0; font-size: var(--mc-font-size-sm); }
 .admin-table th,
@@ -766,7 +768,8 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
   z-index: var(--mc-z-dropdown);
   display: grid;
   gap: var(--mc-space-1);
-  min-width: 220px;
+  min-width: min(220px, calc(100vw - var(--mc-space-8)));
+  max-width: calc(100vw - var(--mc-space-8));
   padding: var(--mc-space-2);
   border: 1px solid var(--mc-color-border);
   border-radius: var(--mc-radius-md);
@@ -951,6 +954,9 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
   background: var(--admin-info-soft);
 }
 .admin-ai-helper strong, .admin-ai-helper small { display: block; }
+.admin-pager { display: flex; align-items: center; justify-content: center; gap: var(--mc-space-3); margin-top: var(--mc-space-3); }
+.campaign-tools { display: flex; flex-wrap: wrap; align-items: end; gap: var(--mc-space-2); padding: var(--mc-space-3); border: 1px dashed var(--mc-color-border); border-radius: var(--mc-radius-md); }
+.campaign-tools label { display: grid; gap: var(--mc-space-1); }
 .admin-email-frame { width: 100%; height: 560px; margin-top: var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-background); }
 .admin-ai-helper.is-compact { grid-template-columns: auto minmax(0, 1fr); gap: var(--mc-space-2); padding: var(--mc-space-1) 0; border: 0; background: transparent; }
 .admin-ai-helper.is-compact [data-ai-status] { grid-column: auto; }

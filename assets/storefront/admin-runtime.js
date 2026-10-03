@@ -58,6 +58,8 @@ function toast(message, type = 'info', timeout = 5200) {
   }
 }
 
+window.mcAdminToast = toast;
+
 function initFlashToasts() {
   qa('[data-toast-source], .admin-notice').forEach((source) => {
     const message = source.textContent.trim();
@@ -97,6 +99,19 @@ function initAdminAjaxForms() {
           toast(n.textContent.trim(), type);
         });
         qa('input[type="password"]', form).forEach((input) => { if (input instanceof HTMLInputElement) input.value = ''; });
+        const replace = form.dataset.adminAjaxReplace;
+        if (replace) {
+          replace.split(',').forEach((selector) => {
+            const current = q(selector.trim());
+            const next = doc.querySelector(selector.trim());
+            if (!current || !next) return;
+            // The notices were shown as toasts already; the dialogs and the page's own scripts keep working on the new content.
+            qa('.admin-notice, [data-toast-source]', next).forEach((node) => node.remove());
+            current.replaceChildren(...Array.from(next.childNodes).map((node) => document.importNode(node, true)));
+          });
+          initDirtyGuard();
+          initAdminAjaxForms();
+        }
         const refresh = form.dataset.adminAjaxRefresh;
         if (refresh) qa(refresh).forEach((frame) => { try { frame.contentWindow?.location.reload(); } catch (_) { /* a frame from another origin stays as it is */ } });
       } catch (_) {
@@ -193,6 +208,8 @@ function initConfirmations() {
 
 function initDirtyGuard() {
   qa('form[data-dirty-guard]').forEach((form) => {
+    if (form.dataset.dirtyBound === '1') return;
+    form.dataset.dirtyBound = '1';
     let dirty = false;
     const mark = () => { dirty = true; form.classList.add('is-dirty'); };
     form.addEventListener('input', mark, { passive: true });

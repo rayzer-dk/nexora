@@ -2,6 +2,23 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.34.0 — 2026-10-03
+
+Campaign templates, subscribers, AJAX admin — schema 78.
+
+- Marketing: reusable campaign templates (save, load, delete) separate from the sent-campaign history; history entries can be reused or deleted (not while queued). Campaign preview in the shop or own HTML layout, subscribers list with filters and deletion.
+- Orders: date range filter and CSV export; every action on the order page works without reloading.
+- Translate-all for forms, navigation labels and blog posts; translation pages save in place.
+- AJAX forms on the storefront (compare, newsletter, reviews, questions) and in the admin (currency rates, notification channels).
+- Order email has a "View order" button. Admin pages no longer overflow on phones.
+
+## 3.33.0 — 2026-10-02
+
+Telegram chat, mail and bots, email design — schema 77.
+
+- Website chat with a Telegram bot (one topic per customer) and a direct bot; mail (SMTP) and order-alert bot settings in the admin with a test message.
+- AI helpers in forms, HTML and raw-HTML campaigns, email colours, customer and subscriber export.
+
 ## 3.32.0 — 2026-10-01
 
 Upgrade in place, installer feedback, closable notices — schema 73.

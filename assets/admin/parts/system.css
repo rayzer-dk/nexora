@@ -2,7 +2,7 @@
 
 /* Cron / automation page */
 .admin-app .admin-cron-status { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
-.admin-cron-status__main { display: flex; align-items: flex-start; gap: var(--mc-space-3); min-width: 0; }
+.admin-cron-status__main { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--mc-space-3); min-width: 0; }
 .admin-cron-status__main > div { display: grid; gap: var(--mc-space-1); min-width: 0; }
 .admin-cron-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: var(--admin-gap); align-items: start; }
 .admin-cron-block h3 { margin-top: var(--mc-space-2); font-size: var(--mc-font-size-base); }

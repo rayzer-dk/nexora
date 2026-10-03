@@ -27,6 +27,7 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
         private StorefrontUiTranslator $translator,
         private bool $smsEnabled,
         private \Commerce\Modules\Order\Application\OrderMethodPresenter $methodLabels,
+        #[\Symfony\Component\DependencyInjection\Attribute\Autowire('%commerce.app_public_url%')] private string $publicUrl = '',
     ) {
     }
 
@@ -43,7 +44,7 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
     public function handle(StoredDomainEvent $event): void
     {
         $row = $this->connection->fetchAssociative(
-            'SELECT id,order_number,subtotal_minor,discount_minor,total_minor,currency,customer_email,customer_phone,customer_name,locale FROM mc_sales_order WHERE public_id=? LIMIT 1',
+            'SELECT id,public_id,order_number,subtotal_minor,discount_minor,total_minor,currency,customer_email,customer_phone,customer_name,locale FROM mc_sales_order WHERE public_id=? LIMIT 1',
             [Uuid::fromString($event->aggregateId)->toBinary()],
         );
         if (!is_array($row)) {
@@ -72,6 +73,8 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
                 'items' => $items,
                 'fulfillment_label' => $fulfillmentLabel,
                 'payment_label' => $paymentLabel,
+                'action_url' => $this->publicUrl !== '' ? rtrim($this->publicUrl, '/') . '/account/orders/' . \Symfony\Component\Uid\Uuid::fromBinary((string) $row['public_id'])->toRfc4122() : '',
+                'action_label' => $this->translator->translate('view_order', $locale),
             ],
             'order_created',
         );
