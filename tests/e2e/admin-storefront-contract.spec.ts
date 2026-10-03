@@ -506,11 +506,11 @@ test('storefront order is fully operable from admin lifecycle actions', async ({
   await paidForm.locator('button[type="submit"]').click();
   expect((await paidResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('.admin-stats')).toContainText('paid');
+  await expect(page.locator('.admin-stats')).toContainText('Оплачено');
 
   await expect(page.locator(`form[action="/admin/orders/${orderId}/fulfillment"]`)).toBeVisible();
   // The fulfillment state machine forbids skipping "shipped"; a shipment needs a tracking number, later steps keep it.
-  for (const step of ['shipped', 'delivered']) {
+  for (const [step, label] of [['shipped', 'Відправлено'], ['delivered', 'Доставлено']]) {
     const form = page.locator(`form[action="/admin/orders/${orderId}/fulfillment"]`);
     await form.locator('select[name="status"]').selectOption(step);
     if (step === 'shipped') await form.locator('input[name="tracking_number"]').fill('E2E-TTN-0001');
@@ -521,11 +521,11 @@ test('storefront order is fully operable from admin lifecycle actions', async ({
     expect((await responsePromise).status()).toBeLessThan(400);
     await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
-    await expect(page.locator('.admin-stats')).toContainText(step);
+    await expect(page.locator('.admin-stats')).toContainText(label);
   }
 
   // A paid order that reaches "delivered" completes automatically, so the manual completion form disappears.
-  await expect(page.locator('.admin-stats')).toContainText('completed');
+  await expect(page.locator('.admin-stats')).toContainText('Виконано');
   await expect(page.locator(`form[action="/admin/orders/${orderId}/complete"]`)).toHaveCount(0);
 });
 
