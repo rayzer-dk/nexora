@@ -1,5 +1,5 @@
 import { createServer, type Server } from 'node:net';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { expectNoServerError } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
@@ -9,6 +9,14 @@ async function loginAdmin(page: Page): Promise<void> {
   await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
   await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
   await Promise.all([page.waitForURL(/\/admin(?:\/|$)/), page.locator('button[type="submit"]').click()]);
+}
+
+/** Admin forms of these pages are sent in place: wait for the request to finish (the page itself does not navigate). */
+async function inPlace(page: Page, button: Locator): Promise<void> {
+  await Promise.all([
+    page.waitForResponse((r) => r.request().resourceType() === 'fetch' && r.request().method() === 'GET' && r.url().includes('/admin/')),
+    button.click(),
+  ]);
 }
 
 /** A tiny SMTP server that records every message it is given. */
@@ -62,17 +70,17 @@ test('the admin sets the SMTP server and a test e-mail really arrives; a wrong s
     await form().locator('input[name="smtp_port"]').fill(String(port));
     await form().locator('select[name="smtp_encryption"]').selectOption('none');
     await form().locator('input[name="from_address"]').fill('shop@e2e.test');
-    await Promise.all([page.waitForURL(/notification-channels/), form().locator('button[type="submit"]').click()]);
+    await inPlace(page, form().locator('button[type="submit"]'));
   };
   const sendTest = async () => {
     const mailForm = page.locator('form[action$="/notification-channels/test"]:has(input[name="channel"][value="email"])');
     await mailForm.locator('input[name="to"]').fill('owner@e2e.test');
-    await Promise.all([page.waitForURL(/notification-channels/), mailForm.locator('button').click()]);
+    await inPlace(page, mailForm.locator('button'));
   };
   try {
     await save('127.0.0.1', sink.port, true);
     await sendTest();
-    await expect(page.locator('.admin-notice.is-success').first()).toBeAttached();
+    await expect(page.locator('.admin-toast.is-success').first()).toBeVisible();
     await expect.poll(() => sink.mails.length, { timeout: 10_000 }).toBe(1);
     expect(sink.mails[0]).toContain('To: owner@e2e.test');
     expect(sink.mails[0]).toMatch(/From: .*shop@e2e\.test/);
@@ -81,7 +89,7 @@ test('the admin sets the SMTP server and a test e-mail really arrives; a wrong s
 
     await save('127.0.0.1', 1, true);
     await sendTest();
-    await expect(page.locator('.admin-notice.is-error').first()).toBeAttached();
+    await expect(page.locator('.admin-toast.is-error').first()).toBeVisible();
     expect(sink.mails.length).toBe(1);
   } finally {
     await save('', 587, false);
@@ -102,16 +110,16 @@ test('the order-alert Telegram bot is set in the admin and its test message reac
     await form.locator('input[name="tg_enabled"]').check();
     await form.locator('input[name="tg_token"]').fill('123456789:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
     await form.locator('input[name="tg_chat_id"]').fill('-1001234567891');
-    await Promise.all([page.waitForURL(/notification-channels/), form.locator('button[type="submit"]').click()]);
-    await Promise.all([page.waitForURL(/notification-channels/), page.locator('form:has(input[name="channel"][value="telegram"]) button').click()]);
-    await expect(page.locator('.admin-notice.is-success').first()).toBeAttached();
+    await inPlace(page, form.locator('button[type="submit"]'));
+    await inPlace(page, page.locator('form:has(input[name="channel"][value="telegram"]) button'));
+    await expect(page.locator('.admin-toast.is-success').first()).toBeVisible();
     const calls: Array<{ method: string; payload: Record<string, unknown> }> = await (await request.get(`${mock}/__log`)).json();
     const sent = calls.find((c) => c.method === 'sendMessage');
     expect(sent?.payload.chat_id).toBe('-1001234567891');
   } finally {
     await page.goto('/admin/commerce/notification-channels', { waitUntil: 'domcontentloaded' });
     await form.locator('input[name="tg_enabled"]').uncheck();
-    await Promise.all([page.waitForURL(/notification-channels/), form.locator('button[type="submit"]').click()]);
+    await inPlace(page, form.locator('button[type="submit"]'));
   }
 });
 
@@ -125,14 +133,14 @@ test('e-mail colours are chosen in the admin and reach the rendered e-mails; res
     await designForm().locator('input[name="header_bg"]').fill('#7c2d12');
     await designForm().locator('input[name="accent"]').fill('#15803d');
     await designForm().locator('input[name="footer"]').fill('E2E footer line');
-    await Promise.all([page.waitForURL(/notification-channels/), designForm().locator('button[type="submit"]:not([name="reset"])').click()]);
+    await inPlace(page, designForm().locator('button[type="submit"]:not([name="reset"])'));
     const html = await preview();
     expect(html).toContain('background:#7c2d12');
     expect(html).toContain('color:#15803d');
     expect(html).toContain('E2E footer line');
   } finally {
     await page.goto('/admin/commerce/notification-channels', { waitUntil: 'domcontentloaded' });
-    await Promise.all([page.waitForURL(/notification-channels/), designForm().locator('button[name="reset"]').click()]);
+    await inPlace(page, designForm().locator('button[name="reset"]'));
   }
   const html = await preview();
   expect(html).toContain('background:#0b63f6');
@@ -150,7 +158,7 @@ test("a campaign can carry the shop's own HTML (cleaned, sent through the real t
     await channels.locator('input[name="smtp_host"]').fill(enabled ? '127.0.0.1' : '');
     await channels.locator('input[name="smtp_port"]').fill(String(enabled ? sink.port : 587));
     await channels.locator('select[name="smtp_encryption"]').selectOption('none');
-    await Promise.all([page.waitForURL(/notification-channels/), channels.locator('button[type="submit"]').click()]);
+    await inPlace(page, channels.locator('button[type="submit"]'));
   };
   const sendTest = async (format: string, body: string) => {
     await page.goto('/admin/commerce/campaigns', { waitUntil: 'domcontentloaded' });
@@ -159,7 +167,7 @@ test("a campaign can carry the shop's own HTML (cleaned, sent through the real t
     await form.locator('input[name="subject"]').fill('E2E campaign');
     await form.locator('textarea[name="body"]').fill(body);
     await form.locator('input[name="test_to"]').fill('reader@e2e.test');
-    await Promise.all([page.waitForURL(/campaigns/), form.locator('button[formaction$="/campaigns/test"]').click()]);
+    await inPlace(page, form.locator('button[formaction$="/campaigns/test"]'));
   };
   const own = '<table role="presentation" width="100%" style="background:#112233"><tr><td style="padding:20px;color:#ffffff;font-size:18px">Own layout <a href="https://example.com/x">link</a><script>alert(1)</script><img src="http://insecure.test/a.png" onerror="x()"></td></tr></table>';
   try {
@@ -189,5 +197,18 @@ test("a campaign can carry the shop's own HTML (cleaned, sent through the real t
     expect(response.status()).toBe(200);
     expect(response.headers()['content-type']).toContain('text/csv');
     expect((await response.text()).replace(/^\uFEFF/, '')).toMatch(new RegExp(`^${header}`));
+  }
+});
+
+test('every e-mail template fits a phone and a desktop screen without sideways scrolling', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Read-only, runs once.');
+  await loginAdmin(page);
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const template of ['order_created', 'order_status', 'generic', 'campaign']) {
+      await page.goto(`/admin/commerce/email-preview/render/${template}`, { waitUntil: 'load' });
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `${template} at ${width}px`).toBeLessThanOrEqual(0);
+    }
   }
 });

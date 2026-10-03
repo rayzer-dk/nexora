@@ -15,7 +15,7 @@
         </div>
         <div class="pp-title__tools">
             {% if customer_caps.features.customer_accounts|default(false) %}
-                {% if app.user %}<form class="product-wishlist" method="post" action="{{ path('customer_wishlist_add',{product:product.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('wishlist_add_' ~ product.id) }}"><button type="submit" class="button button--secondary button--icon" title="{{ ui_text('add_wishlist') }}" aria-label="{{ ui_text('add_wishlist') }}">{{ ui_icon('heart', 18) }}</button></form>{% else %}<a class="button button--secondary button--icon product-wishlist" href="{{ path('customer_login') }}" title="{{ ui_text('login_to_save') }}" aria-label="{{ ui_text('login_to_save') }}">{{ ui_icon('heart', 18) }}</a>{% endif %}
+                {% if app.user %}<form class="product-wishlist" method="post" action="{{ path('customer_wishlist_add',{product:product.id}) }}" data-ajax-form><input type="hidden" name="_token" value="{{ csrf_token('wishlist_add_' ~ product.id) }}"><button type="submit" class="button button--secondary button--icon" title="{{ ui_text('add_wishlist') }}" aria-label="{{ ui_text('add_wishlist') }}">{{ ui_icon('heart', 18) }}</button></form>{% else %}<a class="button button--secondary button--icon product-wishlist" href="{{ path('customer_login') }}" title="{{ ui_text('login_to_save') }}" aria-label="{{ ui_text('login_to_save') }}">{{ ui_icon('heart', 18) }}</a>{% endif %}
             {% endif %}
             {% include '@storefront/components/share_popover.html.twig' with {share_url: share_url, share_title: product.name} only %}
         </div>

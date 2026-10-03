@@ -4,7 +4,7 @@
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 {% if env_mail_is_null and not s.smtp_enabled %}<div class="admin-notice is-warning">{{ ui_text('admin.notify_channels.null_warning') }}</div>{% endif %}
 
-<form method="post" action="{{ path('admin_commerce_notification_channels') }}" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}">
+<form method="post" action="{{ path('admin_commerce_notification_channels') }}" data-dirty-guard data-admin-ajax><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}">
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.notify_channels.mail_kicker') }}</small><h2>{{ ui_text('admin.notify_channels.mail_title') }}</h2></div></div>
 <p class="admin-card-note">{{ ui_text('admin.notify_channels.mail_help') }}</p>
 <div class="admin-form-grid">
@@ -30,7 +30,7 @@
 
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.notify_channels.design_kicker') }}</small><h2>{{ ui_text('admin.notify_channels.design_title') }}</h2></div><a class="admin-button" href="{{ path('admin_email_preview') }}">{{ ui_icon('eye', 16) }} {{ ui_text('admin.notify_channels.design_preview') }}</a></div>
 <p class="admin-card-note">{{ ui_text('admin.notify_channels.design_help') }}</p>
-<form method="post" action="{{ path('admin_commerce_notification_design') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}">
+<form method="post" action="{{ path('admin_commerce_notification_design') }}" class="admin-form-grid" data-admin-ajax data-admin-ajax-refresh=".admin-email-frame"><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}">
 {% for key, label in {header_bg: ui_text('admin.notify_channels.design_header_bg'), header_text: ui_text('admin.notify_channels.design_header_text'), accent: ui_text('admin.notify_channels.design_accent'), page_bg: ui_text('admin.notify_channels.design_page_bg'), card_bg: ui_text('admin.notify_channels.design_card_bg'), text: ui_text('admin.notify_channels.design_text')} %}<label>{{ label }}<input type="color" name="{{ key }}" value="{{ design[key] }}"></label>{% endfor %}
 <label class="admin-form-wide">{{ ui_text('admin.notify_channels.design_footer') }}<input name="footer" maxlength="300" value="{{ design.footer }}" placeholder="{{ ui_text('admin.notify_channels.design_footer_hint') }}"></label>
 <div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.notify_channels.save') }}</button><button class="admin-button" type="submit" name="reset" value="1">{{ ui_icon('rotate-ccw', 16) }} {{ ui_text('admin.notify_channels.design_reset') }}</button></div></form>
@@ -40,7 +40,7 @@
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.notify_channels.test_kicker') }}</small><h2>{{ ui_text('admin.notify_channels.test_title') }}</h2></div></div>
 <p class="admin-card-note">{{ ui_text('admin.notify_channels.test_help') }}</p>
 <div class="admin-inline-actions">
-<form method="post" action="{{ path('admin_commerce_notification_channels_test') }}" class="admin-inline-actions"><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}"><input type="hidden" name="channel" value="email"><input type="email" name="to" required placeholder="you@example.com" aria-label="{{ ui_text('admin.notify_channels.test_to') }}"><button class="admin-button" type="submit">{{ ui_icon('mail', 16) }} {{ ui_text('admin.notify_channels.test_mail') }}</button></form>
-<form method="post" action="{{ path('admin_commerce_notification_channels_test') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}"><input type="hidden" name="channel" value="telegram"><button class="admin-button" type="submit">{{ ui_icon('send', 16) }} {{ ui_text('admin.notify_channels.test_tg') }}</button></form>
+<form method="post" action="{{ path('admin_commerce_notification_channels_test') }}" class="admin-inline-actions" data-admin-ajax><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}"><input type="hidden" name="channel" value="email"><input type="email" name="to" required placeholder="you@example.com" aria-label="{{ ui_text('admin.notify_channels.test_to') }}"><button class="admin-button" type="submit">{{ ui_icon('mail', 16) }} {{ ui_text('admin.notify_channels.test_mail') }}</button></form>
+<form method="post" action="{{ path('admin_commerce_notification_channels_test') }}" data-admin-ajax><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}"><input type="hidden" name="channel" value="telegram"><button class="admin-button" type="submit">{{ ui_icon('send', 16) }} {{ ui_text('admin.notify_channels.test_tg') }}</button></form>
 </div></section>
 {{ shell.end() }}

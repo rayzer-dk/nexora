@@ -68,6 +68,47 @@ function initFlashToasts() {
   });
 }
 
+// Admin forms marked data-admin-ajax (or a submit button marked data-admin-ajax-submit) are sent with fetch. The notices of the answer
+// become toasts, the page stays put, and data-admin-ajax-refresh names iframes to reload. A failure falls back to the normal submit.
+function initAdminAjaxForms() {
+  qa('form[data-admin-ajax]').forEach((form) => {
+    if (form.dataset.adminAjaxBound === '1') return;
+    form.dataset.adminAjaxBound = '1';
+    form.addEventListener('submit', async (event) => {
+      const submitter = event.submitter instanceof HTMLElement ? event.submitter : null;
+      if (submitter && form.dataset.adminAjax === 'buttons' && !submitter.hasAttribute('data-admin-ajax-submit')) return;
+      if (event.defaultPrevented) return;
+      event.preventDefault();
+      const target = submitter?.getAttribute('formaction') || form.action;
+      const body = new FormData(form);
+      if (submitter?.getAttribute('name')) body.append(submitter.getAttribute('name') || '', submitter.getAttribute('value') || '');
+      if (submitter instanceof HTMLButtonElement) submitter.disabled = true;
+      try {
+        const response = await fetch(target, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', redirect: 'follow' });
+        if (response.redirected && /\/admin\/login/.test(new URL(response.url).pathname)) {
+          window.location.href = response.url;
+          return;
+        }
+        const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const notices = Array.from(doc.querySelectorAll('[data-toast-source], .admin-notice')).filter((n) => n.textContent.trim() !== '');
+        if (!response.ok && notices.length === 0) throw new Error('request failed');
+        notices.forEach((n) => {
+          const type = n.classList.contains('is-error') ? 'error' : n.classList.contains('is-warning') ? 'warning' : n.classList.contains('is-success') ? 'success' : 'info';
+          toast(n.textContent.trim(), type);
+        });
+        qa('input[type="password"]', form).forEach((input) => { if (input instanceof HTMLInputElement) input.value = ''; });
+        const refresh = form.dataset.adminAjaxRefresh;
+        if (refresh) qa(refresh).forEach((frame) => { try { frame.contentWindow?.location.reload(); } catch (_) { /* a frame from another origin stays as it is */ } });
+      } catch (_) {
+        form.submit();
+        return;
+      } finally {
+        if (submitter instanceof HTMLButtonElement) submitter.disabled = false;
+      }
+    });
+  });
+}
+
 function ensureConfirmDialog() {
   let modal = q('[data-admin-confirm]');
   if (modal) return modal;
@@ -1327,6 +1368,7 @@ function initAdminPush() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initFlashToasts();
+  initAdminAjaxForms();
   initConfirmations();
   initDirtyGuard();
   initImagePreviews();

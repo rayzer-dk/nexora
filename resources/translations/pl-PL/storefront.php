@@ -836,4 +836,5 @@ return [
     'support_chat.widget_close' => 'Zamknij czat',
     'support_chat.widget_you' => 'Ty',
     'support_chat.widget_staff' => 'Sklep',
+    'compare_added' => 'Dodano do porównania',
 ];

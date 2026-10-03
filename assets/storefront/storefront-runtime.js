@@ -55,6 +55,44 @@ function initStoreNotices() {
   });
 }
 
+// Forms marked data-ajax-form are sent with fetch: the answer's flash messages become toasts and the page stays where it is.
+// Any failure falls back to the ordinary submit, so nothing depends on JavaScript.
+function initAjaxForms() {
+  qa('form[data-ajax-form]').forEach((form) => {
+    if (form.dataset.ajaxBound === '1') return;
+    form.dataset.ajaxBound = '1';
+    form.addEventListener('submit', async (event) => {
+      if (event.defaultPrevented) return;
+      event.preventDefault();
+      const submit = form.querySelector('[type="submit"]');
+      if (submit) submit.disabled = true;
+      try {
+        const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', redirect: 'follow' });
+        if (response.redirected && /\/account\/login/.test(new URL(response.url).pathname)) {
+          window.location.href = response.url;
+          return;
+        }
+        const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const notices = Array.from(doc.querySelectorAll('[data-store-toast-source]')).filter((n) => n.textContent.trim() !== '');
+        if (!response.ok && notices.length === 0) throw new Error('request failed');
+        let failed = false;
+        notices.forEach((n) => {
+          const isError = n.classList.contains('is-error');
+          failed = failed || isError;
+          toast(n.textContent.trim(), isError ? 'error' : 'success', isError ? 7000 : 4200);
+        });
+        if (notices.length === 0 && form.dataset.ajaxOk) toast(form.dataset.ajaxOk, 'success');
+        if (!failed && form.hasAttribute('data-ajax-reset')) form.reset();
+      } catch (_) {
+        form.submit();
+        return;
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    });
+  });
+}
+
 function initForumCompose() {
   const modal = q('[data-forum-compose]');
   if (!modal) return;
@@ -269,6 +307,7 @@ function initMobileNavigation() {
 
 document.addEventListener('DOMContentLoaded', () => {
   try { initStoreNotices(); } catch (_) {}
+  try { initAjaxForms(); } catch (_) {}
   try { initForumCompose(); } catch (_) {}
   try { initLiveSearch(); } catch (_) {}
   try { initMobileNavigation(); } catch (_) {}

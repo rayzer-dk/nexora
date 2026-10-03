@@ -837,4 +837,5 @@ return [
     'support_chat.widget_close' => 'Закрыть чат',
     'support_chat.widget_you' => 'Вы',
     'support_chat.widget_staff' => 'Магазин',
+    'compare_added' => 'Добавлено к сравнению',
 ];

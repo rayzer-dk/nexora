@@ -50,22 +50,8 @@ final class OrderAdminController extends AbstractController
             $limit = 25;
         }
         $offset = ($page - 1) * $limit;
-        $search = trim((string) $request->query->get('search', ''));
-        $status = AdminFilterValues::list($request, 'status', self::ORDER_STATUSES);
-        $paymentStatus = AdminFilterValues::list($request, 'payment_status', self::PAYMENT_STATUSES);
-        $fulfillmentStatus = AdminFilterValues::list($request, 'fulfillment_status', self::FULFILLMENT_STATUSES);
-
-        $where = ['o.store_id=?'];
-        $params = [$ctx->storeId];
-        if ($search !== '') {
-            $where[] = '(o.order_number LIKE ? OR o.customer_phone LIKE ? OR o.customer_email_normalized LIKE ? OR o.customer_name LIKE ?)';
-            $q = '%' . $search . '%';
-            array_push($params, $q, $q, mb_strtolower($q), $q);
-        }
-        AdminFilterValues::in('o.status', $status, $where, $params);
-        AdminFilterValues::in('o.payment_status', $paymentStatus, $where, $params);
-        AdminFilterValues::in('o.fulfillment_status', $fulfillmentStatus, $where, $params);
-        $sqlWhere = implode(' AND ', $where);
+        [$sqlWhere, $params, $filters] = $this->orderFilters($request, $ctx->storeId);
+        ['search' => $search, 'status' => $status, 'payment_status' => $paymentStatus, 'fulfillment_status' => $fulfillmentStatus, 'date_from' => $dateFrom, 'date_to' => $dateTo] = $filters;
 
         $count = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_sales_order o WHERE ' . $sqlWhere, $params);
         $pages = max(1, (int) ceil($count / $limit));
@@ -109,6 +95,8 @@ final class OrderAdminController extends AbstractController
             'status' => $status,
             'payment_status' => $paymentStatus,
             'fulfillment_status' => $fulfillmentStatus,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
             'order_statuses' => self::ORDER_STATUSES,
             'payment_statuses' => self::PAYMENT_STATUSES,
             'fulfillment_statuses' => self::FULFILLMENT_STATUSES,
@@ -123,6 +111,80 @@ final class OrderAdminController extends AbstractController
         ]);
     }
 
+
+    /**
+     * The list filters shared by the order list and its CSV export: search text, status lists and an inclusive date range.
+     *
+     * @return array{0:string,1:list<mixed>,2:array{search:string,status:list<string>,payment_status:list<string>,fulfillment_status:list<string>,date_from:string,date_to:string}}
+     */
+    private function orderFilters(Request $request, int $storeId): array
+    {
+        $search = trim((string) $request->query->get('search', ''));
+        $status = AdminFilterValues::list($request, 'status', self::ORDER_STATUSES);
+        $paymentStatus = AdminFilterValues::list($request, 'payment_status', self::PAYMENT_STATUSES);
+        $fulfillmentStatus = AdminFilterValues::list($request, 'fulfillment_status', self::FULFILLMENT_STATUSES);
+        $date = static function (string $key) use ($request): string {
+            $value = trim((string) $request->query->get($key, ''));
+
+            return preg_match('/^\d{4}-\d{2}-\d{2}$/D', $value) === 1 && checkdate((int) substr($value, 5, 2), (int) substr($value, 8, 2), (int) substr($value, 0, 4)) ? $value : '';
+        };
+        $dateFrom = $date('date_from');
+        $dateTo = $date('date_to');
+
+        $where = ['o.store_id=?'];
+        $params = [$storeId];
+        if ($search !== '') {
+            $where[] = '(o.order_number LIKE ? OR o.customer_phone LIKE ? OR o.customer_email_normalized LIKE ? OR o.customer_name LIKE ?)';
+            $q = '%' . $search . '%';
+            array_push($params, $q, $q, mb_strtolower($q), $q);
+        }
+        AdminFilterValues::in('o.status', $status, $where, $params);
+        AdminFilterValues::in('o.payment_status', $paymentStatus, $where, $params);
+        AdminFilterValues::in('o.fulfillment_status', $fulfillmentStatus, $where, $params);
+        if ($dateFrom !== '') {
+            $where[] = 'o.created_at >= ?';
+            $params[] = $dateFrom . ' 00:00:00';
+        }
+        if ($dateTo !== '') {
+            $where[] = 'o.created_at < ?';
+            $params[] = (new \DateTimeImmutable($dateTo))->modify('+1 day')->format('Y-m-d') . ' 00:00:00';
+        }
+
+        return [implode(' AND ', $where), $params, ['search' => $search, 'status' => $status, 'payment_status' => $paymentStatus, 'fulfillment_status' => $fulfillmentStatus, 'date_from' => $dateFrom, 'date_to' => $dateTo]];
+    }
+
+    /** All orders of the current filter as a CSV file (spreadsheet formulas are escaped). */
+    #[Route('/admin/orders/export.csv', name: 'admin_orders_export', methods: ['GET'], priority: 10)]
+    public function export(Request $request): Response
+    {
+        $ctx = $this->contexts->resolve($request);
+        [$sqlWhere, $params] = $this->orderFilters($request, $ctx->storeId);
+        $rows = $this->db->iterateAssociative(
+            'SELECT o.order_number,o.created_at,o.status,o.payment_status,o.fulfillment_status,o.customer_name,o.customer_phone,o.customer_email,o.total_minor,o.currency,
+                    (SELECT p.provider_code FROM mc_payment p WHERE p.order_id=o.id ORDER BY p.id DESC LIMIT 1) provider_code
+             FROM mc_sales_order o WHERE ' . $sqlWhere . ' ORDER BY o.id DESC',
+            $params,
+        );
+        $response = new \Symfony\Component\HttpFoundation\StreamedResponse(static function () use ($rows): void {
+            $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['order', 'date', 'status', 'payment_status', 'fulfillment_status', 'customer', 'phone', 'email', 'total', 'currency', 'payment_method'], ',', '"', '');
+            foreach ($rows as $r) {
+                $line = [$r['order_number'], $r['created_at'], $r['status'], $r['payment_status'], $r['fulfillment_status'], $r['customer_name'], $r['customer_phone'], $r['customer_email'], number_format(((int) $r['total_minor']) / 100, 2, '.', ''), $r['currency'], $r['provider_code']];
+                fputcsv($out, array_map(static fn ($v): string => preg_match('/^[=+\-@\t\r]/', (string) $v) === 1 ? "'" . $v : (string) $v, $line), ',', '"', '');
+            }
+            fclose($out);
+        });
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="orders-' . gmdate('Ymd-His') . '.csv"');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Cache-Control', 'no-store');
+
+        return $response;
+    }
 
     #[Route('/admin/orders/views/save', name:'admin_order_saved_view_save', methods:['POST'])]
     public function saveView(Request $request): Response

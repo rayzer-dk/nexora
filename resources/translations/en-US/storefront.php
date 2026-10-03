@@ -1105,4 +1105,5 @@ return [
     'support_chat.widget_close' => 'Close chat',
     'support_chat.widget_you' => 'You',
     'support_chat.widget_staff' => 'Store',
+    'compare_added' => 'Added to comparison',
 ];

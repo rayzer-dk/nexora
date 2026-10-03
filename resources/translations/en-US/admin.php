@@ -4043,4 +4043,8 @@ return [
     'admin.translations.all_hint' => 'Every field (name, meta tags, description) into every language with one click.',
     'admin.ai.translate_all_done' => 'Done: check the translation and press “Save all languages”.',
     'admin.ai.saving' => 'Saving',
+    'admin.orders.date_from' => 'Date from',
+    'admin.orders.date_to' => 'Date to',
+    'admin.orders.export' => 'Export CSV (current filter)',
+    'admin.ai.saved_all' => 'All languages saved.',
 ];

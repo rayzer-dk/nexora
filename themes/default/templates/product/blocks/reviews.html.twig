@@ -7,11 +7,11 @@
             <p>{{ review.text }}</p>
             {% if review.images is not empty %}<div class="review-media" aria-label="{{ ui_text('review_photos') }}">{% for image in review.images %}<a href="{{ image }}" target="_blank" rel="noopener"><img src="{{ image }}" alt="{{ ui_text('review_photo_by', {author: review.author}) }}" loading="lazy"></a>{% endfor %}</div>{% endif %}
             {% if review.reply %}<div class="merchant-reply"><strong>{{ ui_text('store_reply') }}</strong><p>{{ review.reply }}</p></div>{% endif %}
-            <div class="review__actions"><small>{{ ui_text('helpful_review') }}: {{ review.helpful }}</small>{% if app.user and is_granted('ROLE_CUSTOMER') %}<form method="post" action="{{ path('product_review_helpful',{id:review.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('review_helpful_' ~ review.id) }}"><button type="submit" class="button button--secondary button--sm">{{ ui_icon('thumbs-up', 16) }}{{ ui_text('helpful') }}</button></form>{% endif %}</div>
+            <div class="review__actions"><small>{{ ui_text('helpful_review') }}: {{ review.helpful }}</small>{% if app.user and is_granted('ROLE_CUSTOMER') %}<form method="post" action="{{ path('product_review_helpful',{id:review.id}) }}" data-ajax-form><input type="hidden" name="_token" value="{{ csrf_token('review_helpful_' ~ review.id) }}"><button type="submit" class="button button--secondary button--sm">{{ ui_icon('thumbs-up', 16) }}{{ ui_text('helpful') }}</button></form>{% endif %}</div>
         </article>
     {% else %}<p>{{ ui_text('no_reviews') }}</p>{% endfor %}
     {% if app.user and is_granted('ROLE_CUSTOMER') %}
-        <form method="post" action="{{ path('product_review_submit',{product:product.id}) }}" class="feedback-form" enctype="multipart/form-data">
+        <form method="post" action="{{ path('product_review_submit',{product:product.id}) }}" class="feedback-form" enctype="multipart/form-data" data-ajax-form data-ajax-reset>
             <input type="hidden" name="_token" value="{{ csrf_token('review_' ~ product.id) }}"><input type="hidden" name="_rendered_at" value="{{ 'now'|date('U') }}"><input class="hp-field" type="text" name="_website" value="" tabindex="-1" autocomplete="off" aria-hidden="true">
             <label>{{ ui_text('rating') }}<select name="rating" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></label>
             <label>{{ ui_text('title') }}<input type="text" name="title" maxlength="255"></label>

@@ -55,6 +55,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (in_array($route,['admin_catalog_saved_view_save','admin_catalog_saved_view_delete'],true)) return AdminPermissionCatalog::CATALOG_VIEW;
         if (in_array($route,['admin_order_saved_view_save','admin_order_saved_view_delete'],true)) return AdminPermissionCatalog::ORDERS_VIEW;
         if (str_contains($route,'refund')) return AdminPermissionCatalog::ORDERS_REFUND;
+        if ($route==='admin_orders_export') return AdminPermissionCatalog::ORDERS_EXPORT;
         if (str_starts_with($route,'admin_order')||$route==='admin_orders'||str_starts_with($route,'admin_shipment')) return $get?AdminPermissionCatalog::ORDERS_VIEW:AdminPermissionCatalog::ORDERS_MANAGE;
         if ($route==='admin_customer_experience') return AdminPermissionCatalog::CUSTOMERS_VIEW;
         if (str_starts_with($route,'admin_return_')) return AdminPermissionCatalog::ORDERS_MANAGE;

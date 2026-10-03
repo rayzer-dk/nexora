@@ -836,4 +836,5 @@ return [
     'support_chat.widget_close' => 'Chat schließen',
     'support_chat.widget_you' => 'Sie',
     'support_chat.widget_staff' => 'Shop',
+    'compare_added' => 'Zum Vergleich hinzugefügt',
 ];

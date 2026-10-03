@@ -54,9 +54,12 @@ test('translate every language with one click, one field with its own button, th
     await expect(name('en-US')).toHaveValue(/^TR-en-US-/);
     await expect(name('de-DE')).toHaveValue(/^TR-de-DE-/);
 
-    // saving every language ends with a reload of the page: let the page settle first so that 'load' is the reload
-    await page.waitForLoadState('load');
-    await Promise.all([page.waitForEvent('load'), page.locator('[data-save-all]').click()]);
+    // translating changes the form only; saving is an in-place request and the page is never reloaded
+    await page.evaluate(() => { (window as unknown as { __kept: boolean }).__kept = true; });
+    await page.locator('[data-save-all]').click();
+    await expect(page.locator('[data-bulk-status]')).toContainText('збережено', { timeout: 15_000 });
+    expect(await page.evaluate(() => (window as unknown as { __kept?: boolean }).__kept)).toBe(true);
+    await page.reload({ waitUntil: 'load' });
     await expectNoServerError(page);
     await expect(name('en-US')).toHaveValue(/^TR-en-US-/);
     await expect(name('de-DE')).toHaveValue(/^TR-de-DE-/);
@@ -68,6 +71,12 @@ test('translate every language with one click, one field with its own button, th
     await page.locator('form[action$="/translations/en-US"] label:has(input[name="name"]) [data-translate-one]').click();
     await expect(name('en-US')).toHaveValue(/^TR-en-US-/);
     await expect(name('de-DE')).toHaveValue(/^TR-de-DE-/);
+
+    // a single language saves in place too
+    await page.evaluate(() => { (window as unknown as { __kept: boolean }).__kept = true; });
+    await page.locator('form[action$="/translations/en-US"] button[type="submit"]').click();
+    await expect(page.locator('form[action$="/translations/en-US"] [data-ai-status]')).not.toHaveText('', { timeout: 15_000 });
+    expect(await page.evaluate(() => (window as unknown as { __kept?: boolean }).__kept)).toBe(true);
 
     // and the link from the product card starts the whole thing by itself
     page.on('dialog', (dialog) => dialog.accept()); // unsaved edits trigger the leave-page warning

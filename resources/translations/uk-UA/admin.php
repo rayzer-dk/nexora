@@ -4038,4 +4038,8 @@ return [
     'admin.translations.all_hint' => 'Усі поля (назва, мета-теги, опис) на всі мови одним кліком.',
     'admin.ai.translate_all_done' => 'Готово: перевірте переклад і натисніть «Зберегти всі мови».',
     'admin.ai.saving' => 'Збереження',
+    'admin.orders.date_from' => 'Дата від',
+    'admin.orders.date_to' => 'Дата до',
+    'admin.orders.export' => 'Експорт у CSV (за фільтром)',
+    'admin.ai.saved_all' => 'Усі мови збережено.',
 ];

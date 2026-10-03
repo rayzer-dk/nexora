@@ -903,4 +903,5 @@ return [
     'support_chat.widget_close' => 'Luk chat',
     'support_chat.widget_you' => 'Dig',
     'support_chat.widget_staff' => 'Butik',
+    'compare_added' => 'Tilføjet til sammenligning',
 ];

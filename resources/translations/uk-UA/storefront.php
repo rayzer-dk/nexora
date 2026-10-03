@@ -1105,4 +1105,5 @@ return [
     'support_chat.widget_close' => 'Закрити чат',
     'support_chat.widget_you' => 'Ви',
     'support_chat.widget_staff' => 'Магазин',
+    'compare_added' => 'Додано до порівняння',
 ];

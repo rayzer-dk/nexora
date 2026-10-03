@@ -8,6 +8,7 @@ use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\Catalog\Application\CatalogTranslationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -44,7 +45,7 @@ final class CatalogTranslationAdminController extends AbstractController
     }
 
     #[Route('/admin/catalog/products/{publicId}/translations/{locale}', name: 'admin_catalog_product_translation_save', methods: ['POST'], requirements: ['locale' => '[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})?'])]
-    public function saveProduct(Request $request, string $publicId, string $locale): RedirectResponse
+    public function saveProduct(Request $request, string $publicId, string $locale): Response
     {
         $storeId = $this->contexts->resolve($request)->storeId;
         $entity = $this->translations->product($storeId, $publicId);
@@ -54,16 +55,23 @@ final class CatalogTranslationAdminController extends AbstractController
         $this->guard($request, $publicId);
         try {
             $this->translations->saveProduct($storeId, $entity['id'], $locale, $request->request->all());
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['ok' => true, 'message' => CanonicalUiText::get('admin.translations.saved')]);
+            }
             $this->addFlash('success', CanonicalUiText::get('admin.translations.saved'));
         } catch (\InvalidArgumentException $e) {
-            $this->addFlash('error', CanonicalUiText::get('admin.translations.error.' . $e->getMessage()));
+            $message = CanonicalUiText::get('admin.translations.error.' . $e->getMessage());
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['ok' => false, 'message' => $message], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            $this->addFlash('error', $message);
         }
 
         return $this->redirectToRoute('admin_catalog_product_translations', ['publicId' => $publicId, '_fragment' => 'lang-' . $locale]);
     }
 
     #[Route('/admin/catalog/categories/{publicId}/translations/{locale}', name: 'admin_catalog_category_translation_save', methods: ['POST'], requirements: ['locale' => '[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})?'])]
-    public function saveCategory(Request $request, string $publicId, string $locale): RedirectResponse
+    public function saveCategory(Request $request, string $publicId, string $locale): Response
     {
         $storeId = $this->contexts->resolve($request)->storeId;
         $entity = $this->translations->category($storeId, $publicId);
@@ -73,9 +81,16 @@ final class CatalogTranslationAdminController extends AbstractController
         $this->guard($request, $publicId);
         try {
             $this->translations->saveCategory($storeId, $entity['id'], $locale, $request->request->all());
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['ok' => true, 'message' => CanonicalUiText::get('admin.translations.saved')]);
+            }
             $this->addFlash('success', CanonicalUiText::get('admin.translations.saved'));
         } catch (\InvalidArgumentException $e) {
-            $this->addFlash('error', CanonicalUiText::get('admin.translations.error.' . $e->getMessage()));
+            $message = CanonicalUiText::get('admin.translations.error.' . $e->getMessage());
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse(['ok' => false, 'message' => $message], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            $this->addFlash('error', $message);
         }
 
         return $this->redirectToRoute('admin_catalog_category_translations', ['publicId' => $publicId, '_fragment' => 'lang-' . $locale]);

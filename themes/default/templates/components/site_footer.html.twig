@@ -11,7 +11,7 @@
                 {% set push_key = push_public_key() %}{% if push_key %}<button class="push-toggle" type="button" data-push-subscribe data-push-key="{{ push_key }}" hidden>{{ ui_icon('bell', 16) }}<span>{{ ui_text('push_subscribe') }}</span></button>{% endif %}
             </div>
         </div>
-        <form class="newsletter-signup__form" method="post" action="{{ path('storefront_newsletter_subscribe') }}">
+        <form class="newsletter-signup__form" method="post" action="{{ path('storefront_newsletter_subscribe') }}" data-ajax-form data-ajax-reset>
             <input type="hidden" name="_token" value="{{ csrf_token('newsletter_subscribe') }}">
             {% include '@storefront/components/spam_fields.html.twig' %}
             <label class="sr-only" for="newsletter-email">{{ ui_text('email') }}</label>

@@ -138,6 +138,31 @@ document.querySelectorAll('[data-translate-from]').forEach((button) => {
   });
 });
 
+// Saves a form with fetch and leaves the page alone: the server answers JSON for XHR, the status line next to the button shows the result.
+async function saveFormInPlace(form) {
+  const response = await fetch(form.action, { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: new FormData(form) });
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data || !data.ok) throw new Error(data?.message || t('admin.ai.draft_failed'));
+  return data;
+}
+document.querySelectorAll('form[data-ajax-save]').forEach((form) => {
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const status = form.querySelector('[data-ai-status]');
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    if (status) status.textContent = t('admin.ai.saving');
+    try {
+      const data = await saveFormInPlace(form);
+      if (status) status.textContent = data.message || '';
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+});
+
 // Translation editor, one-click variants: a single field, or every language at once (then one "save all"). Nothing is saved before a save button is pressed.
 async function translateText(page, text, target) {
   const provider = page.querySelector('[data-ai-provider]');
@@ -207,15 +232,15 @@ document.querySelectorAll('[data-translate-all]').forEach((button) => {
     saveAll.disabled = true;
     try {
       for (const panel of page.querySelectorAll('[data-translate-panel]:not([data-source])')) {
-        const form = panel.querySelector('form');
+        const form = panel.querySelector('form[data-ajax-save]');
         if (!form) continue;
         status.textContent = `${t('admin.ai.saving')} ${panel.dataset.locale}`;
-        const response = await fetch(form.action, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: new FormData(form), redirect: 'follow' });
-        if (!response.ok) throw new Error(t('admin.ai.draft_failed'));
+        await saveFormInPlace(form);
       }
-      window.location.reload();
+      status.textContent = t('admin.ai.saved_all');
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+    } finally {
       saveAll.disabled = false;
     }
   });
