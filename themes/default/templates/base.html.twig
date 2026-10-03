@@ -35,6 +35,13 @@
         --mc-color-accent-contrast:{{ contrast_color(presentation.theme.accent) }};
         --mc-color-success:{{ presentation.theme.success }};
         --mc-color-surface:{{ presentation.theme.surface }};
+        {% set colors = presentation.colors|default({}) %}
+        {% if colors.background|default('') %}--mc-color-background:{{ colors.background }};{% endif %}
+        {% if colors.text|default('') %}--mc-color-text:{{ colors.text }};{% endif %}
+        {% if colors.heading|default('') %}--mc-color-heading:{{ colors.heading }};{% endif %}
+        {% if colors.footer_bg|default('') %}--mc-color-ink:{{ colors.footer_bg }};{% endif %}
+        {% if colors.header_bg|default('') %}--mc-header-bg:{{ colors.header_bg }};{% endif %}
+        {% if colors.buy_button|default('') %}--mc-color-buy-fill:{{ colors.buy_button }};--mc-color-buy-contrast:{{ contrast_color(colors.buy_button) }};{% endif %}
         --mc-content-max:{{ presentation.theme.container }}px;
         --mc-radius-sm:{{ (presentation.theme.radius * 0.45)|round }}px;
         --mc-radius-md:{{ (presentation.theme.radius * 0.67)|round }}px;
@@ -45,6 +52,7 @@
       }
       body[data-theme-density="compact"]{--mc-control-height-sm:28px;--mc-control-height-md:36px;--mc-control-height-lg:44px;--mc-space-4:12px;--mc-space-6:20px}
       body[data-theme-density="spacious"]{--mc-control-height-sm:36px;--mc-control-height-md:44px;--mc-control-height-lg:52px;--mc-space-4:20px;--mc-space-6:28px}
+      {% if colors.header_bg|default('') %}{% set hfg = contrast_color(colors.header_bg) %}.reference-header{border-bottom-color:color-mix(in srgb,{{ hfg }} 22%,transparent)}.reference-header .reference-brand strong,.reference-header .reference-brand small,.reference-header .reference-account-link,.reference-header .reference-account-link span,.reference-header .reference-cart-link,.reference-header .reference-cart-link > span:not(.reference-cart-count),.reference-header .reference-category-nav a,.reference-header .reference-category-nav__sale,.reference-header .reference-theme-toggle{color:{{ hfg }}}.reference-header .reference-theme-toggle{border-color:color-mix(in srgb,{{ hfg }} 35%,transparent);background:transparent}{% endif %}
     </style>
     {% if active_theme_css %}<link rel="stylesheet" href="{{ active_theme_css }}">{% endif %}
     <link rel="stylesheet" href="{{ vite_asset('assets/storefront/consent.css', '/assets/consent.css') }}">

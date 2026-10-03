@@ -76,6 +76,13 @@ final class AppearanceAdminController extends AbstractController
                         'quick_order' => $bool('display_quick_order'),
                         'benefits' => $request->request->get('display_benefits',''),
                     ],
+                    'colors' => array_combine(
+                        ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'buy_button'],
+                        array_map(
+                            static fn (string $key): string => $request->request->getBoolean('colors_' . $key . '_on') ? (string) $request->request->get('colors_' . $key, '') : '',
+                            ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'buy_button'],
+                        ),
+                    ),
                     'consent' => [
                         'title' => $request->request->get('consent_title',''),
                         'text' => $request->request->get('consent_text',''),

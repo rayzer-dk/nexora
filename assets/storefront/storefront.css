@@ -32,6 +32,10 @@ img, svg, video { max-width: 100%; }
 img { display: block; height: auto; }
 picture { display: contents; }
 h1, h2, h3, h4 { margin: 0; line-height: var(--mc-line-height-snug); letter-spacing: var(--mc-letter-spacing-tight); font-weight: var(--mc-font-weight-bold); text-wrap: balance; }
+h1, h2, h3, h4 { color: var(--mc-color-heading, inherit); }
+/* Dark surfaces keep their own text colour when the owner picks a heading colour. */
+.site-footer, .demo-contact-cta, .forum-hero, .reference-side-promo, .demo-promo-card, .demo-mini-banner, .demo-announcement, .mc-consent { --mc-color-heading: initial; }
+body[data-card-style="overlay"] .catalog-card__body, body[data-category-style="overlay"] .reference-category__copy { --mc-color-heading: initial; }
 h1 { font-size: var(--mc-font-size-3xl); line-height: var(--mc-line-height-tight); }
 h2 { font-size: var(--mc-font-size-2xl); }
 h3 { font-size: var(--mc-font-size-lg); }
@@ -131,6 +135,9 @@ main:has(> .checkout-page) { padding-top: 0; padding-bottom: 0; }
 .button:disabled, .button.is-loading { opacity: 0.6; cursor: not-allowed; }
 .button--primary { background: var(--mc-color-primary-fill); border-color: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); }
 .button--primary:hover { background: var(--mc-color-primary-fill-hover); border-color: var(--mc-color-primary-fill-hover); }
+/* Buy buttons (add to cart, buy now, place order) can carry their own colour; they follow the primary colour by default. */
+.catalog-card__buy, [data-primary-buy], [data-sticky-buy-action], .place-order { background: var(--mc-color-buy-fill, var(--mc-color-primary-fill)); border-color: var(--mc-color-buy-fill, var(--mc-color-primary-fill)); color: var(--mc-color-buy-contrast, var(--mc-color-primary-contrast)); }
+.catalog-card__buy:hover, [data-primary-buy]:hover, [data-sticky-buy-action]:hover, .place-order:hover { background: color-mix(in srgb, var(--mc-color-buy-fill, var(--mc-color-primary-fill)) 82%, #000); border-color: color-mix(in srgb, var(--mc-color-buy-fill, var(--mc-color-primary-fill)) 82%, #000); }
 .button--secondary { background: var(--mc-color-surface-raised); border-color: var(--mc-color-border-strong); color: var(--mc-color-text); }
 .button--secondary:hover { border-color: var(--mc-color-primary); color: var(--mc-color-primary); background: var(--mc-color-primary-soft); }
 .button--ghost { background: transparent; color: var(--mc-color-text); }
@@ -818,10 +825,41 @@ commerce-slider, .slider-shell { display: block; min-width: 0; }
   :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__moon { display: none; }
   :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__sun { display: inline-flex; }
 }
+/* Dark scheme: product photos are shot on white. Multiply blending only works on a light page, so photos sit on a white tile instead of being darkened. */
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .product-gallery__open img,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .product-gallery__thumb img,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .demo-mini-banner img,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .demo-promo-card img,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .related-card img,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .wishlist-card > a img,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .cart-line > a img,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .summary-image,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .compare-table thead img,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .live-search__item img,
+:root[data-theme="dark"] .product-gallery__open img,
+:root[data-theme="dark"] .product-gallery__thumb img,
+:root[data-theme="dark"] .demo-mini-banner img,
+:root[data-theme="dark"] .demo-promo-card img,
+:root[data-theme="dark"] .related-card img,
+:root[data-theme="dark"] .wishlist-card > a img,
+:root[data-theme="dark"] .cart-line > a img,
+:root[data-theme="dark"] .summary-image,
+:root[data-theme="dark"] .compare-table thead img,
+:root[data-theme="dark"] .live-search__item img { mix-blend-mode: normal; background: #fff; border-radius: var(--mc-radius-md); }
 :root[data-color-scheme="dark"]:not([data-theme="light"]) .demo-hero-card__media img,
-:root[data-theme="dark"] .demo-hero-card__media img { mix-blend-mode: normal; border-radius: var(--mc-radius-lg); background: #fff; }
+:root[data-theme="dark"] .demo-hero-card__media img { mix-blend-mode: normal; background: #fff; border-radius: var(--mc-radius-lg); transform: none; max-height: 240px; padding: var(--mc-space-3); -webkit-mask-image: none; mask-image: none; }
 @media (prefers-color-scheme: dark) {
-  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .demo-hero-card__media img { mix-blend-mode: normal; border-radius: var(--mc-radius-lg); background: #fff; }
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .product-gallery__open img,
+:root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .product-gallery__thumb img,
+:root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .demo-mini-banner img,
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .demo-promo-card img,
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .related-card img,
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .wishlist-card > a img,
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .cart-line > a img,
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .summary-image,
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .compare-table thead img,
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .live-search__item img { mix-blend-mode: normal; background: #fff; border-radius: var(--mc-radius-md); }
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .demo-hero-card__media img { mix-blend-mode: normal; background: #fff; border-radius: var(--mc-radius-lg); transform: none; max-height: 240px; padding: var(--mc-space-3); -webkit-mask-image: none; mask-image: none; }
 }
 
 .offline-page { display: grid; justify-items: center; gap: var(--mc-space-4); padding-block: var(--mc-space-20); text-align: center; }

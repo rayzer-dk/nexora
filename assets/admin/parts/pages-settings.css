@@ -52,3 +52,10 @@
 .admin-page-editor__slug { display: grid; gap: var(--mc-space-1); }
 .lang-tabs__name { font-size: var(--mc-font-size-sm); }
 .admin-button small, .admin-button .admin-cell-sub { color: inherit; }
+
+/* Appearance: optional single-colour overrides */
+.admin-color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--mc-space-3); }
+.admin-color-option { display: grid; gap: var(--mc-space-2); padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); }
+.admin-color-option > span:first-child { font-weight: var(--mc-font-weight-semibold); }
+.admin-color-option input[type="color"] { width: 100%; height: var(--mc-control-height-md); padding: 2px; }
+.admin-color-option__use { display: flex; align-items: center; gap: var(--mc-space-2); font-size: var(--mc-font-size-sm); }

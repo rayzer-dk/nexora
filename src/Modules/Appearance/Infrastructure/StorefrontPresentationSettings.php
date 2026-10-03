@@ -83,6 +83,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'container' => '1408',
                 'font' => 'system',
             ],
+            // Optional overrides of single colours; an empty value keeps the colour of the chosen preset and colour scheme.
+            'colors' => ['background' => '', 'text' => '', 'heading' => '', 'header_bg' => '', 'footer_bg' => '', 'buy_button' => ''],
             'display' => [
                 'card_style' => 'classic',
                 'card_columns' => '4',
@@ -152,6 +154,11 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $scheme=(string)($input['theme']['color_scheme']??$defaults['theme']['color_scheme']); $out['theme']['color_scheme']=in_array($scheme,['light','auto','dark'],true)?$scheme:$defaults['theme']['color_scheme'];$out['theme']['toggle']=(string)($input['theme']['toggle']??$defaults['theme']['toggle'])==='0'?'0':'1';
         $container=(int)($input['theme']['container']??$defaults['theme']['container']); $out['theme']['container']=(string)max(960,min(1680,$container));
         $font=(string)($input['theme']['font']??$defaults['theme']['font']); $out['theme']['font']=in_array($font,['system','inter','manrope'],true)?$font:$defaults['theme']['font'];
+        $col = is_array($input['colors'] ?? null) ? $input['colors'] : [];
+        foreach (array_keys($defaults['colors']) as $key) {
+            $value = strtoupper(trim((string) ($col[$key] ?? '')));
+            $out['colors'][$key] = preg_match('/^#[0-9A-F]{6}$/D', $value) === 1 ? $value : '';
+        }
         $choice = static fn (mixed $v, array $allowed, string $fallback): string => in_array((string) $v, $allowed, true) ? (string) $v : $fallback;
         $d = $defaults['display'];
         $in = is_array($input['display'] ?? null) ? $input['display'] : [];
