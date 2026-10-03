@@ -184,7 +184,6 @@
 .site-footer__contact { display: flex; align-items: flex-start; gap: var(--mc-space-2); overflow-wrap: anywhere; }
 .site-footer__contact > .ui-icon { flex: none; margin-top: 2px; }
 .site-footer__bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--mc-space-2) var(--mc-space-4); padding-block: var(--mc-space-4) calc(var(--mc-space-4) + 56px); border-top: 1px solid color-mix(in srgb, #fff 12%, transparent); font-size: var(--mc-font-size-xs); }
-.site-footer__social { display: flex; flex-wrap: wrap; gap: var(--mc-space-1) var(--mc-space-4); }
 
 /* ---------- breakpoints ---------- */
 @media (max-width: 640px) {

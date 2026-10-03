@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Modules\Admin\Domain\AdminUser;
-use Commerce\Modules\Catalog\Application\ProductWriter;
 use Commerce\Modules\Catalog\Infrastructure\DbalCatalogAdminQuery;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ProductWorkspaceAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly ProductWriter $writer, private readonly Connection $db, private readonly \Commerce\Modules\Catalog\Application\ProductBulkEditor $editor, private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo, private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus) {}
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly Connection $db, private readonly \Commerce\Modules\Catalog\Application\ProductBulkEditor $editor, private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo, private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus) {}
 
     #[Route('/admin/catalog/products/bulk-edit', name:'admin_catalog_products_bulk_edit', methods:['GET','POST'])]
     public function bulkEdit(Request $request): Response

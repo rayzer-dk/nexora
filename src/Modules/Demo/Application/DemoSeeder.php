@@ -573,18 +573,6 @@ final readonly class DemoSeeder
         return max(0, (int) round($usd * $rate * (10 ** $digits)));
     }
 
-    private function formatNumber(mixed $value): string
-    {
-        if (!is_numeric($value)) { return '—'; }
-        return rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
-    }
-
-    /** @param array<string,mixed> $attrs */
-    private function formatDimensions(array $attrs): string
-    {
-        return $this->formatNumber($attrs['width_cm'] ?? null) . ' × ' . $this->formatNumber($attrs['height_cm'] ?? null) . ' × ' . $this->formatNumber($attrs['depth_cm'] ?? null) . ' cm';
-    }
-
     /**
      * Curated technical specifications, listed in a fixed order between the identity and the service rows.
      *

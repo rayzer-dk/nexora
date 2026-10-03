@@ -47,8 +47,6 @@
 
 /* Tax rate editor */
 .tax-edit { display: grid; gap: var(--mc-space-3); }
-.tax-edit__row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--mc-space-3); align-items: end; }
-.tax-edit__checks { display: flex; flex-wrap: wrap; gap: var(--mc-space-4); }
 .tax-edit__note { margin: 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
 .lang-tabs__note { margin: 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
 .admin-page-editor__slug { display: grid; gap: var(--mc-space-1); }

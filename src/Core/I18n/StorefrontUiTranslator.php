@@ -16,7 +16,7 @@ final class StorefrontUiTranslator
     private readonly TranslationCatalogLoader $loader;
 
     public function __construct(
-        private readonly string $projectDir = '',
+        string $projectDir = '',
         private readonly ?Connection $connection = null,
     ) {
         $this->loader = new TranslationCatalogLoader($projectDir);
