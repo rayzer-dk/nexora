@@ -13,6 +13,7 @@
       {% if not cart.requires_shipping %}<input type="hidden" name="carrier" value="digital">{% endif %}
       <input type="hidden" name="city_id" data-city-id value="{{ old.city_id|default('') }}"><input type="hidden" name="city_name" data-city-name value="{{ old.city_name|default('') }}"><input type="hidden" name="point_id" data-point-id value="{{ old.point_id|default('') }}"><input type="hidden" name="point_name" data-point-name value="{{ old.point_name|default('') }}"><input type="hidden" name="service_type" value="pickup_point" data-service-type>
       {% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.before_contact'} only %}
+      {% set gift_order = 90 %}{% for block in checkout_layout.blocks %}{% if block.component == 'checkout_consent' %}{% set gift_order = loop.index - 1 %}{% endif %}{% endfor %}
       {% for block in checkout_layout.blocks %}
         {% if block.component == 'checkout_shipping' %}{% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.before_shipping'} only %}{% endif %}
         {% if block.component == 'checkout_payment' %}{% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.before_payment'} only %}{% endif %}
@@ -36,7 +37,7 @@
         {% if block.component == 'checkout_payment' %}{% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.after_payment'} only %}{% endif %}
         {% if block.component == 'checkout_summary' %}{% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.after_summary'} only %}{% endif %}
       {% endfor %}
-      <div class="checkout-builder-slot is-left" style="--checkout-order:90">
+      <div class="checkout-builder-slot is-left" style="--checkout-order:{{ gift_order }}">
         <details class="ck-fold" data-checkout-block="gift"><summary>{{ ui_icon('gift', 18) }}<span>{{ ui_text('gift_rewards') }}</span>{{ ui_icon('chevron-down', 16) }}</summary>
           <div class="ck-grid"><label class="ck-field"><span>{{ ui_text('gift_card_code') }}</span><input type="text" name="gift_card_code" maxlength="64" autocomplete="off" placeholder="GC-..."></label>
           {% if customer_user and loyalty_config.enabled %}<label class="ck-field"><span>{{ ui_text('redeem_points') }}</span><input type="number" name="loyalty_points" min="0" max="{{ loyalty_account.points_balance|default(0) }}" step="1" value="0"><small>{{ ui_text('points_available', {points: loyalty_account.points_balance|default(0), min: loyalty_config.min_redeem_points}) }}</small></label>{% elseif not customer_user %}<p class="ck-hint">{{ ui_text('loyalty_login') }}</p>{% endif %}</div>
