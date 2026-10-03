@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Notification\Channel\Email;
 
+use Commerce\Modules\Notification\Application\NotificationChannelSettings;
 use Commerce\Modules\Notification\Application\NotificationTemplateService;
 use Commerce\Modules\Notification\Contract\NotificationSenderInterface;
 use Commerce\Modules\Notification\Domain\NotificationChannel;
@@ -19,6 +20,7 @@ final class EmailNotificationSender implements NotificationSenderInterface
         private readonly string $fromAddress,
         private readonly string $fromName,
         private readonly NotificationTemplateService $templates,
+        private readonly ?NotificationChannelSettings $channels = null,
     ) {
     }
 
@@ -29,11 +31,12 @@ final class EmailNotificationSender implements NotificationSenderInterface
 
     public function send(NotificationMessage $message, string $recipient): void
     {
+        $saved = $this->channels?->active();
         $override = $this->templates->resolve($message);
         $subject = $override['subject'] ?? $message->subject;
         $text = $override['body'] ?? $message->text;
         $email = (new TemplatedEmail())
-            ->from(new Address($this->fromAddress, $this->fromName))
+            ->from(new Address(($saved['from_address'] ?? '') !== '' ? $saved['from_address'] : $this->fromAddress, ($saved['from_name'] ?? '') !== '' ? $saved['from_name'] : $this->fromName))
             ->to($recipient)
             ->subject($subject)
             ->htmlTemplate('@storefront/email/' . $message->emailTemplate . '.html.twig')

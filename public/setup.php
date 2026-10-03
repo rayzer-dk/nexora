@@ -365,6 +365,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'TELEGRAM_NOTIFICATIONS_ENABLED' => '0',
                 'TELEGRAM_BOT_TOKEN' => '',
                 'TELEGRAM_DEFAULT_CHAT_ID' => '',
+                'TELEGRAM_API_BASE' => 'https://api.telegram.org',
                 'SMS_NOTIFICATIONS_ENABLED' => '0',
                 'SMS_GATEWAY_ENDPOINT' => '',
                 'SMS_GATEWAY_BEARER_TOKEN' => '',

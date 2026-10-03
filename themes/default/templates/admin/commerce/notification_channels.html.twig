@@ -1,0 +1,37 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.notify_channels.title'),'notification_channels') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.notify_channels.title') }}</span></nav><h1>{{ ui_text('admin.notify_channels.title') }}</h1><p>{{ ui_text('admin.notify_channels.intro') }}</p></div><a class="admin-button" href="/admin/commerce/notifications">{{ ui_icon('bell', 16) }} {{ ui_text('admin.notify_channels.to_center') }}</a></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+{% if env_mail_is_null and not s.smtp_enabled %}<div class="admin-notice is-warning">{{ ui_text('admin.notify_channels.null_warning') }}</div>{% endif %}
+
+<form method="post" action="{{ path('admin_commerce_notification_channels') }}" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}">
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.notify_channels.mail_kicker') }}</small><h2>{{ ui_text('admin.notify_channels.mail_title') }}</h2></div></div>
+<p class="admin-card-note">{{ ui_text('admin.notify_channels.mail_help') }}</p>
+<div class="admin-form-grid">
+<div class="admin-check-grid admin-form-wide"><label><input type="checkbox" name="smtp_enabled" value="1"{{ s.smtp_enabled ? ' checked' : '' }}> {{ ui_text('admin.notify_channels.smtp_enabled') }}</label></div>
+<label>{{ ui_text('admin.notify_channels.host') }}<input name="smtp_host" value="{{ s.smtp_host }}" placeholder="smtp.example.com" autocomplete="off"></label>
+<label>{{ ui_text('admin.notify_channels.port') }}<input name="smtp_port" type="number" min="1" max="65535" value="{{ s.smtp_port }}"></label>
+<label>{{ ui_text('admin.notify_channels.encryption') }}<select name="smtp_encryption"><option value="tls"{{ s.smtp_encryption == 'tls' ? ' selected' : '' }}>STARTTLS (587)</option><option value="ssl"{{ s.smtp_encryption == 'ssl' ? ' selected' : '' }}>SSL/TLS (465)</option><option value="none"{{ s.smtp_encryption == 'none' ? ' selected' : '' }}>{{ ui_text('admin.notify_channels.no_encryption') }}</option></select></label>
+<label>{{ ui_text('admin.notify_channels.user') }}<input name="smtp_user" value="{{ s.smtp_user }}" autocomplete="off"></label>
+<label>{{ ui_text('admin.notify_channels.password') }}<input type="password" name="smtp_pass" autocomplete="new-password" placeholder="{{ s.has_smtp_pass ? ui_text('admin.notify_channels.secret_saved') : '' }}"><small>{{ ui_text('admin.notify_channels.secret_hint') }}</small></label>
+<label>{{ ui_text('admin.notify_channels.from_address') }}<input name="from_address" type="email" value="{{ s.from_address }}" placeholder="{{ env_from ?: 'shop@example.com' }}"></label>
+<label>{{ ui_text('admin.notify_channels.from_name') }}<input name="from_name" maxlength="120" value="{{ s.from_name }}"></label>
+</div></section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.notify_channels.tg_kicker') }}</small><h2>{{ ui_text('admin.notify_channels.tg_title') }}</h2></div></div>
+<p class="admin-card-note">{{ ui_text('admin.notify_channels.tg_help') }} <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer">@BotFather</a></p>
+<div class="admin-form-grid">
+<div class="admin-check-grid admin-form-wide"><label><input type="checkbox" name="tg_enabled" value="1"{{ s.tg_enabled ? ' checked' : '' }}> {{ ui_text('admin.notify_channels.tg_enabled') }}</label></div>
+<label>{{ ui_text('admin.notify_channels.tg_token') }}<input type="password" name="tg_token" autocomplete="new-password" placeholder="{{ s.has_tg_token ? ui_text('admin.notify_channels.secret_saved') : '123456789:AA…' }}"></label>
+<label>{{ ui_text('admin.notify_channels.tg_chat') }}<input name="tg_chat_id" value="{{ s.tg_chat_id }}" placeholder="-1001234567890"><small>{{ ui_text('admin.notify_channels.tg_chat_hint') }}</small></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.notify_channels.save') }}</button></div>
+</div></section>
+</form>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.notify_channels.test_kicker') }}</small><h2>{{ ui_text('admin.notify_channels.test_title') }}</h2></div></div>
+<p class="admin-card-note">{{ ui_text('admin.notify_channels.test_help') }}</p>
+<div class="admin-inline-actions">
+<form method="post" action="{{ path('admin_commerce_notification_channels_test') }}" class="admin-inline-actions"><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}"><input type="hidden" name="channel" value="email"><input type="email" name="to" required placeholder="you@example.com" aria-label="{{ ui_text('admin.notify_channels.test_to') }}"><button class="admin-button" type="submit">{{ ui_icon('mail', 16) }} {{ ui_text('admin.notify_channels.test_mail') }}</button></form>
+<form method="post" action="{{ path('admin_commerce_notification_channels_test') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_notify_channels') }}"><input type="hidden" name="channel" value="telegram"><button class="admin-button" type="submit">{{ ui_icon('send', 16) }} {{ ui_text('admin.notify_channels.test_tg') }}</button></form>
+</div></section>
+{{ shell.end() }}

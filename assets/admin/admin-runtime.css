@@ -951,6 +951,8 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
   background: var(--admin-info-soft);
 }
 .admin-ai-helper strong, .admin-ai-helper small { display: block; }
+.admin-ai-helper.is-compact { grid-template-columns: auto minmax(0, 1fr); gap: var(--mc-space-2); padding: var(--mc-space-1) 0; border: 0; background: transparent; }
+.admin-ai-helper.is-compact [data-ai-status] { grid-column: auto; }
 .admin-ai-helper [data-ai-status] { grid-column: 1 / -1; font-size: var(--mc-font-size-sm); }
 .admin-variant-stack,
 .admin-document-list { display: grid; gap: var(--mc-space-2); }

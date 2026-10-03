@@ -353,8 +353,13 @@ services:
     Commerce\Modules\Shipping\Console\ClearShippingCacheCommand:
         arguments:
             $shippingCache: '@cache.shipping'
+    Commerce\Modules\Notification\Channel\Email\RuntimeMailer:
+        arguments:
+            $fallback: '@mailer.mailer'
+
     Commerce\Modules\Notification\Channel\Email\EmailNotificationSender:
         arguments:
+            $mailer: '@Commerce\Modules\Notification\Channel\Email\RuntimeMailer'
             $fromAddress: '%commerce.mail.from_address%'
             $fromName: '%commerce.mail.from_name%'
 
@@ -363,6 +368,7 @@ services:
             $enabled: '%commerce.telegram.enabled%'
             $botToken: '%commerce.telegram.bot_token%'
             $defaultChatId: '%commerce.telegram.default_chat_id%'
+            $apiBase: '%env(TELEGRAM_API_BASE)%'
 
     Commerce\Modules\Notification\Channel\Sms\HttpSmsNotificationSender:
         arguments:
