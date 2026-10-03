@@ -1,4 +1,4 @@
-{% extends '@storefront/base.html.twig' %}
+{% extends '@storefront/base.html.twig' %}{% set page_kind = 'home' %}
 {% set presentation = storefront_presentation() %}
 {% block body %}
 {% for layout_block in home_layout.blocks|default([]) %}

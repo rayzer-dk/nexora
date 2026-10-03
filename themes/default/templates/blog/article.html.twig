@@ -1,10 +1,12 @@
-{% extends '@storefront/base.html.twig' %}
+{% extends '@storefront/base.html.twig' %}{% set page_kind = 'blog' %}
 {% block head %}<link rel="alternate" type="application/rss+xml" title="{{ ui_text('blog_rss')|e('html_attr') }}" href="/blog/feed.xml"><script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>{% endblock %}
 {% block body %}
+{% set ba = presentation.blog.article|default({}) %}
 <article class="shell article-page" data-article data-lightbox-scope>
   {% include '@storefront/components/breadcrumbs.html.twig' with {items: breadcrumbs} only %}
-  <div class="article-layout{% if article.toc %} has-toc{% endif %}">
-    {% if article.toc %}
+  {% set show_toc = article.toc and ba.show_toc is not same as(false) %}
+  <div class="article-layout{% if show_toc %} has-toc{% endif %}">
+    {% if show_toc %}
     <nav class="article-toc" aria-labelledby="article-toc-title">
       <h2 id="article-toc-title">{{ ui_icon('list-tree', 16) }}{{ ui_text('blog_toc') }}</h2>
       <ol>{% for item in article.toc %}<li class="{{ item.level == 3 ? 'article-toc__l3' : 'article-toc__l2' }}"><a href="#{{ item.id }}">{{ item.text }}</a></li>{% endfor %}</ol>
@@ -16,9 +18,9 @@
     <h1>{{ article.title }}</h1>
     {% if article.excerpt %}<p class="article-header__lead">{{ article.excerpt }}</p>{% endif %}
     <p class="article-header__meta">
-      {% if article.author %}<span>{{ ui_icon('user', 16) }}{{ ui_text('blog_by') }} {{ article.author }}</span>{% endif %}
+      {% if article.author and ba.show_author is not same as(false) %}<span>{{ ui_icon('user', 16) }}{{ ui_text('blog_by') }} {{ article.author }}</span>{% endif %}
       <span>{{ ui_icon('calendar', 16) }}<time datetime="{{ article.published_iso }}">{{ article.date }}</time></span>
-      <span>{{ ui_icon('clock', 16) }}{{ ui_text('blog_min_read')|replace({'%min%': article.reading_minutes}) }}</span>
+      {% if ba.show_reading_time is not same as(false) %}<span>{{ ui_icon('clock', 16) }}{{ ui_text('blog_min_read')|replace({'%min%': article.reading_minutes}) }}</span>{% endif %}
     </p>
   </header>
   {% set img_align = article.image_align|default('none') %}
@@ -28,18 +30,18 @@
         {% if article.image and (img_align == 'left' or img_align == 'right') %}<figure class="article-figure article-figure--{{ img_align }} article-figure--{{ img_size }}" data-lightbox-item>{{ media_picture(article.image, 'card', ['card', 'product'], '(min-width: 1024px) 360px, 50vw', {alt: (article.image_alt), width: '720', height: '540', loading: 'eager', decoding: 'async'}) }}</figure>{% endif %}
         {{ article.body_html|raw|with_forms }}
       </div>
-      {% if article.tags %}<ul class="article-tags" aria-label="{{ ui_text('blog_tags_label')|e('html_attr') }}">{% for tag in article.tags %}<li><a class="blog-chip" href="/blog/tag/{{ tag.slug }}">{{ ui_icon('tag', 14) }}{{ tag.name }}</a></li>{% endfor %}</ul>{% endif %}
-      {% include '@storefront/components/share_links.html.twig' with {share_url: share_url, share_title: article.title} only %}
+      {% if article.tags and ba.show_tags is not same as(false) %}<ul class="article-tags" aria-label="{{ ui_text('blog_tags_label')|e('html_attr') }}">{% for tag in article.tags %}<li><a class="blog-chip" href="/blog/tag/{{ tag.slug }}">{{ ui_icon('tag', 14) }}{{ tag.name }}</a></li>{% endfor %}</ul>{% endif %}
+      {% if ba.show_share is not same as(false) %}{% include '@storefront/components/share_links.html.twig' with {share_url: share_url, share_title: article.title} only %}{% endif %}
     </div>
     <aside class="article-rail" aria-label="{{ ui_text('blog_related')|e('html_attr') }}">
-      {% set linked_products = article_products(article.id) %}
+      {% set linked_products = ba.show_products is not same as(false) ? article_products(article.id) : [] %}
       {% if linked_products %}
       <section class="aside-card" aria-labelledby="article-products-title">
         <h2 id="article-products-title">{{ ui_icon('shopping-bag', 16) }}{{ ui_text('blog_products') }}</h2>
         <ul class="aside-links">{% for p in linked_products %}<li><a href="{{ p.path }}">{{ p.name }}{{ ui_icon('chevron-right', 14) }}</a></li>{% endfor %}</ul>
       </section>
       {% endif %}
-      {% if related %}
+      {% if related and ba.show_related is not same as(false) %}
       <section class="aside-card" aria-labelledby="article-related-title">
         <h2 id="article-related-title">{{ ui_icon('newspaper', 16) }}{{ ui_text('blog_related') }}</h2>
         <ul class="article-rail__list">{% for item in related|slice(0, 4) %}<li><a class="article-rail__item" href="{{ item.url }}">{% if item.image %}{{ media_picture(item.image, 'thumb', [], '', {alt: '', width: '96', height: '64', loading: 'lazy', decoding: 'async'}) }}{% else %}<span class="article-rail__ph" aria-hidden="true">{{ ui_icon('file-text', 20) }}</span>{% endif %}<span><strong>{{ item.title }}</strong><small>{{ item.date }}</small></span></a></li>{% endfor %}</ul>
@@ -48,7 +50,7 @@
     </aside>
   </div>
 
-  {% if neighbors.prev or neighbors.next %}
+  {% if (neighbors.prev or neighbors.next) and ba.show_neighbors is not same as(false) %}
   <nav class="article-neighbors" aria-label="{{ ui_text('pagination') }}">
     {% if neighbors.prev %}<a class="article-neighbors__link" rel="prev" href="{{ neighbors.prev.url }}"><small>{{ ui_icon('arrow-left', 14) }}{{ ui_text('blog_prev') }}</small><span>{{ neighbors.prev.title }}</span></a>{% else %}<span></span>{% endif %}
     {% if neighbors.next %}<a class="article-neighbors__link is-next" rel="next" href="{{ neighbors.next.url }}"><small>{{ ui_text('blog_next') }}{{ ui_icon('arrow-right', 14) }}</small><span>{{ neighbors.next.title }}</span></a>{% endif %}

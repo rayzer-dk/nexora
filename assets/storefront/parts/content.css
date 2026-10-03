@@ -249,3 +249,15 @@ body.has-lightbox { overflow: hidden; }
   .article-grid > .article-card:nth-last-child(2):nth-child(3n + 1), .article-grid > .article-card:last-child:nth-child(3n + 2) { grid-column: span 3; }
   .article-grid > .article-card:last-child:nth-child(3n + 1) { grid-column: 1 / -1; }
 }
+
+/* Blog list options (Appearance → Blog): two columns, or one compact row per article. */
+@media (min-width: 1024px) {
+  :root .article-grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .article-grid[data-cols="2"] > .article-card { grid-column: auto; }
+}
+@media (min-width: 640px) {
+  :root .article-grid[data-layout="list"] { grid-template-columns: minmax(0, 1fr); }
+  .article-grid[data-layout="list"] > .article-card { grid-column: auto; display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); }
+  .article-grid[data-layout="list"] > .article-card .article-card__image { aspect-ratio: auto; min-height: 100%; }
+}
+.article-rail:not(:has(*)) { display: none; }

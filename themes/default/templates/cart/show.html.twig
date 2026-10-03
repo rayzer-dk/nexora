@@ -1,4 +1,4 @@
-{% extends '@storefront/base.html.twig' %}
+{% extends '@storefront/base.html.twig' %}{% set page_kind = 'cart' %}
 {% block head %}<script type="module" src="{{ vite_asset('assets/storefront/cart.js', '/assets/cart.js') }}"></script>{% endblock %}
 {% block body %}
 {% set capabilities = site_capabilities() %}

@@ -78,6 +78,40 @@ final class AppearanceAdminController extends AbstractController
                         'key_features_limit' => $request->request->get('display_key_features_limit','5'),
                         'benefits' => $request->request->get('display_benefits',''),
                     ],
+                    'blog' => [
+                        'index' => [
+                            'show_intro' => $bool('blog_index_show_intro'),
+                            'show_categories' => $bool('blog_index_show_categories'),
+                            'show_search' => $bool('blog_index_show_search'),
+                            'show_featured' => $bool('blog_index_show_featured'),
+                            'show_tags' => $bool('blog_index_show_tags'),
+                            'show_rss' => $bool('blog_index_show_rss'),
+                            'layout' => $request->request->get('blog_index_layout', 'grid'),
+                            'columns' => $request->request->get('blog_index_columns', '3'),
+                        ],
+                        'article' => [
+                            'show_toc' => $bool('blog_article_show_toc'),
+                            'show_author' => $bool('blog_article_show_author'),
+                            'show_reading_time' => $bool('blog_article_show_reading_time'),
+                            'show_tags' => $bool('blog_article_show_tags'),
+                            'show_share' => $bool('blog_article_show_share'),
+                            'show_products' => $bool('blog_article_show_products'),
+                            'show_related' => $bool('blog_article_show_related'),
+                            'show_neighbors' => $bool('blog_article_show_neighbors'),
+                        ],
+                    ],
+                    'announcement' => [
+                        'enabled' => $bool('announcement_enabled'),
+                        'text' => $request->request->get('announcement_text', ''),
+                        'link_label' => $request->request->get('announcement_link_label', ''),
+                        'link_url' => $request->request->get('announcement_link_url', ''),
+                        'mode' => $request->request->get('announcement_mode', 'marquee_mobile'),
+                        'bg' => $request->request->getBoolean('announcement_bg_on') ? (string) $request->request->get('announcement_bg', '') : '',
+                        'pages' => array_combine(
+                            ['home', 'catalog', 'category', 'product', 'cart', 'blog', 'content'],
+                            array_map(static fn (string $page): bool => $request->request->getBoolean('announcement_page_' . $page), ['home', 'catalog', 'category', 'product', 'cart', 'blog', 'content']),
+                        ),
+                    ],
                     'colors' => array_combine(
                         ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'primary_hover', 'primary_active', 'buy_button', 'buy_hover', 'buy_active'],
                         array_map(

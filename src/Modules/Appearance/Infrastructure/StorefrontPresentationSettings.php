@@ -83,6 +83,13 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'container' => '1408',
                 'font' => 'system',
             ],
+            // Blog: which blocks the list and the article show.
+            'blog' => ['index' => ['show_intro' => true, 'show_categories' => true, 'show_search' => true, 'show_featured' => true, 'show_tags' => true, 'show_rss' => true, 'layout' => 'grid', 'columns' => '3'], 'article' => ['show_toc' => true, 'show_author' => true, 'show_reading_time' => true, 'show_tags' => true, 'show_share' => true, 'show_products' => true, 'show_related' => true, 'show_neighbors' => true]],
+            // Announcement bar above the header. Empty text falls back to the demo showcase text while the demo is installed.
+            'announcement' => [
+                'enabled' => true, 'text' => '', 'link_label' => '', 'link_url' => '', 'mode' => 'marquee_mobile', 'bg' => '',
+                'pages' => ['home' => true, 'catalog' => true, 'category' => true, 'product' => true, 'cart' => true, 'blog' => true, 'content' => true],
+            ],
             // Optional overrides of single colours; an empty value keeps the colour of the chosen preset and colour scheme.
             'colors' => ['background' => '', 'text' => '', 'heading' => '', 'header_bg' => '', 'footer_bg' => '', 'primary_hover' => '', 'primary_active' => '', 'buy_button' => '', 'buy_hover' => '', 'buy_active' => ''],
             'display' => [
@@ -156,6 +163,30 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $scheme=(string)($input['theme']['color_scheme']??$defaults['theme']['color_scheme']); $out['theme']['color_scheme']=in_array($scheme,['light','auto','dark'],true)?$scheme:$defaults['theme']['color_scheme'];$out['theme']['toggle']=(string)($input['theme']['toggle']??$defaults['theme']['toggle'])==='0'?'0':'1';
         $container=(int)($input['theme']['container']??$defaults['theme']['container']); $out['theme']['container']=(string)max(960,min(1680,$container));
         $font=(string)($input['theme']['font']??$defaults['theme']['font']); $out['theme']['font']=in_array($font,['system','inter','manrope'],true)?$font:$defaults['theme']['font'];
+        $bl = is_array($input['blog'] ?? null) ? $input['blog'] : [];
+        foreach (['index', 'article'] as $group) {
+            foreach (array_keys($defaults['blog'][$group]) as $key) {
+                if (in_array($key, ['layout', 'columns'], true)) {
+                    continue;
+                }
+                $given = is_array($bl[$group] ?? null) ? $bl[$group] : null;
+                $out['blog'][$group][$key] = $given === null ? $defaults['blog'][$group][$key] : (bool) ($given[$key] ?? false);
+            }
+        }
+        $bi = is_array($bl['index'] ?? null) ? $bl['index'] : [];
+        $out['blog']['index']['layout'] = in_array((string) ($bi['layout'] ?? 'grid'), ['grid', 'list'], true) ? (string) $bi['layout'] : 'grid';
+        $out['blog']['index']['columns'] = in_array((string) ($bi['columns'] ?? '3'), ['2', '3'], true) ? (string) $bi['columns'] : '3';
+        $an = is_array($input['announcement'] ?? null) ? $input['announcement'] : [];
+        $out['announcement']['enabled'] = (bool) ($an['enabled'] ?? $defaults['announcement']['enabled']);
+        $out['announcement']['text'] = $this->text($an['text'] ?? '', 200);
+        $out['announcement']['link_label'] = $this->text($an['link_label'] ?? '', 40);
+        $out['announcement']['link_url'] = trim((string) ($an['link_url'] ?? '')) === '' ? '' : $this->url($an['link_url']);
+        $mode = (string) ($an['mode'] ?? 'marquee_mobile');
+        $out['announcement']['mode'] = in_array($mode, ['marquee_mobile', 'marquee', 'static'], true) ? $mode : 'marquee_mobile';
+        $out['announcement']['bg'] = $this->hex($an['bg'] ?? '', '');
+        foreach (array_keys($defaults['announcement']['pages']) as $page) {
+            $out['announcement']['pages'][$page] = (bool) (is_array($an['pages'] ?? null) ? ($an['pages'][$page] ?? false) : $defaults['announcement']['pages'][$page]);
+        }
         $col = is_array($input['colors'] ?? null) ? $input['colors'] : [];
         foreach (array_keys($defaults['colors']) as $key) {
             $value = strtoupper(trim((string) ($col[$key] ?? '')));

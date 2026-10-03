@@ -1,30 +1,31 @@
-{% extends '@storefront/base.html.twig' %}
+{% extends '@storefront/base.html.twig' %}{% set page_kind = 'blog' %}
 {% block head %}<link rel="alternate" type="application/rss+xml" title="{{ ui_text('blog_rss')|e('html_attr') }}" href="/blog/feed.xml">{% endblock %}
 {% block body %}
+{% set bi = presentation.blog.index|default({}) %}
 <section class="shell content-list blog-page">
   <header class="content-hero blog-hero">
     <p class="eyebrow">{{ ui_text('useful_materials') }}</p>
     <h1>{{ heading }}</h1>
-    <p>{% if category and category.description %}{{ category.description }}{% else %}{{ ui_text('blog_intro') }}{% endif %}</p>
+    {% if bi.show_intro is not same as(false) %}<p>{% if category and category.description %}{{ category.description }}{% else %}{{ ui_text('blog_intro') }}{% endif %}</p>{% endif %}
   </header>
 
-  <div class="blog-toolbar">
-    <nav class="blog-chips" aria-label="{{ ui_text('blog_categories_label')|e('html_attr') }}">
+  {% if bi.show_categories is not same as(false) or bi.show_search is not same as(false) %}<div class="blog-toolbar">
+    {% if bi.show_categories is not same as(false) %}<nav class="blog-chips" aria-label="{{ ui_text('blog_categories_label')|e('html_attr') }}">
       <a class="blog-chip blog-chip--filter" href="/blog"{% if not active_category and not active_tag and not search %} aria-current="page"{% endif %}>{{ ui_text('blog_all') }}</a>
       {% for item in categories %}<a class="blog-chip blog-chip--filter" href="/blog/category/{{ item.slug }}"{% if active_category == item.slug %} aria-current="page"{% endif %}>{{ item.name }}<span class="blog-chip__count">{{ item.articles }}</span></a>{% endfor %}
-    </nav>
-    <form class="blog-search" method="get" action="/blog" role="search">
+    </nav>{% endif %}
+    {% if bi.show_search is not same as(false) %}<form class="blog-search" method="get" action="/blog" role="search">
       <label class="sr-only" for="blog-search-input">{{ ui_text('blog_search_label') }}</label>
       <input id="blog-search-input" type="search" name="q" value="{{ search }}" maxlength="100" placeholder="{{ ui_text('blog_search_placeholder')|e('html_attr') }}" autocomplete="off">
       <button class="button button--secondary" type="submit">{{ ui_icon('search', 16) }}<span>{{ ui_text('blog_search_submit') }}</span></button>
-    </form>
-  </div>
+    </form>{% endif %}
+  </div>{% endif %}
 
-  {% if featured %}<div class="blog-featured">{% include '@storefront/components/blog_card.html.twig' with {article: featured, large: true} only %}</div>{% endif %}
+  {% if featured and bi.show_featured is not same as(false) %}<div class="blog-featured">{% include '@storefront/components/blog_card.html.twig' with {article: featured, large: true} only %}</div>{% endif %}
 
   {% if articles %}
-    <div class="article-grid">{% for article in articles %}{% include '@storefront/components/blog_card.html.twig' with {article: article} only %}{% endfor %}</div>
-  {% elseif not featured %}
+    <div class="article-grid" data-layout="{{ bi.layout|default('grid') }}" data-cols="{{ bi.columns|default('3') }}">{% for article in articles %}{% include '@storefront/components/blog_card.html.twig' with {article: article} only %}{% endfor %}</div>
+  {% elseif not (featured and bi.show_featured is not same as(false)) %}
     <div class="empty-state"><h2>{{ search or category or tag_name ? ui_text('blog_no_results') : ui_text('no_articles') }}</h2><p>{{ search or category or tag_name ? ui_text('blog_no_results_text') : ui_text('no_articles_text') }}</p></div>
   {% endif %}
 
@@ -36,13 +37,13 @@
   </nav>
   {% endif %}
 
-  {% if tags and not active_tag %}
+  {% if tags and not active_tag and bi.show_tags is not same as(false) %}
   <aside class="blog-tags" aria-labelledby="blog-tags-title">
     <h2 id="blog-tags-title">{{ ui_text('blog_popular_tags') }}</h2>
     <ul>{% for item in tags %}<li><a class="blog-chip" href="/blog/tag/{{ item.slug }}">#{{ item.name }}</a></li>{% endfor %}</ul>
   </aside>
   {% endif %}
 
-  <p class="blog-rss"><a href="/blog/feed.xml">{{ ui_icon('rss', 16) }}<span>{{ ui_text('blog_rss') }}</span></a></p>
+  {% if bi.show_rss is not same as(false) %}<p class="blog-rss"><a href="/blog/feed.xml">{{ ui_icon('rss', 16) }}<span>{{ ui_text('blog_rss') }}</span></a></p>{% endif %}
 </section>
 {% endblock %}

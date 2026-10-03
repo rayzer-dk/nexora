@@ -1,4 +1,4 @@
-{% extends '@storefront/base.html.twig' %}
+{% extends '@storefront/base.html.twig' %}{% set page_kind = 'catalog' %}
 {% block body %}
 <section class="shell compare-page">
     <div class="section-heading"><div><span class="eyebrow">{{ ui_text('catalog_title') }}</span><h1>{{ ui_text('compare_products') }}</h1></div><div><span>{{ products|length }} / 4</span>{% if products %}<form method="post" action="{{ path('product_compare_clear') }}"><input type="hidden" name="_token" value="{{ csrf_token('compare_clear') }}"><button class="button button--secondary button--sm" type="submit">{{ ui_icon('trash-2', 16) }}{{ ui_text('clear') }}</button></form>{% endif %}</div></div>

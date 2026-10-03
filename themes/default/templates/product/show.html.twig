@@ -1,4 +1,4 @@
-{% extends '@storefront/base.html.twig' %}
+{% extends '@storefront/base.html.twig' %}{% set page_kind = 'product' %}
 
 {% block head %}
     <script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>
