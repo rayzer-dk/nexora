@@ -17,7 +17,7 @@ final class LayoutSchemaValidator
         'hero','category_grid','product_grid','product_carousel','banner','rich_text','image','gallery','video',
         'brands','faq','newsletter','article_grid','breadcrumbs','product_gallery','product_title','product_price',
         'product_stock','product_variants','product_buy','product_description','product_attributes','product_documents',
-        'product_reviews','related_products','info_card','checkout_contact','checkout_shipping','checkout_company','checkout_comment','checkout_payment','checkout_coupon','checkout_summary','checkout_consent','category_heading','category_filters','category_toolbar','category_recommended','category_grid','category_description','cart_heading','cart_lines','cart_summary','cart_saved','cart_recent','logo','search','catalog_button','menu','language','currency','account','wishlist','cart','contacts','social_links','button',
+        'product_reviews','related_products','info_card','checkout_contact','checkout_shipping','checkout_company','checkout_comment','checkout_payment','checkout_coupon','checkout_summary','checkout_consent','category_heading','category_filters','category_subcategories','category_toolbar','category_recommended','category_grid','category_description','cart_heading','cart_lines','cart_summary','cart_saved','cart_recent','logo','search','catalog_button','menu','language','currency','account','wishlist','cart','contacts','social_links','button',
     ];
 
     /** @param array<string,mixed> $layout @return array<string,mixed> */
@@ -76,7 +76,7 @@ final class LayoutSchemaValidator
             'header' => ['logo','search','catalog_button','menu','language','currency','account','wishlist','cart','button'],
             'footer' => ['logo','menu','contacts','social_links','newsletter','button'],
             'product' => ['product_gallery','product_title','product_price','product_stock','product_variants','product_buy','product_description','product_attributes','product_documents','product_reviews','related_products','rich_text','image','info_card'],
-            'category' => ['category_heading','category_filters','category_toolbar','category_recommended','category_grid','category_description'],
+            'category' => ['category_heading','category_filters','category_subcategories','category_toolbar','category_recommended','category_grid','category_description'],
             'cart' => ['cart_heading','cart_lines','cart_summary','cart_saved','cart_recent'],
             'checkout' => ['checkout_contact','checkout_shipping','checkout_company','checkout_comment','checkout_payment','checkout_coupon','checkout_summary','checkout_consent'],
             default => [],

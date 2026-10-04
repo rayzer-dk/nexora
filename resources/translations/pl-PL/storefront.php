@@ -838,4 +838,6 @@ return [
     'support_chat.widget_staff' => 'Sklep',
     'compare_added' => 'Dodano do porównania',
     'view_order' => 'Zobacz zamówienie',
+    'subcategories' => 'Podkategorie',
+    'category_tile_products' => 'Produktów: %count%',
 ];

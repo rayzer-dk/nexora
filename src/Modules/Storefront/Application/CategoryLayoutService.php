@@ -12,20 +12,21 @@ use Commerce\Modules\Appearance\Builder\LayoutRevisionStore;
  */
 final readonly class CategoryLayoutService
 {
-    private const MAIN = ['category_toolbar' => 'toolbar', 'category_recommended' => 'recommended', 'category_grid' => 'grid'];
+    private const MAIN = ['category_subcategories' => 'subcategories', 'category_toolbar' => 'toolbar', 'category_recommended' => 'recommended', 'category_grid' => 'grid'];
     private const SIDE = ['category_heading' => 'heading', 'category_filters' => 'filters', 'category_description' => 'description'];
 
     public function __construct(private LayoutRevisionStore $layouts)
     {
     }
 
-    /** @return array{main:list<string>,show:array<string,bool>,classes:array<string,string>} */
+    /** @return array{main:list<string>,show:array<string,bool>,classes:array<string,string>,subcategories:array{layout:string,columns:int,show_image:bool,show_count:bool,limit:int,order:string}} */
     public function active(int $storeId): array
     {
         $layout = $this->layouts->publishedOrNull($storeId, 'category');
         $rows = is_array($layout) ? (array) ($layout['blocks'] ?? []) : [];
         $main = [];
-        $show = ['heading' => true, 'filters' => true, 'description' => true, 'toolbar' => true, 'recommended' => true, 'grid' => true];
+        $show = ['heading' => true, 'filters' => true, 'description' => true, 'toolbar' => true, 'recommended' => true, 'grid' => true, 'subcategories' => true];
+        $subcategories = ['layout' => 'grid', 'columns' => 4, 'show_image' => true, 'show_count' => true, 'limit' => 24, 'order' => 'manual'];
         $classes = array_fill_keys(array_keys($show), '');
         $seen = [];
         foreach ($rows as $row) {
@@ -48,16 +49,28 @@ final readonly class CategoryLayoutService
                     $classes[$name] .= ' is-hidden-' . $device;
                 }
             }
+            if ($name === 'subcategories') {
+                $props = is_array($row['props'] ?? null) ? $row['props'] : [];
+                $subcategories = [
+                    'layout' => ($props['layout'] ?? 'grid') === 'scroll' ? 'scroll' : 'grid',
+                    'columns' => max(2, min(6, (int) ($props['columns'] ?? 4) ?: 4)),
+                    'show_image' => ($props['show_image'] ?? true) !== false && ($props['show_image'] ?? true) !== '0',
+                    'show_count' => ($props['show_count'] ?? true) !== false && ($props['show_count'] ?? true) !== '0',
+                    'limit' => max(1, min(60, (int) ($props['limit'] ?? 24) ?: 24)),
+                    'order' => in_array($props['order'] ?? 'manual', ['manual', 'name', 'popular', 'newest'], true) ? (string) $props['order'] : 'manual',
+                ];
+            }
             if (in_array($name, self::MAIN, true) && $enabled) {
                 $main[] = $name;
             }
         }
         foreach (self::MAIN as $name) {
             if (!isset($seen[$name])) {
-                $main[] = $name;
+                // A layout saved before the subcategory tiles existed gets them above the product list.
+                $name === 'subcategories' ? array_unshift($main, $name) : $main[] = $name;
             }
         }
 
-        return ['main' => $main, 'show' => $show, 'classes' => array_map('trim', $classes)];
+        return ['main' => $main, 'show' => $show, 'classes' => array_map('trim', $classes), 'subcategories' => $subcategories];
     }
 }

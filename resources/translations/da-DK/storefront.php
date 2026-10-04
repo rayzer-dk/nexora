@@ -905,4 +905,6 @@ return [
     'support_chat.widget_staff' => 'Butik',
     'compare_added' => 'Tilføjet til sammenligning',
     'view_order' => 'Se din ordre',
+    'subcategories' => 'Underkategorier',
+    'category_tile_products' => 'Produkter: %count%',
 ];

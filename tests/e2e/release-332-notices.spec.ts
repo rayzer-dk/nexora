@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-// Release 3.42.1: inline notices and errors can be closed.
+// Release 3.43.0: inline notices and errors can be closed.
 
 test('login error notice has a working close button', async ({ page }) => {
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });

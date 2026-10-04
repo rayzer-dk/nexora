@@ -839,4 +839,6 @@ return [
     'support_chat.widget_staff' => 'Магазин',
     'compare_added' => 'Добавлено к сравнению',
     'view_order' => 'Посмотреть заказ',
+    'subcategories' => 'Подкатегории',
+    'category_tile_products' => 'Товаров: %count%',
 ];

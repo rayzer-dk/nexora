@@ -207,6 +207,11 @@ final class StorefrontCatalogController extends AbstractController
             $recommended = (array) ($this->catalog->products($context, (int) $category['id'], 1, 4, null, new ProductCatalogFilter(inStockOnly: true, sort: ProductCatalogFilter::SORT_POPULAR))['items'] ?? []);
         }
         $facets = $this->catalog->catalogFacets($context, (int) $category['id']);
+        $layout = $this->categoryLayout->active($context->storeId);
+        $subcategories = [];
+        if ($page === 1 && !$filter->isFiltered() && ($layout['show']['subcategories'] ?? true)) {
+            $subcategories = $this->catalog->childCategories($context, (int) $category['id'], $layout['subcategories']['limit'], $layout['subcategories']['order']);
+        }
         $canonical = $request->getSchemeAndHttpHost() . $category['url'] . (!$filter->isFiltered() && $page > 1 ? '?page=' . $page : '');
 
         return $this->render('@storefront/category/show.html.twig', [
@@ -215,7 +220,9 @@ final class StorefrontCatalogController extends AbstractController
             'category' => $category,
             'products' => $products,
             'recommended_products' => $recommended,
-            'category_layout' => $this->categoryLayout->active($context->storeId),
+            'category_layout' => $layout,
+            'subcategories' => $subcategories,
+            'category_trail' => $this->catalog->categoryTrail($context, (int) $category['id']),
             'search_query' => $filter->search,
             'catalog_filter' => $filter,
             'catalog_facets' => $facets,

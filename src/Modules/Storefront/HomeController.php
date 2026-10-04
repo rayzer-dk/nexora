@@ -48,7 +48,19 @@ final class HomeController extends AbstractController
         $articles = [];
         if ((bool) ($features['catalog'] ?? true)) {
             try {
-                $categories = $this->catalog->topCategories($context, 12);
+                // The category block of the home layout chooses how many tiles and in which order (manual, name, popular, newest).
+                $categoryProps = [];
+                foreach ((array) ($this->layouts->active($context->storeId, 'home')['blocks'] ?? []) as $block) {
+                    if (is_array($block) && ($block['component'] ?? '') === 'category_grid' && ($block['enabled'] ?? true) !== false) {
+                        $categoryProps = is_array($block['props'] ?? null) ? $block['props'] : [];
+                        break;
+                    }
+                }
+                $categories = $this->catalog->topCategories(
+                    $context,
+                    max(1, min(24, (int) ($categoryProps['limit'] ?? 12) ?: 12)),
+                    in_array($categoryProps['order'] ?? 'manual', ['manual', 'name', 'popular', 'newest'], true) ? (string) $categoryProps['order'] : 'manual',
+                );
             } catch (\Throwable) {
                 $categories = [];
             }

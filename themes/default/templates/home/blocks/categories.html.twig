@@ -1,14 +1,6 @@
 {% if presentation.home.show_categories and categories %}
 <section class="shell" aria-label="{{ ui_text('product_categories') }}" data-home-builder-block="{{ layout_block.id }}">
     <div class="reference-section-title reference-section-title--spaced"><div><small class="section-kicker">{{ ui_text('quick_choice') }}</small><h2>{{ layout_block.props.title|default('') ?: ui_text('popular_categories') }}</h2></div><a class="section-link" href="/catalog">{{ ui_text('all_catalog_arrow') }}{{ ui_icon('arrow-right', 16) }}</a></div>
-    <div class="reference-categories">
-    {% for category in categories %}
-    <a class="reference-category" href="{{ category.url }}">
-        <span class="reference-category__image">{{ media_picture(category.image|default('/assets/product-placeholder.svg'), 'card', ['card', 'product'], '(min-width: 1024px) 20vw, 50vw', {alt: '', width: '480', height: '360', loading: 'lazy', decoding: 'async'}) }}</span>
-        <span class="reference-category__copy"><strong>{{ category.name }}</strong>{% if category.subtitle is defined %}<small>{{ category.subtitle }}</small>{% endif %}</span>
-        <span class="reference-category__arrow" aria-hidden="true">{{ ui_icon('arrow-right', 16) }}</span>
-    </a>
-    {% endfor %}
-    </div>
+    {% include '@storefront/components/category_tiles.html.twig' with {items: categories, options: {layout: layout_block.props.layout|default('grid'), columns: (layout_block.props.columns|default(0)) ?: min(6, max(2, categories|length)), show_image: layout_block.props.show_image|default(true) not in [false, 0, '0', 'false'], show_count: layout_block.props.show_count|default(true) not in [false, 0, '0', 'false']}} only %}
 </section>
 {% endif %}

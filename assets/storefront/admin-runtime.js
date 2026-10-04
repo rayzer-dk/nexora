@@ -410,6 +410,39 @@ function initSmsCounters() {
   });
 }
 
+function initQuickOrder() {
+  qa('[data-quick-order]').forEach((box) => {
+    const input = q('[data-quick-order-input]', box);
+    if (!input) return;
+    let busy = false;
+    const save = async () => {
+      const value = input.value.trim();
+      if (busy || value === input.dataset.original) return;
+      if (!/^\d{1,6}$/.test(value)) { input.setCustomValidity(t('js_order_invalid')); input.reportValidity(); return; }
+      input.setCustomValidity('');
+      busy = true;
+      try {
+        const body = new URLSearchParams({ _token: box.dataset.token || '', order: value });
+        const response = await fetch(box.dataset.url || '', { method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' } });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error('order');
+        input.dataset.original = String(data.order);
+        toast(t('js_order_saved'), 'success', 2000);
+      } catch (_) {
+        input.value = input.dataset.original || '';
+        toast(t('js_order_failed'), 'error', 4000);
+      } finally {
+        busy = false;
+      }
+    };
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); save(); input.blur(); }
+      if (event.key === 'Escape') { input.value = input.dataset.original || ''; input.blur(); }
+    });
+    input.addEventListener('change', save);
+  });
+}
+
 function initQuickStatus() {
   qa('[data-quick-status]').forEach((box) => {
     const input = q('input', box);
@@ -1481,6 +1514,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAttributePicker();
   initQuickPrice();
   initQuickStatus();
+  initQuickOrder();
   initSmsCounters();
   initThumbZoom();
   initProductTabs();

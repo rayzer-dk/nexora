@@ -1686,6 +1686,11 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-sms-limits { display: block; color: var(--mc-color-text-muted); }
 .admin-sms-event { border-top: 1px solid var(--mc-color-border); padding-top: var(--mc-space-3); }
 .admin-sms-history { list-style: none; margin: var(--mc-space-3) 0 0; padding: 0; display: grid; gap: var(--mc-space-3); }
+/* Category tree: indentation by depth and the quick Order field. */
+.admin-tree-cell { display: flex; align-items: flex-start; gap: var(--mc-space-2); padding-left: calc(var(--depth, 0) * var(--mc-space-6)); }
+.admin-tree-cell strong, .admin-tree-cell small { display: block; }
+.admin-tree-cell__branch { color: var(--mc-color-text-muted); padding-top: var(--mc-space-1); }
+.admin-quick-order > input { width: 5.5rem; min-height: var(--mc-control-height-sm); text-align: right; }
 /* Status switch next to the badge: compact, no label gap. */
 .admin-quick-status { margin-inline-start: var(--mc-space-2); vertical-align: middle; gap: 0; }
 .admin-quick-price { display: inline-flex; align-items: center; gap: var(--mc-space-1); }

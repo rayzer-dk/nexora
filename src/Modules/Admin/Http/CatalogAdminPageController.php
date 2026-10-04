@@ -92,8 +92,34 @@ final class CatalogAdminPageController extends AbstractController
     public function categories(Request $request): Response
     {
         $context = $this->context->resolve($request);
-        $result = $this->query->categories($context->storeId, $context->locale, (int) $request->query->get('page', 1), 25, (string) $request->query->get('search', ''));
-        return $this->render('@storefront/admin/catalog/categories.html.twig', ['result' => $result, 'search' => (string) $request->query->get('search', '')]);
+        $search = (string) $request->query->get('search', '');
+        // Without a search the whole tree is shown at once (indented, in the order the shop uses); a search is a flat, paged list.
+        $tree = trim($search) === '' ? $this->query->categoryTree($context->storeId, $context->locale) : null;
+        $result = $tree !== null
+            ? ['items' => $tree, 'total' => count($tree), 'page' => 1, 'limit' => max(1, count($tree))]
+            : $this->query->categories($context->storeId, $context->locale, (int) $request->query->get('page', 1), 25, $search);
+        return $this->render('@storefront/admin/catalog/categories.html.twig', ['result' => $result, 'search' => $search, 'is_tree' => $tree !== null]);
+    }
+
+    /** Changes the position of one category from the list (Enter or leaving the field). Answers JSON. */
+    #[Route('/admin/catalog/categories/{publicId}/quick-order', name: 'admin_catalog_category_quick_order', methods: ['POST'])]
+    public function categoryQuickOrder(string $publicId, Request $request): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        $context = $this->context->resolve($request);
+        if (!$this->isCsrfTokenValid('admin_category_quick_order', (string) $request->request->get('_token'))) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => false], 403);
+        }
+        $raw = trim((string) $request->request->get('order', ''));
+        if (preg_match('/^\d{1,6}$/D', $raw) !== 1) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => false, 'error' => 'format'], 422);
+        }
+        try {
+            $this->categories->reorder($context->storeId, $context->marketId, $publicId, (int) $raw);
+        } catch (\Throwable) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => false, 'error' => 'save'], 422);
+        }
+
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => true, 'order' => (int) $raw]);
     }
 
     #[Route('/admin/catalog/categories/new', name: 'admin_catalog_category_new', methods: ['GET', 'POST'])]

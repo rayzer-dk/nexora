@@ -475,7 +475,18 @@ legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-
   .reference-benefits { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (min-width: 1024px) {
-  /* Two columns only when the side banners exist; otherwise the hero takes the whole width. */
+  /* Category photo tiles: grid with a chosen number of columns on wide screens, or one horizontal swipe row. */
+.category-tiles { min-width: 0; }
+.category-tiles--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 640px) { .category-tiles--grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .category-tiles--grid { grid-template-columns: repeat(var(--tile-cols, 4), minmax(0, 1fr)); } }
+.category-tiles--scroll { display: flex; gap: var(--mc-space-3); overflow-x: auto; padding-bottom: var(--mc-space-2); scroll-snap-type: x proximity; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.category-tiles--scroll > .reference-category { flex: 0 0 min(64vw, 220px); scroll-snap-align: start; }
+@media (min-width: 1024px) { .category-tiles--scroll > .reference-category { flex-basis: calc((100% - (var(--tile-cols, 4) - 1) * var(--mc-space-3)) / var(--tile-cols, 4)); } }
+.reference-category--text { grid-template-areas: "copy arrow"; }
+.reference-category--text .reference-category__copy { padding: var(--mc-space-2); }
+.category-subcategories { margin-block: var(--mc-space-4); }
+/* Two columns only when the side banners exist; otherwise the hero takes the whole width. */
   .demo-hero-grid:has(.demo-hero-stack) { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .demo-hero-stack { grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr 1fr; }
   .reference-categories { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }

@@ -28,6 +28,22 @@ final readonly class CategoryWriter
     ) {
     }
 
+    /** Changes only the position of a category among its siblings (the Order field), in the store and in the market. */
+    public function reorder(int $storeId, int $marketId, string $publicId, int $sortOrder): void
+    {
+        $sortOrder = max(0, min(100000, $sortOrder));
+        $this->connection->transactional(function (Connection $db) use ($storeId, $marketId, $publicId, $sortOrder): void {
+            $id = $db->fetchOne('SELECT c.id FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? WHERE c.public_id=?', [$storeId, Uuid::fromString($publicId)->toBinary()]);
+            if ($id === false) {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.6324b72effe1'));
+            }
+            $db->update('mc_category', ['sort_order' => $sortOrder, 'updated_at' => $this->now()], ['id' => (int) $id]);
+            $db->update('mc_store_category', ['sort_order' => $sortOrder], ['store_id' => $storeId, 'category_id' => (int) $id]);
+            $db->update('mc_market_category', ['sort_order' => $sortOrder], ['market_id' => $marketId, 'category_id' => (int) $id]);
+            $this->events->publish($this->eventFactory->create(EventNames::CATEGORY_UPDATED, 'category', $publicId, ['store_id' => $storeId, 'market_id' => $marketId], ['source' => 'catalog']));
+        });
+    }
+
     /** @return array{id:int,public_id:string,url:string} */
     public function create(CreateCategoryCommand $command): array
     {

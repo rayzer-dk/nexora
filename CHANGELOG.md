@@ -2,6 +2,16 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.43.0 — 2026-10-04
+
+Deep category tree, subcategory tiles, bigger demo catalogue — schema 78.
+
+- A category page now lists the products of its whole branch (a parent such as "Electronics" used to show 0 products when everything sat in subcategories); filters and facets follow the same branch.
+- Subcategory tiles with photos and product counts on the category page, a new block "Subcategories" in the Category Builder (grid or horizontal swipe strip, columns, photo and count switches, limit, order); the breadcrumbs show every parent.
+- Home page category block: layout (grid or swipe strip), columns, limit, photo and count switches, order (manual, by name, by number of products, newest). Tiles show the photo of a product from the branch when the category has none.
+- Admin → Categories: a tree with indentation, the parent name, the number of products and the Order number edited in place.
+- Demo catalogue: 53 categories in up to four levels (Electronics → Phones & tablets → Smartphones → Apple iPhone) and 165 products from the DummyJSON snapshot (MIT); photos are fetched in parallel during the optional demo installation, products without a photo (offline install) simply have none. Texts of the added products in Ukrainian and Russian are generated from category templates; names of simple goods are translated, model names stay Latin.
+
 ## 3.42.1 — 2026-10-04
 
 - Home page: the hero block no longer leaves an empty third of the row when there are no side banners.

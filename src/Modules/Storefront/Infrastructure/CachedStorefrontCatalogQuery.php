@@ -21,12 +21,33 @@ final readonly class CachedStorefrontCatalogQuery
     }
 
     /** @return list<array<string,mixed>> */
-    public function topCategories(StorefrontContext $context, int $limit = 24): array
+    public function topCategories(StorefrontContext $context, int $limit = 24, string $order = 'manual'): array
     {
         $limit = min(60, max(1, $limit));
-        return $this->cache->get($this->key('top-categories', $context, [$limit]), function (ItemInterface $item) use ($context, $limit): array {
+        $order = in_array($order, ['manual', 'name', 'popular', 'newest'], true) ? $order : 'manual';
+        return $this->cache->get($this->key('top-categories', $context, [$limit, $order]), function (ItemInterface $item) use ($context, $limit, $order): array {
             $item->expiresAfter(300);
-            return $this->inner->topCategories($context, $limit);
+            return $this->inner->topCategories($context, $limit, $order);
+        });
+    }
+
+    /** @return list<array<string,mixed>> */
+    public function childCategories(StorefrontContext $context, int $parentId, int $limit = 60, string $order = 'manual'): array
+    {
+        $limit = min(100, max(1, $limit));
+        $order = in_array($order, ['manual', 'name', 'popular', 'newest'], true) ? $order : 'manual';
+        return $this->cache->get($this->key('child-categories', $context, [$parentId, $limit, $order]), function (ItemInterface $item) use ($context, $parentId, $limit, $order): array {
+            $item->expiresAfter(300);
+            return $this->inner->childCategories($context, $parentId, $limit, $order);
+        });
+    }
+
+    /** @return list<array{name:string,url:string}> */
+    public function categoryTrail(StorefrontContext $context, int $categoryId): array
+    {
+        return $this->cache->get($this->key('category-trail', $context, [$categoryId]), function (ItemInterface $item) use ($context, $categoryId): array {
+            $item->expiresAfter(300);
+            return $this->inner->categoryTrail($context, $categoryId);
         });
     }
 

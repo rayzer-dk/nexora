@@ -229,4 +229,57 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         foreach ($rows as &$row) { $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122(); }
         return ['items' => $rows, 'total' => $total, 'page' => $page, 'limit' => $limit];
     }
+
+    /**
+     * Every category of the store as a tree in display order (siblings by their Order, then id), with the depth, the
+     * name of the parent and the number of products attached to the category itself.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function categoryTree(int $storeId, string $locale): array
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name,
+                    (SELECT COUNT(*) FROM mc_product_category pc WHERE pc.category_id=c.id) AS product_count
+             FROM mc_category c
+             JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=?
+             JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=sc.store_id AND ct.locale=?
+             ORDER BY c.sort_order ASC,c.id ASC LIMIT 2000',
+            [$storeId, $locale],
+        );
+        $byParent = [];
+        $names = [];
+        foreach ($rows as $row) {
+            $names[(int) $row['id']] = (string) $row['name'];
+            $byParent[$row['parent_id'] === null ? 0 : (int) $row['parent_id']][] = $row;
+        }
+        $out = [];
+        $walk = function (int $parent, int $depth) use (&$walk, &$out, $byParent, $names): void {
+            foreach ($byParent[$parent] ?? [] as $row) {
+                if ($depth > 12) {
+                    return;
+                }
+                $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122();
+                $row['depth'] = $depth;
+                $row['parent_name'] = $row['parent_id'] !== null ? ($names[(int) $row['parent_id']] ?? '') : '';
+                $row['children'] = count($byParent[(int) $row['id']] ?? []);
+                $out[] = $row;
+                $walk((int) $row['id'], $depth + 1);
+            }
+        };
+        $walk(0, 0);
+        // Categories whose parent is missing (not translated in this language) still appear, at the end, so nothing is lost.
+        $seen = array_flip(array_map(static fn (array $r): int => (int) $r['id'], $out));
+        foreach ($rows as $row) {
+            if (!isset($seen[(int) $row['id']])) {
+                $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122();
+                $row['depth'] = 0;
+                $row['parent_name'] = '';
+                $row['children'] = 0;
+                $out[] = $row;
+            }
+        }
+
+        return $out;
+    }
 }

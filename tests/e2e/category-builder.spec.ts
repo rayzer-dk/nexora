@@ -33,14 +33,15 @@ test('Category Builder changes the real category page and restores cleanly', asy
   const originalRaw = await page.locator('textarea[name="layout_json"]').inputValue();
   const layout = JSON.parse(originalRaw);
   const components = (layout.blocks as { component: string }[]).map((row) => row.component);
-  expect(components).toEqual(['category_heading', 'category_filters', 'category_toolbar', 'category_recommended', 'category_grid', 'category_description']);
+  expect(components).toEqual(['category_heading', 'category_filters', 'category_subcategories', 'category_toolbar', 'category_recommended', 'category_grid', 'category_description']);
 
   // filters off, heading off, products above the sorting bar, the grid itself cannot be switched off
   const byName = (name: string) => layout.blocks.find((row: { component: string }) => row.component === name);
   byName('category_filters').enabled = false;
   byName('category_heading').enabled = false;
   byName('category_grid').enabled = false;
-  layout.blocks.splice(2, 0, layout.blocks.splice(4, 1)[0]);
+  const gridBlock = layout.blocks.splice(layout.blocks.indexOf(byName('category_grid')), 1)[0];
+  layout.blocks.splice(layout.blocks.indexOf(byName('category_toolbar')), 0, gridBlock);
   await publish(page, JSON.stringify(layout));
 
   try {

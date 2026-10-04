@@ -1,0 +1,13 @@
+{#- Photo tiles of categories (home page block and subcategories of a category page). Options: layout grid|scroll, columns 2-6, show_image, show_count. -#}
+{% set opts = options|default({}) %}
+{% set layout = opts.layout|default('grid') == 'scroll' ? 'scroll' : 'grid' %}
+{% set cols = max(2, min(6, opts.columns|default(4) ?: 4)) %}
+<div class="reference-categories category-tiles category-tiles--{{ layout }}" style="--tile-cols: {{ cols }}"{% if opts.label|default('') %} role="list" aria-label="{{ opts.label }}"{% endif %}>
+{% for category in items %}
+    <a class="reference-category{{ opts.show_image|default(true) ? '' : ' reference-category--text' }}" href="{{ category.url }}"{% if opts.label|default('') %} role="listitem"{% endif %}>
+        {% if opts.show_image|default(true) %}<span class="reference-category__image">{{ media_picture(category.image|default('/assets/product-placeholder.svg'), 'card', ['card', 'product'], '(min-width: 1024px) 20vw, 50vw', {alt: '', width: '480', height: '360', loading: 'lazy', decoding: 'async'}) }}</span>{% endif %}
+        <span class="reference-category__copy"><strong>{{ category.name }}</strong>{% if opts.show_count|default(true) and category.product_count|default(0) > 0 %}<small>{{ ui_text('category_tile_products', {count: category.product_count}) }}</small>{% elseif category.subtitle is defined %}<small>{{ category.subtitle }}</small>{% endif %}</span>
+        <span class="reference-category__arrow" aria-hidden="true">{{ ui_icon('arrow-right', 16) }}</span>
+    </a>
+{% endfor %}
+</div>

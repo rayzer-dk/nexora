@@ -31,7 +31,7 @@ final class SafeLayoutProvider
     public function category(): array
     {
         $blocks = [];
-        foreach (['category_heading','category_filters','category_toolbar','category_recommended','category_grid','category_description'] as $component) {
+        foreach (['category_heading','category_filters','category_subcategories','category_toolbar','category_recommended','category_grid','category_description'] as $component) {
             $blocks[] = ['id'=>$component,'component'=>$component,'enabled'=>true,'props'=>[],'style'=>[],'visibility'=>[]];
         }
         return ['schema_version' => 1, 'blocks' => $blocks];

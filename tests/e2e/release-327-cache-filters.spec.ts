@@ -79,6 +79,9 @@ test('an admin change shows on the shop at once, without waiting for the stored 
 test('the shop filter takes several brands, and the old single brand link still works', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Desktop filter panel.');
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  // A long brand list starts collapsed; open it like a shopper would.
+  const brandGroup = page.locator('#catalog-filters details.cf__group').filter({ has: page.locator('input[name="brand[]"]') }).first();
+  if ((await brandGroup.count()) && !(await brandGroup.evaluate((el: HTMLDetailsElement) => el.open))) await brandGroup.locator('summary').click();
   const boxes = page.locator('#catalog-filters input[name="brand[]"]');
   const count = await boxes.count();
   test.skip(count < 2, 'The demo catalogue needs at least two brands.');

@@ -21,26 +21,116 @@ final readonly class DbalStorefrontCatalogQuery
         private \Commerce\Modules\Catalog\Application\ProductBadgeService $badges,
         private \Commerce\Modules\Media\Application\MediaVariantService $variants,
         private \Commerce\Modules\Media\Application\ProductVideoService $videos,
+        private CategoryTreeIndex $tree,
     ) {
     }
 
-    /** @return list<array<string,mixed>> */
-    public function topCategories(StorefrontContext $context, int $limit = 24): array
+    /**
+     * Top-level categories for the home page. $order: manual (the Order field of each category), name, popular (most
+     * products first) or newest. Each tile has a photo (its own, else that of a product somewhere in its branch) and
+     * the number of products in the whole branch.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function topCategories(StorefrontContext $context, int $limit = 24, string $order = 'manual'): array
     {
+        return $this->categoryTiles($context, null, $limit, $order);
+    }
+
+    /**
+     * Direct subcategories of a category, as photo tiles.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function childCategories(StorefrontContext $context, int $parentId, int $limit = 60, string $order = 'manual'): array
+    {
+        return $this->categoryTiles($context, $parentId, $limit, $order);
+    }
+
+    /** @return list<array{name:string,url:string}> the parents of a category from the top level down, for breadcrumbs */
+    public function categoryTrail(StorefrontContext $context, int $categoryId): array
+    {
+        $ids = $this->tree->ancestors($categoryId, $context->storeId);
+        if ($ids === []) {
+            return [];
+        }
+        $in = implode(',', array_map('intval', $ids));
+        $rows = $this->connection->fetchAllAssociative(
+            "SELECT c.id,ct.name,sr.path FROM mc_category c
+             JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=?
+             JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id
+             WHERE c.id IN ({$in})",
+            [$context->storeId, $context->locale, $context->storeId, $context->locale],
+        );
+        $byId = [];
+        foreach ($rows as $row) {
+            $byId[(int) $row['id']] = ['name' => (string) $row['name'], 'url' => '/' . ltrim((string) $row['path'], '/')];
+        }
+        $trail = [];
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $trail[] = $byId[$id];
+            }
+        }
+
+        return $trail;
+    }
+
+    /** Comma-separated integer ids of a category branch, safe to put into SQL. */
+    private function scopeSql(int $categoryId, int $storeId): string
+    {
+        return implode(',', array_map('intval', $this->tree->scope($categoryId, $storeId)));
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function categoryTiles(StorefrontContext $context, ?int $parentId, int $limit, string $order): array
+    {
+        $limit = max(1, min(200, $limit));
+        $parentSql = $parentId === null ? 'c.parent_id IS NULL' : 'c.parent_id=' . (int) $parentId;
         $rows = $this->connection->fetchAllAssociative(
             "SELECT c.id,c.public_id,ct.name,ct.description,sr.path,
-                    COALESCE((SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id),
-                    (SELECT ma.storage_key FROM mc_product_category pcx JOIN mc_product px ON px.id=pcx.product_id AND px.status='published' JOIN mc_product_media pm ON pm.product_id=px.id AND pm.role IN ('primary','gallery') JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pcx.category_id=c.id ORDER BY (pm.role='primary') DESC,pm.sort_order ASC,px.id ASC LIMIT 1)) AS image_key
+                    (SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id LIMIT 1) AS image_key
              FROM mc_category c
              JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active'
              JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active'
              JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=?
              JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id
-             WHERE c.status='active' AND c.parent_id IS NULL
-             ORDER BY sc.sort_order ASC,c.sort_order ASC,c.id ASC LIMIT {$limit}",
-            [$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale],
+             WHERE c.status='active' AND {$parentSql}
+             ORDER BY sc.sort_order ASC,c.sort_order ASC,c.id ASC LIMIT 200",
+            [$context->storeId, $context->marketId, $context->storeId, $context->locale, $context->storeId, $context->locale],
         );
-        return array_map(fn(array $r): array => $this->categoryRow($r), $rows);
+        $tiles = [];
+        foreach ($rows as $row) {
+            $ids = $this->scopeSql((int) $row['id'], $context->storeId);
+            if (($row['image_key'] ?? null) === null || $row['image_key'] === '') {
+                $row['image_key'] = $this->connection->fetchOne(
+                    "SELECT ma.storage_key FROM mc_product_category pcx
+                     JOIN mc_product px ON px.id=pcx.product_id AND px.status='published'
+                     JOIN mc_product_media pm ON pm.product_id=px.id AND pm.role IN ('primary','gallery')
+                     JOIN mc_media_asset ma ON ma.id=pm.media_asset_id
+                     WHERE pcx.category_id IN ({$ids})
+                     ORDER BY (pm.role='primary') DESC,pm.sort_order ASC,px.id ASC LIMIT 1",
+                ) ?: null;
+            }
+            $tile = $this->categoryRow($row);
+            $tile['product_count'] = (int) $this->connection->fetchOne(
+                "SELECT COUNT(DISTINCT p.id) FROM mc_product p
+                 JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active'
+                 JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active'
+                 WHERE p.status='published' AND EXISTS (SELECT 1 FROM mc_product_category pc WHERE pc.product_id=p.id AND pc.category_id IN ({$ids}))",
+                [$context->storeId, $context->marketId],
+            );
+            $tiles[] = $tile;
+        }
+        if ($order === 'name') {
+            usort($tiles, static fn (array $a, array $b): int => strcasecmp((string) $a['name'], (string) $b['name']));
+        } elseif ($order === 'popular') {
+            usort($tiles, static fn (array $a, array $b): int => $b['product_count'] <=> $a['product_count']);
+        } elseif ($order === 'newest') {
+            usort($tiles, static fn (array $a, array $b): int => $b['id'] <=> $a['id']);
+        }
+
+        return array_slice($tiles, 0, $limit);
     }
 
     /** @return array{items:list<array<string,mixed>>,total:int,page:int,pages:int} */
@@ -67,8 +157,8 @@ final readonly class DbalStorefrontCatalogQuery
         $filterParams = [];
 
         if ($categoryId !== null) {
-            $conditions[] = 'EXISTS (SELECT 1 FROM mc_product_category fpc WHERE fpc.product_id=p.id AND fpc.category_id=?)';
-            $filterParams[] = $categoryId;
+            // A category lists the products of its whole branch, so a parent such as "Electronics" is never empty.
+            $conditions[] = 'EXISTS (SELECT 1 FROM mc_product_category fpc WHERE fpc.product_id=p.id AND fpc.category_id IN (' . $this->scopeSql($categoryId, $context->storeId) . '))';
         }
         if ($filter->brandIds !== []) {
             $conditions[] = 'p.brand_id IN (' . implode(',', array_fill(0, count($filter->brandIds), '?')) . ')';
@@ -292,8 +382,7 @@ final readonly class DbalStorefrontCatalogQuery
         ];
         $filterParams = [];
         if ($categoryId !== null) {
-            $conditions[] = 'EXISTS (SELECT 1 FROM mc_product_category cpc WHERE cpc.product_id=p.id AND cpc.category_id=?)';
-            $filterParams[] = $categoryId;
+            $conditions[] = 'EXISTS (SELECT 1 FROM mc_product_category cpc WHERE cpc.product_id=p.id AND cpc.category_id IN (' . $this->scopeSql($categoryId, $context->storeId) . '))';
         }
         if ($afterProductId !== null && $afterProductId > 0) {
             $conditions[] = 'p.id<?';
@@ -341,11 +430,8 @@ final readonly class DbalStorefrontCatalogQuery
     /** @return array{brands:list<array{id:int,name:string,count:int}>,price_min_minor:?int,price_max_minor:?int,attributes:list<array{code:string,name:string,data_type:string,unit_label:?string,values:list<array{token:string,label:string,count:int}>}>} */
     public function catalogFacets(StorefrontContext $context, ?int $categoryId = null): array
     {
-        $categorySql = $categoryId === null ? '' : ' AND EXISTS (SELECT 1 FROM mc_product_category fpc WHERE fpc.product_id=p.id AND fpc.category_id=?)';
+        $categorySql = $categoryId === null ? '' : ' AND EXISTS (SELECT 1 FROM mc_product_category fpc WHERE fpc.product_id=p.id AND fpc.category_id IN (' . $this->scopeSql($categoryId, $context->storeId) . '))';
         $params = [$context->storeId, $context->marketId];
-        if ($categoryId !== null) {
-            $params[] = $categoryId;
-        }
         $brands = $this->connection->fetchAllAssociative(
             "SELECT b.id,b.name,COUNT(DISTINCT p.id) product_count
              FROM mc_product p
@@ -358,9 +444,7 @@ final readonly class DbalStorefrontCatalogQuery
         );
 
         $priceParams = [$context->storeId, $context->marketId, $context->storeId, $context->marketId, $context->currency];
-        if ($categoryId !== null) {
-            $priceParams[] = $categoryId;
-        }
+
         $price = $this->connection->fetchAssociative(
             "SELECT MIN(pr.amount_minor) min_price,MAX(pr.amount_minor) max_price
              FROM mc_product p
@@ -373,9 +457,7 @@ final readonly class DbalStorefrontCatalogQuery
         );
 
         $attributeParams = [$context->storeId, $context->marketId, $context->locale, $context->locale];
-        if ($categoryId !== null) {
-            $attributeParams[] = $categoryId;
-        }
+
         $attributeRows = $this->connection->fetchAllAssociative(
             "SELECT ad.code,ad.data_type,COALESCE(at.name,ad.code) attribute_name,at.unit_label,
                     CASE

@@ -51,15 +51,20 @@ final readonly class DemoSeeder
             $now = $this->now();
             $categoryDefs = $catalog['categories'];
             $categoryIds = [];
-            foreach ($categoryDefs as $i => $def) {
+            $siblingIndex = [];
+            foreach ($categoryDefs as $def) {
+                // Parents come before their children in the snapshot; a parent that is missing makes the category a top-level one.
+                $parentSlug = $def['parent'] ?? null;
+                $parentId = $parentSlug !== null ? ($categoryIds[$parentSlug] ?? null) : null;
+                $siblingIndex[$parentSlug ?? ''] = ($siblingIndex[$parentSlug ?? ''] ?? 0) + 1;
                 $created = $this->categories->create(new CreateCategoryCommand(
                     $ctx['store_id'],
                     $ctx['market_id'],
                     $ctx['locale'],
                     $def['name'],
-                    null,
+                    $parentId,
                     $def['slug'],
-                    ($i + 1) * 10,
+                    $siblingIndex[$parentSlug ?? ''] * 10,
                 ));
                 $categoryIds[$def['slug']] = $created['id'];
                 $db->update('mc_category_translation', [
@@ -140,19 +145,21 @@ final readonly class DemoSeeder
                     );
                 }
 
-                $mediaId = $this->createMedia($db, $def['image'], $now, [
-                    'source' => 'dummyjson',
-                    'source_id' => $def['source_id'],
-                    'source_url' => $def['image_url'],
-                ]);
-                $db->insert('mc_product_media', [
-                    'product_id' => $productId,
-                    'variant_id' => null,
-                    'media_asset_id' => $mediaId,
-                    'role' => 'primary',
-                    'sort_order' => 0,
-                    'alt_text' => $def['name'],
-                ]);
+                if ($def['image'] !== null) {
+                    $mediaId = $this->createMedia($db, $def['image'], $now, [
+                        'source' => 'dummyjson',
+                        'source_id' => $def['source_id'],
+                        'source_url' => $def['image_url'],
+                    ]);
+                    $db->insert('mc_product_media', [
+                        'product_id' => $productId,
+                        'variant_id' => null,
+                        'media_asset_id' => $mediaId,
+                        'role' => 'primary',
+                        'sort_order' => 0,
+                        'alt_text' => $def['name'],
+                    ]);
+                }
                 foreach ($def['gallery'] as $galleryIndex => $gallery) {
                     $galleryId = $this->createMedia($db, $gallery['path'], $now, [
                         'source' => 'dummyjson',
@@ -227,7 +234,7 @@ final readonly class DemoSeeder
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.42.1',
+                'version' => '3.43.0',
                 'catalog_source' => 'DummyJSON',
             ]);
 
@@ -434,7 +441,7 @@ final readonly class DemoSeeder
     /** @return array{categories:list<array<string,mixed>>,products:list<array<string,mixed>>} */
     private function loadDemoCatalog(string $locale, string $currency): array
     {
-        $file = $this->projectDir . '/resources/demo/dummyjson-tech.json';
+        $file = $this->projectDir . '/resources/demo/dummyjson-catalog.json';
         if (!is_file($file)) {
             throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.demo_snapshot_missing'));
         }
@@ -448,7 +455,7 @@ final readonly class DemoSeeder
             if (!is_array($category)) { continue; }
             $slug=(string) ($category['slug'] ?? '');
             $name=$this->localized($category['name'] ?? [], $locale);
-            $categories[] = ['slug'=>$slug,'name'=>$name,'description'=>$this->localized($category['description'] ?? [], $locale)];
+            $categories[] = ['slug'=>$slug,'parent'=>isset($category['parent']) && $category['parent']!=='' ? (string)$category['parent'] : null,'name'=>$name,'description'=>$this->localized($category['description'] ?? [], $locale)];
             $categoryNames[$slug]=$name;
         }
         $products = [];
@@ -459,7 +466,7 @@ final readonly class DemoSeeder
             $attrs = is_array($product['attributes'] ?? null) ? $product['attributes'] : [];
             $products[] = [
                 'source_id' => (int) ($product['source_id'] ?? 0),
-                'name' => (string) ($product['name'] ?? ''),
+                'name' => $this->localized($product['name'] ?? '', $locale),
                 'slug' => (string) ($product['slug'] ?? ''),
                 'sku' => (string) ($product['sku'] ?? ''),
                 'category' => (string) ($product['category'] ?? ''),
@@ -473,7 +480,7 @@ final readonly class DemoSeeder
                 'description' => $this->localized($product['description'] ?? [], $locale),
                 'image_url' => (string) ($product['image_url'] ?? ''),
                 'gallery_urls' => array_values(array_filter(array_map('strval', is_array($product['gallery_urls'] ?? null) ? $product['gallery_urls'] : []))),
-                'fallback' => (string) ($product['fallback'] ?? 'demo/smartphone-neo-x1.webp'),
+                'fallback' => isset($product['fallback']) && $product['fallback'] !== '' ? (string) $product['fallback'] : null,
                 'attrs' => array_merge(
                     [
                         [$this->attributeLabel('brand', $locale), (string) ($product['brand'] ?? 'Demo')],
@@ -494,17 +501,26 @@ final readonly class DemoSeeder
     /** @param list<array<string,mixed>> $products @return list<array<string,mixed>> */
     private function prepareDemoMedia(array $products): array
     {
+        // One parallel pass for every photo: a few hundred sequential requests would not fit into a web installer run.
+        $jobs = [];
+        foreach ($products as $product) {
+            $sourceId = max(1, (int) ($product['source_id'] ?? 0));
+            if ((string) ($product['image_url'] ?? '') !== '') {
+                $jobs['demo/dummyjson/' . $sourceId . '-1.webp'] = (string) $product['image_url'];
+            }
+            foreach (array_slice((array) ($product['gallery_urls'] ?? []), 0, 2) as $index => $url) {
+                $jobs['demo/dummyjson/' . $sourceId . '-' . ($index + 2) . '.webp'] = (string) $url;
+            }
+        }
+        $done = $this->downloadDemoImages($jobs);
         foreach ($products as &$product) {
             $sourceId = max(1, (int) ($product['source_id'] ?? 0));
             $primary = 'demo/dummyjson/' . $sourceId . '-1.webp';
-            if (!$this->downloadDemoImage((string) ($product['image_url'] ?? ''), $primary)) {
-                $primary = (string) ($product['fallback'] ?? 'demo/smartphone-neo-x1.webp');
-            }
-            $product['image'] = $primary;
+            $product['image'] = ($done[$primary] ?? false) ? $primary : ($product['fallback'] ?? null);
             $gallery = [];
             foreach (array_slice((array) ($product['gallery_urls'] ?? []), 0, 2) as $index => $url) {
                 $path = 'demo/dummyjson/' . $sourceId . '-' . ($index + 2) . '.webp';
-                if ($this->downloadDemoImage((string) $url, $path)) {
+                if ($done[$path] ?? false) {
                     $gallery[] = ['path' => $path, 'url' => (string) $url];
                 }
             }
@@ -514,44 +530,117 @@ final readonly class DemoSeeder
         return $products;
     }
 
-    private function downloadDemoImage(string $url, string $storageKey): bool
+    /**
+     * Downloads demo photos (only from cdn.dummyjson.com over https, images only, at most 5 MB each) with up to eight
+     * requests in flight and a shared time budget. A photo that cannot be fetched is simply missing from the result.
+     *
+     * @param array<string,string> $jobs storage key => url
+     * @return array<string,bool> storage key => stored
+     */
+    private function downloadDemoImages(array $jobs): array
     {
-        if ($url === '' || !function_exists('curl_init')) { return false; }
-        $parts = parse_url($url);
-        if (!is_array($parts) || ($parts['scheme'] ?? '') !== 'https' || strtolower((string) ($parts['host'] ?? '')) !== 'cdn.dummyjson.com') {
-            return false;
+        $result = [];
+        $queue = [];
+        foreach ($jobs as $key => $url) {
+            $parts = parse_url($url);
+            if (!function_exists('curl_multi_init') || !is_array($parts) || ($parts['scheme'] ?? '') !== 'https' || strtolower((string) ($parts['host'] ?? '')) !== 'cdn.dummyjson.com') {
+                $result[$key] = false;
+                continue;
+            }
+            $target = $this->projectDir . '/public/media/' . ltrim($key, '/');
+            if (is_file($target) && filesize($target) > 0 && @getimagesize($target) !== false) {
+                $result[$key] = true;
+                continue;
+            }
+            $dir = dirname($target);
+            if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+                $result[$key] = false;
+                continue;
+            }
+            $queue[$key] = [$url, $target];
         }
-        $target = $this->projectDir . '/public/media/' . ltrim($storageKey, '/');
-        if (is_file($target) && filesize($target) > 0 && @getimagesize($target) !== false) { return true; }
-        $dir = dirname($target);
-        if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) { return false; }
-        $data = '';
-        $ch = curl_init($url);
-        if ($ch === false) { return false; }
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => false,
-            CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT => 15,
-            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/3.42.1',
-            CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$data): int {
-                if (strlen($data) + strlen($chunk) > 5 * 1024 * 1024) { return 0; }
-                $data .= $chunk;
-                return strlen($chunk);
-            },
-        ]);
-        $ok = curl_exec($ch);
-        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        $type = strtolower((string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE));
-        curl_close($ch);
-        if ($ok === false || $status !== 200 || $data === '' || !str_starts_with($type, 'image/')) { return false; }
-        if (@getimagesizefromstring($data) === false) { return false; }
-        $tmp = $target . '.tmp-' . bin2hex(random_bytes(4));
-        if (@file_put_contents($tmp, $data, LOCK_EX) === false) { return false; }
-        if (!@rename($tmp, $target)) { @unlink($tmp); return false; }
-        @chmod($target, 0644);
-        return true;
+        if ($queue === []) {
+            return $result;
+        }
+        $multi = curl_multi_init();
+        $active = [];
+        $buffers = [];
+        $deadline = microtime(true) + 150.0;
+        $start = static function (string $key) use (&$queue, &$active, &$buffers, $multi): void {
+            [$url] = $queue[$key];
+            $ch = curl_init($url);
+            if ($ch === false) {
+                return;
+            }
+            $buffers[$key] = '';
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => false,
+                CURLOPT_FOLLOWLOCATION => false,
+                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_TIMEOUT => 20,
+                CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+                CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/' . \Commerce\Core\Platform\PlatformVersion::VERSION,
+                CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$buffers, $key): int {
+                    if (strlen($buffers[$key]) + strlen($chunk) > 5 * 1024 * 1024) {
+                        return 0;
+                    }
+                    $buffers[$key] .= $chunk;
+
+                    return strlen($chunk);
+                },
+            ]);
+            curl_multi_add_handle($multi, $ch);
+            $active[$key] = $ch;
+        };
+        $pending = array_keys($queue);
+        try {
+            while ($pending !== [] || $active !== []) {
+                while (count($active) < 8 && $pending !== [] && microtime(true) < $deadline) {
+                    $start((string) array_shift($pending));
+                }
+                if ($active === []) {
+                    break;
+                }
+                curl_multi_exec($multi, $running);
+                curl_multi_select($multi, 0.5);
+                while (($info = curl_multi_info_read($multi)) !== false) {
+                    $ch = $info['handle'];
+                    $key = (string) array_search($ch, $active, true);
+                    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+                    $type = strtolower((string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE));
+                    $data = $buffers[$key] ?? '';
+                    curl_multi_remove_handle($multi, $ch);
+                    curl_close($ch);
+                    unset($active[$key], $buffers[$key]);
+                    $stored = false;
+                    if ($info['result'] === CURLE_OK && $status === 200 && $data !== '' && str_starts_with($type, 'image/') && @getimagesizefromstring($data) !== false) {
+                        $target = $queue[$key][1];
+                        $tmp = $target . '.tmp-' . bin2hex(random_bytes(4));
+                        if (@file_put_contents($tmp, $data, LOCK_EX) !== false && @rename($tmp, $target)) {
+                            @chmod($target, 0644);
+                            $stored = true;
+                        } else {
+                            @unlink($tmp);
+                        }
+                    }
+                    $result[$key] = $stored;
+                }
+                if (microtime(true) >= $deadline && $pending !== []) {
+                    foreach ($pending as $key) {
+                        $result[$key] = false;
+                    }
+                    $pending = [];
+                }
+            }
+        } finally {
+            foreach ($active as $ch) {
+                curl_multi_remove_handle($multi, $ch);
+                curl_close($ch);
+            }
+            curl_multi_close($multi);
+        }
+
+        return $result + array_fill_keys(array_keys($queue), false);
     }
 
     private function localized(mixed $values, string $locale): string
