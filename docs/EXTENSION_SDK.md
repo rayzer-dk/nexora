@@ -41,7 +41,7 @@ Dynamic Builder blocks support `home`, `header`, `footer`, `product` and `checko
 
 Core checkout blocks `checkout_contact`, `checkout_shipping`, `checkout_payment`, `checkout_summary` and `checkout_consent` remain mandatory and cannot be disabled by extensions.
 
-Stable UI slots are defined by `Commerce\Core\Extension\ExtensionPoint`, including product, checkout, admin, navigation and content points. `slot_contributions` may reference only those stable slots and only blocks declared by the same extension.
+Stable UI slots (full list in `docs/EXTENSION_SLOTS.md`) are defined by `Commerce\Core\Extension\ExtensionPoint`, including product, checkout, admin, navigation and content points. `slot_contributions` may reference only those stable slots and only blocks declared by the same extension.
 
 ## Routes and pages
 
