@@ -127,7 +127,8 @@ test('forms and navigation labels translate with one click and are saved only wi
     await panel.locator('[data-translate-from]').click();
     await expect(page.locator('[data-form-translation="en-US"] input[name$="[submit_label]"]')).toHaveValue(/^TR-en-US-/, { timeout: 15_000 });
     await Promise.all([page.waitForResponse((r) => r.request().method() === 'POST' && r.url().includes('/admin/content/forms/save')), page.locator('form[data-form-editor] button[type="submit"]').first().click()]);
-    await page.reload({ waitUntil: 'load' });
+    await page.waitForLoadState('load'); // the save redirects; reloading before it lands aborts the navigation
+    await page.goto(page.url(), { waitUntil: 'load' });
     await expect(page.locator('[data-form-translation="en-US"] input[name$="[submit_label]"]')).toHaveValue(/^TR-en-US-/); // saved with the form
   } finally {
     await setAi(page, false);

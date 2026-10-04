@@ -49,7 +49,8 @@ test('ROLE_VIEWER is genuinely read-only and store scoped at the server', async 
   await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);
   await expect(page.locator('details.admin-panel > summary').filter({ hasText: email })).toBeVisible();
 
-  const logout = page.locator('form[action="/admin/logout"]');
+  // The sidebar and the user menu both carry a logout form; either one signs the session out.
+  const logout = page.locator('form[action="/admin/logout"]').first();
   if (await logout.count()) {
     await Promise.all([
       page.waitForURL((url) => !url.pathname.startsWith('/admin')), // logout returns to the storefront
