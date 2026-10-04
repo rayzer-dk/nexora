@@ -10,6 +10,7 @@
 <p class="admin-card-note">{{ ui_text('admin.sms.gateway_help') }}</p>
 <div class="admin-form-grid">
 <div class="admin-check-grid admin-form-wide"><label><input type="checkbox" name="enabled" value="1"{{ s.enabled ? ' checked' : '' }}> {{ ui_text('admin.sms.enabled') }}</label></div>
+<label class="admin-form-wide">{{ ui_text('admin.sms.driver') }}<select name="driver"><option value="json"{{ s.driver == 'json' ? ' selected' : '' }}>{{ ui_text('admin.sms.driver_json') }}</option><option value="smsfly"{{ s.driver == 'smsfly' ? ' selected' : '' }}>SMS-fly (sms-fly.ua)</option></select><small>{{ ui_text('admin.sms.driver_hint') }}</small></label>
 <label class="admin-form-wide">{{ ui_text('admin.sms.endpoint') }}<input name="endpoint" type="url" maxlength="500" value="{{ s.endpoint }}" placeholder="https://sms.example.com/api/send" autocomplete="off"><small>{{ ui_text('admin.sms.endpoint_hint') }}</small></label>
 <label>{{ ui_text('admin.sms.token') }}<input type="password" name="token" autocomplete="new-password" placeholder="{{ s.has_token ? ui_text('admin.notify_channels.secret_saved') : '' }}"><small>{{ ui_text('admin.notify_channels.secret_hint') }}</small></label>
 <label>{{ ui_text('admin.sms.sender') }}<input name="sender" maxlength="32" value="{{ s.sender }}" placeholder="MyShop"><small>{{ ui_text('admin.sms.sender_hint') }}</small></label>

@@ -32,6 +32,7 @@ test('SMS page: counter switches between GSM-7 and UCS-2, settings are saved, a 
 
   try {
     await page.locator('input[name="enabled"]').check();
+    await page.locator('select[name="driver"]').selectOption('smsfly');
     await page.locator('input[name="endpoint"]').fill('https://sms.example.com/send');
     await page.locator('input[name="sender"]').fill('E2EShop');
     await page.locator('input[name="flash_supported"]').check();
@@ -43,6 +44,7 @@ test('SMS page: counter switches between GSM-7 and UCS-2, settings are saved, a 
     await page.goto('/admin/commerce/sms', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('input[name="endpoint"]')).toHaveValue('https://sms.example.com/send');
     await expect(page.locator('input[name="enabled"]')).toBeChecked();
+    await expect(page.locator('select[name="driver"]')).toHaveValue('smsfly');
 
     // manual SMS from an order: the gateway is not reachable in the test, so the attempt is logged as failed
     await page.goto('/admin/orders', { waitUntil: 'domcontentloaded' });

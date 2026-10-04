@@ -13,6 +13,8 @@ use Doctrine\DBAL\Connection;
  */
 final readonly class SmsSettings
 {
+    /** json: any gateway that takes {to, from, message}; smsfly: the built-in SMS-fly driver. */
+    public const DRIVERS = ['json', 'smsfly'];
     public const EVENTS = ['placed', 'shipped', 'ready', 'cancelled'];
     private const CTX = 'notification.sms_token';
 
@@ -20,7 +22,7 @@ final readonly class SmsSettings
     {
     }
 
-    /** @return array{configured:bool,enabled:bool,endpoint:string,token:string,has_token:bool,sender:string,flash_supported:bool,auto:array<string,bool>,tpl:array<string,string>} */
+    /** @return array{configured:bool,enabled:bool,driver:string,endpoint:string,token:string,has_token:bool,sender:string,flash_supported:bool,auto:array<string,bool>,tpl:array<string,string>} */
     public function get(int $storeId): array
     {
         return $this->hydrate($this->row($storeId));
@@ -55,8 +57,13 @@ final readonly class SmsSettings
         if (strlen($token) > 2000) {
             throw new \InvalidArgumentException('token');
         }
+        $driver = (string) ($input['driver'] ?? 'json');
+        if (!in_array($driver, self::DRIVERS, true)) {
+            $driver = 'json';
+        }
         $row = [
             'enabled' => !empty($input['enabled']) ? 1 : 0,
+            'driver' => $driver,
             'endpoint' => $endpoint,
             'token_enc' => $token !== '' ? $this->vault->encrypt($token, self::CTX) : null,
             'sender' => $sender,
@@ -108,6 +115,7 @@ final readonly class SmsSettings
         return [
             'configured' => is_array($row),
             'enabled' => is_array($row) && (int) $row['enabled'] === 1,
+            'driver' => is_array($row) && in_array((string) ($row['driver'] ?? ''), self::DRIVERS, true) ? (string) $row['driver'] : 'json',
             'endpoint' => is_array($row) ? (string) $row['endpoint'] : '',
             'token' => $token,
             'has_token' => $token !== '',

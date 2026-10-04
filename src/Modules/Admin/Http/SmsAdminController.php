@@ -35,6 +35,7 @@ final class SmsAdminController extends AbstractController
             $in = $request->request;
             $input = [
                 'enabled' => $in->getBoolean('enabled'),
+                'driver' => (string) $in->get('driver', 'json'),
                 'endpoint' => (string) $in->get('endpoint', ''),
                 'token' => (string) $in->get('token', ''),
                 'sender' => (string) $in->get('sender', ''),

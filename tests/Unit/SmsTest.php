@@ -12,6 +12,7 @@ use Commerce\Modules\Notification\Application\SmsSettings;
 use Commerce\Modules\Notification\Contract\NotificationSenderInterface;
 use Commerce\Modules\Notification\Domain\NotificationChannel;
 use Commerce\Modules\Notification\Domain\NotificationMessage;
+use Commerce\Modules\Notification\Channel\Sms\SmsFlyApi;
 use Commerce\Modules\Notification\Domain\SmsText;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -116,6 +117,32 @@ final class SmsTest extends TestCase
         $this->assertCount(1, $sent);
     }
 
+    public function testSmsFlyRequestAndAnswer(): void
+    {
+        $body = SmsFlyApi::request('KEY', 'MyShop', '+380501234567', 'Привіт');
+        $this->assertSame('SENDMESSAGE', $body['action']);
+        $this->assertSame('KEY', $body['auth']['key']);
+        $this->assertSame('380501234567', $body['data']['recipient']);
+        $this->assertSame(['sms'], $body['data']['channels']);
+        $this->assertSame('MyShop', $body['data']['sms']['source']);
+        $this->assertSame('Привіт', $body['data']['sms']['text']);
+
+        SmsFlyApi::assertAccepted(['success' => 1, 'data' => ['messageID' => 5]]);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('SMS-fly: Bad key');
+        SmsFlyApi::assertAccepted(['success' => 0, 'error' => ['description' => 'Bad key', 'code' => '']]);
+    }
+
+    public function testDriverIsSavedAndUnknownDriverFallsBackToJson(): void
+    {
+        $db = $this->database();
+        $settings = $this->settings($db);
+        $settings->save(1, ['enabled' => true, 'driver' => 'smsfly', 'token' => 'k']);
+        $this->assertSame('smsfly', $settings->get(1)['driver']);
+        $settings->save(1, ['enabled' => true, 'driver' => 'evil']);
+        $this->assertSame('json', $settings->get(1)['driver']);
+    }
+
     private function settings(Connection $db): SmsSettings
     {
         return new SmsSettings($db, new SecretVault('unit-test-secret-0123456789abcdef0123456789'));
@@ -148,7 +175,7 @@ final class SmsTest extends TestCase
     private function database(): Connection
     {
         $db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $db->executeStatement('CREATE TABLE mc_sms_settings (store_id INTEGER PRIMARY KEY, enabled INTEGER, endpoint TEXT, token_enc TEXT, sender TEXT, flash_supported INTEGER, auto_placed INTEGER, auto_shipped INTEGER, auto_ready INTEGER, auto_cancelled INTEGER, tpl_placed TEXT, tpl_shipped TEXT, tpl_ready TEXT, tpl_cancelled TEXT, updated_at TEXT)');
+        $db->executeStatement('CREATE TABLE mc_sms_settings (store_id INTEGER PRIMARY KEY, enabled INTEGER, driver TEXT, endpoint TEXT, token_enc TEXT, sender TEXT, flash_supported INTEGER, auto_placed INTEGER, auto_shipped INTEGER, auto_ready INTEGER, auto_cancelled INTEGER, tpl_placed TEXT, tpl_shipped TEXT, tpl_ready TEXT, tpl_cancelled TEXT, updated_at TEXT)');
         $db->executeStatement('CREATE TABLE mc_sms_log (id INTEGER PRIMARY KEY AUTOINCREMENT, store_id INTEGER, order_id INTEGER, recipient TEXT, mode TEXT, event TEXT, body TEXT, segments INTEGER, flash INTEGER, status TEXT, error TEXT, admin_id INTEGER, created_at TEXT)');
         $db->executeStatement('CREATE TABLE mc_sales_order (id INTEGER PRIMARY KEY, store_id INTEGER, order_number TEXT, customer_phone TEXT, customer_name TEXT, total_minor INTEGER, currency TEXT, locale TEXT)');
         $db->executeStatement('CREATE TABLE mc_fulfillment (id INTEGER PRIMARY KEY, order_id INTEGER, tracking_number TEXT)');

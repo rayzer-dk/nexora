@@ -2,6 +2,13 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.41.0 — 2026-10-04
+
+SMS-fly driver — schema 78 (column `mc_sms_settings.driver`).
+
+- SMS page: gateway type "SMS-fly (sms-fly.ua)" next to the generic JSON gateway. The token is the API key, the sender is the registered alpha name, the address may stay empty. The request follows the public SMS-fly JSON API (`SENDMESSAGE`); it has not been run against a live account, so send the test SMS first.
+- Text and counters, automatic and manual SMS, the log and the order panel work the same with both gateway types.
+
 ## 3.40.0 — 2026-10-04
 
 SMS to customers in the admin — schema 78 (new tables `mc_sms_settings`, `mc_sms_log`).
