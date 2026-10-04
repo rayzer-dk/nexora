@@ -445,7 +445,7 @@ final readonly class DemoCommerceSeeder
         return $out;
     }
 
-    /** @return list<array{id:int,initial:int,balance:int,last4:string,currency:string}> */
+    /** @return array<int,array{id:int,initial:int,balance:int,last4:string,currency:string}> */
     private function seedGiftCards(Connection $db, array $ctx, DateTimeImmutable $now): array
     {
         $out = [];
@@ -765,7 +765,9 @@ final readonly class DemoCommerceSeeder
 
             // Gift card redemption.
             if ($giftIx !== null && $gift > 0) {
-                $giftCards[$giftIx]['balance'] -= $gift;
+                $card = $giftCards[$giftIx];
+                $card['balance'] -= $gift;
+                $giftCards[$giftIx] = $card;
                 $db->insert('mc_gift_card_transaction', [
                     'gift_card_id' => $giftCards[$giftIx]['id'], 'order_id' => $orderId, 'tx_type' => 'redeem', 'amount_minor' => -$gift,
                     'balance_after_minor' => $giftCards[$giftIx]['balance'], 'idempotency_key' => 'demo:gift:redeem:' . $number, 'created_at' => $this->fmt($created),

@@ -19,7 +19,7 @@ final readonly class SupportChatSettings
     {
     }
 
-    /** @return array{enabled:bool,site_chat_enabled:bool,direct_enabled:bool,bot_token:string,has_token:bool,bot_username:string,group_chat_id:string,webhook_secret:string,welcome_text:string,offline_text:string,seen_chats:list<array{id:string,title:string,is_forum:bool}>} */
+    /** @return array{enabled:bool,site_chat_enabled:bool,direct_enabled:bool,bot_token:string,has_token:bool,bot_username:string,group_chat_id:string,webhook_secret:string,welcome_text:string,offline_text:string,load_delay_seconds:int,seen_chats:list<array{id:string,title:string,is_forum:bool}>} */
     public function get(int $storeId): array
     {
         try {
