@@ -12,7 +12,9 @@ Help inside the admin, profile and password, update page — schema 78.
 - `upgrade.php` / `bin/upgrade.php` create a database snapshot (`before-upgrade`) before applying database changes.
 - New guides: `docs/UPDATE_AND_RESTORE.md` (for the store owner), `docs/QUICKSTART_MODULE.md` (first module in ten minutes), `docs/EXTENSION_SLOTS.md` (all 36 slots).
 - Modules: manifest `scheduled_tasks` and `$context->scheduledTask()` for signed modules; tasks show up in Cron.
+- Every admin page warns when the files are newer than the database (updated files, `upgrade.php` not run yet) and links to the update page.
 - Builders: Category Builder and Cart Builder.
+- Packaging refuses a `vendor/` that contains dev packages.
 - Fixes: the error page printed an empty CSP nonce and lost its scripts; storefront AJAX forms ask for a fresh captcha after each answer.
 
 ## 3.34.0 — 2026-10-03

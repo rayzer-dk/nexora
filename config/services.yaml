@@ -184,7 +184,7 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
-    Commerce\Modules\Admin\Http\AdminSystemUpdateController:
+    Commerce\Core\Update\PendingMigrations:
         arguments:
             $projectDir: '%kernel.project_dir%'
 

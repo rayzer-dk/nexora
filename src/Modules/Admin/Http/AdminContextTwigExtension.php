@@ -19,11 +19,12 @@ final class AdminContextTwigExtension extends AbstractExtension
         private readonly RequestStack $requests,
         private readonly Security $security,
         private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo,
+        private readonly \Commerce\Core\Update\PendingMigrations $migrations,
     ) {}
 
     public function getFunctions(): array
     {
-        return [new TwigFunction('admin_context_switcher', [$this, 'contextSwitcher']), new TwigFunction('admin_undo_pending', [$this, 'undoPending'])];
+        return [new TwigFunction('admin_context_switcher', [$this, 'contextSwitcher']), new TwigFunction('admin_undo_pending', [$this, 'undoPending']), new TwigFunction('admin_pending_migrations', [$this, 'pendingMigrations'])];
     }
 
     /** @return array<string,mixed> */
@@ -58,6 +59,18 @@ final class AdminContextTwigExtension extends AbstractExtension
     }
 
     /** @return array{id:int,kind:string,label:string}|null the administrator's own last reversible action from the last few minutes */
+    /** Number of database changes that are not applied yet, for administrators who may run the update; 0 otherwise. */
+    public function pendingMigrations(): int
+    {
+        $request = $this->requests->getCurrentRequest();
+        $user = $this->security->getUser();
+        if ($request === null || !$user instanceof AdminUser || !$request->isMethod('GET') || $request->attributes->get('_route') === 'admin_system_update') {
+            return 0;
+        }
+
+        return count($this->migrations->pending());
+    }
+
     public function undoPending(): ?array
     {
         $request = $this->requests->getCurrentRequest();

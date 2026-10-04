@@ -4160,4 +4160,6 @@ return [
     'admin.extensions.howto.step1' => 'Choose a ZIP package below and press "Check the ZIP package".',
     'admin.extensions.howto.step2' => 'In "Installed packages" press "Activate".',
     'admin.extensions.howto.step3' => 'Press "Settings" next to the active module. If a module breaks something, press "Disable" or "Roll back to".',
+    'admin.update.banner' => 'The system files are newer than the database: %count% database change(s) not applied. Finish the update.',
+    'admin.update.banner_link' => 'How to do it',
 ];

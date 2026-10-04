@@ -6,6 +6,8 @@ VERSION="$(php -r "require 'src/Core/Platform/PlatformVersion.php'; echo Commerc
 OUT_DIR="$ROOT/build/production-$VERSION"
 ZIP="$ROOT/build/Nexora_Commerce_v${VERSION}_PRODUCTION.zip"
 
+# vendor/ is copied as it is: a vendor installed with dev packages would ship test frameworks (gigabytes) to production.
+[ ! -d vendor/phpunit ] || { echo 'ERROR: vendor/ contains dev packages. Run: composer install --no-dev --optimize-autoloader' >&2; exit 20; }
 php bin/dependency-integrity-check.php
 php bin/release-check.php
 php bin/release-contract-check.php --production
