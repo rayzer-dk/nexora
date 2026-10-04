@@ -2,6 +2,16 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.44.0 — 2026-10-04
+
+Banners, scroll story and video banner in the home builder — schema 78.
+
+- Home builder: the "Computer / Tablet / Phone" switches and the Style fields (background, text colour, padding, margin, alignment) of a block were saved but ignored by the home page; now they apply to every block (values are checked: only colours, simple gradients and lengths pass).
+- New block "Banner": image (and a separate image for phones), title, text, button, link, width (full, 2/3, 1/2, 1/3 — neighbouring banners form one row), height, text position (3 × 3 grid), image darkening, own text colour and background (a colour or a gradient), per-device visibility.
+- New block "Scroll story": up to four steps; on a computer the picture sticks to the screen and changes with the step being read, on a phone every step shows its own picture.
+- New block "Video banner": a muted looped .mp4/.webm background with a poster, text and button; it starts only on a wide screen, when in view, not with reduced motion or data saver, and has a pause button; phones show the poster unless the merchant allows the video.
+- Help: `docs/HOME_BUILDER.md`.
+
 ## 3.43.0 — 2026-10-04
 
 Deep category tree, subcategory tiles, bigger demo catalogue — schema 78.

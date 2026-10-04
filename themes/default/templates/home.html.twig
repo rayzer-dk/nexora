@@ -1,9 +1,19 @@
 {% extends '@storefront/base.html.twig' %}{% set page_kind = 'home' %}
 {% set presentation = storefront_presentation() %}
+{% block head %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and b.component in ['scroll_story', 'video_hero'])|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/home-blocks.js', '/assets/home-blocks.js') }}"></script>{% endif %}{% endblock %}
 {% block body %}
-{% for layout_block in home_layout.blocks|default([]) %}
+{% for layout_block in home_blocks_grouped(home_layout.blocks|default([])) %}
   {% if layout_block.enabled|default(true) and not layout_block.missing_extension|default(false) %}
-    {% if layout_block.component == 'hero' %}
+    {#- Device visibility and the style fields of the builder apply to every block; banners carry their own, per banner. -#}
+    {% set block_attrs = layout_block.component == 'banner_row' ? {class: '', style: ''} : home_block_attrs(layout_block) %}
+    <div class="home-block{{ block_attrs.class ? ' ' ~ block_attrs.class : '' }}"{% if block_attrs.style %} style="{{ block_attrs.style }}"{% endif %}>
+    {% if layout_block.component == 'banner_row' %}
+      {% include '@storefront/home/blocks/banners.html.twig' %}
+    {% elseif layout_block.component == 'scroll_story' %}
+      {% include '@storefront/home/blocks/scroll_story.html.twig' %}
+    {% elseif layout_block.component == 'video_hero' %}
+      {% include '@storefront/home/blocks/video_hero.html.twig' %}
+    {% elseif layout_block.component == 'hero' %}
       {% include '@storefront/home/blocks/hero.html.twig' %}
     {% elseif layout_block.component == 'category_grid' %}
       {% include '@storefront/home/blocks/categories.html.twig' %}
@@ -36,6 +46,7 @@
       <section class="shell demo-contact-cta"><div><small>{{ ui_text('form_showcase') }}</small><h2>{{ ui_text('questions_about_product_store') }}</h2><p>{{ ui_text('contact_form_demo_text') }}</p></div><a class="button button--primary button--lg" href="/contact">{{ ui_text('contact_us') }}{{ ui_icon('arrow-right', 16) }}</a></section>
       {% endif %}
     {% endif %}
+    </div>
   {% endif %}
 {% endfor %}
 

@@ -1,0 +1,31 @@
+{#- Scroll story: a sticky picture that changes with the step being read (up to four steps). On phones every step shows its own picture. -#}
+{% set p = layout_block.props|default({}) %}
+{% set steps = [] %}
+{% for n in 1..4 %}
+    {% set st = p['step' ~ n ~ '_title']|default('') %}
+    {% set sx = p['step' ~ n ~ '_text']|default('') %}
+    {% set si = safe_media_url(p['step' ~ n ~ '_image']|default('')) %}
+    {% if st or sx or si %}{% set steps = steps|merge([{title: st, text: sx, image: si}]) %}{% endif %}
+{% endfor %}
+{% if steps %}
+<section class="scroll-story scroll-story--{{ p.image_side|default('left') == 'right' ? 'right' : 'left' }}" data-scroll-story data-home-builder-block="{{ layout_block.id }}" aria-label="{{ p.title|default(ui_text('scroll_story')) }}">
+    <div class="shell">
+        {% if p.title|default('') or p.text|default('') %}<header class="scroll-story__intro">{% if p.title|default('') %}<h2>{{ p.title }}</h2>{% endif %}{% if p.text|default('') %}<p>{{ p.text }}</p>{% endif %}</header>{% endif %}
+        <div class="scroll-story__layout">
+            <div class="scroll-story__stage" aria-hidden="true">
+                {% for step in steps %}{% if step.image %}<img class="scroll-story__image{{ loop.first ? ' is-active' : '' }}" data-story-image="{{ loop.index0 }}" src="{{ step.image }}" alt="" width="1000" height="800" loading="{{ loop.first ? 'eager' : 'lazy' }}" decoding="async">{% endif %}{% endfor %}
+            </div>
+            <ol class="scroll-story__steps">
+                {% for step in steps %}
+                <li class="scroll-story__step{{ loop.first ? ' is-active' : '' }}" data-story-step="{{ loop.index0 }}">
+                    {% if step.image %}<img class="scroll-story__inline-image" src="{{ step.image }}" alt="" width="1000" height="800" loading="lazy" decoding="async">{% endif %}
+                    {% if step.title %}<h3>{{ step.title }}</h3>{% endif %}
+                    {% if step.text %}<p>{{ step.text }}</p>{% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% if p.button_label|default('') and safe_media_url(p.button_url|default('')) %}<p class="scroll-story__cta"><a class="button button--primary button--lg" href="{{ safe_media_url(p.button_url) }}">{{ p.button_label }}{{ ui_icon('arrow-right', 16) }}</a></p>{% endif %}
+    </div>
+</section>
+{% endif %}

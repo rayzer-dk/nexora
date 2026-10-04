@@ -907,4 +907,8 @@ return [
     'view_order' => 'Se din ordre',
     'subcategories' => 'Underkategorier',
     'category_tile_products' => 'Produkter: %count%',
+    'banners' => 'Bannere',
+    'scroll_story' => 'Historie ved scroll',
+    'video_pause' => 'Sæt video på pause',
+    'video_play' => 'Afspil video',
 ];

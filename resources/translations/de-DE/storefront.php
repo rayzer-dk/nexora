@@ -840,4 +840,8 @@ return [
     'view_order' => 'Bestellung ansehen',
     'subcategories' => 'Unterkategorien',
     'category_tile_products' => 'Produkte: %count%',
+    'banners' => 'Banner',
+    'scroll_story' => 'Geschichte beim Scrollen',
+    'video_pause' => 'Video pausieren',
+    'video_play' => 'Video abspielen',
 ];

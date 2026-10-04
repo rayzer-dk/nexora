@@ -13,6 +13,7 @@ final class HelpCatalog
         'update-and-restore' => ['file' => 'docs/UPDATE_AND_RESTORE.md', 'group' => 'system'],
         'language-packs' => ['file' => 'docs/LANGUAGE_PACKS.md', 'group' => 'system'],
         'sms' => ['file' => 'docs/SMS.md', 'group' => 'system'],
+        'home-builder' => ['file' => 'docs/HOME_BUILDER.md', 'group' => 'system'],
         'backup-feeds-sitemap' => ['file' => 'docs/BACKUP_FEEDS_SITEMAP.md', 'group' => 'system'],
         'security' => ['file' => 'docs/SECURITY.md', 'group' => 'system'],
         'extensibility' => ['file' => 'docs/EXTENSIBILITY.md', 'group' => 'modules'],

@@ -1,0 +1,27 @@
+{#- A row of banners (neighbouring "banner" blocks). Each banner: image (+ phone image), text, button, text colour, text position, height, width, devices. -#}
+<section class="shell banner-row" aria-label="{{ ui_text('banners') }}" data-home-builder-block="{{ layout_block.id }}">
+{% for banner in layout_block.items %}
+    {% set p = banner.props|default({}) %}
+    {% set attrs = home_block_attrs(banner, false) %}
+    {% set image = safe_media_url(p.image|default('')) %}
+    {% set image_mobile = safe_media_url(p.image_mobile|default('')) %}
+    {% set url = safe_media_url(p.url|default('')) ?: safe_media_url(p.button_url|default('')) %}
+    {% set color = block_color(banner.style.color|default('')) %}
+    {% set bg = block_background(banner.style.background|default('')) %}
+    {% set width = p.width|default('full') in ['full', 'two_thirds', 'half', 'third'] ? p.width|default('full') : 'full' %}
+    {% set height = p.height|default('m') in ['s', 'm', 'l', 'xl'] ? p.height|default('m') : 'm' %}
+    {% set position = p.position|default('ml') matches '/^[tmb][lcr]$/' ? p.position|default('ml') : 'ml' %}
+    {% set overlay = max(0, min(80, (p.overlay|default(image ? 30 : 0))|round)) %}
+    {% set tag = url ? 'a' : 'div' %}
+    <{{ tag }} class="banner banner--w-{{ width }} banner--h-{{ height }} banner--pos-{{ position }}{{ image ? ' has-image' : '' }}{{ attrs.class ? ' ' ~ attrs.class : '' }}"{% if url %} href="{{ url }}"{% endif %} style="--banner-overlay: {{ overlay / 100 }};{% if color %} --banner-color: {{ color }};{% endif %}{% if bg %} --banner-bg: {{ bg }};{% endif %}" data-banner="{{ banner.id }}">
+        {% if image %}<picture class="banner__media">{% if image_mobile %}<source media="(max-width: 767px)" srcset="{{ image_mobile }}">{% endif %}<img src="{{ image }}" alt="{{ p.alt|default(p.title|default('')) }}" width="1600" height="640" loading="{{ loop.index > 1 ? 'lazy' : 'eager' }}" decoding="async"></picture><span class="banner__scrim" aria-hidden="true"></span>{% endif %}
+        {% if p.title|default('') or p.text|default('') or p.button_label|default('') %}
+        <span class="banner__copy">
+            {% if p.title|default('') %}<strong class="banner__title">{{ p.title }}</strong>{% endif %}
+            {% if p.text|default('') %}<span class="banner__text">{{ p.text }}</span>{% endif %}
+            {% if p.button_label|default('') and url %}<span class="button button--primary banner__button">{{ p.button_label }}{{ ui_icon('arrow-right', 16) }}</span>{% endif %}
+        </span>
+        {% endif %}
+    </{{ tag }}>
+{% endfor %}
+</section>

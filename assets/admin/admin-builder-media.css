@@ -220,3 +220,11 @@
   .media-folder-form input,
   .media-folder-form select { flex: 0 0 auto; width: 100%; }
 }
+
+/* Builder: 3 x 3 grid for the text position of a banner or video block. */
+.mc-pos-grid { display: grid; grid-template-columns: repeat(3, var(--mc-control-height-md, 36px)); gap: var(--mc-space-1); width: max-content; }
+.mc-pos-grid__cell { position: relative; display: block; }
+.mc-pos-grid__cell input { position: absolute; inset: 0; opacity: 0; cursor: pointer; margin: 0; }
+.mc-pos-grid__cell > span:not(.visually-hidden) { display: block; height: var(--mc-control-height-md, 36px); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); }
+.mc-pos-grid__cell input:checked + span { background: var(--mc-color-primary); border-color: var(--mc-color-primary); }
+.mc-pos-grid__cell input:focus-visible + span { outline: 2px solid var(--mc-color-primary); outline-offset: 2px; }

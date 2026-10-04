@@ -26,6 +26,7 @@ export default defineConfig({
         slider: 'assets/storefront/slider.js',
         supportChat: 'assets/storefront/support-chat.js',
         catalogPage: 'assets/storefront/catalog-page.js',
+        homeBlocks: 'assets/storefront/home-blocks.js',
         adminRuntime: 'assets/storefront/admin-runtime.js',
         adminBuilder: 'assets/admin/features/builder.js',
         adminMedia: 'assets/admin/features/media-library.js',

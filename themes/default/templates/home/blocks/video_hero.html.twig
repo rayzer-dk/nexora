@@ -1,0 +1,21 @@
+{#- Video hero: poster picture first, the video starts only on a wide screen, without data-saver and without reduced motion (or on phones when the merchant allows it). -#}
+{% set p = layout_block.props|default({}) %}
+{% set video = safe_media_url(p.video_url|default('')) %}
+{% set poster = safe_media_url(p.image|default('')) %}
+{% set color = block_color(layout_block.style.color|default('')) %}
+{% set height = p.height|default('l') in ['m', 'l', 'xl', 'screen'] ? p.height|default('l') : 'l' %}
+{% set position = p.position|default('ml') matches '/^[tmb][lcr]$/' ? p.position|default('ml') : 'ml' %}
+{% set overlay = max(0, min(80, (p.overlay|default(35))|round)) %}
+{% if video or poster %}
+<section class="video-hero video-hero--h-{{ height }} video-hero--pos-{{ position }}" data-video-hero data-video-mobile="{{ p.mobile_video|default(false) in [true, 1, '1', 'true'] ? '1' : '0' }}" style="--video-overlay: {{ overlay / 100 }};{% if color %} --video-color: {{ color }};{% endif %}" data-home-builder-block="{{ layout_block.id }}">
+    {% if poster %}<img class="video-hero__poster" src="{{ poster }}" alt="" width="1920" height="900" fetchpriority="high" decoding="async">{% endif %}
+    {% if video %}<video class="video-hero__video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" data-video-src="{{ video }}"></video>{% endif %}
+    <span class="video-hero__scrim" aria-hidden="true"></span>
+    <div class="shell video-hero__copy">
+        {% if p.title|default('') %}<h2 class="video-hero__title">{{ p.title }}</h2>{% endif %}
+        {% if p.text|default('') %}<p class="video-hero__text">{{ p.text }}</p>{% endif %}
+        {% if p.button_label|default('') and safe_media_url(p.button_url|default('')) %}<a class="button button--primary button--lg" href="{{ safe_media_url(p.button_url) }}">{{ p.button_label }}{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
+    </div>
+    {% if video %}<button type="button" class="video-hero__toggle" data-video-toggle hidden aria-label="{{ ui_text('video_pause') }}" data-label-pause="{{ ui_text('video_pause') }}" data-label-play="{{ ui_text('video_play') }}"><span class="video-hero__icon-pause">{{ ui_icon('pause', 18) }}</span><span class="video-hero__icon-play">{{ ui_icon('play', 18) }}</span></button>{% endif %}
+</section>
+{% endif %}

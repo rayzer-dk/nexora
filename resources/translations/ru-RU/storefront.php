@@ -841,4 +841,8 @@ return [
     'view_order' => 'Посмотреть заказ',
     'subcategories' => 'Подкатегории',
     'category_tile_products' => 'Товаров: %count%',
+    'banners' => 'Баннеры',
+    'scroll_story' => 'История при прокрутке',
+    'video_pause' => 'Приостановить видео',
+    'video_play' => 'Воспроизвести видео',
 ];
