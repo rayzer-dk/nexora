@@ -27,6 +27,10 @@ $allowedRaw = [
     // The shop owner's own e-mail HTML: sanitized (commerce.email_html) when the campaign is saved, never raw from the request.
     'themes/default/templates/email/campaign.html.twig',
     'themes/default/templates/email/campaign_raw.html.twig',
+    // custom_html is the owner's template body, sanitized by NotificationTemplateService::cleanHtml() on save.
+    'themes/default/templates/email/generic.html.twig',
+    'themes/default/templates/email/order_status.html.twig',
+    'themes/default/templates/email/order_created.html.twig',
     // Bundled documentation rendered by MarkdownLite, which HTML-escapes every character of the source first.
     'themes/default/templates/admin/help/doc.html.twig',
 ];
