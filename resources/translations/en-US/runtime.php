@@ -1875,6 +1875,7 @@ return [
     'extension.sdk.capability_undeclared' => 'The trusted extension did not declare a capability in manifest.json: ',
     'extension.sdk.service_contract' => 'The service does not match the contract of the extension point: ',
     'sms.runtime.unexpected_answer' => 'Unexpected answer from the provider',
+    'sms.runtime.http_error' => 'SMS-fly: HTTP error ',
     'extension.sdk.ai_provider_duplicate' => 'The AI provider code is empty or already registered: ',
     'extension.sdk.payment_provider_duplicate' => 'The payment provider code is empty or already registered: ',
     'extension.sdk.product_block_label' => 'Product block',

@@ -48,7 +48,7 @@ final readonly class HttpSmsNotificationSender implements NotificationSenderInte
                 'max_redirects' => 0,
                 'timeout' => 8.0,
             ]);
-            if ($answer->getStatusCode() >= 300) throw new RuntimeException('SMS-fly: HTTP ' . $answer->getStatusCode());
+            if ($answer->getStatusCode() >= 300) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('sms.runtime.http_error') . $answer->getStatusCode());
             $decoded = json_decode($answer->getContent(false), true);
             SmsFlyApi::assertAccepted(is_array($decoded) ? $decoded : null);
 
