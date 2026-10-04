@@ -475,7 +475,8 @@ legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-
   .reference-benefits { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (min-width: 1024px) {
-  .demo-hero-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  /* Two columns only when the side banners exist; otherwise the hero takes the whole width. */
+  .demo-hero-grid:has(.demo-hero-stack) { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .demo-hero-stack { grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr 1fr; }
   .reference-categories { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
   .reference-benefits { grid-template-columns: repeat(6, minmax(0, 1fr)); }

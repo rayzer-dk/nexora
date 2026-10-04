@@ -2,6 +2,10 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.42.1 — 2026-10-04
+
+- Home page: the hero block no longer leaves an empty third of the row when there are no side banners.
+
 ## 3.42.0 — 2026-10-04
 
 Only ordinary SMS — schema 78 (columns `mc_sms_settings.flash_supported` and `mc_sms_log.flash` dropped).
