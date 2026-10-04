@@ -51,3 +51,14 @@ Redirect hits are counted on a best-effort basis. Failure to update analytics ne
 The migration adapter preserves available OpenCart `seo_url` / `url_alias` keywords for products, categories and manufacturers for every mapped active locale. When the source path differs from Nexora's canonical path (for example Nexora's `brand/` namespace), the source path is registered as a 301 alias to the imported canonical route.
 
 OpenCart stores aliases, not a guaranteed snapshot of every public URL ever served by third-party SEO extensions. A custom SeoPro/SEO-module may have emitted hierarchical or otherwise rewritten URLs that cannot be reconstructed unambiguously from `seo_url` alone. Nexora therefore preserves every path that can be derived safely from source records and does not fabricate unknown legacy URLs. For such stores, provide an explicit legacy URL map during migration or import additional redirects after migration.
+
+## Шлях категорії в адресі товару (необов'язково)
+
+За замовчуванням адреса товару коротка: `/iphone-13`. У Адмінка → Каталог → Категорії можна ввімкнути «Шлях категорії в адресі товару». Тоді:
+
+- товар відкривається і за адресою `/electronics/phones-tablets/smartphones/smartphones-apple/iphone-13` (будь-який ланцюжок від верхньої категорії до категорії, у якій лежить товар, або до її нащадка);
+- посилання на товари на сторінці категорії містять шлях цієї категорії;
+- **канонічна адреса залишається короткою** (`<link rel="canonical" href="/iphone-13">`), тож пошукові системи бачать одну сторінку;
+- ланцюжок, що не веде до товару, дає 404; з вимкненим перемикачем адреси з категоріями — теж 404 (нічого не змінюється для вже наявних посилань).
+
+Головна категорія товару (перша в списку; у формі товару її вибирають окремо, коли категорій дві або більше) використовується для хлібних крихт і фідів.

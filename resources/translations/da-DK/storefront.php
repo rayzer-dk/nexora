@@ -712,6 +712,7 @@ return [
     'doc_type_warranty' => 'Garanti',
     'blog_all' => 'Alle artikler',
     'blog_categories_label' => 'Blogkategorier',
+    'blog_subcategories_label' => 'Blogunderkategorier',
     'blog_search_label' => 'Søg i bloggen',
     'blog_search_placeholder' => 'Søg artikler',
     'blog_search_submit' => 'Søg',

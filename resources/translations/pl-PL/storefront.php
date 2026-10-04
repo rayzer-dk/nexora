@@ -645,6 +645,7 @@ return [
     'doc_type_warranty' => 'Gwarancja',
     'blog_all' => 'Wszystkie artykuły',
     'blog_categories_label' => 'Kategorie bloga',
+    'blog_subcategories_label' => 'Podkategorie bloga',
     'blog_search_label' => 'Szukaj na blogu',
     'blog_search_placeholder' => 'Szukaj artykułów',
     'blog_search_submit' => 'Szukaj',

@@ -69,6 +69,11 @@ final readonly class InstallationSeeder
             ]);
 
             $db->insert('mc_store_locale', ['store_id' => $storeId, 'locale_code' => $locale, 'enabled' => 1, 'is_default' => 1, 'url_prefix' => null, 'sort_order' => 10]);
+            // The admin and the shop ship complete in Ukrainian, English and Russian, so all three are on from the start;
+            // the other bundled languages are registered and can be switched on in Admin → System → Localization.
+            foreach (array_values(array_diff(RegionCatalog::FULL_LOCALES, [$locale])) as $index => $extraLocale) {
+                $db->insert('mc_store_locale', ['store_id' => $storeId, 'locale_code' => $extraLocale, 'enabled' => 1, 'is_default' => 0, 'url_prefix' => null, 'sort_order' => 20 + $index * 10]);
+            }
             $db->insert('mc_store_currency', ['store_id' => $storeId, 'currency_code' => $currency, 'enabled' => 1, 'is_default' => 1, 'auto_convert' => 0, 'rounding_increment_minor' => 1, 'sort_order' => 10]);
 
             $db->insert('mc_market', [
@@ -193,24 +198,34 @@ final readonly class InstallationSeeder
     private function seedInformationPages(Connection $db, int $storeId, string $now, string $storeName, string $email, string $storeLocale, string $country = ''): void
     {
         // Page drafts exist in uk, ru, pl, de, da and en; the store language picks the draft, the country picks the legal frame.
-        $pageLocale = \Commerce\Modules\Content\System\InformationPageTemplates::directoryFor($storeLocale);
-        \Commerce\Core\I18n\CanonicalUiText::useLocale(in_array(substr($pageLocale, 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US');
+        // Every language that is on from the start (Ukrainian, English, Russian) gets its own draft of every page.
         $path = $this->projectDir . '/config/content/information_pages.json';
         $document = json_decode((string) file_get_contents($path), true, 64, JSON_THROW_ON_ERROR);
         $templates = new \Commerce\Modules\Content\System\InformationPageTemplates($this->projectDir);
         $profile = ['store_name' => $storeName, 'email' => $email, 'privacy_contact' => $email, 'return_contact' => $email, 'warranty_contact' => $email];
+        $locales = array_values(array_unique([$storeLocale, ...RegionCatalog::FULL_LOCALES]));
         foreach (($document['pages'] ?? []) as $key => $definition) {
             $db->insert('mc_content_entry', [
                 'public_id' => $this->publicIds->binary(), 'store_id' => $storeId, 'content_type' => 'page', 'system_key' => (string) $key, 'status' => 'draft',
                 'author_subject' => 'system:installer', 'published_at' => null, 'created_at' => $now, 'updated_at' => $now,
             ]);
             $contentId = (int) $db->lastInsertId();
-            $db->insert('mc_content_translation', [
-                'content_id' => $contentId, 'locale' => $pageLocale, 'title' => $templates->title((string) $key, $pageLocale) ?? (trim((string) ($definition['title_key'] ?? '')) !== '' ? \Commerce\Core\I18n\CanonicalUiText::get((string) $definition['title_key']) : (string) ($definition['title'] ?? $key)),
-                'excerpt' => null, 'body_html' => $templates->body((string) $key, $pageLocale, $profile, $country), 'meta_title' => null, 'meta_description' => null,
-                'created_at' => $now, 'updated_at' => $now,
-            ]);
+            $seen = [];
+            foreach ($locales as $locale) {
+                $pageLocale = \Commerce\Modules\Content\System\InformationPageTemplates::directoryFor($locale);
+                if (isset($seen[$locale])) {
+                    continue;
+                }
+                $seen[$locale] = true;
+                \Commerce\Core\I18n\CanonicalUiText::useLocale(in_array(substr($pageLocale, 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US');
+                $db->insert('mc_content_translation', [
+                    'content_id' => $contentId, 'locale' => $locale, 'title' => $templates->title((string) $key, $pageLocale) ?? (trim((string) ($definition['title_key'] ?? '')) !== '' ? \Commerce\Core\I18n\CanonicalUiText::get((string) $definition['title_key']) : (string) ($definition['title'] ?? $key)),
+                    'excerpt' => null, 'body_html' => $templates->body((string) $key, $pageLocale, $profile, $country), 'meta_title' => null, 'meta_description' => null,
+                    'created_at' => $now, 'updated_at' => $now,
+                ]);
+            }
         }
+        \Commerce\Core\I18n\CanonicalUiText::useLocale(in_array(substr($storeLocale, 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US');
     }
 
     private function now(): string

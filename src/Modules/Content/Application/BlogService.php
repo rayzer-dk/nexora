@@ -20,6 +20,9 @@ use Symfony\Component\Uid\Uuid;
 /** Write side of the blog: articles (per locale), categories and tags. */
 final class BlogService
 {
+    /** Levels below the top one (top level = 0). */
+    private const MAX_CATEGORY_DEPTH = 3;
+
     public const STATUSES = ['draft', 'published'];
     private const MAX_TAGS = 10;
 
@@ -268,29 +271,77 @@ final class BlogService
     public function categories(int $storeId, string $locale): array
     {
         $rows = $this->db->fetchAllAssociative(
-            "SELECT c.id, c.slug, c.sort_order, c.status,
+            "SELECT c.id, c.parent_id, c.slug, c.sort_order, c.status,
                     COALESCE(t.name, (SELECT t2.name FROM mc_blog_category_translation t2 WHERE t2.category_id = c.id ORDER BY t2.locale LIMIT 1), c.slug) AS name,
                     (SELECT COUNT(*) FROM mc_blog_article_meta bm WHERE bm.category_id = c.id) AS articles
              FROM mc_blog_category c LEFT JOIN mc_blog_category_translation t ON t.category_id = c.id AND t.locale = ?
              WHERE c.store_id = ? ORDER BY c.sort_order, name",
             [$locale, $storeId],
         );
-        return array_map(static fn (array $r): array => [
-            'id' => (int) $r['id'], 'slug' => (string) $r['slug'], 'name' => (string) $r['name'],
-            'sort_order' => (int) $r['sort_order'], 'status' => (string) $r['status'], 'articles' => (int) $r['articles'],
-        ], $rows);
+        $byId = [];
+        foreach ($rows as $r) {
+            $byId[(int) $r['id']] = $r;
+        }
+        $children = [];
+        foreach ($byId as $id => $r) {
+            $parent = $r['parent_id'] !== null && isset($byId[(int) $r['parent_id']]) ? (int) $r['parent_id'] : 0;
+            $children[$parent][] = $id;
+        }
+        // The admin list is the tree: every category under its parent, indented by "depth".
+        $out = [];
+        $walk = function (int $parentKey, int $depth) use (&$walk, &$out, $byId, $children): void {
+            foreach ($children[$parentKey] ?? [] as $id) {
+                $r = $byId[$id];
+                $out[] = [
+                    'id' => $id, 'parent_id' => $r['parent_id'] !== null ? (int) $r['parent_id'] : null, 'depth' => $depth, 'slug' => (string) $r['slug'], 'name' => (string) $r['name'],
+                    'sort_order' => (int) $r['sort_order'], 'status' => (string) $r['status'], 'articles' => (int) $r['articles'],
+                ];
+                if ($depth < self::MAX_CATEGORY_DEPTH) {
+                    $walk($id, $depth + 1);
+                }
+            }
+        };
+        $walk(0, 0);
+
+        return $out;
     }
 
     /** @return array<string,mixed>|null */
     public function category(int $storeId, int $id, string $locale): ?array
     {
         $row = $this->db->fetchAssociative(
-            'SELECT c.id, c.slug, c.sort_order, c.status, t.name, t.description, t.meta_title, t.meta_description
+            'SELECT c.id, c.parent_id, c.slug, c.sort_order, c.status, t.name, t.description, t.meta_title, t.meta_description
              FROM mc_blog_category c LEFT JOIN mc_blog_category_translation t ON t.category_id = c.id AND t.locale = ?
              WHERE c.id = ? AND c.store_id = ?',
             [$locale, $id, $storeId],
         );
         return is_array($row) ? $row : null;
+    }
+
+    /**
+     * A parent must be a category of the same store that is not the category itself or one of its descendants (no loops)
+     * and keeps the tree within MAX_CATEGORY_DEPTH levels; anything else makes the category a top-level one.
+     */
+    private function validParent(Connection $db, int $storeId, ?int $id, int $parentId): ?int
+    {
+        if ($parentId <= 0) {
+            return null;
+        }
+        $parents = [];
+        foreach ($db->fetchAllAssociative('SELECT id, parent_id FROM mc_blog_category WHERE store_id = ?', [$storeId]) as $r) {
+            $parents[(int) $r['id']] = $r['parent_id'] !== null ? (int) $r['parent_id'] : null;
+        }
+        if (!array_key_exists($parentId, $parents)) {
+            return null;
+        }
+        $depth = 0;
+        for ($current = $parentId; $current !== null && $depth <= self::MAX_CATEGORY_DEPTH + 1; $current = $parents[$current] ?? null, ++$depth) {
+            if ($id !== null && $current === $id) {
+                return null;
+            }
+        }
+
+        return $depth > self::MAX_CATEGORY_DEPTH ? null : $parentId;
     }
 
     /** @param array<string,mixed> $in */
@@ -305,15 +356,19 @@ final class BlogService
         $now = $this->now();
         $requested = trim((string) ($in['slug'] ?? ''));
         return $this->db->transactional(function (Connection $db) use ($storeId, $locale, $id, $name, $status, $sort, $now, $requested, $in): int {
+            $parentId = array_key_exists('parent_id', $in) ? $this->validParent($db, $storeId, $id, (int) $in['parent_id']) : false;
             if ($id === null) {
                 $slug = $this->uniqueCategorySlug($db, $storeId, $requested !== '' ? $requested : $name, $locale, null);
-                $db->insert('mc_blog_category', ['store_id' => $storeId, 'slug' => $slug, 'sort_order' => $sort, 'status' => $status, 'created_at' => $now, 'updated_at' => $now]);
+                $db->insert('mc_blog_category', ['store_id' => $storeId, 'parent_id' => $parentId === false ? null : $parentId, 'slug' => $slug, 'sort_order' => $sort, 'status' => $status, 'created_at' => $now, 'updated_at' => $now]);
                 $id = (int) $db->lastInsertId();
             } else {
                 if ((int) $db->fetchOne('SELECT COUNT(*) FROM mc_blog_category WHERE id = ? AND store_id = ?', [$id, $storeId]) !== 1) {
                     throw new InvalidArgumentException(CanonicalUiText::get('admin.blog.error.not_found'));
                 }
                 $update = ['sort_order' => $sort, 'status' => $status, 'updated_at' => $now];
+                if ($parentId !== false) {
+                    $update['parent_id'] = $parentId;
+                }
                 if ($requested !== '') {
                     $update['slug'] = $this->uniqueCategorySlug($db, $storeId, $requested, $locale, $id);
                 }

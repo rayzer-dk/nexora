@@ -910,6 +910,7 @@ return [
     'doc_type_warranty' => 'Гарантія',
     'blog_all' => 'Усі статті',
     'blog_categories_label' => 'Категорії блогу',
+    'blog_subcategories_label' => 'Підкатегорії блогу',
     'blog_search_label' => 'Пошук по блогу',
     'blog_search_placeholder' => 'Пошук статей',
     'blog_search_submit' => 'Знайти',

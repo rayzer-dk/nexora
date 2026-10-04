@@ -7,11 +7,21 @@ declare(strict_types=1);
 $projectDir = dirname(__DIR__);
 require_once $projectDir . '/bootstrap/upgrade.php';
 
-$locales = ['uk-UA', 'ru-RU', 'en-US'];
+$locales = ['uk-UA', 'en-US', 'ru-RU', 'de-DE', 'fr-FR', 'es-ES', 'it-IT', 'pl-PL', 'pt-BR', 'tr-TR'];
 $requested = (string) ($_GET['lang'] ?? $_POST['_lang'] ?? $_COOKIE['nexora_setup_lang'] ?? 'uk-UA');
 $locale = in_array($requested, $locales, true) ? $requested : 'uk-UA';
-$catalogPath = $projectDir . '/resources/translations/' . $locale . '/installer.php';
-$catalog = is_file($catalogPath) ? require $catalogPath : [];
+$catalog = [];
+foreach (['en-US', $locale] as $catalogLocale) {
+    foreach ([$projectDir . '/resources/translations/' . $catalogLocale . '/installer.php', $projectDir . '/resources/installer-lang/' . $catalogLocale . '.php'] as $catalogPath) {
+        if (is_file($catalogPath)) {
+            $loaded = require $catalogPath;
+            if (is_array($loaded)) {
+                $catalog = array_merge($catalog, $loaded);
+            }
+            break;
+        }
+    }
+}
 $it = static function (string $key, array $replace = []) use ($catalog): string {
     $value = is_array($catalog) && isset($catalog[$key]) ? (string) $catalog[$key] : $key;
     foreach ($replace as $name => $replacement) {

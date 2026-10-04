@@ -910,6 +910,7 @@ return [
     'doc_type_warranty' => 'Warranty',
     'blog_all' => 'All articles',
     'blog_categories_label' => 'Blog categories',
+    'blog_subcategories_label' => 'Blog subcategories',
     'blog_search_label' => 'Search the blog',
     'blog_search_placeholder' => 'Search articles',
     'blog_search_submit' => 'Search',

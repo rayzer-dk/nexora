@@ -1659,6 +1659,10 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-maintenance__text p { margin: var(--mc-space-1) 0 0; }
 
 /* Multi-select filter */
+.admin-category-url { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--mc-space-3); margin-bottom: var(--mc-space-3); }
+.admin-primary-category { display: grid; gap: var(--mc-space-1); margin-top: var(--mc-space-3); max-width: 26rem; }
+.admin-primary-category[hidden] { display: none; }
+.admin-primary-category small { color: var(--mc-color-text-muted); }
 .admin-multiselect { position: relative; min-width: 0; display: grid; gap: var(--mc-space-1); }
 .admin-multiselect__label { color: var(--mc-color-text); font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-semibold); }
 .admin-multiselect__summary { display: flex; align-items: center; justify-content: space-between; gap: var(--mc-space-2); min-height: var(--mc-control-height-md); padding: 0 var(--mc-control-padding-x); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-raised); cursor: pointer; list-style: none; }

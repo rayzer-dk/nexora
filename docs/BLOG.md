@@ -21,3 +21,8 @@ Storefront: `/blog`, `/blog/category/{slug}`, `/blog/tag/{slug}`, `/blog/feed.xm
 - Article HTML is sanitised server-side (`commerce.rich_text`) before it is stored.
 - All admin writes are CSRF-protected and covered by the destructive-action confirmation gate (`bin/admin-confirm-check.php`).
 - Cover images go through the media pipeline (type/size/pixel limits, WebP/AVIF derivatives).
+
+
+## Підкатегорії блогу
+
+Категорія блогу може мати батьківську (до чотирьох рівнів): Адмінка → Контент → Блог → Категорії, поле «Батьківська категорія». Категорія на сайті показує статті всієї своєї гілки, під рядком категорій з'являється рядок підкатегорій, хлібні крихти статті містять батьківські категорії. Видалення батьківської категорії робить дочірні категорії верхнього рівня.

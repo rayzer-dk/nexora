@@ -122,6 +122,24 @@ final class BlogController extends AbstractController
             throw $this->createNotFoundException();
         }
 
+        // Subcategories: the chips below the top row are the children of the open category, or its siblings when it has none.
+        $categoryTree = $this->blog->categories($context->storeId, $context->locale);
+        $bySlug = [];
+        foreach ($categoryTree as $node) {
+            $bySlug[$node['slug']] = $node;
+        }
+        $branch = [];
+        for ($cursor = $categorySlug; $cursor !== null && isset($bySlug[$cursor]) && count($branch) < 8; $cursor = $bySlug[$cursor]['parent']) {
+            array_unshift($branch, $cursor);
+        }
+        $subCategories = [];
+        if ($categorySlug !== null && isset($bySlug[$categorySlug])) {
+            $subCategories = array_values(array_filter($categoryTree, static fn (array $node): bool => $node['parent'] === $categorySlug));
+            if ($subCategories === [] && $bySlug[$categorySlug]['parent'] !== null) {
+                $subCategories = array_values(array_filter($categoryTree, static fn (array $node): bool => $node['parent'] === $bySlug[$categorySlug]['parent']));
+            }
+        }
+
         $path = match (true) {
             $categorySlug !== null => '/blog/category/' . $categorySlug,
             $tagSlug !== null => '/blog/tag/' . $tagSlug,
@@ -153,7 +171,9 @@ final class BlogController extends AbstractController
             'featured' => $featured,
             'articles' => $result['items'],
             'pagination' => ['page' => $result['page'], 'pages' => $result['pages'], 'total' => $result['total'], 'path' => $path],
-            'categories' => $this->blog->categories($context->storeId, $context->locale),
+            'categories' => $categoryTree,
+            'category_branch' => $branch,
+            'sub_categories' => $subCategories,
             'tags' => $this->blog->tags($context->storeId, $context->locale, 15),
             'active_category' => $categorySlug,
             'active_tag' => $tagSlug,

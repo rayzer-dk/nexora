@@ -52,6 +52,7 @@ final class CatalogAdminPageController extends AbstractController
         private readonly \Commerce\Modules\Media\Application\ProductVideoService $videos,
         private readonly \Commerce\Modules\Media\Application\ProductMediaOrder $mediaOrder,
         private readonly \Commerce\Modules\Media\Application\MediaLibraryService $mediaLibrary,
+        private readonly \Commerce\Modules\Seo\Application\SeoSettings $seoSettings,
     ) {
     }
 
@@ -98,7 +99,22 @@ final class CatalogAdminPageController extends AbstractController
         $result = $tree !== null
             ? ['items' => $tree, 'total' => count($tree), 'page' => 1, 'limit' => max(1, count($tree))]
             : $this->query->categories($context->storeId, $context->locale, (int) $request->query->get('page', 1), 25, $search);
-        return $this->render('@storefront/admin/catalog/categories.html.twig', ['result' => $result, 'search' => $search, 'is_tree' => $tree !== null]);
+        return $this->render('@storefront/admin/catalog/categories.html.twig', ['result' => $result, 'search' => $search, 'is_tree' => $tree !== null, 'category_path_in_url' => $this->seoSettings->categoryPathInProductUrl($context->storeId)]);
+    }
+
+    /** Switches the optional category path in product addresses (the flat address stays canonical). */
+    #[Route('/admin/catalog/categories/url-settings', name: 'admin_catalog_category_url_settings', methods: ['POST'])]
+    public function categoryUrlSettings(Request $request): Response
+    {
+        $context = $this->context->resolve($request);
+        if (!$this->isCsrfTokenValid('admin_category_url_settings', (string) $request->request->get('_token'))) {
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.sesiiu_formy_vtracheno_povtorit_diiu'));
+        } else {
+            $this->seoSettings->setCategoryPathInProductUrl($context->storeId, $request->request->getBoolean('category_path'));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.categories.url_saved'));
+        }
+
+        return $this->redirectToRoute('admin_catalog_categories');
     }
 
     /** Changes the position of one category from the list (Enter or leaving the field). Answers JSON. */
@@ -162,7 +178,7 @@ final class CatalogAdminPageController extends AbstractController
                 $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.sesiiu_formy_vtracheno_povtorit_diiu'));
             } else {
                 try {
-                    $categoryIds = array_values(array_filter(array_map('intval', $request->request->all('category_ids')), static fn (int $id): bool => $id > 0));
+                    $categoryIds = $this->primaryFirst(array_values(array_filter(array_map('intval', $request->request->all('category_ids')), static fn (int $id): bool => $id > 0)), (int) $request->request->get('primary_category_id', 0));
                     $created = $this->products->create(new CreateProductCommand(
                         storeId: $context->storeId, marketId: $context->marketId, locale: $context->locale,
                         name: (string) $request->request->get('name', ''), sku: trim((string) $request->request->get('sku', '')) !== '' ? (string) $request->request->get('sku', '') : $this->skus->next(),
@@ -260,7 +276,7 @@ final class CatalogAdminPageController extends AbstractController
                             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.translations.publish_blocked', ['locales' => implode(', ', $missingLocales)]));
                         }
                     }
-                    $categoryIds = array_values(array_filter(array_map('intval', $request->request->all('category_ids')), static fn (int $id): bool => $id > 0));
+                    $categoryIds = $this->primaryFirst(array_values(array_filter(array_map('intval', $request->request->all('category_ids')), static fn (int $id): bool => $id > 0)), (int) $request->request->get('primary_category_id', 0));
                     // Index / noindex of this language's page; set before the update so the storefront cache is rebuilt with it.
                     if ($request->request->has('seo_present')) {
                         $this->seoUrls->setIndexable($context->storeId, $context->locale, \Commerce\Modules\Seo\Domain\SeoEntityType::Product, $publicId, $request->request->getBoolean('indexable'));
@@ -890,5 +906,21 @@ final class CatalogAdminPageController extends AbstractController
         $type = (string) $request->request->get('document_type', 'document');
 
         return $type === '__custom' ? (string) $request->request->get('document_type_custom', '') : $type;
+    }
+
+    /**
+     * The first category of a product is its main one (breadcrumbs, feeds, the optional category path in the address).
+     * The chosen main category moves to the front; one that is not among the product's categories is ignored.
+     *
+     * @param list<int> $ids
+     * @return list<int>
+     */
+    private function primaryFirst(array $ids, int $primary): array
+    {
+        if ($primary <= 0 || !in_array($primary, $ids, true)) {
+            return $ids;
+        }
+
+        return array_values(array_unique([$primary, ...$ids]));
     }
 }

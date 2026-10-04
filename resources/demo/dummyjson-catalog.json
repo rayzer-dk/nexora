@@ -753,7 +753,11 @@
  "products": [
   {
    "source_id": 83,
-   "name": "Blue & Black Check Shirt",
+   "name": {
+    "uk-UA": "Сорочка в синьо-чорну клітинку",
+    "ru-RU": "Рубашка в сине-чёрную клетку",
+    "en-US": "Blue & Black Check Shirt"
+   },
    "slug": "blue-black-check-shirt",
    "category": "mens-shirts",
    "brand": "Fashion Trends",
@@ -764,13 +768,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловіча сорочка: Blue & Black Check Shirt, бренд Fashion Trends.",
-    "ru-RU": "Мужская рубашка: Blue & Black Check Shirt, бренд Fashion Trends.",
+    "uk-UA": "Сорочка в синьо-чорну клітинку від Fashion Trends.",
+    "ru-RU": "Рубашка в сине-чёрную клетку от Fashion Trends.",
     "en-US": "The Blue & Black Check Shirt is a stylish and comfortable men's shirt featuring a classic check pattern."
    },
    "description": {
-    "uk-UA": "<p>Чоловіча сорочка: Blue & Black Check Shirt, бренд Fashion Trends. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужская рубашка: Blue & Black Check Shirt, бренд Fashion Trends. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Сорочка в синьо-чорну клітинку від Fashion Trends. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Рубашка в сине-чёрную клетку от Fashion Trends. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Blue & Black Check Shirt is a stylish and comfortable men's shirt featuring a classic check pattern. Made from high-quality fabric, it's suitable for both casual and semi-formal occasions.</p>"
    },
    "attributes": {
@@ -788,7 +792,11 @@
   },
   {
    "source_id": 11,
-   "name": "Annibale Colombo Bed",
+   "name": {
+    "uk-UA": "Ліжко Annibale Colombo",
+    "ru-RU": "Кровать Annibale Colombo",
+    "en-US": "Annibale Colombo Bed"
+   },
    "slug": "annibale-colombo-bed",
    "category": "furniture",
    "brand": "Annibale Colombo",
@@ -799,13 +807,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Меблі: Annibale Colombo Bed, бренд Annibale Colombo.",
-    "ru-RU": "Мебель: Annibale Colombo Bed, бренд Annibale Colombo.",
+    "uk-UA": "Ліжко Annibale Colombo від Annibale Colombo.",
+    "ru-RU": "Кровать Annibale Colombo от Annibale Colombo.",
     "en-US": "The Annibale Colombo Bed is a luxurious and elegant bed frame, crafted with high-quality materials for a comfortable and stylish bedroom."
    },
    "description": {
-    "uk-UA": "<p>Меблі: Annibale Colombo Bed, бренд Annibale Colombo. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мебель: Annibale Colombo Bed, бренд Annibale Colombo. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Ліжко Annibale Colombo від Annibale Colombo. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Кровать Annibale Colombo от Annibale Colombo. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Annibale Colombo Bed is a luxurious and elegant bed frame, crafted with high-quality materials for a comfortable and stylish bedroom.</p>"
    },
    "attributes": {
@@ -823,7 +831,11 @@
   },
   {
    "source_id": 121,
-   "name": "iPhone 5s",
+   "name": {
+    "uk-UA": "iPhone 5s",
+    "ru-RU": "iPhone 5s",
+    "en-US": "iPhone 5s"
+   },
    "slug": "iphone-5s",
    "category": "smartphones-apple",
    "brand": "Apple",
@@ -834,13 +846,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Товар: iPhone 5s, бренд Apple.",
-    "ru-RU": "Товар: iPhone 5s, бренд Apple.",
+    "uk-UA": "iPhone 5s від Apple.",
+    "ru-RU": "iPhone 5s от Apple.",
     "en-US": "The iPhone 5s is a classic smartphone known for its compact design and advanced features during its release."
    },
    "description": {
-    "uk-UA": "<p>Товар: iPhone 5s, бренд Apple. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Товар: iPhone 5s, бренд Apple. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>iPhone 5s від Apple. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>iPhone 5s от Apple. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The iPhone 5s is a classic smartphone known for its compact design and advanced features during its release. While it's an older model, it still provides a reliable user experience.</p>"
    },
    "attributes": {
@@ -897,7 +909,11 @@
   },
   {
    "source_id": 84,
-   "name": "Gigabyte Aorus Men Tshirt",
+   "name": {
+    "uk-UA": "Чоловіча футболка Gigabyte Aorus",
+    "ru-RU": "Мужская футболка Gigabyte Aorus",
+    "en-US": "Gigabyte Aorus Men Tshirt"
+   },
    "slug": "gigabyte-aorus-men-tshirt",
    "category": "mens-shirts",
    "brand": "Gigabyte",
@@ -908,13 +924,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловіча сорочка: Gigabyte Aorus Men Tshirt, бренд Gigabyte.",
-    "ru-RU": "Мужская рубашка: Gigabyte Aorus Men Tshirt, бренд Gigabyte.",
+    "uk-UA": "Чоловіча футболка Gigabyte Aorus від Gigabyte.",
+    "ru-RU": "Мужская футболка Gigabyte Aorus от Gigabyte.",
     "en-US": "The Gigabyte Aorus Men Tshirt is a cool and casual shirt for gaming enthusiasts."
    },
    "description": {
-    "uk-UA": "<p>Чоловіча сорочка: Gigabyte Aorus Men Tshirt, бренд Gigabyte. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужская рубашка: Gigabyte Aorus Men Tshirt, бренд Gigabyte. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Чоловіча футболка Gigabyte Aorus від Gigabyte. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Мужская футболка Gigabyte Aorus от Gigabyte. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Gigabyte Aorus Men Tshirt is a cool and casual shirt for gaming enthusiasts. With the Aorus logo and sleek design, it's perfect for expressing your gaming style.</p>"
    },
    "attributes": {
@@ -932,7 +948,11 @@
   },
   {
    "source_id": 12,
-   "name": "Annibale Colombo Sofa",
+   "name": {
+    "uk-UA": "Диван Annibale Colombo",
+    "ru-RU": "Диван Annibale Colombo",
+    "en-US": "Annibale Colombo Sofa"
+   },
    "slug": "annibale-colombo-sofa",
    "category": "furniture",
    "brand": "Annibale Colombo",
@@ -943,13 +963,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Меблі: Annibale Colombo Sofa, бренд Annibale Colombo.",
-    "ru-RU": "Мебель: Annibale Colombo Sofa, бренд Annibale Colombo.",
+    "uk-UA": "Диван Annibale Colombo від Annibale Colombo.",
+    "ru-RU": "Диван Annibale Colombo от Annibale Colombo.",
     "en-US": "The Annibale Colombo Sofa is a sophisticated and comfortable seating option, featuring exquisite design and premium upholstery for your living room."
    },
    "description": {
-    "uk-UA": "<p>Меблі: Annibale Colombo Sofa, бренд Annibale Colombo. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мебель: Annibale Colombo Sofa, бренд Annibale Colombo. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Диван Annibale Colombo від Annibale Colombo. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Диван Annibale Colombo от Annibale Colombo. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Annibale Colombo Sofa is a sophisticated and comfortable seating option, featuring exquisite design and premium upholstery for your living room.</p>"
    },
    "attributes": {
@@ -967,7 +987,11 @@
   },
   {
    "source_id": 1,
-   "name": "Essence Mascara Lash Princess",
+   "name": {
+    "uk-UA": "Туш для вій Essence Lash Princess",
+    "ru-RU": "Тушь для ресниц Essence Lash Princess",
+    "en-US": "Essence Mascara Lash Princess"
+   },
    "slug": "essence-mascara-lash-princess",
    "category": "beauty",
    "brand": "Essence",
@@ -978,13 +1002,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Засіб для макіяжу: Essence Mascara Lash Princess, бренд Essence.",
-    "ru-RU": "Средство для макияжа: Essence Mascara Lash Princess, бренд Essence.",
+    "uk-UA": "Туш для вій Essence Lash Princess від Essence.",
+    "ru-RU": "Тушь для ресниц Essence Lash Princess от Essence.",
     "en-US": "The Essence Mascara Lash Princess is a popular mascara known for its volumizing and lengthening effects."
    },
    "description": {
-    "uk-UA": "<p>Засіб для макіяжу: Essence Mascara Lash Princess, бренд Essence. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Средство для макияжа: Essence Mascara Lash Princess, бренд Essence. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Туш для вій Essence Lash Princess від Essence. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Тушь для ресниц Essence Lash Princess от Essence. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Essence Mascara Lash Princess is a popular mascara known for its volumizing and lengthening effects. Achieve dramatic lashes with this long-lasting and cruelty-free formula.</p>"
    },
    "attributes": {
@@ -1002,7 +1026,11 @@
   },
   {
    "source_id": 122,
-   "name": "iPhone 6",
+   "name": {
+    "uk-UA": "iPhone 6",
+    "ru-RU": "iPhone 6",
+    "en-US": "iPhone 6"
+   },
    "slug": "iphone-6",
    "category": "smartphones-apple",
    "brand": "Apple",
@@ -1013,13 +1041,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Товар: iPhone 6, бренд Apple.",
-    "ru-RU": "Товар: iPhone 6, бренд Apple.",
+    "uk-UA": "iPhone 6 від Apple.",
+    "ru-RU": "iPhone 6 от Apple.",
     "en-US": "The iPhone 6 is a stylish and capable smartphone with a larger display and improved performance."
    },
    "description": {
-    "uk-UA": "<p>Товар: iPhone 6, бренд Apple. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Товар: iPhone 6, бренд Apple. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>iPhone 6 від Apple. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>iPhone 6 от Apple. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The iPhone 6 is a stylish and capable smartphone with a larger display and improved performance. It introduced new features and design elements, making it a popular choice in its time.</p>"
    },
    "attributes": {
@@ -1037,7 +1065,11 @@
   },
   {
    "source_id": 85,
-   "name": "Man Plaid Shirt",
+   "name": {
+    "uk-UA": "Чоловіча сорочка в картату смужку",
+    "ru-RU": "Мужская рубашка в клетчатую полоску",
+    "en-US": "Man Plaid Shirt"
+   },
    "slug": "man-plaid-shirt",
    "category": "mens-shirts",
    "brand": "Classic Wear",
@@ -1048,13 +1080,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловіча сорочка: Man Plaid Shirt, бренд Classic Wear.",
-    "ru-RU": "Мужская рубашка: Man Plaid Shirt, бренд Classic Wear.",
+    "uk-UA": "Чоловіча сорочка в картату смужку від Classic Wear.",
+    "ru-RU": "Мужская рубашка в клетчатую полоску от Classic Wear.",
     "en-US": "The Man Plaid Shirt is a timeless and versatile men's shirt with a classic plaid pattern."
    },
    "description": {
-    "uk-UA": "<p>Чоловіча сорочка: Man Plaid Shirt, бренд Classic Wear. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужская рубашка: Man Plaid Shirt, бренд Classic Wear. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Чоловіча сорочка в картату смужку від Classic Wear. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Мужская рубашка в клетчатую полоску от Classic Wear. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Man Plaid Shirt is a timeless and versatile men's shirt with a classic plaid pattern. Its comfortable fit and casual style make it a wardrobe essential for various occasions.</p>"
    },
    "attributes": {
@@ -1072,7 +1104,11 @@
   },
   {
    "source_id": 13,
-   "name": "Bedside Table African Cherry",
+   "name": {
+    "uk-UA": "Тумбочка з африканської вишні",
+    "ru-RU": "Прикроватная тумба из африканской вишни",
+    "en-US": "Bedside Table African Cherry"
+   },
    "slug": "bedside-table-african-cherry",
    "category": "furniture",
    "brand": "Furniture Co.",
@@ -1083,13 +1119,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Меблі: Bedside Table African Cherry, бренд Furniture Co..",
-    "ru-RU": "Мебель: Bedside Table African Cherry, бренд Furniture Co..",
+    "uk-UA": "Тумбочка з африканської вишні від Furniture Co..",
+    "ru-RU": "Прикроватная тумба из африканской вишни от Furniture Co..",
     "en-US": "The Bedside Table in African Cherry is a stylish and functional addition to your bedroom, providing convenient storage space and a touch of elegance."
    },
    "description": {
-    "uk-UA": "<p>Меблі: Bedside Table African Cherry, бренд Furniture Co.. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мебель: Bedside Table African Cherry, бренд Furniture Co.. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Тумбочка з африканської вишні від Furniture Co.. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Прикроватная тумба из африканской вишни от Furniture Co.. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Bedside Table in African Cherry is a stylish and functional addition to your bedroom, providing convenient storage space and a touch of elegance.</p>"
    },
    "attributes": {
@@ -1107,7 +1143,11 @@
   },
   {
    "source_id": 123,
-   "name": "iPhone 13 Pro",
+   "name": {
+    "uk-UA": "iPhone 13 Pro",
+    "ru-RU": "iPhone 13 Pro",
+    "en-US": "iPhone 13 Pro"
+   },
    "slug": "iphone-13-pro",
    "category": "smartphones-apple",
    "brand": "Apple",
@@ -1192,7 +1232,11 @@
   },
   {
    "source_id": 86,
-   "name": "Man Short Sleeve Shirt",
+   "name": {
+    "uk-UA": "Чоловіча сорочка з коротким рукавом",
+    "ru-RU": "Мужская рубашка с коротким рукавом",
+    "en-US": "Man Short Sleeve Shirt"
+   },
    "slug": "man-short-sleeve-shirt",
    "category": "mens-shirts",
    "brand": "Casual Comfort",
@@ -1203,13 +1247,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловіча сорочка: Man Short Sleeve Shirt, бренд Casual Comfort.",
-    "ru-RU": "Мужская рубашка: Man Short Sleeve Shirt, бренд Casual Comfort.",
+    "uk-UA": "Чоловіча сорочка з коротким рукавом від Casual Comfort.",
+    "ru-RU": "Мужская рубашка с коротким рукавом от Casual Comfort.",
     "en-US": "The Man Short Sleeve Shirt is a breezy and stylish option for warm days."
    },
    "description": {
-    "uk-UA": "<p>Чоловіча сорочка: Man Short Sleeve Shirt, бренд Casual Comfort. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужская рубашка: Man Short Sleeve Shirt, бренд Casual Comfort. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Чоловіча сорочка з коротким рукавом від Casual Comfort. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Мужская рубашка с коротким рукавом от Casual Comfort. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Man Short Sleeve Shirt is a breezy and stylish option for warm days. With a comfortable fit and short sleeves, it's perfect for a laid-back yet polished look.</p>"
    },
    "attributes": {
@@ -1227,7 +1271,11 @@
   },
   {
    "source_id": 14,
-   "name": "Knoll Saarinen Executive Conference Chair",
+   "name": {
+    "uk-UA": "Конференц-крісло Knoll Saarinen Executive",
+    "ru-RU": "Конференц-кресло Knoll Saarinen Executive",
+    "en-US": "Knoll Saarinen Executive Conference Chair"
+   },
    "slug": "knoll-saarinen-executive-conference-chair",
    "category": "furniture",
    "brand": "Knoll",
@@ -1238,13 +1286,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Меблі: Knoll Saarinen Executive Conference Chair, бренд Knoll.",
-    "ru-RU": "Мебель: Knoll Saarinen Executive Conference Chair, бренд Knoll.",
+    "uk-UA": "Конференц-крісло Knoll Saarinen Executive від Knoll.",
+    "ru-RU": "Конференц-кресло Knoll Saarinen Executive от Knoll.",
     "en-US": "The Knoll Saarinen Executive Conference Chair is a modern and ergonomic chair, perfect for your office or conference room with its timeless design."
    },
    "description": {
-    "uk-UA": "<p>Меблі: Knoll Saarinen Executive Conference Chair, бренд Knoll. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мебель: Knoll Saarinen Executive Conference Chair, бренд Knoll. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Конференц-крісло Knoll Saarinen Executive від Knoll. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Конференц-кресло Knoll Saarinen Executive от Knoll. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Knoll Saarinen Executive Conference Chair is a modern and ergonomic chair, perfect for your office or conference room with its timeless design.</p>"
    },
    "attributes": {
@@ -1262,7 +1310,11 @@
   },
   {
    "source_id": 87,
-   "name": "Men Check Shirt",
+   "name": {
+    "uk-UA": "Чоловіча картата сорочка",
+    "ru-RU": "Мужская клетчатая рубашка",
+    "en-US": "Men Check Shirt"
+   },
    "slug": "men-check-shirt",
    "category": "mens-shirts",
    "brand": "Urban Chic",
@@ -1273,13 +1325,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловіча сорочка: Men Check Shirt, бренд Urban Chic.",
-    "ru-RU": "Мужская рубашка: Men Check Shirt, бренд Urban Chic.",
+    "uk-UA": "Чоловіча картата сорочка від Urban Chic.",
+    "ru-RU": "Мужская клетчатая рубашка от Urban Chic.",
     "en-US": "The Men Check Shirt is a classic and versatile shirt featuring a stylish check pattern."
    },
    "description": {
-    "uk-UA": "<p>Чоловіча сорочка: Men Check Shirt, бренд Urban Chic. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужская рубашка: Men Check Shirt, бренд Urban Chic. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Чоловіча картата сорочка від Urban Chic. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Мужская клетчатая рубашка от Urban Chic. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Men Check Shirt is a classic and versatile shirt featuring a stylish check pattern. Suitable for various occasions, it adds a smart and polished touch to your wardrobe.</p>"
    },
    "attributes": {
@@ -1297,7 +1349,11 @@
   },
   {
    "source_id": 124,
-   "name": "iPhone X",
+   "name": {
+    "uk-UA": "iPhone X",
+    "ru-RU": "iPhone X",
+    "en-US": "iPhone X"
+   },
    "slug": "iphone-x",
    "category": "smartphones-apple",
    "brand": "Apple",
@@ -1343,7 +1399,11 @@
   },
   {
    "source_id": 15,
-   "name": "Wooden Bathroom Sink With Mirror",
+   "name": {
+    "uk-UA": "Дерев’яна раковина з дзеркалом для ванної",
+    "ru-RU": "Деревянная раковина с зеркалом для ванной",
+    "en-US": "Wooden Bathroom Sink With Mirror"
+   },
    "slug": "wooden-bathroom-sink-with-mirror",
    "category": "furniture",
    "brand": "Bath Trends",
@@ -1354,13 +1414,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Меблі: Wooden Bathroom Sink With Mirror, бренд Bath Trends.",
-    "ru-RU": "Мебель: Wooden Bathroom Sink With Mirror, бренд Bath Trends.",
+    "uk-UA": "Дерев’яна раковина з дзеркалом для ванної від Bath Trends.",
+    "ru-RU": "Деревянная раковина с зеркалом для ванной от Bath Trends.",
     "en-US": "The Wooden Bathroom Sink with Mirror is a unique and stylish addition to your bathroom, featuring a wooden sink countertop and a matching mirror."
    },
    "description": {
-    "uk-UA": "<p>Меблі: Wooden Bathroom Sink With Mirror, бренд Bath Trends. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мебель: Wooden Bathroom Sink With Mirror, бренд Bath Trends. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Дерев’яна раковина з дзеркалом для ванної від Bath Trends. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Деревянная раковина с зеркалом для ванной от Bath Trends. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Wooden Bathroom Sink with Mirror is a unique and stylish addition to your bathroom, featuring a wooden sink countertop and a matching mirror.</p>"
    },
    "attributes": {
@@ -1378,7 +1438,11 @@
   },
   {
    "source_id": 88,
-   "name": "Nike Air Jordan 1 Red And Black",
+   "name": {
+    "uk-UA": "Nike Air Jordan 1, червоно-чорні",
+    "ru-RU": "Nike Air Jordan 1, красно-чёрные",
+    "en-US": "Nike Air Jordan 1 Red And Black"
+   },
    "slug": "nike-air-jordan-1-red-and-black",
    "category": "mens-sneakers",
    "brand": "Nike",
@@ -1389,13 +1453,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Кросівки: Nike Air Jordan 1 Red And Black, бренд Nike.",
-    "ru-RU": "Кроссовки: Nike Air Jordan 1 Red And Black, бренд Nike.",
+    "uk-UA": "Nike Air Jordan 1, червоно-чорні від Nike.",
+    "ru-RU": "Nike Air Jordan 1, красно-чёрные от Nike.",
     "en-US": "The Nike Air Jordan 1 in Red and Black is an iconic basketball sneaker known for its stylish design and high-performance features, making it a favorite among sneaker enthusiasts and athletes."
    },
    "description": {
-    "uk-UA": "<p>Кросівки: Nike Air Jordan 1 Red And Black, бренд Nike. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Кроссовки: Nike Air Jordan 1 Red And Black, бренд Nike. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Nike Air Jordan 1, червоно-чорні від Nike. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Nike Air Jordan 1, красно-чёрные от Nike. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Nike Air Jordan 1 in Red and Black is an iconic basketball sneaker known for its stylish design and high-performance features, making it a favorite among sneaker enthusiasts and athletes.</p>"
    },
    "attributes": {
@@ -1452,7 +1516,11 @@
   },
   {
    "source_id": 2,
-   "name": "Eyeshadow Palette with Mirror",
+   "name": {
+    "uk-UA": "Палітра тіней із дзеркалом",
+    "ru-RU": "Палетка теней с зеркалом",
+    "en-US": "Eyeshadow Palette with Mirror"
+   },
    "slug": "eyeshadow-palette-with-mirror",
    "category": "beauty",
    "brand": "Glamour Beauty",
@@ -1463,13 +1531,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Засіб для макіяжу: Eyeshadow Palette with Mirror, бренд Glamour Beauty.",
-    "ru-RU": "Средство для макияжа: Eyeshadow Palette with Mirror, бренд Glamour Beauty.",
+    "uk-UA": "Палітра тіней із дзеркалом від Glamour Beauty.",
+    "ru-RU": "Палетка теней с зеркалом от Glamour Beauty.",
     "en-US": "The Eyeshadow Palette with Mirror offers a versatile range of eyeshadow shades for creating stunning eye looks."
    },
    "description": {
-    "uk-UA": "<p>Засіб для макіяжу: Eyeshadow Palette with Mirror, бренд Glamour Beauty. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Средство для макияжа: Eyeshadow Palette with Mirror, бренд Glamour Beauty. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Палітра тіней із дзеркалом від Glamour Beauty. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Палетка теней с зеркалом от Glamour Beauty. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Eyeshadow Palette with Mirror offers a versatile range of eyeshadow shades for creating stunning eye looks. With a built-in mirror, it's convenient for on-the-go makeup application.</p>"
    },
    "attributes": {
@@ -1487,7 +1555,11 @@
   },
   {
    "source_id": 131,
-   "name": "Samsung Galaxy S7",
+   "name": {
+    "uk-UA": "Samsung Galaxy S7",
+    "ru-RU": "Samsung Galaxy S7",
+    "en-US": "Samsung Galaxy S7"
+   },
    "slug": "samsung-galaxy-s7",
    "category": "smartphones-samsung",
    "brand": "Samsung",
@@ -1533,7 +1605,11 @@
   },
   {
    "source_id": 43,
-   "name": "Decoration Swing",
+   "name": {
+    "uk-UA": "Декоративні гойдалки",
+    "ru-RU": "Декоративные качели",
+    "en-US": "Decoration Swing"
+   },
    "slug": "decoration-swing",
    "category": "home-decoration",
    "brand": "Demo",
@@ -1544,13 +1620,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Декор для дому: Decoration Swing.",
-    "ru-RU": "Декор для дома: Decoration Swing.",
+    "uk-UA": "Декор для дому: Декоративні гойдалки.",
+    "ru-RU": "Декор для дома: Декоративные качели.",
     "en-US": "The Decoration Swing is a charming addition to your home decor."
    },
    "description": {
-    "uk-UA": "<p>Декор для дому: Decoration Swing. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Декор для дома: Decoration Swing. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Декор для дому: Декоративні гойдалки. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Декор для дома: Декоративные качели. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Decoration Swing is a charming addition to your home decor. Crafted with intricate details, it adds a touch of elegance and whimsy to any room.</p>"
    },
    "attributes": {
@@ -1568,7 +1644,11 @@
   },
   {
    "source_id": 89,
-   "name": "Nike Baseball Cleats",
+   "name": {
+    "uk-UA": "Бутси Nike для бейсболу",
+    "ru-RU": "Бутсы Nike для бейсбола",
+    "en-US": "Nike Baseball Cleats"
+   },
    "slug": "nike-baseball-cleats",
    "category": "mens-sneakers",
    "brand": "Nike",
@@ -1579,13 +1659,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Кросівки: Nike Baseball Cleats, бренд Nike.",
-    "ru-RU": "Кроссовки: Nike Baseball Cleats, бренд Nike.",
+    "uk-UA": "Бутси Nike для бейсболу від Nike.",
+    "ru-RU": "Бутсы Nike для бейсбола от Nike.",
     "en-US": "Nike Baseball Cleats are designed for maximum traction and performance on the baseball field."
    },
    "description": {
-    "uk-UA": "<p>Кросівки: Nike Baseball Cleats, бренд Nike. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Кроссовки: Nike Baseball Cleats, бренд Nike. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Бутси Nike для бейсболу від Nike. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Бутсы Nike для бейсбола от Nike. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Nike Baseball Cleats are designed for maximum traction and performance on the baseball field. They provide stability and support for players during games and practices.</p>"
    },
    "attributes": {
@@ -1603,7 +1683,11 @@
   },
   {
    "source_id": 132,
-   "name": "Samsung Galaxy S8",
+   "name": {
+    "uk-UA": "Samsung Galaxy S8",
+    "ru-RU": "Samsung Galaxy S8",
+    "en-US": "Samsung Galaxy S8"
+   },
    "slug": "samsung-galaxy-s8",
    "category": "smartphones-samsung",
    "brand": "Samsung",
@@ -1649,7 +1733,11 @@
   },
   {
    "source_id": 44,
-   "name": "Family Tree Photo Frame",
+   "name": {
+    "uk-UA": "Фоторамка «Родинне дерево»",
+    "ru-RU": "Фоторамка «Семейное дерево»",
+    "en-US": "Family Tree Photo Frame"
+   },
    "slug": "family-tree-photo-frame",
    "category": "home-decoration",
    "brand": "Demo",
@@ -1660,13 +1748,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Декор для дому: Family Tree Photo Frame.",
-    "ru-RU": "Декор для дома: Family Tree Photo Frame.",
+    "uk-UA": "Декор для дому: Фоторамка «Родинне дерево».",
+    "ru-RU": "Декор для дома: Фоторамка «Семейное дерево».",
     "en-US": "The Family Tree Photo Frame is a sentimental and stylish way to display your cherished family memories."
    },
    "description": {
-    "uk-UA": "<p>Декор для дому: Family Tree Photo Frame. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Декор для дома: Family Tree Photo Frame. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Декор для дому: Фоторамка «Родинне дерево». Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Декор для дома: Фоторамка «Семейное дерево». Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Family Tree Photo Frame is a sentimental and stylish way to display your cherished family memories. With multiple photo slots, it tells the story of your loved ones.</p>"
    },
    "attributes": {
@@ -1684,7 +1772,11 @@
   },
   {
    "source_id": 90,
-   "name": "Puma Future Rider Trainers",
+   "name": {
+    "uk-UA": "Кросівки Puma Future Rider",
+    "ru-RU": "Кроссовки Puma Future Rider",
+    "en-US": "Puma Future Rider Trainers"
+   },
    "slug": "puma-future-rider-trainers",
    "category": "mens-sneakers",
    "brand": "Puma",
@@ -1695,13 +1787,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Кросівки: Puma Future Rider Trainers, бренд Puma.",
-    "ru-RU": "Кроссовки: Puma Future Rider Trainers, бренд Puma.",
+    "uk-UA": "Кросівки Puma Future Rider від Puma.",
+    "ru-RU": "Кроссовки Puma Future Rider от Puma.",
     "en-US": "The Puma Future Rider Trainers offer a blend of retro style and modern comfort."
    },
    "description": {
-    "uk-UA": "<p>Кросівки: Puma Future Rider Trainers, бренд Puma. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Кроссовки: Puma Future Rider Trainers, бренд Puma. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Кросівки Puma Future Rider від Puma. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Кроссовки Puma Future Rider от Puma. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Puma Future Rider Trainers offer a blend of retro style and modern comfort. Perfect for casual wear, these trainers provide a fashionable and comfortable option for everyday use.</p>"
    },
    "attributes": {
@@ -1758,7 +1850,11 @@
   },
   {
    "source_id": 133,
-   "name": "Samsung Galaxy S10",
+   "name": {
+    "uk-UA": "Samsung Galaxy S10",
+    "ru-RU": "Samsung Galaxy S10",
+    "en-US": "Samsung Galaxy S10"
+   },
    "slug": "samsung-galaxy-s10",
    "category": "smartphones-samsung",
    "brand": "Samsung",
@@ -1804,7 +1900,11 @@
   },
   {
    "source_id": 91,
-   "name": "Sports Sneakers Off White & Red",
+   "name": {
+    "uk-UA": "Спортивні кросівки Off White, біло-червоні",
+    "ru-RU": "Спортивные кроссовки Off White, бело-красные",
+    "en-US": "Sports Sneakers Off White & Red"
+   },
    "slug": "sports-sneakers-off-white-red",
    "category": "mens-sneakers",
    "brand": "Off White",
@@ -1815,13 +1915,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Кросівки: Sports Sneakers Off White & Red, бренд Off White.",
-    "ru-RU": "Кроссовки: Sports Sneakers Off White & Red, бренд Off White.",
+    "uk-UA": "Спортивні кросівки Off White, біло-червоні від Off White.",
+    "ru-RU": "Спортивные кроссовки Off White, бело-красные от Off White.",
     "en-US": "The Sports Sneakers in Off White and Red combine style and functionality, making them a fashionable choice for sports enthusiasts."
    },
    "description": {
-    "uk-UA": "<p>Кросівки: Sports Sneakers Off White & Red, бренд Off White. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Кроссовки: Sports Sneakers Off White & Red, бренд Off White. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Спортивні кросівки Off White, біло-червоні від Off White. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Спортивные кроссовки Off White, бело-красные от Off White. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Sports Sneakers in Off White and Red combine style and functionality, making them a fashionable choice for sports enthusiasts. The red and off-white color combination adds a bold and energetic touch.</p>"
    },
    "attributes": {
@@ -1839,7 +1939,11 @@
   },
   {
    "source_id": 45,
-   "name": "House Showpiece Plant",
+   "name": {
+    "uk-UA": "Декоративна кімнатна рослина",
+    "ru-RU": "Декоративное комнатное растение",
+    "en-US": "House Showpiece Plant"
+   },
    "slug": "house-showpiece-plant",
    "category": "home-decoration",
    "brand": "Demo",
@@ -1850,13 +1954,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Декор для дому: House Showpiece Plant.",
-    "ru-RU": "Декор для дома: House Showpiece Plant.",
+    "uk-UA": "Декор для дому: Декоративна кімнатна рослина.",
+    "ru-RU": "Декор для дома: Декоративное комнатное растение.",
     "en-US": "The House Showpiece Plant is an artificial plant that brings a touch of nature to your home without the need for maintenance."
    },
    "description": {
-    "uk-UA": "<p>Декор для дому: House Showpiece Plant. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Декор для дома: House Showpiece Plant. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Декор для дому: Декоративна кімнатна рослина. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Декор для дома: Декоративное комнатное растение. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The House Showpiece Plant is an artificial plant that brings a touch of nature to your home without the need for maintenance. It adds greenery and style to any space.</p>"
    },
    "attributes": {
@@ -1874,7 +1978,11 @@
   },
   {
    "source_id": 3,
-   "name": "Powder Canister",
+   "name": {
+    "uk-UA": "Пудра в тубі",
+    "ru-RU": "Пудра в тубе",
+    "en-US": "Powder Canister"
+   },
    "slug": "powder-canister",
    "category": "beauty",
    "brand": "Velvet Touch",
@@ -1885,13 +1993,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Засіб для макіяжу: Powder Canister, бренд Velvet Touch.",
-    "ru-RU": "Средство для макияжа: Powder Canister, бренд Velvet Touch.",
+    "uk-UA": "Пудра в тубі від Velvet Touch.",
+    "ru-RU": "Пудра в тубе от Velvet Touch.",
     "en-US": "The Powder Canister is a finely milled setting powder designed to set makeup and control shine."
    },
    "description": {
-    "uk-UA": "<p>Засіб для макіяжу: Powder Canister, бренд Velvet Touch. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Средство для макияжа: Powder Canister, бренд Velvet Touch. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Пудра в тубі від Velvet Touch. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Пудра в тубе от Velvet Touch. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Powder Canister is a finely milled setting powder designed to set makeup and control shine. With a lightweight and translucent formula, it provides a smooth and matte finish.</p>"
    },
    "attributes": {
@@ -1909,7 +2017,11 @@
   },
   {
    "source_id": 92,
-   "name": "Sports Sneakers Off White Red",
+   "name": {
+    "uk-UA": "Спортивні кросівки Off White, червоний акцент",
+    "ru-RU": "Спортивные кроссовки Off White, красный акцент",
+    "en-US": "Sports Sneakers Off White Red"
+   },
    "slug": "sports-sneakers-off-white-red-92",
    "category": "mens-sneakers",
    "brand": "Off White",
@@ -1920,13 +2032,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Кросівки: Sports Sneakers Off White Red, бренд Off White.",
-    "ru-RU": "Кроссовки: Sports Sneakers Off White Red, бренд Off White.",
+    "uk-UA": "Спортивні кросівки Off White, червоний акцент від Off White.",
+    "ru-RU": "Спортивные кроссовки Off White, красный акцент от Off White.",
     "en-US": "Another variant of the Sports Sneakers in Off White Red, featuring a unique design."
    },
    "description": {
-    "uk-UA": "<p>Кросівки: Sports Sneakers Off White Red, бренд Off White. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Кроссовки: Sports Sneakers Off White Red, бренд Off White. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Спортивні кросівки Off White, червоний акцент від Off White. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Спортивные кроссовки Off White, красный акцент от Off White. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Another variant of the Sports Sneakers in Off White Red, featuring a unique design. These sneakers offer style and comfort for casual occasions.</p>"
    },
    "attributes": {
@@ -1944,7 +2056,11 @@
   },
   {
    "source_id": 125,
-   "name": "Oppo A57",
+   "name": {
+    "uk-UA": "Oppo A57",
+    "ru-RU": "Oppo A57",
+    "en-US": "Oppo A57"
+   },
    "slug": "oppo-a57",
    "category": "smartphones-other",
    "brand": "Oppo",
@@ -1990,7 +2106,11 @@
   },
   {
    "source_id": 46,
-   "name": "Plant Pot",
+   "name": {
+    "uk-UA": "Горщик для рослин",
+    "ru-RU": "Горшок для растений",
+    "en-US": "Plant Pot"
+   },
    "slug": "plant-pot",
    "category": "home-decoration",
    "brand": "Demo",
@@ -2001,13 +2121,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Декор для дому: Plant Pot.",
-    "ru-RU": "Декор для дома: Plant Pot.",
+    "uk-UA": "Декор для дому: Горщик для рослин.",
+    "ru-RU": "Декор для дома: Горшок для растений.",
     "en-US": "The Plant Pot is a stylish container for your favorite plants."
    },
    "description": {
-    "uk-UA": "<p>Декор для дому: Plant Pot. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Декор для дома: Plant Pot. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Декор для дому: Горщик для рослин. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Декор для дома: Горшок для растений. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Plant Pot is a stylish container for your favorite plants. With a sleek design, it complements your indoor or outdoor garden, adding a modern touch to your plant display.</p>"
    },
    "attributes": {
@@ -2064,7 +2184,11 @@
   },
   {
    "source_id": 93,
-   "name": "Brown Leather Belt Watch",
+   "name": {
+    "uk-UA": "Годинник із коричневим шкіряним ремінцем",
+    "ru-RU": "Часы с коричневым кожаным ремешком",
+    "en-US": "Brown Leather Belt Watch"
+   },
    "slug": "brown-leather-belt-watch",
    "category": "mens-watches",
    "brand": "Fashion Timepieces",
@@ -2075,13 +2199,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловічий годинник: Brown Leather Belt Watch, бренд Fashion Timepieces.",
-    "ru-RU": "Мужские часы: Brown Leather Belt Watch, бренд Fashion Timepieces.",
+    "uk-UA": "Годинник із коричневим шкіряним ремінцем від Fashion Timepieces.",
+    "ru-RU": "Часы с коричневым кожаным ремешком от Fashion Timepieces.",
     "en-US": "The Brown Leather Belt Watch is a stylish timepiece with a classic design."
    },
    "description": {
-    "uk-UA": "<p>Чоловічий годинник: Brown Leather Belt Watch, бренд Fashion Timepieces. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужские часы: Brown Leather Belt Watch, бренд Fashion Timepieces. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Годинник із коричневим шкіряним ремінцем від Fashion Timepieces. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Часы с коричневым кожаным ремешком от Fashion Timepieces. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Brown Leather Belt Watch is a stylish timepiece with a classic design. Featuring a genuine leather strap and a sleek dial, it adds a touch of sophistication to your look.</p>"
    },
    "attributes": {
@@ -2099,7 +2223,11 @@
   },
   {
    "source_id": 47,
-   "name": "Table Lamp",
+   "name": {
+    "uk-UA": "Настільна лампа",
+    "ru-RU": "Настольная лампа",
+    "en-US": "Table Lamp"
+   },
    "slug": "table-lamp",
    "category": "home-decoration",
    "brand": "Demo",
@@ -2110,13 +2238,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Декор для дому: Table Lamp.",
-    "ru-RU": "Декор для дома: Table Lamp.",
+    "uk-UA": "Декор для дому: Настільна лампа.",
+    "ru-RU": "Декор для дома: Настольная лампа.",
     "en-US": "The Table Lamp is a functional and decorative lighting solution for your living space."
    },
    "description": {
-    "uk-UA": "<p>Декор для дому: Table Lamp. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Декор для дома: Table Lamp. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Декор для дому: Настільна лампа. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Декор для дома: Настольная лампа. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Table Lamp is a functional and decorative lighting solution for your living space. With a modern design, it provides both ambient and task lighting, enhancing the atmosphere.</p>"
    },
    "attributes": {
@@ -2134,7 +2262,11 @@
   },
   {
    "source_id": 126,
-   "name": "Oppo F19 Pro Plus",
+   "name": {
+    "uk-UA": "Oppo F19 Pro Plus",
+    "ru-RU": "Oppo F19 Pro Plus",
+    "en-US": "Oppo F19 Pro Plus"
+   },
    "slug": "oppo-f19-pro-plus",
    "category": "smartphones-other",
    "brand": "Oppo",
@@ -2181,7 +2313,11 @@
   },
   {
    "source_id": 94,
-   "name": "Longines Master Collection",
+   "name": {
+    "uk-UA": "Longines Master Collection",
+    "ru-RU": "Longines Master Collection",
+    "en-US": "Longines Master Collection"
+   },
    "slug": "longines-master-collection",
    "category": "mens-watches",
    "brand": "Longines",
@@ -2192,13 +2328,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловічий годинник: Longines Master Collection, бренд Longines.",
-    "ru-RU": "Мужские часы: Longines Master Collection, бренд Longines.",
+    "uk-UA": "Longines Master Collection від Longines.",
+    "ru-RU": "Longines Master Collection от Longines.",
     "en-US": "The Longines Master Collection is an elegant and refined watch known for its precision and craftsmanship."
    },
    "description": {
-    "uk-UA": "<p>Чоловічий годинник: Longines Master Collection, бренд Longines. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужские часы: Longines Master Collection, бренд Longines. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Longines Master Collection від Longines. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Longines Master Collection от Longines. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Longines Master Collection is an elegant and refined watch known for its precision and craftsmanship. With a timeless design, it's a symbol of luxury and sophistication.</p>"
    },
    "attributes": {
@@ -2255,7 +2391,11 @@
   },
   {
    "source_id": 127,
-   "name": "Oppo K1",
+   "name": {
+    "uk-UA": "Oppo K1",
+    "ru-RU": "Oppo K1",
+    "en-US": "Oppo K1"
+   },
    "slug": "oppo-k1",
    "category": "smartphones-other",
    "brand": "Oppo",
@@ -2341,7 +2481,11 @@
   },
   {
    "source_id": 95,
-   "name": "Rolex Cellini Date Black Dial",
+   "name": {
+    "uk-UA": "Rolex Cellini Date, чорний циферблат",
+    "ru-RU": "Rolex Cellini Date, чёрный циферблат",
+    "en-US": "Rolex Cellini Date Black Dial"
+   },
    "slug": "rolex-cellini-date-black-dial",
    "category": "mens-watches",
    "brand": "Rolex",
@@ -2352,13 +2496,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловічий годинник: Rolex Cellini Date Black Dial, бренд Rolex.",
-    "ru-RU": "Мужские часы: Rolex Cellini Date Black Dial, бренд Rolex.",
+    "uk-UA": "Rolex Cellini Date, чорний циферблат від Rolex.",
+    "ru-RU": "Rolex Cellini Date, чёрный циферблат от Rolex.",
     "en-US": "The Rolex Cellini Date with Black Dial is a classic and prestigious watch."
    },
    "description": {
-    "uk-UA": "<p>Чоловічий годинник: Rolex Cellini Date Black Dial, бренд Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужские часы: Rolex Cellini Date Black Dial, бренд Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Rolex Cellini Date, чорний циферблат від Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Rolex Cellini Date, чёрный циферблат от Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Rolex Cellini Date with Black Dial is a classic and prestigious watch. With a black dial and date complication, it exudes sophistication and is a symbol of Rolex's heritage.</p>"
    },
    "attributes": {
@@ -2415,7 +2559,11 @@
   },
   {
    "source_id": 4,
-   "name": "Red Lipstick",
+   "name": {
+    "uk-UA": "Червона помада",
+    "ru-RU": "Красная помада",
+    "en-US": "Red Lipstick"
+   },
    "slug": "red-lipstick",
    "category": "beauty",
    "brand": "Chic Cosmetics",
@@ -2426,13 +2574,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Засіб для макіяжу: Red Lipstick, бренд Chic Cosmetics.",
-    "ru-RU": "Средство для макияжа: Red Lipstick, бренд Chic Cosmetics.",
+    "uk-UA": "Червона помада від Chic Cosmetics.",
+    "ru-RU": "Красная помада от Chic Cosmetics.",
     "en-US": "The Red Lipstick is a classic and bold choice for adding a pop of color to your lips."
    },
    "description": {
-    "uk-UA": "<p>Засіб для макіяжу: Red Lipstick, бренд Chic Cosmetics. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Средство для макияжа: Red Lipstick, бренд Chic Cosmetics. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Червона помада від Chic Cosmetics. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Красная помада от Chic Cosmetics. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Red Lipstick is a classic and bold choice for adding a pop of color to your lips. With a creamy and pigmented formula, it provides a vibrant and long-lasting finish.</p>"
    },
    "attributes": {
@@ -2450,7 +2598,11 @@
   },
   {
    "source_id": 96,
-   "name": "Rolex Cellini Moonphase",
+   "name": {
+    "uk-UA": "Rolex Cellini Moonphase",
+    "ru-RU": "Rolex Cellini Moonphase",
+    "en-US": "Rolex Cellini Moonphase"
+   },
    "slug": "rolex-cellini-moonphase",
    "category": "mens-watches",
    "brand": "Rolex",
@@ -2461,13 +2613,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловічий годинник: Rolex Cellini Moonphase, бренд Rolex.",
-    "ru-RU": "Мужские часы: Rolex Cellini Moonphase, бренд Rolex.",
+    "uk-UA": "Rolex Cellini Moonphase від Rolex.",
+    "ru-RU": "Rolex Cellini Moonphase от Rolex.",
     "en-US": "The Rolex Cellini Moonphase is a masterpiece of horology, featuring a moon phase complication and exquisite design."
    },
    "description": {
-    "uk-UA": "<p>Чоловічий годинник: Rolex Cellini Moonphase, бренд Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужские часы: Rolex Cellini Moonphase, бренд Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Rolex Cellini Moonphase від Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Rolex Cellini Moonphase от Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Rolex Cellini Moonphase is a masterpiece of horology, featuring a moon phase complication and exquisite design. It reflects Rolex's commitment to precision and elegance.</p>"
    },
    "attributes": {
@@ -2485,7 +2637,11 @@
   },
   {
    "source_id": 128,
-   "name": "Realme C35",
+   "name": {
+    "uk-UA": "Realme C35",
+    "ru-RU": "Realme C35",
+    "en-US": "Realme C35"
+   },
    "slug": "realme-c35",
    "category": "smartphones-other",
    "brand": "Realme",
@@ -2610,7 +2766,11 @@
   },
   {
    "source_id": 97,
-   "name": "Rolex Datejust",
+   "name": {
+    "uk-UA": "Rolex Datejust",
+    "ru-RU": "Rolex Datejust",
+    "en-US": "Rolex Datejust"
+   },
    "slug": "rolex-datejust",
    "category": "mens-watches",
    "brand": "Rolex",
@@ -2621,13 +2781,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловічий годинник: Rolex Datejust, бренд Rolex.",
-    "ru-RU": "Мужские часы: Rolex Datejust, бренд Rolex.",
+    "uk-UA": "Rolex Datejust від Rolex.",
+    "ru-RU": "Rolex Datejust от Rolex.",
     "en-US": "The Rolex Datejust is an iconic and versatile timepiece with a date window."
    },
    "description": {
-    "uk-UA": "<p>Чоловічий годинник: Rolex Datejust, бренд Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужские часы: Rolex Datejust, бренд Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Rolex Datejust від Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Rolex Datejust от Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Rolex Datejust is an iconic and versatile timepiece with a date window. Known for its timeless design and reliability, it's a symbol of Rolex's watchmaking excellence.</p>"
    },
    "attributes": {
@@ -2645,7 +2805,11 @@
   },
   {
    "source_id": 129,
-   "name": "Realme X",
+   "name": {
+    "uk-UA": "Realme X",
+    "ru-RU": "Realme X",
+    "en-US": "Realme X"
+   },
    "slug": "realme-x",
    "category": "smartphones-other",
    "brand": "Realme",
@@ -2656,13 +2820,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Товар: Realme X, бренд Realme.",
-    "ru-RU": "Товар: Realme X, бренд Realme.",
+    "uk-UA": "Realme X від Realme.",
+    "ru-RU": "Realme X от Realme.",
     "en-US": "The Realme X is a mid-range smartphone known for its sleek design and impressive display."
    },
    "description": {
-    "uk-UA": "<p>Товар: Realme X, бренд Realme. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Товар: Realme X, бренд Realme. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Realme X від Realme. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Realme X от Realme. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Realme X is a mid-range smartphone known for its sleek design and impressive display. It offers a good balance of performance and camera capabilities for users seeking a quality device.</p>"
    },
    "attributes": {
@@ -2719,7 +2883,11 @@
   },
   {
    "source_id": 98,
-   "name": "Rolex Submariner Watch",
+   "name": {
+    "uk-UA": "Годинник Rolex Submariner",
+    "ru-RU": "Часы Rolex Submariner",
+    "en-US": "Rolex Submariner Watch"
+   },
    "slug": "rolex-submariner-watch",
    "category": "mens-watches",
    "brand": "Rolex",
@@ -2730,13 +2898,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Чоловічий годинник: Rolex Submariner Watch, бренд Rolex.",
-    "ru-RU": "Мужские часы: Rolex Submariner Watch, бренд Rolex.",
+    "uk-UA": "Годинник Rolex Submariner від Rolex.",
+    "ru-RU": "Часы Rolex Submariner от Rolex.",
     "en-US": "The Rolex Submariner is a legendary dive watch with a rich history."
    },
    "description": {
-    "uk-UA": "<p>Чоловічий годинник: Rolex Submariner Watch, бренд Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мужские часы: Rolex Submariner Watch, бренд Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Годинник Rolex Submariner від Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Часы Rolex Submariner от Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Rolex Submariner is a legendary dive watch with a rich history. Known for its durability and water resistance, it's a symbol of adventure and exploration.</p>"
    },
    "attributes": {
@@ -2754,7 +2922,11 @@
   },
   {
    "source_id": 130,
-   "name": "Realme XT",
+   "name": {
+    "uk-UA": "Realme XT",
+    "ru-RU": "Realme XT",
+    "en-US": "Realme XT"
+   },
    "slug": "realme-xt",
    "category": "smartphones-other",
    "brand": "Realme",
@@ -2801,7 +2973,11 @@
   },
   {
    "source_id": 177,
-   "name": "Black Women's Gown",
+   "name": {
+    "uk-UA": "Чорна жіноча сукня-гала",
+    "ru-RU": "Чёрное женское вечернее платье",
+    "en-US": "Black Women's Gown"
+   },
    "slug": "black-women-s-gown",
    "category": "womens-dresses",
    "brand": "Demo",
@@ -2812,13 +2988,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сукня: Black Women's Gown.",
-    "ru-RU": "Женское платье: Black Women's Gown.",
+    "uk-UA": "Жіноча сукня: Чорна жіноча сукня-гала.",
+    "ru-RU": "Женское платье: Чёрное женское вечернее платье.",
     "en-US": "The Black Women's Gown is an elegant and timeless evening gown."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сукня: Black Women's Gown. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женское платье: Black Women's Gown. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіноча сукня: Чорна жіноча сукня-гала. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женское платье: Чёрное женское вечернее платье. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Black Women's Gown is an elegant and timeless evening gown. With a sleek black design, it's perfect for formal events and special occasions, exuding sophistication and style.</p>"
    },
    "attributes": {
@@ -2914,7 +3090,11 @@
   },
   {
    "source_id": 5,
-   "name": "Red Nail Polish",
+   "name": {
+    "uk-UA": "Червоний лак для нігтів",
+    "ru-RU": "Красный лак для ногтей",
+    "en-US": "Red Nail Polish"
+   },
    "slug": "red-nail-polish",
    "category": "beauty",
    "brand": "Nail Couture",
@@ -2925,13 +3105,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Засіб для макіяжу: Red Nail Polish, бренд Nail Couture.",
-    "ru-RU": "Средство для макияжа: Red Nail Polish, бренд Nail Couture.",
+    "uk-UA": "Червоний лак для нігтів від Nail Couture.",
+    "ru-RU": "Красный лак для ногтей от Nail Couture.",
     "en-US": "The Red Nail Polish offers a rich and glossy red hue for vibrant and polished nails."
    },
    "description": {
-    "uk-UA": "<p>Засіб для макіяжу: Red Nail Polish, бренд Nail Couture. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Средство для макияжа: Red Nail Polish, бренд Nail Couture. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Червоний лак для нігтів від Nail Couture. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Красный лак для ногтей от Nail Couture. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Red Nail Polish offers a rich and glossy red hue for vibrant and polished nails. With a quick-drying formula, it provides a salon-quality finish at home.</p>"
    },
    "attributes": {
@@ -2949,7 +3129,11 @@
   },
   {
    "source_id": 134,
-   "name": "Vivo S1",
+   "name": {
+    "uk-UA": "Vivo S1",
+    "ru-RU": "Vivo S1",
+    "en-US": "Vivo S1"
+   },
    "slug": "vivo-s1",
    "category": "smartphones-other",
    "brand": "Vivo",
@@ -2995,7 +3179,11 @@
   },
   {
    "source_id": 178,
-   "name": "Corset Leather With Skirt",
+   "name": {
+    "uk-UA": "Шкіряний корсет зі спідницею",
+    "ru-RU": "Кожаный корсет с юбкой",
+    "en-US": "Corset Leather With Skirt"
+   },
    "slug": "corset-leather-with-skirt",
    "category": "womens-dresses",
    "brand": "Demo",
@@ -3006,13 +3194,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сукня: Corset Leather With Skirt.",
-    "ru-RU": "Женское платье: Corset Leather With Skirt.",
+    "uk-UA": "Жіноча сукня: Шкіряний корсет зі спідницею.",
+    "ru-RU": "Женское платье: Кожаный корсет с юбкой.",
     "en-US": "The Corset Leather With Skirt is a bold and edgy ensemble that combines a stylish corset with a matching skirt."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сукня: Corset Leather With Skirt. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женское платье: Corset Leather With Skirt. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіноча сукня: Шкіряний корсет зі спідницею. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женское платье: Кожаный корсет с юбкой. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Corset Leather With Skirt is a bold and edgy ensemble that combines a stylish corset with a matching skirt. Ideal for fashion-forward individuals, it makes a statement at any event.</p>"
    },
    "attributes": {
@@ -3069,7 +3257,11 @@
   },
   {
    "source_id": 179,
-   "name": "Corset With Black Skirt",
+   "name": {
+    "uk-UA": "Корсет із чорною спідницею",
+    "ru-RU": "Корсет с чёрной юбкой",
+    "en-US": "Corset With Black Skirt"
+   },
    "slug": "corset-with-black-skirt",
    "category": "womens-dresses",
    "brand": "Demo",
@@ -3080,13 +3272,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сукня: Corset With Black Skirt.",
-    "ru-RU": "Женское платье: Corset With Black Skirt.",
+    "uk-UA": "Жіноча сукня: Корсет із чорною спідницею.",
+    "ru-RU": "Женское платье: Корсет с чёрной юбкой.",
     "en-US": "The Corset With Black Skirt is a chic and versatile outfit that pairs a fashionable corset with a classic black skirt."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сукня: Corset With Black Skirt. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женское платье: Corset With Black Skirt. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіноча сукня: Корсет із чорною спідницею. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женское платье: Корсет с чёрной юбкой. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Corset With Black Skirt is a chic and versatile outfit that pairs a fashionable corset with a classic black skirt. It offers a trendy and coordinated look for various occasions.</p>"
    },
    "attributes": {
@@ -3104,7 +3296,11 @@
   },
   {
    "source_id": 135,
-   "name": "Vivo V9",
+   "name": {
+    "uk-UA": "Vivo V9",
+    "ru-RU": "Vivo V9",
+    "en-US": "Vivo V9"
+   },
    "slug": "vivo-v9",
    "category": "smartphones-other",
    "brand": "Vivo",
@@ -3115,13 +3311,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Товар: Vivo V9, бренд Vivo.",
-    "ru-RU": "Товар: Vivo V9, бренд Vivo.",
+    "uk-UA": "Vivo V9 від Vivo.",
+    "ru-RU": "Vivo V9 от Vivo.",
     "en-US": "The Vivo V9 is a smartphone known for its sleek design and emphasis on capturing high-quality selfies."
    },
    "description": {
-    "uk-UA": "<p>Товар: Vivo V9, бренд Vivo. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Товар: Vivo V9, бренд Vivo. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Vivo V9 від Vivo. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Vivo V9 от Vivo. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Vivo V9 is a smartphone known for its sleek design and emphasis on capturing high-quality selfies. It features a notch display, dual-camera setup, and a modern design.</p>"
    },
    "attributes": {
@@ -3217,7 +3413,11 @@
   },
   {
    "source_id": 180,
-   "name": "Dress Pea",
+   "name": {
+    "uk-UA": "Сукня в горошок",
+    "ru-RU": "Платье в горошек",
+    "en-US": "Dress Pea"
+   },
    "slug": "dress-pea",
    "category": "womens-dresses",
    "brand": "Demo",
@@ -3228,13 +3428,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сукня: Dress Pea.",
-    "ru-RU": "Женское платье: Dress Pea.",
+    "uk-UA": "Жіноча сукня: Сукня в горошок.",
+    "ru-RU": "Женское платье: Платье в горошек.",
     "en-US": "The Dress Pea is a stylish and comfortable dress with a pea pattern."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сукня: Dress Pea. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женское платье: Dress Pea. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіноча сукня: Сукня в горошок. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женское платье: Платье в горошек. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Dress Pea is a stylish and comfortable dress with a pea pattern. Perfect for casual outings, it adds a playful and fun element to your wardrobe, making it a great choice for day-to-day wear.</p>"
    },
    "attributes": {
@@ -3291,7 +3491,11 @@
   },
   {
    "source_id": 136,
-   "name": "Vivo X21",
+   "name": {
+    "uk-UA": "Vivo X21",
+    "ru-RU": "Vivo X21",
+    "en-US": "Vivo X21"
+   },
    "slug": "vivo-x21",
    "category": "smartphones-other",
    "brand": "Vivo",
@@ -3338,7 +3542,11 @@
   },
   {
    "source_id": 181,
-   "name": "Marni Red & Black Suit",
+   "name": {
+    "uk-UA": "Червоно-чорний костюм Marni",
+    "ru-RU": "Красно-чёрный костюм Marni",
+    "en-US": "Marni Red & Black Suit"
+   },
    "slug": "marni-red-black-suit",
    "category": "womens-dresses",
    "brand": "Demo",
@@ -3349,13 +3557,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сукня: Marni Red & Black Suit.",
-    "ru-RU": "Женское платье: Marni Red & Black Suit.",
+    "uk-UA": "Жіноча сукня: Червоно-чорний костюм Marni.",
+    "ru-RU": "Женское платье: Красно-чёрный костюм Marni.",
     "en-US": "The Marni Red & Black Suit is a sophisticated and fashion-forward suit ensemble."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сукня: Marni Red & Black Suit. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женское платье: Marni Red & Black Suit. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіноча сукня: Червоно-чорний костюм Marni. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женское платье: Красно-чёрный костюм Marni. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Marni Red & Black Suit is a sophisticated and fashion-forward suit ensemble. With a combination of red and black tones, it showcases a modern design for a bold and confident look.</p>"
    },
    "attributes": {
@@ -3373,7 +3581,11 @@
   },
   {
    "source_id": 6,
-   "name": "Calvin Klein CK One",
+   "name": {
+    "uk-UA": "Calvin Klein CK One",
+    "ru-RU": "Calvin Klein CK One",
+    "en-US": "Calvin Klein CK One"
+   },
    "slug": "calvin-klein-ck-one",
    "category": "fragrances",
    "brand": "Calvin Klein",
@@ -3384,13 +3596,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Парфумерія: Calvin Klein CK One, бренд Calvin Klein.",
-    "ru-RU": "Парфюмерия: Calvin Klein CK One, бренд Calvin Klein.",
+    "uk-UA": "Calvin Klein CK One від Calvin Klein.",
+    "ru-RU": "Calvin Klein CK One от Calvin Klein.",
     "en-US": "CK One by Calvin Klein is a classic unisex fragrance, known for its fresh and clean scent."
    },
    "description": {
-    "uk-UA": "<p>Парфумерія: Calvin Klein CK One, бренд Calvin Klein. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Парфюмерия: Calvin Klein CK One, бренд Calvin Klein. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Calvin Klein CK One від Calvin Klein. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Calvin Klein CK One от Calvin Klein. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>CK One by Calvin Klein is a classic unisex fragrance, known for its fresh and clean scent. It's a versatile fragrance suitable for everyday wear.</p>"
    },
    "attributes": {
@@ -3486,7 +3698,11 @@
   },
   {
    "source_id": 159,
-   "name": "iPad Mini 2021 Starlight",
+   "name": {
+    "uk-UA": "iPad Mini 2021, «зоряне сяйво»",
+    "ru-RU": "iPad Mini 2021, «сияющая звезда»",
+    "en-US": "iPad Mini 2021 Starlight"
+   },
    "slug": "ipad-mini-2021-starlight",
    "category": "tablets-apple",
    "brand": "Apple",
@@ -3532,7 +3748,11 @@
   },
   {
    "source_id": 162,
-   "name": "Blue Frock",
+   "name": {
+    "uk-UA": "Синя сукня",
+    "ru-RU": "Синее платье",
+    "en-US": "Blue Frock"
+   },
    "slug": "blue-frock",
    "category": "womens-tops",
    "brand": "Demo",
@@ -3543,13 +3763,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий топ: Blue Frock.",
-    "ru-RU": "Женский топ: Blue Frock.",
+    "uk-UA": "Жіночий топ: Синя сукня.",
+    "ru-RU": "Женский топ: Синее платье.",
     "en-US": "The Blue Frock is a charming and stylish dress for various occasions."
    },
    "description": {
-    "uk-UA": "<p>Жіночий топ: Blue Frock. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женский топ: Blue Frock. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіночий топ: Синя сукня. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женский топ: Синее платье. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Blue Frock is a charming and stylish dress for various occasions. With a vibrant blue color and a comfortable design, it adds a touch of elegance to your wardrobe.</p>"
    },
    "attributes": {
@@ -3606,7 +3826,11 @@
   },
   {
    "source_id": 163,
-   "name": "Girl Summer Dress",
+   "name": {
+    "uk-UA": "Літня сукня для дівчинки",
+    "ru-RU": "Летнее платье для девочки",
+    "en-US": "Girl Summer Dress"
+   },
    "slug": "girl-summer-dress",
    "category": "womens-tops",
    "brand": "Demo",
@@ -3617,13 +3841,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий топ: Girl Summer Dress.",
-    "ru-RU": "Женский топ: Girl Summer Dress.",
+    "uk-UA": "Жіночий топ: Літня сукня для дівчинки.",
+    "ru-RU": "Женский топ: Летнее платье для девочки.",
     "en-US": "The Girl Summer Dress is a cute and breezy dress designed for warm weather."
    },
    "description": {
-    "uk-UA": "<p>Жіночий топ: Girl Summer Dress. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женский топ: Girl Summer Dress. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіночий топ: Літня сукня для дівчинки. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женский топ: Летнее платье для девочки. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Girl Summer Dress is a cute and breezy dress designed for warm weather. With playful patterns and lightweight fabric, it's perfect for keeping cool and stylish during the summer.</p>"
    },
    "attributes": {
@@ -3641,7 +3865,11 @@
   },
   {
    "source_id": 160,
-   "name": "Samsung Galaxy Tab S8 Plus Grey",
+   "name": {
+    "uk-UA": "Samsung Galaxy Tab S8 Plus, сірий",
+    "ru-RU": "Samsung Galaxy Tab S8 Plus, серый",
+    "en-US": "Samsung Galaxy Tab S8 Plus Grey"
+   },
    "slug": "samsung-galaxy-tab-s8-plus-grey",
    "category": "tablets-android",
    "brand": "Samsung",
@@ -3763,7 +3991,11 @@
   },
   {
    "source_id": 164,
-   "name": "Gray Dress",
+   "name": {
+    "uk-UA": "Сіра сукня",
+    "ru-RU": "Серое платье",
+    "en-US": "Gray Dress"
+   },
    "slug": "gray-dress",
    "category": "womens-tops",
    "brand": "Demo",
@@ -3774,13 +4006,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий топ: Gray Dress.",
-    "ru-RU": "Женский топ: Gray Dress.",
+    "uk-UA": "Жіночий топ: Сіра сукня.",
+    "ru-RU": "Женский топ: Серое платье.",
     "en-US": "The Gray Dress is a versatile and chic option for various occasions."
    },
    "description": {
-    "uk-UA": "<p>Жіночий топ: Gray Dress. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женский топ: Gray Dress. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіночий топ: Сіра сукня. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женский топ: Серое платье. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Gray Dress is a versatile and chic option for various occasions. With a neutral gray color, it can be dressed up or down, making it a wardrobe staple for any fashion-forward individual.</p>"
    },
    "attributes": {
@@ -3798,7 +4030,11 @@
   },
   {
    "source_id": 161,
-   "name": "Samsung Galaxy Tab White",
+   "name": {
+    "uk-UA": "Samsung Galaxy Tab, білий",
+    "ru-RU": "Samsung Galaxy Tab, белый",
+    "en-US": "Samsung Galaxy Tab White"
+   },
    "slug": "samsung-galaxy-tab-white",
    "category": "tablets-android",
    "brand": "Samsung",
@@ -3835,7 +4071,11 @@
   },
   {
    "source_id": 7,
-   "name": "Chanel Coco Noir Eau De",
+   "name": {
+    "uk-UA": "Chanel Coco Noir, парфумована вода",
+    "ru-RU": "Chanel Coco Noir, парфюмерная вода",
+    "en-US": "Chanel Coco Noir Eau De"
+   },
    "slug": "chanel-coco-noir-eau-de",
    "category": "fragrances",
    "brand": "Chanel",
@@ -3846,13 +4086,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Парфумерія: Chanel Coco Noir Eau De, бренд Chanel.",
-    "ru-RU": "Парфюмерия: Chanel Coco Noir Eau De, бренд Chanel.",
+    "uk-UA": "Chanel Coco Noir, парфумована вода від Chanel.",
+    "ru-RU": "Chanel Coco Noir, парфюмерная вода от Chanel.",
     "en-US": "Coco Noir by Chanel is an elegant and mysterious fragrance, featuring notes of grapefruit, rose, and sandalwood."
    },
    "description": {
-    "uk-UA": "<p>Парфумерія: Chanel Coco Noir Eau De, бренд Chanel. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Парфюмерия: Chanel Coco Noir Eau De, бренд Chanel. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Chanel Coco Noir, парфумована вода від Chanel. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Chanel Coco Noir, парфюмерная вода от Chanel. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Coco Noir by Chanel is an elegant and mysterious fragrance, featuring notes of grapefruit, rose, and sandalwood. Perfect for evening occasions.</p>"
    },
    "attributes": {
@@ -3870,7 +4110,11 @@
   },
   {
    "source_id": 165,
-   "name": "Short Frock",
+   "name": {
+    "uk-UA": "Коротка сукня",
+    "ru-RU": "Короткое платье",
+    "en-US": "Short Frock"
+   },
    "slug": "short-frock",
    "category": "womens-tops",
    "brand": "Demo",
@@ -3881,13 +4125,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий топ: Short Frock.",
-    "ru-RU": "Женский топ: Short Frock.",
+    "uk-UA": "Жіночий топ: Коротка сукня.",
+    "ru-RU": "Женский топ: Короткое платье.",
     "en-US": "The Short Frock is a playful and trendy dress with a shorter length."
    },
    "description": {
-    "uk-UA": "<p>Жіночий топ: Short Frock. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женский топ: Short Frock. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіночий топ: Коротка сукня. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женский топ: Короткое платье. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Short Frock is a playful and trendy dress with a shorter length. Ideal for casual outings or special occasions, it combines style and comfort for a fashionable look.</p>"
    },
    "attributes": {
@@ -3944,7 +4188,11 @@
   },
   {
    "source_id": 102,
-   "name": "Apple Airpower Wireless Charger",
+   "name": {
+    "uk-UA": "Бездротова зарядка Apple AirPower",
+    "ru-RU": "Беспроводная зарядка Apple AirPower",
+    "en-US": "Apple Airpower Wireless Charger"
+   },
    "slug": "apple-airpower-wireless-charger",
    "category": "chargers",
    "brand": "Apple",
@@ -3978,7 +4226,11 @@
   },
   {
    "source_id": 166,
-   "name": "Tartan Dress",
+   "name": {
+    "uk-UA": "Сукня в шотландську клітинку",
+    "ru-RU": "Платье в шотландскую клетку",
+    "en-US": "Tartan Dress"
+   },
    "slug": "tartan-dress",
    "category": "womens-tops",
    "brand": "Demo",
@@ -3989,13 +4241,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий топ: Tartan Dress.",
-    "ru-RU": "Женский топ: Tartan Dress.",
+    "uk-UA": "Жіночий топ: Сукня в шотландську клітинку.",
+    "ru-RU": "Женский топ: Платье в шотландскую клетку.",
     "en-US": "The Tartan Dress features a classic tartan pattern, bringing a timeless and sophisticated touch to your wardrobe."
    },
    "description": {
-    "uk-UA": "<p>Жіночий топ: Tartan Dress. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женский топ: Tartan Dress. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіночий топ: Сукня в шотландську клітинку. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женский топ: Платье в шотландскую клетку. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Tartan Dress features a classic tartan pattern, bringing a timeless and sophisticated touch to your wardrobe. Perfect for fall and winter, it adds a hint of traditional charm.</p>"
    },
    "attributes": {
@@ -4091,7 +4343,11 @@
   },
   {
    "source_id": 104,
-   "name": "Apple iPhone Charger",
+   "name": {
+    "uk-UA": "Зарядний пристрій Apple для iPhone",
+    "ru-RU": "Зарядное устройство Apple для iPhone",
+    "en-US": "Apple iPhone Charger"
+   },
    "slug": "apple-iphone-charger",
    "category": "chargers",
    "brand": "Apple",
@@ -4127,7 +4383,11 @@
   },
   {
    "source_id": 185,
-   "name": "Black & Brown Slipper",
+   "name": {
+    "uk-UA": "Чорно-коричневі капці",
+    "ru-RU": "Чёрно-коричневые тапочки",
+    "en-US": "Black & Brown Slipper"
+   },
    "slug": "black-brown-slipper",
    "category": "womens-shoes",
    "brand": "Comfort Trends",
@@ -4138,13 +4398,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноче взуття: Black & Brown Slipper, бренд Comfort Trends.",
-    "ru-RU": "Женская обувь: Black & Brown Slipper, бренд Comfort Trends.",
+    "uk-UA": "Чорно-коричневі капці від Comfort Trends.",
+    "ru-RU": "Чёрно-коричневые тапочки от Comfort Trends.",
     "en-US": "The Black & Brown Slipper is a comfortable and stylish choice for casual wear."
    },
    "description": {
-    "uk-UA": "<p>Жіноче взуття: Black & Brown Slipper, бренд Comfort Trends. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская обувь: Black & Brown Slipper, бренд Comfort Trends. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Чорно-коричневі капці від Comfort Trends. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Чёрно-коричневые тапочки от Comfort Trends. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Black & Brown Slipper is a comfortable and stylish choice for casual wear. Featuring a blend of black and brown colors, it adds a touch of sophistication to your relaxation.</p>"
    },
    "attributes": {
@@ -4201,7 +4461,11 @@
   },
   {
    "source_id": 186,
-   "name": "Calvin Klein Heel Shoes",
+   "name": {
+    "uk-UA": "Туфлі на підборах Calvin Klein",
+    "ru-RU": "Туфли на каблуках Calvin Klein",
+    "en-US": "Calvin Klein Heel Shoes"
+   },
    "slug": "calvin-klein-heel-shoes",
    "category": "womens-shoes",
    "brand": "Calvin Klein",
@@ -4212,13 +4476,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноче взуття: Calvin Klein Heel Shoes, бренд Calvin Klein.",
-    "ru-RU": "Женская обувь: Calvin Klein Heel Shoes, бренд Calvin Klein.",
+    "uk-UA": "Туфлі на підборах Calvin Klein від Calvin Klein.",
+    "ru-RU": "Туфли на каблуках Calvin Klein от Calvin Klein.",
     "en-US": "Calvin Klein Heel Shoes are elegant and sophisticated, designed for formal occasions."
    },
    "description": {
-    "uk-UA": "<p>Жіноче взуття: Calvin Klein Heel Shoes, бренд Calvin Klein. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская обувь: Calvin Klein Heel Shoes, бренд Calvin Klein. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Туфлі на підборах Calvin Klein від Calvin Klein. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Туфли на каблуках Calvin Klein от Calvin Klein. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Calvin Klein Heel Shoes are elegant and sophisticated, designed for formal occasions. With a classic design and high-quality materials, they complement your stylish ensemble.</p>"
    },
    "attributes": {
@@ -4236,7 +4500,11 @@
   },
   {
    "source_id": 105,
-   "name": "Apple MagSafe Battery Pack",
+   "name": {
+    "uk-UA": "Акумуляторний чохол Apple MagSafe",
+    "ru-RU": "Аккумуляторный чехол Apple MagSafe",
+    "en-US": "Apple MagSafe Battery Pack"
+   },
    "slug": "apple-magsafe-battery-pack",
    "category": "chargers",
    "brand": "Apple",
@@ -4277,7 +4545,11 @@
   },
   {
    "source_id": 113,
-   "name": "Generic Motorcycle",
+   "name": {
+    "uk-UA": "Мотоцикл універсальний",
+    "ru-RU": "Мотоцикл универсальный",
+    "en-US": "Generic Motorcycle"
+   },
    "slug": "generic-motorcycle",
    "category": "motorcycle",
    "brand": "Generic Motors",
@@ -4288,13 +4560,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Мотоцикл: Generic Motorcycle, бренд Generic Motors.",
-    "ru-RU": "Мотоцикл: Generic Motorcycle, бренд Generic Motors.",
+    "uk-UA": "Мотоцикл універсальний від Generic Motors.",
+    "ru-RU": "Мотоцикл универсальный от Generic Motors.",
     "en-US": "The Generic Motorcycle is a versatile and reliable bike suitable for various riding preferences."
    },
    "description": {
-    "uk-UA": "<p>Мотоцикл: Generic Motorcycle, бренд Generic Motors. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мотоцикл: Generic Motorcycle, бренд Generic Motors. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Мотоцикл універсальний від Generic Motors. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Мотоцикл универсальный от Generic Motors. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Generic Motorcycle is a versatile and reliable bike suitable for various riding preferences. With a balanced design, it provides a comfortable and efficient riding experience.</p>"
    },
    "attributes": {
@@ -4351,7 +4623,11 @@
   },
   {
    "source_id": 8,
-   "name": "Dior J'adore",
+   "name": {
+    "uk-UA": "Dior J’adore",
+    "ru-RU": "Dior J’adore",
+    "en-US": "Dior J'adore"
+   },
    "slug": "dior-j-adore",
    "category": "fragrances",
    "brand": "Dior",
@@ -4362,13 +4638,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Парфумерія: Dior J'adore, бренд Dior.",
-    "ru-RU": "Парфюмерия: Dior J'adore, бренд Dior.",
+    "uk-UA": "Dior J’adore від Dior.",
+    "ru-RU": "Dior J’adore от Dior.",
     "en-US": "J'adore by Dior is a luxurious and floral fragrance, known for its blend of ylang-ylang, rose, and jasmine."
    },
    "description": {
-    "uk-UA": "<p>Парфумерія: Dior J'adore, бренд Dior. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Парфюмерия: Dior J'adore, бренд Dior. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Dior J’adore від Dior. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Dior J’adore от Dior. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>J'adore by Dior is a luxurious and floral fragrance, known for its blend of ylang-ylang, rose, and jasmine. It embodies femininity and sophistication.</p>"
    },
    "attributes": {
@@ -4386,7 +4662,11 @@
   },
   {
    "source_id": 187,
-   "name": "Golden Shoes Woman",
+   "name": {
+    "uk-UA": "Золоті жіночі туфлі",
+    "ru-RU": "Золотые женские туфли",
+    "en-US": "Golden Shoes Woman"
+   },
    "slug": "golden-shoes-woman",
    "category": "womens-shoes",
    "brand": "Fashion Diva",
@@ -4397,13 +4677,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноче взуття: Golden Shoes Woman, бренд Fashion Diva.",
-    "ru-RU": "Женская обувь: Golden Shoes Woman, бренд Fashion Diva.",
+    "uk-UA": "Золоті жіночі туфлі від Fashion Diva.",
+    "ru-RU": "Золотые женские туфли от Fashion Diva.",
     "en-US": "The Golden Shoes for Women are a glamorous choice for special occasions."
    },
    "description": {
-    "uk-UA": "<p>Жіноче взуття: Golden Shoes Woman, бренд Fashion Diva. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская обувь: Golden Shoes Woman, бренд Fashion Diva. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Золоті жіночі туфлі від Fashion Diva. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Золотые женские туфли от Fashion Diva. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Golden Shoes for Women are a glamorous choice for special occasions. Featuring a golden hue and stylish design, they add a touch of luxury to your outfit.</p>"
    },
    "attributes": {
@@ -4436,13 +4716,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Аксесуар для смартфона: Силіконовий чохол iPhone 12 MagSafe (слива), бренд Apple.",
-    "ru-RU": "Аксессуар для смартфона: Силиконовый чехол iPhone 12 MagSafe (слива), бренд Apple.",
+    "uk-UA": "Силіконовий чохол iPhone 12 MagSafe (слива) від Apple.",
+    "ru-RU": "Силиконовый чехол iPhone 12 MagSafe (слива) от Apple.",
     "en-US": "The iPhone 12 Silicone Case with MagSafe in Plum is a stylish and protective case designed for the iPhone 12."
    },
    "description": {
-    "uk-UA": "<p>Аксесуар для смартфона: Силіконовий чохол iPhone 12 MagSafe (слива), бренд Apple. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Аксессуар для смартфона: Силиконовый чехол iPhone 12 MagSafe (слива), бренд Apple. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Силіконовий чохол iPhone 12 MagSafe (слива) від Apple. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Силиконовый чехол iPhone 12 MagSafe (слива) от Apple. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The iPhone 12 Silicone Case with MagSafe in Plum is a stylish and protective case designed for the iPhone 12. It features MagSafe technology for easy attachment of accessories.</p>"
    },
    "attributes": {
@@ -4499,7 +4779,11 @@
   },
   {
    "source_id": 188,
-   "name": "Pampi Shoes",
+   "name": {
+    "uk-UA": "Туфлі Pampi",
+    "ru-RU": "Туфли Pampi",
+    "en-US": "Pampi Shoes"
+   },
    "slug": "pampi-shoes",
    "category": "womens-shoes",
    "brand": "Pampi",
@@ -4510,13 +4794,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноче взуття: Pampi Shoes, бренд Pampi.",
-    "ru-RU": "Женская обувь: Pampi Shoes, бренд Pampi.",
+    "uk-UA": "Туфлі Pampi від Pampi.",
+    "ru-RU": "Туфли Pampi от Pampi.",
     "en-US": "Pampi Shoes offer a blend of comfort and style for everyday use."
    },
    "description": {
-    "uk-UA": "<p>Жіноче взуття: Pampi Shoes, бренд Pampi. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская обувь: Pampi Shoes, бренд Pampi. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Туфлі Pampi від Pampi. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Туфли Pampi от Pampi. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Pampi Shoes offer a blend of comfort and style for everyday use. With a versatile design, they are suitable for various casual occasions, providing a trendy and relaxed look.</p>"
    },
    "attributes": {
@@ -4534,7 +4818,11 @@
   },
   {
    "source_id": 114,
-   "name": "Kawasaki Z800",
+   "name": {
+    "uk-UA": "Kawasaki Z800",
+    "ru-RU": "Kawasaki Z800",
+    "en-US": "Kawasaki Z800"
+   },
    "slug": "kawasaki-z800",
    "category": "motorcycle",
    "brand": "Kawasaki",
@@ -4545,13 +4833,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Мотоцикл: Kawasaki Z800, бренд Kawasaki.",
-    "ru-RU": "Мотоцикл: Kawasaki Z800, бренд Kawasaki.",
+    "uk-UA": "Kawasaki Z800 від Kawasaki.",
+    "ru-RU": "Kawasaki Z800 от Kawasaki.",
     "en-US": "The Kawasaki Z800 is a powerful and agile sportbike known for its striking design and performance."
    },
    "description": {
-    "uk-UA": "<p>Мотоцикл: Kawasaki Z800, бренд Kawasaki. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мотоцикл: Kawasaki Z800, бренд Kawasaki. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Kawasaki Z800 від Kawasaki. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Kawasaki Z800 от Kawasaki. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Kawasaki Z800 is a powerful and agile sportbike known for its striking design and performance. It's equipped with advanced features, making it a favorite among motorcycle enthusiasts.</p>"
    },
    "attributes": {
@@ -4623,13 +4911,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Аксесуар для смартфона: Монопод, бренд TechGear.",
-    "ru-RU": "Аксессуар для смартфона: Монопод, бренд TechGear.",
+    "uk-UA": "Монопод від TechGear.",
+    "ru-RU": "Монопод от TechGear.",
     "en-US": "The Monopod is a versatile camera accessory for stable and adjustable shooting."
    },
    "description": {
-    "uk-UA": "<p>Аксесуар для смартфона: Монопод, бренд TechGear. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Аксессуар для смартфона: Монопод, бренд TechGear. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Монопод від TechGear. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Монопод от TechGear. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Monopod is a versatile camera accessory for stable and adjustable shooting. Perfect for capturing selfies, group photos, and videos with ease.</p>"
    },
    "attributes": {
@@ -4647,7 +4935,11 @@
   },
   {
    "source_id": 189,
-   "name": "Red Shoes",
+   "name": {
+    "uk-UA": "Червоні туфлі",
+    "ru-RU": "Красные туфли",
+    "en-US": "Red Shoes"
+   },
    "slug": "red-shoes",
    "category": "womens-shoes",
    "brand": "Fashion Express",
@@ -4658,13 +4950,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноче взуття: Red Shoes, бренд Fashion Express.",
-    "ru-RU": "Женская обувь: Red Shoes, бренд Fashion Express.",
+    "uk-UA": "Червоні туфлі від Fashion Express.",
+    "ru-RU": "Красные туфли от Fashion Express.",
     "en-US": "The Red Shoes make a bold statement with their vibrant red color."
    },
    "description": {
-    "uk-UA": "<p>Жіноче взуття: Red Shoes, бренд Fashion Express. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская обувь: Red Shoes, бренд Fashion Express. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Червоні туфлі від Fashion Express. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Красные туфли от Fashion Express. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Red Shoes make a bold statement with their vibrant red color. Whether for a party or a casual outing, these shoes add a pop of color and style to your wardrobe.</p>"
    },
    "attributes": {
@@ -4721,7 +5013,11 @@
   },
   {
    "source_id": 172,
-   "name": "Blue Women's Handbag",
+   "name": {
+    "uk-UA": "Синя жіноча сумка",
+    "ru-RU": "Синяя женская сумка",
+    "en-US": "Blue Women's Handbag"
+   },
    "slug": "blue-women-s-handbag",
    "category": "womens-bags",
    "brand": "Fashionista",
@@ -4732,13 +5028,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сумка: Blue Women's Handbag, бренд Fashionista.",
-    "ru-RU": "Женская сумка: Blue Women's Handbag, бренд Fashionista.",
+    "uk-UA": "Синя жіноча сумка від Fashionista.",
+    "ru-RU": "Синяя женская сумка от Fashionista.",
     "en-US": "The Blue Women's Handbag is a stylish and spacious accessory for everyday use."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сумка: Blue Women's Handbag, бренд Fashionista. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская сумка: Blue Women's Handbag, бренд Fashionista. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Синя жіноча сумка від Fashionista. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Синяя женская сумка от Fashionista. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Blue Women's Handbag is a stylish and spacious accessory for everyday use. With a vibrant blue color and multiple compartments, it combines fashion and functionality.</p>"
    },
    "attributes": {
@@ -4771,13 +5067,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Аксесуар для смартфона: Селфі-лампа для iPhone, бренд GadgetMaster.",
-    "ru-RU": "Аксессуар для смартфона: Селфи-лампа для iPhone, бренд GadgetMaster.",
+    "uk-UA": "Селфі-лампа для iPhone від GadgetMaster.",
+    "ru-RU": "Селфи-лампа для iPhone от GadgetMaster.",
     "en-US": "The Selfie Lamp with iPhone is a portable and adjustable LED light designed to enhance your selfies and video calls."
    },
    "description": {
-    "uk-UA": "<p>Аксесуар для смартфона: Селфі-лампа для iPhone, бренд GadgetMaster. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Аксессуар для смартфона: Селфи-лампа для iPhone, бренд GadgetMaster. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Селфі-лампа для iPhone від GadgetMaster. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Селфи-лампа для iPhone от GadgetMaster. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Selfie Lamp with iPhone is a portable and adjustable LED light designed to enhance your selfies and video calls. Attach it to your iPhone for well-lit photos.</p>"
    },
    "attributes": {
@@ -4795,7 +5091,11 @@
   },
   {
    "source_id": 9,
-   "name": "Dolce Shine Eau de",
+   "name": {
+    "uk-UA": "Dolce & Gabbana Dolce Shine, парфумована вода",
+    "ru-RU": "Dolce & Gabbana Dolce Shine, парфюмерная вода",
+    "en-US": "Dolce Shine Eau de"
+   },
    "slug": "dolce-shine-eau-de",
    "category": "fragrances",
    "brand": "Dolce & Gabbana",
@@ -4806,13 +5106,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Парфумерія: Dolce Shine Eau de, бренд Dolce & Gabbana.",
-    "ru-RU": "Парфюмерия: Dolce Shine Eau de, бренд Dolce & Gabbana.",
+    "uk-UA": "Dolce & Gabbana Dolce Shine, парфумована вода від Dolce & Gabbana.",
+    "ru-RU": "Dolce & Gabbana Dolce Shine, парфюмерная вода от Dolce & Gabbana.",
     "en-US": "Dolce Shine by Dolce & Gabbana is a vibrant and fruity fragrance, featuring notes of mango, jasmine, and blonde woods."
    },
    "description": {
-    "uk-UA": "<p>Парфумерія: Dolce Shine Eau de, бренд Dolce & Gabbana. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Парфюмерия: Dolce Shine Eau de, бренд Dolce & Gabbana. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Dolce & Gabbana Dolce Shine, парфумована вода від Dolce & Gabbana. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Dolce & Gabbana Dolce Shine, парфюмерная вода от Dolce & Gabbana. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Dolce Shine by Dolce & Gabbana is a vibrant and fruity fragrance, featuring notes of mango, jasmine, and blonde woods. It's a joyful and youthful scent.</p>"
    },
    "attributes": {
@@ -4830,7 +5130,11 @@
   },
   {
    "source_id": 115,
-   "name": "MotoGP CI.H1",
+   "name": {
+    "uk-UA": "MotoGP CI.H1",
+    "ru-RU": "MotoGP CI.H1",
+    "en-US": "MotoGP CI.H1"
+   },
    "slug": "motogp-ci-h1",
    "category": "motorcycle",
    "brand": "MotoGP",
@@ -4841,13 +5145,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Мотоцикл: MotoGP CI.H1, бренд MotoGP.",
-    "ru-RU": "Мотоцикл: MotoGP CI.H1, бренд MotoGP.",
+    "uk-UA": "MotoGP CI.H1 від MotoGP.",
+    "ru-RU": "MotoGP CI.H1 от MotoGP.",
     "en-US": "The MotoGP CI.H1 is a high-performance motorcycle inspired by MotoGP racing technology."
    },
    "description": {
-    "uk-UA": "<p>Мотоцикл: MotoGP CI.H1, бренд MotoGP. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мотоцикл: MotoGP CI.H1, бренд MotoGP. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>MotoGP CI.H1 від MotoGP. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>MotoGP CI.H1 от MotoGP. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The MotoGP CI.H1 is a high-performance motorcycle inspired by MotoGP racing technology. It offers cutting-edge features and precision engineering for an exhilarating riding experience.</p>"
    },
    "attributes": {
@@ -4904,7 +5208,11 @@
   },
   {
    "source_id": 173,
-   "name": "Heshe Women's Leather Bag",
+   "name": {
+    "uk-UA": "Жіноча шкіряна сумка Heshe",
+    "ru-RU": "Женская кожаная сумка Heshe",
+    "en-US": "Heshe Women's Leather Bag"
+   },
    "slug": "heshe-women-s-leather-bag",
    "category": "womens-bags",
    "brand": "Heshe",
@@ -4915,13 +5223,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сумка: Heshe Women's Leather Bag, бренд Heshe.",
-    "ru-RU": "Женская сумка: Heshe Women's Leather Bag, бренд Heshe.",
+    "uk-UA": "Жіноча шкіряна сумка Heshe від Heshe.",
+    "ru-RU": "Женская кожаная сумка Heshe от Heshe.",
     "en-US": "The Heshe Women's Leather Bag is a luxurious and high-quality leather bag for the sophisticated woman."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сумка: Heshe Women's Leather Bag, бренд Heshe. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская сумка: Heshe Women's Leather Bag, бренд Heshe. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіноча шкіряна сумка Heshe від Heshe. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женская кожаная сумка Heshe от Heshe. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Heshe Women's Leather Bag is a luxurious and high-quality leather bag for the sophisticated woman. With a timeless design and durable craftsmanship, it's a versatile accessory.</p>"
    },
    "attributes": {
@@ -4954,13 +5262,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Аксесуар для смартфона: Монопод-селфі палиця, бренд SnapTech.",
-    "ru-RU": "Аксессуар для смартфона: Монопод-селфи палка, бренд SnapTech.",
+    "uk-UA": "Монопод-селфі палиця від SnapTech.",
+    "ru-RU": "Монопод-селфи палка от SnapTech.",
     "en-US": "The Selfie Stick Monopod is a extendable and foldable device for capturing the perfect selfie or group photo."
    },
    "description": {
-    "uk-UA": "<p>Аксесуар для смартфона: Монопод-селфі палиця, бренд SnapTech. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Аксессуар для смартфона: Монопод-селфи палка, бренд SnapTech. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Монопод-селфі палиця від SnapTech. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Монопод-селфи палка от SnapTech. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Selfie Stick Monopod is a extendable and foldable device for capturing the perfect selfie or group photo. Compatible with smartphones and cameras.</p>"
    },
    "attributes": {
@@ -4978,7 +5286,11 @@
   },
   {
    "source_id": 174,
-   "name": "Prada Women Bag",
+   "name": {
+    "uk-UA": "Жіноча сумка Prada",
+    "ru-RU": "Женская сумка Prada",
+    "en-US": "Prada Women Bag"
+   },
    "slug": "prada-women-bag",
    "category": "womens-bags",
    "brand": "Prada",
@@ -4989,13 +5301,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сумка: Prada Women Bag, бренд Prada.",
-    "ru-RU": "Женская сумка: Prada Women Bag, бренд Prada.",
+    "uk-UA": "Жіноча сумка Prada від Prada.",
+    "ru-RU": "Женская сумка Prada от Prada.",
     "en-US": "The Prada Women Bag is an iconic designer bag that exudes elegance and luxury."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сумка: Prada Women Bag, бренд Prada. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская сумка: Prada Women Bag, бренд Prada. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіноча сумка Prada від Prada. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женская сумка Prada от Prada. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Prada Women Bag is an iconic designer bag that exudes elegance and luxury. Crafted with precision and featuring the Prada logo, it's a statement piece for fashion enthusiasts.</p>"
    },
    "attributes": {
@@ -5067,13 +5379,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Аксесуар для смартфона: Студійна педестал-стійка для камери, бренд ProVision.",
-    "ru-RU": "Аксессуар для смартфона: Студийная стойка-педестал для камеры, бренд ProVision.",
+    "uk-UA": "Студійна педестал-стійка для камери від ProVision.",
+    "ru-RU": "Студийная стойка-педестал для камеры от ProVision.",
     "en-US": "The TV Studio Camera Pedestal is a professional-grade camera support system for smooth and precise camera movements in a studio setting."
    },
    "description": {
-    "uk-UA": "<p>Аксесуар для смартфона: Студійна педестал-стійка для камери, бренд ProVision. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Аксессуар для смартфона: Студийная стойка-педестал для камеры, бренд ProVision. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Студійна педестал-стійка для камери від ProVision. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Студийная стойка-педестал для камеры от ProVision. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The TV Studio Camera Pedestal is a professional-grade camera support system for smooth and precise camera movements in a studio setting. Ideal for broadcast and production.</p>"
    },
    "attributes": {
@@ -5091,7 +5403,11 @@
   },
   {
    "source_id": 175,
-   "name": "White Faux Leather Backpack",
+   "name": {
+    "uk-UA": "Білий рюкзак із екошкіри",
+    "ru-RU": "Белый рюкзак из экокожи",
+    "en-US": "White Faux Leather Backpack"
+   },
    "slug": "white-faux-leather-backpack",
    "category": "womens-bags",
    "brand": "Urban Chic",
@@ -5102,13 +5418,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сумка: White Faux Leather Backpack, бренд Urban Chic.",
-    "ru-RU": "Женская сумка: White Faux Leather Backpack, бренд Urban Chic.",
+    "uk-UA": "Білий рюкзак із екошкіри від Urban Chic.",
+    "ru-RU": "Белый рюкзак из экокожи от Urban Chic.",
     "en-US": "The White Faux Leather Backpack is a trendy and practical backpack for the modern woman."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сумка: White Faux Leather Backpack, бренд Urban Chic. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская сумка: White Faux Leather Backpack, бренд Urban Chic. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Білий рюкзак із екошкіри від Urban Chic. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Белый рюкзак из экокожи от Urban Chic. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The White Faux Leather Backpack is a trendy and practical backpack for the modern woman. With a sleek white design and ample storage space, it's perfect for both casual and on-the-go styles.</p>"
    },
    "attributes": {
@@ -5126,7 +5442,11 @@
   },
   {
    "source_id": 116,
-   "name": "Scooter Motorcycle",
+   "name": {
+    "uk-UA": "Скутер",
+    "ru-RU": "Скутер",
+    "en-US": "Scooter Motorcycle"
+   },
    "slug": "scooter-motorcycle",
    "category": "motorcycle",
    "brand": "ScootMaster",
@@ -5137,13 +5457,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Мотоцикл: Scooter Motorcycle, бренд ScootMaster.",
-    "ru-RU": "Мотоцикл: Scooter Motorcycle, бренд ScootMaster.",
+    "uk-UA": "Скутер від ScootMaster.",
+    "ru-RU": "Скутер от ScootMaster.",
     "en-US": "The Scooter Motorcycle is a practical and fuel-efficient bike ideal for urban commuting."
    },
    "description": {
-    "uk-UA": "<p>Мотоцикл: Scooter Motorcycle, бренд ScootMaster. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мотоцикл: Scooter Motorcycle, бренд ScootMaster. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Скутер від ScootMaster. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Скутер от ScootMaster. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Scooter Motorcycle is a practical and fuel-efficient bike ideal for urban commuting. It features a step-through design and user-friendly controls for easy maneuverability.</p>"
    },
    "attributes": {
@@ -5200,7 +5520,11 @@
   },
   {
    "source_id": 78,
-   "name": "Apple MacBook Pro 14 Inch Space Grey",
+   "name": {
+    "uk-UA": "Apple MacBook Pro 14\", «космічний сірий»",
+    "ru-RU": "Apple MacBook Pro 14\", «серый космос»",
+    "en-US": "Apple MacBook Pro 14 Inch Space Grey"
+   },
    "slug": "apple-macbook-pro-14-inch-space-grey",
    "category": "laptops-apple",
    "brand": "Apple",
@@ -5244,7 +5568,11 @@
   },
   {
    "source_id": 176,
-   "name": "Women Handbag Black",
+   "name": {
+    "uk-UA": "Чорна жіноча сумка",
+    "ru-RU": "Чёрная женская сумка",
+    "en-US": "Women Handbag Black"
+   },
    "slug": "women-handbag-black",
    "category": "womens-bags",
    "brand": "Elegance Collection",
@@ -5255,13 +5583,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіноча сумка: Women Handbag Black, бренд Elegance Collection.",
-    "ru-RU": "Женская сумка: Women Handbag Black, бренд Elegance Collection.",
+    "uk-UA": "Чорна жіноча сумка від Elegance Collection.",
+    "ru-RU": "Чёрная женская сумка от Elegance Collection.",
     "en-US": "The Women Handbag in Black is a classic and versatile accessory that complements various outfits."
    },
    "description": {
-    "uk-UA": "<p>Жіноча сумка: Women Handbag Black, бренд Elegance Collection. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женская сумка: Women Handbag Black, бренд Elegance Collection. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Чорна жіноча сумка від Elegance Collection. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Чёрная женская сумка от Elegance Collection. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Women Handbag in Black is a classic and versatile accessory that complements various outfits. With a timeless black color and functional design, it's a must-have in every woman's wardrobe.</p>"
    },
    "attributes": {
@@ -5279,7 +5607,11 @@
   },
   {
    "source_id": 10,
-   "name": "Gucci Bloom Eau de",
+   "name": {
+    "uk-UA": "Gucci Bloom, парфумована вода",
+    "ru-RU": "Gucci Bloom, парфюмерная вода",
+    "en-US": "Gucci Bloom Eau de"
+   },
    "slug": "gucci-bloom-eau-de",
    "category": "fragrances",
    "brand": "Gucci",
@@ -5290,13 +5622,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Парфумерія: Gucci Bloom Eau de, бренд Gucci.",
-    "ru-RU": "Парфюмерия: Gucci Bloom Eau de, бренд Gucci.",
+    "uk-UA": "Gucci Bloom, парфумована вода від Gucci.",
+    "ru-RU": "Gucci Bloom, парфюмерная вода от Gucci.",
     "en-US": "Gucci Bloom by Gucci is a floral and captivating fragrance, with notes of tuberose, jasmine, and Rangoon creeper."
    },
    "description": {
-    "uk-UA": "<p>Парфумерія: Gucci Bloom Eau de, бренд Gucci. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Парфюмерия: Gucci Bloom Eau de, бренд Gucci. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Gucci Bloom, парфумована вода від Gucci. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Gucci Bloom, парфюмерная вода от Gucci. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Gucci Bloom by Gucci is a floral and captivating fragrance, with notes of tuberose, jasmine, and Rangoon creeper. It's a modern and romantic scent.</p>"
    },
    "attributes": {
@@ -5353,7 +5685,11 @@
   },
   {
    "source_id": 182,
-   "name": "Green Crystal Earring",
+   "name": {
+    "uk-UA": "Сережки із зеленим кристалом",
+    "ru-RU": "Серьги с зелёным кристаллом",
+    "en-US": "Green Crystal Earring"
+   },
    "slug": "green-crystal-earring",
    "category": "womens-jewellery",
    "brand": "Demo",
@@ -5364,13 +5700,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Прикраса: Green Crystal Earring.",
-    "ru-RU": "Украшение: Green Crystal Earring.",
+    "uk-UA": "Прикраса: Сережки із зеленим кристалом.",
+    "ru-RU": "Украшение: Серьги с зелёным кристаллом.",
     "en-US": "The Green Crystal Earring is a dazzling accessory that features a vibrant green crystal."
    },
    "description": {
-    "uk-UA": "<p>Прикраса: Green Crystal Earring. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Украшение: Green Crystal Earring. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Прикраса: Сережки із зеленим кристалом. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Украшение: Серьги с зелёным кристаллом. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Green Crystal Earring is a dazzling accessory that features a vibrant green crystal. With a classic design, it adds a touch of elegance to your ensemble, perfect for formal or special occasions.</p>"
    },
    "attributes": {
@@ -5388,7 +5724,11 @@
   },
   {
    "source_id": 79,
-   "name": "Asus Zenbook Pro Dual Screen Laptop",
+   "name": {
+    "uk-UA": "Ноутбук Asus Zenbook Pro з двома екранами",
+    "ru-RU": "Ноутбук Asus Zenbook Pro с двумя экранами",
+    "en-US": "Asus Zenbook Pro Dual Screen Laptop"
+   },
    "slug": "asus-zenbook-pro-dual-screen-laptop",
    "category": "laptops-windows",
    "brand": "Asus",
@@ -5429,7 +5769,11 @@
   },
   {
    "source_id": 117,
-   "name": "Sportbike Motorcycle",
+   "name": {
+    "uk-UA": "Спортивний мотоцикл",
+    "ru-RU": "Спортивный мотоцикл",
+    "en-US": "Sportbike Motorcycle"
+   },
    "slug": "sportbike-motorcycle",
    "category": "motorcycle",
    "brand": "SpeedMaster",
@@ -5440,13 +5784,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Мотоцикл: Sportbike Motorcycle, бренд SpeedMaster.",
-    "ru-RU": "Мотоцикл: Sportbike Motorcycle, бренд SpeedMaster.",
+    "uk-UA": "Спортивний мотоцикл від SpeedMaster.",
+    "ru-RU": "Спортивный мотоцикл от SpeedMaster.",
     "en-US": "The Sportbike Motorcycle is designed for speed and agility, with a sleek and aerodynamic profile."
    },
    "description": {
-    "uk-UA": "<p>Мотоцикл: Sportbike Motorcycle, бренд SpeedMaster. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Мотоцикл: Sportbike Motorcycle, бренд SpeedMaster. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Спортивний мотоцикл від SpeedMaster. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Спортивный мотоцикл от SpeedMaster. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Sportbike Motorcycle is designed for speed and agility, with a sleek and aerodynamic profile. It's suitable for riders looking for a dynamic and thrilling riding experience.</p>"
    },
    "attributes": {
@@ -5503,7 +5847,11 @@
   },
   {
    "source_id": 183,
-   "name": "Green Oval Earring",
+   "name": {
+    "uk-UA": "Овальні зелені сережки",
+    "ru-RU": "Овальные зелёные серьги",
+    "en-US": "Green Oval Earring"
+   },
    "slug": "green-oval-earring",
    "category": "womens-jewellery",
    "brand": "Demo",
@@ -5514,13 +5862,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Прикраса: Green Oval Earring.",
-    "ru-RU": "Украшение: Green Oval Earring.",
+    "uk-UA": "Прикраса: Овальні зелені сережки.",
+    "ru-RU": "Украшение: Овальные зелёные серьги.",
     "en-US": "The Green Oval Earring is a stylish and versatile accessory with a unique oval shape."
    },
    "description": {
-    "uk-UA": "<p>Прикраса: Green Oval Earring. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Украшение: Green Oval Earring. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Прикраса: Овальні зелені сережки. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Украшение: Овальные зелёные серьги. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Green Oval Earring is a stylish and versatile accessory with a unique oval shape. Whether for casual or dressy occasions, its green hue and contemporary design make it a standout piece.</p>"
    },
    "attributes": {
@@ -5538,7 +5886,11 @@
   },
   {
    "source_id": 80,
-   "name": "Huawei Matebook X Pro",
+   "name": {
+    "uk-UA": "Huawei MateBook X Pro",
+    "ru-RU": "Huawei MateBook X Pro",
+    "en-US": "Huawei Matebook X Pro"
+   },
    "slug": "huawei-matebook-x-pro",
    "category": "laptops-windows",
    "brand": "Huawei",
@@ -5620,7 +5972,11 @@
   },
   {
    "source_id": 184,
-   "name": "Tropical Earring",
+   "name": {
+    "uk-UA": "Сережки «Тропіки»",
+    "ru-RU": "Серьги «Тропики»",
+    "en-US": "Tropical Earring"
+   },
    "slug": "tropical-earring",
    "category": "womens-jewellery",
    "brand": "Demo",
@@ -5631,13 +5987,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Прикраса: Tropical Earring.",
-    "ru-RU": "Украшение: Tropical Earring.",
+    "uk-UA": "Прикраса: Сережки «Тропіки».",
+    "ru-RU": "Украшение: Серьги «Тропики».",
     "en-US": "The Tropical Earring is a fun and playful accessory inspired by tropical elements."
    },
    "description": {
-    "uk-UA": "<p>Прикраса: Tropical Earring. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Украшение: Tropical Earring. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Прикраса: Сережки «Тропіки». Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Украшение: Серьги «Тропики». Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Tropical Earring is a fun and playful accessory inspired by tropical elements. Featuring vibrant colors and a lively design, it's perfect for adding a touch of summer to your look.</p>"
    },
    "attributes": {
@@ -5655,7 +6011,11 @@
   },
   {
    "source_id": 167,
-   "name": "300 Touring",
+   "name": {
+    "uk-UA": "Chrysler 300 Touring",
+    "ru-RU": "Chrysler 300 Touring",
+    "en-US": "300 Touring"
+   },
    "slug": "300-touring",
    "category": "vehicle",
    "brand": "Chrysler",
@@ -5666,13 +6026,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Автомобіль: 300 Touring, бренд Chrysler.",
-    "ru-RU": "Автомобиль: 300 Touring, бренд Chrysler.",
+    "uk-UA": "Chrysler 300 Touring від Chrysler.",
+    "ru-RU": "Chrysler 300 Touring от Chrysler.",
     "en-US": "The 300 Touring is a stylish and comfortable sedan, known for its luxurious features and smooth performance."
    },
    "description": {
-    "uk-UA": "<p>Автомобіль: 300 Touring, бренд Chrysler. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Автомобиль: 300 Touring, бренд Chrysler. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Chrysler 300 Touring від Chrysler. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Chrysler 300 Touring от Chrysler. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The 300 Touring is a stylish and comfortable sedan, known for its luxurious features and smooth performance.</p>"
    },
    "attributes": {
@@ -5729,7 +6089,11 @@
   },
   {
    "source_id": 81,
-   "name": "Lenovo Yoga 920",
+   "name": {
+    "uk-UA": "Lenovo Yoga 920",
+    "ru-RU": "Lenovo Yoga 920",
+    "en-US": "Lenovo Yoga 920"
+   },
    "slug": "lenovo-yoga-920",
    "category": "laptops-windows",
    "brand": "Lenovo",
@@ -5773,7 +6137,11 @@
   },
   {
    "source_id": 190,
-   "name": "IWC Ingenieur Automatic Steel",
+   "name": {
+    "uk-UA": "IWC Ingenieur Automatic, сталь",
+    "ru-RU": "IWC Ingenieur Automatic, сталь",
+    "en-US": "IWC Ingenieur Automatic Steel"
+   },
    "slug": "iwc-ingenieur-automatic-steel",
    "category": "womens-watches",
    "brand": "IWC",
@@ -5784,13 +6152,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий годинник: IWC Ingenieur Automatic Steel, бренд IWC.",
-    "ru-RU": "Женские часы: IWC Ingenieur Automatic Steel, бренд IWC.",
+    "uk-UA": "IWC Ingenieur Automatic, сталь від IWC.",
+    "ru-RU": "IWC Ingenieur Automatic, сталь от IWC.",
     "en-US": "The IWC Ingenieur Automatic Steel watch is a durable and sophisticated timepiece."
    },
    "description": {
-    "uk-UA": "<p>Жіночий годинник: IWC Ingenieur Automatic Steel, бренд IWC. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женские часы: IWC Ingenieur Automatic Steel, бренд IWC. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>IWC Ingenieur Automatic, сталь від IWC. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>IWC Ingenieur Automatic, сталь от IWC. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The IWC Ingenieur Automatic Steel watch is a durable and sophisticated timepiece. With a stainless steel case and automatic movement, it combines precision and style for watch enthusiasts.</p>"
    },
    "attributes": {
@@ -5808,7 +6176,11 @@
   },
   {
    "source_id": 118,
-   "name": "Attitude Super Leaves Hand Soap",
+   "name": {
+    "uk-UA": "Рідке мило для рук Attitude Super Leaves",
+    "ru-RU": "Жидкое мыло для рук Attitude Super Leaves",
+    "en-US": "Attitude Super Leaves Hand Soap"
+   },
    "slug": "attitude-super-leaves-hand-soap",
    "category": "skin-care",
    "brand": "Attitude",
@@ -5819,13 +6191,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Засіб для догляду за шкірою: Attitude Super Leaves Hand Soap, бренд Attitude.",
-    "ru-RU": "Средство для ухода за кожей: Attitude Super Leaves Hand Soap, бренд Attitude.",
+    "uk-UA": "Рідке мило для рук Attitude Super Leaves від Attitude.",
+    "ru-RU": "Жидкое мыло для рук Attitude Super Leaves от Attitude.",
     "en-US": "Attitude Super Leaves Hand Soap is a natural and nourishing hand soap enriched with the goodness of super leaves."
    },
    "description": {
-    "uk-UA": "<p>Засіб для догляду за шкірою: Attitude Super Leaves Hand Soap, бренд Attitude. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Средство для ухода за кожей: Attitude Super Leaves Hand Soap, бренд Attitude. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Рідке мило для рук Attitude Super Leaves від Attitude. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Жидкое мыло для рук Attitude Super Leaves от Attitude. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Attitude Super Leaves Hand Soap is a natural and nourishing hand soap enriched with the goodness of super leaves. It cleanses and moisturizes your hands, leaving them feeling fresh and soft.</p>"
    },
    "attributes": {
@@ -5882,7 +6254,11 @@
   },
   {
    "source_id": 191,
-   "name": "Rolex Cellini Moonphase",
+   "name": {
+    "uk-UA": "Rolex Cellini Moonphase, жіночі",
+    "ru-RU": "Rolex Cellini Moonphase, женские",
+    "en-US": "Rolex Cellini Moonphase"
+   },
    "slug": "rolex-cellini-moonphase-191",
    "category": "womens-watches",
    "brand": "Rolex",
@@ -5893,13 +6269,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий годинник: Rolex Cellini Moonphase, бренд Rolex.",
-    "ru-RU": "Женские часы: Rolex Cellini Moonphase, бренд Rolex.",
+    "uk-UA": "Rolex Cellini Moonphase, жіночі від Rolex.",
+    "ru-RU": "Rolex Cellini Moonphase, женские от Rolex.",
     "en-US": "The Rolex Cellini Moonphase watch is a masterpiece of horology."
    },
    "description": {
-    "uk-UA": "<p>Жіночий годинник: Rolex Cellini Moonphase, бренд Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женские часы: Rolex Cellini Moonphase, бренд Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Rolex Cellini Moonphase, жіночі від Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Rolex Cellini Moonphase, женские от Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Rolex Cellini Moonphase watch is a masterpiece of horology. Featuring a moon phase complication, it showcases the craftsmanship and elegance that Rolex is renowned for.</p>"
    },
    "attributes": {
@@ -5917,7 +6293,11 @@
   },
   {
    "source_id": 82,
-   "name": "DELL XPS 13 9300 Laptop",
+   "name": {
+    "uk-UA": "Ноутбук DELL XPS 13 9300",
+    "ru-RU": "Ноутбук DELL XPS 13 9300",
+    "en-US": "DELL XPS 13 9300 Laptop"
+   },
    "slug": "dell-xps-13-9300-laptop",
    "category": "laptops-windows",
    "brand": "Dell",
@@ -5962,7 +6342,11 @@
   },
   {
    "source_id": 168,
-   "name": "Charger SXT RWD",
+   "name": {
+    "uk-UA": "Dodge Charger SXT RWD",
+    "ru-RU": "Dodge Charger SXT RWD",
+    "en-US": "Charger SXT RWD"
+   },
    "slug": "charger-sxt-rwd",
    "category": "vehicle",
    "brand": "Dodge",
@@ -5973,13 +6357,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Автомобіль: Charger SXT RWD, бренд Dodge.",
-    "ru-RU": "Автомобиль: Charger SXT RWD, бренд Dodge.",
+    "uk-UA": "Dodge Charger SXT RWD від Dodge.",
+    "ru-RU": "Dodge Charger SXT RWD от Dodge.",
     "en-US": "The Charger SXT RWD is a powerful and sporty rear-wheel-drive sedan, offering a blend of performance and practicality."
    },
    "description": {
-    "uk-UA": "<p>Автомобіль: Charger SXT RWD, бренд Dodge. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Автомобиль: Charger SXT RWD, бренд Dodge. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Dodge Charger SXT RWD від Dodge. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Dodge Charger SXT RWD от Dodge. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Charger SXT RWD is a powerful and sporty rear-wheel-drive sedan, offering a blend of performance and practicality.</p>"
    },
    "attributes": {
@@ -5997,7 +6381,11 @@
   },
   {
    "source_id": 192,
-   "name": "Rolex Datejust Women",
+   "name": {
+    "uk-UA": "Rolex Datejust, жіночі",
+    "ru-RU": "Rolex Datejust, женские",
+    "en-US": "Rolex Datejust Women"
+   },
    "slug": "rolex-datejust-women",
    "category": "womens-watches",
    "brand": "Rolex",
@@ -6008,13 +6396,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий годинник: Rolex Datejust Women, бренд Rolex.",
-    "ru-RU": "Женские часы: Rolex Datejust Women, бренд Rolex.",
+    "uk-UA": "Rolex Datejust, жіночі від Rolex.",
+    "ru-RU": "Rolex Datejust, женские от Rolex.",
     "en-US": "The Rolex Datejust Women's watch is an iconic timepiece designed for women."
    },
    "description": {
-    "uk-UA": "<p>Жіночий годинник: Rolex Datejust Women, бренд Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женские часы: Rolex Datejust Women, бренд Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Rolex Datejust, жіночі від Rolex. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Rolex Datejust, женские от Rolex. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Rolex Datejust Women's watch is an iconic timepiece designed for women. With a timeless design and a date complication, it offers both elegance and functionality.</p>"
    },
    "attributes": {
@@ -6071,7 +6459,11 @@
   },
   {
    "source_id": 99,
-   "name": "Amazon Echo Plus",
+   "name": {
+    "uk-UA": "Amazon Echo Plus",
+    "ru-RU": "Amazon Echo Plus",
+    "en-US": "Amazon Echo Plus"
+   },
    "slug": "amazon-echo-plus",
    "category": "audio-smart-home",
    "brand": "Amazon",
@@ -6111,7 +6503,11 @@
   },
   {
    "source_id": 193,
-   "name": "Watch Gold for Women",
+   "name": {
+    "uk-UA": "Жіночий золотистий годинник",
+    "ru-RU": "Женские золотистые часы",
+    "en-US": "Watch Gold for Women"
+   },
    "slug": "watch-gold-for-women",
    "category": "womens-watches",
    "brand": "Fashion Gold",
@@ -6122,13 +6518,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий годинник: Watch Gold for Women, бренд Fashion Gold.",
-    "ru-RU": "Женские часы: Watch Gold for Women, бренд Fashion Gold.",
+    "uk-UA": "Жіночий золотистий годинник від Fashion Gold.",
+    "ru-RU": "Женские золотистые часы от Fashion Gold.",
     "en-US": "The Gold Women's Watch is a stunning accessory that combines luxury and style."
    },
    "description": {
-    "uk-UA": "<p>Жіночий годинник: Watch Gold for Women, бренд Fashion Gold. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женские часы: Watch Gold for Women, бренд Fashion Gold. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіночий золотистий годинник від Fashion Gold. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женские золотистые часы от Fashion Gold. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Gold Women's Watch is a stunning accessory that combines luxury and style. Featuring a gold-plated case and a chic design, it adds a touch of glamour to any outfit.</p>"
    },
    "attributes": {
@@ -6185,7 +6581,11 @@
   },
   {
    "source_id": 100,
-   "name": "Apple AirPods",
+   "name": {
+    "uk-UA": "Apple AirPods",
+    "ru-RU": "Apple AirPods",
+    "en-US": "Apple AirPods"
+   },
    "slug": "apple-airpods",
    "category": "audio-smart-home",
    "brand": "Apple",
@@ -6228,7 +6628,11 @@
   },
   {
    "source_id": 119,
-   "name": "Olay Ultra Moisture Shea Butter Body Wash",
+   "name": {
+    "uk-UA": "Гель для душу Olay Ultra Moisture з маслом ши",
+    "ru-RU": "Гель для душа Olay Ultra Moisture с маслом ши",
+    "en-US": "Olay Ultra Moisture Shea Butter Body Wash"
+   },
    "slug": "olay-ultra-moisture-shea-butter-body-wash",
    "category": "skin-care",
    "brand": "Olay",
@@ -6239,13 +6643,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Засіб для догляду за шкірою: Olay Ultra Moisture Shea Butter Body Wash, бренд Olay.",
-    "ru-RU": "Средство для ухода за кожей: Olay Ultra Moisture Shea Butter Body Wash, бренд Olay.",
+    "uk-UA": "Гель для душу Olay Ultra Moisture з маслом ши від Olay.",
+    "ru-RU": "Гель для душа Olay Ultra Moisture с маслом ши от Olay.",
     "en-US": "Olay Ultra Moisture Shea Butter Body Wash is a luxurious body wash that hydrates and nourishes your skin with the moisturizing power of shea butter."
    },
    "description": {
-    "uk-UA": "<p>Засіб для догляду за шкірою: Olay Ultra Moisture Shea Butter Body Wash, бренд Olay. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Средство для ухода за кожей: Olay Ultra Moisture Shea Butter Body Wash, бренд Olay. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Гель для душу Olay Ultra Moisture з маслом ши від Olay. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Гель для душа Olay Ultra Moisture с маслом ши от Olay. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Olay Ultra Moisture Shea Butter Body Wash is a luxurious body wash that hydrates and nourishes your skin with the moisturizing power of shea butter. Enjoy a rich lather and silky-smooth skin.</p>"
    },
    "attributes": {
@@ -6263,7 +6667,11 @@
   },
   {
    "source_id": 169,
-   "name": "Dodge Hornet GT Plus",
+   "name": {
+    "uk-UA": "Dodge Hornet GT Plus",
+    "ru-RU": "Dodge Hornet GT Plus",
+    "en-US": "Dodge Hornet GT Plus"
+   },
    "slug": "dodge-hornet-gt-plus",
    "category": "vehicle",
    "brand": "Dodge",
@@ -6274,13 +6682,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Автомобіль: Dodge Hornet GT Plus, бренд Dodge.",
-    "ru-RU": "Автомобиль: Dodge Hornet GT Plus, бренд Dodge.",
+    "uk-UA": "Dodge Hornet GT Plus від Dodge.",
+    "ru-RU": "Dodge Hornet GT Plus от Dodge.",
     "en-US": "The Dodge Hornet GT Plus is a compact and agile hatchback, perfect for urban driving with a touch of sportiness."
    },
    "description": {
-    "uk-UA": "<p>Автомобіль: Dodge Hornet GT Plus, бренд Dodge. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Автомобиль: Dodge Hornet GT Plus, бренд Dodge. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Dodge Hornet GT Plus від Dodge. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Dodge Hornet GT Plus от Dodge. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Dodge Hornet GT Plus is a compact and agile hatchback, perfect for urban driving with a touch of sportiness.</p>"
    },
    "attributes": {
@@ -6298,7 +6706,11 @@
   },
   {
    "source_id": 194,
-   "name": "Women's Wrist Watch",
+   "name": {
+    "uk-UA": "Жіночий наручний годинник",
+    "ru-RU": "Женские наручные часы",
+    "en-US": "Women's Wrist Watch"
+   },
    "slug": "women-s-wrist-watch",
    "category": "womens-watches",
    "brand": "Fashion Co.",
@@ -6309,13 +6721,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Жіночий годинник: Women's Wrist Watch, бренд Fashion Co..",
-    "ru-RU": "Женские часы: Women's Wrist Watch, бренд Fashion Co..",
+    "uk-UA": "Жіночий наручний годинник від Fashion Co..",
+    "ru-RU": "Женские наручные часы от Fashion Co..",
     "en-US": "The Women's Wrist Watch is a versatile and fashionable timepiece for everyday wear."
    },
    "description": {
-    "uk-UA": "<p>Жіночий годинник: Women's Wrist Watch, бренд Fashion Co.. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Женские часы: Women's Wrist Watch, бренд Fashion Co.. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Жіночий наручний годинник від Fashion Co.. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Женские наручные часы от Fashion Co.. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Women's Wrist Watch is a versatile and fashionable timepiece for everyday wear. With a comfortable strap and a simple yet elegant design, it complements various styles.</p>"
    },
    "attributes": {
@@ -6372,7 +6784,11 @@
   },
   {
    "source_id": 101,
-   "name": "Apple AirPods Max Silver",
+   "name": {
+    "uk-UA": "Apple AirPods Max, срібний",
+    "ru-RU": "Apple AirPods Max, серебристый",
+    "en-US": "Apple AirPods Max Silver"
+   },
    "slug": "apple-airpods-max-silver",
    "category": "audio-smart-home",
    "brand": "Apple",
@@ -6414,7 +6830,11 @@
   },
   {
    "source_id": 154,
-   "name": "Black Sun Glasses",
+   "name": {
+    "uk-UA": "Чорні сонцезахисні окуляри",
+    "ru-RU": "Чёрные солнцезащитные очки",
+    "en-US": "Black Sun Glasses"
+   },
    "slug": "black-sun-glasses",
    "category": "sunglasses",
    "brand": "Fashion Shades",
@@ -6425,13 +6845,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Сонцезахисні окуляри: Black Sun Glasses, бренд Fashion Shades.",
-    "ru-RU": "Солнцезащитные очки: Black Sun Glasses, бренд Fashion Shades.",
+    "uk-UA": "Чорні сонцезахисні окуляри від Fashion Shades.",
+    "ru-RU": "Чёрные солнцезащитные очки от Fashion Shades.",
     "en-US": "The Black Sun Glasses are a classic and stylish choice, featuring a sleek black frame and tinted lenses."
    },
    "description": {
-    "uk-UA": "<p>Сонцезахисні окуляри: Black Sun Glasses, бренд Fashion Shades. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Солнцезащитные очки: Black Sun Glasses, бренд Fashion Shades. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Чорні сонцезахисні окуляри від Fashion Shades. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Чёрные солнцезащитные очки от Fashion Shades. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Black Sun Glasses are a classic and stylish choice, featuring a sleek black frame and tinted lenses. They provide both UV protection and a fashionable look.</p>"
    },
    "attributes": {
@@ -6488,7 +6908,11 @@
   },
   {
    "source_id": 155,
-   "name": "Classic Sun Glasses",
+   "name": {
+    "uk-UA": "Класичні сонцезахисні окуляри",
+    "ru-RU": "Классические солнцезащитные очки",
+    "en-US": "Classic Sun Glasses"
+   },
    "slug": "classic-sun-glasses",
    "category": "sunglasses",
    "brand": "Fashion Shades",
@@ -6499,13 +6923,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Сонцезахисні окуляри: Classic Sun Glasses, бренд Fashion Shades.",
-    "ru-RU": "Солнцезащитные очки: Classic Sun Glasses, бренд Fashion Shades.",
+    "uk-UA": "Класичні сонцезахисні окуляри від Fashion Shades.",
+    "ru-RU": "Классические солнцезащитные очки от Fashion Shades.",
     "en-US": "The Classic Sun Glasses offer a timeless design with a neutral frame and UV-protected lenses."
    },
    "description": {
-    "uk-UA": "<p>Сонцезахисні окуляри: Classic Sun Glasses, бренд Fashion Shades. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Солнцезащитные очки: Classic Sun Glasses, бренд Fashion Shades. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Класичні сонцезахисні окуляри від Fashion Shades. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Классические солнцезащитные очки от Fashion Shades. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Classic Sun Glasses offer a timeless design with a neutral frame and UV-protected lenses. These sunglasses are versatile and suitable for various occasions.</p>"
    },
    "attributes": {
@@ -6523,7 +6947,11 @@
   },
   {
    "source_id": 170,
-   "name": "Durango SXT RWD",
+   "name": {
+    "uk-UA": "Dodge Durango SXT RWD",
+    "ru-RU": "Dodge Durango SXT RWD",
+    "en-US": "Durango SXT RWD"
+   },
    "slug": "durango-sxt-rwd",
    "category": "vehicle",
    "brand": "Dodge",
@@ -6534,13 +6962,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Автомобіль: Durango SXT RWD, бренд Dodge.",
-    "ru-RU": "Автомобиль: Durango SXT RWD, бренд Dodge.",
+    "uk-UA": "Dodge Durango SXT RWD від Dodge.",
+    "ru-RU": "Dodge Durango SXT RWD от Dodge.",
     "en-US": "The Durango SXT RWD is a spacious and versatile SUV, known for its strong performance and family-friendly features."
    },
    "description": {
-    "uk-UA": "<p>Автомобіль: Durango SXT RWD, бренд Dodge. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Автомобиль: Durango SXT RWD, бренд Dodge. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Dodge Durango SXT RWD від Dodge. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Dodge Durango SXT RWD от Dodge. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Durango SXT RWD is a spacious and versatile SUV, known for its strong performance and family-friendly features.</p>"
    },
    "attributes": {
@@ -6558,7 +6986,11 @@
   },
   {
    "source_id": 103,
-   "name": "Apple HomePod Mini Cosmic Grey",
+   "name": {
+    "uk-UA": "Apple HomePod mini, «космічний сірий»",
+    "ru-RU": "Apple HomePod mini, «серый космос»",
+    "en-US": "Apple HomePod Mini Cosmic Grey"
+   },
    "slug": "apple-homepod-mini-cosmic-grey",
    "category": "audio-smart-home",
    "brand": "Apple",
@@ -6638,7 +7070,11 @@
   },
   {
    "source_id": 156,
-   "name": "Green and Black Glasses",
+   "name": {
+    "uk-UA": "Зелено-чорні окуляри",
+    "ru-RU": "Зелёно-чёрные очки",
+    "en-US": "Green and Black Glasses"
+   },
    "slug": "green-and-black-glasses",
    "category": "sunglasses",
    "brand": "Fashion Shades",
@@ -6649,13 +7085,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Сонцезахисні окуляри: Green and Black Glasses, бренд Fashion Shades.",
-    "ru-RU": "Солнцезащитные очки: Green and Black Glasses, бренд Fashion Shades.",
+    "uk-UA": "Зелено-чорні окуляри від Fashion Shades.",
+    "ru-RU": "Зелёно-чёрные очки от Fashion Shades.",
     "en-US": "The Green and Black Glasses feature a bold combination of green and black colors, adding a touch of vibrancy to your eyewear collection."
    },
    "description": {
-    "uk-UA": "<p>Сонцезахисні окуляри: Green and Black Glasses, бренд Fashion Shades. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Солнцезащитные очки: Green and Black Glasses, бренд Fashion Shades. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Зелено-чорні окуляри від Fashion Shades. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Зелёно-чёрные очки от Fashion Shades. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Green and Black Glasses feature a bold combination of green and black colors, adding a touch of vibrancy to your eyewear collection. They are both stylish and eye-catching.</p>"
    },
    "attributes": {
@@ -6673,7 +7109,11 @@
   },
   {
    "source_id": 106,
-   "name": "Apple Watch Series 4 Gold",
+   "name": {
+    "uk-UA": "Apple Watch Series 4, золотистий",
+    "ru-RU": "Apple Watch Series 4, золотистый",
+    "en-US": "Apple Watch Series 4 Gold"
+   },
    "slug": "apple-watch-series-4-gold",
    "category": "audio-smart-home",
    "brand": "Apple",
@@ -6718,7 +7158,11 @@
   },
   {
    "source_id": 120,
-   "name": "Vaseline Men Body and Face Lotion",
+   "name": {
+    "uk-UA": "Лосьйон для тіла й обличчя Vaseline Men",
+    "ru-RU": "Лосьон для тела и лица Vaseline Men",
+    "en-US": "Vaseline Men Body and Face Lotion"
+   },
    "slug": "vaseline-men-body-and-face-lotion",
    "category": "skin-care",
    "brand": "Vaseline",
@@ -6729,13 +7173,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Засіб для догляду за шкірою: Vaseline Men Body and Face Lotion, бренд Vaseline.",
-    "ru-RU": "Средство для ухода за кожей: Vaseline Men Body and Face Lotion, бренд Vaseline.",
+    "uk-UA": "Лосьйон для тіла й обличчя Vaseline Men від Vaseline.",
+    "ru-RU": "Лосьон для тела и лица Vaseline Men от Vaseline.",
     "en-US": "Vaseline Men Body and Face Lotion is a specially formulated lotion designed to provide long-lasting moisture to men's skin."
    },
    "description": {
-    "uk-UA": "<p>Засіб для догляду за шкірою: Vaseline Men Body and Face Lotion, бренд Vaseline. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Средство для ухода за кожей: Vaseline Men Body and Face Lotion, бренд Vaseline. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Лосьйон для тіла й обличчя Vaseline Men від Vaseline. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Лосьон для тела и лица Vaseline Men от Vaseline. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>Vaseline Men Body and Face Lotion is a specially formulated lotion designed to provide long-lasting moisture to men's skin. It absorbs quickly and helps keep the skin hydrated and healthy.</p>"
    },
    "attributes": {
@@ -6792,7 +7236,11 @@
   },
   {
    "source_id": 157,
-   "name": "Party Glasses",
+   "name": {
+    "uk-UA": "Окуляри для вечірок",
+    "ru-RU": "Очки для вечеринок",
+    "en-US": "Party Glasses"
+   },
    "slug": "party-glasses",
    "category": "sunglasses",
    "brand": "Fashion Fun",
@@ -6803,13 +7251,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Сонцезахисні окуляри: Party Glasses, бренд Fashion Fun.",
-    "ru-RU": "Солнцезащитные очки: Party Glasses, бренд Fashion Fun.",
+    "uk-UA": "Окуляри для вечірок від Fashion Fun.",
+    "ru-RU": "Очки для вечеринок от Fashion Fun.",
     "en-US": "The Party Glasses are designed to add flair to your party outfit."
    },
    "description": {
-    "uk-UA": "<p>Сонцезахисні окуляри: Party Glasses, бренд Fashion Fun. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Солнцезащитные очки: Party Glasses, бренд Fashion Fun. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Окуляри для вечірок від Fashion Fun. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Очки для вечеринок от Fashion Fun. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Party Glasses are designed to add flair to your party outfit. With unique shapes or colorful frames, they're perfect for adding a playful touch to your look during celebrations.</p>"
    },
    "attributes": {
@@ -6827,7 +7275,11 @@
   },
   {
    "source_id": 171,
-   "name": "Pacifica Touring",
+   "name": {
+    "uk-UA": "Chrysler Pacifica Touring",
+    "ru-RU": "Chrysler Pacifica Touring",
+    "en-US": "Pacifica Touring"
+   },
    "slug": "pacifica-touring",
    "category": "vehicle",
    "brand": "Chrysler",
@@ -6838,13 +7290,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Автомобіль: Pacifica Touring, бренд Chrysler.",
-    "ru-RU": "Автомобиль: Pacifica Touring, бренд Chrysler.",
+    "uk-UA": "Chrysler Pacifica Touring від Chrysler.",
+    "ru-RU": "Chrysler Pacifica Touring от Chrysler.",
     "en-US": "The Pacifica Touring is a stylish and well-equipped minivan, offering comfort and convenience for family journeys."
    },
    "description": {
-    "uk-UA": "<p>Автомобіль: Pacifica Touring, бренд Chrysler. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Автомобиль: Pacifica Touring, бренд Chrysler. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Chrysler Pacifica Touring від Chrysler. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Chrysler Pacifica Touring от Chrysler. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Pacifica Touring is a stylish and well-equipped minivan, offering comfort and convenience for family journeys.</p>"
    },
    "attributes": {
@@ -6862,7 +7314,11 @@
   },
   {
    "source_id": 107,
-   "name": "Beats Flex Wireless Earphones",
+   "name": {
+    "uk-UA": "Бездротові навушники Beats Flex",
+    "ru-RU": "Беспроводные наушники Beats Flex",
+    "en-US": "Beats Flex Wireless Earphones"
+   },
    "slug": "beats-flex-wireless-earphones",
    "category": "audio-smart-home",
    "brand": "Beats",
@@ -6941,7 +7397,11 @@
   },
   {
    "source_id": 158,
-   "name": "Sunglasses",
+   "name": {
+    "uk-UA": "Сонцезахисні окуляри",
+    "ru-RU": "Солнцезащитные очки",
+    "en-US": "Sunglasses"
+   },
    "slug": "sunglasses",
    "category": "sunglasses",
    "brand": "Fashion Shades",
@@ -6952,13 +7412,13 @@
    "gallery_urls": [],
    "fallback": null,
    "short": {
-    "uk-UA": "Сонцезахисні окуляри: Sunglasses, бренд Fashion Shades.",
-    "ru-RU": "Солнцезащитные очки: Sunglasses, бренд Fashion Shades.",
+    "uk-UA": "Сонцезахисні окуляри від Fashion Shades.",
+    "ru-RU": "Солнцезащитные очки от Fashion Shades.",
     "en-US": "The Sunglasses offer a classic and simple design with a focus on functionality."
    },
    "description": {
-    "uk-UA": "<p>Сонцезахисні окуляри: Sunglasses, бренд Fashion Shades. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
-    "ru-RU": "<p>Солнцезащитные очки: Sunglasses, бренд Fashion Shades. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
+    "uk-UA": "<p>Сонцезахисні окуляри від Fashion Shades. Швидка доставка, офіційна гарантія та повернення протягом 14 днів.</p>",
+    "ru-RU": "<p>Солнцезащитные очки от Fashion Shades. Быстрая доставка, официальная гарантия и возврат в течение 14 дней.</p>",
     "en-US": "<p>The Sunglasses offer a classic and simple design with a focus on functionality. These sunglasses provide essential UV protection while maintaining a timeless look.</p>"
    },
    "attributes": {

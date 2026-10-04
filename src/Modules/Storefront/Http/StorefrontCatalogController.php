@@ -47,6 +47,8 @@ final class StorefrontCatalogController extends AbstractController
         private readonly ExtensionRouteController $extensionRoutes,
         private readonly SiteCapabilitySettings $capabilities,
         private readonly \Commerce\Modules\Content\Infrastructure\DbalInformationPageQuery $informationPages,
+        private readonly \Commerce\Modules\Seo\Application\SeoSettings $seoSettings,
+        private readonly \Commerce\Modules\Storefront\Infrastructure\CategoryProductPath $categoryPaths,
     ) {
     }
 
@@ -145,6 +147,13 @@ final class StorefrontCatalogController extends AbstractController
         }
         $context = $this->contexts->resolve($request);
         $resolved = $this->seo->resolve($context->storeId, $context->locale, $path);
+        if ($resolved->route === null && str_contains($path, '/') && $this->seoSettings->categoryPathInProductUrl($context->storeId)) {
+            // /category/subcategory/product: an alias of the flat product address (which stays canonical).
+            $nested = $this->categoryPaths->productRoute($context->storeId, $context->locale, $path);
+            if ($nested !== null) {
+                $resolved = \Commerce\Modules\Seo\Domain\SeoRouteResolution::canonical($nested);
+            }
+        }
         if ($resolved->route === null) {
             // The visitor switched to a language this page is not translated into yet. Show the
             // default-language content (the URL is the default-language URL anyway) instead of a 404;
@@ -197,6 +206,17 @@ final class StorefrontCatalogController extends AbstractController
         $filter = $this->catalogFilter($request);
         $perPage = $this->perPage($request);
         $products = $this->catalog->products($context, (int) $category['id'], $page, $perPage, null, $filter);
+        $categoryTrail = $this->catalog->categoryTrail($context, (int) $category['id']);
+        if ($this->seoSettings->categoryPathInProductUrl($context->storeId)) {
+            // With the category path switched on, the product links of a category page carry the path of this category.
+            $prefix = implode('/', array_map(static fn (array $step): string => basename((string) parse_url((string) ($step['url'] ?? ''), PHP_URL_PATH)), [...$categoryTrail, ['url' => (string) ($category['url'] ?? '')]]));
+            foreach ($products['items'] as &$item) {
+                if (isset($item['url']) && $prefix !== '' && !str_contains(ltrim((string) $item['url'], '/'), '/')) {
+                    $item['url'] = '/' . $prefix . $item['url'];
+                }
+            }
+            unset($item);
+        }
         if ($page > (int) ($products['pages'] ?? 1)) {
             throw $this->createNotFoundException();
         }
@@ -222,7 +242,7 @@ final class StorefrontCatalogController extends AbstractController
             'recommended_products' => $recommended,
             'category_layout' => $layout,
             'subcategories' => $subcategories,
-            'category_trail' => $this->catalog->categoryTrail($context, (int) $category['id']),
+            'category_trail' => $categoryTrail,
             'search_query' => $filter->search,
             'catalog_filter' => $filter,
             'catalog_facets' => $facets,
@@ -280,7 +300,9 @@ final class StorefrontCatalogController extends AbstractController
         $blogLabel = \Commerce\Core\I18n\CanonicalUiText::get('php.modules.content.http.blogcontroller.bloh');
         $breadcrumbs = [['name' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.holovna'), 'url' => $baseUrl . '/'], ['name' => $blogLabel, 'url' => $baseUrl . '/blog']];
         if (is_array($article['category'])) {
-            $breadcrumbs[] = ['name' => (string) $article['category']['name'], 'url' => $baseUrl . '/blog/category/' . $article['category']['slug']];
+            foreach ($this->blog->categoryTrail($context->storeId, $context->locale, (string) $article['category']['slug']) as $step) {
+                $breadcrumbs[] = ['name' => $step['name'], 'url' => $baseUrl . '/blog/category/' . $step['slug']];
+            }
         }
         $breadcrumbs[] = ['name' => $article['title']];
         $image = (string) $article['image'] !== '' ? (str_starts_with((string) $article['image'], 'http') ? (string) $article['image'] : $baseUrl . $article['image']) : '';

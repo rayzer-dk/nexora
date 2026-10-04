@@ -948,6 +948,7 @@ commerce-slider, .slider-shell { display: block; min-width: 0; }
 /* ========== 20. Blog ========== */
 .blog-toolbar { display: grid; gap: var(--mc-space-4); margin-bottom: var(--mc-space-6); }
 .blog-chips { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); }
+.blog-chips--sub { margin-top: var(--mc-space-2); padding-left: var(--mc-space-3); border-left: 2px solid var(--mc-color-border); }
 .blog-chip { display: inline-flex; align-items: center; gap: var(--mc-space-1); padding: var(--mc-space-1) var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-full); background: var(--mc-color-surface-raised); color: var(--mc-color-text); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-medium); text-decoration: none; transition: border-color var(--mc-transition), color var(--mc-transition), background var(--mc-transition); }
 .blog-chip:hover { border-color: var(--mc-color-primary); color: var(--mc-color-primary); text-decoration: none; }
 .blog-chip[aria-current="page"] { border-color: var(--mc-color-primary-fill); background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); }

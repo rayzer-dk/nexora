@@ -13,6 +13,8 @@ final class RegionCatalog
 {
     /** Languages that ship a storefront translation catalog. */
     public const BUNDLED_LOCALES = ['uk-UA', 'en-US', 'ru-RU', 'pl-PL', 'de-DE', 'da-DK'];
+    /** Languages in which the admin, the shop and the demo content are complete; they are enabled on every new store. */
+    public const FULL_LOCALES = ['uk-UA', 'en-US', 'ru-RU'];
 
     /** @var array<string,array{0:string,1:string,2:string,3:int}> country => [currency, locale, timezone, standard VAT in basis points] */
     private const COUNTRIES = [

@@ -645,6 +645,7 @@ return [
     'doc_type_warranty' => 'Гарантия',
     'blog_all' => 'Все статьи',
     'blog_categories_label' => 'Категории блога',
+    'blog_subcategories_label' => 'Подкатегории блога',
     'blog_search_label' => 'Поиск по блогу',
     'blog_search_placeholder' => 'Поиск статей',
     'blog_search_submit' => 'Найти',

@@ -2,6 +2,19 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.45.0 — 2026-10-04
+
+The demo store is self-contained and complete in three languages; main category, category path in addresses, blog subcategories, more installer languages.
+
+- Demo photos ship inside the package (212 WebP files in `resources/demo/images`, about 6.5 MB): the installer copies them and never uses the network, so the demo installs in seconds on any server. `bin/vendor-demo-images.php` and the manual workflow "Vendor demo images" refresh them.
+- The demo is installed in Ukrainian, English and Russian at once: product names, descriptions, characteristics, reviews, categories, brands, blog articles and addresses of every language. Product names are translated properly (not only the descriptions). Information pages get a draft in all three languages.
+- Ukrainian, English and Russian are switched on in every new store (the other bundled languages can be enabled in Admin → System → Localization).
+- Product form: an explicit "Main category" choice (shown with two or more categories); it drives breadcrumbs, feeds and the category path in the address.
+- Admin → Catalog → Categories: the optional switch "Category path in product addresses". When on, a product opens at `/category/subcategory/product` too and links on category pages carry that path; the canonical address stays the short `/product`, a path whose categories do not lead to the product is a 404.
+- Blog: categories can have subcategories (up to four levels). A category lists the articles of its whole branch, the chips show the level below, breadcrumbs of an article include the parents, the admin shows the tree and has a "Parent category" field. The demo blog has two subcategories under "Guides".
+- Installer (`setup.php`, `upgrade.php`): language drop-down with Ukrainian, English, Russian, German, French, Spanish, Italian, Polish, Portuguese (Brazil) and Turkish. The new languages translate only the installer; missing texts fall back to English. The admin and the shop are not translated into them by this release.
+- Fixes: the blog category pages used a Twig filter that does not exist; the demo-install text in the installer no longer promises "10 products".
+
 ## 3.44.1 — 2026-10-04
 
 Fix release for 3.44.0.

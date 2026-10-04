@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Demo\Application;
 
 use Commerce\Core\Id\PublicIdFactory;
+use Commerce\Modules\Catalog\Application\CatalogTranslationService;
 use Commerce\Modules\Catalog\Application\CategoryWriter;
 use Commerce\Modules\Catalog\Application\Command\CreateCategoryCommand;
 use Commerce\Modules\Catalog\Application\Command\CreateProductCommand;
@@ -30,6 +31,7 @@ final readonly class DemoSeeder
         private StorefrontPresentationWriterInterface $presentation,
         private BlogService $blog,
         private DemoCommerceSeeder $commerce,
+        private CatalogTranslationService $translations,
         private string $projectDir,
     ) {
     }
@@ -208,6 +210,8 @@ final readonly class DemoSeeder
                 }
             }
 
+            $reviewCount += $this->translateCatalog($db, $ctx, $categoryIds, $productIds, $brands, $catalog['products'], $now);
+
             for ($i = 0; $i < count($productIds) - 1; $i++) {
                 $db->insert('mc_product_relation', [
                     'product_id' => $productIds[$i],
@@ -234,7 +238,7 @@ final readonly class DemoSeeder
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.44.1',
+                'version' => '3.45.0',
                 'catalog_source' => 'DummyJSON',
             ]);
 
@@ -319,9 +323,10 @@ final readonly class DemoSeeder
         $db->executeStatement("INSERT IGNORE INTO mc_store_media_asset (store_id,asset_id,folder_id,tags_json,created_at,updated_at) VALUES (?,?,?,'[\"demo\"]',?,?)",[$storeId,$assetId,(int)$folderId,$now,$now]);
     }
 
-    private function addAttribute(Connection $db,int $productId,string $name,string $value,int $sort,string $now,string $locale): void
+    /** $identity is the label in the store default language: it keeps one attribute across all demo languages. */
+    private function addAttribute(Connection $db,int $productId,string $name,string $value,int $sort,string $now,string $locale,?string $identity=null): void
     {
-        $code='demo_'.substr(hash('sha256',$name),0,12);
+        $code='demo_'.substr(hash('sha256',$identity??$name),0,12);
         $attr=$db->fetchOne('SELECT id FROM mc_attribute_definition WHERE code=?',[$code]);
         if($attr===false){
             $db->insert('mc_attribute_definition',['public_id'=>$this->publicIds->binary(),'code'=>$code,'data_type'=>'text','filterable'=>1,'comparable'=>1,'sort_order'=>$sort*10]);
@@ -373,11 +378,15 @@ final readonly class DemoSeeder
         $file=$this->projectDir.'/resources/demo/blog-articles.json';
         $data=is_file($file)?json_decode((string)file_get_contents($file),true):null;
         if(!is_array($data)||!is_array($data['articles']??null)){return 0;}
+        $extraLocales=$this->extraLocales($db,$storeId,$locale);
         $categoryIds=[];
         $sort=0;
         foreach((array)($data['categories']??[]) as $key=>$names){
             $sort+=10;
-            $id=$this->blog->saveCategory($storeId,$locale,null,['name'=>$this->localized($names,$locale),'slug'=>'demo-'.$key,'sort_order'=>$sort,'status'=>'active']);
+            $parentKey=(string)(((array)($data['category_parents']??[]))[(string)$key]??'');
+            $parentId=$parentKey!==''?($categoryIds[$parentKey]??0):0;
+            $id=$this->blog->saveCategory($storeId,$locale,null,['name'=>$this->localized($names,$locale),'slug'=>'demo-'.$key,'sort_order'=>$sort,'status'=>'active','parent_id'=>$parentId]);
+            foreach($extraLocales as $extra){$this->blog->saveCategory($storeId,$extra,$id,['name'=>$this->localized($names,$extra),'sort_order'=>$sort,'status'=>'active']);}
             $categoryIds[(string)$key]=$id;
             $this->tag($db,$storeId,'blog_category',Uuid::v4()->toRfc4122(),'seed_blog_category',['id'=>$id]);
         }
@@ -393,6 +402,16 @@ final readonly class DemoSeeder
                 'cover_url'=>(string)($article['cover']??''),'cover_alt'=>(string)$tr['title'],'author_name'=>$author,
                 'featured'=>!empty($article['featured']),'tags'=>implode(', ',(array)($tr['tags']??[])),
             ],'demo:editorial');
+            foreach($extraLocales as $extra){
+                $trExtra=$this->pickTranslation((array)($article['translations']??[]),$extra);
+                if($trExtra===null){continue;}
+                $this->blog->save($storeId,$extra,$id,[
+                    'title'=>(string)$trExtra['title'],'slug'=>(string)$article['slug'],'excerpt'=>(string)$trExtra['excerpt'],'body_html'=>(string)$trExtra['body'],
+                    'status'=>'published','published_at'=>$published,'category_id'=>$categoryIds[(string)($article['category']??'')]??0,
+                    'cover_url'=>(string)($article['cover']??''),'cover_alt'=>(string)$trExtra['title'],'author_name'=>$this->localized($data['authors']??'',$extra),
+                    'featured'=>!empty($article['featured']),'tags'=>implode(', ',(array)($trExtra['tags']??[])),
+                ],'demo:editorial');
+            }
             if(str_ends_with((string)($article['cover']??''),'.svg')){$this->registerSvgMedia($db,ltrim(substr((string)$article['cover'],strlen('/media/')),'/'),$now);}
             $public=(string)$db->fetchOne('SELECT public_id FROM mc_content_entry WHERE id=?',[$id]);
             $this->tag($db,$storeId,'article',Uuid::fromBinary($public)->toRfc4122(),'seed',['kind'=>'article','showcase'=>true]);
@@ -437,6 +456,72 @@ final readonly class DemoSeeder
         }
     }
 
+
+    /** @return list<string> the demo languages other than the store default that are enabled on the store */
+    private function extraLocales(Connection $db, int $storeId, string $default): array
+    {
+        $enabled = array_map('strval', $db->fetchFirstColumn('SELECT locale_code FROM mc_store_locale WHERE store_id=? AND enabled=1', [$storeId]));
+
+        return array_values(array_filter(\Commerce\Core\Install\RegionCatalog::FULL_LOCALES, static fn (string $locale): bool => $locale !== $default && in_array($locale, $enabled, true)));
+    }
+
+    /**
+     * The demo catalogue is written in the store default language first; here every other enabled demo language gets its own
+     * names, descriptions, characteristics, reviews and addresses, so the shop and the admin are complete in Ukrainian,
+     * English and Russian right after installation.
+     *
+     * @param array<string,int> $categoryIds slug => id
+     * @param list<int> $productIds in catalogue order
+     * @param array<string,int> $brands name => id
+     * @param list<array<string,mixed>> $defaultProducts the catalogue in the store default language (identifies attributes)
+     * @return int number of reviews added
+     */
+    private function translateCatalog(Connection $db, array $ctx, array $categoryIds, array $productIds, array $brands, array $defaultProducts, string $now): int
+    {
+        $reviews = 0;
+        foreach ($this->extraLocales($db, $ctx['store_id'], $ctx['locale']) as $locale) {
+            \Commerce\Core\I18n\CanonicalUiText::useLocale(in_array(substr($locale, 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US');
+            $catalog = $this->loadDemoCatalog($locale, $ctx['currency']);
+            foreach ($catalog['categories'] as $def) {
+                if (!isset($categoryIds[$def['slug']])) {
+                    continue;
+                }
+                $this->translations->saveCategory($ctx['store_id'], $categoryIds[$def['slug']], $locale, [
+                    'name' => $def['name'], 'description' => $def['description'], 'meta_title' => $def['name'], 'meta_description' => $def['description'],
+                ]);
+            }
+            foreach ($brands as $name => $brandId) {
+                if ((int) $db->fetchOne('SELECT COUNT(*) FROM mc_brand_translation WHERE brand_id=? AND store_id=? AND locale=?', [$brandId, $ctx['store_id'], $locale]) === 0) {
+                    $slug = (string) $db->fetchOne('SELECT slug FROM mc_brand_translation WHERE brand_id=? AND store_id=? LIMIT 1', [$brandId, $ctx['store_id']]);
+                    $db->insert('mc_brand_translation', ['brand_id' => $brandId, 'store_id' => $ctx['store_id'], 'locale' => $locale, 'slug' => $slug, 'description' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.demonstratsiinyi_brend_modern_commerce'), 'meta_title' => (string) $name, 'meta_description' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.tovary_brendu') . $name]);
+                }
+            }
+            foreach ($catalog['products'] as $index => $def) {
+                $productId = $productIds[$index] ?? null;
+                if ($productId === null) {
+                    continue;
+                }
+                $this->translations->saveProduct($ctx['store_id'], $productId, $locale, [
+                    'name' => $def['name'], 'short_description' => $def['short'], 'description' => $def['description'],
+                    'meta_title' => $def['name'], 'meta_description' => $def['short'],
+                ]);
+                foreach ($def['attrs'] as $sort => $attr) {
+                    $this->addAttribute($db, $productId, $attr[0], $attr[1], $sort, $now, $locale, (string) ($defaultProducts[$index]['attrs'][$sort][0] ?? $attr[0]));
+                }
+                foreach ($this->demoReviews($locale) as $ri => $review) {
+                    $db->insert('mc_product_review', [
+                        'public_id' => $this->publicIds->binary(), 'store_id' => $ctx['store_id'], 'product_id' => $productId, 'customer_id' => null,
+                        'locale' => $locale, 'author_name' => $review['author'], 'rating' => $review['rating'], 'title' => $review['title'], 'body' => $review['body'],
+                        'verified_purchase' => 1, 'status' => 'published', 'helpful_count' => $ri === 0 ? 3 : 1, 'created_at' => $now, 'published_at' => $now,
+                    ]);
+                    ++$reviews;
+                }
+            }
+        }
+        \Commerce\Core\I18n\CanonicalUiText::useLocale(in_array(substr($ctx['locale'], 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US');
+
+        return $reviews;
+    }
 
     /** @return array{categories:list<array<string,mixed>>,products:list<array<string,mixed>>} */
     private function loadDemoCatalog(string $locale, string $currency): array
@@ -498,149 +583,51 @@ final readonly class DemoSeeder
         return ['categories' => $categories, 'products' => $products];
     }
 
-    /** @param list<array<string,mixed>> $products @return list<array<string,mixed>> */
+    /**
+     * The demo photos ship inside the package (resources/demo/images, WebP) and are copied into the media folder:
+     * the installer never touches the network. A product whose photo is missing falls back to the bundled tech set.
+     *
+     * @param list<array<string,mixed>> $products
+     * @return list<array<string,mixed>>
+     */
     private function prepareDemoMedia(array $products): array
     {
-        // One parallel pass for every photo: a few hundred sequential requests would not fit into a web installer run.
-        $jobs = [];
-        foreach ($products as $product) {
-            $sourceId = max(1, (int) ($product['source_id'] ?? 0));
-            if ((string) ($product['image_url'] ?? '') !== '') {
-                $jobs['demo/dummyjson/' . $sourceId . '-1.webp'] = (string) $product['image_url'];
-            }
-            foreach (array_slice((array) ($product['gallery_urls'] ?? []), 0, 2) as $index => $url) {
-                $jobs['demo/dummyjson/' . $sourceId . '-' . ($index + 2) . '.webp'] = (string) $url;
-            }
-        }
-        $done = $this->downloadDemoImages($jobs);
         foreach ($products as &$product) {
             $sourceId = max(1, (int) ($product['source_id'] ?? 0));
-            $primary = 'demo/dummyjson/' . $sourceId . '-1.webp';
-            $product['image'] = ($done[$primary] ?? false) ? $primary : ($product['fallback'] ?? null);
+            $primary = $this->bundleDemoImage($sourceId . '-1.webp');
+            $product['image'] = $primary ?? ($product['fallback'] ?? null);
             $gallery = [];
             foreach (array_slice((array) ($product['gallery_urls'] ?? []), 0, 2) as $index => $url) {
-                $path = 'demo/dummyjson/' . $sourceId . '-' . ($index + 2) . '.webp';
-                if ($done[$path] ?? false) {
+                $path = $this->bundleDemoImage($sourceId . '-' . ($index + 2) . '.webp');
+                if ($path !== null) {
                     $gallery[] = ['path' => $path, 'url' => (string) $url];
                 }
             }
             $product['gallery'] = $gallery;
         }
         unset($product);
+
         return $products;
     }
 
-    /**
-     * Downloads demo photos (only from cdn.dummyjson.com over https, images only, at most 5 MB each) with up to eight
-     * requests in flight and a shared time budget. A photo that cannot be fetched is simply missing from the result.
-     *
-     * @param array<string,string> $jobs storage key => url
-     * @return array<string,bool> storage key => stored
-     */
-    private function downloadDemoImages(array $jobs): array
+    /** Copies one packaged demo photo into public/media/demo/dummyjson and returns its storage key, or null when the package has no such photo. */
+    private function bundleDemoImage(string $file): ?string
     {
-        $result = [];
-        $queue = [];
-        foreach ($jobs as $key => $url) {
-            $parts = parse_url($url);
-            if (!function_exists('curl_multi_init') || !is_array($parts) || ($parts['scheme'] ?? '') !== 'https' || strtolower((string) ($parts['host'] ?? '')) !== 'cdn.dummyjson.com') {
-                $result[$key] = false;
-                continue;
-            }
-            $target = $this->projectDir . '/public/media/' . ltrim($key, '/');
-            if (is_file($target) && filesize($target) > 0 && @getimagesize($target) !== false) {
-                $result[$key] = true;
-                continue;
-            }
-            $dir = dirname($target);
-            if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
-                $result[$key] = false;
-                continue;
-            }
-            $queue[$key] = [$url, $target];
+        $source = $this->projectDir . '/resources/demo/images/' . $file;
+        if (!is_file($source) || filesize($source) === 0) {
+            return null;
         }
-        if ($queue === []) {
-            return $result;
+        $key = 'demo/dummyjson/' . $file;
+        $target = $this->projectDir . '/public/media/' . $key;
+        if (is_file($target) && filesize($target) === filesize($source)) {
+            return $key;
         }
-        $multi = curl_multi_init();
-        $active = [];
-        $buffers = [];
-        $deadline = microtime(true) + 150.0;
-        $start = static function (string $key) use (&$queue, &$active, &$buffers, $multi): void {
-            [$url] = $queue[$key];
-            $ch = curl_init($url);
-            if ($ch === false) {
-                return;
-            }
-            $buffers[$key] = '';
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => false,
-                CURLOPT_FOLLOWLOCATION => false,
-                CURLOPT_CONNECTTIMEOUT => 5,
-                CURLOPT_TIMEOUT => 20,
-                CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-                CURLOPT_USERAGENT => 'Nexora-Commerce-Demo/' . \Commerce\Core\Platform\PlatformVersion::VERSION,
-                CURLOPT_WRITEFUNCTION => static function ($curl, string $chunk) use (&$buffers, $key): int {
-                    if (strlen($buffers[$key]) + strlen($chunk) > 5 * 1024 * 1024) {
-                        return 0;
-                    }
-                    $buffers[$key] .= $chunk;
-
-                    return strlen($chunk);
-                },
-            ]);
-            curl_multi_add_handle($multi, $ch);
-            $active[$key] = $ch;
-        };
-        $pending = array_keys($queue);
-        try {
-            while ($pending !== [] || $active !== []) {
-                while (count($active) < 8 && $pending !== [] && microtime(true) < $deadline) {
-                    $start((string) array_shift($pending));
-                }
-                if ($active === []) {
-                    break;
-                }
-                curl_multi_exec($multi, $running);
-                curl_multi_select($multi, 0.5);
-                while (($info = curl_multi_info_read($multi)) !== false) {
-                    $ch = $info['handle'];
-                    $key = (string) array_search($ch, $active, true);
-                    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-                    $type = strtolower((string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE));
-                    $data = $buffers[$key] ?? '';
-                    curl_multi_remove_handle($multi, $ch);
-                    curl_close($ch);
-                    unset($active[$key], $buffers[$key]);
-                    $stored = false;
-                    if ($info['result'] === CURLE_OK && $status === 200 && $data !== '' && str_starts_with($type, 'image/') && @getimagesizefromstring($data) !== false) {
-                        $target = $queue[$key][1];
-                        $tmp = $target . '.tmp-' . bin2hex(random_bytes(4));
-                        if (@file_put_contents($tmp, $data, LOCK_EX) !== false && @rename($tmp, $target)) {
-                            @chmod($target, 0644);
-                            $stored = true;
-                        } else {
-                            @unlink($tmp);
-                        }
-                    }
-                    $result[$key] = $stored;
-                }
-                if (microtime(true) >= $deadline && $pending !== []) {
-                    foreach ($pending as $key) {
-                        $result[$key] = false;
-                    }
-                    $pending = [];
-                }
-            }
-        } finally {
-            foreach ($active as $ch) {
-                curl_multi_remove_handle($multi, $ch);
-                curl_close($ch);
-            }
-            curl_multi_close($multi);
+        $dir = dirname($target);
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+            return null;
         }
 
-        return $result + array_fill_keys(array_keys($queue), false);
+        return @copy($source, $target) ? $key : null;
     }
 
     private function localized(mixed $values, string $locale): string

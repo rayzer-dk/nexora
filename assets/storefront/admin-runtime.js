@@ -410,6 +410,32 @@ function initSmsCounters() {
   });
 }
 
+function initPrimaryCategory() {
+  qa('[data-primary-category]').forEach((box) => {
+    const select = q('[data-primary-category-select]', box);
+    const form = box.closest('form');
+    if (!select || !form) return;
+    const sync = () => {
+      const picked = qa('input[name="category_ids[]"]:checked', form).map((input) => input.value);
+      Array.from(select.options).forEach((option) => {
+        const on = picked.includes(option.value);
+        option.hidden = !on;
+        option.disabled = !on;
+      });
+      if (!picked.includes(select.value)) select.value = picked[0] || '';
+      // One category is always the main one; the choice only matters with two or more.
+      box.hidden = picked.length < 2;
+    };
+    form.addEventListener('change', (event) => {
+      if (event.target instanceof HTMLInputElement && event.target.name === 'category_ids[]') sync();
+    });
+    form.addEventListener('click', (event) => {
+      if (event.target instanceof Element && event.target.closest('[data-multiselect-clear]')) setTimeout(sync, 0);
+    });
+    sync();
+  });
+}
+
 function initQuickOrder() {
   qa('[data-quick-order]').forEach((box) => {
     const input = q('[data-quick-order-input]', box);
@@ -1515,6 +1541,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initQuickPrice();
   initQuickStatus();
   initQuickOrder();
+  initPrimaryCategory();
   initSmsCounters();
   initThumbZoom();
   initProductTabs();

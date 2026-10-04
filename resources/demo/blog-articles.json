@@ -14,6 +14,16 @@
    "uk-UA": "Гайди",
    "en-US": "Guides",
    "ru-RU": "Гайды"
+  },
+  "guides-launch": {
+   "uk-UA": "Запуск магазину",
+   "en-US": "Launching a store",
+   "ru-RU": "Запуск магазина"
+  },
+  "guides-seo": {
+   "uk-UA": "SEO-гайди",
+   "en-US": "SEO guides",
+   "ru-RU": "SEO-гайды"
   }
  },
  "authors": {
@@ -96,7 +106,7 @@
   },
   {
    "slug": "seo-out-of-the-box",
-   "category": "seo",
+   "category": "guides-seo",
    "featured": false,
    "days_ago": 3,
    "cover": "/media/demo/blog/blog-seo.svg",
@@ -210,7 +220,7 @@
   },
   {
    "slug": "launch-checklist",
-   "category": "guides",
+   "category": "guides-launch",
    "featured": false,
    "days_ago": 6,
    "cover": "/media/demo/blog/blog-launch.svg",
@@ -244,5 +254,9 @@
     }
    }
   }
- ]
+ ],
+ "category_parents": {
+  "guides-launch": "guides",
+  "guides-seo": "guides"
+ }
 }

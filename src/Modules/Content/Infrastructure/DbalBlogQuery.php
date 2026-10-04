@@ -43,8 +43,9 @@ final readonly class DbalBlogQuery
         $where = 'ce.store_id=:store AND ' . self::PUBLISHED;
         $params = ['locale' => $locale, 'ns' => 'demo-' . $storeId, 'store' => $storeId];
         if ($categorySlug !== null && $categorySlug !== '') {
-            $where .= ' AND bc.slug=:category';
-            $params['category'] = $categorySlug;
+            // A category shows its own articles and those of every subcategory below it.
+            $branch = $this->branchIds($storeId, $categorySlug);
+            $where .= $branch === [] ? ' AND 1=0' : ' AND bm.category_id IN (' . implode(',', $branch) . ')';
         }
         if ($tag !== null && $tag !== '') {
             $where .= ' AND EXISTS (SELECT 1 FROM mc_blog_article_tag bt WHERE bt.content_id=ce.id AND bt.tag_slug=:tag)';
@@ -77,39 +78,120 @@ final readonly class DbalBlogQuery
         return is_array($row) ? $this->card($row, $locale) : null;
     }
 
-    /** @return list<array{slug:string,name:string,description:string,articles:int}> */
+    /**
+     * Active categories as a tree (parents before their children). "articles" counts the category and everything below it.
+     *
+     * @return list<array{slug:string,name:string,description:string,articles:int,parent:?string,depth:int}>
+     */
     public function categories(int $storeId, string $locale): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT c.slug,COALESCE(t.name,c.slug) AS name,COALESCE(t.description,'') AS description,
+            "SELECT c.id,c.parent_id,c.slug,COALESCE(t.name,c.slug) AS name,COALESCE(t.description,'') AS description,
                     (SELECT COUNT(*) FROM mc_blog_article_meta bm
                        JOIN mc_content_entry ce ON ce.id=bm.content_id
                        JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=:locale
                        JOIN mc_seo_route sr ON sr.store_id=ce.store_id AND sr.locale=:locale AND sr.entity_type='blog_article' AND sr.entity_public_id=ce.public_id
-                      WHERE bm.category_id=c.id AND " . self::PUBLISHED . ") AS articles
+                      WHERE bm.category_id=c.id AND " . self::PUBLISHED . ") AS own_articles
              FROM mc_blog_category c LEFT JOIN mc_blog_category_translation t ON t.category_id=c.id AND t.locale=:locale
              WHERE c.store_id=:store AND c.status='active' ORDER BY c.sort_order,name",
             ['locale' => $locale, 'store' => $storeId],
         );
-        $out = [];
+        $byId = [];
         foreach ($rows as $r) {
-            if ((int) $r['articles'] > 0) {
-                $out[] = ['slug' => (string) $r['slug'], 'name' => (string) $r['name'], 'description' => (string) $r['description'], 'articles' => (int) $r['articles']];
-            }
+            $byId[(int) $r['id']] = $r;
         }
+        // A subcategory whose parent is hidden is not reachable through the tree: it is shown as a top-level one.
+        $children = [];
+        foreach ($byId as $id => $r) {
+            $parent = $r['parent_id'] !== null && isset($byId[(int) $r['parent_id']]) ? (int) $r['parent_id'] : 0;
+            $children[$parent][] = $id;
+        }
+        $total = function (int $id) use (&$total, $byId, $children): int {
+            $sum = (int) $byId[$id]['own_articles'];
+            foreach ($children[$id] ?? [] as $child) {
+                $sum += $total($child);
+            }
+
+            return $sum;
+        };
+        $out = [];
+        $walk = function (int $parentKey, int $depth) use (&$walk, &$out, $byId, $children, $total): void {
+            foreach ($children[$parentKey] ?? [] as $id) {
+                $row = $byId[$id];
+                $articles = $total($id);
+                if ($articles > 0 && $depth < 6) {
+                    $parentRow = $row['parent_id'] !== null ? ($byId[(int) $row['parent_id']] ?? null) : null;
+                    $out[] = ['slug' => (string) $row['slug'], 'name' => (string) $row['name'], 'description' => (string) $row['description'], 'articles' => $articles, 'parent' => $parentRow !== null ? (string) $parentRow['slug'] : null, 'depth' => $depth];
+                    $walk($id, $depth + 1);
+                }
+            }
+        };
+        $walk(0, 0);
+
         return $out;
     }
 
-    /** @return array{slug:string,name:string,description:string,meta_title:string,meta_description:string}|null */
+    /** @return array{slug:string,name:string,description:string,meta_title:string,meta_description:string,parent:string}|null */
     public function category(int $storeId, string $locale, string $slug): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT c.slug,COALESCE(t.name,c.slug) AS name,COALESCE(t.description,'') AS description,COALESCE(t.meta_title,'') AS meta_title,COALESCE(t.meta_description,'') AS meta_description
+            "SELECT c.slug,COALESCE(t.name,c.slug) AS name,COALESCE(t.description,'') AS description,COALESCE(t.meta_title,'') AS meta_title,COALESCE(t.meta_description,'') AS meta_description,
+                    COALESCE((SELECT p.slug FROM mc_blog_category p WHERE p.id=c.parent_id AND p.status='active'),'') AS parent
              FROM mc_blog_category c LEFT JOIN mc_blog_category_translation t ON t.category_id=c.id AND t.locale=?
              WHERE c.store_id=? AND c.slug=? AND c.status='active' LIMIT 1",
             [$locale, $storeId, $slug],
         );
         return is_array($row) ? array_map('strval', $row) : null;
+    }
+
+    /** @return list<array{slug:string,name:string}> the category and its parents, from the top level down (for breadcrumbs) */
+    public function categoryTrail(int $storeId, string $locale, string $slug): array
+    {
+        $trail = [];
+        for ($depth = 0; $slug !== '' && $depth < 8; ++$depth) {
+            $row = $this->category($storeId, $locale, $slug);
+            if ($row === null) {
+                break;
+            }
+            array_unshift($trail, ['slug' => $row['slug'], 'name' => $row['name']]);
+            $slug = $row['parent'];
+        }
+
+        return $trail;
+    }
+
+    /** @return list<int> the id of the category with this slug and of all its active subcategories */
+    private function branchIds(int $storeId, string $slug): array
+    {
+        $all = [];
+        foreach ($this->connection->fetchAllAssociative("SELECT id,parent_id,slug FROM mc_blog_category WHERE store_id=? AND status='active'", [$storeId]) as $r) {
+            $all[(int) $r['id']] = ['parent' => $r['parent_id'] !== null ? (int) $r['parent_id'] : null, 'slug' => (string) $r['slug']];
+        }
+        $root = null;
+        foreach ($all as $id => $row) {
+            if ($row['slug'] === $slug) {
+                $root = $id;
+                break;
+            }
+        }
+        if ($root === null) {
+            return [];
+        }
+        $ids = [$root];
+        for ($round = 0; $round < 8; ++$round) {
+            $added = false;
+            foreach ($all as $id => $row) {
+                if ($row['parent'] !== null && in_array($row['parent'], $ids, true) && !in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                    $added = true;
+                }
+            }
+            if (!$added) {
+                break;
+            }
+        }
+
+        return $ids;
     }
 
     /** @return list<array{slug:string,name:string,articles:int}> */
