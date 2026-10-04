@@ -243,7 +243,6 @@ test('undo ticket is single-use and cannot be forged', async ({ page }) => {
   await loginAdmin(page);
   const forged = await page.request.post('/admin/undo/999999', { form: { _token: 'bad' }, maxRedirects: 0 });
   expect([302, 403]).toContain(forged.status());
-  await setLocale(page, 'en-US', false);
 });
 
 test('AI translate script is bundled into the admin runtime', async ({ page }) => {

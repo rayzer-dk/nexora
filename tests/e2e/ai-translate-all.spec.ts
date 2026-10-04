@@ -87,7 +87,7 @@ test('translate every language with one click, one field with its own button, th
   } finally {
     await setAi(page, false);
     await setLocale(page, 'de-DE', false);
-    await setLocale(page, 'en-US', false);
+    // en-US is on from the installation (Ukrainian, English and Russian ship complete), so it stays on.
   }
 });
 
@@ -132,6 +132,5 @@ test('forms and navigation labels translate with one click and are saved only wi
     await expect(page.locator('[data-form-translation="en-US"] input[name$="[submit_label]"]')).toHaveValue(/^TR-en-US-/); // saved with the form
   } finally {
     await setAi(page, false);
-    await setLocale(page, 'en-US', false);
   }
 });

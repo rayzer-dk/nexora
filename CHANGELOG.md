@@ -2,6 +2,12 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.45.1 — 2026-10-04
+
+Fix release for 3.45.0 (tests only).
+
+- E2E: two older specs switched English off at the end because English used to start disabled; English is on from the installation now, so they leave it on. The language contract test tolerates the machine-translation stubs that other specs write.
+
 ## 3.45.0 — 2026-10-04
 
 The demo store is self-contained and complete in three languages; main category, category path in addresses, blog subcategories, more installer languages.
