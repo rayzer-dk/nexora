@@ -58,9 +58,10 @@ final class NotificationTemplateAdminController extends AbstractController
         $storeName = (string) ($this->db->fetchOne('SELECT name FROM mc_store WHERE id=?', [$context->storeId]) ?: 'Nexora');
         $vars = $this->templates->sampleVariables($storeName);
         $subject = $this->templates->render(mb_substr((string) $request->request->get('subject', ''), 0, 255), $vars);
-        $body = $this->templates->render(mb_substr(strip_tags((string) $request->request->get('body', '')), 0, 8000), $vars);
+        $isHtml = $request->request->getBoolean('is_html');
+        $body = $this->templates->render($isHtml ? $this->templates->cleanHtml(mb_substr((string) $request->request->get('body', ''), 0, 30000)) : mb_substr(strip_tags((string) $request->request->get('body', '')), 0, 8000), $vars);
         $html = $this->renderView('@storefront/email/' . $layout . '.html.twig', [
-            'notification_subject' => $subject, 'notification_text' => $body, 'custom_body' => $body,
+            'notification_subject' => $subject, 'notification_text' => $body, 'custom_body' => $isHtml ? '' : $body, 'custom_html' => $isHtml ? $body : '',
             'store_name' => $storeName, 'locale' => (string) $request->request->get('locale', 'en-US'),
             'order_number' => $vars['order_number'], 'customer_name' => $vars['customer_name'], 'total' => $vars['total'],
             'items' => [['name' => 'Sample product', 'sku' => 'DEMO-001', 'quantity' => 1, 'unit_code' => 'pcs', 'line_total_minor' => 124900]],
@@ -84,7 +85,7 @@ final class NotificationTemplateAdminController extends AbstractController
                 $this->templates->reset($context->storeId, $code, $locale);
                 $this->addFlash('success', CanonicalUiText::get('admin.tpl.reset_done'));
             } else {
-                $this->templates->save($context->storeId, $code, $locale, (string) $request->request->get('subject', ''), (string) $request->request->get('body', ''), $request->request->get('enabled') === '1');
+                $this->templates->save($context->storeId, $code, $locale, (string) $request->request->get('subject', ''), (string) $request->request->get('body', ''), $request->request->get('enabled') === '1', $request->request->getBoolean('is_html'));
                 $this->addFlash('success', CanonicalUiText::get('admin.tpl.saved'));
             }
         } catch (\InvalidArgumentException $e) {

@@ -25,8 +25,11 @@ final class NotificationTemplateService
     /** @var array{id:int,name:string,locale:string}|null */
     private ?array $primary = null;
 
-    public function __construct(private readonly Connection $db, private readonly \Commerce\Core\I18n\StorefrontUiTranslator $translator)
-    {
+    public function __construct(
+        private readonly Connection $db,
+        private readonly \Commerce\Core\I18n\StorefrontUiTranslator $translator,
+        #[\Symfony\Component\DependencyInjection\Attribute\Autowire(service: 'html_sanitizer.sanitizer.commerce.rich_text')] private readonly ?\Symfony\Component\HtmlSanitizer\HtmlSanitizerInterface $sanitizer = null,
+    ) {
     }
 
     /**
@@ -60,28 +63,28 @@ final class NotificationTemplateService
     {
         $out = [];
         try {
-            $rows = $this->db->fetchAllAssociative('SELECT template_code,subject,body,enabled FROM mc_notification_template WHERE store_id=? AND locale=?', [$storeId, $locale]);
+            $rows = $this->db->fetchAllAssociative('SELECT template_code,subject,body,enabled,is_html FROM mc_notification_template WHERE store_id=? AND locale=?', [$storeId, $locale]);
         } catch (\Throwable) {
             return [];
         }
         foreach ($rows as $row) {
-            $out[(string) $row['template_code']] = ['subject' => (string) $row['subject'], 'body' => (string) $row['body'], 'enabled' => (bool) $row['enabled']];
+            $out[(string) $row['template_code']] = ['subject' => (string) $row['subject'], 'body' => (string) $row['body'], 'enabled' => (bool) $row['enabled'], 'is_html' => (bool) ($row['is_html'] ?? false)];
         }
 
         return $out;
     }
 
-    public function save(int $storeId, string $code, string $locale, string $subject, string $body, bool $enabled): void
+    public function save(int $storeId, string $code, string $locale, string $subject, string $body, bool $enabled, bool $html = false): void
     {
         if (!isset(self::CATALOG[$code])) {
             throw new \InvalidArgumentException(CanonicalUiText::get('admin.tpl.error.code'));
         }
         $subject = trim(preg_replace('/[\r\n]+/', ' ', strip_tags($subject)) ?? '');
-        $body = trim(str_replace("\r\n", "\n", strip_tags($body)));
+        $body = $html ? $this->cleanHtml($body) : trim(str_replace("\r\n", "\n", strip_tags($body)));
         if ($subject === '' || mb_strlen($subject, 'UTF-8') > 255) {
             throw new \InvalidArgumentException(CanonicalUiText::get('admin.tpl.error.subject'));
         }
-        if ($body === '' || mb_strlen($body, 'UTF-8') > 8000) {
+        if ($body === '' || mb_strlen($body, 'UTF-8') > ($html ? 30000 : 8000)) {
             throw new \InvalidArgumentException(CanonicalUiText::get('admin.tpl.error.body'));
         }
         if (preg_match('/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/', $locale) !== 1) {
@@ -89,8 +92,8 @@ final class NotificationTemplateService
         }
         $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
         $this->db->executeStatement(
-            'INSERT INTO mc_notification_template (store_id,template_code,locale,subject,body,enabled,updated_at) VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE subject=VALUES(subject),body=VALUES(body),enabled=VALUES(enabled),updated_at=VALUES(updated_at)',
-            [$storeId, $code, $locale, $subject, $body, $enabled ? 1 : 0, $now],
+            'INSERT INTO mc_notification_template (store_id,template_code,locale,subject,body,enabled,is_html,updated_at) VALUES (?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE subject=VALUES(subject),body=VALUES(body),enabled=VALUES(enabled),is_html=VALUES(is_html),updated_at=VALUES(updated_at)',
+            [$storeId, $code, $locale, $subject, $body, $enabled ? 1 : 0, $html ? 1 : 0, $now],
         );
     }
 
@@ -102,7 +105,7 @@ final class NotificationTemplateService
     /**
      * Rendered override for an outgoing e-mail, or null to keep the built-in text.
      *
-     * @return array{subject:string,body:string}|null
+     * @return array{subject:string,body:string,html:bool}|null
      */
     public function resolve(NotificationMessage $message): ?array
     {
@@ -115,7 +118,7 @@ final class NotificationTemplateService
                 return null;
             }
             $locale = trim((string) ($message->context['locale'] ?? '')) ?: $store['locale'];
-            $row = $this->db->fetchAssociative('SELECT subject,body FROM mc_notification_template WHERE store_id=? AND template_code=? AND locale=? AND enabled=1', [$store['id'], $message->type, $locale]);
+            $row = $this->db->fetchAssociative('SELECT subject,body,is_html FROM mc_notification_template WHERE store_id=? AND template_code=? AND locale=? AND enabled=1', [$store['id'], $message->type, $locale]);
         } catch (\Throwable) {
             return null;
         }
@@ -124,7 +127,15 @@ final class NotificationTemplateService
         }
         $vars = $this->variables($message, $store['name']);
 
-        return ['subject' => $this->render((string) $row['subject'], $vars), 'body' => $this->render((string) $row['body'], $vars)];
+        return ['subject' => $this->render((string) $row['subject'], $vars), 'body' => $this->render((string) $row['body'], $vars), 'html' => (bool) ($row['is_html'] ?? false)];
+    }
+
+    /** The sanitizer of the rich-text profile; without it every tag is removed. */
+    public function cleanHtml(string $html): string
+    {
+        $html = trim(str_replace("\r\n", "\n", $html));
+
+        return $this->sanitizer !== null ? trim($this->sanitizer->sanitize($html)) : trim(strip_tags($html));
     }
 
     /** @param array<string,string> $vars */

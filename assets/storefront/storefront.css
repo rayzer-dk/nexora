@@ -1216,3 +1216,9 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
   :root:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__moon { display: none; }
   :root:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__sun { display: inline-flex; }
 }
+
+/* Benefit cards fill the row without empty cells, whatever their number; a phone can show only the first few. */
+.reference-benefits { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)); }
+@media (max-width: 768px) {
+  .reference-benefits[data-mobile-limit="1"] > article:nth-child(n+2), .reference-benefits[data-mobile-limit="2"] > article:nth-child(n+3), .reference-benefits[data-mobile-limit="3"] > article:nth-child(n+4), .reference-benefits[data-mobile-limit="4"] > article:nth-child(n+5), .reference-benefits[data-mobile-limit="5"] > article:nth-child(n+6), .reference-benefits[data-mobile-limit="6"] > article:nth-child(n+7) { display: none; }
+}

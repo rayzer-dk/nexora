@@ -24,7 +24,46 @@ final class AdminContextTwigExtension extends AbstractExtension
 
     public function getFunctions(): array
     {
-        return [new TwigFunction('admin_context_switcher', [$this, 'contextSwitcher']), new TwigFunction('admin_undo_pending', [$this, 'undoPending']), new TwigFunction('admin_pending_migrations', [$this, 'pendingMigrations'])];
+        return [new TwigFunction('admin_context_switcher', [$this, 'contextSwitcher']), new TwigFunction('admin_undo_pending', [$this, 'undoPending']), new TwigFunction('admin_pending_migrations', [$this, 'pendingMigrations']), new TwigFunction('admin_attention', [$this, 'attention'])];
+    }
+
+    /**
+     * New items that wait for a person: return requests, reviews, product questions and withdrawal notices (the header counter).
+     *
+     * @return array{returns:int,reviews:int,questions:int,withdrawals:int,total:int}
+     */
+    public function attention(): array
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        $zero = ['returns' => 0, 'reviews' => 0, 'questions' => 0, 'withdrawals' => 0, 'total' => 0];
+        $request = $this->requests->getCurrentRequest();
+        if ($request === null || !$this->security->getUser() instanceof AdminUser) {
+            return $zero;
+        }
+        try {
+            $storeId = $this->contexts->resolve($request)->storeId;
+        } catch (\Throwable) {
+            return $zero;
+        }
+        $count = function (string $sql) use ($storeId): int {
+            try {
+                return (int) $this->db->fetchOne($sql, [$storeId]);
+            } catch (\Throwable) {
+                return 0;
+            }
+        };
+        $out = [
+            'returns' => $count("SELECT COUNT(*) FROM mc_return_request WHERE store_id=? AND status='requested'"),
+            'reviews' => $count("SELECT COUNT(*) FROM mc_product_review WHERE store_id=? AND status='pending'"),
+            'questions' => $count("SELECT COUNT(*) FROM mc_product_question WHERE store_id=? AND status='pending'"),
+            'withdrawals' => $count('SELECT COUNT(*) FROM mc_withdrawal_notice WHERE store_id=? AND acknowledged_at IS NULL'),
+        ];
+        $out['total'] = array_sum($out);
+
+        return $cache = $out;
     }
 
     /** @return array<string,mixed> */

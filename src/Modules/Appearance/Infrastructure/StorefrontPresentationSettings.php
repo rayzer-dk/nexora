@@ -17,6 +17,9 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
     {
     }
 
+    /** Icons offered for the benefit cards (all are Lucide icons shipped with the admin). */
+    public const BENEFIT_ICONS = ['truck', 'shield-check', 'package', 'credit-card', 'star', 'headset', 'refresh-cw', 'lock', 'gift', 'clock', 'heart', 'thumbs-up', 'phone', 'map-pin', 'badge-percent'];
+
     /** @return array<string,mixed> */
     public function get(int $storeId): array
     {
@@ -26,6 +29,19 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         return $this->localize(is_array($revision)
             ? $this->normalize(array_replace_recursive($defaults, $revision))
             : $defaults);
+    }
+
+    /**
+     * The saved settings with every per-language text kept as a map (what the admin editor needs); the storefront uses get().
+     *
+     * @return array<string,mixed>
+     */
+    public function getRaw(int $storeId): array
+    {
+        $defaults = self::defaults();
+        $revision = $this->revisions->latestValidPayload($storeId, 'appearance', 'storefront_presentation');
+
+        return is_array($revision) ? $this->normalize(array_replace_recursive($defaults, $revision)) : $defaults;
     }
 
     /**
@@ -150,6 +166,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'search_placeholder' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.poshuk_tovariv_katehorii_brendiv'),
                 'show_category_nav' => true,
             ],
+            // Benefit cards under the categories: own icon, title and text per language; where they show and how many on a phone.
+            'benefits' => ['items' => [], 'devices' => ['desktop' => true, 'tablet' => true, 'mobile' => true], 'mobile_limit' => '0'],
             'home' => [
                 'show_benefits' => true,
                 'show_categories' => true,
@@ -244,6 +262,25 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         }
         $lines = array_slice(array_values(array_filter(array_map(fn (string $l): string => $this->text($l, 90), preg_split('/\R/u', (string) ($in['benefits'] ?? '')) ?: []), static fn (string $l): bool => $l !== '')), 0, 4);
         $out['display']['benefits'] = implode("\n", $lines);
+        $bn = is_array($input['benefits'] ?? null) ? $input['benefits'] : [];
+        $items = [];
+        foreach (array_slice(is_array($bn['items'] ?? null) ? array_values($bn['items']) : [], 0, 8) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $title = $this->text($item['title'] ?? '', 60);
+            $titleFilled = is_array($title) ? array_filter($title, static fn (string $v): bool => $v !== '') !== [] : $title !== '';
+            if (!$titleFilled) {
+                continue;
+            }
+            $icon = (string) ($item['icon'] ?? 'shield-check');
+            $items[] = ['icon' => in_array($icon, self::BENEFIT_ICONS, true) ? $icon : 'shield-check', 'title' => $title, 'text' => $this->text($item['text'] ?? '', 90)];
+        }
+        $out['benefits']['items'] = $items;
+        foreach (['desktop', 'tablet', 'mobile'] as $device) {
+            $out['benefits']['devices'][$device] = (bool) (is_array($bn['devices'] ?? null) ? ($bn['devices'][$device] ?? false) : true);
+        }
+        $out['benefits']['mobile_limit'] = (string) max(0, min(8, (int) ($bn['mobile_limit'] ?? 0)));
         $c = is_array($input['consent'] ?? null) ? $input['consent'] : [];
         $out['consent']['title'] = $this->text($c['title'] ?? '', 80);
         $out['consent']['text'] = $this->text($c['text'] ?? '', 400);

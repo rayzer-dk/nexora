@@ -42,6 +42,7 @@ final class SupportChatAdminController extends AbstractController
                     'group_chat_id' => (string) ($request->request->get('group_chat_pick', '') ?: $request->request->get('group_chat_id', '')),
                     'welcome_text' => (string) $request->request->get('welcome_text', ''),
                     'offline_text' => (string) $request->request->get('offline_text', ''),
+                    'load_delay_seconds' => (int) $request->request->get('load_delay_seconds', 3),
                 ]);
                 $this->addFlash('success', CanonicalUiText::get('admin.support_chat.saved'));
             } catch (\InvalidArgumentException $e) {

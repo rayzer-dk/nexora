@@ -29,7 +29,7 @@ final class SupportChatServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $this->db->executeStatement('CREATE TABLE mc_support_chat_settings (store_id INTEGER PRIMARY KEY, enabled INTEGER, site_chat_enabled INTEGER, direct_enabled INTEGER, bot_token_enc TEXT, bot_username TEXT, group_chat_id TEXT, webhook_secret TEXT, welcome_text TEXT, offline_text TEXT, seen_chats TEXT, updated_at TEXT)');
+        $this->db->executeStatement('CREATE TABLE mc_support_chat_settings (store_id INTEGER PRIMARY KEY, enabled INTEGER, site_chat_enabled INTEGER, direct_enabled INTEGER, bot_token_enc TEXT, bot_username TEXT, group_chat_id TEXT, webhook_secret TEXT, welcome_text TEXT, offline_text TEXT, load_delay_seconds INTEGER DEFAULT 3, seen_chats TEXT, updated_at TEXT)');
         $this->db->executeStatement('CREATE TABLE mc_support_thread (id INTEGER PRIMARY KEY AUTOINCREMENT, store_id INTEGER, channel TEXT, public_token TEXT, telegram_user_id INTEGER, tg_topic_id INTEGER, customer_name TEXT, customer_contact TEXT, customer_user_id INTEGER, source_url TEXT, status TEXT, created_at TEXT, last_message_at TEXT)');
         $this->db->executeStatement('CREATE TABLE mc_support_message (id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER, direction TEXT, body TEXT, tg_message_id INTEGER, tg_update_id INTEGER UNIQUE, created_at TEXT)');
 

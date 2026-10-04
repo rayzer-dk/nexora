@@ -923,6 +923,38 @@ function initColorFields() {
   });
 }
 
+/** Badge colour: preset swatches plus a free HEX colour; a free colour switches the tone to "custom". */
+function initToneFields() {
+  qa('[data-tone-field]').forEach((field) => {
+    const value = q('[data-tone-value]', field);
+    const picker = q('[data-tone-picker]', field);
+    const hex = q('[data-tone-hex]', field);
+    const swatches = qa('[data-tone-preset]', field);
+    if (!value || !picker || !hex) return;
+    const valid = (v) => /^#[0-9a-fA-F]{6}$/.test(v);
+    const toHex = (css) => { const m = css.match(/\d+/g); return m && m.length >= 3 ? '#' + m.slice(0, 3).map((n) => Number(n).toString(16).padStart(2, '0')).join('') : ''; };
+    const mark = (active) => swatches.forEach((s) => { const on = s === active; s.classList.toggle('is-active', on); s.setAttribute('aria-pressed', String(on)); });
+    swatches.forEach((swatch) => swatch.addEventListener('click', () => {
+      value.value = swatch.dataset.tonePreset || 'primary';
+      mark(swatch);
+      const shown = toHex(window.getComputedStyle(swatch).backgroundColor);
+      if (shown) { picker.value = shown; }
+      hex.value = '';
+      hex.setCustomValidity('');
+    }));
+    const custom = (v) => { value.value = 'custom'; mark(null); hex.value = v; picker.value = v; hex.setCustomValidity(''); };
+    picker.addEventListener('input', () => custom(picker.value.toLowerCase()));
+    hex.addEventListener('input', () => {
+      let v = hex.value.trim();
+      if (v && !v.startsWith('#')) v = `#${v}`;
+      hex.value = v;
+      if (valid(v)) { value.value = 'custom'; mark(null); picker.value = v.toLowerCase(); hex.setCustomValidity(''); }
+      else hex.setCustomValidity(v === '' ? '' : t('js_color_invalid'));
+    });
+    if (value.value === 'custom') mark(null);
+  });
+}
+
 /** Every plain colour input gets a HEX text box next to it (type or paste #ffffff). */
 function initColorHexInputs() {
   qa('input[type="color"]:not([data-color-picker])').forEach((picker) => {
@@ -954,6 +986,53 @@ function initColorHexInputs() {
   });
 }
 
+/**
+ * A page with four or more panels in a row becomes tabs (no long ribbons): the panels are grouped into one tab set and the
+ * tab names come from the panel headings. Pages that already use data-tabs, or carry data-no-auto-tabs, are left alone.
+ */
+function initAutoTabs() {
+  const main = q('main.admin-content');
+  if (!main || main.hasAttribute('data-no-auto-tabs') || main.querySelector('[data-tabs]')) return;
+  const panels = Array.from(main.children).filter((el) => el.matches('section.admin-panel') && q('h2', el) && !el.hasAttribute('data-tab'));
+  if (panels.length < 4) return;
+  const wrap = document.createElement('div');
+  wrap.dataset.tabs = 'auto';
+  wrap.dataset.tabsFlex = '';
+  panels[0].before(wrap);
+  panels.forEach((panel, i) => { panel.dataset.tab = `p${i + 1}`; wrap.appendChild(panel); });
+}
+
+/**
+ * A click on a table row opens the record: the row's own open/edit link (marked data-row-open, or the first icon link of the
+ * actions cell, or a title link). Clicks on controls, links, selected text and tables marked data-no-row-click are left alone.
+ */
+function initRowLinks() {
+  const skip = 'a, button, input, select, textarea, label, summary, details, [data-quick-status], [data-quick-order], [data-quick-price], [contenteditable]';
+  const unsafe = /delete|remove|export|download|label|pdf|logout|\.csv/i;
+  const target = (row) => {
+    const candidates = [
+      ...row.querySelectorAll('[data-row-open]'),
+      ...row.querySelectorAll('td.is-actions a.admin-icon-button[href], .admin-row-actions a[href]'),
+      ...row.querySelectorAll('td a[href^="/admin"]'),
+    ];
+    return candidates.find((a) => a instanceof window.HTMLAnchorElement && a.getAttribute('href')?.startsWith('/admin') && !a.target && !a.hasAttribute('download') && !a.classList.contains('is-danger') && !unsafe.test(a.getAttribute('href') || '')) || null;
+  };
+  const rowOf = (el) => (el instanceof Element ? el.closest('table.admin-table tbody tr') : null);
+  document.addEventListener('mouseover', (event) => {
+    const row = rowOf(event.target);
+    if (!row || row.dataset.rowLink || row.closest('[data-no-row-click]')) return;
+    row.dataset.rowLink = target(row) ? '1' : '0';
+  });
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
+    const row = rowOf(event.target);
+    if (!row || row.closest('[data-no-row-click]') || event.target.closest(skip)) return;
+    if (window.getSelection()?.toString()) return;
+    const link = target(row);
+    if (link) window.location.assign(link.href);
+  });
+}
+
 function initTabs() {
   qa('[data-tabs]').forEach((root) => {
     const panels = Array.from(root.children).filter((el) => el.matches('[data-tab]'));
@@ -981,13 +1060,36 @@ function initTabs() {
       return b;
     });
     list.append(...buttons);
+    // Long pages offer "all sections": every panel stays open one under another (remembered on this device).
+    const flex = root.hasAttribute('data-tabs-flex');
+    const readAll = () => { try { return localStorage.getItem('mc_admin_tabs') === 'all'; } catch { return false; } };
+    let showAll = flex && readAll();
+    let allButton = null;
+    if (flex) {
+      allButton = document.createElement('button');
+      allButton.type = 'button';
+      allButton.className = 'admin-tab admin-tab--all';
+      allButton.title = t('js_tabs_all');
+      allButton.setAttribute('aria-pressed', String(showAll));
+      allButton.appendChild(lucideIconNode('layout-grid', 16));
+      const allLabel = document.createElement('span');
+      allLabel.textContent = t('js_tabs_all');
+      allButton.appendChild(allLabel);
+      list.appendChild(allButton);
+    }
     panels[0].before(list);
     const activate = (id, save = true) => {
       const target = panels.find((p) => p.dataset.tab === id) || panels[0];
-      panels.forEach((p) => { p.hidden = p !== target; });
+      panels.forEach((p) => { p.hidden = !showAll && p !== target; });
       buttons.forEach((b) => { const on = b.dataset.tabTarget === target.dataset.tab; b.classList.toggle('is-active', on); b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
       if (save) { try { sessionStorage.setItem(key, target.dataset.tab); } catch { /* per-page only */ } }
     };
+    allButton?.addEventListener('click', () => {
+      showAll = !showAll;
+      try { localStorage.setItem('mc_admin_tabs', showAll ? 'all' : 'tabs'); } catch { /* per-session only */ }
+      allButton.setAttribute('aria-pressed', String(showAll));
+      activate(buttons.find((b) => b.classList.contains('is-active'))?.dataset.tabTarget || panels[0].dataset.tab, false);
+    });
     buttons.forEach((b, i) => {
       b.addEventListener('click', () => { activate(b.dataset.tabTarget); history.replaceState(null, '', `#${b.dataset.tabTarget}`); });
       b.addEventListener('keydown', (e) => {
@@ -999,6 +1101,13 @@ function initTabs() {
       });
     });
     let initial = location.hash.slice(1);
+    // A link to an element inside a hidden panel (#language-packs) opens the tab that holds it.
+    if (initial && !panels.some((p) => p.dataset.tab === initial)) {
+      let anchored = null;
+      try { anchored = document.getElementById(decodeURIComponent(initial)); } catch { anchored = null; }
+      const host = anchored ? panels.find((p) => p === anchored || p.contains(anchored)) : null;
+      if (host) initial = host.dataset.tab;
+    }
     if (!panels.some((p) => p.dataset.tab === initial)) { try { initial = sessionStorage.getItem(key) || ''; } catch { initial = ''; } }
     activate(initial, false);
   });
@@ -1525,6 +1634,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initHotkeys();
   initCommandPalette();
   initAutoSubmit();
+  initRowLinks();
+  initAutoTabs();
   initTabs();
   initTemplateEditors();
   initDataTables();
@@ -1532,6 +1643,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHelpTips();
   initColorFields();
   initColorHexInputs();
+  initToneFields();
   initCustomSelects();
   initDefaultSubmit();
   initMediaPickers();

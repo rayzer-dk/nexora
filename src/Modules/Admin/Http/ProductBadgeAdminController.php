@@ -36,6 +36,7 @@ final class ProductBadgeAdminController extends AbstractController
 
         return $this->render('@storefront/admin/catalog/badges.html.twig', [
             'rules' => $rules, 'tones' => ProductBadgeService::TONES, 'locale' => $ctx->locale,
+            'locales' => $this->db->fetchAllAssociative('SELECT sl.locale_code code,COALESCE(l.native_name,sl.locale_code) native_name FROM mc_store_locale sl LEFT JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.store_id=? AND sl.enabled=1 ORDER BY sl.is_default DESC,sl.locale_code', [$ctx->storeId]),
         ]);
     }
 
@@ -53,7 +54,7 @@ final class ProductBadgeAdminController extends AbstractController
                 'code' => is_array($existing) ? $existing['code'] : (string) $request->request->get('code', ''),
                 'kind' => is_array($existing) ? $existing['kind'] : (string) $request->request->get('kind', 'manual'),
                 'tone' => (string) $request->request->get('tone', 'primary') === 'custom' ? (string) $request->request->get('tone_custom', '') : (string) $request->request->get('tone', 'primary'),
-                'labels' => ['default' => (string) $request->request->get('label_default', ''), $ctx->locale => (string) $request->request->get('label_locale', '')],
+                'labels' => $this->labelsFromRequest($request),
                 'window_days' => $request->request->getInt('window_days', 30), 'min_sold' => $request->request->getInt('min_sold', 5),
                 'priority' => $request->request->getInt('priority', 100), 'enabled' => $request->request->getBoolean('enabled'),
             ]);
@@ -69,6 +70,29 @@ final class ProductBadgeAdminController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_catalog_badges');
+    }
+
+    /**
+     * One text per language of the store; the first filled one (the default language comes first) is also the common fallback.
+     *
+     * @return array<string,string>
+     */
+    private function labelsFromRequest(Request $request): array
+    {
+        $labels = [];
+        $posted = $request->request->all('label');
+        foreach ($posted as $locale => $text) {
+            $text = trim((string) $text);
+            if ($text !== '' && preg_match('/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/', (string) $locale) === 1) {
+                $labels[(string) $locale] = $text;
+            }
+        }
+        $labels = ['default' => (string) (reset($labels) ?: '')] + $labels;
+        if ($labels['default'] === '') {
+            $labels['default'] = trim((string) $request->request->get('label_default', ''));
+        }
+
+        return $labels;
     }
 
     #[Route('/admin/catalog/badges/{id}/delete', name: 'admin_catalog_badge_delete', methods: ['POST'], requirements: ['id' => '\d+'])]

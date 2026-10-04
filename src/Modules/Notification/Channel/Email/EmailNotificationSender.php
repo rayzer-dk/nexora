@@ -43,7 +43,8 @@ final class EmailNotificationSender implements NotificationSenderInterface
             ->context($message->context + [
                 'notification_subject' => $subject,
                 'notification_text' => $text,
-                'custom_body' => $override['body'] ?? '',
+                'custom_body' => ($override['html'] ?? false) ? '' : ($override['body'] ?? ''),
+                'custom_html' => ($override['html'] ?? false) ? ($override['body'] ?? '') : '',
             ]);
 
         $this->mailer->send($email);

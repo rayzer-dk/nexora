@@ -135,11 +135,17 @@ final class StorefrontUiTwigExtension extends AbstractExtension
 
     /** @param array<string,mixed> $context */
     /** Human label for an order/payment/fulfilment status code; unknown codes fall back to a readable form of the code. @param array<string,mixed> $context */
-    public function statusLabel(array $context, mixed $code): string
+    public function statusLabel(array $context, mixed $code, string $group = ''): string
     {
         $code = trim((string) $code);
         if ($code === '') {
             return '—';
+        }
+        if ($group !== '') {
+            $grouped = $this->text($context, 'status.' . $group . '.' . $code);
+            if ($grouped !== 'status.' . $group . '.' . $code) {
+                return $grouped;
+            }
         }
         $key = 'status.' . $code;
         $label = $this->text($context, $key);

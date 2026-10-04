@@ -373,8 +373,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'REDIS_DSN' => 'redis://127.0.0.1:6379',
                 'VALKEY_DSN' => 'valkey://127.0.0.1:6379',
                 'VALKEY_SESSION_DSN' => 'redis://127.0.0.1:6379',
-                'MAILER_DSN' => 'null://null',
-                'MAIL_FROM_ADDRESS' => 'no-reply@localhost',
+                // Like a typical shop engine: mail leaves from the server itself (PHP mail / sendmail) with an address on the shop's own
+                // domain; an SMTP server can be added later in the admin (Marketing → Mail and bots).
+                'MAILER_DSN' => 'native://default',
+                'MAIL_FROM_ADDRESS' => 'no-reply@' . (preg_replace('/^www\./i', '', (string) (parse_url($publicUrl, PHP_URL_HOST) ?: 'localhost'))),
                 'MAIL_FROM_NAME' => $storeName,
                 'ERROR_WEBHOOK_URL' => '',
                 'ADMIN_REQUIRE_MFA' => '0',

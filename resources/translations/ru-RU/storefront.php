@@ -822,6 +822,7 @@ return [
     'status.returned' => 'Возвращено',
     'js_add_to_cart' => 'В корзину',
     'js_details' => 'Подробнее',
+    'js_tabs_all' => 'Все секции',
     'support_chat.tg_welcome' => 'Здравствуйте! Напишите свой вопрос — мы ответим здесь как можно скорее.',
     'support_chat.attachment' => 'вложение',
     'support_chat.closed_note' => 'Разговор закрыт. Новое сообщение клиента откроет его снова.',

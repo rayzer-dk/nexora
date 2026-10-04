@@ -14,7 +14,8 @@
 <form method="post" action="{{ path('admin_commerce_notification_templates_save') }}" class="admin-form-grid" data-tpl-form data-preview-url="{{ path('admin_commerce_notification_templates_preview') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_notification_templates') }}"><input type="hidden" name="code" value="{{ item.code }}"><input type="hidden" name="locale" value="{{ locale }}">
 {% if not item.stored %}<p class="admin-help admin-form-wide">{{ ui_text('admin.tpl.default_hint') }}</p>{% endif %}
 <label class="admin-form-wide">{{ ui_text('admin.tpl.subject') }}<input type="text" name="subject" maxlength="255" required value="{{ subject_value }}"></label>
-<label class="admin-form-wide">{{ ui_text('admin.tpl.body') }}<textarea name="body" rows="7" maxlength="8000" required>{{ body_value }}</textarea></label>
+<label class="admin-form-wide admin-check"><input type="checkbox" name="is_html" value="1"{{ item.stored and item.stored.is_html ? ' checked' : '' }}><span><strong>{{ ui_text('admin.tpl.html_mode') }}</strong><small>{{ ui_text('admin.tpl.html_mode_hint') }}</small></span></label>
+<label class="admin-form-wide">{{ ui_text('admin.tpl.body') }}<textarea name="body" rows="12" maxlength="30000" required>{{ body_value }}</textarea></label>
 <div class="admin-form-wide tpl-placeholders"><small>{{ ui_text('admin.tpl.placeholders') }} ({{ ui_text('admin.tpl.placeholders_click') }}):</small> {% for p in item.placeholders %}<button type="button" class="admin-chip" data-insert-placeholder="%{{ p }}%"><code>%{{ p }}%</code></button> {% endfor %}</div>
 <label class="admin-check"><input type="checkbox" name="enabled" value="1"{{ item.stored is null or item.stored.enabled ? ' checked' : '' }}> {{ ui_text('admin.tpl.enabled') }}</label>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div></form>

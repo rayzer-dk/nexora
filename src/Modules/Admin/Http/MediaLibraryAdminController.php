@@ -178,6 +178,17 @@ final class MediaLibraryAdminController extends AbstractController
         return $this->redirectToRoute('admin_media_library');
     }
 
+    /** Creates a folder for the file manager dialog and answers with JSON. */
+    #[Route('/admin/media/folder.json', name:'admin_media_folder_create_json', methods:['POST'])]
+    public function folderJson(Request $request): JsonResponse
+    {
+        $ctx=$this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('media_upload',(string)$request->request->get('_csrf_token'))){return $this->json(['ok'=>false],403);}
+        try{$id=$this->library->createFolder($ctx->storeId,(string)$request->request->get('name',''),$this->optionalInt($request->request->get('parent_id')));}
+        catch(\Throwable){return $this->json(['ok'=>false],422);}
+        return $this->json(['ok'=>true,'id'=>$id]);
+    }
+
     #[Route('/admin/media/folder', name:'admin_media_folder_create', methods:['POST'])]
     public function folder(Request $request): Response
     {

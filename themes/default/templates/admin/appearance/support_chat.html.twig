@@ -23,6 +23,7 @@
   <input name="group_chat_id" value="{{ s.group_chat_id }}" placeholder="-1001234567890" inputmode="numeric"><small>{{ ui_text('admin.support_chat.group_hint') }}</small></label>
 <label class="admin-form-wide">{{ ui_text('admin.support_chat.welcome') }}<input name="welcome_text" maxlength="500" value="{{ s.welcome_text }}" placeholder="{{ ui_text('support_chat.widget_welcome') }}"></label>
 <label class="admin-form-wide">{{ ui_text('admin.support_chat.offline') }}<input name="offline_text" maxlength="500" value="{{ s.offline_text }}" placeholder="{{ ui_text('support_chat.widget_offline') }}"></label>
+<label>{{ ui_text('admin.support_chat.load_delay') }}<input type="number" name="load_delay_seconds" min="0" max="60" step="1" value="{{ s.load_delay_seconds }}"><small>{{ ui_text('admin.support_chat.load_delay_hint') }}</small></label>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.support_chat.save') }}</button></div></form></section>
 
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.support_chat.connection_kicker') }}</small><h2>{{ ui_text('admin.support_chat.connection_title') }}</h2></div>{% if s.bot_username %}<span class="admin-badge is-active">@{{ s.bot_username }}</span>{% endif %}</div>

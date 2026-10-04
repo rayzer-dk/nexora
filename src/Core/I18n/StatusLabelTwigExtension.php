@@ -24,13 +24,13 @@ final class StatusLabelTwigExtension extends AbstractExtension
     }
 
     /** @param array<string,mixed> $context */
-    public function label(array $context, mixed $code, string $group): string
+    public function label(array $context, mixed $code, string $group = ''): string
     {
         $code = trim((string) $code);
         if ($code === '') {
             return '—';
         }
-        $key = 'status.' . $group . '.' . $code;
+        $key = $group === '' ? 'status.' . $code : 'status.' . $group . '.' . $code;
         $text = $this->ui->text($context, $key);
 
         return $text !== $key ? $text : ucfirst(str_replace(['_', '-'], ' ', $code));

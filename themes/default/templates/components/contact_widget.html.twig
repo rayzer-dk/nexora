@@ -38,7 +38,7 @@
       {% if support.direct_url %}<a class="support-chat__tg" href="{{ support.direct_url }}" target="_blank" rel="noopener noreferrer">{{ ui_icon('send', 14) }}<span>{{ ui_text('support_chat.widget_telegram') }}</span></a>{% endif %}
     </form>
   </dialog>
-  <script type="module" src="{{ vite_asset('assets/storefront/support-chat.js', '/assets/support-chat.js') }}"></script>
+  <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">(function(){var src={{ vite_asset('assets/storefront/support-chat.js', '/assets/support-chat.js')|json_encode|raw }},done=false,t;function load(then){if(done)return;done=true;clearTimeout(t);var s=document.createElement('script');s.type='module';s.src=src;if(then)s.onload=then;document.head.appendChild(s);}t=setTimeout(function(){load();},{{ support.delay * 1000 }});document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-cw-support]');if(b&&!done){load(function(){b.click();});}},true);})();</script>
   {% endif %}
 </div>
 {% endif %}

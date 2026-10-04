@@ -1,1 +1,20 @@
-<section class="admin-preview-card"><header><div><small>{{ ui_text('admin.orders._preview.shvydkyi_preview') }}</small><h2>{{ order.order_number }}</h2><p>{{ order.status|status_label }} · {{ order.payment_status|status_label }} · {{ order.fulfillment_status|status_label }}</p></div><strong class="admin-preview-price">{{ order.total_display }}</strong></header>{% if admin_can('personal_data.view') %}<div class="admin-preview-customer"><strong>{{ order.customer_name|default('—') }}</strong><span>{{ order.customer_phone|default('') }}{% if order.customer_email %} · {{ order.customer_email }}{% endif %}</span></div>{% else %}<div class="admin-preview-customer"><strong>{{ ui_text('admin.orders._preview.personalni_dani_prykhovano') }}</strong></div>{% endif %}<div class="admin-preview-lines">{% for item in items %}<div><span>{{ item.name }}<small>{{ item.sku }} · ×{{ item.quantity }}</small></span><strong>{{ item.line_total_display }}</strong></div>{% else %}<p>{{ ui_text('admin.orders._preview.pozytsii_nemaie') }}</p>{% endfor %}</div><footer><a class="admin-button is-primary" href="{{ path('admin_order_view',{publicId:order.public_id_text}) }}">{{ ui_text('admin.orders._preview.vidkryty_zamovlennia') }}</a></footer></section>
+{% set unit_labels = {'item':ui_text('unit_item'),'pack':ui_text('unit_pack'),'set':ui_text('unit_set'),'pair':ui_text('unit_pair'),'kg':ui_text('unit_kg'),'g':ui_text('unit_g'),'l':ui_text('unit_l'),'ml':ui_text('unit_ml'),'m':ui_text('unit_m'),'sqm':ui_text('unit_sqm')} %}
+<section class="admin-order-quick">
+  <header class="admin-order-quick__head">
+    <div><small>{{ ui_text('admin.orders._preview.shvydkyi_preview') }}</small><h2>{{ order.order_number }}</h2></div>
+    <strong class="admin-order-quick__total">{{ order.total_display }}</strong>
+  </header>
+  <div class="admin-order-quick__badges">
+    <span class="admin-badge is-info">{{ order.status|status_label }}</span>
+    <span class="admin-badge">{{ ui_icon('credit-card', 14) }}{{ order.payment_status|status_label }}</span>
+    <span class="admin-badge">{{ ui_icon('truck', 14) }}{{ order.fulfillment_status|status_label('fulfillment') }}</span>
+  </div>
+  <div class="admin-order-quick__customer">
+    {% if admin_can('personal_data.view') %}<strong>{{ order.customer_name|default('—') }}</strong><span>{{ order.customer_phone|default('') }}</span>{% if order.customer_email %}<span>{{ order.customer_email }}</span>{% endif %}{% else %}<strong>{{ ui_text('admin.orders._preview.personalni_dani_prykhovano') }}</strong>{% endif %}
+  </div>
+  <ul class="admin-order-quick__lines">
+    {% for item in items %}<li><span class="admin-order-quick__name"><strong>{{ item.name }}</strong><small>{{ item.sku }} · {{ item.quantity * 1 }} {{ unit_labels[item.unit_code|default('item')]|default('') }}</small></span><strong class="admin-order-quick__sum">{{ item.line_total_display }}</strong></li>
+    {% else %}<li>{{ ui_text('admin.orders._preview.pozytsii_nemaie') }}</li>{% endfor %}
+  </ul>
+  <footer><a class="admin-button is-primary" href="{{ path('admin_order_view',{publicId:order.public_id_text}) }}">{{ ui_icon('arrow-right', 16) }}{{ ui_text('admin.orders._preview.vidkryty_zamovlennia') }}</a></footer>
+</section>

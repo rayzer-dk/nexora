@@ -815,6 +815,7 @@ return [
     'status.returned' => 'Zwrócono',
     'js_add_to_cart' => 'Do koszyka',
     'js_details' => 'Szczegóły',
+    'js_tabs_all' => 'Wszystkie sekcje',
     'support_chat.tg_welcome' => 'Witamy! Napisz pytanie — odpowiemy tutaj jak najszybciej.',
     'support_chat.attachment' => 'załącznik',
     'support_chat.closed_note' => 'Rozmowa zamknięta. Nowa wiadomość klienta otworzy ją ponownie.',

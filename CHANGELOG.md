@@ -2,18 +2,19 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.47.1 — 2026-10-05
+## 3.48.0 — 2026-10-05
 
-The share menu icons are drawn from CSS masks instead of inline SVG (the icon audit allows Lucide icons only); no other changes since 3.47.0.
+Admin and storefront polish, part two.
 
-## 3.47.0 — 2026-10-05
-
-Storefront and admin polish release.
-
-- Theme switch: a sun and a thin moon (storefront and admin); language menu text no longer blends into its hover background.
-- One spacing standard: `--mc-section-gap` between page sections and `--mc-stack-gap` inside a block (home categories, benefits and coupon strip no longer touch).
-- Product page: discount badge next to the price with the old price below, the unit ("pcs") sits outside the quantity box, coloured share icons without text plus a copy-link button with text, a real disabled button when the product is unavailable; carousels and "recently viewed" always show a button.
-- Checkout: gift card and bonus points have "Apply" buttons with a live preview (`/checkout/rewards/preview`); the order summary stays in view on desktop.
-- Catalogue: paging without a full reload (links keep working without script).
-- Product attributes are no longer repeated once per language.
-- Admin: quick status switch in the lists of categories, blog articles and blog categories; new "Demo data" page to install, refresh or remove the demo without a console (also the way to get the full demo after an update).
+- New design of the update page and of the 404 page (big code, search, illustration).
+- Order page: statuses, delivery, carriers, events and units are shown in words; quick view redesigned; a click on a table row opens the record.
+- Header: counter of new returns, reviews, questions and withdrawal notices; the top bar stays on one line.
+- Long admin pages become tabs, with an "All sections" switch (remembered); Storefront, Brands and attributes, Marketing and any page with four or more panels.
+- File manager (media picker): icon toolbar with tooltips, folders with path and "up", new folder, upload from the computer, last folder remembered; product photos use one toolbar.
+- Abandoned carts first on the marketing page: customer, phone, items, total, time and reminder status.
+- E-mail templates and lifecycle e-mails can be written in HTML; the order e-mail shows product photos.
+- Badges: colour by swatches or HEX, one text per store language.
+- Benefit cards of the home page are editable: icon, title and text per language, devices, number on a phone; the row has no empty cells.
+- Support chat: delay in seconds before the chat script is loaded.
+- Product, category and article open in a language without a translation (empty fields instead of an error).
+- Shorter demo SKUs; default mail goes from the server itself (`native://default`) with an address on the shop's domain.

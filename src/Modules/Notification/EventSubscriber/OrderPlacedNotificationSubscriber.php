@@ -50,7 +50,12 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
             throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.673a97ad6d36'));
         }
 
-        $items = $this->connection->fetchAllAssociative('SELECT name,sku,quantity,unit_code,unit_price_minor,line_total_minor FROM mc_sales_order_item WHERE order_id=? ORDER BY id', [(int) $row['id']]);
+        $items = $this->connection->fetchAllAssociative('SELECT i.name,i.sku,i.quantity,i.unit_code,i.unit_price_minor,i.line_total_minor,(SELECT ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=i.product_id ORDER BY pm.sort_order,pm.media_asset_id LIMIT 1) image_key FROM mc_sales_order_item i WHERE i.order_id=? ORDER BY i.id', [(int) $row['id']]);
+        // The product photo goes into the e-mail as an absolute address (mail clients cannot resolve a relative one).
+        foreach ($items as &$item) {
+            $item['image_url'] = ($item['image_key'] ?? '') !== '' && $this->publicUrl !== '' ? rtrim($this->publicUrl, '/') . '/media/' . ltrim((string) $item['image_key'], '/') : '';
+        }
+        unset($item);
         $locale = trim((string) ($row['locale'] ?? '')) ?: 'en-US';
         $fulfillment = $this->connection->fetchAssociative('SELECT provider_code,destination_snapshot FROM mc_fulfillment WHERE order_id=? ORDER BY id DESC LIMIT 1', [(int) $row['id']]);
         $payment = $this->connection->fetchOne('SELECT provider_code FROM mc_payment WHERE order_id=? ORDER BY id DESC LIMIT 1', [(int) $row['id']]);

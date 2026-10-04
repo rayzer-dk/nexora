@@ -85,11 +85,11 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     {
         $binary = Uuid::fromString($publicId)->toBinary();
         $row = $this->connection->fetchAssociative(
-            "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,pt.name,pt.short_description,pt.description,pt.meta_title,pt.meta_description,v.id AS variant_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,pr.amount_minor,pr.compare_at_minor,pr.currency,sr.slug,COALESCE(sr.indexable,1) AS indexable,COALESCE(ppp.mode,'auto') purchase_mode,ppp.button_label purchase_button_label,ppp.eta_text purchase_eta_text,
+            "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,(pt.product_id IS NOT NULL) AS has_translation,pt.name,pt.short_description,pt.description,pt.meta_title,pt.meta_description,v.id AS variant_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,pr.amount_minor,pr.compare_at_minor,pr.currency,sr.slug,COALESCE(sr.indexable,1) AS indexable,COALESCE(ppp.mode,'auto') purchase_mode,ppp.button_label purchase_button_label,ppp.eta_text purchase_eta_text,
                 (SELECT sl.stocked_quantity FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id ORDER BY mil.priority ASC,sl.location_id ASC LIMIT 1) AS stock_quantity
              FROM mc_product p
              JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?
-             JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
+             LEFT JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
              JOIN mc_product_variant v ON v.product_id=p.id AND v.sort_order=0
              LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id
              LEFT JOIN mc_price pr ON pr.id=(SELECT p2.id FROM mc_price p2 WHERE p2.variant_id=v.id AND p2.store_id=? AND p2.market_id=? AND p2.customer_group='default' AND p2.price_list_id IS NULL AND p2.max_quantity IS NULL AND p2.starts_at IS NULL AND p2.ends_at IS NULL ORDER BY p2.priority ASC,p2.min_quantity ASC,p2.id DESC LIMIT 1)
@@ -100,6 +100,11 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         if (!is_array($row)) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.7fe16b67154e'));
         }
+        // A language without a translation opens with empty text fields instead of an error.
+        foreach (['name', 'short_description', 'description', 'meta_title', 'meta_description'] as $textField) {
+            $row[$textField] = (string) ($row[$textField] ?? '');
+        }
+        $row['has_translation'] = (bool) $row['has_translation'];
         $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122();
         $row['category_ids'] = array_map('intval', $this->connection->fetchFirstColumn('SELECT category_id FROM mc_product_category WHERE product_id=? ORDER BY is_primary DESC,sort_order ASC,category_id ASC', [(int) $row['id']]));
         return $row;
@@ -208,11 +213,14 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     public function categoryForEdit(int $storeId, string $locale, string $publicId): array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name,ct.description,ct.description_bottom,sr.slug FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? LIMIT 1",
+            "SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name,ct.description,ct.description_bottom,sr.slug FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? LEFT JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? LIMIT 1",
             [$storeId, $storeId, $locale, $storeId, $locale, Uuid::fromString($publicId)->toBinary()],
         );
         if (!is_array($row)) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.76a3f4c42869'));
+        }
+        foreach (['name', 'description', 'description_bottom'] as $textField) {
+            $row[$textField] = (string) ($row[$textField] ?? '');
         }
         $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122();
         return $row;

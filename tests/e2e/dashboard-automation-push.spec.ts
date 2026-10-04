@@ -39,7 +39,7 @@ test('manual order creates a real order and the dashboard reports it', async ({ 
   await expectNoServerError(page);
   await page.locator('input[name="name"]').fill('Телефонний Клієнт');
   await page.locator('input[name="phone"]').fill('+380501112233');
-  await page.locator('input[name="sku[]"]').first().fill('DEMO-LAP-APP-APP-078');
+  await page.locator('input[name="sku[]"]').first().fill('DEMO-078');
   await page.locator('input[name="qty[]"]').first().fill('2');
   await page.locator('input[name="delivery"]').fill('Київ, Нова пошта №1');
   await Promise.all([page.waitForURL(/\/admin\/orders\/[0-9a-f-]{36}/), page.locator('main form button[type="submit"]').last().click()]);
@@ -185,30 +185,42 @@ test('downloads centre: upload, public listing, download counter, type whitelist
   await shop.close();
 });
 
-test('category text blocks render sanitised above and below the grid', async ({ page }) => {
+test('the category description renders sanitised, above or below the grid by one global setting', async ({ page }) => {
   await loginAdmin(page);
+  const setPosition = async (position: 'top' | 'bottom'): Promise<void> => {
+    await page.goto('/admin/catalog/categories', { waitUntil: 'domcontentloaded' });
+    await page.locator('.admin-category-url select[name="description_position"]').selectOption(position);
+    await Promise.all([page.waitForURL(/\/admin\/catalog\/categories/), page.locator('.admin-category-url button[type="submit"]').click()]);
+  };
   await page.goto('/admin/catalog/categories', { waitUntil: 'domcontentloaded' });
   await page.locator('a[href*="/admin/catalog/categories/"][href$="/edit"]').first().click();
   await page.waitForLoadState('domcontentloaded');
   await expectNoServerError(page);
-  await page.locator('textarea[name="description"]').evaluate((el, v) => { (el as HTMLTextAreaElement).value = v; }, '<p>E2E intro</p><script>window.__x=1</script>');
-  await page.locator('textarea[name="description_bottom"]').evaluate((el, v) => { (el as HTMLTextAreaElement).value = v; }, '<h2>E2E seo</h2><p onclick="alert(1)">Bottom text</p>');
+  await expect(page.locator('textarea[name="description_bottom"]')).toHaveCount(0); // one text, not two
+  await page.locator('textarea[name="description"]').evaluate((el, v) => { (el as HTMLTextAreaElement).value = v; }, '<p>E2E intro</p><script>window.__x=1</script><p onclick="alert(1)">Safe text</p>');
   const url = page.url();
   await Promise.all([page.waitForResponse((r) => r.request().method() === 'POST' && r.url() === url), page.locator('main form button[type="submit"]').last().click()]);
   await page.goto(url, { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('textarea[name="description_bottom"]')).toHaveValue(/E2E seo/);
+  await expect(page.locator('textarea[name="description"]')).toHaveValue(/E2E intro/);
   const name = await page.locator('input[name="name"]').first().inputValue();
-  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
-  const link = page.locator('main a, header a, nav a').filter({ hasText: name }).locator('visible=true').first();
-  await expect(link).toBeVisible();
-  await link.click();
-  await page.waitForLoadState('domcontentloaded');
-  await expectNoServerError(page);
-  await expect(page.locator('.category-description').first()).toContainText('E2E intro');
-  await expect(page.locator('.category-description--bottom')).toContainText('Bottom text');
-  const html = await page.content();
-  expect(html).not.toContain('window.__x=1');
-  expect(html).not.toContain('onclick="alert(1)"');
+  try {
+    for (const position of ['top', 'bottom'] as const) {
+      await setPosition(position);
+      await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+      const link = page.locator('main a, header a, nav a').filter({ hasText: name }).locator('visible=true').first();
+      await expect(link).toBeVisible();
+      await link.click();
+      await page.waitForLoadState('domcontentloaded');
+      await expectNoServerError(page);
+      const block = page.locator(position === 'bottom' ? '.category-description--bottom' : '.category-description:not(.category-description--bottom)').first();
+      await expect(block).toContainText('E2E intro');
+      const html = await page.content();
+      expect(html).not.toContain('window.__x=1');
+      expect(html).not.toContain('onclick="alert(1)"');
+    }
+  } finally {
+    await setPosition('top');
+  }
 });
 
 test('custom fields: define, fill on the product, show on the storefront', async ({ page }) => {

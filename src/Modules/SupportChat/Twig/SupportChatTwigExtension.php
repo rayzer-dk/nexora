@@ -24,7 +24,7 @@ final class SupportChatTwigExtension extends AbstractExtension
         return [new TwigFunction('support_chat', $this->support(...))];
     }
 
-    /** @return array{site_chat:bool,direct_url:string,welcome:string,offline:string}|null */
+    /** @return array{site_chat:bool,direct_url:string,welcome:string,offline:string,delay:int}|null */
     public function support(): ?array
     {
         if ($this->memo !== false) {
@@ -49,6 +49,6 @@ final class SupportChatTwigExtension extends AbstractExtension
             return null;
         }
 
-        return $this->memo = ['site_chat' => $s['site_chat_enabled'], 'direct_url' => $direct, 'welcome' => $s['welcome_text'], 'offline' => $s['offline_text']];
+        return $this->memo = ['site_chat' => $s['site_chat_enabled'], 'direct_url' => $direct, 'welcome' => $s['welcome_text'], 'offline' => $s['offline_text'], 'delay' => $s['load_delay_seconds']];
     }
 }

@@ -25,7 +25,7 @@ final class NotificationTemplateServiceTest extends TestCase
         $this->db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         $this->db->executeStatement("CREATE TABLE mc_store (id INTEGER PRIMARY KEY, name TEXT, default_locale TEXT, status TEXT)");
         $this->db->executeStatement("INSERT INTO mc_store VALUES (1,'Acme Shop','uk-UA','active')");
-        $this->db->executeStatement('CREATE TABLE mc_notification_template (store_id INTEGER, template_code TEXT, locale TEXT, subject TEXT, body TEXT, enabled INTEGER, updated_at TEXT, PRIMARY KEY (store_id, template_code, locale))');
+        $this->db->executeStatement('CREATE TABLE mc_notification_template (store_id INTEGER, template_code TEXT, locale TEXT, subject TEXT, body TEXT, enabled INTEGER, is_html INTEGER NOT NULL DEFAULT 0, updated_at TEXT, PRIMARY KEY (store_id, template_code, locale))');
     }
 
     private function message(): NotificationMessage

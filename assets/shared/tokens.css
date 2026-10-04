@@ -77,6 +77,8 @@
   --mc-font-size-2xl: 24px;
   --mc-font-size-3xl: 30px;
   --mc-font-size-4xl: 38px;
+  --mc-font-size-display: 8rem;
+  --mc-font-size-none: 0px;
   --mc-font-size-5xl: 48px;
   --mc-line-height-tight: 1.15;
   --mc-line-height-snug: 1.3;

@@ -25,6 +25,8 @@ export default defineConfig({
     video: 'retain-on-failure',
     actionTimeout: 10_000,
     navigationTimeout: 20_000,
+    // Long admin pages are tab sets; the suite works with every section open one under another (the "all sections" preference).
+    storageState: { cookies: [], origins: [{ origin: new URL(baseURL).origin, localStorage: [{ name: 'mc_admin_tabs', value: 'all' }] }] },
   },
   projects: [
     { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } } },

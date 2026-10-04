@@ -168,5 +168,10 @@ return [
     'upgrade.open_admin' => 'Открыть админку',
     'upgrade.open_store' => 'Открыть витрину',
     'upgrade.cleanup_hint' => 'После обновления из соображений безопасности можно удалить файл public/upgrade.php (с новым архивом он появится снова).',
+    'upgrade.done' => 'Обновление завершено.',
+    'upgrade.stat_version' => 'Версия',
+    'upgrade.stat_schema' => 'Схема БД',
+    'upgrade.stat_removed' => 'Удалено устаревших файлов',
+    'upgrade.show_log' => 'Показать журнал обновления',
     'upgrade.secret_missing' => 'Не удалось прочитать APP_SECRET на сервере. Запустите обновление командой: php bin/upgrade.php',
 ];

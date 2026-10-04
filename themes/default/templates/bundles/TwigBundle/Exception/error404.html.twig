@@ -3,15 +3,20 @@
 {% block title %}{{ ui_text('error_404_title') }}{% endblock %}
 {% block head %}<meta name="robots" content="noindex">{% endblock %}
 {% block body %}
-<section class="shell content-shell">
-    <div class="empty-state" data-error-page="404">
-        <p class="eyebrow">404</p>
+<section class="shell error-page" data-error-page="404">
+    <div class="error-page__copy">
+        <p class="error-page__code">404</p>
         <h1>{{ ui_text('error_404_title') }}</h1>
-        <p>{{ ui_text('error_404_text') }}</p>
-        <div class="empty-state__actions">
-            <a class="button button--primary" href="/catalog">{{ ui_text('go_catalog') }}{{ ui_icon('arrow-right', 16) }}</a>
-            <a class="button" href="/">{{ ui_text('home') }}</a>
+        <p class="error-page__text">{{ ui_text('error_404_text') }}</p>
+        <form class="error-page__search" action="/catalog" method="get" role="search">
+            <input type="search" name="q" placeholder="{{ ui_text('search')|e('html_attr') }}" aria-label="{{ ui_text('search')|e('html_attr') }}">
+            <button class="button button--primary" type="submit">{{ ui_icon('search', 18) }}<span>{{ ui_text('search') }}</span></button>
+        </form>
+        <div class="error-page__actions">
+            <a class="button button--primary button--lg" href="/catalog">{{ ui_text('go_catalog') }}{{ ui_icon('arrow-right', 16) }}</a>
+            <a class="button button--lg" href="/">{{ ui_icon('home', 16) }}<span>{{ ui_text('home') }}</span></a>
         </div>
     </div>
+    <img class="error-page__art" src="/assets/branding/not-found.svg" alt="" width="520" height="420" loading="eager" decoding="async">
 </section>
 {% endblock %}

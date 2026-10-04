@@ -130,6 +130,11 @@ final class AppearanceAdminController extends AbstractController
                         'search_placeholder' => $request->request->get('search_placeholder',''),
                         'show_category_nav' => $bool('show_category_nav'),
                     ],
+                    'benefits' => [
+                        'items' => $this->benefitItems($request),
+                        'devices' => ['desktop' => $bool('benefits_desktop'), 'tablet' => $bool('benefits_tablet'), 'mobile' => $bool('benefits_mobile')],
+                        'mobile_limit' => $request->request->get('benefits_mobile_limit', '0'),
+                    ],
                     'home' => [
                         'show_benefits' => $bool('show_benefits'),
                         'show_categories' => $bool('show_categories'),
@@ -169,6 +174,9 @@ final class AppearanceAdminController extends AbstractController
         $store = $connection->fetchAssociative('SELECT name FROM mc_store WHERE id=?', [$context->storeId]) ?: [];
         return $this->render('@storefront/admin/appearance/storefront.html.twig', [
             'settings' => $this->settings->get($context->storeId),
+            'raw_benefits' => $this->settings->getRaw($context->storeId)['benefits'] ?? [],
+            'benefit_icons' => \Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings::BENEFIT_ICONS,
+            'store_locales' => $connection->fetchAllAssociative('SELECT sl.locale_code code,COALESCE(l.native_name,sl.locale_code) native_name FROM mc_store_locale sl LEFT JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.store_id=? AND sl.enabled=1 ORDER BY sl.is_default DESC,sl.locale_code', [$context->storeId]),
             'store' => $store,
             'platform_version' => PlatformVersion::VERSION,
             'revisions' => $this->settings->history($context->storeId, 12),
@@ -198,5 +206,27 @@ final class AppearanceAdminController extends AbstractController
     {
         $user = $this->getUser();
         return $user instanceof AdminUser ? 'admin:' . $user->id : 'admin';
+    }
+
+    /**
+     * Benefit cards from the form: icon, and a title and text for every language of the store (empty titles are dropped by the settings).
+     *
+     * @return list<array{icon:string,title:array<string,string>,text:array<string,string>}>
+     */
+    private function benefitItems(Request $request): array
+    {
+        $icons = $request->request->all('benefit_icon');
+        $titles = $request->request->all('benefit_title');
+        $texts = $request->request->all('benefit_text');
+        $items = [];
+        foreach ($icons as $index => $icon) {
+            $items[] = [
+                'icon' => (string) $icon,
+                'title' => is_array($titles[$index] ?? null) ? $titles[$index] : [],
+                'text' => is_array($texts[$index] ?? null) ? $texts[$index] : [],
+            ];
+        }
+
+        return $items;
     }
 }

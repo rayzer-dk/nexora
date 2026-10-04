@@ -2,7 +2,7 @@
 {% block content %}
   <h1 style="margin:0 0 18px;font-size:24px;line-height:1.25;">{{ ui_text('order_number')|replace({'%number%': order_number}) }}</h1>
   {% if customer_name %}<p>{{ ui_text('hello_named')|replace({'%name%': customer_name}) }}</p>{% endif %}
-  {% if custom_body is defined and custom_body %}<p>{{ custom_body|nl2br }}</p>{% else %}<p>{{ ui_text('order_status_updated') }}</p>{% endif %}
+  {% if custom_html is defined and custom_html %}<div>{{ custom_html|raw }}</div>{% elseif custom_body is defined and custom_body %}<p>{{ custom_body|nl2br }}</p>{% else %}<p>{{ ui_text('order_status_updated') }}</p>{% endif %}
   <table role="presentation" style="width:100%;border-collapse:collapse;margin:20px 0;">
     <tr><td style="padding:8px 0;color:#667085;">{{ ui_text('order') }}</td><td style="padding:8px 0;text-align:right;font-weight:600;">{{ status }}</td></tr>
     <tr><td style="padding:8px 0;color:#667085;">{{ ui_text('payment') }}</td><td style="padding:8px 0;text-align:right;font-weight:600;">{{ payment_status }}</td></tr>

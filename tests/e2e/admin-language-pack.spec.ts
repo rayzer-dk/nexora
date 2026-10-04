@@ -13,7 +13,7 @@ test('language packs: texts download as JSON and a broken file is refused with a
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Shared admin session runs once.');
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
   await signIn(page);
-  await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
+  await page.goto('/admin/system/localization#language-packs', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#language-packs')).toBeVisible();
 
   const download = await page.request.get('/admin/system/localization/pack/en-US');
@@ -35,7 +35,7 @@ test('language packs: texts download as JSON and a broken file is refused with a
   };
   await upload('{"cart": "Kurv",');
   await expect(page.locator('.admin-notice.is-error').first()).toBeAttached();
-  await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
+  await page.goto('/admin/system/localization#language-packs', { waitUntil: 'domcontentloaded' });
   await upload(JSON.stringify({ 'no.such.key': 'x' }));
   await expect(page.locator('.admin-notice.is-error').first()).toBeAttached();
   expect((await page.request.get('/admin/system/localization/pack/not_a_locale')).status()).toBe(404);

@@ -168,5 +168,10 @@ return [
     'upgrade.open_admin' => 'Open admin',
     'upgrade.open_store' => 'Open storefront',
     'upgrade.cleanup_hint' => 'For safety you may delete public/upgrade.php after upgrading (a new archive brings it back).',
+    'upgrade.done' => 'Upgrade completed.',
+    'upgrade.stat_version' => 'Version',
+    'upgrade.stat_schema' => 'Database schema',
+    'upgrade.stat_removed' => 'Obsolete files removed',
+    'upgrade.show_log' => 'Show upgrade log',
     'upgrade.secret_missing' => 'Could not read APP_SECRET on the server. Run the upgrade with: php bin/upgrade.php',
 ];

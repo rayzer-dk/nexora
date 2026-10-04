@@ -27,8 +27,8 @@ test('product badges: automatic new badge, custom badge by SKU, delete needs con
   await expect(page.locator('[data-badge-rule="sale"]')).toBeVisible();
   const create = page.locator('section:has(h2) form:has(input[name="kind"][value="manual"])');
   await create.locator('input[name="code"]').fill('e2e-hot');
-  await create.locator('input[name="label_default"]').fill('E2E Hot');
-  await create.locator('select[name="tone"]').selectOption('success');
+  await create.locator('input[name^="label["]').first().fill('E2E Hot');
+  await create.locator('[data-tone-preset="success"]').click();
   await create.locator('input[name="priority"]').fill('-100');
   await create.locator('textarea[name="skus"]').fill(sku);
   await create.locator('button[type="submit"]').click();

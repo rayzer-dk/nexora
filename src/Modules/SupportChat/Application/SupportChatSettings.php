@@ -27,7 +27,7 @@ final readonly class SupportChatSettings
         } catch (\Throwable) {
             $row = false;
         }
-        $empty = ['enabled' => false, 'site_chat_enabled' => true, 'direct_enabled' => true, 'bot_token' => '', 'has_token' => false, 'bot_username' => '', 'group_chat_id' => '', 'webhook_secret' => '', 'welcome_text' => '', 'offline_text' => '', 'seen_chats' => []];
+        $empty = ['enabled' => false, 'site_chat_enabled' => true, 'direct_enabled' => true, 'bot_token' => '', 'has_token' => false, 'bot_username' => '', 'group_chat_id' => '', 'webhook_secret' => '', 'welcome_text' => '', 'offline_text' => '', 'load_delay_seconds' => 3, 'seen_chats' => []];
         if (!is_array($row)) {
             return $empty;
         }
@@ -52,6 +52,7 @@ final readonly class SupportChatSettings
             'webhook_secret' => (string) $row['webhook_secret'],
             'welcome_text' => (string) $row['welcome_text'],
             'offline_text' => (string) $row['offline_text'],
+            'load_delay_seconds' => max(0, min(60, (int) ($row['load_delay_seconds'] ?? 3))),
             'seen_chats' => is_array($seen) ? array_values(array_filter($seen, 'is_array')) : [],
         ];
     }
@@ -103,6 +104,7 @@ final readonly class SupportChatSettings
             'webhook_secret' => $secret,
             'welcome_text' => mb_substr(trim(strip_tags((string) ($input['welcome_text'] ?? ''))), 0, 500),
             'offline_text' => mb_substr(trim(strip_tags((string) ($input['offline_text'] ?? ''))), 0, 500),
+            'load_delay_seconds' => max(0, min(60, (int) ($input['load_delay_seconds'] ?? $current['load_delay_seconds']))),
             'seen_chats' => json_encode($current['seen_chats'], JSON_THROW_ON_ERROR),
             'updated_at' => gmdate('Y-m-d H:i:s'),
         ];

@@ -17,9 +17,11 @@
       {% include '@storefront/home/blocks/hero.html.twig' %}
     {% elseif layout_block.component == 'category_grid' %}
       {% include '@storefront/home/blocks/categories.html.twig' %}
-      {% if presentation.home.show_benefits and benefits %}
-      <section class="shell reference-benefits" aria-label="{{ ui_text('benefits') }}">
-      {% for benefit in benefits %}<article><span class="reference-benefits__icon" aria-hidden="true">{{ ui_icon(benefit.icon, 24) }}</span><div><strong>{{ benefit.title }}</strong><small>{{ benefit.text }}</small></div></article>{% endfor %}
+      {% set own_benefits = presentation.benefits.items|default([]) %}{% set benefit_cards = own_benefits ? own_benefits : benefits %}
+      {% if presentation.home.show_benefits and benefit_cards %}
+      {% set bd = presentation.benefits.devices|default({}) %}
+      <section class="shell reference-benefits{{ bd.desktop is same as(false) ? ' vis-hide-desktop' : '' }}{{ bd.tablet is same as(false) ? ' vis-hide-tablet' : '' }}{{ bd.mobile is same as(false) ? ' vis-hide-mobile' : '' }}"{% if presentation.benefits.mobile_limit|default('0') != '0' %} data-mobile-limit="{{ presentation.benefits.mobile_limit }}"{% endif %} aria-label="{{ ui_text('benefits') }}">
+      {% for benefit in benefit_cards %}<article><span class="reference-benefits__icon" aria-hidden="true">{{ ui_icon(benefit.icon, 24) }}</span><div><strong>{{ benefit.title }}</strong><small>{{ benefit.text }}</small></div></article>{% endfor %}
       </section>
       {% endif %}
       {% if demo_showcase and site_features.catalog|default(false) %}

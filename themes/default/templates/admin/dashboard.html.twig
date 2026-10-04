@@ -15,6 +15,14 @@
 
 {% if onboarding.done < onboarding.total %}<a class="onboarding-card" href="{{ path('admin_onboarding') }}"><span class="onboarding-card__text"><strong>{{ ui_text('admin.onboarding.card') }}</strong><small>{{ onboarding.done }} / {{ onboarding.total }}</small></span><progress class="onboarding-bar" max="{{ onboarding.total }}" value="{{ onboarding.done }}"></progress>{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
 {% if catalog_quality and catalog_quality.total > 0 and catalog_quality.clean < catalog_quality.total %}<a class="onboarding-card catalog-quality-card" href="{{ path('admin_catalog_quality') }}"><span class="onboarding-card__text"><strong>{{ ui_text('admin.catalog_quality.card') }} · {{ catalog_quality.score }}%</strong><small>{{ ui_text('admin.catalog_quality.card_hint', {count: catalog_quality.total - catalog_quality.clean}) }}</small></span><progress class="onboarding-bar" max="100" value="{{ catalog_quality.score }}"></progress>{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
+<section class="admin-quick-grid">
+<a class="admin-quick-card" href="/admin/catalog/products/new"><span class="admin-quick-icon">{{ ui_icon('plus', 20) }}</span><strong>{{ ui_text('admin_new_product') }}</strong><small>{{ ui_text('admin_create_product') }}</small></a>
+<a class="admin-quick-card" href="/admin/catalog/merchandising"><span class="admin-quick-icon">{{ ui_icon('arrow-up-down', 20) }}</span><strong>{{ ui_text('admin_merchandising') }}</strong><small>{{ ui_text('admin_product_ordering') }}</small></a>
+<a class="admin-quick-card" href="/admin/appearance/editor"><span class="admin-quick-icon">{{ ui_icon('monitor', 20) }}</span><strong>{{ ui_text('ui.admin.dashboard.visual_store_editor') }}</strong><small>{{ ui_text('admin_visual_editor_hint') }}</small></a>
+<a class="admin-quick-card" href="{{ path('admin_automation') }}"><span class="admin-quick-icon">{{ ui_icon('zap', 20) }}</span><strong>{{ ui_text('admin.automation.title') }}</strong><small>{{ ui_text('admin.dashboard.automation_hint') }}</small></a>
+<a class="admin-quick-card" href="/admin/system/cron"><span class="admin-quick-icon">{{ ui_icon('clock', 20) }}</span><strong>{{ ui_text('ui.admin.dashboard.cron') }}</strong><small>{{ ui_text('admin_cron_state') }}</small></a>
+<a class="admin-quick-card" href="/admin/system/stability"><span class="admin-quick-icon">{{ ui_icon('heart-pulse', 20) }}</span><strong>{{ ui_text('admin_stability') }}</strong><small>{{ ui_text('admin_backup_health_recovery') }}</small></a>
+</section>
 <section class="dash-kpis" aria-label="{{ ui_text('admin.dashboard.kpi_title') }}">
 {% for k in report.kpis %}
   <article class="dash-kpi">
@@ -115,14 +123,6 @@
     {% if report.inquiries %}<ul class="dash-rank">{% for q in report.inquiries %}<li><span>{{ q.customer_name }}<small>{{ inquiry_types[q.inquiry_type]|default(q.inquiry_type) }}{% if q.phone %} · {{ q.phone }}{% endif %} · {{ q.created_at|slice(0,16) }}</small></span>{% if q.inquiry_type == 'quick_order' %}<a class="admin-button" href="{{ path('admin_orders_manual',{inquiry:q.id}) }}">{{ ui_text('admin.dashboard.to_order') }}</a>{% endif %}</li>{% endfor %}</ul>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.no_inquiries') }}</p>{% endif %}</section>
 </div>
 
-<section class="admin-quick-grid">
-<a class="admin-quick-card" href="/admin/catalog/products/new"><span class="admin-quick-icon">{{ ui_icon('plus', 20) }}</span><strong>{{ ui_text('admin_new_product') }}</strong><small>{{ ui_text('admin_create_product') }}</small></a>
-<a class="admin-quick-card" href="/admin/catalog/merchandising"><span class="admin-quick-icon">{{ ui_icon('arrow-up-down', 20) }}</span><strong>{{ ui_text('admin_merchandising') }}</strong><small>{{ ui_text('admin_product_ordering') }}</small></a>
-<a class="admin-quick-card" href="/admin/appearance/editor"><span class="admin-quick-icon">{{ ui_icon('monitor', 20) }}</span><strong>{{ ui_text('ui.admin.dashboard.visual_store_editor') }}</strong><small>{{ ui_text('admin_visual_editor_hint') }}</small></a>
-<a class="admin-quick-card" href="{{ path('admin_automation') }}"><span class="admin-quick-icon">{{ ui_icon('zap', 20) }}</span><strong>{{ ui_text('admin.automation.title') }}</strong><small>{{ ui_text('admin.dashboard.automation_hint') }}</small></a>
-<a class="admin-quick-card" href="/admin/system/cron"><span class="admin-quick-icon">{{ ui_icon('clock', 20) }}</span><strong>{{ ui_text('ui.admin.dashboard.cron') }}</strong><small>{{ ui_text('admin_cron_state') }}</small></a>
-<a class="admin-quick-card" href="/admin/system/stability"><span class="admin-quick-icon">{{ ui_icon('heart-pulse', 20) }}</span><strong>{{ ui_text('admin_stability') }}</strong><small>{{ ui_text('admin_backup_health_recovery') }}</small></a>
-</section>
 {% if counts.products < 1 or counts.orders < 1 %}
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin_first_run') }}</small><h2>{{ ui_text('admin_short_checklist') }}</h2></div></div><div class="admin-onboarding-grid"><a href="/admin/system/store">{{ ui_text('admin_check_company') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/admin/appearance/editor">{{ ui_text('admin_check_storefront') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/admin/catalog/products">{{ ui_text('admin_check_products') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/admin/commerce/notifications">{{ ui_text('admin_check_notifications') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/admin/commerce/feeds">{{ ui_text('admin_check_feeds') }}{{ ui_icon('chevron-right', 16) }}</a><a href="/" target="_blank" rel="noopener">{{ ui_text('admin_check_store') }}{{ ui_icon('external-link', 16) }}</a></div></section>
 {% endif %}
