@@ -27,6 +27,7 @@ final readonly class ProductWriter
         private HtmlSanitizerInterface $richTextSanitizer,
         private EventBusInterface $events,
         private DomainEventFactory $eventFactory,
+        private \Commerce\Modules\Localization\Application\TranslationFallbackFiller $fallbackTexts,
     ) {
     }
 
@@ -114,7 +115,58 @@ final readonly class ProductWriter
                 ['source' => 'catalog'],
             ));
 
+            $this->fallbackTexts->fillProduct($db, $command->storeId, $productId);
             return ['id' => $productId, 'variant_id' => $variantId, 'public_id' => $uuid->toRfc4122(), 'url' => '/' . ltrim($route->path, '/'), 'status' => 'draft'];
+        });
+    }
+
+    /**
+     * Switches a product between physical and digital. A digital product has no stock; a product that becomes physical gets an
+     * inventory item and a stock row (quantity 0) at the first location of the market, so it can be edited and sold as usual.
+     */
+    public function changeType(int $storeId, int $marketId, int $productId, string $type): void
+    {
+        if (!in_array($type, ['physical', 'digital'], true)) {
+            throw new \InvalidArgumentException('product_type');
+        }
+        $this->connection->transactional(function (Connection $db) use ($storeId, $marketId, $productId, $type): void {
+            $product = $db->fetchAssociative('SELECT p.id,p.product_type FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? WHERE p.id=? FOR UPDATE', [$storeId, $productId]);
+            if (!is_array($product) || (string) $product['product_type'] === $type) {
+                return;
+            }
+            $now = $this->now();
+            $db->update('mc_product', ['product_type' => $type, 'updated_at' => $now], ['id' => $productId]);
+            $variants = $db->fetchAllAssociative('SELECT id,sku,sale_unit_code FROM mc_product_variant WHERE product_id=?', [$productId]);
+            if ($type === 'digital') {
+                $db->executeStatement('UPDATE mc_product_variant SET manage_inventory=0,updated_at=? WHERE product_id=?', [$now, $productId]);
+
+                return;
+            }
+            $locationId = $db->fetchOne(
+                'SELECT mil.location_id FROM mc_market_inventory_location mil JOIN mc_inventory_location l ON l.id=mil.location_id AND l.status=? WHERE mil.market_id=? ORDER BY mil.priority ASC,mil.location_id ASC LIMIT 1',
+                ['active', $marketId],
+            );
+            if ($locationId === false) {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.1cfeecea05f2'));
+            }
+            foreach ($variants as $variant) {
+                $db->executeStatement('UPDATE mc_product_variant SET manage_inventory=1,updated_at=? WHERE id=?', [$now, (int) $variant['id']]);
+                $itemId = $db->fetchOne('SELECT inventory_item_id FROM mc_variant_inventory_item WHERE variant_id=? ORDER BY inventory_item_id LIMIT 1', [(int) $variant['id']]);
+                if ($itemId === false) {
+                    $db->insert('mc_inventory_item', [
+                        'public_id' => $this->publicIds->generate()->toBinary(), 'sku' => (string) $variant['sku'], 'unit_code' => (string) $variant['sale_unit_code'],
+                        'requires_shipping' => 1, 'created_at' => $now, 'updated_at' => $now,
+                    ]);
+                    $itemId = (int) $db->lastInsertId();
+                    $db->insert('mc_variant_inventory_item', ['variant_id' => (int) $variant['id'], 'inventory_item_id' => $itemId, 'required_quantity' => '1.000000']);
+                }
+                if ((int) $db->fetchOne('SELECT COUNT(*) FROM mc_stock_level WHERE inventory_item_id=? AND location_id=?', [(int) $itemId, (int) $locationId]) === 0) {
+                    $db->insert('mc_stock_level', [
+                        'inventory_item_id' => (int) $itemId, 'location_id' => (int) $locationId, 'stocked_quantity' => '0.000000',
+                        'reserved_quantity' => '0.000000', 'incoming_quantity' => '0.000000', 'safety_stock' => '0.000000', 'row_version' => 1, 'updated_at' => $now,
+                    ]);
+                }
+            }
         });
     }
 
@@ -139,6 +191,7 @@ final readonly class ProductWriter
             $db->update('mc_store_product', ['status' => $publicationStatus, 'published_at' => $publishedAt], ['store_id' => $command->storeId, 'product_id' => $command->productId]);
             $db->update('mc_market_product', ['status' => $publicationStatus, 'published_at' => $publishedAt], ['market_id' => $command->marketId, 'product_id' => $command->productId]);
             $translation = [
+                'is_fallback' => 0,
                 'name' => trim($command->name),
                 'short_description' => $this->plainText($command->shortDescription),
                 'description' => $this->richText($command->description),
@@ -241,6 +294,7 @@ final readonly class ProductWriter
                 ['source' => 'catalog'],
             ));
 
+            $this->fallbackTexts->fillProduct($db, $command->storeId, $command->productId);
             return ['id' => $command->productId, 'variant_id' => $variantId, 'public_id' => $publicId, 'url' => '/' . ltrim($route->path, '/'), 'status' => $command->status];
         });
     }

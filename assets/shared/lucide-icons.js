@@ -16,6 +16,8 @@ export function lucideIcon(name, size = 20, className = '') {
 export function lucideIconNode(name, size = 20, className = '') {
   const markup = lucideIcon(name, size, className);
   if (!markup) return document.createComment('');
-  const parsed = new DOMParser().parseFromString(markup, 'image/svg+xml').documentElement;
+  // The XML parser only creates SVG-namespaced elements when the namespace is declared; without it the node is an inert
+  // unknown element (zero size, no stroke) and the icon is invisible.
+  const parsed = new DOMParser().parseFromString(markup.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '), 'image/svg+xml').documentElement;
   return document.importNode(parsed, true);
 }

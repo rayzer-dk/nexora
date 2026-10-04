@@ -13,6 +13,7 @@ use Commerce\Modules\Catalog\Application\Command\UpdateProductCommand;
 use Commerce\Modules\Catalog\Application\ProductWriter;
 use Commerce\Modules\Appearance\Application\StorefrontPresentationWriterInterface;
 use Commerce\Modules\Content\Application\BlogService;
+use Commerce\Modules\Pricing\Application\CurrencyPriceSynchronizer;
 use Commerce\Modules\Seo\Application\SeoUrlManager;
 use Commerce\Modules\Seo\Domain\SeoEntityType;
 use DateTimeImmutable;
@@ -32,6 +33,7 @@ final readonly class DemoSeeder
         private BlogService $blog,
         private DemoCommerceSeeder $commerce,
         private CatalogTranslationService $translations,
+        private CurrencyPriceSynchronizer $currencyPrices,
         private string $projectDir,
     ) {
     }
@@ -210,6 +212,7 @@ final readonly class DemoSeeder
                 }
             }
 
+            $this->enableDemoCurrencies($db, $ctx);
             $reviewCount += $this->translateCatalog($db, $ctx, $categoryIds, $productIds, $brands, $catalog['products'], $now);
 
             for ($i = 0; $i < count($productIds) - 1; $i++) {
@@ -235,10 +238,14 @@ final readonly class DemoSeeder
             $this->seedPromotionDemo($db, $ctx['store_id'], $now);
             $this->seedForumDemo($db, $ctx['store_id'], $now);
             $commerce = $this->commerce->install($db, $ctx, $productIds);
-            $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name']), 'demo:seed');
+            $promoTitles = [];
+            foreach (array_merge([$ctx['locale']], $this->extraLocales($db, $ctx['store_id'], $ctx['locale'])) as $promoLocale) {
+                $promoTitles[$promoLocale] = (string) ($this->loadDemoCatalog($promoLocale, $ctx['currency'])['categories'][2]['name'] ?? '');
+            }
+            $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name'], array_filter($promoTitles)), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.45.2',
+                'version' => '3.46.0',
                 'catalog_source' => 'DummyJSON',
             ]);
 
@@ -456,6 +463,38 @@ final readonly class DemoSeeder
         }
     }
 
+
+    /**
+     * The demo shop offers US dollars and euros next to the store currency, so the currency switcher can be tried at once.
+     * The rates are fixed demonstration values (rate source "manual"); a real store picks an official source in
+     * Admin → System → Localization.
+     */
+    private function enableDemoCurrencies(Connection $db, array $ctx): void
+    {
+        $base = strtoupper((string) $ctx['currency']);
+        $baseRate = \Commerce\Core\Install\RegionCatalog::demoRatePerUsd($base);
+        if ($baseRate <= 0) {
+            return;
+        }
+        $now = $this->now();
+        foreach (['USD', 'EUR'] as $index => $quote) {
+            $quoteRate = \Commerce\Core\Install\RegionCatalog::demoRatePerUsd($quote);
+            if ($quote === $base || $quoteRate <= 0 || (int) $db->fetchOne('SELECT COUNT(*) FROM mc_currency WHERE code=?', [$quote]) === 0) {
+                continue;
+            }
+            $db->executeStatement(
+                "INSERT INTO mc_store_currency (store_id,currency_code,enabled,is_default,auto_convert,rate_source,rate_markup_bps,rounding_increment_minor,sort_order) VALUES (?,?,1,0,1,'manual',0,1,?)
+                 ON DUPLICATE KEY UPDATE enabled=1,auto_convert=1,rate_source='manual'",
+                [$ctx['store_id'], $quote, 20 + $index * 10],
+            );
+            $db->executeStatement(
+                "INSERT INTO mc_exchange_rate (base_currency,quote_currency,rate,provider,observed_at,expires_at,created_at) VALUES (?,?,?,'manual',?,NULL,?)
+                 ON DUPLICATE KEY UPDATE rate=VALUES(rate),expires_at=NULL",
+                [$base, $quote, sprintf('%.12F', $quoteRate / $baseRate), $now, $now],
+            );
+        }
+        $this->currencyPrices->sync($ctx['store_id'], true);
+    }
 
     /** @return list<string> the demo languages other than the store default that are enabled on the store */
     private function extraLocales(Connection $db, int $storeId, string $default): array
@@ -737,17 +776,59 @@ final readonly class DemoSeeder
     }
 
     /** @return array<string,mixed> */
-    private function demoPresentation(array $catalog, string $storeName): array
+    /**
+     * The texts of the demo home page, in every demo language at once (the shop then shows the language of the visitor).
+     *
+     * @param array{categories:list<array<string,mixed>>,products:list<array<string,mixed>>} $catalog
+     * @param array<string,string> $promoRightTitles locale => title of the second promo (a category name)
+     * @return array<string,mixed>
+     */
+    private function demoPresentation(array $catalog, string $storeName, array $promoRightTitles = []): array
     {
+        $restore = in_array(substr((string) ($this->context()['locale'] ?? ''), 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US';
+        $t = function (string $key, string $ru) use ($restore): array {
+            $out = [];
+            foreach (['uk-UA', 'en-US'] as $locale) {
+                \Commerce\Core\I18n\CanonicalUiText::useLocale($locale);
+                $out[$locale] = \Commerce\Core\I18n\CanonicalUiText::get($key);
+            }
+            \Commerce\Core\I18n\CanonicalUiText::useLocale($restore);
+            $out['ru-RU'] = $ru;
+
+            return $out;
+        };
+
         return [
-            'utility'=>['location'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.ukraina'),'delivery'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.bezkoshtovna_dostavka_vid_2_000'),'support'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.pidtrymka_shchodnia')],
-            'brand'=>['title'=>$storeName,'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.demo_vitryna_modern_commerce'),'icon'=>''],
-            'theme'=>['primary'=>'#0B63F6','accent'=>'#FF7A1A','success'=>'#0F7A4B'],
-            'header'=>['search_placeholder'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.poshuk_tovariv_brendiv_abo_katehorii'),'show_category_nav'=>true],
-            'home'=>['show_benefits'=>true,'show_categories'=>true,'show_products'=>true,'show_promos'=>true,'show_articles'=>true],
-            'hero'=>['eyebrow'=>'Nexora Commerce','title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.hotovyi_suchasnyi_mahazyn'),'subtitle'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.kataloh_checkout_kontent_i_marketynh_v_odnii_systemi'),'text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.demonstratsiina_vitryna_vstanovliuietsia_razom_iz_sy'),'image'=>'/media/'.($catalog['products'][0]['image'] ?? 'demo/laptop-pro-14.webp'),'button_label'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.pereity_do_katalohu'),'button_url'=>'/catalog'],
-            'promo_left'=>['title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.smartfony_ta_hadzhety'),'text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.demo_tovary_z_tsinamy_zalyshkamy_ta_vidhukamy'),'image'=>'/media/'.($catalog['products'][3]['image'] ?? 'demo/smartphone-neo-x1.webp'),'url'=>'/smartphones'],
-            'promo_right'=>['title'=>($catalog['categories'][2]['name'] ?? 'Audio & Smart Home'),'text'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoseeder.katehorii_aktsii_ta_kontentni_bloky'),'image'=>'/media/'.($catalog['products'][8]['image'] ?? 'demo/headphones-airbeat.webp'),'url'=>'/audio-smart-home'],
+            'utility' => [
+                'location' => $t('php.modules.demo.application.demoseeder.ukraina', 'Украина'),
+                'delivery' => $t('php.modules.demo.application.demoseeder.bezkoshtovna_dostavka_vid_2_000', 'Бесплатная доставка от 2 000 ₴'),
+                'support' => $t('php.modules.demo.application.demoseeder.pidtrymka_shchodnia', 'Поддержка ежедневно'),
+            ],
+            'brand' => ['title' => $storeName, 'subtitle' => $t('php.modules.demo.application.demoshowcasequery.demo_vitryna_modern_commerce', 'Демо-витрина Nexora Commerce'), 'icon' => ''],
+            'theme' => ['primary' => '#0B63F6', 'accent' => '#FF7A1A', 'success' => '#0F7A4B'],
+            'header' => ['search_placeholder' => $t('php.modules.demo.application.demoseeder.poshuk_tovariv_brendiv_abo_katehorii', 'Поиск товаров, брендов или категорий…'), 'show_category_nav' => true],
+            'home' => ['show_benefits' => true, 'show_categories' => true, 'show_products' => true, 'show_promos' => true, 'show_articles' => true],
+            'hero' => [
+                'eyebrow' => 'Nexora Commerce',
+                'title' => $t('php.modules.demo.application.demoseeder.hotovyi_suchasnyi_mahazyn', 'Готовый современный магазин'),
+                'subtitle' => $t('php.modules.demo.application.demoseeder.kataloh_checkout_kontent_i_marketynh_v_odnii_systemi', 'Каталог, оформление заказа, контент и маркетинг в одной системе'),
+                'text' => $t('php.modules.demo.application.demoseeder.demonstratsiina_vitryna_vstanovliuietsia_razom_iz_sy', 'Демонстрационная витрина устанавливается вместе с системой и показывает реальные сценарии покупки.'),
+                'image' => '/media/' . ($catalog['products'][0]['image'] ?? 'demo/laptop-pro-14.webp'),
+                'button_label' => $t('php.modules.demo.application.demoseeder.pereity_do_katalohu', 'Перейти в каталог'),
+                'button_url' => '/catalog',
+            ],
+            'promo_left' => [
+                'title' => $t('php.modules.demo.application.demoshowcasequery.smartfony_ta_hadzhety', 'Смартфоны и гаджеты'),
+                'text' => $t('php.modules.demo.application.demoseeder.demo_tovary_z_tsinamy_zalyshkamy_ta_vidhukamy', 'Демо-товары с ценами, остатками и отзывами'),
+                'image' => '/media/' . ($catalog['products'][3]['image'] ?? 'demo/smartphone-neo-x1.webp'),
+                'url' => '/smartphones',
+            ],
+            'promo_right' => [
+                'title' => $promoRightTitles !== [] ? $promoRightTitles : ($catalog['categories'][2]['name'] ?? 'Audio & Smart Home'),
+                'text' => $t('php.modules.demo.application.demoseeder.katehorii_aktsii_ta_kontentni_bloky', 'Категории, акции и контентные блоки'),
+                'image' => '/media/' . ($catalog['products'][8]['image'] ?? 'demo/headphones-airbeat.webp'),
+                'url' => '/audio-smart-home',
+            ],
         ];
     }
 

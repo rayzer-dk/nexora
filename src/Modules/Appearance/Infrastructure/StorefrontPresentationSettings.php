@@ -12,6 +12,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
     public function __construct(
         private ConfigurationRevisionStore $revisions,
         private ThemePresetCatalog $presets,
+        private \Symfony\Component\HttpFoundation\RequestStack $requests,
     )
     {
     }
@@ -22,9 +23,44 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $defaults = self::defaults();
 
         $revision = $this->revisions->latestValidPayload($storeId, 'appearance', 'storefront_presentation');
-        return is_array($revision)
+        return $this->localize(is_array($revision)
             ? $this->normalize(array_replace_recursive($defaults, $revision))
-            : $defaults;
+            : $defaults);
+    }
+
+    /**
+     * A text can be stored as a map language => text (the demo does this, so the shop is complete in every language);
+     * the visitor gets the text of the current language. A plain string, saved by the admin form, is used as it is.
+     *
+     * @param array<string,mixed> $data
+     * @return array<string,mixed>
+     */
+    private function localize(array $data): array
+    {
+        $locale = (string) ($this->requests->getCurrentRequest()?->getLocale() ?? '');
+        foreach ($data as $key => $value) {
+            if (!is_array($value)) {
+                continue;
+            }
+            $isMap = $value !== [] && array_reduce(array_keys($value), static fn (bool $all, mixed $k): bool => $all && is_string($k) && preg_match('/^[a-z]{2,3}(?:-[A-Z]{2})?$/D', $k) === 1, true);
+            if (!$isMap) {
+                $data[$key] = $this->localize($value);
+                continue;
+            }
+            $language = substr($locale, 0, 2);
+            $picked = $value[$locale] ?? null;
+            if ($picked === null) {
+                foreach ($value as $code => $text) {
+                    if (str_starts_with((string) $code, $language)) {
+                        $picked = $text;
+                        break;
+                    }
+                }
+            }
+            $data[$key] = (string) ($picked ?? (string) reset($value));
+        }
+
+        return $data;
     }
 
     /** @param array<string,mixed> $settings */
@@ -80,7 +116,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'density' => 'comfortable',
                 'color_scheme' => 'light',
                 'toggle' => '1',
-                'container' => '1408',
+                'container' => '1600',
                 'font' => 'system',
             ],
             // Blog: which blocks the list and the article show.
@@ -161,7 +197,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $shadow=(string)($input['theme']['shadow']??$defaults['theme']['shadow']); $out['theme']['shadow']=in_array($shadow,['none','soft','medium','strong'],true)?$shadow:$defaults['theme']['shadow'];
         $density=(string)($input['theme']['density']??$defaults['theme']['density']); $out['theme']['density']=in_array($density,['compact','comfortable','spacious'],true)?$density:$defaults['theme']['density'];
         $scheme=(string)($input['theme']['color_scheme']??$defaults['theme']['color_scheme']); $out['theme']['color_scheme']=in_array($scheme,['light','auto','dark'],true)?$scheme:$defaults['theme']['color_scheme'];$out['theme']['toggle']=(string)($input['theme']['toggle']??$defaults['theme']['toggle'])==='0'?'0':'1';
-        $container=(int)($input['theme']['container']??$defaults['theme']['container']); $out['theme']['container']=(string)max(960,min(1680,$container));
+        $container=(int)($input['theme']['container']??$defaults['theme']['container']); $out['theme']['container']=(string)max(960,min(1920,$container));
         $font=(string)($input['theme']['font']??$defaults['theme']['font']); $out['theme']['font']=in_array($font,['system','inter','manrope'],true)?$font:$defaults['theme']['font'];
         $bl = is_array($input['blog'] ?? null) ? $input['blog'] : [];
         foreach (['index', 'article'] as $group) {
@@ -240,8 +276,19 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         return preg_match('/^#[0-9A-F]{6}$/D', $value) === 1 ? $value : $fallback;
     }
 
-    private function text(mixed $value, int $max): string
+    /** @return string|array<string,string> a text, or a map language => text */
+    private function text(mixed $value, int $max): string|array
     {
+        if (is_array($value)) {
+            $map = [];
+            foreach ($value as $code => $text) {
+                if (is_string($code) && preg_match('/^[a-z]{2,3}(?:-[A-Z]{2})?$/D', $code) === 1) {
+                    $map[$code] = mb_substr(trim(strip_tags((string) $text)), 0, $max, 'UTF-8');
+                }
+            }
+
+            return $map;
+        }
         $value = trim(strip_tags((string) $value));
         return mb_substr($value, 0, $max, 'UTF-8');
     }

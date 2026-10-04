@@ -2,6 +2,19 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.46.0 — 2026-10-04
+
+Admin and storefront usability release.
+
+- Product form: the product type (physical / digital) is selectable and can be changed on an existing product.
+- Product list: symmetric filter toolbar, wider multi-select panel, quick-action button labelled consistently.
+- Rich text editor: compact one-row toolbar with a "more" menu, recently used colours as small swatches; the HTML editor offers 12 colour themes.
+- Categories: one description instead of two texts, with a global setting that shows it above or below the product grid.
+- Storefront: wider default container (1600 px, up to 1920 px selectable), product photos keep their colours in the dark theme, demo installs USD and EUR so the currency switcher is visible, the forum link is shown by default (hybrid profile).
+- Languages: texts missing in a store language are copied from the default language (flagged as fallback) instead of leaving blocks and categories empty; presentation texts can be stored per language.
+- Admin: new "Logs and errors" page (view, filter, download and clear `var/log`), icons rendered through `lucideIconNode` are visible again.
+- Installer: `setup.php` on an installed system redirects to `upgrade.php`, so a full release can be unpacked over an existing installation.
+
 ## 3.45.2 — 2026-10-04
 
 Repository clean-up (no product changes).

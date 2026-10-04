@@ -89,7 +89,7 @@ final readonly class CatalogTranslationService
         $this->db->transactional(function (Connection $db) use ($storeId, $productId, $locale, $data, $now, $publicId): void {
             $exists = (int) $db->fetchOne('SELECT COUNT(*) FROM mc_product_translation WHERE product_id=? AND store_id=? AND locale=?', [$productId, $storeId, $locale]) > 0;
             if ($exists) {
-                $db->update('mc_product_translation', $data + ['updated_at' => $now], ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale]);
+                $db->update('mc_product_translation', $data + ['updated_at' => $now, 'is_fallback' => 0], ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale]);
             } else {
                 $db->insert('mc_product_translation', $data + ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale, 'slug' => null, 'created_at' => $now, 'updated_at' => $now]);
             }
@@ -110,7 +110,7 @@ final readonly class CatalogTranslationService
         $this->db->transactional(function (Connection $db) use ($storeId, $categoryId, $locale, $data, $publicId): void {
             $exists = (int) $db->fetchOne('SELECT COUNT(*) FROM mc_category_translation WHERE category_id=? AND store_id=? AND locale=?', [$categoryId, $storeId, $locale]) > 0;
             if ($exists) {
-                $db->update('mc_category_translation', $data, ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale]);
+                $db->update('mc_category_translation', $data + ['is_fallback' => 0], ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale]);
             } else {
                 $db->insert('mc_category_translation', $data + ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale, 'slug' => null]);
             }

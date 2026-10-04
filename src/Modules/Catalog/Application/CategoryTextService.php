@@ -16,6 +16,7 @@ final readonly class CategoryTextService
 {
     public function __construct(
         private Connection $db,
+        private \Commerce\Modules\Localization\Application\TranslationFallbackFiller $fallbackTexts,
         #[Autowire(service: 'html_sanitizer.sanitizer.commerce.rich_text')] private HtmlSanitizerInterface $sanitizer,
     ) {
     }
@@ -23,9 +24,10 @@ final readonly class CategoryTextService
     public function save(int $categoryId, int $storeId, string $locale, string $top, string $bottom): void
     {
         $this->db->executeStatement(
-            'UPDATE mc_category_translation SET description=?,description_bottom=? WHERE category_id=? AND store_id=? AND locale=?',
+            'UPDATE mc_category_translation SET description=?,description_bottom=?,is_fallback=0 WHERE category_id=? AND store_id=? AND locale=?',
             [$this->clean($top), $this->clean($bottom), $categoryId, $storeId, $locale],
         );
+        $this->fallbackTexts->fillCategory($this->db, $storeId, $categoryId);
     }
 
     private function clean(string $html): ?string

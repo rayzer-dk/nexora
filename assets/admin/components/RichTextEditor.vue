@@ -13,12 +13,13 @@ import { TextStyleKit } from '@tiptap/extension-text-style';
 import {
   Bold, Italic, Underline, Strikethrough, Subscript as SubIcon, Superscript as SupIcon, Highlighter, List, ListOrdered, Quote, Minus, Table2,
   ImagePlus, Link2, Unlink, RemoveFormatting, Code, Undo2, Redo2, Maximize2, Minimize2, X, FolderOpen,
-  Palette, PaintBucket, Anchor as AnchorIcon, Video as VideoIcon,
+  Palette, PaintBucket, Anchor as AnchorIcon, Video as VideoIcon, Ellipsis, ChevronDown,
   TextAlignStart, TextAlignCenter, TextAlignEnd, TextAlignJustify, Rows3, Columns3, Trash2,
 } from '@lucide/vue';
 import { BlockAlign } from '../features/editor-align';
 import { BlockAnchor, Video, videoEmbedUrl } from '../features/editor-extras';
 import { pickMedia } from '../features/media-picker';
+import { CODE_THEME_LABELS } from '../features/html-code-editor';
 import type { CodeThemeName, HtmlCodeEditor } from '../features/html-code-editor';
 
 const props = withDefaults(defineProps<{ modelValue: string; placeholder?: string }>(), { placeholder: t('vue.components.richtexteditor.pochnit_vvodyty_tekst') });
@@ -182,8 +183,8 @@ const LINE_HEIGHTS = ['1', '1.15', '1.3', '1.5', '1.8', '2'];
 const textStyle = (name: string): string => String((editor.getAttributes('textStyle') as Record<string, unknown>)[name] ?? '');
 const fontValue = (): string => textStyle('fontFamily').replace(/["']/g, '').split(',')[0]?.trim() ?? '';
 const normalizeHex = (value: string): string => (/^#[0-9a-fA-F]{6}$/.test(value) ? value : '#000000');
-const setColor = (event: Event) => { editor.chain().focus().setColor((event.target as HTMLInputElement).value).run(); };
-const setBackground = (event: Event) => { editor.chain().focus().setBackgroundColor((event.target as HTMLInputElement).value).run(); };
+const setColor = (event: Event) => { const value = (event.target as HTMLInputElement).value; editor.chain().focus().setColor(value).run(); rememberColor('text', value); };
+const setBackground = (event: Event) => { const value = (event.target as HTMLInputElement).value; editor.chain().focus().setBackgroundColor(value).run(); rememberColor('bg', value); };
 const clearColors = () => { editor.chain().focus().unsetColor().unsetBackgroundColor().run(); };
 const setFont = (event: Event) => {
   const value = (event.target as HTMLSelectElement).value;
@@ -240,6 +241,38 @@ const insertVideo = () => {
   videoDialog.open = false;
 };
 
+
+// ---- compact toolbar: rarely used tools live in the "more" menu ----
+const moreOpen = ref(false);
+const colorMenu = ref<'' | 'text' | 'bg'>('');
+const closeMenus = (event: Event) => {
+  if (!(event.target instanceof Element) || !event.target.closest('.rich-editor__menu-host')) { moreOpen.value = false; colorMenu.value = ''; }
+};
+onMounted(() => document.addEventListener('mousedown', closeMenus));
+onBeforeUnmount(() => document.removeEventListener('mousedown', closeMenus));
+
+// ---- recently used colours (kept in this browser only) ----
+const RECENT_KEY = 'mc_editor_recent_colors';
+const loadRecent = (): { text: string[]; bg: string[] } => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '{}') as { text?: unknown; bg?: unknown };
+    const clean = (list: unknown): string[] => (Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string' && /^#[0-9a-fA-F]{6}$/.test(item)).slice(0, 12) : []);
+    return { text: clean(parsed.text), bg: clean(parsed.bg) };
+  } catch { return { text: [], bg: [] }; }
+};
+const recentColors = reactive(loadRecent());
+const rememberColor = (kind: 'text' | 'bg', value: string) => {
+  const color = value.toLowerCase();
+  recentColors[kind] = [color, ...recentColors[kind].filter((item) => item !== color)].slice(0, 12);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify({ text: recentColors.text, bg: recentColors.bg })); } catch { /* storage blocked: the list lives for this page only */ }
+};
+const applyRecent = (kind: 'text' | 'bg', color: string) => {
+  if (kind === 'text') editor.chain().focus().setColor(color).run();
+  else editor.chain().focus().setBackgroundColor(color).run();
+  rememberColor(kind, color);
+  colorMenu.value = '';
+};
+
 const insertTable = () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
 const words = (): number => {
   const text = editor.getText().trim();
@@ -267,45 +300,64 @@ const words = (): number => {
         <option v-for="font in FONTS" :key="font" :value="font">{{ font }}</option>
       </select>
       <select class="rich-editor__select rich-editor__select--narrow" :aria-label="tr('font_size')" :title="tr('font_size')" :disabled="sourceMode" :value="textStyle('fontSize').replace('px', '')" @change="setSize">
-        <option value="">{{ tr('font_size') }}</option>
+        <option value="">Aa</option>
         <option v-for="size in SIZES" :key="size" :value="String(size)">{{ size }}</option>
       </select>
-      <select class="rich-editor__select rich-editor__select--narrow" :aria-label="tr('line_height')" :title="tr('line_height')" :disabled="sourceMode" :value="textStyle('lineHeight')" @change="setLineHeight">
-        <option value="">{{ tr('line_height') }}</option>
-        <option v-for="height in LINE_HEIGHTS" :key="height" :value="height">{{ height }}</option>
-      </select>
-      <label class="rich-editor__color" :title="tr('text_color')"><Palette :size="16" /><input type="color" :aria-label="tr('text_color')" :disabled="sourceMode" :value="normalizeHex(textStyle('color'))" @input="setColor"></label>
-      <label class="rich-editor__color" :title="tr('bg_color')"><PaintBucket :size="16" /><input type="color" :aria-label="tr('bg_color')" :disabled="sourceMode" :value="normalizeHex(textStyle('backgroundColor') || '#ffff00')" @input="setBackground"></label>
+      <span class="rich-editor__menu-host rich-editor__colorgroup">
+        <label class="rich-editor__color" :title="tr('text_color')"><Palette :size="16" /><input type="color" :aria-label="tr('text_color')" :disabled="sourceMode" :value="normalizeHex(textStyle('color'))" @change="setColor"></label>
+        <button type="button" class="rich-editor__tiny" :title="tr('recent_colors')" :aria-label="tr('recent_colors')" :aria-expanded="colorMenu === 'text'" :disabled="sourceMode" @click="colorMenu = colorMenu === 'text' ? '' : 'text'"><ChevronDown :size="14" /></button>
+        <div v-if="colorMenu === 'text'" class="rich-editor__swatches" role="group" :aria-label="tr('recent_colors')">
+          <button v-for="color in recentColors.text" :key="color" type="button" class="rich-editor__swatch" :style="{ backgroundColor: color }" :title="color" :aria-label="color" @click="applyRecent('text', color)"></button>
+          <small v-if="recentColors.text.length === 0">{{ tr('recent_none') }}</small>
+        </div>
+      </span>
+      <span class="rich-editor__menu-host rich-editor__colorgroup">
+        <label class="rich-editor__color" :title="tr('bg_color')"><PaintBucket :size="16" /><input type="color" :aria-label="tr('bg_color')" :disabled="sourceMode" :value="normalizeHex(textStyle('backgroundColor') || '#ffff00')" @change="setBackground"></label>
+        <button type="button" class="rich-editor__tiny" :title="tr('recent_colors')" :aria-label="tr('recent_colors')" :aria-expanded="colorMenu === 'bg'" :disabled="sourceMode" @click="colorMenu = colorMenu === 'bg' ? '' : 'bg'"><ChevronDown :size="14" /></button>
+        <div v-if="colorMenu === 'bg'" class="rich-editor__swatches" role="group" :aria-label="tr('recent_colors')">
+          <button v-for="color in recentColors.bg" :key="color" type="button" class="rich-editor__swatch" :style="{ backgroundColor: color }" :title="color" :aria-label="color" @click="applyRecent('bg', color)"></button>
+          <small v-if="recentColors.bg.length === 0">{{ tr('recent_none') }}</small>
+        </div>
+      </span>
       <button type="button" :title="tr('color_reset')" :aria-label="tr('color_reset')" :disabled="sourceMode" @click="clearColors"><X :size="14" /></button>
       <span class="rich-editor__sep" aria-hidden="true"></span>
       <button type="button" :title="tr('bold')" :aria-label="tr('bold')" :disabled="sourceMode" :class="{ active: editor.isActive('bold') }" @click="editor.chain().focus().toggleBold().run()"><Bold :size="16" /></button>
       <button type="button" :title="tr('italic')" :aria-label="tr('italic')" :disabled="sourceMode" :class="{ active: editor.isActive('italic') }" @click="editor.chain().focus().toggleItalic().run()"><Italic :size="16" /></button>
       <button type="button" :title="tr('underline')" :aria-label="tr('underline')" :disabled="sourceMode" :class="{ active: editor.isActive('underline') }" @click="editor.chain().focus().toggleUnderline().run()"><Underline :size="16" /></button>
-      <button type="button" :title="tr('strike')" :aria-label="tr('strike')" :disabled="sourceMode" :class="{ active: editor.isActive('strike') }" @click="editor.chain().focus().toggleStrike().run()"><Strikethrough :size="16" /></button>
-      <button type="button" :title="tr('highlight')" :aria-label="tr('highlight')" :disabled="sourceMode" :class="{ active: editor.isActive('highlight') }" @click="editor.chain().focus().toggleHighlight().run()"><Highlighter :size="16" /></button>
-      <button type="button" :title="tr('subscript')" :aria-label="tr('subscript')" :disabled="sourceMode" :class="{ active: editor.isActive('subscript') }" @click="editor.chain().focus().toggleSubscript().run()"><SubIcon :size="16" /></button>
-      <button type="button" :title="tr('superscript')" :aria-label="tr('superscript')" :disabled="sourceMode" :class="{ active: editor.isActive('superscript') }" @click="editor.chain().focus().toggleSuperscript().run()"><SupIcon :size="16" /></button>
       <span class="rich-editor__sep" aria-hidden="true"></span>
       <button type="button" :title="tr('align_left')" :aria-label="tr('align_left')" :disabled="sourceMode" :class="{ active: isAligned('left') }" @click="align('left')"><TextAlignStart :size="16" /></button>
       <button type="button" :title="tr('align_center')" :aria-label="tr('align_center')" :disabled="sourceMode" :class="{ active: isAligned('center') }" @click="align('center')"><TextAlignCenter :size="16" /></button>
       <button type="button" :title="tr('align_right')" :aria-label="tr('align_right')" :disabled="sourceMode" :class="{ active: isAligned('right') }" @click="align('right')"><TextAlignEnd :size="16" /></button>
-      <button type="button" :title="tr('align_justify')" :aria-label="tr('align_justify')" :disabled="sourceMode" :class="{ active: isAligned('justify') }" @click="align('justify')"><TextAlignJustify :size="16" /></button>
       <span class="rich-editor__sep" aria-hidden="true"></span>
       <button type="button" :title="t('vue.components.richtexteditor.markirovanyi_spysok')" :aria-label="t('vue.components.richtexteditor.markirovanyi_spysok')" :disabled="sourceMode" :class="{ active: editor.isActive('bulletList') }" @click="editor.chain().focus().toggleBulletList().run()"><List :size="16" /></button>
       <button type="button" :title="t('vue.components.richtexteditor.numerovanyi_spysok')" :aria-label="t('vue.components.richtexteditor.numerovanyi_spysok')" :disabled="sourceMode" :class="{ active: editor.isActive('orderedList') }" @click="editor.chain().focus().toggleOrderedList().run()"><ListOrdered :size="16" /></button>
       <button type="button" :title="tr('quote')" :aria-label="tr('quote')" :disabled="sourceMode" :class="{ active: editor.isActive('blockquote') }" @click="editor.chain().focus().toggleBlockquote().run()"><Quote :size="16" /></button>
-      <button type="button" :title="tr('rule')" :aria-label="tr('rule')" :disabled="sourceMode" @click="editor.chain().focus().setHorizontalRule().run()"><Minus :size="16" /></button>
       <span class="rich-editor__sep" aria-hidden="true"></span>
       <button type="button" :title="tr('link')" :aria-label="tr('link')" :disabled="sourceMode" :class="{ active: editor.isActive('link') }" @click="openLink"><Link2 :size="16" /></button>
       <button type="button" :title="tr('unlink')" :aria-label="tr('unlink')" :disabled="sourceMode || !editor.isActive('link')" @click="removeLink"><Unlink :size="16" /></button>
-      <button type="button" :title="tr('anchor')" :aria-label="tr('anchor')" :disabled="sourceMode" :class="{ active: editor.getAttributes('heading').id || editor.getAttributes('paragraph').id }" @click="openAnchor"><AnchorIcon :size="16" /></button>
       <button type="button" :title="tr('image')" :aria-label="tr('image')" :disabled="sourceMode" @click="openImage"><ImagePlus :size="16" /></button>
       <button type="button" :title="tr('video')" :aria-label="tr('video')" :disabled="sourceMode" @click="openVideo"><VideoIcon :size="16" /></button>
       <button type="button" :title="tr('table')" :aria-label="tr('table')" :disabled="sourceMode" @click="insertTable"><Table2 :size="16" /></button>
-      <button type="button" :title="tr('clear')" :aria-label="tr('clear')" :disabled="sourceMode" @click="editor.chain().focus().clearNodes().unsetAllMarks().run()"><RemoveFormatting :size="16" /></button>
+      <span class="rich-editor__menu-host rich-editor__more">
+        <button type="button" :title="tr('more_tools')" :aria-label="tr('more_tools')" :aria-expanded="moreOpen" :disabled="sourceMode" @click="moreOpen = !moreOpen"><Ellipsis :size="16" /></button>
+        <div v-if="moreOpen" class="rich-editor__more-panel" role="toolbar" :aria-label="tr('more_tools')" @click="moreOpen = false">
+        <button type="button" :title="tr('strike')" :aria-label="tr('strike')" :disabled="sourceMode" :class="{ active: editor.isActive('strike') }" @click="editor.chain().focus().toggleStrike().run()"><Strikethrough :size="16" /></button>
+        <button type="button" :title="tr('highlight')" :aria-label="tr('highlight')" :disabled="sourceMode" :class="{ active: editor.isActive('highlight') }" @click="editor.chain().focus().toggleHighlight().run()"><Highlighter :size="16" /></button>
+        <button type="button" :title="tr('subscript')" :aria-label="tr('subscript')" :disabled="sourceMode" :class="{ active: editor.isActive('subscript') }" @click="editor.chain().focus().toggleSubscript().run()"><SubIcon :size="16" /></button>
+        <button type="button" :title="tr('superscript')" :aria-label="tr('superscript')" :disabled="sourceMode" :class="{ active: editor.isActive('superscript') }" @click="editor.chain().focus().toggleSuperscript().run()"><SupIcon :size="16" /></button>
+        <button type="button" :title="tr('align_justify')" :aria-label="tr('align_justify')" :disabled="sourceMode" :class="{ active: isAligned('justify') }" @click="align('justify')"><TextAlignJustify :size="16" /></button>
+        <button type="button" :title="tr('rule')" :aria-label="tr('rule')" :disabled="sourceMode" @click="editor.chain().focus().setHorizontalRule().run()"><Minus :size="16" /></button>
+        <button type="button" :title="tr('anchor')" :aria-label="tr('anchor')" :disabled="sourceMode" :class="{ active: editor.getAttributes('heading').id || editor.getAttributes('paragraph').id }" @click="openAnchor"><AnchorIcon :size="16" /></button>
+        <button type="button" :title="tr('clear')" :aria-label="tr('clear')" :disabled="sourceMode" @click="editor.chain().focus().clearNodes().unsetAllMarks().run()"><RemoveFormatting :size="16" /></button>
+          <select class="rich-editor__select rich-editor__select--panel" @click.stop :aria-label="tr('line_height')" :title="tr('line_height')" :disabled="sourceMode" :value="textStyle('lineHeight')" @change="setLineHeight">
+            <option value="">{{ tr('line_height') }}</option>
+            <option v-for="height in LINE_HEIGHTS" :key="height" :value="height">{{ height }}</option>
+          </select>
+        </div>
+      </span>
       <span class="rich-editor__spacer" aria-hidden="true"></span>
       <button type="button" :title="fullscreen ? tr('exit_fullscreen') : tr('fullscreen')" :aria-label="fullscreen ? tr('exit_fullscreen') : tr('fullscreen')" :aria-pressed="fullscreen" @click="setFullscreen(!fullscreen)"><Minimize2 v-if="fullscreen" :size="16" /><Maximize2 v-else :size="16" /></button>
-      <select v-if="sourceMode" class="rich-editor__select rich-editor__select--narrow" :aria-label="tr('code_theme')" :title="tr('code_theme')" :value="codeTheme" @change="changeCodeTheme"><option value="monokai">Monokai</option><option value="dracula">Dracula</option><option value="github">GitHub</option></select>
+      <select v-if="sourceMode" class="rich-editor__select" :aria-label="tr('code_theme')" :title="tr('code_theme')" :value="codeTheme" @change="changeCodeTheme"><option v-for="(label, name) in CODE_THEME_LABELS" :key="name" :value="name">{{ label }}</option></select>
       <button type="button" class="rich-editor__source-toggle" :title="tr('html')" :aria-label="tr('html')" :aria-pressed="sourceMode" :class="{ active: sourceMode }" @click="toggleSource"><Code :size="16" /> <span>HTML</span></button>
     </div>
     <div v-if="!sourceMode && editor.isActive('table')" class="rich-editor__toolbar rich-editor__toolbar--table" role="toolbar" :aria-label="tr('table')">

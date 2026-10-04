@@ -25,6 +25,7 @@ final readonly class CategoryWriter
         private SeoUrlManager $seo,
         private EventBusInterface $events,
         private DomainEventFactory $eventFactory,
+        private \Commerce\Modules\Localization\Application\TranslationFallbackFiller $fallbackTexts,
     ) {
     }
 
@@ -75,6 +76,7 @@ final readonly class CategoryWriter
                 ['source' => 'catalog'],
             ));
 
+            $this->fallbackTexts->fillCategory($db, $command->storeId, $id);
             return ['id' => $id, 'public_id' => $uuid->toRfc4122(), 'url' => '/' . ltrim($route->path, '/')];
         });
     }
@@ -99,7 +101,7 @@ final readonly class CategoryWriter
             $db->update('mc_category', ['parent_id' => $command->parentId, 'status' => $command->status, 'sort_order' => $command->sortOrder, 'updated_at' => $now], ['id' => $command->categoryId]);
             $db->update('mc_store_category', ['status' => $command->status, 'sort_order' => $command->sortOrder], ['store_id' => $command->storeId, 'category_id' => $command->categoryId]);
             $db->update('mc_market_category', ['status' => $command->status, 'sort_order' => $command->sortOrder], ['market_id' => $command->marketId, 'category_id' => $command->categoryId]);
-            $db->update('mc_category_translation', ['name' => trim($command->name)], ['category_id' => $command->categoryId, 'store_id' => $command->storeId, 'locale' => $command->locale]);
+            $db->update('mc_category_translation', ['name' => trim($command->name), 'is_fallback' => 0], ['category_id' => $command->categoryId, 'store_id' => $command->storeId, 'locale' => $command->locale]);
 
             $publicId = Uuid::fromBinary((string) $row['public_id'])->toRfc4122();
             $route = $this->seo->ensureForCreatedEntity($command->storeId, $command->locale, SeoEntityType::Category, $publicId, $command->name);
@@ -114,6 +116,7 @@ final readonly class CategoryWriter
                 ['source' => 'catalog'],
             ));
 
+            $this->fallbackTexts->fillCategory($db, $command->storeId, $command->categoryId);
             return ['id' => $command->categoryId, 'public_id' => $publicId, 'url' => '/' . ltrim($route->path, '/'), 'status' => $command->status];
         });
     }

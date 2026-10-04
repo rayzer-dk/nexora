@@ -243,6 +243,7 @@ final class StorefrontCatalogController extends AbstractController
             'category_layout' => $layout,
             'subcategories' => $subcategories,
             'category_trail' => $categoryTrail,
+            'category_description_position' => $this->seoSettings->categoryDescriptionPosition($context->storeId),
             'search_query' => $filter->search,
             'catalog_filter' => $filter,
             'catalog_facets' => $facets,

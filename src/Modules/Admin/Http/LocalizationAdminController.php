@@ -31,6 +31,8 @@ final class LocalizationAdminController extends AbstractController
         private readonly ApiKeyExchangeRateSource $apiSource,
         private readonly LanguagePackService $packs,
         private readonly \Commerce\Core\I18n\AdminInterfaceLocale $adminLocales,
+        private readonly \Commerce\Modules\Localization\Application\TranslationFallbackFiller $fallbackTexts,
+        private readonly \Doctrine\DBAL\Connection $db,
     ) {
     }
 
@@ -69,6 +71,10 @@ final class LocalizationAdminController extends AbstractController
                 $rows[$code] = ['enabled' => '1', 'sort_order' => '100'];
             }
             $this->settings->saveLocales($storeId, $rows);
+            // A language that was just switched on shows the default-language text of everything not translated yet.
+            foreach ($this->db->fetchFirstColumn('SELECT locale_code FROM mc_store_locale WHERE store_id=? AND enabled=1 AND is_default=0', [$storeId]) as $enabledLocale) {
+                $this->fallbackTexts->backfillLocale($storeId, (string) $enabledLocale);
+            }
 
             return CanonicalUiText::get('admin.localization.locales.saved');
         });

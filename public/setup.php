@@ -184,7 +184,7 @@ $values = [
     'admin_name' => $_POST['admin_name'] ?? it('installer.administrator'),
     'admin_email' => $_POST['admin_email'] ?? '',
     'public_url' => $_POST['public_url'] ?? detectPublicUrl(),
-    'site_mode' => $_POST['site_mode'] ?? 'shop',
+    'site_mode' => $_POST['site_mode'] ?? 'hybrid',
     'country' => strtoupper((string) ($_POST['country'] ?? ($installerLocale === 'uk-UA' ? 'UA' : ($installerLocale === 'ru-RU' ? 'UA' : 'US')))),
     'currency' => strtoupper((string) ($_POST['currency'] ?? '')),
     'store_locale' => (string) ($_POST['store_locale'] ?? $installerLocale),
@@ -214,7 +214,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $publicUrl = rtrim(trim((string) ($_POST['public_url'] ?? '')), '/');
     $createDatabase = isset($_POST['create_database']);
     $installDemo = isset($_POST['install_demo']);
-    $siteMode = trim((string) ($_POST['site_mode'] ?? 'shop'));
+    $siteMode = trim((string) ($_POST['site_mode'] ?? 'hybrid'));
     $storeCountry = strtoupper(trim((string) ($_POST['country'] ?? 'UA')));
     $storeCurrency = strtoupper(trim((string) ($_POST['currency'] ?? '')));
     $storeLocale = trim((string) ($_POST['store_locale'] ?? ''));
@@ -957,7 +957,7 @@ function runApplicationInstall(string $projectDir, array $payload, array $secret
             '--admin-name' => (string) ($payload['admin_name'] ?? ''),
             '--admin-email' => (string) ($payload['admin_email'] ?? ''),
             '--public-url' => (string) ($payload['public_url'] ?? ''),
-            '--site-mode' => (string) ($payload['site_mode'] ?? 'shop'),
+            '--site-mode' => (string) ($payload['site_mode'] ?? 'hybrid'),
             '--country' => (string) ($payload['country'] ?? 'UA'),
             '--currency' => (string) ($payload['currency'] ?? ''),
             '--locale' => (string) ($payload['locale'] ?? ''),
@@ -1073,6 +1073,11 @@ function formatBytes(float $bytes): string
 
 function installedResponse(): never
 {
+    // An existing installation: unpacking a full release over it and opening setup.php leads to the upgrade page.
+    if (is_file(__DIR__ . '/upgrade.php')) {
+        header('Location: /upgrade.php', true, 302);
+        exit;
+    }
     http_response_code(410);
     echo it('installer.doctype_html_meta_charset_utf_8_meta_name_robots_content');
     exit;

@@ -40,7 +40,7 @@ final class InstallCommand extends Command
             ->addOption('admin-email', null, InputOption::VALUE_REQUIRED, \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.email_administratora'))
             ->addOption('admin-password', null, InputOption::VALUE_REQUIRED, \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.parol_administratora_shchonaimenshe_12_symvoliv'))
             ->addOption('public-url', null, InputOption::VALUE_REQUIRED, \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.publichna_adresa_mahazynu'), 'https://shop.example.com')
-            ->addOption('site-mode', null, InputOption::VALUE_REQUIRED, \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.profil_saitu_shop_catalog_content_landing_hybrid'), 'shop')
+            ->addOption('site-mode', null, InputOption::VALUE_REQUIRED, \Commerce\Core\I18n\CanonicalUiText::get('php.core.install.installcommand.profil_saitu_shop_catalog_content_landing_hybrid'), 'hybrid')
             ->addOption('country', null, InputOption::VALUE_REQUIRED, 'Store country (ISO 3166-1 alpha-2); proposes currency, language, time zone and tax rate', 'UA')
             ->addOption('currency', null, InputOption::VALUE_REQUIRED, 'Default currency (ISO 4217); defaults to the country preset', '')
             ->addOption('locale', null, InputOption::VALUE_REQUIRED, 'Default language (uk-UA, en-US, ru-RU, pl-PL, de-DE, da-DK); defaults to the country preset', '')

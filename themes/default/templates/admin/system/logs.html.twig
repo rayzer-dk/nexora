@@ -1,0 +1,26 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.logs.title'),'logs') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.logs.title') }}</span></nav><h1>{{ ui_text('admin.logs.title') }}</h1><p>{{ ui_text('admin.logs.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" role="status">{{ message }}</div>{% endfor %}{% endfor %}
+{% if files|length == 0 %}
+<section class="admin-panel"><p>{{ ui_text('admin.logs.none') }}</p></section>
+{% else %}
+<section class="admin-panel admin-logs">
+  <form method="get" class="admin-logs__filters">
+    <label><span>{{ ui_text('admin.logs.file') }}</span><select name="file" data-autosubmit>{% for name, info in files %}<option value="{{ name }}"{{ name == file ? ' selected' : '' }}>{{ name }} · {{ (info.size / 1024)|round }} KB · {{ info.modified|date('Y-m-d H:i') }}</option>{% endfor %}</select></label>
+    <label><span>{{ ui_text('admin.logs.level') }}</span><select name="level"><option value="all"{{ level == 'all' ? ' selected' : '' }}>{{ ui_text('admin.logs.level_all') }}</option><option value="error"{{ level == 'error' ? ' selected' : '' }}>{{ ui_text('admin.logs.level_error') }}</option><option value="warning"{{ level == 'warning' ? ' selected' : '' }}>{{ ui_text('admin.logs.level_warning') }}</option></select></label>
+    <label><span>{{ ui_text('admin.logs.limit') }}</span><select name="limit">{% for n in limits %}<option value="{{ n }}"{{ n == limit ? ' selected' : '' }}>{{ n }}</option>{% endfor %}</select></label>
+    <label class="admin-logs__search"><span>{{ ui_text('admin.logs.search') }}</span><input type="search" name="q" value="{{ search }}" maxlength="120"></label>
+    <button type="submit" class="admin-button is-primary">{{ ui_icon('list-filter', 16) }}{{ ui_text('admin.logs.show') }}</button>
+  </form>
+  <p class="admin-logs__summary"><span class="admin-badge is-danger">{{ ui_text('admin.logs.errors') }}: {{ counts.error }}</span> <span class="admin-badge is-warning">{{ ui_text('admin.logs.warnings') }}: {{ counts.warning }}</span> <small>{{ ui_text('admin.logs.summary_hint') }}</small></p>
+  <div class="admin-logs__actions">
+    <a class="admin-button" href="{{ path('admin_system_logs_download', {file: file}) }}">{{ ui_icon('download', 16) }}{{ ui_text('admin.logs.download') }}</a>
+    <form method="post" action="{{ path('admin_system_logs_clear') }}" data-confirm="{{ ui_text('admin.logs.clear_confirm') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_system_logs_clear') }}"><input type="hidden" name="file" value="{{ file }}"><button type="submit" class="admin-button is-danger">{{ ui_icon('trash-2', 16) }}{{ ui_text('admin.logs.clear') }}</button></form>
+  </div>
+  {% if entries %}
+  <ol class="admin-logs__list" tabindex="0" aria-label="{{ ui_text('admin.logs.title') }}">{% for entry in entries %}<li class="admin-logs__line is-{{ entry.severity }}"><code>{{ entry.text }}</code></li>{% endfor %}</ol>
+  {% else %}<p class="admin-help">{{ ui_text('admin.logs.empty') }}</p>{% endif %}
+</section>
+{% endif %}
+{{ shell.end() }}

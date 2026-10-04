@@ -99,7 +99,7 @@ final class CatalogAdminPageController extends AbstractController
         $result = $tree !== null
             ? ['items' => $tree, 'total' => count($tree), 'page' => 1, 'limit' => max(1, count($tree))]
             : $this->query->categories($context->storeId, $context->locale, (int) $request->query->get('page', 1), 25, $search);
-        return $this->render('@storefront/admin/catalog/categories.html.twig', ['result' => $result, 'search' => $search, 'is_tree' => $tree !== null, 'category_path_in_url' => $this->seoSettings->categoryPathInProductUrl($context->storeId)]);
+        return $this->render('@storefront/admin/catalog/categories.html.twig', ['result' => $result, 'search' => $search, 'is_tree' => $tree !== null, 'category_path_in_url' => $this->seoSettings->categoryPathInProductUrl($context->storeId), 'description_position' => $this->seoSettings->categoryDescriptionPosition($context->storeId)]);
     }
 
     /** Switches the optional category path in product addresses (the flat address stays canonical). */
@@ -111,6 +111,7 @@ final class CatalogAdminPageController extends AbstractController
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.sesiiu_formy_vtracheno_povtorit_diiu'));
         } else {
             $this->seoSettings->setCategoryPathInProductUrl($context->storeId, $request->request->getBoolean('category_path'));
+            $this->seoSettings->setCategoryDescriptionPosition($context->storeId, (string) $request->request->get('description_position', 'top'));
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.categories.url_saved'));
         }
 
@@ -154,7 +155,7 @@ final class CatalogAdminPageController extends AbstractController
                         trim((string) $request->request->get('slug', '')) ?: null,
                         (int) $request->request->get('sort_order', 0),
                     ));
-                    $this->categoryTexts->save((int) $created['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), (string) $request->request->get('description_bottom', ''));
+                    $this->categoryTexts->save((int) $created['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), '');
                     if (($imageId = $this->categoryImages->imageFromRequest($request)) !== false) {
                         $this->categoryImages->set((int) $created['id'], $context->storeId, $imageId, (string) $request->request->get('name', ''));
                     }
@@ -229,7 +230,7 @@ final class CatalogAdminPageController extends AbstractController
                         sortOrder: (int) $request->request->get('sort_order', 0),
                         status: (string) $request->request->get('status', 'active'),
                     ));
-                    $this->categoryTexts->save((int) $category['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), (string) $request->request->get('description_bottom', ''));
+                    $this->categoryTexts->save((int) $category['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), '');
                     if (($imageId = $this->categoryImages->imageFromRequest($request)) !== false) {
                         $this->categoryImages->set((int) $category['id'], $context->storeId, $imageId, (string) $request->request->get('name', ''));
                     }
@@ -280,6 +281,12 @@ final class CatalogAdminPageController extends AbstractController
                     // Index / noindex of this language's page; set before the update so the storefront cache is rebuilt with it.
                     if ($request->request->has('seo_present')) {
                         $this->seoUrls->setIndexable($context->storeId, $context->locale, \Commerce\Modules\Seo\Domain\SeoEntityType::Product, $publicId, $request->request->getBoolean('indexable'));
+                    }
+                    // The product type is chosen on the form; switching it first lets the update below see the right stock model.
+                    $newType = (string) $request->request->get('product_type', '');
+                    if (in_array($newType, ['physical', 'digital'], true) && $newType !== (string) $product['product_type']) {
+                        $this->products->changeType($context->storeId, $context->marketId, (int) $product['id'], $newType);
+                        $product['product_type'] = $newType;
                     }
                     $this->products->update(new UpdateProductCommand(
                         productId: (int) $product['id'], storeId: $context->storeId, marketId: $context->marketId, locale: $context->locale,

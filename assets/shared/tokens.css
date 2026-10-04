@@ -126,7 +126,7 @@
   --mc-z-toast: 100;
 
   /* Layout. */
-  --mc-content-max: 1408px;
+  --mc-content-max: 1600px;
   --mc-gutter: var(--mc-space-4);
   --mc-transition: 140ms cubic-bezier(0.2, 0, 0, 1);
 

@@ -56,6 +56,7 @@
             {% if admin_can('system.settings') %}{{ nav.link(section, 'ai', '/admin/system/ai', 'sparkles', ui_text('admin.ai.title')) }}{% endif %}
             {% if admin_can('system.cron.view') %}{{ nav.link(section, 'cron', '/admin/system/cron', 'clock', ui_text('admin_cron_automation')) }}{% endif %}
             {% if admin_can('system.audit.view') %}{{ nav.link(section, 'activity', '/admin/system/activity', 'scroll-text', ui_text('admin_activity_log')) }}{% endif %}
+            {% if admin_can('system.settings') %}{{ nav.link(section, 'logs', '/admin/system/logs', 'triangle-alert', ui_text('admin.logs.nav')) }}{% endif %}
             {% if admin_can('developer_tools.view') %}{{ nav.link(section, 'developer', '/admin/system/developer', 'terminal', ui_text('ui.admin.catalog._shell.developer_tools')) }}{% endif %}
             {% if admin_can('admin_users.manage') %}{{ nav.link(section, 'access', '/admin/system/access', 'shield-user', ui_text('admin_admins_permissions')) }}{% endif %}
         </nav>

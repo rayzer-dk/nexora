@@ -9,7 +9,7 @@
       "radius": "18",
       "shadow": "medium",
       "density": "comfortable",
-      "container": "1408",
+      "container": "1600",
       "font": "system"
     },
     "description_key": "admin.appearance.storefront.zbalansovanyi_suchasnyi_mahazyn"
@@ -69,7 +69,7 @@
       "radius": "28",
       "shadow": "soft",
       "density": "spacious",
-      "container": "1408",
+      "container": "1600",
       "font": "manrope"
     },
     "description_key": "admin.appearance.storefront.miaki_formy_ta_druzhnia_podacha"

@@ -909,6 +909,13 @@ commerce-slider, .slider-shell { display: block; min-width: 0; }
   :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .demo-hero-card__media img { mix-blend-mode: normal; background: #fff; border-radius: var(--mc-radius-lg); transform: none; max-height: 240px; padding: var(--mc-space-3); -webkit-mask-image: none; mask-image: none; }
 }
 
+/* Safety net for every other place a product photo is shown: on a dark page the multiply blend would darken the photo, so it is switched off for all images. */
+:root[data-theme="dark"] img,
+:root[data-color-scheme="dark"]:not([data-theme="light"]) img { mix-blend-mode: normal; }
+@media (prefers-color-scheme: dark) {
+  :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) img { mix-blend-mode: normal; }
+}
+
 .offline-page { display: grid; justify-items: center; gap: var(--mc-space-4); padding-block: var(--mc-space-20); text-align: center; }
 .offline-page__icon { display: inline-flex; align-items: center; justify-content: center; width: var(--mc-icon-size-xl); height: var(--mc-icon-size-xl); color: var(--mc-color-muted); }
 .offline-page p { max-width: 48ch; color: var(--mc-color-muted); }

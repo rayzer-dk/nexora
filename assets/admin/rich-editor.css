@@ -74,3 +74,34 @@
 .rich-editor__color { position: relative; display: inline-flex; align-items: center; gap: var(--mc-space-1); min-height: var(--mc-control-height-sm); padding: 0 var(--mc-space-2); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-xs); background: var(--mc-color-surface-raised); color: var(--mc-color-text); cursor: pointer; }
 .rich-editor__color input[type="color"] { width: 1.25rem; height: 1.25rem; padding: 0; border: 0; background: none; cursor: pointer; }
 .rich-editor__content .rte-video, .rich-text .rte-video { display: block; width: 100%; max-width: 48rem; aspect-ratio: 16 / 9; border: 0; }
+
+/* Compact toolbar: one tidy row on a desktop, tools that are rarely needed live in the "more" menu */
+.rich-editor__toolbar { align-items: center; gap: 2px; padding: var(--mc-space-1) var(--mc-space-2); }
+.rich-editor__toolbar button { min-width: 30px; min-height: 30px; padding: 0 var(--mc-space-1); }
+.rich-editor__toolbar select.rich-editor__select { width: auto; min-width: 0; min-height: 30px; height: 30px; padding: 0 var(--mc-space-6) 0 var(--mc-space-2); font-size: var(--mc-font-size-xs); line-height: 1; }
+.rich-editor__toolbar select.rich-editor__select:not(.rich-editor__select--narrow) { max-width: 8.5rem; }
+.rich-editor__toolbar .rich-editor__select--narrow { max-width: 4.25rem; }
+.rich-editor__sep { margin: 6px 2px; }
+.rich-editor__menu-host { position: relative; display: inline-flex; align-items: center; }
+.rich-editor__colorgroup { gap: 0; }
+.rich-editor__toolbar .rich-editor__color { min-height: 30px; padding: 0 var(--mc-space-1); gap: 2px; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.rich-editor__toolbar .rich-editor__color input[type="color"] { width: 1rem; height: 1rem; }
+.rich-editor__toolbar .rich-editor__tiny { min-width: 18px; min-height: 30px; padding: 0; border: 1px solid var(--mc-color-border); border-left: 0; border-radius: 0 var(--mc-radius-xs) var(--mc-radius-xs) 0; }
+.rich-editor__swatches, .rich-editor__more-panel { position: absolute; z-index: var(--mc-z-dropdown); top: calc(100% + var(--mc-space-1)); left: 0; padding: var(--mc-space-2); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-raised); box-shadow: var(--mc-shadow-md); }
+.rich-editor__swatches { display: flex; flex-wrap: wrap; gap: var(--mc-space-1); width: 9.5rem; }
+.rich-editor__swatches > small { color: var(--mc-color-muted); }
+.rich-editor__toolbar .rich-editor__swatch { min-width: 18px; width: 18px; min-height: 18px; height: 18px; padding: 0; border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-xs); }
+.rich-editor__more-panel { display: flex; flex-wrap: wrap; gap: 2px; width: 10.5rem; }
+.rich-editor__toolbar input[type="color"] { min-height: 0; width: 16px; height: 16px; padding: 0; border: 0; background: none; }
+.rich-editor__toolbar select.rich-editor__select:not(.rich-editor__select--narrow) { max-width: 6.75rem; }
+.rich-editor__toolbar .rich-editor__select--narrow { max-width: 3.75rem; }
+.rich-editor__toolbar select.rich-editor__select { padding-right: var(--mc-space-5); background-position: right var(--mc-space-1) center; }
+.rich-editor__toolbar .rich-editor__source-toggle { gap: var(--mc-space-1); padding-inline: var(--mc-space-2); }
+.rich-editor__toolbar .rich-editor__color { display: inline-flex; flex-direction: row; align-items: center; margin: 0; }
+.rich-editor__toolbar .rich-editor__color .ui-icon, .rich-editor__toolbar .rich-editor__color svg { flex: none; }
+.rich-editor__toolbar select.rich-editor__select:not(.rich-editor__select--narrow) { max-width: 5.75rem; }
+.rich-editor__toolbar .rich-editor__select--narrow { max-width: 3.25rem; }
+.rich-editor__toolbar .rich-editor__color { padding: 0 2px; border-color: transparent; background: transparent; }
+.rich-editor__toolbar .rich-editor__color:hover { background: var(--mc-color-surface-subtle); }
+.rich-editor__sep { margin: 6px 0; }
+.rich-editor__toolbar select.rich-editor__select--panel { max-width: none; width: 100%; flex: 1 1 100%; }
