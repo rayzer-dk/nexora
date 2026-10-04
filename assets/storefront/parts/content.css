@@ -13,7 +13,7 @@
 }
 
 /* Tight, even vertical rhythm between page sections (was 48px everywhere). */
-:root main > * + * { margin-top: var(--mc-space-8); }
+:root main > * + * { margin-top: var(--mc-section-gap); }
 @media (min-width: 1024px) {
   :root main { padding-block: var(--mc-space-4) var(--mc-space-12); }
 }

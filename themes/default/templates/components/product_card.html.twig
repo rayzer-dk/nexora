@@ -26,7 +26,7 @@
                 <button class="button button--primary catalog-card__buy" type="submit">{{ ui_icon('shopping-cart', 16) }}<span>{{ product.purchase_button_label|default(ui_text('add_cart')) }}</span></button>
             </form>
             {% else %}
-            <a class="button button--secondary catalog-card__buy" href="{{ product.url }}"><span>{{ ui_text('details') }}</span>{{ ui_icon('arrow-right', 16) }}</a>
+            <a class="button button--secondary" href="{{ product.url }}"><span>{{ ui_text('details') }}</span>{{ ui_icon('arrow-right', 16) }}</a>
             {% endif %}
         </div>
     </div>

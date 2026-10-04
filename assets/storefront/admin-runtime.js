@@ -475,7 +475,8 @@ function initQuickStatus() {
     const badge = box.parentElement ? q('.admin-badge', box.parentElement) : null;
     if (!input) return;
     input.addEventListener('change', async () => {
-      const want = input.checked ? 'published' : 'draft';
+      const on = box.dataset.on || 'published';
+      const want = input.checked ? on : (box.dataset.off || 'draft');
       input.disabled = true;
       try {
         const body = new URLSearchParams({ _token: box.dataset.token || '', status: want });
@@ -483,8 +484,9 @@ function initQuickStatus() {
         const data = await response.json();
         if (!response.ok || !data.ok) throw new Error('status');
         if (badge) {
-          badge.className = 'admin-badge is-' + (want === 'published' ? 'success' : 'warning');
-          badge.textContent = want === 'published' ? t('js_status_published') : t('js_status_draft');
+          const onNow = want === on;
+          badge.className = 'admin-badge is-' + (onNow ? (box.dataset.onTone || 'success') : (box.dataset.offTone || 'warning'));
+          badge.textContent = (onNow ? box.dataset.labelOn : box.dataset.labelOff) || (onNow ? t('js_status_published') : t('js_status_draft'));
         }
         toast(t('js_status_saved'), 'success', 2000);
       } catch (_) {

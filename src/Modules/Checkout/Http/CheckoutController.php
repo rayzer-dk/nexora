@@ -48,6 +48,7 @@ final class CheckoutController extends AbstractController
         private readonly CheckoutMethodSettings $methodSettings,
         private readonly PickupPointRepository $pickupPoints,
         private readonly OrderConfirmationQuery $confirmation,
+        private readonly \Commerce\Modules\Rewards\Application\GiftCardService $giftCards,
     ) {}
 
     #[Route('/checkout', name: 'storefront_checkout', methods: ['GET'], priority: 100)]
@@ -100,6 +101,36 @@ final class CheckoutController extends AbstractController
             'total'=>$this->money->format($result->totalMinor,$context->currency,$context->locale),
             'applied'=>$result->applied,
         ]);
+    }
+
+    #[Route('/checkout/rewards/preview', name: 'storefront_checkout_rewards_preview', methods: ['POST'], priority: 100)]
+    public function rewardsPreview(Request $request): JsonResponse
+    {
+        $text = static fn (string $key, array $replace = []): string => \Commerce\Core\I18n\CanonicalUiText::get($key, $replace);
+        if (!$this->isCsrfTokenValid('checkout_promotion', (string)$request->request->get('_token'))) return $this->json(['ok'=>false,'message'=>$text('reward_gift_invalid')], 403);
+        $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
+        $customer=$this->getUser(); $customerId=$customer instanceof CustomerUser?$customer->id():null;
+        $result=$this->promotions->calculateForCart($context->storeId,$cart['id'],trim((string)$request->request->get('coupon_code')) ?: null,$customerId,trim((string)$request->request->get('email')) ?: null);
+        $left=$result->totalMinor; $messages=[]; $ok=true; $giftMinor=0; $loyaltyMinor=0;
+        $code=trim((string)$request->request->get('gift_card_code'));
+        if ($code !== '') {
+            $gift=$this->giftCards->preview($context->storeId,$code,$context->currency,$left);
+            if ($gift === null) { $ok=false; $messages[]=$text('reward_gift_invalid'); }
+            else { $giftMinor=(int)$gift['amount_minor']; $left-=$giftMinor; $messages[]=$text('reward_gift_applied',['amount'=>$this->money->format($giftMinor,$context->currency,$context->locale)]); }
+        }
+        $points=max(0,(int)$request->request->get('loyalty_points'));
+        if ($points > 0) {
+            $cfg=$this->loyalty->config($context->storeId); $min=(int)($cfg['min_redeem_points']??0); $per=max(1,(int)($cfg['redeem_minor_per_point']??1));
+            if ($customerId === null) { $ok=false; $messages[]=$text('reward_points_login'); }
+            else {
+                $balance=(int)($this->loyalty->account($context->storeId,$customerId)['points_balance']??0);
+                $use=min($points,$balance,intdiv(max(0,$left),$per));
+                if (!(bool)($cfg['enabled']??false) || $use < $min) { $ok=false; $messages[]=$text('reward_points_invalid',['min'=>$min]); }
+                else { $loyaltyMinor=$use*$per; $left-=$loyaltyMinor; $messages[]=$text('reward_points_applied',['amount'=>$this->money->format($loyaltyMinor,$context->currency,$context->locale)]); }
+            }
+        }
+        if ($messages === []) { $ok=false; $messages[]=$text('reward_none'); }
+        return $this->json(['ok'=>$ok,'message'=>implode(' ',$messages),'gift_minor'=>$giftMinor,'loyalty_minor'=>$loyaltyMinor,'total_minor'=>max(0,$left),'total'=>$this->money->format(max(0,$left),$context->currency,$context->locale)]);
     }
 
     #[Route('/checkout/place', name: 'storefront_checkout_place', methods: ['POST'], priority: 100)]

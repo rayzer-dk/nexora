@@ -39,8 +39,10 @@
       {% endfor %}
       <div class="checkout-builder-slot is-left" style="--checkout-order:{{ gift_order }}">
         <details class="ck-fold" data-checkout-block="gift"><summary>{{ ui_icon('gift', 18) }}<span>{{ ui_text('gift_rewards') }}</span>{{ ui_icon('chevron-down', 16) }}</summary>
-          <div class="ck-grid"><label class="ck-field"><span>{{ ui_text('gift_card_code') }}</span><input type="text" name="gift_card_code" maxlength="64" autocomplete="off" placeholder="GC-..."></label>
-          {% if customer_user and loyalty_config.enabled %}<label class="ck-field"><span>{{ ui_text('redeem_points') }}</span><input type="number" name="loyalty_points" min="0" max="{{ loyalty_account.points_balance|default(0) }}" step="1" value="0"><small>{{ ui_text('points_available', {points: loyalty_account.points_balance|default(0), min: loyalty_config.min_redeem_points}) }}</small></label>{% elseif not customer_user %}<p class="ck-hint">{{ ui_text('loyalty_login') }}</p>{% endif %}</div>
+          <div class="ck-grid" data-rewards>
+          <div class="ck-field"><label for="ck-gift-code">{{ ui_text('gift_card_code') }}</label><div class="coupon-row"><input id="ck-gift-code" type="text" name="gift_card_code" maxlength="64" autocomplete="off" placeholder="GC-..." data-reward-gift><button class="button button--secondary" type="button" data-reward-apply>{{ ui_text('apply') }}</button></div></div>
+          {% if customer_user and loyalty_config.enabled %}<div class="ck-field"><label for="ck-points">{{ ui_text('redeem_points') }}</label><div class="coupon-row"><input id="ck-points" type="number" name="loyalty_points" min="0" max="{{ loyalty_account.points_balance|default(0) }}" step="1" value="0" data-reward-points><button class="button button--secondary" type="button" data-reward-apply>{{ ui_text('apply') }}</button></div><small class="ck-hint">{{ ui_text('points_available', {points: loyalty_account.points_balance|default(0), min: loyalty_config.min_redeem_points}) }}</small></div>{% elseif not customer_user %}<p class="ck-hint">{{ ui_text('loyalty_login') }}</p>{% endif %}
+          <small class="ck-hint ck-hint--wide" data-reward-message aria-live="polite"></small></div>
         </details>
       </div>
     </form>

@@ -85,7 +85,8 @@ time { font-variant-numeric: tabular-nums; }
 /* ========== 2. Layout ========== */
 .shell { width: min(100% - 2 * var(--mc-gutter), var(--mc-content-max)); margin-inline: auto; }
 main { display: flow-root; min-height: 50vh; padding-block: var(--mc-space-6) var(--mc-space-16); }
-main > * + * { margin-top: var(--mc-space-12); }
+main > * + * { margin-top: var(--mc-section-gap); }
+.home-block > * + * { margin-top: var(--mc-stack-gap); }
 main:has(> .checkout-page) { padding-top: 0; padding-bottom: 0; }
 .section-heading, .reference-section-title {
   display: flex;
@@ -516,7 +517,6 @@ legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-
 .quantity input, .cart-qty input { width: 56px; height: 100%; padding: 0; border: 0; border-radius: 0; text-align: center; font-weight: var(--mc-font-weight-semibold); -moz-appearance: textfield; }
 .quantity input:focus, .cart-qty input:focus { box-shadow: none; }
 .quantity input::-webkit-outer-spin-button, .quantity input::-webkit-inner-spin-button, .cart-qty input::-webkit-outer-spin-button, .cart-qty input::-webkit-inner-spin-button { margin: 0; -webkit-appearance: none; }
-.quantity__unit { padding-right: var(--mc-space-2); color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); }
 .stock-notify-form, .product-inquiry-form { gap: var(--mc-space-3); padding: var(--mc-space-4); box-shadow: none; background: var(--mc-color-surface); }
 
 .detail-card h2, .consumer-rights-card h2, .product-custom-content h2 { margin-bottom: var(--mc-space-4); font-size: var(--mc-font-size-xl); }
@@ -1203,3 +1203,16 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 .support-chat__send { width: var(--mc-control-height-md); height: var(--mc-control-height-md); padding: 0; }
 .support-chat__tg { display: inline-flex; align-items: center; justify-content: center; gap: var(--mc-space-1); color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); }
 .support-chat__tg:hover { color: var(--mc-color-primary); }
+
+/* Theme toggle: a thin moon in the light theme, a sun in the dark theme. */
+.reference-theme-toggle__moon { display: inline-flex; }
+.reference-theme-toggle__sun { display: none; }
+.reference-theme-toggle__moon .ui-icon, .admin-theme-toggle__moon .ui-icon { stroke-width: 1.25; }
+:root[data-theme="dark"] .reference-theme-toggle__moon { display: none; }
+:root[data-theme="dark"] .reference-theme-toggle__sun { display: inline-flex; }
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .reference-theme-toggle__moon { display: none; }
+:root[data-color-scheme="dark"]:not([data-theme="light"]) .reference-theme-toggle__sun { display: inline-flex; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__moon { display: none; }
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__sun { display: inline-flex; }
+}

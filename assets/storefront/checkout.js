@@ -326,4 +326,31 @@ if (checkout) {
       promotionButton.disabled = false;
     }
   });
+
+  // ---- Gift card and bonus points: the same advisory preview as the promo code ---------------------------------
+  qa('[data-reward-apply]', form).forEach((button) => button.addEventListener('click', async () => {
+    const token = q('[data-promotion-token]', form);
+    const message = q('[data-reward-message]', form);
+    if (!token || !message) return;
+    button.disabled = true;
+    try {
+      const body = new URLSearchParams({
+        _token: token.value,
+        gift_card_code: q('[data-reward-gift]', form)?.value || '',
+        loyalty_points: q('[data-reward-points]', form)?.value || '0',
+        coupon_code: q('[data-coupon-code]', form)?.value || '',
+        email: form.querySelector('[name="email"]')?.value || '',
+      });
+      const response = await fetch('/checkout/rewards/preview', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
+      const data = await response.json();
+      message.textContent = data.message || i18n.promoFailed;
+      message.dataset.state = data.ok ? 'success' : 'error';
+      if (data.total) qa('[data-summary-total]', form).forEach((node) => { node.textContent = data.total; });
+    } catch (_) {
+      message.textContent = i18n.promoRetry;
+      message.dataset.state = 'error';
+    } finally {
+      button.disabled = false;
+    }
+  }));
 }

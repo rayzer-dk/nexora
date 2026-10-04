@@ -88,6 +88,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_downloads')) return $get?AdminPermissionCatalog::CONTENT_VIEW:AdminPermissionCatalog::CONTENT_MANAGE;
         if (str_starts_with($route,'admin_custom_fields')) return $get?AdminPermissionCatalog::CATALOG_VIEW:AdminPermissionCatalog::CATALOG_MANAGE;
         if (str_starts_with($route,'admin_system_push')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if (str_starts_with($route,'admin_system_demo')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_logs')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if ($route==='admin_system_captcha'||$route==='admin_system_tracking') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_seo_')) return $get?AdminPermissionCatalog::SYSTEM_SETTINGS:AdminPermissionCatalog::SYSTEM_SETTINGS;

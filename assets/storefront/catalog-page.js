@@ -102,3 +102,47 @@ if (form instanceof HTMLFormElement) {
         form.addEventListener('submit', () => { if (body instanceof HTMLElement) sessionStorage.setItem('cf_scroll', String(body.scrollTop)); });
     } catch { /* storage unavailable */ }
 }
+
+// Paging without a full reload: the pager links stay ordinary links (they work without script and can be opened in a new tab);
+// with script the product grid and the pager are swapped in place and the address is updated.
+(() => {
+  const grid = () => document.querySelector('.product-grid');
+  if (!grid() || !window.fetch || !window.history?.pushState) return;
+  let busy = false;
+  const swap = (doc) => {
+    ['.product-grid', 'nav.pager'].forEach((selector) => {
+      const current = document.querySelector(selector);
+      const next = doc.querySelector(selector);
+      if (current && next) current.replaceWith(next);
+      else if (current) current.remove();
+    });
+    document.dispatchEvent(new CustomEvent('commerce:content-updated'));
+  };
+  const load = async (url, push) => {
+    if (busy) return;
+    busy = true;
+    const target = grid();
+    target?.setAttribute('aria-busy', 'true');
+    try {
+      const response = await fetch(url, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+      if (!response.ok) throw new Error('page');
+      const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+      if (!doc.querySelector('.product-grid')) throw new Error('page');
+      swap(doc);
+      if (push) history.pushState({ mcCatalog: true }, '', url);
+      grid()?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    } catch (_) {
+      window.location.assign(url);
+    } finally {
+      busy = false;
+    }
+  };
+  document.addEventListener('click', (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = event.target instanceof Element ? event.target.closest('nav.pager a[href]') : null;
+    if (!link) return;
+    event.preventDefault();
+    load(new URL(link.getAttribute('href'), window.location.href).href, true);
+  });
+  window.addEventListener('popstate', () => { load(window.location.href, false); });
+})();

@@ -179,6 +179,26 @@ final class BlogAdminController extends AbstractController
         return $this->redirectToRoute('admin_content_blog');
     }
 
+    #[Route('/admin/content/blog/{id}/quick-status', name: 'admin_content_blog_quick_status', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function quickStatus(Request $request, int $id): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        $ctx = $this->contexts->resolve($request);
+        $status = (string) $request->request->get('status', '');
+        $ok = $this->isCsrfTokenValid('admin_quick_status', (string) $request->request->get('_token')) && $this->blog->setStatus($ctx->storeId, $id, $status);
+
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => $ok, 'status' => $status], $ok ? 200 : 422);
+    }
+
+    #[Route('/admin/content/blog/categories/{id}/quick-status', name: 'admin_content_blog_category_quick_status', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function quickCategoryStatus(Request $request, int $id): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        $ctx = $this->contexts->resolve($request);
+        $status = (string) $request->request->get('status', '');
+        $ok = $this->isCsrfTokenValid('admin_quick_status', (string) $request->request->get('_token')) && $this->blog->setCategoryStatus($ctx->storeId, $id, $status);
+
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => $ok, 'status' => $status], $ok ? 200 : 422);
+    }
+
     #[Route('/admin/content/blog/categories', name: 'admin_content_blog_categories', methods: ['GET'])]
     public function categories(Request $request): Response
     {

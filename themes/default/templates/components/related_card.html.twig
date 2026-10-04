@@ -9,5 +9,7 @@
         <input type="hidden" name="quantity" value="1">
         <button class="button button--primary catalog-card__buy" type="submit">{{ ui_icon('shopping-cart', 16) }}<span>{{ ui_text('add_cart') }}</span></button>
     </form>
+    {% else %}
+    <div class="related-card__cart"><a class="button button--secondary" href="{{ item.url }}"><span>{{ ui_text('details') }}</span>{{ ui_icon('arrow-right', 16) }}</a></div>
     {% endif %}
 </article>

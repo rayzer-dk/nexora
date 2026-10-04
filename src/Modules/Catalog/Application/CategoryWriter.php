@@ -45,6 +45,24 @@ final readonly class CategoryWriter
         });
     }
 
+    /** Switches one category between active and inactive (the switch in the category list). */
+    public function setStatus(int $storeId, int $marketId, string $publicId, string $status): void
+    {
+        if (!in_array($status, ['active', 'inactive'], true)) {
+            throw new \DomainException('status');
+        }
+        $this->connection->transactional(function (Connection $db) use ($storeId, $marketId, $publicId, $status): void {
+            $id = $db->fetchOne('SELECT c.id FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? WHERE c.public_id=?', [$storeId, Uuid::fromString($publicId)->toBinary()]);
+            if ($id === false) {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.6324b72effe1'));
+            }
+            $db->update('mc_category', ['status' => $status, 'updated_at' => $this->now()], ['id' => (int) $id]);
+            $db->update('mc_store_category', ['status' => $status], ['store_id' => $storeId, 'category_id' => (int) $id]);
+            $db->update('mc_market_category', ['status' => $status], ['market_id' => $marketId, 'category_id' => (int) $id]);
+            $this->events->publish($this->eventFactory->create(EventNames::CATEGORY_UPDATED, 'category', $publicId, ['store_id' => $storeId, 'market_id' => $marketId], ['source' => 'catalog']));
+        });
+    }
+
     /** @return array{id:int,public_id:string,url:string} */
     public function create(CreateCategoryCommand $command): array
     {

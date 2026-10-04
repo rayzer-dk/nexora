@@ -5,8 +5,8 @@
 .reference-topbar__inner { display: flex; align-items: center; gap: var(--mc-space-3); min-height: var(--mc-control-height-sm); }
 .reference-topbar__service { display: none; gap: var(--mc-space-5); margin-right: auto; }
 .reference-topbar nav { display: flex; flex: 1; justify-content: flex-start; gap: var(--mc-space-4); min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.reference-topbar a { color: inherit; white-space: nowrap; }
-.reference-topbar a:hover { color: #fff; text-decoration: none; }
+.reference-topbar a:not(.store-switcher__option) { color: inherit; white-space: nowrap; }
+.reference-topbar a:not(.store-switcher__option):hover { color: #fff; text-decoration: none; }
 
 .store-switchers { display: flex; flex: none; align-items: center; gap: var(--mc-space-1); }
 .store-switcher { position: relative; }

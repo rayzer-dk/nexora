@@ -200,7 +200,7 @@ html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-g
   .checkout-page .checkout-builder-layout { grid-template-columns: minmax(0, 1fr) 392px; column-gap: var(--mc-space-6); }
   .checkout-page .checkout-builder-slot.is-left { grid-column: 1; }
   .checkout-page .checkout-builder-slot.is-full { grid-column: 1 / -1; }
-  .checkout-page .checkout-builder-slot.is-right { grid-column: 2; grid-row: 1 / span 40; margin-bottom: 0; }
+  .checkout-page .checkout-builder-slot.is-right { grid-column: 2; grid-row: 1 / span 40; align-self: stretch; margin-bottom: 0; }
   .checkout-page .checkout-builder-slot.is-right .order-summary { position: sticky; top: var(--mc-space-4); }
   body[data-sticky-header] .checkout-page .checkout-builder-slot.is-right .order-summary { top: var(--mc-space-20); }
   .ck-choices--carriers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -231,3 +231,8 @@ html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-g
 @media (min-width: 640px) {
   .ck-success__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Gift card / bonus points use the same apply row as the promo code. */
+.ck-hint--wide { grid-column: 1 / -1; }
+[data-reward-message][data-state="success"], [data-coupon-message][data-state="success"] { color: var(--mc-color-success); }
+[data-reward-message][data-state="error"], [data-coupon-message][data-state="error"] { color: var(--mc-color-danger); }

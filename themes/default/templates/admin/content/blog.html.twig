@@ -18,7 +18,7 @@
 {% for item in list.items %}<tr data-blog-row="{{ item.id }}">
 <td><a href="{{ path('admin_content_blog_edit', {id: item.id}) }}"><strong>{{ item.title }}</strong></a>{% if item.featured %} <span class="admin-badge is-info">{{ ui_icon('star', 14) }}{{ ui_text('admin.blog.featured') }}</span>{% endif %}{% if not item.has_locale %}<br><small class="admin-muted">{{ ui_text('admin.blog.no_translation') }}</small>{% endif %}</td>
 <td>{% for c in categories %}{% if c.id == item.category_id %}{{ c.name }}{% endif %}{% endfor %}</td>
-<td><span class="admin-badge is-{{ item.state }}">{{ state_labels[item.state] }}</span></td>
+<td><span class="admin-badge is-{{ item.state }}">{{ state_labels[item.state] }}</span> <label class="admin-switch admin-quick-status" data-quick-status data-url="{{ path('admin_content_blog_quick_status', {id:item.id}) }}" data-token="{{ csrf_token('admin_quick_status') }}" data-on="published" data-off="draft" data-label-on="{{ state_labels.published }}" data-label-off="{{ state_labels.draft }}" data-on-tone="published" data-off-tone="draft"><input type="checkbox" role="switch"{{ item.state != 'draft' ? ' checked' : '' }} aria-label="{{ ui_text('admin.catalog.products.quick_status') }}" title="{{ ui_text('admin.catalog.products.quick_status') }}"></label></td>
 <td>{{ item.published_at ? item.published_at|slice(0, 16) : '—' }}</td>
 <td><code>{{ item.locales }}</code></td>
 <td><span class="admin-row-actions">

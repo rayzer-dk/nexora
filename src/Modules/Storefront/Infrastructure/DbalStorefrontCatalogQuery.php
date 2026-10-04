@@ -1057,8 +1057,17 @@ final readonly class DbalStorefrontCatalogQuery
     /** @return list<array{name:string,value:string}> */
     private function productAttributes(int $productId,string $locale):array
     {
-        $rows=$this->connection->fetchAllAssociative(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.select_coalesce_at_name_ad_code_name_coalesce_pav_va'),[$locale,$productId]);
-        return array_values(array_filter(array_map(static fn(array $r):array=>['name'=>(string)$r['name'],'value'=>(string)$r['value']],$rows),static fn(array $r):bool=>$r['value']!==''));
+        // Values are stored per language: one value per attribute is shown, the visitor's language first, then language-neutral, then any.
+        $sql=preg_replace('/^SELECT /','SELECT ad.id aid,pav.locale vloc,',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.select_coalesce_at_name_ad_code_name_coalesce_pav_va'),1);
+        $rows=$this->connection->fetchAllAssociative((string)$sql,[$locale,$productId]);
+        $chosen=[];
+        foreach($rows as $r){
+            if((string)$r['value']==='')continue;
+            $rank=(string)$r['vloc']===$locale?0:($r['vloc']===null?1:2);
+            $key=(int)$r['aid'];
+            if(!isset($chosen[$key])||$rank<$chosen[$key]['rank'])$chosen[$key]=['rank'=>$rank,'name'=>(string)$r['name'],'value'=>(string)$r['value']];
+        }
+        return array_values(array_map(static fn(array $c):array=>['name'=>$c['name'],'value'=>$c['value']],$chosen));
     }
 
     /** @return list<array{name:string,url:string}> */

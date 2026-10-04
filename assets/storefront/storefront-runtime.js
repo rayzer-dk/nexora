@@ -318,9 +318,17 @@ document.addEventListener('DOMContentLoaded', () => {
   try { initProductCardCartActions(); } catch (_) {}
 });
 
+// Content swapped in by script (catalogue pages) gets the same behaviour as server-rendered content.
+document.addEventListener('commerce:content-updated', () => {
+  try { initAjaxForms(); } catch (_) {}
+  try { initProductCardCartActions(); } catch (_) {}
+});
+
 document.addEventListener('mc:toast', (event) => toast(event.detail?.message, event.detail?.type === 'error' ? 'error' : 'success', 6000));
 function initProductCardCartActions() {
   qa('[data-card-add-to-cart]').forEach((form) => {
+    if (form.dataset.cardBound === '1') return;
+    form.dataset.cardBound = '1';
     form.addEventListener('submit', async (event) => {
       if (!window.fetch) return;
       event.preventDefault();
@@ -415,6 +423,15 @@ function initRecentlyViewed() {
       const label = document.createElement('span'); label.textContent = t('js_add_to_cart'); button.append(label);
       form.append(button);
       li.append(form);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.className = 'recent-viewed__cart';
+      const more = document.createElement('a');
+      more.className = 'button button--secondary';
+      more.href = item.url;
+      more.textContent = t('js_details');
+      wrap.append(more);
+      li.append(wrap);
     }
     list.append(li);
   });

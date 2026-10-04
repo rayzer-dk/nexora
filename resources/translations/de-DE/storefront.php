@@ -814,6 +814,7 @@ return [
     'status.partial' => 'Teilweise',
     'status.returned' => 'Retourniert',
     'js_add_to_cart' => 'In den Warenkorb',
+    'js_details' => 'Details',
     'support_chat.tg_welcome' => 'Willkommen! Schreiben Sie Ihre Frage — wir antworten hier so schnell wie möglich.',
     'support_chat.attachment' => 'Anhang',
     'support_chat.closed_note' => 'Das Gespräch ist geschlossen. Eine neue Nachricht des Kunden öffnet es wieder.',

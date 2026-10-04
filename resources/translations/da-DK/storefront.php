@@ -881,6 +881,7 @@ return [
     'status.partial' => 'Delvis',
     'status.returned' => 'Returneret',
     'js_add_to_cart' => 'Læg i kurv',
+    'js_details' => 'Detaljer',
     'support_chat.tg_welcome' => 'Velkommen! Skriv dit spørgsmål, så svarer vi her hurtigst muligt.',
     'support_chat.attachment' => 'vedhæftning',
     'support_chat.closed_note' => 'Samtalen er lukket. En ny besked fra kunden åbner den igen.',

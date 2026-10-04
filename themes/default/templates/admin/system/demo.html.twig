@@ -1,0 +1,13 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.demo.title'),'demo') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.demo.title') }}</span></nav><h1>{{ ui_text('admin.demo.title') }}</h1><p>{{ ui_text('admin.demo.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" role="status">{{ message }}</div>{% endfor %}{% endfor %}
+<section class="admin-panel admin-demo">
+  <p>{{ ui_text('admin.demo.what') }}</p>
+  <div class="admin-demo__actions">
+    <form method="post" action="{{ path('admin_system_demo_install') }}" data-confirm="{{ ui_text('admin.demo.install_confirm') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_system_demo') }}"><button type="submit" class="admin-button is-primary">{{ ui_icon('download', 16) }}{{ ui_text('admin.demo.install') }}</button></form>
+    <form method="post" action="{{ path('admin_system_demo_remove') }}" data-confirm="{{ ui_text('admin.demo.remove_confirm') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_system_demo') }}"><button type="submit" class="admin-button is-danger">{{ ui_icon('trash-2', 16) }}{{ ui_text('admin.demo.remove') }}</button></form>
+  </div>
+  <p class="admin-help">{{ ui_text('admin.demo.wait') }}</p>
+</section>
+{{ shell.end() }}

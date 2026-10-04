@@ -118,6 +118,24 @@ final class CatalogAdminPageController extends AbstractController
         return $this->redirectToRoute('admin_catalog_categories');
     }
 
+    /** Switches one category on or off from the list (the switch in the status column). Answers JSON. */
+    #[Route('/admin/catalog/categories/{publicId}/quick-status', name: 'admin_catalog_category_quick_status', methods: ['POST'])]
+    public function categoryQuickStatus(string $publicId, Request $request): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        $context = $this->context->resolve($request);
+        if (!$this->isCsrfTokenValid('admin_quick_status', (string) $request->request->get('_token'))) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => false], 403);
+        }
+        $status = (string) $request->request->get('status', '');
+        try {
+            $this->categories->setStatus($context->storeId, $context->marketId, $publicId, $status);
+        } catch (\Throwable) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => false, 'error' => 'save'], 422);
+        }
+
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => true, 'status' => $status]);
+    }
+
     /** Changes the position of one category from the list (Enter or leaving the field). Answers JSON. */
     #[Route('/admin/catalog/categories/{publicId}/quick-order', name: 'admin_catalog_category_quick_order', methods: ['POST'])]
     public function categoryQuickOrder(string $publicId, Request $request): \Symfony\Component\HttpFoundation\JsonResponse

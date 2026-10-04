@@ -1239,6 +1239,7 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
   :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .admin-theme-toggle__moon { display: none; }
   :root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) .admin-theme-toggle__sun { display: inline-flex; }
 }
+.admin-theme-toggle__moon .ui-icon { stroke-width: 1.25; }
 .admin-theme-toggle { display: inline-flex; align-items: center; justify-content: center; }
 .admin-extension-uninstall { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: var(--mc-space-2); white-space: nowrap; }
 .admin-extension-uninstall .admin-check-inline { font-size: var(--mc-font-size-sm); }
@@ -1790,3 +1791,8 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-logs__line.is-warning { border-left: 3px solid var(--mc-color-warning); }
 @media (max-width: 768px) { .admin-logs__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 480px) { .admin-logs__filters { grid-template-columns: minmax(0, 1fr); } }
+
+/* Admin → System → Demo data. */
+.admin-demo { display: grid; gap: var(--mc-space-4); max-width: 48rem; }
+.admin-demo p { margin: 0; }
+.admin-demo__actions { display: flex; flex-wrap: wrap; gap: var(--mc-space-3); }

@@ -267,6 +267,28 @@ final class BlogService
         });
     }
 
+    /** Publishes or hides one article from the list; a scheduled date in the future stays as it is. */
+    public function setStatus(int $storeId, int $id, string $status): bool
+    {
+        if (!in_array($status, ['draft', 'published'], true)) {
+            return false;
+        }
+        $now = gmdate('Y-m-d H:i:s');
+        $published = $status === 'published' ? ', published_at = COALESCE(published_at, ?)' : '';
+        $params = $status === 'published' ? [$status, $now, $now, $id, $storeId] : [$status, $now, $id, $storeId];
+
+        return $this->db->executeStatement("UPDATE mc_content_entry SET status = ?, updated_at = ?{$published} WHERE id = ? AND store_id = ? AND content_type = 'article'", $params) >= 0;
+    }
+
+    public function setCategoryStatus(int $storeId, int $id, string $status): bool
+    {
+        if (!in_array($status, ['active', 'hidden'], true)) {
+            return false;
+        }
+
+        return $this->db->executeStatement('UPDATE mc_blog_category SET status = ?, updated_at = ? WHERE id = ? AND store_id = ?', [$status, gmdate('Y-m-d H:i:s'), $id, $storeId]) >= 0;
+    }
+
     /** @return list<array{id:int,slug:string,name:string,sort_order:int,status:string,articles:int}> */
     public function categories(int $storeId, string $locale): array
     {
