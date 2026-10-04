@@ -18,6 +18,7 @@ final class ExtensionListContractsCommand extends Command
             'provider.payment' => \Commerce\Modules\Payment\Contract\PaymentProviderInterface::class,
             'provider.shipping' => \Commerce\Modules\Shipping\Contract\DeliveryProviderInterface::class,
             'provider.product_block' => \Commerce\Modules\ProductPage\Contract\ProductBlockProviderInterface::class,
+            'provider.translation' => \Commerce\Modules\Ai\Contract\TranslationProviderInterface::class,
             'provider.ai' => \Commerce\Modules\Ai\Contract\TextGenerationProviderInterface::class,
         ];
         foreach ($contracts as $capability => $interface) {

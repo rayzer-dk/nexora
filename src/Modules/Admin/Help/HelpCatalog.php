@@ -14,6 +14,7 @@ final class HelpCatalog
         'language-packs' => ['file' => 'docs/LANGUAGE_PACKS.md', 'group' => 'system'],
         'backup-feeds-sitemap' => ['file' => 'docs/BACKUP_FEEDS_SITEMAP.md', 'group' => 'system'],
         'security' => ['file' => 'docs/SECURITY.md', 'group' => 'system'],
+        'extensibility' => ['file' => 'docs/EXTENSIBILITY.md', 'group' => 'modules'],
         'modules-quickstart' => ['file' => 'docs/QUICKSTART_MODULE.md', 'group' => 'modules'],
         'modules-lifecycle' => ['file' => 'docs/EXTENSION_LIFECYCLE.md', 'group' => 'modules'],
         'developer-guide' => ['file' => 'docs/DEVELOPER_GUIDE_UK.md', 'group' => 'developers'],

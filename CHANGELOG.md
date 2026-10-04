@@ -2,6 +2,15 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.37.0 — 2026-10-04
+
+Admin language packs, providers of modules at checkout, extensibility map — schema 78.
+
+- Language packs now also translate the admin: download the admin texts (4000+) of a language, translate, upload; the new language appears in the interface language list of the admin. Each language shows its coverage for the storefront and for the admin.
+- Fix: providers of signed modules (payment, shipping, product blocks, AI, translation) were registered only when the module booted for another reason, so they did not appear at checkout, on product pages or in the translation lists. Modules that declare a `provider.*` capability now boot before the request.
+- `commerce:extension:list-contracts` lists `provider.translation`.
+- Docs: `docs/EXTENSIBILITY.md` (what a module can and cannot extend), `docs/LANGUAGE_PACKS.md` covers the admin.
+
 ## 3.36.0 — 2026-10-04
 
 Language packs, translation providers, modules list, faster catalog — schema 78.

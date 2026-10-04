@@ -27,7 +27,7 @@ final class AdminInterfaceLocale
     }
 
     /**
-     * Interface languages that ship a back-office catalog (resources/translations/<locale>/admin.php).
+     * Interface languages that ship a back-office catalog (resources/translations/<locale>/admin.php) or have an admin language pack.
      *
      * @return array<string,string> code => native name
      */
@@ -41,6 +41,13 @@ final class AdminInterfaceLocale
         foreach (glob(rtrim($this->projectDir, '/') . '/resources/translations/*/admin.php') ?: [] as $file) {
             $code = basename(dirname($file));
             $out[$code] = $names[$code] ?? $code;
+        }
+        // Languages added by the store owner with an admin language pack (var/translations/<locale>/admin.json).
+        foreach (glob(rtrim($this->projectDir, '/') . '/var/translations/*/admin.json') ?: [] as $file) {
+            $code = basename(dirname($file));
+            if (preg_match('/^[a-z]{2,3}(?:-[A-Z]{2})?$/D', $code) === 1) {
+                $out[$code] ??= $names[$code] ?? $code;
+            }
         }
         uksort($out, static fn (string $a, string $b): int => $a === self::DEFAULT ? -1 : ($b === self::DEFAULT ? 1 : strcmp($a, $b)));
 

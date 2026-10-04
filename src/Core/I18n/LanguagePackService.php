@@ -7,13 +7,15 @@ namespace Commerce\Core\I18n;
 use DomainException;
 
 /**
- * Storefront language packs edited by the store owner: a JSON file per language in var/translations/<locale>/.
+ * Language packs edited by the store owner: a JSON file per language and scope in var/translations/<locale>/
+ * (storefront.json for the shop, admin.json for the back office).
  * var/ is never touched by updates, JSON has no quoting traps (an apostrophe is just a character), and a broken
  * pack is rejected on upload instead of taking the site down. Missing texts fall back to Ukrainian.
  */
 final class LanguagePackService
 {
-    private const MAX_BYTES = 2_097_152;
+    public const SCOPES = ['storefront', 'admin'];
+    private const MAX_BYTES = 4_194_304;
     private const MAX_TEXT = 4000;
 
     public function __construct(private readonly string $projectDir)
@@ -30,10 +32,10 @@ final class LanguagePackService
      *
      * @return array<string,string>
      */
-    public function export(string $locale): array
+    public function export(string $locale, string $scope = 'storefront'): array
     {
         $this->assertLocale($locale);
-        $base = $this->base();
+        $base = $this->base($scope);
         $current = $locale === 'uk-UA' ? $base : (new TranslationCatalogLoader($this->projectDir))->load($locale);
         $texts = [];
         foreach ($base as $key => $text) {
@@ -47,7 +49,7 @@ final class LanguagePackService
     /**
      * @return array{saved:int,translated:int,rejected:array<string,string>} rejected: key => reason
      */
-    public function import(string $locale, string $json): array
+    public function import(string $locale, string $json, string $scope = 'storefront'): array
     {
         $this->assertLocale($locale);
         if ($locale === 'uk-UA') {
@@ -64,7 +66,7 @@ final class LanguagePackService
         if (!is_array($data) || array_is_list($data)) {
             throw new DomainException(CanonicalUiText::get('admin.langpack.error_shape'));
         }
-        $base = $this->base();
+        $base = $this->base($scope);
         $pack = [];
         $rejected = [];
         foreach ($data as $key => $value) {
@@ -87,7 +89,7 @@ final class LanguagePackService
         if ($pack === []) {
             throw new DomainException(CanonicalUiText::get('admin.langpack.error_empty'));
         }
-        $this->write($locale, $pack);
+        $this->write($locale, $pack, $scope);
         $translated = 0;
         foreach ($pack as $key => $value) {
             if ($value !== $base[$key]) {
@@ -98,15 +100,39 @@ final class LanguagePackService
         return ['saved' => count($pack), 'translated' => $translated, 'rejected' => $rejected];
     }
 
-    public function exists(string $locale): bool
+    public function exists(string $locale, string $scope = 'storefront'): bool
     {
-        return $this->isValidLocale($locale) && is_file($this->path($locale));
+        return $this->isValidLocale($locale) && in_array($scope, self::SCOPES, true) && is_file($this->path($locale, $scope));
+    }
+
+    /** Percentage of the Ukrainian texts of a scope that have a translation in this language (a pack line equal to the Ukrainian text is not a translation). */
+    public function coverage(string $locale, string $scope = 'storefront'): int
+    {
+        $base = $this->base($scope);
+        if ($base === [] || !$this->isValidLocale($locale)) {
+            return 0;
+        }
+        if ($locale === 'uk-UA') {
+            return 100;
+        }
+        $current = (new TranslationCatalogLoader($this->projectDir))->load($locale);
+        $done = 0;
+        foreach ($base as $key => $text) {
+            if (isset($current[$key]) && $current[$key] !== $text) {
+                ++$done;
+            }
+        }
+
+        return (int) floor($done * 100 / count($base));
     }
 
     /** @return array<string,string> */
-    private function base(): array
+    private function base(string $scope): array
     {
-        $file = $this->projectDir . '/resources/translations/uk-UA/storefront.php';
+        if (!in_array($scope, self::SCOPES, true)) {
+            throw new DomainException(CanonicalUiText::get('common.error.operation_failed'));
+        }
+        $file = $this->projectDir . '/resources/translations/uk-UA/' . $scope . '.php';
         $data = is_file($file) ? require $file : [];
 
         return is_array($data) ? array_filter($data, 'is_string') : [];
@@ -123,24 +149,24 @@ final class LanguagePackService
     }
 
     /** @param array<string,string> $pack */
-    private function write(string $locale, array $pack): void
+    private function write(string $locale, array $pack, string $scope): void
     {
-        $dir = dirname($this->path($locale));
+        $dir = dirname($this->path($locale, $scope));
         if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
             throw new DomainException(CanonicalUiText::get('common.error.operation_failed'));
         }
         ksort($pack, SORT_STRING);
-        $tmp = $dir . '/.storefront-' . bin2hex(random_bytes(4)) . '.tmp';
+        $tmp = $dir . '/.' . $scope . '-' . bin2hex(random_bytes(4)) . '.tmp';
         $written = @file_put_contents($tmp, json_encode($pack, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n", LOCK_EX);
-        if ($written === false || !@rename($tmp, $this->path($locale))) {
+        if ($written === false || !@rename($tmp, $this->path($locale, $scope))) {
             @unlink($tmp);
             throw new DomainException(CanonicalUiText::get('common.error.operation_failed'));
         }
     }
 
-    private function path(string $locale): string
+    private function path(string $locale, string $scope): string
     {
-        return $this->projectDir . '/var/translations/' . $locale . '/storefront.json';
+        return $this->projectDir . '/var/translations/' . $locale . '/' . $scope . '.json';
     }
 
     private function assertLocale(string $locale): void

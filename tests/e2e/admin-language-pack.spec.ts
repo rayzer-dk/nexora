@@ -23,6 +23,10 @@ test('language packs: texts download as JSON and a broken file is refused with a
   expect(Object.keys(texts).length).toBeGreaterThan(500);
   expect(Object.values(texts).every((value) => typeof value === 'string')).toBe(true);
 
+  const adminTexts = (await (await page.request.get('/admin/system/localization/pack/en-US?scope=admin')).json()) as Record<string, string>;
+  expect(Object.keys(adminTexts).length).toBeGreaterThan(3000);
+  expect((await page.request.get('/admin/system/localization/pack/en-US?scope=nope')).status()).toBe(200); // an unknown scope falls back to the storefront texts
+
   const upload = async (content: string): Promise<void> => {
     const form = page.locator('#language-packs form');
     await form.locator('select[name="pack_locale"]').selectOption('da-DK');

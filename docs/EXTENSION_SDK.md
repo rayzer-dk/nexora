@@ -57,7 +57,7 @@ They require `trusted_handler` mode and a permission declared by the same module
 
 A trusted module declares `autoload.psr4` and `entrypoint`. Its entrypoint implements `TrustedExtensionEntrypointInterface` and receives `TrustedExtensionContext`.
 
-The context currently supports trusted route handlers and domain-event handlers. Active trusted modules are booted lazily; disabled versions are not loaded.
+The context supports trusted route handlers, domain-event handlers, scheduled tasks and the provider registrations of `EXTENSION_PROVIDER_CONTRACTS.md`. A module that declares a `provider.*` capability is booted before every request, so its providers are available at checkout, on product pages and in the translation lists. What a module can and cannot extend is summarised in `EXTENSIBILITY.md`. Active trusted modules are booted lazily; disabled versions are not loaded.
 
 The platform event catalog includes checkout, product, order, customer, content, layout and navigation lifecycle names in addition to the existing commerce outbox events. A trusted package may subscribe only through declared events and the runtime bridge; it does not patch controllers.
 

@@ -39,12 +39,15 @@
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.langpack.eyebrow') }}</small><h2>{{ ui_text('admin.langpack.title') }}</h2></div></div>
     <p class="admin-card-note">{{ ui_text('admin.langpack.help') }}</p>
     <ol class="admin-steps"><li>{{ ui_text('admin.langpack.step1') }}</li><li>{{ ui_text('admin.langpack.step2') }}</li><li>{{ ui_text('admin.langpack.step3') }}</li></ol>
-    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.localization.locales.code') }}</th><th>{{ ui_text('admin.localization.col.ui_translation') }}</th><th></th></tr></thead><tbody>
-    {% for locale in data.locales %}<tr><td><code>{{ locale.code }}</code> {{ locale.native_name }}</td><td>{{ locale.ui_coverage }}%</td><td class="is-actions"><a class="admin-button" href="{{ path('admin_system_localization_pack_download', {locale: locale.code}) }}">{{ ui_icon('download', 16) }} <span>{{ ui_text('admin.langpack.download') }}</span></a></td></tr>{% endfor %}
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.localization.col.language') }}</th><th>{{ ui_text('admin.langpack.scope_storefront') }}</th><th>{{ ui_text('admin.langpack.scope_admin') }}</th></tr></thead><tbody>
+    {% for locale in data.locales %}<tr><td><code>{{ locale.code }}</code> {{ locale.native_name }}</td>
+        <td>{{ locale.ui_coverage }}% <a class="admin-button" href="{{ path('admin_system_localization_pack_download', {locale: locale.code}) }}">{{ ui_icon('download', 16) }} <span>{{ ui_text('admin.langpack.download') }}</span></a></td>
+        <td>{{ admin_coverage[locale.code]|default(0) }}% <a class="admin-button" href="{{ path('admin_system_localization_pack_download', {locale: locale.code, scope: 'admin'}) }}">{{ ui_icon('download', 16) }} <span>{{ ui_text('admin.langpack.download') }}</span></a></td></tr>{% endfor %}
     </tbody></table></div>
     <form method="post" action="{{ path('admin_system_localization_pack_upload') }}" enctype="multipart/form-data" class="admin-form-grid">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_pack') }}">
         <label><span>{{ ui_text('admin.langpack.language') }}</span><select name="pack_locale" required>{% for locale in data.locales|filter(l => l.code != 'uk-UA') %}<option value="{{ locale.code }}">{{ locale.code }} · {{ locale.native_name }}</option>{% endfor %}</select></label>
+        <label><span>{{ ui_text('admin.langpack.scope') }}</span><select name="pack_scope"><option value="storefront">{{ ui_text('admin.langpack.scope_storefront') }}</option><option value="admin">{{ ui_text('admin.langpack.scope_admin') }}</option></select></label>
         <label><span>{{ ui_text('admin.langpack.file') }}</span><input type="file" name="pack_file" accept=".json,application/json" required></label>
         <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('upload', 16) }} <span>{{ ui_text('admin.langpack.upload') }}</span></button></div>
     </form>

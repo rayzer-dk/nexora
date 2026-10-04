@@ -19,6 +19,7 @@ final class LanguagePackServiceTest extends TestCase
         mkdir($this->dir . '/resources/translations/uk-UA', 0777, true);
         mkdir($this->dir . '/resources/translations/en-US', 0777, true);
         file_put_contents($this->dir . '/resources/translations/uk-UA/storefront.php', "<?php\nreturn ['cart' => 'Кошик', 'items' => 'У кошику %count% товарів', 'it_s' => 'Це м\\'який текст'];\n");
+        file_put_contents($this->dir . '/resources/translations/uk-UA/admin.php', "<?php\nreturn ['admin.save' => 'Зберегти', 'admin.count' => 'Всього: %count%'];\n");
         file_put_contents($this->dir . '/resources/translations/en-US/storefront.php', "<?php\nreturn ['cart' => 'Cart'];\n");
     }
 
@@ -78,6 +79,29 @@ final class LanguagePackServiceTest extends TestCase
                 self::assertFalse($service->exists($locale));
             }
         }
+    }
+
+    public function testAnAdminPackAddsAnInterfaceLanguageAndCoverageCountsOnlyRealTranslations(): void
+    {
+        $service = new LanguagePackService($this->dir);
+        $db = \Doctrine\DBAL\DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        self::assertArrayNotHasKey('fr-FR', (new \Commerce\Core\I18n\AdminInterfaceLocale($this->dir, $db))->available());
+
+        $service->import('fr-FR', json_encode(['admin.save' => 'Enregistrer', 'admin.count' => 'Total : %count%'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), 'admin');
+
+        self::assertSame(100, $service->coverage('fr-FR', 'admin'));
+        self::assertSame(0, $service->coverage('fr-FR', 'storefront'));
+        self::assertSame('Enregistrer', (new TranslationCatalogLoader($this->dir))->load('fr-FR')['admin.save']);
+        self::assertSame('fr-FR', array_key_last((new \Commerce\Core\I18n\AdminInterfaceLocale($this->dir, $db))->available()) ?? '');
+        // the Ukrainian text pasted back is not a translation
+        $service->import('de-DE', json_encode(['admin.save' => 'Зберегти'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), 'admin');
+        self::assertSame(0, $service->coverage('de-DE', 'admin'));
+    }
+
+    public function testUnknownScopeIsRefused(): void
+    {
+        $this->expectException(DomainException::class);
+        (new LanguagePackService($this->dir))->import('fr-FR', '{"x":"y"}', 'secrets');
     }
 
     public function testThePackOfTheOwnerWinsOverTheBundledTexts(): void

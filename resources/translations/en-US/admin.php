@@ -4166,8 +4166,8 @@ return [
     'admin.system.modules.open' => 'Open',
     'admin.system.modules.no_page' => 'No page of its own: managed from other modules\' pages',
     'admin.langpack.eyebrow' => 'Interface languages',
-    'admin.langpack.title' => 'Storefront language packs',
-    'admin.langpack.help' => 'The storefront texts (buttons, labels, messages) come from a language pack. New language: add it above, download the texts, translate them in JSON and upload the file back. Anything not translated is shown in Ukrainian. The pack lives in var/translations and survives updates.',
+    'admin.langpack.title' => 'Language packs',
+    'admin.langpack.help' => 'The storefront texts (buttons, labels, messages) and the admin texts come from a language pack. New language: add it above, download the texts of the part you need, translate them in JSON and upload the file back. Anything not translated is shown in Ukrainian. The pack lives in var/translations and survives updates. A new admin language appears in the interface language list at the top of the admin.',
     'admin.langpack.step1' => 'Add the language in the table above (a code such as fr-FR) and save.',
     'admin.langpack.step2' => 'Press "Download texts" in the row of that language, open the file in a text editor and translate the values (after the colon). Leave the keys, the %name% marks and HTML tags as they are. Apostrophes need no special characters; write a double quote " inside a text as \".',
     'admin.langpack.step3' => 'Choose the language, choose the file and press "Upload translation". Invalid lines are skipped with a message.',
@@ -4183,4 +4183,7 @@ return [
     'admin.langpack.error_shape' => 'The file must hold a JSON object like {"key": "text"}.',
     'admin.langpack.error_empty' => 'The file has no valid line.',
     'admin.langpack.error_nofile' => 'Choose a JSON file.',
+    'admin.langpack.scope' => 'What is translated',
+    'admin.langpack.scope_storefront' => 'Storefront (for customers)',
+    'admin.langpack.scope_admin' => 'Admin (for you and the team)',
 ];

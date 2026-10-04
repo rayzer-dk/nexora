@@ -39,9 +39,15 @@ final class LocalizationAdminController extends AbstractController
         $context = $this->contexts->resolve($request);
 
         $api = $this->apiSource->config();
+        $data = $this->settings->overview($context->storeId);
+        $adminCoverage = [];
+        foreach ($data['locales'] as $locale) {
+            $adminCoverage[(string) $locale['code']] = $this->packs->coverage((string) $locale['code'], 'admin');
+        }
 
         return $this->render('@storefront/admin/system/localization.html.twig', [
-            'data' => $this->settings->overview($context->storeId),
+            'data' => $data,
+            'admin_coverage' => $adminCoverage,
             'rate_sources' => $this->rates->sourceChoices(),
             'rate_providers' => $this->rates->providerStatus(),
             'rate_api' => ['service' => $api['service'], 'has_key' => $api['key'] !== '', 'services' => ApiKeyExchangeRateSource::SERVICES],
@@ -66,11 +72,12 @@ final class LocalizationAdminController extends AbstractController
 
     /** The texts of one language as JSON to translate: the current text, or the Ukrainian one where there is no translation yet. */
     #[Route('/admin/system/localization/pack/{locale}', name: 'admin_system_localization_pack_download', methods: ['GET'], requirements: ['locale' => '[a-z]{2,3}(?:-[A-Z]{2})?'])]
-    public function downloadPack(string $locale): Response
+    public function downloadPack(Request $request, string $locale): Response
     {
-        $response = new JsonResponse($this->packs->export($locale), 200, [], false);
+        $scope = in_array((string) $request->query->get('scope', 'storefront'), LanguagePackService::SCOPES, true) ? (string) $request->query->get('scope', 'storefront') : 'storefront';
+        $response = new JsonResponse($this->packs->export($locale, $scope), 200, [], false);
         $response->setEncodingOptions(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'storefront-' . $locale . '.json'));
+        $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $scope . '-' . $locale . '.json'));
 
         return $response;
     }
@@ -86,8 +93,9 @@ final class LocalizationAdminController extends AbstractController
             if ($json === '') {
                 throw new \DomainException(CanonicalUiText::get('admin.langpack.error_nofile'));
             }
-            $result = $this->packs->import($locale, $json);
-            $message = CanonicalUiText::get('admin.langpack.saved', ['locale' => $locale, 'saved' => $result['saved'], 'translated' => $result['translated']]);
+            $scope = (string) $request->request->get('pack_scope', 'storefront');
+            $result = $this->packs->import($locale, $json, $scope);
+            $message = CanonicalUiText::get('admin.langpack.saved', ['locale' => $locale . ' (' . $scope . ')', 'saved' => $result['saved'], 'translated' => $result['translated']]);
             if ($result['rejected'] !== []) {
                 $message .= ' ' . CanonicalUiText::get('admin.langpack.rejected', ['count' => count($result['rejected']), 'keys' => implode(', ', array_slice(array_keys($result['rejected']), 0, 5))]);
             }
