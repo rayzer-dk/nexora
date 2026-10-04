@@ -28,6 +28,7 @@ final readonly class TrustedExtensionContext
         private ProductBlockRegistry $productBlocks,
         private AiProviderRegistry $ai,
         private TranslationProviderRegistry $translations,
+        private ExtensionServiceRegistry $services,
         private array $declaredRoutes = [],
         private array $declaredEvents = [],
         private array $declaredCapabilities = [],
@@ -88,6 +89,16 @@ final readonly class TrustedExtensionContext
     {
         $this->requireCapability('provider.translation');
         $this->translations->register($provider);
+    }
+
+    /**
+     * Contributes a service to an extension point of the core (`provider.exchange_rate`, `provider.search`,
+     * `provider.notification_sender`, `provider.feed`); the object must implement the contract of that capability.
+     */
+    public function provide(string $capability, object $service): void
+    {
+        $this->requireCapability($capability);
+        $this->services->add($capability, $service);
     }
 
     private function requireCapability(string $capability): void

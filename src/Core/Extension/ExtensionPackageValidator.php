@@ -232,7 +232,7 @@ final class ExtensionPackageValidator
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.commercial.invalid'));
             }
         }
-        $providerCapabilities = ['provider.payment','provider.shipping','provider.product_block','provider.ai','provider.translation'];
+        $providerCapabilities = ['provider.payment','provider.shipping','provider.product_block','provider.ai','provider.translation','provider.exchange_rate','provider.search','provider.notification_sender','provider.feed'];
         foreach ((array) ($manifest['capabilities'] ?? []) as $capability) {
             if (str_starts_with((string) $capability, 'provider.') && !in_array((string) $capability, $providerCapabilities, true)) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.sdk.provider_capability_unknown') . (string) $capability);

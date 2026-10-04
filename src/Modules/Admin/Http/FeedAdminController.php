@@ -19,6 +19,7 @@ final class FeedAdminController extends AbstractController
         private readonly AdminContextResolver $contexts,
         private readonly Connection $db,
         private readonly FeedStorageService $feeds,
+        private readonly \Commerce\Modules\Feeds\Application\ProductFeedGenerator $generator,
         private readonly string $publicBaseUrl,
     ) {}
 
@@ -42,6 +43,7 @@ final class FeedAdminController extends AbstractController
 
         $store=$this->db->fetchAssociative('SELECT code,name,default_currency FROM mc_store WHERE id=?',[$context->storeId]) ?: [];
         $platforms=['google'=>'Google Merchant XML','meta'=>'Meta / Facebook CSV','pinterest'=>'Pinterest CSV','tiktok'=>'TikTok Catalog CSV','rozetka'=>'Rozetka XML','prom'=>'Prom.ua YML','csv'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.feedadmincontroller.universalnyi_csv'),'json'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.feedadmincontroller.universalnyi_json'),'agentic'=>'AI / Agentic Commerce JSONL'];
+        foreach($this->generator->extensionFormats() as $formatCode=>$format)$platforms[$formatCode]=$format->label();
         $rows=[];
         foreach($platforms as $code=>$label){
             $latest=$this->feeds->latest((string)($store['code']??'store'),$code,$context->locale);$meta=$latest['meta']??[];
@@ -53,7 +55,7 @@ final class FeedAdminController extends AbstractController
         return $this->render('@storefront/admin/commerce/feeds.html.twig',['store_locales'=>$storeLocales,'rows'=>$rows,'store'=>$store,'locale'=>$context->locale,'categories'=>$categories,'mappings'=>$mappings]);
     }
 
-    #[Route('/admin/commerce/feeds/{platform}/generate', name:'admin_commerce_feed_generate', methods:['POST'], requirements:['platform'=>'google|meta|pinterest|tiktok|rozetka|prom|csv|json|agentic'])]
+    #[Route('/admin/commerce/feeds/{platform}/generate', name:'admin_commerce_feed_generate', methods:['POST'], requirements:['platform'=>'[a-z0-9_]{2,30}'])]
     public function generate(string $platform,Request $request): Response
     {
         $context=$this->contexts->resolve($request);if(!$this->isCsrfTokenValid('feed_generate_'.$platform,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();$store=$this->db->fetchAssociative('SELECT code,default_currency FROM mc_store WHERE id=?',[$context->storeId])?:[];
@@ -61,7 +63,7 @@ final class FeedAdminController extends AbstractController
         return $this->redirectToRoute('admin_commerce_feeds');
     }
 
-    #[Route('/admin/commerce/feeds/{platform}/preview', name:'admin_commerce_feed_preview', methods:['GET'], requirements:['platform'=>'google|meta|pinterest|tiktok|rozetka|prom|csv|json|agentic'])]
+    #[Route('/admin/commerce/feeds/{platform}/preview', name:'admin_commerce_feed_preview', methods:['GET'], requirements:['platform'=>'[a-z0-9_]{2,30}'])]
     public function preview(string $platform,Request $request): Response
     {
         $context=$this->contexts->resolve($request);$store=$this->db->fetchAssociative('SELECT code,default_currency FROM mc_store WHERE id=?',[$context->storeId])?:[];$stored=$this->feeds->latest((string)$store['code'],$platform,$context->locale);if($stored===null){$this->addFlash('warning',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.feedadmincontroller.spochatku_zheneruite_feed'));return $this->redirectToRoute('admin_commerce_feeds');}

@@ -389,6 +389,10 @@ services:
             $bearerToken: '%commerce.sms.bearer_token%'
             $sender: '%commerce.sms.sender%'
 
+    Commerce\Core\Extension\ExtensionServiceRegistry:
+        calls:
+            - setBooter: [!service_closure '@Commerce\Core\Extension\TrustedProviderBootSubscriber']
+
     Commerce\Modules\Notification\Application\NotificationDispatcher:
         arguments:
             $senders: !tagged_iterator commerce.notification_sender
@@ -685,8 +689,12 @@ services:
         arguments:
             $cache: '@cache.storefront'
 
+    Commerce\Modules\Search\Infrastructure\ExtensionAwareSearchCandidateProvider:
+        arguments:
+            $builtIn: '@Commerce\Modules\Search\Infrastructure\MeilisearchCandidateProvider'
+
     Commerce\Modules\Search\Contract\SearchCandidateProviderInterface:
-        alias: Commerce\Modules\Search\Infrastructure\MeilisearchCandidateProvider
+        alias: Commerce\Modules\Search\Infrastructure\ExtensionAwareSearchCandidateProvider
 
     Commerce\Modules\Storefront\Infrastructure\CachedStorefrontCatalogQuery:
         arguments:

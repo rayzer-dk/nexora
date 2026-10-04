@@ -19,6 +19,10 @@ final class ExtensionListContractsCommand extends Command
             'provider.shipping' => \Commerce\Modules\Shipping\Contract\DeliveryProviderInterface::class,
             'provider.product_block' => \Commerce\Modules\ProductPage\Contract\ProductBlockProviderInterface::class,
             'provider.translation' => \Commerce\Modules\Ai\Contract\TranslationProviderInterface::class,
+            'provider.exchange_rate' => \Commerce\Modules\Pricing\Contract\ReferenceRateSourceInterface::class,
+            'provider.search' => \Commerce\Modules\Search\Contract\SearchCandidateProviderInterface::class,
+            'provider.notification_sender' => \Commerce\Modules\Notification\Contract\NotificationSenderInterface::class,
+            'provider.feed' => \Commerce\Modules\Feeds\Contract\FeedFormatProviderInterface::class,
             'provider.ai' => \Commerce\Modules\Ai\Contract\TextGenerationProviderInterface::class,
         ];
         foreach ($contracts as $capability => $interface) {

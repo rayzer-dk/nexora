@@ -26,6 +26,7 @@ final class TrustedExtensionRuntimeLoader
         private readonly ProductBlockRegistry $productBlocks,
         private readonly AiProviderRegistry $ai,
         private readonly TranslationProviderRegistry $translations,
+        private readonly ExtensionServiceRegistry $services,
     ) {}
 
     public function bootActive(): void
@@ -62,7 +63,7 @@ final class TrustedExtensionRuntimeLoader
         $declaredRoutes=[];foreach((array)($manifest['routes']??[]) as $route){if(is_array($route)&&is_string($route['name']??null))$declaredRoutes[]=(string)$route['name'];}
         $declaredEvents=array_values(array_filter((array)($manifest['events']??[]),'is_string'));
         $declaredTasks=[];foreach((array)($manifest['scheduled_tasks']??[]) as $task){if(is_array($task)&&is_string($task['code']??null))$declaredTasks[(string)$task['code']]=['interval'=>(int)($task['interval']??3600),'label'=>(string)($task['label']??$task['code']),'description'=>(string)($task['description']??'')];}
-        $instance->boot(new TrustedExtensionContext((string)$row['code'],(string)$row['version'],$path,$this->runtime,$this->payments,$this->shipping,$this->productBlocks,$this->ai,$this->translations,$declaredRoutes,$declaredEvents,array_values(array_filter((array)($manifest['capabilities']??[]),'is_string')),$declaredTasks));
+        $instance->boot(new TrustedExtensionContext((string)$row['code'],(string)$row['version'],$path,$this->runtime,$this->payments,$this->shipping,$this->productBlocks,$this->ai,$this->translations,$this->services,$declaredRoutes,$declaredEvents,array_values(array_filter((array)($manifest['capabilities']??[]),'is_string')),$declaredTasks));
     }
 
     /** @param array<string,mixed> $row */

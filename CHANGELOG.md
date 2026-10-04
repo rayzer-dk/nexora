@@ -2,6 +2,15 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.38.0 — 2026-10-04
+
+More extension points for signed modules — schema 78.
+
+- A module can now add exchange-rate sources (`provider.exchange_rate`), search engines (`provider.search`, asked before Meilisearch and the SQL search; a failing engine is skipped), senders of notification channels (`provider.notification_sender`, for example an SMS gateway or a messenger instead of the built-in sender of that channel) and product feed formats (`provider.feed`, listed on the feeds page, in `commerce:feeds:generate` and at `/feeds/{store}/{code}`). Built-in sources and formats cannot be replaced by a module.
+- Module services are found by cron, queue worker and console as well as by web requests (the modules that declare a provider boot before the first lookup).
+- `commerce:extension:list-contracts` lists the new capabilities; the validator accepts them; `docs/EXTENSIBILITY.md` and `docs/EXTENSION_PROVIDER_CONTRACTS.md` describe them.
+- English is the fallback language (locale, then English, then Ukrainian); the default admin language is set in Localization; the Localization page warns when an enabled language is only partly translated.
+
 ## 3.37.0 — 2026-10-04
 
 Admin language packs, providers of modules at checkout, extensibility map — schema 78.

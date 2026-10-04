@@ -37,10 +37,28 @@ final class ExchangeRateService
         private readonly Connection $db,
         #[AutowireIterator('commerce.rate_source')] iterable $sources,
         private readonly ?ExchangeRateStatusStore $status = null,
+        private readonly ?\Commerce\Core\Extension\ExtensionServiceRegistry $extensions = null,
     ) {
         foreach ($sources as $source) {
             $this->sources[$source->code()] = $source;
         }
+    }
+
+    /**
+     * Built-in sources plus those of signed modules (`provider.exchange_rate`); a built-in code cannot be replaced.
+     *
+     * @return array<string,ReferenceRateSourceInterface>
+     */
+    private function sources(): array
+    {
+        $sources = $this->sources;
+        foreach ($this->extensions?->all('provider.exchange_rate') ?? [] as $source) {
+            if ($source instanceof ReferenceRateSourceInterface && preg_match('/^[a-z0-9_]{2,20}$/D', $source->code()) === 1 && !isset($this->sources[$source->code()])) {
+                $sources[$source->code()] = $source;
+            }
+        }
+
+        return $sources;
     }
 
     /** @return list<string> every value a currency's rate source may take, in display order */
@@ -48,11 +66,11 @@ final class ExchangeRateService
     {
         $choices = [self::SOURCE_AUTO];
         foreach (['ecb', 'nbu', 'nbp', 'cnb', 'api'] as $code) {
-            if (isset($this->sources[$code])) {
+            if (isset($this->sources()[$code])) {
                 $choices[] = $code;
             }
         }
-        foreach (array_keys($this->sources) as $code) {
+        foreach (array_keys($this->sources()) as $code) {
             if (!in_array($code, $choices, true)) {
                 $choices[] = $code;
             }
@@ -111,11 +129,11 @@ final class ExchangeRateService
             if (isset($fetched[$code])) {
                 return $fetched[$code];
             }
-            if (isset($errors[$code]) || !isset($this->sources[$code])) {
+            if (isset($errors[$code]) || !isset($this->sources()[$code])) {
                 return null;
             }
             try {
-                return $fetched[$code] = $this->sources[$code]->table();
+                return $fetched[$code] = $this->sources()[$code]->table();
             } catch (\Throwable $e) {
                 $errors[$code] = $e->getMessage() !== '' ? $e->getMessage() : $e::class;
 
@@ -184,7 +202,7 @@ final class ExchangeRateService
     {
         $known = $this->status?->all() ?? [];
         $out = [];
-        foreach ($this->sources as $code => $_) {
+        foreach ($this->sources() as $code => $_) {
             $out[$code] = $known[$code] ?? ['provider' => $code, 'last_attempt_at' => null, 'last_success_at' => null, 'last_rate_date' => null, 'last_error' => null, 'pairs_stored' => 0, 'consecutive_failures' => 0];
         }
 

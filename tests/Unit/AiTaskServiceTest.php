@@ -58,7 +58,7 @@ final class AiTaskServiceTest extends TestCase
         $settings = new AiSettings($this->db, new SecretVault(str_repeat('k', 32)));
         $ai = new AiProviderRegistry([$this->stub]);
         $this->translations = new TranslationProviderRegistry();
-        $loader = new TrustedExtensionRuntimeLoader($this->db, new TrustedExtensionRuntimeRegistry(), new PaymentProviderRegistry([]), new DeliveryProviderRegistry([]), new ProductBlockRegistry([]), $ai, $this->translations);
+        $loader = new TrustedExtensionRuntimeLoader($this->db, new TrustedExtensionRuntimeRegistry(), new PaymentProviderRegistry([]), new DeliveryProviderRegistry([]), new ProductBlockRegistry([]), $ai, $this->translations, new \Commerce\Core\Extension\ExtensionServiceRegistry());
         $this->service = new AiTaskService($settings, new MockHttpClient(), $ai, $this->translations, $loader);
     }
 

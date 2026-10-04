@@ -12,6 +12,13 @@ Supported provider capabilities:
 - `provider.ai` -> `Commerce\Modules\Ai\Contract\TextGenerationProviderInterface` (a language model; it appears in the AI provider list of the admin)
 - `provider.translation` -> `Commerce\Modules\Ai\Contract\TranslationProviderInterface` (a machine-translation service such as Google Cloud Translation or DeepL; it appears in the provider list of every "Translate" button, next to the AI providers, and receives the text itself instead of a prompt)
 
+- `provider.exchange_rate` -> `Commerce\Modules\Pricing\Contract\ReferenceRateSourceInterface` (an exchange-rate publisher; its code appears in the rate-source choice of every currency; codes `[a-z0-9_]{2,20}`, built-in codes are kept)
+- `provider.search` -> `Commerce\Modules\Search\Contract\SearchCandidateProviderInterface` (a search engine; asked before the built-in one, return null to let the next engine or the SQL search answer)
+- `provider.notification_sender` -> `Commerce\Modules\Notification\Contract\NotificationSenderInterface` (replaces the built-in sender of the channel it returns from `channel()`, for example `NotificationChannel::Sms`)
+- `provider.feed` -> `Commerce\Modules\Feeds\Contract\FeedFormatProviderInterface` (a feed format or marketplace; it gets the canonical product rows and returns the file; codes `[a-z0-9_]{2,30}`, built-in codes are kept)
+
+These four are registered with `$context->provide('<capability>', $service)`; the object must implement the contract of the capability or `provide()` throws.
+
 Registration from the trusted entrypoint:
 
     public function boot(TrustedExtensionContext $context): void
@@ -21,6 +28,7 @@ Registration from the trusted entrypoint:
         $context->productBlockProvider(new MyProductBlockProvider(...));
         $context->aiProvider(new MyAiProvider(...));
         $context->translationProvider(new GoogleTranslateProvider(...));
+        $context->provide('provider.feed', new HotlineFeed(...));
     }
 
 Only declare and register the providers your module actually needs. Duplicate provider codes are rejected. A module cannot register a provider capability it did not declare in its manifest.

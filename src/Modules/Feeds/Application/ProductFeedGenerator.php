@@ -9,7 +9,15 @@ use DOMDocument;
 
 final readonly class ProductFeedGenerator
 {
-    public function __construct(private CanonicalProductExportService $catalog, private Connection $db, private string $publicBaseUrl) {}
+    public function __construct(private CanonicalProductExportService $catalog, private Connection $db, private string $publicBaseUrl, private ?\Commerce\Core\Extension\ExtensionServiceRegistry $extensions = null) {}
+
+    /** @return array<string,\Commerce\Modules\Feeds\Contract\FeedFormatProviderInterface> formats of signed modules by code; built-in codes cannot be replaced */
+    public function extensionFormats(): array
+    {
+        $out=[];foreach($this->extensions?->all('provider.feed')??[] as $format){if($format instanceof \Commerce\Modules\Feeds\Contract\FeedFormatProviderInterface&&preg_match('/^[a-z0-9_]{2,30}$/D',$format->code())===1&&!in_array($format->code(),self::BUILT_IN,true))$out[$format->code()]=$format;}return $out;
+    }
+
+    public const BUILT_IN=['google','meta','facebook','pinterest','tiktok','rozetka','prom','csv','json','agentic'];
 
     /** @return array{content:string,content_type:string,extension:string,count:int,skipped:int,warnings:list<string>} */
     public function generate(string $platform,int $storeId,int $marketId,string $locale,string $currency,bool $inStockOnly=false): array
@@ -26,11 +34,20 @@ final readonly class ProductFeedGenerator
             'agentic'=>$this->agenticJsonl($products),
             'json'=>['content'=>json_encode(['generated_at'=>gmdate('c'),'products'=>$products],JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),'content_type'=>'application/json; charset=UTF-8','extension'=>'json','count'=>count($products)],
             'csv'=>$this->catalogCsv($products,'generic'),
-            default=>throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.0c8195565302')),
+            default=>isset($this->extensionFormats()[$platform])?$this->extensionFormat($this->extensionFormats()[$platform],$products,$storeId,$locale,$currency):throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.0c8195565302')),
         };
         return $result+['skipped'=>count($all)-count($products),'warnings'=>$warnings];
     }
 
+
+    /** @param list<array<string,mixed>> $products */
+    private function extensionFormat(\Commerce\Modules\Feeds\Contract\FeedFormatProviderInterface $format,array $products,int $storeId,string $locale,string $currency): array
+    {
+        $r=$format->render($products,$storeId,$locale,$currency);
+        $ext=preg_match('/^[a-z0-9]{2,8}$/D',(string)($r['extension']??''))===1?(string)$r['extension']:'txt';
+
+        return ['content'=>(string)($r['content']??''),'content_type'=>(string)($r['content_type']??'text/plain; charset=UTF-8'),'extension'=>$ext,'count'=>count($products)];
+    }
 
     /** @param list<array<string,mixed>> $products */
     private function agenticJsonl(array $products): array

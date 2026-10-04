@@ -22,7 +22,15 @@ final class TrustedProviderBootSubscriber
     #[AsEventListener(event: 'kernel.request', priority: -16)]
     public function onRequest(RequestEvent $event): void
     {
-        if ($event->isMainRequest() && self::needsBoot($this->contributions->activeManifests())) {
+        if ($event->isMainRequest()) {
+            $this->ensureBooted();
+        }
+    }
+
+    /** Boots the modules that declare providers; idempotent, also called by the core services that consult module providers (cron, queue worker, console). */
+    public function ensureBooted(): void
+    {
+        if (self::needsBoot($this->contributions->activeManifests())) {
             $this->loader->bootActive();
         }
     }
