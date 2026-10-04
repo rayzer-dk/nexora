@@ -25,7 +25,6 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
         private Connection $connection,
         private NotificationOutbox $notifications,
         private StorefrontUiTranslator $translator,
-        private bool $smsEnabled,
         private \Commerce\Modules\Order\Application\OrderMethodPresenter $methodLabels,
         #[\Symfony\Component\DependencyInjection\Attribute\Autowire('%commerce.app_public_url%')] private string $publicUrl = '',
     ) {
@@ -84,10 +83,5 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
             $this->notifications->enqueue(NotificationChannel::Email, $message, $email, null, 'event:' . $event->eventId . ':order-created:email');
         }
         $this->notifications->enqueue(NotificationChannel::Telegram, $message, '', null, 'event:' . $event->eventId . ':order-created:telegram');
-        $phone = trim((string) ($row['customer_phone'] ?? ''));
-        if ($this->smsEnabled && $phone !== '') {
-            $smsMessage = new NotificationMessage('order.created', $this->translator->translate('order_number', $locale, ['number' => (string) $row['order_number']]), $this->translator->translate('sms_order_received', $locale, ['number' => (string) $row['order_number'], 'amount' => number_format(((int) $row['total_minor']) / 100, 2, '.', '') . ' ' . (string) $row['currency']]), ['locale' => $locale], 'generic');
-            $this->notifications->enqueue(NotificationChannel::Sms, $smsMessage, $phone, null, 'event:' . $event->eventId . ':order-created:sms');
-        }
     }
 }

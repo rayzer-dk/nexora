@@ -369,6 +369,47 @@ function initQuickPrice() {
   });
 }
 
+const SMS_GSM_BASIC = '@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#¤%&\'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà';
+const SMS_GSM_EXTENDED = '^{}\\[~]|€\f';
+
+// Same rule as Commerce\Modules\Notification\Domain\SmsText: GSM 7-bit is 160 / 153 per part, anything else is UCS-2 with 70 / 67.
+function smsAnalyze(text) {
+  let gsmUnits = 0;
+  let gsm = true;
+  for (const char of text) {
+    if (SMS_GSM_BASIC.includes(char)) gsmUnits += 1;
+    else if (SMS_GSM_EXTENDED.includes(char)) gsmUnits += 2;
+    else { gsm = false; break; }
+  }
+  if (gsm) return { encoding: 'gsm7', units: gsmUnits, segments: gsmUnits === 0 ? 0 : (gsmUnits <= 160 ? 1 : Math.ceil(gsmUnits / 153)), single: 160, part: 153 };
+  const units = text.length; // JavaScript strings are UTF-16: the length is the UCS-2 unit count
+  return { encoding: 'ucs2', units, segments: units <= 70 ? 1 : Math.ceil(units / 67), single: 70, part: 67 };
+}
+
+function initSmsCounters() {
+  qa('[data-sms-counter]').forEach((area) => {
+    const scope = area.closest('label') || area.parentElement;
+    const out = scope ? q('[data-sms-counter-out]', scope) : null;
+    if (!out) return;
+    const update = () => {
+      const info = smsAnalyze(area.value.replace(/\r\n/g, '\n'));
+      const limit = info.segments <= 1 ? info.single : info.segments * info.part;
+      out.textContent = t('js_sms_counter', { n: info.units, limit, parts: info.segments, enc: t('js_sms_enc.' + info.encoding) });
+      out.classList.toggle('is-long', info.segments > 1);
+    };
+    area.addEventListener('input', update);
+    update();
+  });
+  qa('[data-sms-template]').forEach((select) => {
+    select.addEventListener('change', () => {
+      const area = q('[data-sms-counter]', select.closest('form') || document);
+      if (!area || !select.value) return;
+      area.value = select.value;
+      area.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  });
+}
+
 function initQuickStatus() {
   qa('[data-quick-status]').forEach((box) => {
     const input = q('input', box);
@@ -1440,6 +1481,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAttributePicker();
   initQuickPrice();
   initQuickStatus();
+  initSmsCounters();
   initThumbZoom();
   initProductTabs();
   initCopyControls();

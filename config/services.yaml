@@ -382,6 +382,10 @@ services:
             $defaultChatId: '%commerce.telegram.default_chat_id%'
             $apiBase: '%env(TELEGRAM_API_BASE)%'
 
+    Commerce\Modules\Notification\Application\SmsService:
+        arguments:
+            $envEnabled: '%commerce.sms.enabled%'
+
     Commerce\Modules\Notification\Channel\Sms\HttpSmsNotificationSender:
         arguments:
             $enabled: '%commerce.sms.enabled%'
@@ -728,10 +732,6 @@ services:
     Commerce\Modules\Ai\Application\AiProviderRegistry:
         arguments:
             $providers: !tagged_iterator commerce.ai_text_provider
-
-    Commerce\Modules\Notification\EventSubscriber\OrderPlacedNotificationSubscriber:
-        arguments:
-            $smsEnabled: '%commerce.sms.enabled%'
 
     Commerce\Modules\Marketing\Application\NewsletterTokenService:
         arguments:

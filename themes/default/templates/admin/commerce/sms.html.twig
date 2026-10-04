@@ -1,0 +1,45 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{% macro counter(hint) %}<small class="admin-sms-counter" data-sms-counter-out aria-live="polite"></small><small class="admin-sms-limits">{{ hint }}</small>{% endmacro %}
+{{ shell.start(ui_text('admin.sms.title'),'sms') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.sms.title') }}</span></nav><h1>{{ ui_text('admin.sms.title') }}</h1><p>{{ ui_text('admin.sms.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+{% if env_enabled %}<div class="admin-notice is-warning">{{ ui_text('admin.sms.env_notice') }}</div>{% endif %}
+
+<form method="post" action="{{ path('admin_commerce_sms') }}" data-dirty-guard data-admin-ajax><input type="hidden" name="_token" value="{{ csrf_token('admin_sms') }}">
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.sms.gateway_kicker') }}</small><h2>{{ ui_text('admin.sms.gateway_title') }}</h2></div></div>
+<p class="admin-card-note">{{ ui_text('admin.sms.gateway_help') }}</p>
+<div class="admin-form-grid">
+<div class="admin-check-grid admin-form-wide"><label><input type="checkbox" name="enabled" value="1"{{ s.enabled ? ' checked' : '' }}> {{ ui_text('admin.sms.enabled') }}</label></div>
+<label class="admin-form-wide">{{ ui_text('admin.sms.endpoint') }}<input name="endpoint" type="url" maxlength="500" value="{{ s.endpoint }}" placeholder="https://sms.example.com/api/send" autocomplete="off"><small>{{ ui_text('admin.sms.endpoint_hint') }}</small></label>
+<label>{{ ui_text('admin.sms.token') }}<input type="password" name="token" autocomplete="new-password" placeholder="{{ s.has_token ? ui_text('admin.notify_channels.secret_saved') : '' }}"><small>{{ ui_text('admin.notify_channels.secret_hint') }}</small></label>
+<label>{{ ui_text('admin.sms.sender') }}<input name="sender" maxlength="32" value="{{ s.sender }}" placeholder="MyShop"><small>{{ ui_text('admin.sms.sender_hint') }}</small></label>
+<div class="admin-check-grid admin-form-wide"><label><input type="checkbox" name="flash_supported" value="1"{{ s.flash_supported ? ' checked' : '' }}> {{ ui_text('admin.sms.flash_supported') }}</label><small>{{ ui_text('admin.sms.flash_hint') }}</small></div>
+</div></section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.sms.auto_kicker') }}</small><h2>{{ ui_text('admin.sms.auto_title') }}</h2></div></div>
+<p class="admin-card-note">{{ ui_text('admin.sms.auto_help') }}</p>
+<div class="admin-form-grid">
+{% for event in events %}
+<div class="admin-form-wide admin-sms-event">
+<div class="admin-check-grid"><label><input type="checkbox" name="auto_{{ event }}" value="1"{{ s.auto[event] ? ' checked' : '' }}> {{ ui_text('admin.sms.auto.' ~ event) }}</label></div>
+<label>{{ ui_text('admin.sms.tpl_label') }}<textarea name="tpl_{{ event }}" rows="2" maxlength="500" data-sms-counter placeholder="{{ ui_text('admin.sms.tpl_placeholder') }}">{{ s.tpl[event] }}</textarea>{{ _self.counter(ui_text('admin.sms.limits_hint')) }}</label>
+</div>
+{% endfor %}
+<p class="admin-help admin-form-wide">{{ ui_text('admin.sms.tpl_hint') }}</p>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.sms.save') }}</button></div>
+</div></section>
+</form>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.sms.test_kicker') }}</small><h2>{{ ui_text('admin.sms.test_title') }}</h2></div></div>
+<form method="post" action="{{ path('admin_commerce_sms_test') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_sms') }}">
+<label>{{ ui_text('admin.sms.phone') }}<input name="phone" type="tel" inputmode="tel" maxlength="24" placeholder="+380501234567" required></label>
+<label class="admin-form-wide">{{ ui_text('admin.sms.text') }}<textarea name="text" rows="2" maxlength="640" data-sms-counter required>{{ ui_text('admin.sms.test_text') }}</textarea>{{ _self.counter(ui_text('admin.sms.limits_hint')) }}</label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button" type="submit">{{ ui_icon('send', 18) }} {{ ui_text('admin.sms.test_send') }}</button></div>
+</form></section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.sms.log_kicker') }}</small><h2>{{ ui_text('admin.sms.log_title') }}</h2></div></div>
+{% if log %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.sms.col_time') }}</th><th>{{ ui_text('admin.sms.col_to') }}</th><th>{{ ui_text('admin.sms.col_mode') }}</th><th>{{ ui_text('admin.sms.col_text') }}</th><th>{{ ui_text('admin.sms.col_parts') }}</th><th>{{ ui_text('admin.sms.col_status') }}</th></tr></thead><tbody>
+{% for row in log %}<tr><td class="admin-nowrap">{{ row.created_at }}</td><td class="admin-nowrap">{{ row.recipient }}</td><td>{{ ui_text('admin.sms.mode.' ~ row.mode) }}{% if row.flash %} · Flash{% endif %}</td><td>{{ row.body }}</td><td>{{ row.segments }}</td><td><span class="admin-badge is-{{ row.status == 'sent' ? 'success' : 'danger' }}">{{ ui_text('admin.sms.status.' ~ row.status) }}</span>{% if row.error %}<small class="admin-cell-sub">{{ row.error }}</small>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p class="admin-help">{{ ui_text('admin.sms.log_empty') }}</p>{% endif %}
+</section>
+{{ shell.end() }}

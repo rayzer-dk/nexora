@@ -2,6 +2,16 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.40.0 — 2026-10-04
+
+SMS to customers in the admin — schema 78 (new tables `mc_sms_settings`, `mc_sms_log`).
+
+- Sales channels → SMS: gateway (https address, encrypted token, sender name), switch, automatic SMS with an editable text for four events (order placed, shipped with the tracking number, ready for pickup, cancelled; each sent once per order), a test SMS and a log. Works separately from Telegram and e-mail.
+- Order page: panel "SMS to the customer" with the phone of the order, ready texts to pick and edit, an optional Flash SMS checkbox (the request gets `"flash": true`; it works only if the provider supports it) and the history of that order.
+- A counter under every SMS text shows characters, SMS count and encoding with the limits: Latin 160 / 153, Cyrillic 70 / 67.
+- The built-in gateway uses the saved settings; installations without them keep working from `SMS_*` in `.env`. A module with `provider.notification_sender` replaces the gateway but keeps the page, counters and log.
+- Help: `docs/SMS.md`.
+
 ## 3.39.0 — 2026-10-04
 
 Quick publish switch and per-page indexing — schema 78.

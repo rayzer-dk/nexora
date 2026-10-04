@@ -21,6 +21,7 @@ final readonly class OrderNotificationService
         private Connection $db,
         private NotificationOutbox $outbox,
         private StorefrontUiTranslator $translator,
+        private \Commerce\Modules\Notification\Application\SmsService $sms,
     ) {}
 
     public function enqueueCurrentStatus(string $orderPublicId): bool
@@ -42,6 +43,12 @@ final readonly class OrderNotificationService
         );
         if (!is_array($order)) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.zamovlennia_ne_znaideno'));
+        }
+
+        // Shipping and pickup SMS follow the delivery status; each is sent once per order (SmsService keeps the log).
+        $smsEvent = ['shipped' => 'shipped', 'ready_for_pickup' => 'ready'][(string) $order['fulfillment_status']] ?? null;
+        if ($smsEvent !== null) {
+            $this->sms->sendAutoByPublicId($orderPublicId, $smsEvent);
         }
 
         $recipient = trim((string) ($order['customer_email'] ?? ''));

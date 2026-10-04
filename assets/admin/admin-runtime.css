@@ -1680,6 +1680,12 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-cell-main > strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
 .admin-row-actions { display: grid; grid-template-columns: repeat(3, auto); gap: var(--mc-space-1); justify-content: start; }
 .admin-row-actions > form { display: contents; }
+/* SMS: live counter under a text field and the limits note. */
+.admin-sms-counter { display: block; font-weight: var(--mc-font-weight-medium); }
+.admin-sms-counter.is-long { color: var(--mc-color-warning-text, var(--mc-color-text)); }
+.admin-sms-limits { display: block; color: var(--mc-color-text-muted); }
+.admin-sms-event { border-top: 1px solid var(--mc-color-border); padding-top: var(--mc-space-3); }
+.admin-sms-history { list-style: none; margin: var(--mc-space-3) 0 0; padding: 0; display: grid; gap: var(--mc-space-3); }
 /* Status switch next to the badge: compact, no label gap. */
 .admin-quick-status { margin-inline-start: var(--mc-space-2); vertical-align: middle; gap: 0; }
 .admin-quick-price { display: inline-flex; align-items: center; gap: var(--mc-space-1); }

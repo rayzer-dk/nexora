@@ -38,6 +38,7 @@ final class OrderAdminController extends AbstractController
         private readonly ShipmentOperationService $shipments,
         private readonly NovaPostShipmentOperationService $novaPostShipments,
         private readonly \Commerce\Modules\Order\Application\OrderMethodPresenter $methodLabels,
+        private readonly \Commerce\Modules\Notification\Application\SmsService $sms,
     ) {}
 
     #[Route('/admin/orders', name: 'admin_orders', methods: ['GET'])]
@@ -302,6 +303,7 @@ final class OrderAdminController extends AbstractController
             'documents' => $this->documents->listForOrder($this->contexts->resolve($request)->storeId, $publicId),
             'shipments' => $this->shipments->listForOrder($this->contexts->resolve($request)->storeId, $publicId),
             'nova_post_api_configured' => $this->novaPostShipments->configured(),
+            'sms' => $this->smsPanel($order, $request),
             'fulfillment_statuses' => ['pending', 'preparing', 'ready_for_pickup', 'shipped', 'delivered', 'cancelled'],
         ]);
     }
@@ -441,6 +443,27 @@ final class OrderAdminController extends AbstractController
         $row['public_id_text'] = $publicId;
         $row['total_display'] = $this->money((int) $row['total_minor'], (string) $row['currency']);
         return $row;
+    }
+
+    /** @param array<string,mixed> $order @return array<string,mixed> */
+    private function smsPanel(array $order, Request $request): array
+    {
+        $storeId = $this->contexts->resolve($request)->storeId;
+        $orderId = (int) ($order['id'] ?? 0);
+        $settings = $this->sms->enabled($storeId);
+        $tracking = (string) $this->db->fetchOne('SELECT tracking_number FROM mc_fulfillment WHERE order_id=? ORDER BY id DESC LIMIT 1', [$orderId]);
+
+        return [
+            'enabled' => $settings,
+            'flash_supported' => $this->smsFlash($storeId),
+            'previews' => $this->sms->previews($storeId, $order + ['tracking_number' => $tracking]),
+            'log' => $this->sms->log($storeId, $orderId, 10),
+        ];
+    }
+
+    private function smsFlash(int $storeId): bool
+    {
+        return (bool) $this->db->fetchOne('SELECT flash_supported FROM mc_sms_settings WHERE store_id=?', [$storeId]);
     }
 
     private function csrf(string $id, Request $request): void
