@@ -30,6 +30,7 @@ test('new product: code generator, searchable categories, editor toolbar extras'
 
   const toolbar = page.locator('.rich-editor__toolbar').first();
   await expect(toolbar).toBeVisible();
+  await toolbar.locator('button[aria-expanded]').last().click(); // the rarely used tools sit in the "more" menu
   const titles = await toolbar.locator('[title]').evaluateAll((nodes) => nodes.map((n) => n.getAttribute('title') || ''));
   for (const pattern of [/Font|Шрифт/, /Line spacing|Міжрядковий/, /Text colour|Колір тексту/, /Anchor|Якір/, /Video|Відео/]) {
     expect(titles.some((title) => pattern.test(title)), String(pattern)).toBe(true);

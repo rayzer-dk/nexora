@@ -1572,7 +1572,7 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-tab:hover { background: var(--mc-color-surface-subtle); color: var(--mc-color-text); }
 .admin-tab.is-active { background: var(--mc-color-primary-soft); color: var(--mc-color-primary); }
 .admin-tab em { min-width: 1.6em; padding: 0 .5em; border-radius: var(--mc-radius-full); background: var(--mc-color-surface-subtle); color: var(--mc-color-muted); font-style: normal; font-size: var(--mc-font-size-xs); text-align: center; }
-.admin-tab.is-active em { background: var(--mc-color-primary); color: var(--mc-color-primary-contrast); }
+.admin-tab.is-active em { background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); }
 [data-tabs] > [data-tab][hidden] { display: none; }
 .admin-stars { display: inline-flex; gap: 1px; vertical-align: middle; }
 .admin-stars > span { display: inline-flex; color: var(--mc-color-border-strong, #b8c1d1); }
@@ -1904,8 +1904,10 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-inline-field { display: inline-flex; align-items: center; gap: var(--mc-space-2); }
 
 /* The top bar never wraps: on narrower screens the context fields drop their captions (the field keeps its tooltip). */
-.admin-topbar { flex-wrap: nowrap; }
-.admin-topbar .admin-search-trigger { flex: 0 1 18rem; min-width: 0; }
+@media (min-width: 1024px) {
+  .admin-topbar { flex-wrap: nowrap; }
+  .admin-topbar .admin-search-trigger { flex: 0 1 18rem; min-width: 0; }
+}
 @media (max-width: 1536px) {
   .admin-context label { gap: 0; font-size: var(--mc-font-size-none); }
   .admin-context label select { font-size: var(--mc-font-size-sm); }

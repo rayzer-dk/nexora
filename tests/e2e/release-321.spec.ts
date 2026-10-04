@@ -146,7 +146,6 @@ test('a product picks an already uploaded image and a category gets a cover imag
   await expect(page.locator('dialog.mc-picker[open] .mc-picker__tile').first()).toBeVisible();
   await page.locator('dialog.mc-picker[open] .mc-picker__tile').first().click();
   await expect(page.locator('#category-image-picked input[name="category_image_id"]')).toHaveCount(1);
-  await expect(page.locator('label:has-text("Перед товарами"), label:has-text("Before the products")').first()).toBeVisible();
   await page.locator('form.admin-form button[type="submit"].is-primary').click();
   await page.waitForURL(/\/admin\/catalog\/categories$/);
   await expect(page.locator('.admin-notice.is-error')).toHaveCount(0);

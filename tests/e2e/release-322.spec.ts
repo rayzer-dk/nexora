@@ -80,14 +80,13 @@ test('badge colour accepts a HEX code and the storefront renders it', async ({ p
   await loginAdmin(page);
   await page.goto('/admin/catalog/badges', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const field = page.locator('[data-color-field]').first();
-  await field.locator('select[data-color-preset]').selectOption('custom');
-  const hex = field.locator('[data-color-hex]');
+  const field = page.locator('[data-tone-field]').first();
+  const hex = field.locator('[data-tone-hex]');
   await expect(hex).toBeVisible();
   await hex.fill('#12ab34');
   await expect(field.locator('input[type="color"]')).toHaveValue('#12ab34');
   await field.locator('xpath=ancestor::form').locator('button[type="submit"]').first().click();
-  await expect(page.locator('[data-color-field] [data-color-hex]').first()).toHaveValue('#12ab34');
+  await expect(page.locator('[data-tone-field] [data-tone-hex]').first()).toHaveValue('#12ab34');
   // Plain colour pickers get a HEX box too.
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('input.admin-color-hex').first()).toBeVisible();
@@ -135,8 +134,14 @@ test('media picker dialog restores the scroll position and can switch folders', 
   await choose.click();
   const dialog = page.locator('dialog.mc-picker');
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator('select')).toBeVisible();
-  await expect(dialog.locator('.media-picker-grid button, .mc-picker__tile').first()).toBeVisible();
+  await expect(dialog.locator('.mc-picker__path')).toBeVisible();
+  // The file manager shows folders and files; opening a folder moves the path and the up button leads back.
+  const folder = dialog.locator('.mc-picker__folder:not(.is-up)').first();
+  await expect(folder).toBeVisible();
+  await folder.click();
+  await expect(dialog.locator('.mc-picker__path .mc-picker__crumb')).toHaveCount(2);
+  await dialog.locator('.mc-picker__bar .mc-picker__tool').first().click();
+  await expect(dialog.locator('.mc-picker__path .mc-picker__crumb')).toHaveCount(1);
   await dialog.locator('.admin-modal__close').click();
   await expect(dialog).toHaveCount(0);
   const after = await page.evaluate(() => Math.round(window.scrollY));
