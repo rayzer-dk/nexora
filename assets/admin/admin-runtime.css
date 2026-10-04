@@ -484,6 +484,22 @@
 }
 .admin-user .ui-icon { color: var(--mc-color-muted); width: var(--mc-icon-size-lg); height: var(--mc-icon-size-lg); }
 .admin-user__name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-user-menu { position: relative; }
+.admin-user-menu > summary { cursor: pointer; list-style: none; }
+.admin-user-menu > summary::-webkit-details-marker { display: none; }
+.admin-user-menu__panel { position: absolute; z-index: var(--mc-z-dropdown); top: calc(100% + var(--mc-space-1)); right: 0; display: grid; min-width: 15rem; padding: var(--mc-space-1); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised); box-shadow: var(--mc-shadow-md); }
+.admin-user-menu__panel a, .admin-user-menu__panel button { display: flex; align-items: center; gap: var(--mc-space-2); width: 100%; min-height: var(--mc-control-height-md); padding: 0 var(--mc-space-3); border: 0; border-radius: var(--mc-radius-sm); background: none; color: var(--mc-color-text); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.admin-user-menu__panel a:hover, .admin-user-menu__panel button:hover { background: var(--mc-color-surface-subtle); }
+.admin-user-menu__panel form { margin: 0; padding-top: var(--mc-space-1); border-top: 1px solid var(--mc-color-border); }
+.admin-status { padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-left-width: 4px; border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-raised); font-weight: var(--mc-font-weight-medium); }
+.admin-status.is-success { border-color: color-mix(in srgb, var(--mc-color-success) 35%, var(--mc-color-background)); border-left-color: var(--mc-color-success); }
+.admin-status.is-warning { border-color: color-mix(in srgb, var(--mc-color-warning) 35%, var(--mc-color-background)); border-left-color: var(--mc-color-warning); }
+.admin-steps { display: grid; gap: var(--mc-space-2); margin: 0 0 var(--mc-space-3); padding-left: var(--mc-space-5); }
+.admin-doc { max-width: 60rem; overflow-wrap: anywhere; }
+.admin-doc h2, .admin-doc h3, .admin-doc h4 { margin: var(--mc-space-5) 0 var(--mc-space-2); }
+.admin-doc pre { overflow-x: auto; padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-subtle); }
+.admin-doc code { font-family: var(--mc-font-mono, ui-monospace, monospace); font-size: var(--mc-font-size-sm); }
+.admin-doc ul, .admin-doc ol { padding-left: var(--mc-space-5); }
 
 .admin-content {
   display: flex;

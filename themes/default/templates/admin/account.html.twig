@@ -1,0 +1,17 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.account.title'),'account') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.account.title') }}</span></nav><h1>{{ ui_text('admin.account.title') }}</h1><p>{{ admin.userIdentifier }}</p></div><a class="admin-button" href="{{ path('admin_account_security') }}">{{ ui_icon('shield-check', 16) }} {{ ui_text('admin.mfa.nav') }}</a></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.account.profile') }}</h2><p>{{ ui_text('admin.account.profile_hint') }}</p></div></div>
+<form class="admin-form" method="post" action="{{ path('admin_account_profile') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_account_profile') }}">
+<label><span>{{ ui_text('admin.account.display_name') }}</span><input name="display_name" value="{{ admin.displayName }}" maxlength="190" required></label>
+<div class="admin-inline-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.account.save') }}</button></div></form></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.account.password') }}</h2><p>{{ ui_text('admin.account.password_hint') }}</p></div></div>
+<form class="admin-form" method="post" action="{{ path('admin_account_password') }}" autocomplete="off"><input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_account_password') }}">
+<label><span>{{ ui_text('admin.account.current_password') }}</span><input type="password" name="current_password" autocomplete="current-password" required></label>
+<label><span>{{ ui_text('admin.account.new_password') }}</span><input type="password" name="new_password" autocomplete="new-password" minlength="12" required></label>
+<label><span>{{ ui_text('admin.account.new_password_confirm') }}</span><input type="password" name="new_password_confirm" autocomplete="new-password" minlength="12" required></label>
+<div class="admin-inline-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.account.change_password') }}</button></div></form></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.account.more') }}</h2></div></div>
+<div class="admin-inline-actions"><a class="admin-button" href="{{ path('admin_help') }}">{{ ui_icon('file-text', 16) }} {{ ui_text('admin.help.title') }}</a><a class="admin-button" href="{{ path('admin_system_update') }}">{{ ui_icon('refresh-cw', 16) }} {{ ui_text('admin.update.title') }}</a></div></section>
+{{ shell.end() }}

@@ -1,0 +1,10 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.help.title'),'help') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.help.title') }}</span></nav><h1>{{ ui_text('admin.help.title') }}</h1><p>{{ ui_text('admin.help.intro') }}</p></div></header>
+{% for group in ['system','modules','developers'] %}
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.help.group.' ~ group) }}</h2></div></div>
+<div class="admin-document-list">{% for doc in docs|filter(d => d.group == group) %}<article><strong>{{ doc.title }}</strong><a class="admin-button" href="/admin/help/{{ doc.slug }}">{{ ui_text('admin.help.open') }}</a></article>{% endfor %}</div></section>
+{% endfor %}
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.help.quick_title') }}</h2></div></div>
+<div class="admin-inline-actions"><a class="admin-button" href="{{ path('admin_system_update') }}">{{ ui_icon('refresh-cw', 16) }} {{ ui_text('admin.update.title') }}</a><a class="admin-button" href="{{ path('admin_system_stability') }}">{{ ui_icon('life-buoy', 16) }} {{ ui_text('admin.help.recovery') }}</a><a class="admin-button" href="{{ path('admin_system_extensions') }}">{{ ui_icon('puzzle', 16) }} {{ ui_text('admin_extensions') }}</a></div></section>
+{{ shell.end() }}

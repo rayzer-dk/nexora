@@ -94,7 +94,16 @@
             {% endif %}
             <button class="admin-icon-button admin-theme-toggle" type="button" data-theme-toggle aria-label="{{ ui_text('admin.theme_toggle') }}" title="{{ ui_text('admin.theme_toggle') }}"><span class="admin-theme-toggle__moon" aria-hidden="true">{{ ui_icon('moon', 20) }}</span><span class="admin-theme-toggle__sun" aria-hidden="true">{{ ui_icon('sun', 20) }}</span></button>
             {% set admin_user = app.user %}
-            <span class="admin-user" title="{{ admin_user.displayName|default('') }}">{{ ui_icon('circle-user-round', 24) }}<span class="admin-user__name">{{ admin_user.displayName|default('') }}</span></span>
+            <details class="admin-user-menu" data-user-menu><summary class="admin-user" title="{{ admin_user.displayName|default('') }}" aria-label="{{ ui_text('admin.account.menu') }}">{{ ui_icon('circle-user-round', 24) }}<span class="admin-user__name">{{ admin_user.displayName|default('') }}</span>{{ ui_icon('chevron-down', 16) }}</summary>
+                <div class="admin-user-menu__panel">
+                    <a href="{{ path('admin_account') }}">{{ ui_icon('key-round', 18) }}<span>{{ ui_text('admin.account.title') }}</span></a>
+                    <a href="{{ path('admin_account_security') }}">{{ ui_icon('shield-check', 18) }}<span>{{ ui_text('admin.mfa.nav') }}</span></a>
+                    <a href="{{ path('admin_help') }}">{{ ui_icon('file-text', 18) }}<span>{{ ui_text('admin.help.title') }}</span></a>
+                    {% if admin_can('system.update') %}<a href="{{ path('admin_system_update') }}">{{ ui_icon('refresh-cw', 18) }}<span>{{ ui_text('admin.update.title') }}</span></a>{% endif %}
+                    {% if admin_can('system.settings') %}<a href="{{ path('admin_system_stability') }}">{{ ui_icon('life-buoy', 18) }}<span>{{ ui_text('admin.help.recovery') }}</span></a>{% endif %}
+                    {% if admin_can('extensions.manage') %}<a href="{{ path('admin_system_extensions') }}">{{ ui_icon('puzzle', 18) }}<span>{{ ui_text('admin_extensions') }}</span></a>{% endif %}
+                    <form method="post" action="/admin/logout"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button type="submit">{{ ui_icon('log-out', 18) }}<span>{{ ui_text('admin_logout') }}</span></button></form>
+                </div></details>
         </header>
         <main class="admin-content">
 {% set undo_pending = admin_undo_pending() %}{% if undo_pending %}<form class="admin-undo" method="post" action="{{ path('admin_undo', {id: undo_pending.id}) }}" data-undo-form><input type="hidden" name="_token" value="{{ csrf_token('admin_undo') }}"><span>{{ ui_icon('undo-2', 16) }} {{ undo_pending.label }}</span><button class="admin-button" type="submit" title="Ctrl+Z">{{ ui_text('admin.undo.button') }}</button></form>{% endif %}

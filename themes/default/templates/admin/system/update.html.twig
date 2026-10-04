@@ -1,0 +1,21 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.update.title'),'update') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.update.title') }}</span></nav><h1>{{ ui_text('admin.update.title') }}</h1><p>{{ ui_text('admin.update.intro') }}</p></div><a class="admin-button" href="{{ path('admin_help_doc', {slug: 'update-and-restore'}) }}">{{ ui_icon('file-text', 16) }} {{ ui_text('admin.update.read_guide') }}</a></header>
+{% if pending|length > 0 %}<div class="admin-status is-warning" role="status">{{ ui_text('admin.update.pending', {count: pending|length}) }}</div>{% else %}<div class="admin-status is-success" role="status">{{ ui_text('admin.update.up_to_date') }}</div>{% endif %}
+<section class="admin-stats">
+<article><span>{{ ui_text('admin.update.version') }}</span><strong>{{ version }}</strong><small>{{ ui_text('admin.update.channel') }}: {{ channel }}</small></article>
+<article><span>{{ ui_text('admin.update.schema') }}</span><strong>{{ schema }}</strong><small>{{ ui_text('admin.update.applied', {applied: applied, files: files}) }}</small></article>
+<article><span>PHP</span><strong>{{ php }}</strong><small>{{ ui_text('admin.update.php_min', {min: php_min}) }}</small></article>
+<article><span>{{ ui_text('admin.update.extension_api') }}</span><strong>{{ extension_api }}</strong><small>{{ ui_text('admin.update.extension_api_hint') }}</small></article>
+</section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.update.steps_title') }}</h2><p>{{ ui_text('admin.update.steps_hint') }}</p></div></div>
+<ol class="admin-steps">
+<li><strong>{{ ui_text('admin.update.step1') }}</strong> {{ ui_text('admin.update.step1_text') }} <a href="{{ path('admin_system_stability') }}">{{ ui_text('admin.update.open_recovery') }}</a></li>
+<li><strong>{{ ui_text('admin.update.step2') }}</strong> {{ ui_text('admin.update.step2_text') }}</li>
+<li><strong>{{ ui_text('admin.update.step3') }}</strong> {{ ui_text('admin.update.step3_text') }} <code>{{ upgrade_url }}</code></li>
+<li><strong>{{ ui_text('admin.update.step4') }}</strong> {{ ui_text('admin.update.step4_text') }}</li>
+</ol>
+<p>{{ ui_text('admin.update.ssh') }} <code>php bin/upgrade.php</code></p></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.update.restore_title') }}</h2><p>{{ ui_text('admin.update.restore_text') }}</p></div></div>
+<div class="admin-inline-actions"><a class="admin-button is-primary" href="{{ path('admin_system_stability') }}">{{ ui_icon('life-buoy', 16) }} {{ ui_text('admin.help.recovery') }}</a><a class="admin-button" href="{{ path('admin_help_doc', {slug: 'update-and-restore'}) }}">{{ ui_icon('file-text', 16) }} {{ ui_text('admin.update.read_guide') }}</a></div></section>
+{{ shell.end() }}

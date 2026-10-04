@@ -1,0 +1,5 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(doc.title,'help') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_help') }}">{{ ui_text('admin.help.title') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ doc.title }}</span></nav><h1>{{ doc.title }}</h1></div><a class="admin-button" href="{{ path('admin_help') }}">{{ ui_icon('arrow-left', 16) }} {{ ui_text('admin.help.all_docs') }}</a></header>
+<article class="admin-panel admin-doc">{{ body|raw }}</article>
+{{ shell.end() }}

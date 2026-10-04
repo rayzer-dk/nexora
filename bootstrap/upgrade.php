@@ -69,6 +69,17 @@ function nexora_upgrade_run(string $projectDir, callable $log): array
         try {
             $application = new \Symfony\Bundle\FrameworkBundle\Console\Application($kernel);
             $application->setAutoExit(false);
+            // A database backup before the schema changes. Best effort: an upgrade must never be blocked by it.
+            $log('snapshot');
+            try {
+                $snapshotInput = new \Symfony\Component\Console\Input\ArrayInput(['command' => 'commerce:recovery:snapshot', '--backup-profile' => 'database', '--reason' => 'before-upgrade', '--no-interaction' => true]);
+                $snapshotInput->setInteractive(false);
+                $snapshotOutput = new \Symfony\Component\Console\Output\BufferedOutput();
+                $snapshotCode = $application->run($snapshotInput, $snapshotOutput);
+                nexora_upgrade_log($projectDir, 'snapshot exit ' . $snapshotCode . ' ' . trim((string) preg_replace('/\x1B\[[0-9;]*[A-Za-z]/', '', $snapshotOutput->fetch())));
+            } catch (Throwable $snapshotError) {
+                nexora_upgrade_log($projectDir, 'snapshot skipped: ' . $snapshotError::class . ': ' . $snapshotError->getMessage());
+            }
             $input = new \Symfony\Component\Console\Input\ArrayInput([
                 'command' => 'doctrine:migrations:migrate',
                 '--no-interaction' => true,

@@ -2,6 +2,19 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.35.0 — 2026-10-04
+
+Help inside the admin, profile and password, update page — schema 78.
+
+- Admin: the user name at the top right is now a menu: profile and password (display name, password change with the current password), account security, help and documents, system update, recovery, extensions, sign out.
+- Help and documents (`/admin/help`): installation, update and restore, modules for the store owner and the developer guides (SDK, slots, settings schema, examples) are readable inside the admin.
+- System update page (`/admin/system/update`): installed version, schema, whether the database has caught up with the files, step-by-step update and restore instructions.
+- `upgrade.php` / `bin/upgrade.php` create a database snapshot (`before-upgrade`) before applying database changes.
+- New guides: `docs/UPDATE_AND_RESTORE.md` (for the store owner), `docs/QUICKSTART_MODULE.md` (first module in ten minutes), `docs/EXTENSION_SLOTS.md` (all 36 slots).
+- Modules: manifest `scheduled_tasks` and `$context->scheduledTask()` for signed modules; tasks show up in Cron.
+- Builders: Category Builder and Cart Builder.
+- Fixes: the error page printed an empty CSP nonce and lost its scripts; storefront AJAX forms ask for a fresh captcha after each answer.
+
 ## 3.34.0 — 2026-10-03
 
 Campaign templates, subscribers, AJAX admin — schema 78.

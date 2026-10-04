@@ -184,6 +184,14 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
+    Commerce\Modules\Admin\Http\AdminSystemUpdateController:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Admin\Help\HelpCatalog:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     Commerce\Core\I18n\AdminInterfaceLocale:
         arguments:
             $projectDir: '%kernel.project_dir%'

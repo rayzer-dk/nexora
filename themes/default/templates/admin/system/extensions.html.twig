@@ -3,6 +3,8 @@
 <header class="admin-page-header">
     <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.system.extensions.izoliatsiia_v') }}{{ platform_version }}</span></nav><h1>{{ ui_text('admin.system.extensions.bezpechni_rozshyrennia') }}</h1><p>{{ ui_text('admin.system.extensions.paket_spochatku_pereviriaietsia_i_hotuietsia_akt') }}</p></div>
 </header>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.extensions.howto.title') }}</h2><p>{{ ui_text('admin.extensions.howto.hint') }}</p></div><div class="admin-inline-actions"><a class="admin-button" href="{{ path('admin_help_doc', {slug: 'modules-quickstart'}) }}">{{ ui_icon('file-text', 16) }} {{ ui_text('admin.extensions.howto.create') }}</a></div></div>
+<ol class="admin-steps"><li>{{ ui_text('admin.extensions.howto.step1') }}</li><li>{{ ui_text('admin.extensions.howto.step2') }}</li><li>{{ ui_text('admin.extensions.howto.step3') }}</li></ol></section>
 {% include '@storefront/admin/extension/slot.html.twig' with {slot:'admin.extensions.toolbar'} only %}
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 <section class="admin-panel">
