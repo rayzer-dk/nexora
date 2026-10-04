@@ -1,0 +1,31 @@
+name: Vendor demo images
+
+# Maintainer-only: downloads the demo catalogue photos once, converts them to WebP and commits them to
+# resources/demo/images so that the product itself never loads anything from the network.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl,gd,mbstring
+          coverage: none
+      - name: Download and convert
+        run: php bin/vendor-demo-images.php
+      - name: Commit images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resources/demo/images
+          if git diff --cached --quiet; then echo "Nothing to commit"; exit 0; fi
+          git commit -m "Demo photos as WebP inside the package (no network at install time)"
+          git pull --rebase origin main
+          git push origin HEAD:main
