@@ -2,6 +2,14 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.39.0 — 2026-10-04
+
+Quick publish switch and per-page indexing — schema 78.
+
+- Product list: next to the status badge there is a switch that publishes a product or turns it into a draft in one click (no page reload, stored at once). Archived products have no switch.
+- Product editor (SEO): "Let search engines index this page". Off adds `noindex,follow` to the page of the current language and removes it from the sitemap, feeds and IndexNow; the page stays reachable by its link. The flag lives in the existing `mc_seo_route.indexable`, so no migration is needed.
+- E2E: the logout form is looked up once although the sidebar and the user menu both carry one; the form-translation test no longer reloads while the save redirect is in flight.
+
 ## 3.38.0 — 2026-10-04
 
 More extension points for signed modules — schema 78.

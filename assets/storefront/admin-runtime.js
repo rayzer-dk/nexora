@@ -369,6 +369,34 @@ function initQuickPrice() {
   });
 }
 
+function initQuickStatus() {
+  qa('[data-quick-status]').forEach((box) => {
+    const input = q('input', box);
+    const badge = box.parentElement ? q('.admin-badge', box.parentElement) : null;
+    if (!input) return;
+    input.addEventListener('change', async () => {
+      const want = input.checked ? 'published' : 'draft';
+      input.disabled = true;
+      try {
+        const body = new URLSearchParams({ _token: box.dataset.token || '', status: want });
+        const response = await fetch(box.dataset.url || '', { method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' } });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error('status');
+        if (badge) {
+          badge.className = 'admin-badge is-' + (want === 'published' ? 'success' : 'warning');
+          badge.textContent = want === 'published' ? t('js_status_published') : t('js_status_draft');
+        }
+        toast(t('js_status_saved'), 'success', 2000);
+      } catch (_) {
+        input.checked = !input.checked;
+        toast(t('js_status_failed'), 'error', 4000);
+      } finally {
+        input.disabled = false;
+      }
+    });
+  });
+}
+
 function initMultiSelects() {
   const boxes = document.querySelectorAll('[data-multiselect]');
   if (boxes.length === 0) return;
@@ -1411,6 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSkuGenerator();
   initAttributePicker();
   initQuickPrice();
+  initQuickStatus();
   initThumbZoom();
   initProductTabs();
   initCopyControls();

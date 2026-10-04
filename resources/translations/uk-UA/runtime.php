@@ -1886,6 +1886,7 @@ return [
     'extension.sdk.route_undeclared' => 'Trusted-розширення намагалося зареєструвати неоголошений route: ',
     'extension.sdk.event_undeclared' => 'Trusted-розширення намагалося підписатися на неоголошену подію: ',
     'extension.sdk.capability_undeclared' => 'Trusted-розширення не оголосило capability у manifest.json: ',
+    'extension.sdk.service_contract' => 'Сервіс не відповідає контракту точки розширення: ',
     'extension.sdk.ai_provider_duplicate' => 'Код AI provider порожній або вже зареєстрований: ',
     'extension.sdk.payment_provider_duplicate' => 'Код payment provider порожній або вже зареєстрований: ',
     'extension.sdk.product_block_label' => 'Блок товару',

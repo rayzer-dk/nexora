@@ -41,6 +41,11 @@ final readonly class SeoUrlManager
         return $this->repository->create($storeId, $locale, $type, $entityPublicId, $slug, $path);
     }
 
+    public function setIndexable(int $storeId, string $locale, SeoEntityType $entityType, string $entityPublicId, bool $indexable): void
+    {
+        $this->repository->setIndexable($storeId, $locale, $entityType, $entityPublicId, $indexable);
+    }
+
     public function changeSlug(SeoRoute $route, string $requestedSlug, SlugMode $mode = SlugMode::TransliterateAscii): SeoRoute
     {
         $base = $this->slugs->normalizeManual($requestedSlug, $route->locale, $mode);

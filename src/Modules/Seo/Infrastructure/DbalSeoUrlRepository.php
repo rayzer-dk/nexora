@@ -168,6 +168,14 @@ final readonly class DbalSeoUrlRepository implements SeoUrlRepositoryInterface
         ]);
     }
 
+    public function setIndexable(int $storeId, string $locale, SeoEntityType $entityType, string $entityPublicId, bool $indexable): void
+    {
+        $this->connection->executeStatement(
+            'UPDATE mc_seo_route SET indexable=?, updated_at=? WHERE store_id=? AND locale=? AND entity_type=? AND entity_public_id=? AND indexable<>?',
+            [$indexable ? 1 : 0, $this->now(), $storeId, $locale, $entityType->value, Uuid::fromString($entityPublicId)->toBinary(), $indexable ? 1 : 0],
+        );
+    }
+
     public function resolve(int $storeId, string $locale, string $path): SeoRouteResolution
     {
         $hash = hash('sha256', $path, true);

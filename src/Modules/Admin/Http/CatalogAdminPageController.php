@@ -44,6 +44,7 @@ final class CatalogAdminPageController extends AbstractController
         private readonly ProductDocumentService $documents,
         private readonly ProductDigitalAssetService $digitalAssets,
         private readonly Connection $db,
+        private readonly \Commerce\Modules\Seo\Application\SeoUrlManager $seoUrls,
         private readonly \Commerce\Modules\Catalog\Application\CatalogTranslationService $translations,
         private readonly \Commerce\Modules\Localization\Application\ContentPolicyService $contentPolicy,
         private readonly \Commerce\Modules\Tax\Application\TaxSettingsService $taxSettings,
@@ -234,6 +235,10 @@ final class CatalogAdminPageController extends AbstractController
                         }
                     }
                     $categoryIds = array_values(array_filter(array_map('intval', $request->request->all('category_ids')), static fn (int $id): bool => $id > 0));
+                    // Index / noindex of this language's page; set before the update so the storefront cache is rebuilt with it.
+                    if ($request->request->has('seo_present')) {
+                        $this->seoUrls->setIndexable($context->storeId, $context->locale, \Commerce\Modules\Seo\Domain\SeoEntityType::Product, $publicId, $request->request->getBoolean('indexable'));
+                    }
                     $this->products->update(new UpdateProductCommand(
                         productId: (int) $product['id'], storeId: $context->storeId, marketId: $context->marketId, locale: $context->locale,
                         name: (string) $request->request->get('name', ''), sku: (string) $request->request->get('sku', ''),

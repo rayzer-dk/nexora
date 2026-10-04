@@ -85,7 +85,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     {
         $binary = Uuid::fromString($publicId)->toBinary();
         $row = $this->connection->fetchAssociative(
-            "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,pt.name,pt.short_description,pt.description,pt.meta_title,pt.meta_description,v.id AS variant_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,pr.amount_minor,pr.compare_at_minor,pr.currency,sr.slug,COALESCE(ppp.mode,'auto') purchase_mode,ppp.button_label purchase_button_label,ppp.eta_text purchase_eta_text,
+            "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,pt.name,pt.short_description,pt.description,pt.meta_title,pt.meta_description,v.id AS variant_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,pr.amount_minor,pr.compare_at_minor,pr.currency,sr.slug,COALESCE(sr.indexable,1) AS indexable,COALESCE(ppp.mode,'auto') purchase_mode,ppp.button_label purchase_button_label,ppp.eta_text purchase_eta_text,
                 (SELECT sl.stocked_quantity FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id ORDER BY mil.priority ASC,sl.location_id ASC LIMIT 1) AS stock_quantity
              FROM mc_product p
              JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?

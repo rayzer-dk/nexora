@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ProductWorkspaceAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly Connection $db, private readonly \Commerce\Modules\Catalog\Application\ProductBulkEditor $editor, private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo, private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus) {}
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly Connection $db, private readonly \Commerce\Modules\Catalog\Application\ProductBulkEditor $editor, private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo, private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus, private readonly \Commerce\Modules\Bulk\Application\ProductBulkActionService $bulk) {}
 
     #[Route('/admin/catalog/products/bulk-edit', name:'admin_catalog_products_bulk_edit', methods:['GET','POST'])]
     public function bulkEdit(Request $request): Response
@@ -43,6 +43,19 @@ final class ProductWorkspaceAdminController extends AbstractController
         if(trim($template)!=='')$template=$this->skus->saveTemplate($template);
         $sku=$this->skus->next($template);
         return $this->json(['ok'=>$sku!=='','sku'=>$sku,'template'=>$template!==''?$template:$this->skus->template()]);
+    }
+
+    /** Switches one product between published and draft from the list (the switch in the status column). Answers JSON. */
+    #[Route('/admin/catalog/products/{publicId}/quick-status', name:'admin_catalog_product_quick_status', methods:['POST'])]
+    public function quickStatus(string $publicId, Request $request): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        $ctx=$this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('admin_quick_status',(string)$request->request->get('_token')))return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false],403);
+        $status=(string)$request->request->get('status','');
+        if(!in_array($status,['published','draft'],true))return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false,'error'=>'format'],422);
+        $result=$this->bulk->setStatus($ctx->storeId,$ctx->marketId,$ctx->locale,[$publicId],$status);
+        if($result['updated']!==1)return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false,'error'=>'save'],422);
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>true,'status'=>$status]);
     }
 
     /** Changes only the price of one product from the list (Enter or leaving the field). Answers JSON. */

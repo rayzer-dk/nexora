@@ -408,7 +408,7 @@ final class StorefrontCatalogController extends AbstractController
                 'image' => $this->shareImage($baseUrl, [$displayImage, ...array_map(static fn (array $image): string => (string) ($image['url'] ?? ''), $product['images'])]),
                 'type' => 'product',
                 'canonical' => $baseUrl . $product['url'],
-                'robots' => 'index,follow,max-image-preview:large',
+                'robots' => ($product['indexable'] ?? true) === false ? 'noindex,follow' : 'index,follow,max-image-preview:large',
                 'hreflang' => [$context->locale => $baseUrl . $product['url'], 'x-default' => $baseUrl . $product['url']],
             ],
         ]);

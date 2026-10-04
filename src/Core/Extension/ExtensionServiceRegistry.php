@@ -34,7 +34,7 @@ final class ExtensionServiceRegistry
     {
         $contract = self::CONTRACTS[$capability] ?? null;
         if ($contract === null || !$service instanceof $contract) {
-            throw new \LogicException(sprintf('Service %s does not implement the contract of %s.', $service::class, $capability));
+            throw new \LogicException(\Commerce\Core\I18n\CanonicalUiText::get('extension.sdk.service_contract') . $capability . ' (' . $service::class . ')');
         }
         $this->services[$capability][] = $service;
     }

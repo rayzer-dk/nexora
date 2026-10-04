@@ -1,6 +1,6 @@
 {
   "platform": "Nexora Commerce",
-  "version": "3.38.0",
+  "version": "3.39.0",
   "channel": "production",
   "region_profile": "EU-UA",
   "extension_api": "2.0",

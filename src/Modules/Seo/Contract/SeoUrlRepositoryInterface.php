@@ -20,5 +20,8 @@ interface SeoUrlRepositoryInterface
 
     public function addRedirectAlias(SeoRoute $route, string $sourcePath, string $reason = 'legacy_import'): void;
 
+    /** Switches the page between index and noindex (robots meta, sitemap, feeds and IndexNow follow the flag). */
+    public function setIndexable(int $storeId, string $locale, SeoEntityType $entityType, string $entityPublicId, bool $indexable): void;
+
     public function resolve(int $storeId, string $locale, string $path): SeoRouteResolution;
 }
