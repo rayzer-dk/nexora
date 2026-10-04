@@ -60,11 +60,25 @@ test('manual category merchandising changes the real storefront product order an
   await page.waitForLoadState('domcontentloaded');
 
   try {
-    await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
-    const categoryLink = page.locator('.category-chips a').filter({ hasText: categoryName }).first();
-    await expect(categoryLink).toBeVisible();
-    const categoryUrl = await categoryLink.getAttribute('href');
-    expect(categoryUrl).toBeTruthy();
+    // The category may sit deep in the tree: walk down through the chips and the subcategory tiles like a shopper.
+    const wanted = categoryName.replace(/^[\s—–\-·]+/, '').toLowerCase();
+    const links = async (): Promise<{ text: string; href: string }[]> =>
+      page.locator('.category-chips a, .category-tiles a').evaluateAll((nodes) =>
+        nodes.map((node) => ({ text: (node.textContent || '').trim().toLowerCase(), href: (node as HTMLAnchorElement).getAttribute('href') || '' })));
+    let categoryUrl: string | null = null;
+    const queue: string[] = ['/catalog'];
+    const visited = new Set<string>();
+    while (queue.length && !categoryUrl && visited.size < 80) {
+      const path = queue.shift()!;
+      if (visited.has(path)) continue;
+      visited.add(path);
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      const found = await links();
+      const hit = found.find((link) => link.text.includes(wanted));
+      if (hit) { categoryUrl = hit.href; break; }
+      for (const link of found) if (link.href && !visited.has(link.href)) queue.push(link.href);
+    }
+    expect(categoryUrl, 'the category is reachable from the catalogue').toBeTruthy();
 
     await page.goto(categoryUrl!, { waitUntil: 'domcontentloaded' });
     await expectNoServerError(page);

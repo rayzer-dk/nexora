@@ -2,6 +2,13 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.44.1 — 2026-10-04
+
+Fix release for 3.44.0.
+
+- Category block of the home page and the subcategory tiles of a category page logged a PHP warning ("Undefined array key order") on every request when the block had no saved "order" setting; the default (manual) is now applied without the warning, which also fixes the browser-QA error-log audit.
+- The E2E test of manual category merchandising now finds a category deep in the tree by walking the catalogue like a shopper (the top-level chips no longer list every category).
+
 ## 3.44.0 — 2026-10-04
 
 Banners, scroll story and video banner in the home builder — schema 78.

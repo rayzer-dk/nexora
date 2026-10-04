@@ -59,7 +59,7 @@ final class HomeController extends AbstractController
                 $categories = $this->catalog->topCategories(
                     $context,
                     max(1, min(24, (int) ($categoryProps['limit'] ?? 12) ?: 12)),
-                    in_array($categoryProps['order'] ?? 'manual', ['manual', 'name', 'popular', 'newest'], true) ? (string) $categoryProps['order'] : 'manual',
+                    in_array((string) ($categoryProps['order'] ?? 'manual'), ['manual', 'name', 'popular', 'newest'], true) ? (string) ($categoryProps['order'] ?? 'manual') : 'manual',
                 );
             } catch (\Throwable) {
                 $categories = [];

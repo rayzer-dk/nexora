@@ -57,7 +57,7 @@ final readonly class CategoryLayoutService
                     'show_image' => ($props['show_image'] ?? true) !== false && ($props['show_image'] ?? true) !== '0',
                     'show_count' => ($props['show_count'] ?? true) !== false && ($props['show_count'] ?? true) !== '0',
                     'limit' => max(1, min(60, (int) ($props['limit'] ?? 24) ?: 24)),
-                    'order' => in_array($props['order'] ?? 'manual', ['manual', 'name', 'popular', 'newest'], true) ? (string) $props['order'] : 'manual',
+                    'order' => in_array((string) ($props['order'] ?? 'manual'), ['manual', 'name', 'popular', 'newest'], true) ? (string) ($props['order'] ?? 'manual') : 'manual',
                 ];
             }
             if (in_array($name, self::MAIN, true) && $enabled) {
