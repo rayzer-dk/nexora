@@ -2,6 +2,10 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.47.1 — 2026-10-05
+
+The share menu icons are drawn from CSS masks instead of inline SVG (the icon audit allows Lucide icons only); no other changes since 3.47.0.
+
 ## 3.47.0 — 2026-10-05
 
 Storefront and admin polish release.
