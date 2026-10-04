@@ -2,7 +2,7 @@ name: Build Nexora production package
 
 on:
   push:
-    branches: [main, develop/3.6.5-canonical]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -18,8 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -32,7 +30,7 @@ jobs:
           cache: npm
 
       - run: composer validate --strict
-      - run: composer install --no-dev --classmap-authoritative --no-interaction --prefer-dist --no-progress
+      - run: composer install --no-dev --prefer-dist --optimize-autoloader --classmap-authoritative --no-interaction --no-progress
       - name: Check browser installer before packaging
         run: |
           php tests/installer-render-smoke.php uk-UA
@@ -41,90 +39,20 @@ jobs:
       - run: npm install --ignore-scripts --no-audit --no-fund
       - run: npm run build:production
 
-      - name: Validate production release contract
-        run: php bin/release-contract-check.php --production
-
-      - name: Validate one-upload runtime package
-        run: php bin/release-check.php
-
-      - name: Build production and 3.45.1 update archives
-        shell: bash
+      # Runs every release check, assembles the one-upload package, writes the manifest and the checksums.
+      - name: Build the production package
+        id: package
         run: |
-          set -euo pipefail
-          BASE_PREV='e0832d5273ebae4fc582b485c6ac81feec89300c'
-          rm -rf package-root update-root
-          mkdir -p package-root update-root
-
-          rsync -a ./ package-root/ \
-            --exclude '.git/' \
-            --exclude '.github/' \
-            --exclude 'node_modules/' \
-            --exclude 'package-root/' \
-            --exclude 'update-root/' \
-            --exclude 'Nexora_Commerce_v3.45.1_Production_CI.zip' \
-            --exclude 'Nexora_v3.22.0_to_v3.45.1_Update.zip'
-
-          git diff --name-status "$BASE_PREV"..HEAD > CHANGES_FROM_3.22.0.txt
-          git diff --name-only --diff-filter=ACMRT "$BASE_PREV"..HEAD > CHANGED_FILES.txt
-          git diff --name-only --diff-filter=D "$BASE_PREV"..HEAD > DELETED_FILES.txt
-
-          while IFS= read -r path; do
-            [ -z "$path" ] && continue
-            [ -e "$path" ] || continue
-            mkdir -p "update-root/$(dirname "$path")"
-            cp -a "$path" "update-root/$path"
-          done < CHANGED_FILES.txt
-
-          cp -a vendor update-root/vendor
-          mkdir -p update-root/public
-          cp -a public/build update-root/public/build
-          cp -a composer.lock package-lock.json update-root/
-          cp -a CHANGES_FROM_3.22.0.txt CHANGED_FILES.txt DELETED_FILES.txt update-root/
-
-          php tools/create-release-manifest.php package-root
-          php tools/create-release-manifest.php update-root
-          php tools/verify-packaged-release.php package-root
-
-          printf '%s\n' \
-            'Nexora Commerce update ' \
-            '' \
-            '1. Make a full backup of files and database.' \
-            '2. Copy this archive over the existing installation.' \
-            '3. Remove paths listed in DELETED_FILES.txt if they still exist.' \
-            '4. Run database migrations according to the normal Nexora update procedure.' \
-            '5. Clear application cache and PHP OPcache/CDN cache when applicable.' \
-            '6. Verify storefront, admin login, cart, checkout and scheduled tasks.' \
-            '' \
-            'This package includes the complete vendor directory and compiled public/build assets' \
-            'so runtime dependencies match Nexora Commerce 3.45.1.' \
-            > update-root/UPDATE_FROM_3.16.0.txt
-
-          (
-            cd package-root
-            zip -qr ../Nexora_Commerce_v3.45.1_Production_CI.zip .
-          )
-          (
-            cd update-root
-            zip -qr ../Nexora_v3.22.0_to_v3.45.1_Update.zip .
-          )
-
-          sha256sum Nexora_Commerce_v3.45.1_Production_CI.zip > Nexora_Commerce_v3.45.1_Production_CI.zip.sha256
-          sha256sum Nexora_v3.22.0_to_v3.45.1_Update.zip > Nexora_v3.22.0_to_v3.45.1_Update.zip.sha256
+          bash tools/package-production.sh
+          version="$(php -r "require 'src/Core/Platform/PlatformVersion.php'; echo Commerce\\Core\\Platform\\PlatformVersion::VERSION;")"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          (cd build && sha256sum "Nexora_Commerce_v${version}_PRODUCTION.zip" > "Nexora_Commerce_v${version}_PRODUCTION.zip.sha256")
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Nexora_Commerce_v3.45.1_Production_CI
+          name: Nexora_Commerce_v${{ steps.package.outputs.version }}_PRODUCTION
           path: |
-            Nexora_Commerce_v3.45.1_Production_CI.zip
-            Nexora_Commerce_v3.45.1_Production_CI.zip.sha256
-          if-no-files-found: error
-          retention-days: 7
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Nexora_v3.22.0_to_v3.45.1_Update
-          path: |
-            Nexora_v3.22.0_to_v3.45.1_Update.zip
-            Nexora_v3.22.0_to_v3.45.1_Update.zip.sha256
+            build/Nexora_Commerce_v${{ steps.package.outputs.version }}_PRODUCTION.zip
+            build/Nexora_Commerce_v${{ steps.package.outputs.version }}_PRODUCTION.zip.sha256
           if-no-files-found: error
           retention-days: 7

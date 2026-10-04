@@ -1,4 +1,4 @@
-# Nexora Commerce 3.45.1
+# Nexora Commerce 3.45.2
 
 Сучасна модульна e-commerce платформа для України та Європи. Один канонічний вихідний код у гілці `main`.
 
@@ -51,4 +51,3 @@ php bin/console commerce:system:check
 
 Каталог `docs/`: архітектура (`ARCHITECTURE.md`), матриця зрілості функцій (`CAPABILITY_MATRIX.md`), безпека (`SECURITY.md`), розробка розширень (`DEVELOPER_GUIDE_UK.md`), оновлення (`UPDATE_CENTER.md`), розгортання (`DEPLOYMENT.md`).
 
-Політика гілок: `docs/CANONICAL_SOURCE.md` — єдина гілка `main`, без паралельних версій.

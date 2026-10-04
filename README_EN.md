@@ -1,4 +1,4 @@
-# Nexora Commerce 3.45.1
+# Nexora Commerce 3.45.2
 
 Modern modular e-commerce platform for Ukraine and Europe. One canonical source: the `main` branch.
 
@@ -53,4 +53,3 @@ All `bin/*-check.php` scripts are standalone release gates; those needing a data
 
 See `docs/`: architecture (`ARCHITECTURE.md`), feature maturity matrix (`CAPABILITY_MATRIX.md`), security (`SECURITY.md`), extension development (`DEVELOPER_GUIDE.md`), updates (`UPDATE_CENTER.md`), deployment (`DEPLOYMENT.md`).
 
-Branch policy: `docs/CANONICAL_SOURCE.md` — a single `main` branch, no parallel versions.

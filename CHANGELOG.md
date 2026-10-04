@@ -2,6 +2,13 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.45.2 — 2026-10-04
+
+Repository clean-up (no product changes).
+
+- Removed working notes and one-off material from the repository and the package: the audit status note, the roadmap, the technology-decision note, the branch-policy note, the "clean a half-finished installation" note with its SQL script, and the dev-container setup.
+- The package workflow no longer builds an "update from 3.22.0" archive and no longer carries version numbers: it runs `tools/package-production.sh` (all release checks, manifest, checksums) and publishes the one-upload package.
+
 ## 3.45.1 — 2026-10-04
 
 Fix release for 3.45.0 (tests only).
