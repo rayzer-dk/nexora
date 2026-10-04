@@ -75,6 +75,7 @@ final class ExtensionScheduledTaskTest extends TestCase
             new DeliveryProviderRegistry([]),
             new ProductBlockRegistry([]),
             new AiProviderRegistry([]),
+            new \Commerce\Modules\Ai\Application\TranslationProviderRegistry(),
             [],
             [],
             [],

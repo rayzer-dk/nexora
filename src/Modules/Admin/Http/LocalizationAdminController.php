@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Core\I18n\LanguagePackService;
 use Commerce\Core\Configuration\SystemSettingStore;
 use Commerce\Core\Store\StoreLocalizationSettings;
 use Commerce\Modules\Pricing\Application\CurrencyPriceSynchronizer;
 use Commerce\Modules\Pricing\Application\ExchangeRateService;
 use Commerce\Modules\Pricing\Infrastructure\ApiKeyExchangeRateSource;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,6 +29,7 @@ final class LocalizationAdminController extends AbstractController
         private readonly CurrencyPriceSynchronizer $prices,
         private readonly SystemSettingStore $systemSettings,
         private readonly ApiKeyExchangeRateSource $apiSource,
+        private readonly LanguagePackService $packs,
     ) {
     }
 
@@ -57,6 +61,38 @@ final class LocalizationAdminController extends AbstractController
             $this->settings->saveLocales($storeId, $rows);
 
             return CanonicalUiText::get('admin.localization.locales.saved');
+        });
+    }
+
+    /** The texts of one language as JSON to translate: the current text, or the Ukrainian one where there is no translation yet. */
+    #[Route('/admin/system/localization/pack/{locale}', name: 'admin_system_localization_pack_download', methods: ['GET'], requirements: ['locale' => '[a-z]{2,3}(?:-[A-Z]{2})?'])]
+    public function downloadPack(string $locale): Response
+    {
+        $response = new JsonResponse($this->packs->export($locale), 200, [], false);
+        $response->setEncodingOptions(JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'storefront-' . $locale . '.json'));
+
+        return $response;
+    }
+
+    /** Saves a translated JSON file as the language pack of a language (var/translations, kept across updates). */
+    #[Route('/admin/system/localization/pack', name: 'admin_system_localization_pack_upload', methods: ['POST'])]
+    public function uploadPack(Request $request): Response
+    {
+        return $this->guarded($request, 'localization_pack', function () use ($request): string {
+            $locale = trim((string) $request->request->get('pack_locale', ''));
+            $file = $request->files->get('pack_file');
+            $json = $file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile && $file->isValid() ? (string) file_get_contents($file->getPathname()) : '';
+            if ($json === '') {
+                throw new \DomainException(CanonicalUiText::get('admin.langpack.error_nofile'));
+            }
+            $result = $this->packs->import($locale, $json);
+            $message = CanonicalUiText::get('admin.langpack.saved', ['locale' => $locale, 'saved' => $result['saved'], 'translated' => $result['translated']]);
+            if ($result['rejected'] !== []) {
+                $message .= ' ' . CanonicalUiText::get('admin.langpack.rejected', ['count' => count($result['rejected']), 'keys' => implode(', ', array_slice(array_keys($result['rejected']), 0, 5))]);
+            }
+
+            return $message;
         });
     }
 

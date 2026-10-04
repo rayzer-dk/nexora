@@ -2,6 +2,17 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.36.0 — 2026-10-04
+
+Language packs, translation providers, modules list, faster catalog — schema 78.
+
+- Language packs: a new storefront language is added from the admin (Localization → Language packs): download the texts as JSON, translate, upload. The pack lives in `var/translations`, survives updates and has no apostrophe problem; broken lines and files are refused with a message.
+- Modules can contribute machine-translation providers (capability `provider.translation`, for example Google Translate): they appear next to the AI providers on every Translate button. AI providers contributed by modules now appear in the provider lists too.
+- System → Modules: every built-in module has an "Open" button leading to its admin page; extensions with settings have a Settings button.
+- The store owner's own publisher keys go to `var/config/trusted-publishers.json`: updates replace `config/extensions/trusted-publishers.json`, so keys kept there were lost. A language directory added by hand under `resources/translations` is no longer deleted by `upgrade.php`.
+- Speed at 10 000 products: the home page, catalog, category and search pages cost about half as much (the card query no longer computes ratings, stock and photos for every candidate before sorting). See `docs/SCALABILITY.md`.
+- Docs: `docs/LANGUAGE_PACKS.md`; `docs/UPDATE_AND_RESTORE.md` says what an update keeps and what it replaces.
+
 ## 3.35.0 — 2026-10-04
 
 Help inside the admin, profile and password, update page — schema 78.

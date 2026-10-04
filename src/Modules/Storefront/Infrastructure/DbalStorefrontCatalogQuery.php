@@ -180,12 +180,17 @@ final readonly class DbalStorefrontCatalogQuery
 
         $orderParams = [];
         $safeStoreId = (int) $context->storeId;
+        $popularJoin = $filter->sort === ProductCatalogFilter::SORT_POPULAR
+            ? "LEFT JOIN (SELECT soi.product_id,SUM(soi.quantity) AS sold FROM mc_sales_order_item soi JOIN mc_sales_order so ON so.id=soi.order_id AND so.store_id={$safeStoreId} AND so.status NOT IN ('cancelled','expired','rejected') AND so.created_at>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 180 DAY) GROUP BY soi.product_id) pop ON pop.product_id=p.id"
+            : '';
         $orderBy = match ($filter->sort) {
             ProductCatalogFilter::SORT_PRICE_ASC => 'pr.amount_minor IS NULL ASC,pr.amount_minor ASC,p.id DESC',
             ProductCatalogFilter::SORT_PRICE_DESC => 'pr.amount_minor IS NULL ASC,pr.amount_minor DESC,p.id DESC',
             ProductCatalogFilter::SORT_NAME_ASC => 'pt.name ASC,p.id DESC',
             ProductCatalogFilter::SORT_NAME_DESC => 'pt.name DESC,p.id DESC',
-            ProductCatalogFilter::SORT_POPULAR => "(SELECT COALESCE(SUM(soi.quantity),0) FROM mc_sales_order_item soi JOIN mc_sales_order so ON so.id=soi.order_id AND so.store_id={$safeStoreId} AND so.status NOT IN ('cancelled','expired','rejected') AND so.created_at>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 180 DAY) WHERE soi.product_id=p.id) DESC,sp.published_at DESC,p.id DESC",
+            // Sales of the last 180 days come from one grouped join (see $popularJoin): a correlated subquery per product made the home page
+            // and every "popular" list grow linearly with the catalog (0.6 s at 10 000 products).
+            ProductCatalogFilter::SORT_POPULAR => 'COALESCE(pop.sold,0) DESC,sp.published_at DESC,p.id DESC',
             default => 'sp.published_at DESC,p.updated_at DESC,p.id DESC',
         };
         if ($categoryId !== null && $filter->sort === ProductCatalogFilter::SORT_NEWEST && trim($filter->search) === '') {
@@ -232,25 +237,39 @@ final readonly class DbalStorefrontCatalogQuery
             }
         }
 
-        $sql = "SELECT p.id,p.public_id,p.product_type,pt.name,pt.short_description,v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,
+        $selectList = "p.id,p.public_id,p.product_type,pt.name,pt.short_description,v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,
                        pr.amount_minor,pr.compare_at_minor,pr.ends_at AS price_ends_at,pr.currency,pr.tax_included,sr.path,
                        COALESCE(b.name,'') AS brand_name,
                        COALESCE((SELECT AVG(rv.rating) FROM mc_product_review rv WHERE rv.product_id=p.id AND rv.status='published'),0) AS rating_value,
                        (SELECT COUNT(*) FROM mc_product_review rc WHERE rc.product_id=p.id AND rc.status='published') AS review_count,
                        tr.rate_bps,
                        COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) AS available_quantity,
-                       (SELECT ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=p.id AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC LIMIT 1) AS image_key
-                {$baseJoins}
+                       (SELECT ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=p.id AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC LIMIT 1) AS image_key";
+        $fromWhere = static fn (string $w): string => "                {$baseJoins}
+                {$popularJoin}
                 JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
                 LEFT JOIN mc_tax_rate tr ON tr.id=(SELECT tx.id FROM mc_tax_rate tx WHERE tx.tax_class_id=p.tax_class_id AND tx.country_code=? AND tx.enabled=1 AND tx.valid_from<=UTC_TIMESTAMP(6) AND (tx.valid_to IS NULL OR tx.valid_to>UTC_TIMESTAMP(6)) ORDER BY tx.priority ASC,tx.id DESC LIMIT 1)
-                WHERE {$where}
-                ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}";
+                WHERE {$w}";
+        $joinParams = [...$baseParams, $context->storeId, $context->locale, $context->countryCode];
+        // Two steps: the ids of the page first (cheap columns only), then the card data for those few products. Computing
+        // the rating, review count, stock and photo for every candidate before sorting made every list page cost
+        // ~0.6 s at 10 000 products and grow with the catalog. Merchandising orders that sort by those computed columns keep the single query.
+        $offset0 = $offset;
+        if (preg_match('/\b(rating_value|review_count|available_quantity)\b/', $orderBy) !== 1) {
+            $pageIds = array_map('intval', $this->connection->fetchFirstColumn(
+                'SELECT p.id ' . $fromWhere($where) . " ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}",
+                [...$joinParams, ...$filterParams, ...$orderParams],
+            ));
+            if ($pageIds === []) {
+                return ['items' => [], 'total' => $count, 'page' => $page, 'pages' => max(1, (int) ceil($count / $limit))];
+            }
+            $where .= ' AND p.id IN (' . implode(',', $pageIds) . ')';
+            $offset0 = 0;
+        }
+        $sql = "SELECT {$selectList} " . $fromWhere($where) . " ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset0}";
         $queryParams = [
             $context->marketId,
-            ...$baseParams,
-            $context->storeId,
-            $context->locale,
-            $context->countryCode,
+            ...$joinParams,
             ...$filterParams,
             ...$orderParams,
         ];

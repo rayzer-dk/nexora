@@ -7,11 +7,29 @@ namespace Commerce\Modules\System\Application;
 /** What is installed: the built-in modules (folders of src/Modules) and the languages shipped with the platform. */
 final class ModuleCatalog
 {
+    /**
+     * Where each built-in module is managed in the admin. The admin pages live in a few controllers, not in the module
+     * folders, so the map is explicit; a module without an entry has no page of its own: it is managed from the pages of other modules (for example prices and stock from the product form).
+     */
+    private const ADMIN_PAGE = [
+        'Admin' => '/admin', 'Ai' => '/admin/system/ai', 'Analytics' => '/admin/analytics', 'Appearance' => '/admin/appearance/storefront',
+        'Automation' => '/admin/automation', 'B2B' => '/admin/b2b', 'Bulk' => '/admin/catalog/products/bulk-edit', 'Catalog' => '/admin/catalog/products',
+        'Checkout' => '/admin/shipments/methods', 'Content' => '/admin/content/pages', 'CustomField' => '/admin/catalog/fields', 'Customer' => '/admin/commerce/customers',
+        'Developer' => '/admin/system/developer', 'DigitalProduct' => '/admin/content/downloads', 'Downloads' => '/admin/content/downloads', 'Feeds' => '/admin/commerce/feeds',
+        'Forms' => '/admin/content/forms', 'Forum' => '/admin/forum', 'Fraud' => '/admin/system/fraud', 'GoogleCommerce' => '/admin/commerce/feeds',
+        'Identity' => '/admin/system/access', 'ImportExport' => '/admin/commerce/import-export', 'Localization' => '/admin/system/localization',
+        'Marketing' => '/admin/commerce/campaigns', 'Media' => '/admin/media', 'Migration' => '/admin/system/migration', 'Navigation' => '/admin/appearance/navigation',
+        'Notification' => '/admin/commerce/notifications', 'Order' => '/admin/orders', 'Payment' => '/admin/shipments/methods',
+        'Promotion' => '/admin/commerce/promotions', 'Push' => '/admin/system/push', 'Quality' => '/admin/system/quality', 'Rewards' => '/admin/rewards', 'Search' => '/admin/catalog/search', 'Seo' => '/admin/system/seo-redirects',
+        'Shipping' => '/admin/shipments', 'Storefront' => '/admin/system/storefront-contacts', 'SupportChat' => '/admin/appearance/support-chat', 'System' => '/admin/system/modules',
+        'Tax' => '/admin/system/tax',
+    ];
+
     public function __construct(private readonly string $projectDir)
     {
     }
 
-    /** @return list<array{name:string,label:string,classes:int,routes:int,has_admin:bool}> */
+    /** @return list<array{name:string,label:string,classes:int,routes:int,has_admin:bool,admin_url:?string}> */
     public function builtIn(): array
     {
         $rows = [];
@@ -38,6 +56,7 @@ final class ModuleCatalog
                 'classes' => $classes,
                 'routes' => $routes,
                 'has_admin' => $admin,
+                'admin_url' => self::ADMIN_PAGE[$name] ?? null,
             ];
         }
 

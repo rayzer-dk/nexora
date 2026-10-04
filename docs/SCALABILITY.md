@@ -33,3 +33,19 @@ Popular facets can be precomputed into `mc_storefront_facet_projection`. Missing
 Shared Redis and Valkey profiles are opt-in. Default small-store installs keep filesystem application cache and do not require an external cache/search service.
 
 Use `php bin/console commerce:db:observe` for DB counter snapshots and `tests/load/k6-storefront.js` for concurrent HTTP validation. Capacity claims still require a deployed dataset and measured p95/p99.
+
+## Measured at 10 000 products (3.36.0)
+
+A scratch copy of the demo store with 9 933 products, 11 137 variants and 10 558 SEO routes (the demo catalog cloned 300 times), PHP built-in server without OPcache (a deliberately slow baseline: an empty cart page costs ~190 ms there), MariaDB 10.11, every request answered from a cold cache:
+
+| Page | Before | After |
+| --- | --- | --- |
+| Home | 910 ms | 420 ms |
+| Catalog | 800 ms | 350 ms |
+| Category | 900 ms | 400 ms |
+| Search | 640 ms | 430 ms |
+| Product page | 300 ms | 300 ms |
+
+What was slow: the product-card query computed the rating, review count, stock and photo of **every** candidate product before sorting and cutting the page. It now selects the ids of the page first and then loads the card data for those few products. The "popular" order uses one grouped join over the last 180 days of sales instead of a subquery per product. Category lists that sort by rating or stock (merchandising modes) still use the single query.
+
+Reproduce: clone the demo catalog in a scratch database, run `commerce:search:reindex`, request the pages above with the application cache bypassed (wait 9 s between requests) and compare with `config/performance/budgets.json`.

@@ -140,6 +140,26 @@ function nexora_upgrade_manifest(string $projectDir): ?array
     return count($files) > 500 && isset($files['src/Kernel.php'], $files['bootstrap/upgrade.php']) ? $files : null;
 }
 
+/**
+ * Files the store owner added on purpose are not "stale": a whole language directory under resources/translations that the
+ * release does not ship (a language added by hand). Everything else not listed in SHA256SUMS.txt is removed.
+ *
+ * @param array<string,true> $manifest
+ */
+function nexora_upgrade_is_user_file(string $rel, array $manifest): bool
+{
+    if (preg_match('~^resources/translations/([^/]+)/~', $rel, $m) !== 1) {
+        return false;
+    }
+    foreach ($manifest as $path => $_) {
+        if (str_starts_with((string) $path, 'resources/translations/' . $m[1] . '/')) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 /** @param array<string,true> $manifest */
 function nexora_upgrade_remove_stale(string $projectDir, array $manifest, callable $log): int
 {
@@ -163,7 +183,7 @@ function nexora_upgrade_remove_stale(string $projectDir, array $manifest, callab
                 }
                 continue;
             }
-            if (!isset($manifest[$rel]) && @unlink($item->getPathname())) {
+            if (!isset($manifest[$rel]) && !nexora_upgrade_is_user_file($rel, $manifest) && @unlink($item->getPathname())) {
                 ++$removed;
                 $log('stale:' . $rel);
                 nexora_upgrade_log($projectDir, 'removed stale file ' . $rel);

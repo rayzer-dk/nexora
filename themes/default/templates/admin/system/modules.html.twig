@@ -6,9 +6,9 @@
 </header>
 <section class="admin-panel">
     <div class="admin-panel__header"><div><h2>{{ ui_text('admin.system.modules.extensions') }}</h2><p>{{ ui_text('admin.system.modules.extensions_help') }}</p></div><span class="admin-badge">{{ extensions|length }}</span></div>
-    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.modules.name') }}</th><th>{{ ui_text('admin.system.modules.type') }}</th><th>{{ ui_text('admin.system.modules.version') }}</th><th>{{ ui_text('admin.system.modules.status') }}</th></tr></thead><tbody>
-    {% for extension in extensions %}<tr><td><strong>{{ extension.name }}</strong><small class="admin-cell-sub">{{ extension.code }}</small></td><td>{{ extension.extension_type }}</td><td>{{ extension.version }}</td><td><span class="admin-badge">{{ extension.status }}</span></td></tr>
-    {% else %}<tr><td colspan="4">{{ ui_text('admin.system.modules.no_extensions') }}</td></tr>{% endfor %}
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.modules.name') }}</th><th>{{ ui_text('admin.system.modules.type') }}</th><th>{{ ui_text('admin.system.modules.version') }}</th><th>{{ ui_text('admin.system.modules.status') }}</th><th>{{ ui_text('admin.system.modules.settings') }}</th></tr></thead><tbody>
+    {% for extension in extensions %}<tr><td><strong>{{ extension.name }}</strong><small class="admin-cell-sub">{{ extension.code }}</small></td><td>{{ extension.extension_type }}</td><td>{{ extension.version }}</td><td><span class="admin-badge">{{ extension.status }}</span></td><td>{% if extension.has_settings and extension.status != 'quarantined' %}<a class="admin-button" href="{{ path('admin_system_extension_settings',{id:extension.id}) }}">{{ ui_icon('settings', 16) }} <span>{{ ui_text('admin.system.modules.open') }}</span></a>{% else %}<span class="admin-muted">—</span>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="5">{{ ui_text('admin.system.modules.no_extensions') }}</td></tr>{% endfor %}
     </tbody></table></div>
 </section>
 <section class="admin-panel">
@@ -19,8 +19,8 @@
 </section>
 <section class="admin-panel">
     <div class="admin-panel__header"><div><h2>{{ ui_text('admin.system.modules.built_in') }}</h2><p>{{ ui_text('admin.system.modules.built_in_help') }}</p></div><span class="admin-badge">{{ modules|length }}</span></div>
-    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.modules.name') }}</th><th>{{ ui_text('admin.system.modules.classes') }}</th><th>{{ ui_text('admin.system.modules.routes') }}</th><th>{{ ui_text('admin.system.modules.has_admin') }}</th></tr></thead><tbody>
-    {% for module in modules %}<tr><td><strong>{{ module.label }}</strong></td><td>{{ module.classes }}</td><td>{{ module.routes }}</td><td>{{ module.has_admin ? '✓' : '—' }}</td></tr>{% endfor %}
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.modules.name') }}</th><th>{{ ui_text('admin.system.modules.settings') }}</th></tr></thead><tbody>
+    {% for module in modules %}<tr><td><strong>{{ module.label }}</strong></td><td>{% if module.admin_url %}<a class="admin-button" href="{{ module.admin_url }}">{{ ui_icon('settings', 16) }} <span>{{ ui_text('admin.system.modules.open') }}</span></a>{% else %}<span class="admin-muted">{{ ui_text('admin.system.modules.no_page') }}</span>{% endif %}</td></tr>{% endfor %}
     </tbody></table></div>
 </section>
 {{ shell.end() }}

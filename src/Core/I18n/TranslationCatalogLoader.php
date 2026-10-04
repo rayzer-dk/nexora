@@ -32,6 +32,11 @@ final readonly class TranslationCatalogLoader
             $catalog = array_replace($catalog, $this->readPhpCatalog($path));
         }
 
+        // Language packs of the store owner (var/translations/<locale>/*.json): they survive updates and win over the bundled texts.
+        foreach ($this->catalogFiles($root . '/var/translations/' . $locale, 'json') as $path) {
+            $catalog = array_replace($catalog, $this->readJsonCatalog($path));
+        }
+
         foreach ($activeExtensions as $extension) {
             $code = trim((string) ($extension['code'] ?? ''));
             $installPath = (string) ($extension['install_path'] ?? '');

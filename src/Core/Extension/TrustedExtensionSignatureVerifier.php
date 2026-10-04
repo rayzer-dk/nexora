@@ -51,16 +51,18 @@ final class TrustedExtensionSignatureVerifier
 
     private function publisherKey(string $keyId): string
     {
-        $path = rtrim($this->projectDir, '/\\') . '/config/extensions/trusted-publishers.json';
-        if (!is_file($path)) {
+        $base = rtrim($this->projectDir, '/\\');
+        $bundled = $base . '/config/extensions/trusted-publishers.json';
+        if (!is_file($bundled)) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.b79abf7706c1'));
         }
-        try {
-            $data = json_decode((string) file_get_contents($path), true, 32, JSON_THROW_ON_ERROR);
-        } catch (\Throwable $e) {
-            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.c5696e4228b9'), 0, $e);
+        // Keys of the store owner live in var/config: the bundled file is replaced by every update, var/ never is.
+        // A bundled key id always wins, so the owner's file cannot replace a publisher shipped with Nexora.
+        $publishers = $this->readPublishers($base . '/var/config/trusted-publishers.json');
+        foreach ($this->readPublishers($bundled, true) as $id => $publisher) {
+            $publishers[$id] = $publisher;
         }
-        $encoded = is_array($data) ? ($data['publishers'][$keyId]['public_key'] ?? null) : null;
+        $encoded = $publishers[$keyId]['public_key'] ?? null;
         if (!is_string($encoded)) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.3cf712c87738') . $keyId);
         }
@@ -69,6 +71,26 @@ final class TrustedExtensionSignatureVerifier
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.bb5bf1d24c2c'));
         }
         return $key;
+    }
+
+    /** @return array<string,array<string,mixed>> */
+    private function readPublishers(string $path, bool $required = false): array
+    {
+        if (!is_file($path)) {
+            return [];
+        }
+        try {
+            $data = json_decode((string) file_get_contents($path), true, 32, JSON_THROW_ON_ERROR);
+        } catch (\Throwable $e) {
+            if ($required) {
+                throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.c5696e4228b9'), 0, $e);
+            }
+
+            return [];
+        }
+        $publishers = is_array($data) && is_array($data['publishers'] ?? null) ? $data['publishers'] : [];
+
+        return array_filter($publishers, static fn ($publisher, $id): bool => is_string($id) && is_array($publisher), ARRAY_FILTER_USE_BOTH);
     }
 
     private function canonicalDigest(ZipArchive $zip, string $signatureFile): string

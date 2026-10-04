@@ -33,6 +33,8 @@ final class AiTaskService
         private readonly AiSettings $settings,
         private readonly HttpClientInterface $http,
         private readonly AiProviderRegistry $registry,
+        private readonly TranslationProviderRegistry $translations,
+        private readonly \Commerce\Core\Extension\TrustedExtensionRuntimeLoader $extensions,
     ) {
     }
 
@@ -52,7 +54,9 @@ final class AiTaskService
             throw new \DomainException(CanonicalUiText::get('admin.ai.error_task'));
         }
         [$required, $outputs, $instruction] = self::TASKS[$task];
-        $provider = $this->provider($storeId, $providerCode);
+        $this->extensions->bootActive();
+        $translation = $task === 'translate' && $this->translations->has($providerCode) ? $this->translations->require($providerCode) : null;
+        $provider = $translation === null ? $this->provider($storeId, $providerCode) : null;
         $model = $this->settings->providers($storeId)[$providerCode]['model'] ?? '';
 
         $data = [];
@@ -79,6 +83,9 @@ final class AiTaskService
         if ($task === 'translate' && !isset(self::LANGUAGES[strtolower(substr((string) ($data['target'] ?? ''), 0, 2))])) {
             throw new \DomainException(CanonicalUiText::get('admin.ai.error_input'));
         }
+        if ($translation !== null) {
+            return $this->translateWith($translation, $storeId, $admin, $providerCode, (string) $data['text'], (string) $data['target'], $locale, $limit, $used);
+        }
         $target = $task === 'translate' ? $this->languageName((string) ($data['target'] ?? '')) : $this->languageName($locale);
         $prompt = $instruction . "\nOutput language: " . $target . "\nJSON keys: " . implode(', ', array_keys($outputs)) . "\n\n";
         foreach ($data as $name => $value) {
@@ -90,7 +97,7 @@ final class AiTaskService
 
         $in = mb_strlen($prompt);
         try {
-            $raw = $provider->generate($prompt, self::SYSTEM);
+            $raw = $provider?->generate($prompt, self::SYSTEM) ?? '';
             $fields = $this->parse($raw, $outputs);
         } catch (\Throwable $e) {
             $this->settings->log($storeId, $admin, $task, $providerCode, $model, $in, 0, 'error');
@@ -99,6 +106,36 @@ final class AiTaskService
         $this->settings->log($storeId, $admin, $task, $providerCode, $model, $in, array_sum(array_map('mb_strlen', $fields)), 'ok');
 
         return ['fields' => $fields, 'provider' => $providerCode, 'remaining' => max(0, $limit - $used - 1)];
+    }
+
+    /**
+     * A machine-translation provider from an extension: it gets the text itself, not a prompt.
+     *
+     * @return array{fields:array<string,string>,provider:string,remaining:int}
+     */
+    private function translateWith(\Commerce\Modules\Ai\Contract\TranslationProviderInterface $provider, int $storeId, string $admin, string $code, string $text, string $target, string $sourceLocale, int $limit, int $used): array
+    {
+        $targetLocale = $this->localeFor($target);
+        try {
+            $translated = trim($provider->translate($text, $sourceLocale, $targetLocale));
+            if ($translated === '') {
+                throw new \DomainException(CanonicalUiText::get('ai.product_draft.failed'));
+            }
+            $translated = mb_substr($translated, 0, 20000);
+        } catch (\Throwable $e) {
+            $this->settings->log($storeId, $admin, 'translate', $code, '', mb_strlen($text), 0, 'error');
+            throw $e instanceof \DomainException ? $e : new \DomainException(CanonicalUiText::get('ai.product_draft.failed'), 0, $e);
+        }
+        $this->settings->log($storeId, $admin, 'translate', $code, '', mb_strlen($text), mb_strlen($translated), 'ok');
+
+        return ['fields' => ['text' => $translated], 'provider' => $code, 'remaining' => max(0, $limit - $used - 1)];
+    }
+
+    private function localeFor(string $target): string
+    {
+        $map = ['uk' => 'uk-UA', 'ru' => 'ru-RU', 'en' => 'en-US', 'da' => 'da-DK', 'de' => 'de-DE', 'pl' => 'pl-PL'];
+
+        return $map[strtolower(substr($target, 0, 2))] ?? $target;
     }
 
     /** Sends a tiny request to check a key. */

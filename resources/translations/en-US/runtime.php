@@ -2053,4 +2053,5 @@ return [
     'extension.sdk.task_duplicate' => 'The trusted extension registered the same scheduled task twice: ',
     'extension.sdk.task_undeclared' => 'The trusted extension attempted to register an undeclared scheduled task: ',
     'extension.scheduled_task.invalid' => 'scheduled_tasks must list up to 16 tasks of a trusted_release extension, each with a code (a-z, 0-9, _), an interval of 300 to 604800 seconds and a label.',
+    'extension.sdk.translation_provider_invalid' => 'The translation provider code is empty, taken, not a-z0-9_ or reserved: ',
 ];

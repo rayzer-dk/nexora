@@ -48,8 +48,8 @@ final class ExtensionKeygenCommand extends Command
         $output->writeln('');
         $output->writeln('1. Put this in the module manifest.json:');
         $output->writeln(sprintf('   "publisher": {"name": "Your Company", "key_id": "%1$s"}, "signature": {"algorithm": "ed25519", "key_id": "%1$s", "file": "SIGNATURE.ed25519"}', $keyId));
-        $output->writeln('2. Register the public key on every store that should run your modules, in config/extensions/trusted-publishers.json:');
-        $output->writeln(sprintf('   "%s": {"name": "Your Company", "public_key": "%s"}', $keyId, $public));
+        $output->writeln('2. Register the public key on every store that should run your modules, in var/config/trusted-publishers.json (create the file; updates replace config/extensions/, not var/):');
+        $output->writeln(sprintf('   {"schema_version": 2, "publishers": {"%s": {"name": "Your Company", "public_key": "%s"}}}', $keyId, $public));
         $output->writeln('3. Pack, then sign: commerce:extension:pack <dir> --output=module.zip && commerce:extension:sign module.zip ' . $out);
 
         return Command::SUCCESS;

@@ -11,6 +11,7 @@ final class HelpCatalog
     private const DOCS = [
         'install' => ['file' => 'docs/INSTALLATION.md', 'group' => 'system'],
         'update-and-restore' => ['file' => 'docs/UPDATE_AND_RESTORE.md', 'group' => 'system'],
+        'language-packs' => ['file' => 'docs/LANGUAGE_PACKS.md', 'group' => 'system'],
         'backup-feeds-sitemap' => ['file' => 'docs/BACKUP_FEEDS_SITEMAP.md', 'group' => 'system'],
         'security' => ['file' => 'docs/SECURITY.md', 'group' => 'system'],
         'modules-quickstart' => ['file' => 'docs/QUICKSTART_MODULE.md', 'group' => 'modules'],

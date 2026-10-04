@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Commerce\Core\Extension;
 
 use Commerce\Modules\Ai\Application\AiProviderRegistry;
+use Commerce\Modules\Ai\Application\TranslationProviderRegistry;
 use Commerce\Modules\Ai\Contract\TextGenerationProviderInterface;
+use Commerce\Modules\Ai\Contract\TranslationProviderInterface;
 use Commerce\Modules\Payment\Application\PaymentProviderRegistry;
 use Commerce\Modules\Payment\Contract\PaymentProviderInterface;
 use Commerce\Modules\ProductPage\Application\ProductBlockRegistry;
@@ -25,6 +27,7 @@ final readonly class TrustedExtensionContext
         private DeliveryProviderRegistry $shipping,
         private ProductBlockRegistry $productBlocks,
         private AiProviderRegistry $ai,
+        private TranslationProviderRegistry $translations,
         private array $declaredRoutes = [],
         private array $declaredEvents = [],
         private array $declaredCapabilities = [],
@@ -79,6 +82,12 @@ final readonly class TrustedExtensionContext
     {
         $this->requireCapability('provider.ai');
         $this->ai->register($provider);
+    }
+
+    public function translationProvider(TranslationProviderInterface $provider): void
+    {
+        $this->requireCapability('provider.translation');
+        $this->translations->register($provider);
     }
 
     private function requireCapability(string $capability): void

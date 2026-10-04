@@ -184,6 +184,10 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
+    Commerce\Core\I18n\LanguagePackService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     Commerce\Core\Update\PendingMigrations:
         arguments:
             $projectDir: '%kernel.project_dir%'

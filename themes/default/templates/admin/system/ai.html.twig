@@ -26,10 +26,10 @@
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai.limit_hint') }}</small><h2>{{ ui_text('admin.ai.limit') }}</h2></div><span class="admin-badge">{{ ui_text('admin.ai.used_today') }}: {{ used }} / {{ limit }}</span></div>
 <form method="post" action="{{ path('admin_system_ai_save') }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_ai_settings') }}"><label><span>{{ ui_text('admin.ai.daily_limit') }}</span><input type="number" name="daily_limit" min="0" max="100000" value="{{ limit }}"></label><button class="admin-button is-primary" type="submit">{{ ui_text('admin.push.save') }}</button></form></section>
 <section class="admin-panel" data-ai-playground data-ai-token="{{ csrf_token('admin_ai') }}"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai.playground_hint') }}</small><h2>{{ ui_text('admin.ai.playground') }}</h2></div>{{ ui_icon('wand-sparkles', 20) }}</div>
-{% if ai_providers() %}
+{% set box_providers = ai_providers()|filter(p => not p.translation_only|default(false)) %}{% if box_providers %}
 <div class="admin-form-grid">
   <label><span>{{ ui_text('admin.ai.task') }}</span><select data-ai-play-task><option value="reply">{{ ui_text('admin.ai.task_reply') }}</option><option value="translate">{{ ui_text('admin.ai.task_translate') }}</option><option value="seo_meta">{{ ui_text('admin.ai.task_seo_meta') }}</option></select></label>
-  <label><span>{{ ui_text('admin.ai.provider') }}</span><select data-ai-provider>{% for pr in ai_providers() %}<option value="{{ pr.code }}">{{ pr.label }}</option>{% endfor %}</select></label>
+  <label><span>{{ ui_text('admin.ai.provider') }}</span><select data-ai-provider>{% for pr in box_providers %}<option value="{{ pr.code }}">{{ pr.label }}</option>{% endfor %}</select></label>
   <label><span>{{ ui_text('admin.ai.target_language') }}</span><select data-ai-play-target><option value="uk">Ukrainian</option><option value="en">English</option><option value="ru">Russian</option><option value="da">Danish</option><option value="de">German</option><option value="pl">Polish</option></select></label>
   <label class="admin-form-wide"><span>{{ ui_text('admin.ai.input_text') }}</span><textarea rows="5" maxlength="6000" data-ai-play-input></textarea></label>
   <div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="button" data-ai-play-run>{{ ui_icon('sparkles', 16) }}<span>{{ ui_text('admin.ai.run') }}</span></button><span data-ai-status role="status"></span></div>

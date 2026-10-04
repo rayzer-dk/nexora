@@ -12,11 +12,17 @@ use Twig\TwigFunction;
 
 final class AiTwigExtension extends AbstractExtension
 {
-    /** @var list<array{code:string,label:string}>|null */
+    /** @var list<array{code:string,label:string,translation_only?:bool}>|null */
     private ?array $cache = null;
 
-    public function __construct(private readonly AiSettings $settings, private readonly AdminContextResolver $contexts, private readonly RequestStack $requests)
-    {
+    public function __construct(
+        private readonly AiSettings $settings,
+        private readonly AdminContextResolver $contexts,
+        private readonly RequestStack $requests,
+        private readonly \Commerce\Core\Extension\TrustedExtensionRuntimeLoader $extensions,
+        private readonly \Commerce\Modules\Ai\Application\TranslationProviderRegistry $translations,
+        private readonly \Commerce\Modules\Ai\Application\AiProviderRegistry $registry,
+    ) {
     }
 
     public function getFunctions(): array
@@ -35,7 +41,16 @@ final class AiTwigExtension extends AbstractExtension
             return $this->cache = [];
         }
         try {
-            return $this->cache = $this->settings->enabledProviders($this->contexts->resolve($request)->storeId);
+            $this->extensions->bootActive();
+            $list = $this->settings->enabledProviders($this->contexts->resolve($request)->storeId);
+            foreach ($this->registry->enabledCodes() as $code) {
+                $list[] = ['code' => $code, 'label' => $code];
+            }
+            foreach ($this->translations->enabled() as $provider) {
+                $list[] = ['code' => $provider['code'], 'label' => $provider['label'], 'translation_only' => true];
+            }
+
+            return $this->cache = $list;
         } catch (\Throwable) {
             return $this->cache = [];
         }

@@ -98,7 +98,7 @@ Core translations use `resources/translations/<locale>/<domain>.php`. Extensions
 
 ## Signing
 
-Trusted publishers are registered by key id in `config/extensions/trusted-publishers.json`. The package signature is `SIGNATURE.ed25519`. The signed payload is a canonical digest of every ZIP entry except the signature file, preventing post-signing modification of manifest, PHP, migrations, assets or translations.
+Trusted publishers are registered by key id. The store owner's own keys go to `var/config/trusted-publishers.json` (same format; `var/` survives updates, while `config/extensions/trusted-publishers.json` is replaced by every release and holds only the keys shipped with Nexora, which cannot be overridden). The package signature is `SIGNATURE.ed25519`. The signed payload is a canonical digest of every ZIP entry except the signature file, preventing post-signing modification of manifest, PHP, migrations, assets or translations.
 
 Create a package skeleton:
 

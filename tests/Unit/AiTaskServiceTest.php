@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace Commerce\Tests\Unit;
 
+use Commerce\Core\Extension\TrustedExtensionRuntimeLoader;
+use Commerce\Core\Extension\TrustedExtensionRuntimeRegistry;
 use Commerce\Core\Security\SecretVault;
+use Commerce\Modules\Ai\Application\TranslationProviderRegistry;
+use Commerce\Modules\Ai\Contract\TranslationProviderInterface;
+use Commerce\Modules\Payment\Application\PaymentProviderRegistry;
+use Commerce\Modules\ProductPage\Application\ProductBlockRegistry;
+use Commerce\Modules\Shipping\Application\DeliveryProviderRegistry;
 use Commerce\Modules\Ai\Application\AiProviderRegistry;
 use Commerce\Modules\Ai\Application\AiSettings;
 use Commerce\Modules\Ai\Application\AiTaskService;
@@ -19,6 +26,7 @@ final class AiTaskServiceTest extends TestCase
     private Connection $db;
     private object $stub;
     private AiTaskService $service;
+    private TranslationProviderRegistry $translations;
 
     protected function setUp(): void
     {
@@ -48,7 +56,10 @@ final class AiTaskServiceTest extends TestCase
             }
         };
         $settings = new AiSettings($this->db, new SecretVault(str_repeat('k', 32)));
-        $this->service = new AiTaskService($settings, new MockHttpClient(), new AiProviderRegistry([$this->stub]));
+        $ai = new AiProviderRegistry([$this->stub]);
+        $this->translations = new TranslationProviderRegistry();
+        $loader = new TrustedExtensionRuntimeLoader($this->db, new TrustedExtensionRuntimeRegistry(), new PaymentProviderRegistry([]), new DeliveryProviderRegistry([]), new ProductBlockRegistry([]), $ai, $this->translations);
+        $this->service = new AiTaskService($settings, new MockHttpClient(), $ai, $this->translations, $loader);
     }
 
     public function testDraftIsParsedLoggedAndCounted(): void
@@ -93,6 +104,70 @@ final class AiTaskServiceTest extends TestCase
         } catch (\DomainException) {
         }
         self::assertSame('error', $this->db->fetchOne('SELECT status FROM mc_ai_usage'));
+    }
+
+    public function testTranslationProviderOfAnExtensionTranslatesTheTextItself(): void
+    {
+        $provider = new class implements TranslationProviderInterface {
+            public array $calls = [];
+
+            public function code(): string
+            {
+                return 'google_translate';
+            }
+
+            public function label(): string
+            {
+                return 'Google Translate';
+            }
+
+            public function enabled(): bool
+            {
+                return true;
+            }
+
+            public function translate(string $text, string $sourceLocale, string $targetLocale): string
+            {
+                $this->calls[] = [$text, $sourceLocale, $targetLocale];
+
+                return '<p>Hello</p>';
+            }
+        };
+        $this->translations->register($provider);
+
+        $result = $this->service->run(1, 'admin', 'translate', 'google_translate', ['text' => '<p>Привіт</p>', 'target' => 'en-US'], 'uk-UA');
+
+        self::assertSame(['text' => '<p>Hello</p>'], $result['fields']);
+        self::assertSame([['<p>Привіт</p>', 'uk-UA', 'en-US']], $provider->calls);
+        self::assertSame('', $this->stub->lastPrompt, 'a translation provider never receives an AI prompt');
+        self::assertSame('google_translate', $this->db->fetchOne("SELECT provider FROM mc_ai_usage ORDER BY id DESC LIMIT 1"));
+        self::assertSame([['code' => 'google_translate', 'label' => 'Google Translate']], $this->translations->enabled());
+    }
+
+    public function testTranslationProviderCannotTakeABuiltInCode(): void
+    {
+        $this->expectException(\DomainException::class);
+        $this->translations->register(new class implements TranslationProviderInterface {
+            public function code(): string
+            {
+                return 'openai';
+            }
+
+            public function label(): string
+            {
+                return 'x';
+            }
+
+            public function enabled(): bool
+            {
+                return true;
+            }
+
+            public function translate(string $text, string $sourceLocale, string $targetLocale): string
+            {
+                return $text;
+            }
+        });
     }
 
     public function testMissingInputAndUnknownTargetAreRejected(): void

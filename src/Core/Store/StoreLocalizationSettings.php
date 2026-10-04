@@ -212,14 +212,14 @@ final class StoreLocalizationSettings
     private function bundledLocales(): array
     {
         $codes = [];
-        foreach (glob($this->projectDir . '/resources/translations/*/storefront.php') ?: [] as $file) {
+        foreach (array_merge(glob($this->projectDir . '/resources/translations/*/storefront.php') ?: [], glob($this->projectDir . '/var/translations/*/storefront.json') ?: []) as $file) {
             $code = basename(dirname($file));
             if (preg_match('/^[a-z]{2,3}(-[A-Z]{2})?$/', $code) === 1) {
                 $codes[] = $code;
             }
         }
 
-        return $codes;
+        return array_values(array_unique($codes));
     }
 
     private function scalarText(mixed $value): string
@@ -273,7 +273,19 @@ final class StoreLocalizationSettings
         }
         $file = $this->projectDir . '/resources/translations/' . basename($locale) . '/storefront.php';
         $data = is_file($file) ? include $file : [];
+        $keys = is_array($data) ? array_keys($data) : [];
+        // A language pack of the store owner counts only for the texts it really translated (not for the Ukrainian fallbacks).
+        $pack = $this->projectDir . '/var/translations/' . basename($locale) . '/storefront.json';
+        $base = is_file($this->projectDir . '/resources/translations/uk-UA/storefront.php') ? include $this->projectDir . '/resources/translations/uk-UA/storefront.php' : [];
+        $custom = is_file($pack) ? json_decode((string) file_get_contents($pack), true) : null;
+        if (is_array($custom) && is_array($base)) {
+            foreach ($custom as $key => $value) {
+                if (is_string($value) && isset($base[$key]) && ($value !== $base[$key] || $locale === 'uk-UA')) {
+                    $keys[] = $key;
+                }
+            }
+        }
 
-        return $sizes[$locale] = is_array($data) ? count($data) : 0;
+        return $sizes[$locale] = count(array_unique($keys));
     }
 }
