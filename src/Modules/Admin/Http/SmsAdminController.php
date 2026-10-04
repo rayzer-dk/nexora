@@ -39,7 +39,6 @@ final class SmsAdminController extends AbstractController
                 'endpoint' => (string) $in->get('endpoint', ''),
                 'token' => (string) $in->get('token', ''),
                 'sender' => (string) $in->get('sender', ''),
-                'flash_supported' => $in->getBoolean('flash_supported'),
             ];
             foreach (SmsSettings::EVENTS as $event) {
                 $input['auto_' . $event] = $in->getBoolean('auto_' . $event);
@@ -91,7 +90,7 @@ final class SmsAdminController extends AbstractController
         if ($orderId === false) {
             throw $this->createNotFoundException();
         }
-        $result = $this->sms->sendManual($storeId, (int) $orderId, (string) $request->request->get('phone', ''), (string) $request->request->get('text', ''), $request->request->getBoolean('flash'), $this->adminId());
+        $result = $this->sms->sendManual($storeId, (int) $orderId, (string) $request->request->get('phone', ''), (string) $request->request->get('text', ''), $this->adminId());
         $this->flashResult($result, 'admin.sms.order_sent');
 
         return $this->redirectToRoute('admin_order_view', ['publicId' => $publicId]);

@@ -61,24 +61,23 @@ final class SmsTest extends TestCase
         $sent = new \ArrayObject();
         $service = $this->service($db, $sent, false);
 
-        $disabled = $service->sendManual(1, 7, '0501234567', 'Hello', false, 3);
+        $disabled = $service->sendManual(1, 7, '0501234567', 'Hello', 3);
         $this->assertSame(['ok' => false, 'error' => 'disabled'], $disabled);
 
         $this->settings($db)->save(1, ['enabled' => true, 'endpoint' => 'https://sms.example.com/send', 'token' => 'secret', 'sender' => 'Shop']);
-        $this->assertSame(['ok' => true, 'error' => ''], $service->sendManual(1, 7, '0501234567', 'Привіт', true, 3));
-        $this->assertSame(['+380501234567|Привіт|1'], $sent->getArrayCopy());
-        $this->assertSame(['ok' => false, 'error' => 'phone'], $service->sendManual(1, 7, '12', 'Hi', false, 3));
-        $this->assertSame(['ok' => false, 'error' => 'text'], $service->sendManual(1, 7, '0501234567', '  ', false, 3));
+        $this->assertSame(['ok' => true, 'error' => ''], $service->sendManual(1, 7, '0501234567', 'Привіт', 3));
+        $this->assertSame(['+380501234567|Привіт'], $sent->getArrayCopy());
+        $this->assertSame(['ok' => false, 'error' => 'phone'], $service->sendManual(1, 7, '12', 'Hi', 3));
+        $this->assertSame(['ok' => false, 'error' => 'text'], $service->sendManual(1, 7, '0501234567', '  ', 3));
 
         $failing = $this->service($db, $sent, true);
-        $result = $failing->sendManual(1, 7, '0501234567', 'Hi', false, 3);
+        $result = $failing->sendManual(1, 7, '0501234567', 'Hi', 3);
         $this->assertFalse($result['ok']);
         $this->assertSame('gateway down', $result['error']);
 
         $log = $service->log(1, 7);
         $this->assertSame(['failed', 'failed', 'failed', 'sent', 'failed'], array_column($log, 'status'));
         $this->assertSame('3', (string) $log[3]['admin_id']);
-        $this->assertSame('1', (string) $log[3]['flash']);
     }
 
     public function testAutomaticSmsFollowsTheSwitchesAndIsSentOncePerOrderAndEvent(): void
@@ -97,11 +96,11 @@ final class SmsTest extends TestCase
         $this->assertCount(0, $sent);
         $service->sendAuto(9, 'shipped');
         $service->sendAuto(9, 'shipped');
-        $this->assertSame(['+380671112233|Order A-9 has been shipped. Tracking: 5900001|0'], $sent->getArrayCopy());
+        $this->assertSame(['+380671112233|Order A-9 has been shipped. Tracking: 5900001'], $sent->getArrayCopy());
 
         $this->settings($db)->save(1, ['enabled' => true, 'endpoint' => 'https://sms.example.com/send', 'auto_ready' => true, 'tpl_ready' => 'Hi {customer_name}, {order_number} for {total} waits']);
         $service->sendAuto(9, 'ready');
-        $this->assertSame('+380671112233|Hi Ira, A-9 for 125.50 UAH waits|0', $sent[1]);
+        $this->assertSame('+380671112233|Hi Ira, A-9 for 125.50 UAH waits', $sent[1]);
     }
 
     public function testEnvironmentOnlyInstallationKeepsTheOrderPlacedSms(): void
@@ -165,7 +164,7 @@ final class SmsTest extends TestCase
                 if ($this->failing) {
                     throw new \RuntimeException('gateway down');
                 }
-                $this->sent[] = $recipient . '|' . $message->text . '|' . (int) !empty($message->context['flash']);
+                $this->sent[] = $recipient . '|' . $message->text;
             }
         };
 
@@ -175,8 +174,8 @@ final class SmsTest extends TestCase
     private function database(): Connection
     {
         $db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $db->executeStatement('CREATE TABLE mc_sms_settings (store_id INTEGER PRIMARY KEY, enabled INTEGER, driver TEXT, endpoint TEXT, token_enc TEXT, sender TEXT, flash_supported INTEGER, auto_placed INTEGER, auto_shipped INTEGER, auto_ready INTEGER, auto_cancelled INTEGER, tpl_placed TEXT, tpl_shipped TEXT, tpl_ready TEXT, tpl_cancelled TEXT, updated_at TEXT)');
-        $db->executeStatement('CREATE TABLE mc_sms_log (id INTEGER PRIMARY KEY AUTOINCREMENT, store_id INTEGER, order_id INTEGER, recipient TEXT, mode TEXT, event TEXT, body TEXT, segments INTEGER, flash INTEGER, status TEXT, error TEXT, admin_id INTEGER, created_at TEXT)');
+        $db->executeStatement('CREATE TABLE mc_sms_settings (store_id INTEGER PRIMARY KEY, enabled INTEGER, driver TEXT, endpoint TEXT, token_enc TEXT, sender TEXT, auto_placed INTEGER, auto_shipped INTEGER, auto_ready INTEGER, auto_cancelled INTEGER, tpl_placed TEXT, tpl_shipped TEXT, tpl_ready TEXT, tpl_cancelled TEXT, updated_at TEXT)');
+        $db->executeStatement('CREATE TABLE mc_sms_log (id INTEGER PRIMARY KEY AUTOINCREMENT, store_id INTEGER, order_id INTEGER, recipient TEXT, mode TEXT, event TEXT, body TEXT, segments INTEGER, status TEXT, error TEXT, admin_id INTEGER, created_at TEXT)');
         $db->executeStatement('CREATE TABLE mc_sales_order (id INTEGER PRIMARY KEY, store_id INTEGER, order_number TEXT, customer_phone TEXT, customer_name TEXT, total_minor INTEGER, currency TEXT, locale TEXT)');
         $db->executeStatement('CREATE TABLE mc_fulfillment (id INTEGER PRIMARY KEY, order_id INTEGER, tracking_number TEXT)');
 

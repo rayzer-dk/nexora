@@ -2,6 +2,12 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
+## 3.42.0 — 2026-10-04
+
+Only ordinary SMS — schema 78 (columns `mc_sms_settings.flash_supported` and `mc_sms_log.flash` dropped).
+
+- The Flash SMS option is removed: no setting on the SMS page, no checkbox on the order page, no `flash` field in the gateway request. Every SMS is an ordinary one.
+
 ## 3.41.0 — 2026-10-04
 
 SMS-fly driver — schema 78 (column `mc_sms_settings.driver`).

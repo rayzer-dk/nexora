@@ -35,7 +35,6 @@ test('SMS page: counter switches between GSM-7 and UCS-2, settings are saved, a 
     await page.locator('select[name="driver"]').selectOption('smsfly');
     await page.locator('input[name="endpoint"]').fill('https://sms.example.com/send');
     await page.locator('input[name="sender"]').fill('E2EShop');
-    await page.locator('input[name="flash_supported"]').check();
     await area.fill('');
     await Promise.all([
       page.waitForResponse((r) => r.request().method() === 'POST' && r.url().endsWith('/admin/commerce/sms')),
@@ -57,14 +56,12 @@ test('SMS page: counter switches between GSM-7 and UCS-2, settings are saved, a 
     await panel.locator('select[data-sms-template]').selectOption({ index: 1 });
     await expect(panel.locator('textarea[name="text"]')).not.toHaveValue('');
     await expect(panel.locator('[data-sms-counter-out]')).not.toHaveText('');
-    await expect(panel.locator('input[name="flash"]')).toBeVisible();
     await Promise.all([page.waitForURL(/\/admin\/orders\//), panel.locator('button[type="submit"]').click()]);
     await expectNoServerError(page);
     await expect(page.locator('#order-sms .admin-sms-history li').first().locator('.admin-badge')).toHaveClass(/is-danger/); // the test gateway does not resolve
   } finally {
     await page.goto('/admin/commerce/sms', { waitUntil: 'domcontentloaded' });
     await page.locator('input[name="enabled"]').uncheck();
-    await page.locator('input[name="flash_supported"]').uncheck();
     await Promise.all([
       page.waitForResponse((r) => r.request().method() === 'POST' && r.url().endsWith('/admin/commerce/sms')),
       page.locator('form[action$="/admin/commerce/sms"] button[type="submit"]').click(),

@@ -455,15 +455,9 @@ final class OrderAdminController extends AbstractController
 
         return [
             'enabled' => $settings,
-            'flash_supported' => $this->smsFlash($storeId),
             'previews' => $this->sms->previews($storeId, $order + ['tracking_number' => $tracking]),
             'log' => $this->sms->log($storeId, $orderId, 10),
         ];
-    }
-
-    private function smsFlash(int $storeId): bool
-    {
-        return (bool) $this->db->fetchOne('SELECT flash_supported FROM mc_sms_settings WHERE store_id=?', [$storeId]);
     }
 
     private function csrf(string $id, Request $request): void

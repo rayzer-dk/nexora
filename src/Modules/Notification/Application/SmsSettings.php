@@ -22,7 +22,7 @@ final readonly class SmsSettings
     {
     }
 
-    /** @return array{configured:bool,enabled:bool,driver:string,endpoint:string,token:string,has_token:bool,sender:string,flash_supported:bool,auto:array<string,bool>,tpl:array<string,string>} */
+    /** @return array{configured:bool,enabled:bool,driver:string,endpoint:string,token:string,has_token:bool,sender:string,auto:array<string,bool>,tpl:array<string,string>} */
     public function get(int $storeId): array
     {
         return $this->hydrate($this->row($storeId));
@@ -67,7 +67,6 @@ final readonly class SmsSettings
             'endpoint' => $endpoint,
             'token_enc' => $token !== '' ? $this->vault->encrypt($token, self::CTX) : null,
             'sender' => $sender,
-            'flash_supported' => !empty($input['flash_supported']) ? 1 : 0,
             'updated_at' => gmdate('Y-m-d H:i:s'),
         ];
         foreach (self::EVENTS as $event) {
@@ -120,7 +119,6 @@ final readonly class SmsSettings
             'token' => $token,
             'has_token' => $token !== '',
             'sender' => is_array($row) ? (string) $row['sender'] : '',
-            'flash_supported' => is_array($row) && (int) $row['flash_supported'] === 1,
             'auto' => $auto,
             'tpl' => $tpl,
         ];

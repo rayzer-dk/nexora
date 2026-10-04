@@ -58,7 +58,7 @@ final readonly class HttpSmsNotificationSender implements NotificationSenderInte
         if (trim($bearerToken) !== '') $headers['Authorization'] = 'Bearer ' . trim($bearerToken);
         $response = $this->http->request('POST', $endpoint, [
             'headers' => $headers,
-            'json' => ['to' => $recipient, 'from' => trim($from), 'message' => $message->text] + (!empty($message->context['flash']) ? ['flash' => true] : []),
+            'json' => ['to' => $recipient, 'from' => trim($from), 'message' => $message->text],
             'max_redirects' => 0,
             'timeout' => 5.0,
         ]);

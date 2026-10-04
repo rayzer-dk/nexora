@@ -51,15 +51,15 @@ final readonly class SmsService
     }
 
     /** @return array{ok:bool,error:string} */
-    public function sendManual(int $storeId, int $orderId, string $phone, string $text, bool $flash, ?int $adminId): array
+    public function sendManual(int $storeId, int $orderId, string $phone, string $text, ?int $adminId): array
     {
-        return $this->deliver($storeId, $orderId, $phone, $text, 'manual', '', $flash, $adminId);
+        return $this->deliver($storeId, $orderId, $phone, $text, 'manual', '', $adminId);
     }
 
     /** @return array{ok:bool,error:string} */
     public function sendTest(int $storeId, string $phone, string $text, ?int $adminId): array
     {
-        return $this->deliver($storeId, null, $phone, $text, 'test', '', false, $adminId);
+        return $this->deliver($storeId, null, $phone, $text, 'test', '', $adminId);
     }
 
     /** Sends the automatic SMS of an event if it is switched on and was not sent before. Never throws: an SMS outage must not touch an order. */
@@ -82,7 +82,7 @@ final readonly class SmsService
             if ($sent !== false) {
                 return;
             }
-            $this->deliver((int) $order['store_id'], $orderId, (string) $order['customer_phone'], $this->textFor((int) $order['store_id'], $event, $order), 'auto', $event, false, null);
+            $this->deliver((int) $order['store_id'], $orderId, (string) $order['customer_phone'], $this->textFor((int) $order['store_id'], $event, $order), 'auto', $event, null);
         } catch (\Throwable $e) {
             $this->logger?->warning('Automatic SMS failed', ['order' => $orderId, 'event' => $event, 'error' => $e->getMessage()]);
         }
@@ -163,7 +163,7 @@ final readonly class SmsService
     }
 
     /** @return array{ok:bool,error:string} */
-    private function deliver(int $storeId, ?int $orderId, string $phone, string $text, string $mode, string $event, bool $flash, ?int $adminId): array
+    private function deliver(int $storeId, ?int $orderId, string $phone, string $text, string $mode, string $event, ?int $adminId): array
     {
         $text = trim(str_replace("\r\n", "\n", $text));
         $normalized = self::normalizePhone($phone);
@@ -176,7 +176,7 @@ final readonly class SmsService
             $error = 'disabled';
         } else {
             try {
-                $this->dispatcher->send(NotificationChannel::Sms, new NotificationMessage('sms.' . $mode, '', $text, ['flash' => $flash]), $normalized);
+                $this->dispatcher->send(NotificationChannel::Sms, new NotificationMessage('sms.' . $mode, '', $text, []), $normalized);
             } catch (\Throwable $e) {
                 $error = mb_substr(strtok($e->getMessage(), "\n") ?: $e::class, 0, 300, 'UTF-8');
             }
@@ -190,7 +190,6 @@ final readonly class SmsService
                 'event' => $event,
                 'body' => $text,
                 'segments' => max(1, SmsText::analyze($text)['segments']),
-                'flash' => $flash ? 1 : 0,
                 'status' => $error === '' ? 'sent' : 'failed',
                 'error' => $error,
                 'admin_id' => $adminId,

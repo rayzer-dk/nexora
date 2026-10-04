@@ -14,7 +14,6 @@
 <label class="admin-form-wide">{{ ui_text('admin.sms.endpoint') }}<input name="endpoint" type="url" maxlength="500" value="{{ s.endpoint }}" placeholder="https://sms.example.com/api/send" autocomplete="off"><small>{{ ui_text('admin.sms.endpoint_hint') }}</small></label>
 <label>{{ ui_text('admin.sms.token') }}<input type="password" name="token" autocomplete="new-password" placeholder="{{ s.has_token ? ui_text('admin.notify_channels.secret_saved') : '' }}"><small>{{ ui_text('admin.notify_channels.secret_hint') }}</small></label>
 <label>{{ ui_text('admin.sms.sender') }}<input name="sender" maxlength="32" value="{{ s.sender }}" placeholder="MyShop"><small>{{ ui_text('admin.sms.sender_hint') }}</small></label>
-<div class="admin-check-grid admin-form-wide"><label><input type="checkbox" name="flash_supported" value="1"{{ s.flash_supported ? ' checked' : '' }}> {{ ui_text('admin.sms.flash_supported') }}</label><small>{{ ui_text('admin.sms.flash_hint') }}</small></div>
 </div></section>
 
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.sms.auto_kicker') }}</small><h2>{{ ui_text('admin.sms.auto_title') }}</h2></div></div>
@@ -40,7 +39,7 @@
 
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.sms.log_kicker') }}</small><h2>{{ ui_text('admin.sms.log_title') }}</h2></div></div>
 {% if log %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.sms.col_time') }}</th><th>{{ ui_text('admin.sms.col_to') }}</th><th>{{ ui_text('admin.sms.col_mode') }}</th><th>{{ ui_text('admin.sms.col_text') }}</th><th>{{ ui_text('admin.sms.col_parts') }}</th><th>{{ ui_text('admin.sms.col_status') }}</th></tr></thead><tbody>
-{% for row in log %}<tr><td class="admin-nowrap">{{ row.created_at }}</td><td class="admin-nowrap">{{ row.recipient }}</td><td>{{ ui_text('admin.sms.mode.' ~ row.mode) }}{% if row.flash %} · Flash{% endif %}</td><td>{{ row.body }}</td><td>{{ row.segments }}</td><td><span class="admin-badge is-{{ row.status == 'sent' ? 'success' : 'danger' }}">{{ ui_text('admin.sms.status.' ~ row.status) }}</span>{% if row.error %}<small class="admin-cell-sub">{{ row.error }}</small>{% endif %}</td></tr>{% endfor %}
+{% for row in log %}<tr><td class="admin-nowrap">{{ row.created_at }}</td><td class="admin-nowrap">{{ row.recipient }}</td><td>{{ ui_text('admin.sms.mode.' ~ row.mode) }}</td><td>{{ row.body }}</td><td>{{ row.segments }}</td><td><span class="admin-badge is-{{ row.status == 'sent' ? 'success' : 'danger' }}">{{ ui_text('admin.sms.status.' ~ row.status) }}</span>{% if row.error %}<small class="admin-cell-sub">{{ row.error }}</small>{% endif %}</td></tr>{% endfor %}
 </tbody></table></div>{% else %}<p class="admin-help">{{ ui_text('admin.sms.log_empty') }}</p>{% endif %}
 </section>
 {{ shell.end() }}
