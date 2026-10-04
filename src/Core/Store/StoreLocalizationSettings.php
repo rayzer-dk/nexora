@@ -51,11 +51,14 @@ final class StoreLocalizationSettings
             }
         }
         $reference = $this->catalogSize('uk-UA');
+        $productTotal = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product WHERE status='published'");
         foreach ($locales as &$locale) {
             $locale['is_default'] = $locale['code'] === $store['default_locale'];
             $size = $this->catalogSize((string) $locale['code']);
             $locale['ui_coverage'] = $reference > 0 ? min(100, (int) floor($size * 100 / $reference)) : 0;
             $locale['content_count'] = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_product_translation WHERE locale=?', [$locale['code']]);
+            // A product without a translation in a language is not listed in that language: warn before the language goes live half-translated.
+            $locale['content_percent'] = $productTotal > 0 ? min(100, (int) floor($locale['content_count'] * 100 / $productTotal)) : 100;
         }
         unset($locale);
 
@@ -74,7 +77,7 @@ final class StoreLocalizationSettings
         }
         unset($currency);
 
-        return ['locales' => $locales, 'currencies' => $currencies, 'default_locale' => (string) $store['default_locale'], 'default_currency' => (string) $store['default_currency']];
+        return ['product_total' => $productTotal, 'locales' => $locales, 'currencies' => $currencies, 'default_locale' => (string) $store['default_locale'], 'default_currency' => (string) $store['default_currency']];
     }
 
     /** @param array<string,array{enabled?:mixed,sort_order?:mixed}> $rows */

@@ -26,8 +26,8 @@ final class StorefrontUiTranslator
     {
         $locale = $this->normalize($locale);
         $catalog = $this->catalog($locale);
-        $fallback = $this->catalog('uk-UA');
-        $value = $catalog[$key] ?? $fallback[$key] ?? $key;
+        // Missing text: English, then the Ukrainian base catalog (it holds every key), then the key itself.
+        $value = $catalog[$key] ?? $this->catalog('en-US')[$key] ?? $this->catalog('uk-UA')[$key] ?? $key;
         foreach ($replace as $name => $replacement) {
             $value = str_replace('%' . $name . '%', (string) $replacement, $value);
         }
@@ -38,7 +38,7 @@ final class StorefrontUiTranslator
     public function catalogFor(string $locale): array
     {
         $locale = $this->normalize($locale);
-        return $this->catalog($locale) + $this->catalog('uk-UA');
+        return $this->catalog($locale) + $this->catalog('en-US') + $this->catalog('uk-UA');
     }
 
     /** @return array<string,string> */
@@ -48,8 +48,9 @@ final class StorefrontUiTranslator
             return $this->catalogs[$locale];
         }
         $catalog = $this->loader->load($locale, $this->activeExtensions());
-        if ($locale !== 'uk-UA' && $catalog === []) {
-            return $this->catalogs[$locale] = $this->catalog('uk-UA');
+        if ($locale !== 'uk-UA' && $locale !== 'en-US' && $catalog === []) {
+            // A language without files at all is shown in English.
+            return $this->catalogs[$locale] = $this->catalog('en-US');
         }
         return $this->catalogs[$locale] = $catalog;
     }

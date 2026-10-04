@@ -30,6 +30,7 @@ final class LocalizationAdminController extends AbstractController
         private readonly SystemSettingStore $systemSettings,
         private readonly ApiKeyExchangeRateSource $apiSource,
         private readonly LanguagePackService $packs,
+        private readonly \Commerce\Core\I18n\AdminInterfaceLocale $adminLocales,
     ) {
     }
 
@@ -48,6 +49,9 @@ final class LocalizationAdminController extends AbstractController
         return $this->render('@storefront/admin/system/localization.html.twig', [
             'data' => $data,
             'admin_coverage' => $adminCoverage,
+            'admin_languages' => $this->adminLocales->available(),
+            'admin_default_configured' => (string) ($this->systemSettings->getString('admin.default_locale') ?? ''),
+            'admin_default_effective' => $this->adminLocales->siteDefault(),
             'rate_sources' => $this->rates->sourceChoices(),
             'rate_providers' => $this->rates->providerStatus(),
             'rate_api' => ['service' => $api['service'], 'has_key' => $api['key'] !== '', 'services' => ApiKeyExchangeRateSource::SERVICES],
@@ -67,6 +71,21 @@ final class LocalizationAdminController extends AbstractController
             $this->settings->saveLocales($storeId, $rows);
 
             return CanonicalUiText::get('admin.localization.locales.saved');
+        });
+    }
+
+    /** Language of the admin for administrators who have not chosen one (empty = the language of the store). */
+    #[Route('/admin/system/localization/admin-language', name: 'admin_system_localization_admin_language', methods: ['POST'])]
+    public function adminLanguage(Request $request): Response
+    {
+        return $this->guarded($request, 'localization_admin_language', function () use ($request): string {
+            $locale = trim((string) $request->request->get('admin_default_locale', ''));
+            if ($locale !== '' && !isset($this->adminLocales->available()[$locale])) {
+                throw new \DomainException(CanonicalUiText::get('admin.localization.locale.invalid_code'));
+            }
+            $this->systemSettings->setString('admin.default_locale', $locale);
+
+            return CanonicalUiText::get('admin.localization.admin_language.saved');
         });
     }
 

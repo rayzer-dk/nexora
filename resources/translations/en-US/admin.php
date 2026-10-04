@@ -4186,4 +4186,13 @@ return [
     'admin.langpack.scope' => 'What is translated',
     'admin.langpack.scope_storefront' => 'Storefront (for customers)',
     'admin.langpack.scope_admin' => 'Admin (for you and the team)',
+    'admin.localization.locales.content_warning' => 'The language is on, but only %done% of %total% products are translated: the rest are not listed in this language.',
+    'admin.localization.locales.content_warning_link' => 'Translate',
+    'admin.localization.admin_language.eyebrow' => 'Default language',
+    'admin.localization.admin_language.title' => 'Default admin language',
+    'admin.localization.admin_language.help' => 'The admin language for administrators who have not chosen their own (the language menu at the top of the admin). The storefront language for customers is set under System → Store data → Default language; a customer can pick another language if it is switched on in the table above. Texts missing in the chosen language are shown in English.',
+    'admin.localization.admin_language.label' => 'Default admin language',
+    'admin.localization.admin_language.follow_store' => 'Same as the store language (English if there is no admin in that language)',
+    'admin.localization.admin_language.now' => 'In effect now: %locale%',
+    'admin.localization.admin_language.saved' => 'The default admin language is saved.',
 ];

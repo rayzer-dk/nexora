@@ -4181,4 +4181,13 @@ return [
     'admin.langpack.scope' => 'Що перекладаємо',
     'admin.langpack.scope_storefront' => 'Вітрина (для покупців)',
     'admin.langpack.scope_admin' => 'Адмінка (для вас і команди)',
+    'admin.localization.locales.content_warning' => 'Мову увімкнено, але переклад є лише в %done% з %total% товарів: решта в цій мові не показується.',
+    'admin.localization.locales.content_warning_link' => 'Перекласти',
+    'admin.localization.admin_language.eyebrow' => 'Мова за замовчуванням',
+    'admin.localization.admin_language.title' => 'Мова адмінки за замовчуванням',
+    'admin.localization.admin_language.help' => 'Мова адмінки для адміністраторів, які ще не обрали свою (вибір у меню мов угорі адмінки). Мова вітрини для покупців задається в розділі «Система → Дані магазину → Мова за замовчуванням»; покупець може обрати іншу мову, якщо вона увімкнена в таблиці вище. Тексти, яких немає у вибраній мові, показуються англійською.',
+    'admin.localization.admin_language.label' => 'Мова адмінки за замовчуванням',
+    'admin.localization.admin_language.follow_store' => 'Як мова магазину (англійська, якщо адмінки цією мовою немає)',
+    'admin.localization.admin_language.now' => 'Зараз діє: %locale%',
+    'admin.localization.admin_language.saved' => 'Мову адмінки за замовчуванням збережено.',
 ];

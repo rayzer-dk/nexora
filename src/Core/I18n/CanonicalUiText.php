@@ -37,12 +37,17 @@ final class CanonicalUiText
             return self::$catalogs[$locale];
         }
 
+        // A text missing in a language falls back to English, then to the base catalog (Ukrainian holds every key).
         $loader = new TranslationCatalogLoader(dirname(__DIR__, 3));
-        $fallback = $loader->load('uk-UA');
+        $base = $loader->load('uk-UA');
         if ($locale === 'uk-UA') {
-            return self::$catalogs[$locale] = $fallback;
+            return self::$catalogs[$locale] = $base;
+        }
+        $english = $loader->load('en-US');
+        if ($locale === 'en-US') {
+            return self::$catalogs[$locale] = array_replace($base, $english);
         }
 
-        return self::$catalogs[$locale] = array_replace($fallback, $loader->load($locale));
+        return self::$catalogs[$locale] = array_replace($base, $english, $loader->load($locale));
     }
 }

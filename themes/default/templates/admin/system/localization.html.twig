@@ -19,7 +19,7 @@
                 <td><label class="admin-check-inline"><input type="checkbox" name="locale[{{ locale.code }}][enabled]" value="1" {{ locale.enabled or locale.is_default ? 'checked' }} {{ locale.is_default ? 'disabled' }}><span class="visually-hidden">{{ ui_text('admin.localization.col.shown') }}</span></label>{% if locale.is_default %}<input type="hidden" name="locale[{{ locale.code }}][enabled]" value="1">{% endif %}</td>
                 <td><input type="number" name="locale[{{ locale.code }}][sort_order]" value="{{ locale.sort_order }}" min="0" max="9999" class="admin-input-narrow" aria-label="{{ ui_text('admin.localization.col.order') }}"></td>
                 <td>{% if locale.ui_coverage >= 95 %}<span class="admin-badge is-active">{{ locale.ui_coverage }}%</span>{% else %}<span class="admin-badge is-warning" title="{{ ui_text('admin.localization.locales.ui_partial')|e('html_attr') }}">{{ locale.ui_coverage }}%</span>{% endif %}</td>
-                <td>{{ ui_text('admin.localization.locales.products_translated', {count: locale.content_count}) }}</td>
+                <td>{{ ui_text('admin.localization.locales.products_translated', {count: locale.content_count}) }}{% if locale.enabled and not locale.is_default and locale.content_percent < 90 %}<span class="admin-status is-warning" role="status">{{ ui_text('admin.localization.locales.content_warning', {done: locale.content_count, total: data.product_total}) }} <a href="/admin/catalog/products">{{ ui_text('admin.localization.locales.content_warning_link') }}</a></span>{% endif %}</td>
             </tr>
         {% endfor %}
         </tbody>
@@ -32,6 +32,16 @@
             <label><span>{{ ui_text('admin.localization.locales.native_name') }}</span><input type="text" name="new_native_name" maxlength="190" placeholder="Polski"><small>{{ ui_text('admin.localization.locales.native_help') }}</small></label>
         </div>
     </details>
+    <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.localization.locales.save') }}</button></div>
+</form>
+
+<form method="post" action="{{ path('admin_system_localization_admin_language') }}" class="admin-panel" id="admin-language" data-dirty-guard>
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_admin_language') }}">
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.localization.admin_language.eyebrow') }}</small><h2>{{ ui_text('admin.localization.admin_language.title') }}</h2></div></div>
+    <p class="admin-card-note">{{ ui_text('admin.localization.admin_language.help') }}</p>
+    <div class="admin-form-grid">
+        <label><span>{{ ui_text('admin.localization.admin_language.label') }}</span><select name="admin_default_locale"><option value="">{{ ui_text('admin.localization.admin_language.follow_store') }}</option>{% for code, name in admin_languages %}<option value="{{ code }}"{{ code == admin_default_configured ? ' selected' : '' }}>{{ name }} ({{ code }})</option>{% endfor %}</select><small>{{ ui_text('admin.localization.admin_language.now', {locale: admin_default_effective}) }}</small></label>
+    </div>
     <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.localization.locales.save') }}</button></div>
 </form>
 

@@ -10,7 +10,7 @@ use DomainException;
  * Language packs edited by the store owner: a JSON file per language and scope in var/translations/<locale>/
  * (storefront.json for the shop, admin.json for the back office).
  * var/ is never touched by updates, JSON has no quoting traps (an apostrophe is just a character), and a broken
- * pack is rejected on upload instead of taking the site down. Missing texts fall back to Ukrainian.
+ * pack is rejected on upload instead of taking the site down. Missing texts fall back to English, then Ukrainian.
  */
 final class LanguagePackService
 {
@@ -36,10 +36,13 @@ final class LanguagePackService
     {
         $this->assertLocale($locale);
         $base = $this->base($scope);
-        $current = $locale === 'uk-UA' ? $base : (new TranslationCatalogLoader($this->projectDir))->load($locale);
+        $loader = new TranslationCatalogLoader($this->projectDir);
+        $current = $locale === 'uk-UA' ? $base : $loader->load($locale);
+        // What is not translated yet is offered in English (the usual source language for translators), or Ukrainian where there is no English text.
+        $english = $locale === 'uk-UA' ? [] : $loader->load('en-US');
         $texts = [];
         foreach ($base as $key => $text) {
-            $texts[$key] = $current[$key] ?? $text;
+            $texts[$key] = $current[$key] ?? $english[$key] ?? $text;
         }
         ksort($texts, SORT_STRING);
 
@@ -115,10 +118,13 @@ final class LanguagePackService
         if ($locale === 'uk-UA') {
             return 100;
         }
-        $current = (new TranslationCatalogLoader($this->projectDir))->load($locale);
+        $loader = new TranslationCatalogLoader($this->projectDir);
+        $current = $loader->load($locale);
+        $english = $locale === 'en-US' ? [] : $loader->load('en-US');
         $done = 0;
         foreach ($base as $key => $text) {
-            if (isset($current[$key]) && $current[$key] !== $text) {
+            // A line equal to the Ukrainian or the English text (an untouched export) is not a translation.
+            if (isset($current[$key]) && $current[$key] !== $text && $current[$key] !== ($english[$key] ?? null)) {
                 ++$done;
             }
         }

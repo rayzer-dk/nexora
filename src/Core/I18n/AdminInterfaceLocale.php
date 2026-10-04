@@ -54,6 +54,33 @@ final class AdminInterfaceLocale
         return $this->available = $out === [] ? [self::DEFAULT => $names[self::DEFAULT]] : $out;
     }
 
+    /**
+     * Language of an administrator who has not chosen one: the site setting (System → Languages and currencies), else the
+     * language of the store when the admin speaks it, else English, else the base language.
+     */
+    public function siteDefault(): string
+    {
+        $available = $this->available();
+        try {
+            $configured = (string) $this->db->fetchOne("SELECT setting_value FROM mc_system_setting WHERE setting_key='admin.default_locale'");
+        } catch (\Throwable) {
+            $configured = '';
+        }
+        if (isset($available[$configured])) {
+            return $configured;
+        }
+        try {
+            $store = (string) $this->db->fetchOne('SELECT default_locale FROM mc_store ORDER BY id LIMIT 1');
+        } catch (\Throwable) {
+            $store = '';
+        }
+        if (isset($available[$store])) {
+            return $store;
+        }
+
+        return isset($available['en-US']) ? 'en-US' : self::DEFAULT;
+    }
+
     public function resolve(Request $request, ?int $adminUserId): string
     {
         $session = $request->hasSession() ? $request->getSession() : null;
@@ -69,12 +96,12 @@ final class AdminInterfaceLocale
             }
         }
 
-        return isset($this->available()[$candidate]) ? $candidate : self::DEFAULT;
+        return isset($this->available()[$candidate]) ? $candidate : $this->siteDefault();
     }
 
     public function remember(Request $request, ?int $adminUserId, string $locale): string
     {
-        $locale = isset($this->available()[$locale]) ? $locale : self::DEFAULT;
+        $locale = isset($this->available()[$locale]) ? $locale : $this->siteDefault();
         if ($request->hasSession()) {
             $request->getSession()->set(self::SESSION_KEY, $locale);
         }
