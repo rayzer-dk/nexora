@@ -40,6 +40,7 @@
       {% if cart.discount_minor > 0 %}<div class="is-discount"><dt>{{ ui_text('automatic_discount') }}</dt><dd>−{{ cart.discount }}</dd></div>{% endif %}
       <div class="is-grand"><dt>{{ ui_text('amount_due') }}</dt><dd>{{ cart.total }}</dd></div>
     </dl>
+    {% include '@storefront/cart/_free_shipping.html.twig' with {progress: cart.free_shipping|default(null)} only %}
     <p class="cart-drawer__note">{{ ui_text('shipping_payment_next') }}</p>
     {% if capabilities.features.checkout|default(false) %}<a class="button button--primary button--lg button--block" href="/checkout">{{ ui_text('checkout_action') }}{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
     <div class="cart-drawer__links"><button class="button button--secondary button--block" type="button" data-cart-drawer-close>{{ ui_text('continue_shopping') }}</button><a class="cart-drawer__full" href="/cart">{{ ui_text('cart_drawer_open_page') }}</a></div>

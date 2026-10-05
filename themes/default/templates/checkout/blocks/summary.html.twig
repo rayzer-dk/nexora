@@ -5,6 +5,7 @@
     <li class="summary-item"><a class="summary-item__img" href="{{ item.url }}" tabindex="-1" aria-hidden="true">{{ media_picture(item.image, 'thumb', [], '', {class: 'summary-image', alt: '', width: '64', height: '64', loading: 'lazy', decoding: 'async'}) }}</a><div class="summary-item__info"><strong>{{ item.name }}</strong><span>{% if item.options %}{{ item.options }} · {% endif %}{{ item.quantity }} {{ measurement_unit_label(item.unit_code) }} × {{ item.unit_price }}</span></div><b>{{ item.line_total }}</b></li>
   {% endfor %}
   </ul>
+  {% include '@storefront/cart/_free_shipping.html.twig' with {progress: cart.free_shipping|default(null)} only %}
   <div class="summary-totals">
     <div class="summary-total"><span>{{ ui_text('products_sum') }}</span><strong data-summary-subtotal>{{ cart.subtotal }}</strong></div>
     {% if cart.discount_minor > 0 %}<div class="summary-total is-discount" data-discount-row><span>{{ ui_text('discount') }}</span><strong data-summary-discount>−{{ cart.discount }}</strong></div>{% else %}<div class="summary-total is-discount" data-discount-row hidden><span>{{ ui_text('discount') }}</span><strong data-summary-discount></strong></div>{% endif %}

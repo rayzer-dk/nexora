@@ -1226,9 +1226,14 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 /* An icon inside a text (inserted with the editor's icon button). */
 .mc-inline-icon { display: inline-flex; width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
 .mc-inline-icon > svg { width: 100%; height: 100%; }
-.cart-freeship { display: grid; gap: var(--mc-space-2); padding: var(--mc-space-3); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-subtle); font-size: var(--mc-font-size-sm); }
-.cart-freeship i { display: block; height: 6px; border-radius: var(--mc-radius-sm); background: linear-gradient(90deg, var(--mc-color-primary) calc(var(--cart-freeship) * 1%), var(--mc-color-border) 0); }
-.cart-freeship.is-reached { color: var(--mc-color-success); }
+.cart-freeship { display: grid; gap: var(--mc-space-2); margin: var(--mc-space-3) 0; padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-subtle); font-size: var(--mc-font-size-sm); }
+.cart-freeship[hidden] { display: none; }
+.cart-freeship__text { display: flex; align-items: center; gap: var(--mc-space-2); font-weight: var(--mc-font-weight-medium); }
+.cart-freeship__text svg { flex: none; color: var(--mc-color-primary); }
+.cart-freeship__bar { display: block; height: 8px; border-radius: var(--mc-radius-full); background: linear-gradient(90deg, var(--mc-color-primary) calc(var(--cart-freeship) * 1%), var(--mc-color-border) 0); transition: background 0.3s ease; }
+.cart-freeship.is-reached { border-color: color-mix(in srgb, var(--mc-color-success) 40%, var(--mc-color-border)); background: color-mix(in srgb, var(--mc-color-success) 10%, var(--mc-color-surface)); color: var(--mc-color-success); }
+.cart-freeship.is-reached .cart-freeship__text svg { color: var(--mc-color-success); }
+.cart-freeship.is-reached .cart-freeship__bar { background: var(--mc-color-success); }
 
 /* Subcategories on a category page: compact round chips, clearly not product cards. */
 .category-tiles--chips { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); }

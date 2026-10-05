@@ -1,0 +1,7 @@
+{#- Progress towards free delivery. `progress` is the cart summary's free_shipping block (null = nothing to show). -#}
+{% if progress|default(null) %}
+<div class="cart-freeship{{ progress.reached ? ' is-reached' : '' }}" data-free-shipping data-text-left="{{ ui_text('free_shipping_left')|e('html_attr') }}" data-text-reached="{{ ui_text('free_shipping_reached')|e('html_attr') }}" role="status">
+    <span class="cart-freeship__text">{{ ui_icon(progress.reached ? 'check' : 'truck', 16) }}<span data-free-shipping-text>{{ progress.reached ? ui_text('free_shipping_reached') : ui_text('free_shipping_left', {amount: progress.remaining}) }}</span></span>
+    <i class="cart-freeship__bar" style="--cart-freeship:{{ progress.percent }}" data-free-shipping-bar></i>
+</div>
+{% endif %}

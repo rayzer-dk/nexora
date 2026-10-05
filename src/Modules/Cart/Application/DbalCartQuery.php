@@ -12,7 +12,7 @@ use Doctrine\DBAL\Connection;
 
 final readonly class DbalCartQuery
 {
-    public function __construct(private Connection $connection, private StorefrontMoneyFormatter $money, private PromotionEngine $promotions, private \Commerce\Modules\Catalog\Application\ProductAddonService $addons)
+    public function __construct(private Connection $connection, private StorefrontMoneyFormatter $money, private PromotionEngine $promotions, private \Commerce\Modules\Catalog\Application\ProductAddonService $addons, private ?\Commerce\Modules\Checkout\Application\CheckoutMethodSettings $methods = null)
     {
     }
 
@@ -31,6 +31,7 @@ final readonly class DbalCartQuery
             'total' => $zero,
             'currency' => $context->currency,
             'requires_shipping' => false,
+            'free_shipping' => null,
         ];
     }
 
@@ -54,6 +55,36 @@ final readonly class DbalCartQuery
         }
         $promotion=$items!==[]?$this->promotions->calculateForCart($context->storeId,$cartId):null;
         $discount=$promotion?->discountMinor ?? 0; $total=max(0,$subtotal-$discount);
-        return ['items'=>$items,'count'=>count($items),'subtotal_minor'=>$subtotal,'subtotal'=>$this->money->format($subtotal,$context->currency,$context->locale),'discount_minor'=>$discount,'discount'=>$this->money->format($discount,$context->currency,$context->locale),'total_minor'=>$total,'total'=>$this->money->format($total,$context->currency,$context->locale),'currency'=>$context->currency,'requires_shipping'=>$requiresShipping];
+        return ['items'=>$items,'count'=>count($items),'subtotal_minor'=>$subtotal,'subtotal'=>$this->money->format($subtotal,$context->currency,$context->locale),'discount_minor'=>$discount,'discount'=>$this->money->format($discount,$context->currency,$context->locale),'total_minor'=>$total,'total'=>$this->money->format($total,$context->currency,$context->locale),'currency'=>$context->currency,'requires_shipping'=>$requiresShipping,'free_shipping'=>$this->freeShipping($requiresShipping,$total,$context)];
+    }
+
+    /**
+     * Progress towards free delivery: the lowest "free over" amount of the offered delivery methods against what the customer pays
+     * for the goods. Null when the cart has no deliverable goods or no method gives free delivery.
+     *
+     * @return array{reached:bool,percent:int,remaining:string,remaining_minor:int,threshold:string}|null
+     */
+    private function freeShipping(bool $requiresShipping, int $total, StorefrontContext $context): ?array
+    {
+        if (!$requiresShipping || $total <= 0 || $this->methods === null) {
+            return null;
+        }
+        try {
+            $threshold = $this->methods->freeShippingThreshold($context->storeId);
+        } catch (\Throwable) {
+            return null;
+        }
+        if ($threshold === null || $threshold <= 0) {
+            return null;
+        }
+        $left = max(0, $threshold - $total);
+
+        return [
+            'reached' => $left === 0,
+            'percent' => (int) min(100, floor($total * 100 / $threshold)),
+            'remaining' => $this->money->format($left, $context->currency, $context->locale),
+            'remaining_minor' => $left,
+            'threshold' => $this->money->format($threshold, $context->currency, $context->locale),
+        ];
     }
 }
