@@ -4995,4 +4995,10 @@ return [
     'admin.stockrequests.notified_ok' => "Messages sent to those waiting for this product.",
     'admin.stockrequests.empty' => "Nobody is waiting.",
     'admin.catalog.addons.stock' => "Stock",
+    'admin.downloads.edit' => "Edit",
+    'admin.downloads.save_changes' => "Save changes",
+    'admin.downloads.cancel' => "Cancel",
+    'admin.downloads.search' => "Search",
+    'admin.downloads.search_placeholder' => "Name, group or description",
+    'admin.downloads.search_apply' => "Find",
 ];

@@ -4990,4 +4990,10 @@ return [
     'admin.stockrequests.notified_ok' => "Листи надіслано тим, хто чекає цей товар.",
     'admin.stockrequests.empty' => "Очікувань немає.",
     'admin.catalog.addons.stock' => "Залишок",
+    'admin.downloads.edit' => "Редагувати",
+    'admin.downloads.save_changes' => "Зберегти зміни",
+    'admin.downloads.cancel' => "Скасувати",
+    'admin.downloads.search' => "Пошук",
+    'admin.downloads.search_placeholder' => "Назва, група або опис",
+    'admin.downloads.search_apply' => "Знайти",
 ];

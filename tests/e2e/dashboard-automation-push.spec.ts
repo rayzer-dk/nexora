@@ -307,3 +307,14 @@ test('login captcha: built-in challenge gates the customer login, outage mode pe
   await page.goto('/admin/system/captcha', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('select[name="fail_mode"]')).toHaveValue('open');
 });
+
+test('downloads centre: a file can be renamed and found by search', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/content/downloads?q=E2E', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const edit = page.locator('a[href*="downloads?edit="]').first();
+  await expect(edit).toBeAttached();
+  await edit.click();
+  await expect(page.locator('form[action*="/downloads/"][action$="/update"] input[name="title"]')).toBeVisible();
+});

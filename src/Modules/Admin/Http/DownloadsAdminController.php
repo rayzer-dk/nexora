@@ -21,7 +21,18 @@ final class DownloadsAdminController extends AbstractController
     #[Route('/admin/content/downloads', name: 'admin_content_downloads', methods: ['GET'])]
     public function index(Request $request): Response
     {
-        return $this->render('@storefront/admin/content/downloads.html.twig', ['files' => $this->downloads->adminList($this->contexts->resolve($request)->storeId)]);
+        $storeId = $this->contexts->resolve($request)->storeId;
+        $query = trim((string) $request->query->get('q', ''));
+        $files = $this->downloads->adminList($storeId, $query);
+        $editId = (int) $request->query->get('edit', 0);
+        $edit = null;
+        foreach ($files as $file) {
+            if ((int) $file['id'] === $editId) {
+                $edit = $file;
+            }
+        }
+
+        return $this->render('@storefront/admin/content/downloads.html.twig', ['files' => $files, 'query' => $query, 'edit' => $edit]);
     }
 
     #[Route('/admin/content/downloads/upload', name: 'admin_content_downloads_upload', methods: ['POST'])]
@@ -37,6 +48,20 @@ final class DownloadsAdminController extends AbstractController
             $this->downloads->upload($context->storeId, $file, (string) $request->request->get('title', ''), (string) $request->request->get('description', ''), (string) $request->request->get('group', ''), $request->request->getInt('sort', 100));
             $this->addFlash('success', CanonicalUiText::get('admin.downloads.saved'));
         } catch (\InvalidArgumentException|\RuntimeException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_content_downloads');
+    }
+
+    #[Route('/admin/content/downloads/{id}/update', name: 'admin_content_downloads_update', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function update(int $id, Request $request): RedirectResponse
+    {
+        $this->guard($request);
+        try {
+            $this->downloads->update($this->contexts->resolve($request)->storeId, $id, (string) $request->request->get('title', ''), (string) $request->request->get('description', ''), (string) $request->request->get('group', ''), $request->request->getInt('sort', 100));
+            $this->addFlash('success', CanonicalUiText::get('admin.downloads.saved'));
+        } catch (\InvalidArgumentException $e) {
             $this->addFlash('error', $e->getMessage());
         }
 

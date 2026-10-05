@@ -74,9 +74,26 @@ final readonly class DownloadCenterService
     }
 
     /** @return list<array<string,mixed>> */
-    public function adminList(int $storeId): array
+    public function adminList(int $storeId, string $query = ''): array
     {
+        $query = trim($query);
+        if ($query !== '') {
+            $like = '%' . addcslashes($query, '\\%_') . '%';
+
+            return $this->db->fetchAllAssociative('SELECT * FROM mc_download_file WHERE store_id=? AND (title LIKE ? OR group_label LIKE ? OR description LIKE ?) ORDER BY sort_order,id DESC', [$storeId, $like, $like, $like]);
+        }
+
         return $this->db->fetchAllAssociative('SELECT * FROM mc_download_file WHERE store_id=? ORDER BY sort_order,id DESC', [$storeId]);
+    }
+
+    /** Changes what is shown about a file; the file itself stays. */
+    public function update(int $storeId, int $id, string $title, string $description, string $group, int $sort): void
+    {
+        $title = mb_substr(trim(strip_tags($title)), 0, 190);
+        if ($title === '') {
+            throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.downloads.error_title'));
+        }
+        $this->db->update('mc_download_file', ['title' => $title, 'description' => mb_substr(trim(strip_tags($description)), 0, 500), 'group_label' => mb_substr(trim(strip_tags($group)), 0, 120), 'sort_order' => max(0, min(65535, $sort))], ['id' => $id, 'store_id' => $storeId]);
     }
 
     public function toggle(int $storeId, int $id): void
