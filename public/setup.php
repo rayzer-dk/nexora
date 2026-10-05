@@ -1047,13 +1047,83 @@ function installerOutputSummary(string $output, array $secrets = []): string
     return substr($output, 0, 700);
 }
 
+function installerIcon(string $name): string
+{
+    static $icons = null;
+    if ($icons === null) {
+        $file = dirname(__DIR__) . '/resources/icons/lucide.json';
+        $data = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
+        $icons = is_array($data) && is_array($data['icons'] ?? null) ? $data['icons'] : [];
+    }
+    $body = isset($icons[$name]) ? (string) $icons[$name] : '';
+
+    return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $body . '</svg>';
+}
+
 function installationSuccessResponse(bool $demoInstalled): never
 {
     http_response_code(200);
+    $version = '';
+    $versionFile = dirname(__DIR__) . '/src/Core/Platform/PlatformVersion.php';
+    if (is_file($versionFile) && preg_match("/VERSION\s*=\s*'([^']+)'/", (string) file_get_contents($versionFile), $m) === 1) {
+        $version = $m[1];
+    }
     $title = e(it('installer.install_success_title'));
-    $message = e(it('installer.install_success_message'));
-    $demo = $demoInstalled ? '<p class="note">' . e(it('installer.install_success_demo')) . '</p>' : '';
-    echo '<!doctype html><html lang="' . e((string) ($GLOBALS['installerLocale'] ?? 'uk-UA')) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>' . $title . '</title><style>body{margin:0;background:#f5f7fb;color:#172033;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}.box{max-width:760px;margin:8vh auto;padding:28px;background:#fff;border:1px solid #dfe5ef;border-radius:18px;box-shadow:0 18px 50px rgba(29,43,76,.08)}h1{margin:0 0 12px}.ok{padding:14px;border:1px solid #b7e4c7;background:#f0fff4;border-radius:10px}.note{color:#1e4f8f;background:#eff6ff;border-left:3px solid #3b82f6;padding:10px 12px;border-radius:7px}.actions{display:flex;gap:10px;margin-top:20px}.btn{display:inline-block;padding:11px 16px;border-radius:9px;background:#165dff;color:#fff;text-decoration:none;font-weight:700}.btn.alt{background:#eef2f7;color:#172033}</style></head><body><main class="box"><h1>' . $title . '</h1><div class="ok">' . $message . '</div>' . $demo . '<div class="actions"><a class="btn" href="/admin/login">' . e(it('installer.open_admin')) . '</a><a class="btn alt" href="/">' . e(it('installer.open_store')) . '</a></div></main></body></html>';
+    $features = [
+        ['layout-grid', 'feat_builder'], ['languages', 'feat_languages'], ['credit-card', 'feat_payments'], ['search', 'feat_seo'],
+        ['gift', 'feat_marketing'], ['shield-check', 'feat_security'], ['zap', 'feat_speed'], ['users', 'feat_business'],
+    ];
+    $steps = [['step1_title', 'step1_text'], ['step2_title', 'step2_text'], ['step3_title', 'step3_text']];
+    $why = ['why1', 'why2', 'why3'];
+    $css = <<<'CSS'
+*{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#172033;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:32px 20px 56px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:36px;align-items:center;padding:36px;background:linear-gradient(135deg,#fff 0%,#eef4ff 100%);border:1px solid #dfe5ef;border-radius:24px;box-shadow:0 24px 60px rgba(29,43,76,.10)}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#e7f8ee;color:#12663a;font-weight:700;font-size:14px}
+h1{margin:14px 0 10px;font-size:clamp(28px,4vw,42px);line-height:1.12;letter-spacing:-.02em}
+.lead{margin:0 0 22px;color:#44506a;font-size:18px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}.btn{display:inline-flex;align-items:center;padding:13px 20px;border-radius:12px;background:#165dff;color:#fff;text-decoration:none;font-weight:700;box-shadow:0 8px 20px rgba(22,93,255,.28)}.btn:hover{background:#0f4ad6}.btn.alt{background:#fff;color:#172033;border:1px solid #cfd8e6;box-shadow:none}.btn.alt:hover{background:#f1f5fb}
+.note{margin:18px 0 0;color:#1e4f8f;background:#eff6ff;border-left:3px solid #3b82f6;padding:10px 12px;border-radius:8px;font-size:14px}
+.shot{position:relative}.frame{border:1px solid #cfd8e6;border-radius:14px;background:#fff;box-shadow:0 20px 50px rgba(29,43,76,.18);overflow:hidden}
+.bar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:#eef2f8;border-bottom:1px solid #dfe5ef}.bar i{width:10px;height:10px;border-radius:50%;background:#c7d0df}.bar span{margin-left:10px;flex:1;max-width:260px;padding:2px 10px;border-radius:6px;background:#fff;color:#7a869c;font-size:12px}
+.frame img{display:block;width:100%;height:auto}
+.tabs input{position:absolute;opacity:0;pointer-events:none}.tabs label{display:inline-block;margin:0 6px 12px 0;padding:7px 14px;border-radius:999px;background:#e8edf6;color:#44506a;font-weight:700;font-size:14px;cursor:pointer}
+#t1:checked~.labels label[for=t1],#t2:checked~.labels label[for=t2]{background:#172033;color:#fff}.pane{display:none}#t1:checked~.panes .p1,#t2:checked~.panes .p2{display:block}
+.tabs input:focus-visible~.labels label{outline:2px solid #165dff;outline-offset:2px}
+h2{margin:44px 0 18px;font-size:26px;letter-spacing:-.01em}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;counter-reset:s}
+.step{position:relative;padding:20px 20px 20px 64px;background:#fff;border:1px solid #dfe5ef;border-radius:16px}.step:before{counter-increment:s;content:counter(s);position:absolute;left:18px;top:18px;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#165dff;color:#fff;font-weight:800}
+.step strong{display:block;margin-bottom:4px}.step p{margin:0;color:#44506a;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.card{padding:20px;background:#fff;border:1px solid #dfe5ef;border-radius:16px;transition:transform .15s,box-shadow .15s}.card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(29,43,76,.10)}
+.ico{display:grid;place-items:center;width:44px;height:44px;margin-bottom:12px;border-radius:12px;background:#e8f0ff;color:#165dff}.card strong{display:block;margin-bottom:4px}.card p{margin:0;color:#44506a;font-size:14px}
+.why{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:24px;background:#172033;color:#fff;border-radius:20px}.why div{display:flex;gap:12px;align-items:flex-start}.why svg{flex:none;color:#7fb0ff}.why p{margin:0;color:#d4dcec;font-size:15px}
+.foot{margin-top:28px;text-align:center;color:#7a869c;font-size:13px}
+@media(max-width:900px){.hero{grid-template-columns:1fr;padding:24px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.steps,.why{grid-template-columns:1fr}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.btn{width:100%;justify-content:center}}
+CSS;
+    $out = '<!doctype html><html lang="' . e((string) ($GLOBALS['installerLocale'] ?? 'uk-UA')) . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>' . $title . '</title><style>' . $css . '</style></head><body><div class="wrap">';
+    $out .= '<section class="hero"><div><span class="badge">' . installerIcon('circle-check') . e(it('installer.install_success_badge')) . ($version !== '' ? ' · v' . e($version) : '') . '</span>';
+    $out .= '<h1>' . $title . '</h1><p class="lead">' . e(it('installer.install_success_lead')) . '</p>';
+    $out .= '<div class="actions"><a class="btn" href="/admin/login">' . e(it('installer.open_admin')) . '</a><a class="btn alt" href="/">' . e(it('installer.open_store')) . '</a></div>';
+    $out .= ($demoInstalled ? '<p class="note">' . e(it('installer.install_success_demo')) . '</p>' : '') . '</div>';
+    $out .= '<div class="shot tabs"><input type="radio" name="t" id="t1" checked><input type="radio" name="t" id="t2"><div class="labels"><label for="t1">' . e(it('installer.tab_store')) . '</label><label for="t2">' . e(it('installer.tab_admin')) . '</label></div><div class="panes">';
+    $out .= '<div class="pane p1"><div class="frame"><div class="bar"><i></i><i></i><i></i><span>' . e(it('installer.tab_store')) . '</span></div><img src="/assets/branding/welcome-store.webp" alt="" width="1200" height="750"></div></div>';
+    $out .= '<div class="pane p2"><div class="frame"><div class="bar"><i></i><i></i><i></i><span>/admin</span></div><img src="/assets/branding/welcome-admin.webp" alt="" width="1200" height="750"></div></div></div></div></section>';
+    $out .= '<h2>' . e(it('installer.next_title')) . '</h2><div class="steps">';
+    foreach ($steps as [$st, $sx]) {
+        $out .= '<div class="step"><strong>' . e(it('installer.' . $st)) . '</strong><p>' . e(it('installer.' . $sx)) . '</p></div>';
+    }
+    $out .= '</div><h2>' . e(it('installer.features_title')) . '</h2><div class="grid">';
+    foreach ($features as [$icon, $key]) {
+        $out .= '<div class="card"><span class="ico">' . installerIcon($icon) . '</span><strong>' . e(it('installer.' . $key)) . '</strong><p>' . e(it('installer.' . $key . '_text')) . '</p></div>';
+    }
+    $out .= '</div><h2>' . e(it('installer.why_title')) . '</h2><div class="why">';
+    foreach ($why as $key) {
+        $out .= '<div>' . installerIcon('circle-check') . '<p>' . e(it('installer.' . $key)) . '</p></div>';
+    }
+    $out .= '</div><p class="foot">Nexora Commerce' . ($version !== '' ? ' v' . e($version) : '') . '</p></div></body></html>';
+    echo $out;
     exit;
 }
 
