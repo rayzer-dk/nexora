@@ -1,0 +1,48 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.landing.title'),'landing') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.landing.title') }}</span></nav><h1>{{ ui_text('admin.landing.title') }}</h1><p>{{ ui_text('admin.landing.intro') }}</p></div><a class="admin-button" href="/" target="_blank" rel="noopener">{{ ui_icon('external-link', 14) }} {{ ui_text('admin.landing.open') }}</a></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<nav class="admin-tabs" aria-label="{{ ui_text('admin.landing.language') }}" data-no-auto-tabs>{% for code in locales %}<a class="admin-tab{{ code == locale ? ' is-active' : '' }}" href="{{ path('admin_appearance_landing',{locale:code}) }}"{{ code == locale ? ' aria-current="page"' : '' }}>{{ code|slice(0,2)|upper }}</a>{% endfor %}</nav>
+<form method="post" action="{{ path('admin_appearance_landing_save') }}">
+<input type="hidden" name="_token" value="{{ csrf_token('admin_landing') }}"><input type="hidden" name="locale" value="{{ locale }}">
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.hero') }}</h2></div></div>
+<div class="admin-form-grid">
+{% for f in ['eyebrow','title','subtitle','primary_label','primary_url','secondary_label','secondary_url','note','image'] %}<label class="{{ f in ['title','subtitle','image'] ? 'is-wide' : '' }}"><span>{{ ui_text('admin.landing.f.' ~ f) }}</span>{% if f == 'subtitle' %}<textarea name="hero[{{ f }}]" rows="3" maxlength="400">{{ content.hero[f] }}</textarea>{% else %}<input name="hero[{{ f }}]" maxlength="200" value="{{ content.hero[f] }}">{% endif %}</label>{% endfor %}
+</div></section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.headings') }}</h2></div></div>
+<div class="admin-form-grid">{% for f in ['features','features_lead','steps','reviews','faq'] %}<label class="{{ f == 'features_lead' ? 'is-wide' : '' }}"><span>{{ ui_text('admin.landing.h.' ~ f) }}</span><input name="headings[{{ f }}]" maxlength="200" value="{{ content.headings[f] }}"></label>{% endfor %}</div></section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.features') }}</h2></div></div>
+{% for f in content.features %}{% set i = loop.index0 %}<fieldset class="admin-form-grid"><legend>{{ loop.index }}</legend>
+<label><span>{{ ui_text('admin.landing.f.icon') }}</span><select name="features[{{ i }}][icon]">{% for icon in icons %}<option value="{{ icon }}"{{ f.icon == icon ? ' selected' : '' }}>{{ icon }}</option>{% endfor %}</select></label>
+<label><span>{{ ui_text('admin.landing.f.title') }}</span><input name="features[{{ i }}][title]" maxlength="200" value="{{ f.title }}"></label>
+<label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="features[{{ i }}][text]" maxlength="500" value="{{ f.text }}"></label></fieldset>{% endfor %}</section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.stats') }}</h2></div></div>
+<div class="admin-form-grid">{% for s in content.stats %}{% set i = loop.index0 %}<label><span>{{ ui_text('admin.landing.f.value') }} {{ loop.index }}</span><input name="stats[{{ i }}][value]" maxlength="40" value="{{ s.value }}"></label><label><span>{{ ui_text('admin.landing.f.label') }} {{ loop.index }}</span><input name="stats[{{ i }}][label]" maxlength="120" value="{{ s.label }}"></label>{% endfor %}</div></section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.steps') }}</h2></div></div>
+{% for s in content.steps %}{% set i = loop.index0 %}<fieldset class="admin-form-grid"><legend>{{ loop.index }}</legend><label><span>{{ ui_text('admin.landing.f.title') }}</span><input name="steps[{{ i }}][title]" maxlength="200" value="{{ s.title }}"></label><label><span>{{ ui_text('admin.landing.f.text') }}</span><input name="steps[{{ i }}][text]" maxlength="500" value="{{ s.text }}"></label></fieldset>{% endfor %}</section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.reviews') }}</h2></div></div>
+{% for r in content.reviews %}{% set i = loop.index0 %}<fieldset class="admin-form-grid"><legend>{{ loop.index }}</legend><label class="is-wide"><span>{{ ui_text('admin.landing.f.quote') }}</span><textarea name="reviews[{{ i }}][quote]" rows="2" maxlength="500">{{ r.quote }}</textarea></label><label><span>{{ ui_text('admin.landing.f.name') }}</span><input name="reviews[{{ i }}][name]" maxlength="120" value="{{ r.name }}"></label><label><span>{{ ui_text('admin.landing.f.role') }}</span><input name="reviews[{{ i }}][role]" maxlength="120" value="{{ r.role }}"></label></fieldset>{% endfor %}</section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.faq') }}</h2></div></div>
+{% for q in content.faq %}{% set i = loop.index0 %}<fieldset class="admin-form-grid"><legend>{{ loop.index }}</legend><label><span>{{ ui_text('admin.landing.f.q') }}</span><input name="faq[{{ i }}][q]" maxlength="200" value="{{ q.q }}"></label><label><span>{{ ui_text('admin.landing.f.a') }}</span><input name="faq[{{ i }}][a]" maxlength="500" value="{{ q.a }}"></label></fieldset>{% endfor %}</section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.contact') }}</h2></div></div>
+<div class="admin-form-grid">
+<label><span>{{ ui_text('admin.landing.f.cta_title') }}</span><input name="cta[title]" maxlength="200" value="{{ content.cta.title }}"></label>
+<label><span>{{ ui_text('admin.landing.f.cta_button') }}</span><input name="cta[button]" maxlength="200" value="{{ content.cta.button }}"></label>
+<label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="cta[text]" maxlength="400" value="{{ content.cta.text }}"></label>
+<label><span>{{ ui_text('admin.landing.f.form_title') }}</span><input name="form[title]" maxlength="200" value="{{ content.form.title }}"></label>
+<label><span>{{ ui_text('admin.landing.f.form_button') }}</span><input name="form[button]" maxlength="200" value="{{ content.form.button }}"></label>
+<label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="form[text]" maxlength="400" value="{{ content.form.text }}"></label>
+<label class="admin-check"><input type="checkbox" name="form[enabled]" value="1"{{ content.form.enabled ? ' checked' : '' }}> {{ ui_text('admin.landing.f.form_enabled') }}</label>
+</div></section>
+
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button><button class="admin-button" type="submit" name="reset" value="1" formnovalidate data-confirm="{{ ui_text('admin.landing.reset_confirm') }}">{{ ui_icon('refresh-cw', 16) }} {{ ui_text('admin.landing.reset') }}</button></div>
+</form>
+{{ shell.end() }}

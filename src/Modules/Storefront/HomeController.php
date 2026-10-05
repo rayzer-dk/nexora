@@ -31,6 +31,7 @@ final class HomeController extends AbstractController
         private readonly OrganizationCommerceBuilder $organization,
         private readonly StructuredDataGraphBuilder $graph,
         private readonly \Commerce\Modules\Storefront\Infrastructure\StorefrontContactSettings $contact,
+        private readonly \Commerce\Modules\Storefront\Application\LandingContent $landing,
     ) {
     }
 
@@ -44,6 +45,23 @@ final class HomeController extends AbstractController
         // A site installed as a forum opens on the forum itself, not on a shop-style home page.
         if (($settings['mode'] ?? '') === SiteCapabilitySettings::MODE_FORUM && (bool) ($features['forum'] ?? false)) {
             return $this->redirectToRoute('storefront_forum_index');
+        }
+
+        // A site installed as a landing page opens on its own one-page layout, not on a shop home page.
+        if (($settings['mode'] ?? '') === SiteCapabilitySettings::MODE_LANDING) {
+            return $this->render('@storefront/landing.html.twig', [
+                'page_title' => $context->storeName,
+                'store_name' => $context->storeName,
+                'site_mode' => SiteCapabilitySettings::MODE_LANDING,
+                'site_features' => $features,
+                'landing' => $this->landing->forLocale($context->locale),
+                'seo_head' => [
+                    'description' => \Commerce\Core\I18n\CanonicalUiText::get('seo.home.description', ['store' => $context->storeName]),
+                    'canonical' => $request->getSchemeAndHttpHost() . '/',
+                    'robots' => 'index,follow,max-image-preview:large',
+                    'hreflang' => [$context->locale => $request->getSchemeAndHttpHost() . '/', 'x-default' => $request->getSchemeAndHttpHost() . '/'],
+                ],
+            ]);
         }
 
         // Optional homepage blocks are isolated from each other. A broken catalog/blog query

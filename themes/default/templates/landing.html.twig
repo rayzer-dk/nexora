@@ -1,0 +1,115 @@
+{% extends '@storefront/base.html.twig' %}
+{% set page_kind = 'home' %}
+{% set presentation = storefront_presentation() %}
+{% block site_header %}
+<header class="lp-header" data-lp-header>
+    <div class="lp-wrap lp-header__inner">
+        <a class="lp-brand" href="#top" aria-label="{{ storefront_brand_name }}">{% if presentation.brand.logo %}<img src="{{ presentation.brand.logo }}" alt="{{ storefront_brand_name }}" height="32">{% else %}{% if presentation.brand.icon %}<img class="lp-brand__icon" src="{{ presentation.brand.icon }}" alt="" width="32" height="32">{% endif %}<strong>{{ storefront_brand_name }}</strong>{% endif %}</a>
+        <nav class="lp-nav" aria-label="{{ ui_text('navigation') }}">
+            <a href="#features">{{ ui_text('landing.nav.features') }}</a><a href="#how">{{ ui_text('landing.nav.how') }}</a><a href="#reviews">{{ ui_text('landing.nav.reviews') }}</a><a href="#faq">{{ ui_text('landing.nav.faq') }}</a><a href="#contact">{{ ui_text('landing.nav.contact') }}</a>
+        </nav>
+        <div class="lp-header__tools">
+            {% include '@storefront/components/header_switchers.html.twig' %}
+            {% if presentation.theme.toggle|default('1') == '1' %}<button class="reference-theme-toggle" type="button" data-theme-toggle aria-label="{{ ui_text('theme_toggle') }}" title="{{ ui_text('theme_toggle') }}"><span class="reference-theme-toggle__moon" aria-hidden="true">{{ ui_icon('sun-moon', 22) }}</span></button>{% endif %}
+            <a class="lp-btn lp-btn--primary lp-btn--sm" href="{{ landing.hero.primary_url }}">{{ landing.hero.primary_label }}</a>
+        </div>
+    </div>
+</header>
+{% endblock %}
+{% block body %}
+<div id="top"></div>
+<section class="lp-hero">
+    <div class="lp-wrap lp-hero__grid">
+        <div class="lp-hero__copy">
+            {% if landing.hero.eyebrow %}<span class="lp-pill">{{ ui_icon('sparkles', 14) }}{{ landing.hero.eyebrow }}</span>{% endif %}
+            <h1>{{ landing.hero.title }}</h1>
+            <p class="lp-lead">{{ landing.hero.subtitle }}</p>
+            <div class="lp-actions">
+                <a class="lp-btn lp-btn--primary" href="{{ landing.hero.primary_url }}">{{ landing.hero.primary_label }}{{ ui_icon('arrow-right', 18) }}</a>
+                {% if landing.hero.secondary_label %}<a class="lp-btn lp-btn--ghost" href="{{ landing.hero.secondary_url }}">{{ landing.hero.secondary_label }}</a>{% endif %}
+            </div>
+            {% if landing.hero.note %}<p class="lp-note">{{ ui_icon('check', 16) }}{{ landing.hero.note }}</p>{% endif %}
+        </div>
+        <div class="lp-hero__visual" aria-hidden="true">
+            {% if landing.hero.image %}
+                <img class="lp-hero__image" src="{{ landing.hero.image }}" alt="" width="640" height="520" loading="eager" decoding="async">
+            {% else %}
+                <div class="lp-mock">
+                    <div class="lp-mock__bar"><i></i><i></i><i></i><span></span></div>
+                    <div class="lp-mock__body">
+                        <div class="lp-mock__hero"><b></b><b></b><em></em></div>
+                        <div class="lp-mock__cards"><span></span><span></span><span></span></div>
+                    </div>
+                </div>
+                <div class="lp-float lp-float--a">{{ ui_icon('trending-up', 18) }}<div><strong>{{ landing.stats[0].value }}</strong><small>{{ landing.stats[0].label }}</small></div></div>
+                <div class="lp-float lp-float--b">{{ ui_icon('shield-check', 18) }}<div><strong>{{ landing.stats[1].value }}</strong><small>{{ landing.stats[1].label }}</small></div></div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="lp-stats" aria-label="{{ landing.headings.features }}">
+    <div class="lp-wrap lp-stats__grid">{% for stat in landing.stats %}<div><strong>{{ stat.value }}</strong><span>{{ stat.label }}</span></div>{% endfor %}</div>
+</section>
+
+<section class="lp-section" id="features">
+    <div class="lp-wrap">
+        <header class="lp-section__head"><h2>{{ landing.headings.features }}</h2><p>{{ landing.headings.features_lead }}</p></header>
+        <div class="lp-features">{% for f in landing.features %}<article class="lp-card"><span class="lp-card__icon" aria-hidden="true">{{ ui_icon(f.icon, 22) }}</span><h3>{{ f.title }}</h3><p>{{ f.text }}</p></article>{% endfor %}</div>
+    </div>
+</section>
+
+<section class="lp-section lp-section--tint" id="how">
+    <div class="lp-wrap">
+        <header class="lp-section__head"><h2>{{ landing.headings.steps }}</h2></header>
+        <ol class="lp-steps">{% for step in landing.steps %}<li><span class="lp-steps__n">{{ loop.index }}</span><h3>{{ step.title }}</h3><p>{{ step.text }}</p></li>{% endfor %}</ol>
+    </div>
+</section>
+
+<section class="lp-section" id="reviews">
+    <div class="lp-wrap">
+        <header class="lp-section__head"><h2>{{ landing.headings.reviews }}</h2></header>
+        <div class="lp-reviews">{% for r in landing.reviews %}<figure class="lp-review"><span class="lp-review__stars" aria-hidden="true">{% for i in 1..5 %}{{ ui_icon('star-filled', 16) }}{% endfor %}</span><blockquote>{{ r.quote }}</blockquote><figcaption><span class="lp-avatar" aria-hidden="true">{{ r.name|first|upper }}</span><span><strong>{{ r.name }}</strong><small>{{ r.role }}</small></span></figcaption></figure>{% endfor %}</div>
+    </div>
+</section>
+
+<section class="lp-section lp-section--tint" id="faq">
+    <div class="lp-wrap lp-wrap--narrow">
+        <header class="lp-section__head"><h2>{{ landing.headings.faq }}</h2></header>
+        <div class="lp-faq">{% for item in landing.faq %}<details{{ loop.first ? ' open' : '' }}><summary>{{ item.q }}{{ ui_icon('chevron-down', 18) }}</summary><p>{{ item.a }}</p></details>{% endfor %}</div>
+    </div>
+</section>
+
+<section class="lp-section lp-contact" id="contact">
+    <div class="lp-wrap">
+        <div class="lp-cta">
+            <div class="lp-cta__copy"><h2>{{ landing.cta.title }}</h2><p>{{ landing.cta.text }}</p></div>
+            {% if landing.form.enabled %}
+            <form class="lp-form" method="post" action="/contact/send" data-cw-form>
+                <h3>{{ landing.form.title }}</h3>
+                <p>{{ landing.form.text }}</p>
+                <input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="contact"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
+                <label><span>{{ ui_text('landing.ui.name') }}</span><input name="name" required maxlength="190" autocomplete="name"></label>
+                <label><span>{{ ui_text('landing.ui.phone') }}</span><input name="phone" type="tel" required maxlength="32" autocomplete="tel"></label>
+                <label><span>{{ ui_text('landing.ui.message') }}</span><textarea name="message" rows="3" maxlength="2000"></textarea></label>
+                {% include '@storefront/components/captcha.html.twig' with {form:'contact'} only %}
+                <button class="lp-btn lp-btn--primary" type="submit">{{ ui_icon('send', 18) }}{{ landing.form.button }}</button>
+                <small>{{ ui_text('landing.ui.privacy_note') }}</small>
+            </form>
+            {% else %}
+            <a class="lp-btn lp-btn--primary" href="{{ landing.hero.primary_url }}">{{ landing.cta.button }}</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block site_footer %}
+{% set hc = header_contacts() %}
+<footer class="lp-footer">
+    <div class="lp-wrap lp-footer__inner">
+        <strong>{{ storefront_brand_name }}</strong>
+        <span>{% if hc.phone_href %}<a href="{{ hc.phone_href }}">{{ hc.phone }}</a>{% endif %}{% if hc.email %}<a href="mailto:{{ hc.email }}">{{ hc.email }}</a>{% endif %}</span>
+        <span>© {{ 'now'|date('Y') }} {{ storefront_brand_name }}. {{ ui_text('landing.ui.rights') }} <a href="/privacy-policy">{{ ui_text('landing.ui.privacy') }}</a></span>
+    </div>
+</footer>
+{% endblock %}

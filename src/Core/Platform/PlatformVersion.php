@@ -6,7 +6,7 @@ namespace Commerce\Core\Platform;
 
 final class PlatformVersion
 {
-    public const VERSION = '3.77.0';
+    public const VERSION = '3.78.0';
     public const CHANNEL = 'production';
     public const EXTENSION_API = '2.0';
     public const DATABASE_SCHEMA = 79;
