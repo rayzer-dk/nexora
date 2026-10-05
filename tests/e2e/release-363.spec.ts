@@ -174,3 +174,38 @@ test('the list of shoppers waiting for a product has search, period, sorting and
   expect(csv.status()).toBe(200);
   expect(await csv.text()).toContain('email,product,sku,status');
 });
+
+test('with the e-mail confirmation of the newsletter switched off a subscriber is active at once', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  const email = `e2e-noconfirm-${Date.now().toString(36)}@example.test`;
+  await loginAdmin(page);
+  await page.goto('/admin/commerce/subscribers', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const box = page.locator('input[name="confirm[newsletter]"]');
+  await box.uncheck();
+  await Promise.all([page.waitForURL(/subscribers/), page.locator('form[action$="/customer-email-confirmation"] button[type="submit"]').click()]);
+  await expect(page.locator('input[name="confirm[newsletter]"]')).not.toBeChecked();
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const form = page.locator('form[action="/newsletter/subscribe"]').first();
+  await form.locator('input[name="email"]').fill(email);
+  await page.waitForTimeout(1500);
+  await Promise.all([page.waitForResponse((r) => r.url().includes('/newsletter/subscribe')), form.locator('button[type="submit"]').click()]);
+  await page.goto('/admin/commerce/subscribers?search=' + encodeURIComponent(email), { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('tr', { hasText: email })).toContainText(/active|Активн|активн/i);
+  await page.locator('input[name="confirm[newsletter]"]').check();
+  await Promise.all([page.waitForURL(/subscribers/), page.locator('form[action$="/customer-email-confirmation"] button[type="submit"]').click()]);
+});
+
+test('the layout builder shows the real draft in a preview frame', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/appearance/builder/home', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const frame = page.locator('.mc-real-preview iframe');
+  await expect(frame).toBeAttached();
+  const src = (await frame.getAttribute('src')) ?? (await frame.getAttribute('data-src')) ?? '';
+  expect(src).toContain('_layout_preview=');
+  const response = await page.request.get(src);
+  expect(response.status()).toBeLessThan(400);
+  expect(response.headers()['x-robots-tag'] ?? '').toContain('noindex');
+});

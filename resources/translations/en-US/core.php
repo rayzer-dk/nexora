@@ -34,4 +34,5 @@ return [
     'addon.error.required' => "Fill in the option \"%name%\".",
     'addon.error.currency' => "The option price is not available in the chosen currency.",
     'addon.error.sold_out' => "The option \"%name%\" is sold out.",
+    'stock.notify.saved' => "Done: we will tell you as soon as the product is back.",
 ];

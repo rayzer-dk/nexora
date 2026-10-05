@@ -1,0 +1,6 @@
+{# Switches for the e-mail confirmation of shoppers. Vars: back (subscribers|stock) #}
+<section class="admin-panel"><form method="post" action="{{ path('admin_commerce_customer_email_confirmation') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_email_confirmation') }}"><input type="hidden" name="back" value="{{ back }}">
+<div class="admin-panel__header admin-form-wide"><div><small>{{ ui_text('admin.emailconfirm.kicker') }}</small><h2>{{ ui_text('admin.emailconfirm.title') }}</h2></div></div>
+<label class="admin-check admin-form-wide"><input type="checkbox" name="confirm[newsletter]" value="1"{{ email_confirmation_required('newsletter') ? ' checked' : '' }}><span><strong>{{ ui_text('admin.emailconfirm.newsletter') }}</strong><small>{{ ui_text('admin.emailconfirm.newsletter_hint') }}</small></span></label>
+<label class="admin-check admin-form-wide"><input type="checkbox" name="confirm[stock_notify]" value="1"{{ email_confirmation_required('stock_notify') ? ' checked' : '' }}><span><strong>{{ ui_text('admin.emailconfirm.stock') }}</strong><small>{{ ui_text('admin.emailconfirm.stock_hint') }}</small></span></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button" type="submit">{{ ui_text('admin.emailconfirm.save') }}</button></div></form></section>

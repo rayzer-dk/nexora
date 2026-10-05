@@ -34,4 +34,5 @@ return [
     'addon.error.required' => "Заповніть опцію «%name%».",
     'addon.error.currency' => "Ціна опції недоступна в обраній валюті.",
     'addon.error.sold_out' => "Опція «%name%» закінчилась.",
+    'stock.notify.saved' => "Готово: ми повідомимо, щойно товар зʼявиться.",
 ];

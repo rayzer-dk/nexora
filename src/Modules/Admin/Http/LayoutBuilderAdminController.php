@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class LayoutBuilderAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly LayoutRevisionStore $layouts, private readonly LayoutSnippetStore $snippets, private readonly ExtensionContributionRegistry $extensions)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly LayoutRevisionStore $layouts, private readonly LayoutSnippetStore $snippets, private readonly ExtensionContributionRegistry $extensions, private readonly \Commerce\Modules\Appearance\Builder\LayoutPreviewToken $previewToken, private readonly \Doctrine\DBAL\Connection $db)
     {
     }
 
@@ -54,7 +54,9 @@ final class LayoutBuilderAdminController extends AbstractController
         $draft=$this->layouts->draft($context->storeId,$type);
         $layout=$draft ?? $this->layouts->active($context->storeId,$type);
         $missing=[]; foreach((array)($layout['blocks']??[]) as $block){if(is_array($block)&&($block['missing_extension']??false)===true)$missing[]=(string)($block['component']??'');}
+        $previewPath=$this->previewPath($type,$context->storeId,$context->locale);
         return $this->render('@storefront/admin/appearance/builder.html.twig',[
+            'preview_url'=>$previewPath.(str_contains($previewPath,'?')?'&':'?').'_layout_preview='.rawurlencode($this->previewToken->issue($context->storeId,$type)),
             'type'=>$type,'layout'=>$layout,'has_draft'=>$draft!==null,'revisions'=>$this->layouts->history($context->storeId,$type),'snippets'=>$this->snippets->all($context->storeId,$type),'extension_components'=>$this->extensions->blocksFor($type),'missing_extension_components'=>array_values(array_unique(array_filter($missing))),
         ]);
     }
@@ -91,5 +93,19 @@ final class LayoutBuilderAdminController extends AbstractController
     {
         $user=$this->getUser();
         return $user instanceof AdminUser ? $user->id : null;
+    }
+
+    /** A real page of the storefront that uses this layout. */
+    private function previewPath(string $type, int $storeId, string $locale): string
+    {
+        $entity = match ($type) {'product' => 'product', 'category' => 'category', default => ''};
+        if ($entity !== '') {
+            $path = $this->db->fetchOne('SELECT path FROM mc_seo_route WHERE store_id=? AND locale=? AND entity_type=? AND indexable=1 ORDER BY id LIMIT 1', [$storeId, $locale, $entity]);
+            if (is_string($path) && $path !== '') {
+                return '/' . ltrim($path, '/');
+            }
+        }
+
+        return match ($type) {'cart' => '/cart', 'checkout' => '/checkout', default => '/'};
     }
 }

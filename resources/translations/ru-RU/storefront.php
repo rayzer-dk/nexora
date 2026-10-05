@@ -864,6 +864,7 @@ return [
     'status.received' => 'Получено',
     'status.resolved' => 'Решено',
     'status.draft' => 'Черновик',
+    'status.archived' => 'В архиве',
     'status.inactive' => 'Неактивна',
     'status.return_reason.changed_mind' => 'Передумал(а)',
     'status.return_reason.wrong_item' => 'Не тот товар',

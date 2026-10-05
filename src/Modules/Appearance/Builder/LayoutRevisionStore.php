@@ -9,7 +9,7 @@ use RuntimeException;
 
 final readonly class LayoutRevisionStore
 {
-    public function __construct(private Connection $db, private LayoutSchemaValidator $validator, private SafeLayoutProvider $safe)
+    public function __construct(private Connection $db, private LayoutSchemaValidator $validator, private SafeLayoutProvider $safe, private ?LayoutPreviewToken $preview = null, private ?\Symfony\Component\HttpFoundation\RequestStack $requests = null)
     {
     }
 
@@ -17,6 +17,14 @@ final readonly class LayoutRevisionStore
     public function active(int $storeId, string $type): array
     {
         $this->assertType($type);
+        // A signed preview link shows the saved draft instead of the published layout (only for that page view).
+        $token = (string) $this->requests?->getMainRequest()?->query->get('_layout_preview', '');
+        if ($token !== '' && $this->preview?->valid($token, $storeId, $type) === true) {
+            $draft = $this->draft($storeId, $type);
+            if ($draft !== null) {
+                return $draft;
+            }
+        }
         try {
             $raw = $this->db->fetchOne('SELECT payload FROM mc_layout_revision WHERE store_id=? AND layout_type=? AND status=? ORDER BY id DESC LIMIT 1', [$storeId,$type,'published']);
             if (is_string($raw) && $raw !== '') {

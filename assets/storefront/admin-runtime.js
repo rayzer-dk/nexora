@@ -1563,6 +1563,17 @@ function initSeoFields() {
   });
 }
 
+// Builder: the real preview frame takes the width of the chosen device.
+function initRealPreview() {
+  const box = q('[data-real-preview]');
+  const frame = box ? q('iframe', box) : null;
+  if (!box || !frame) return;
+  qa('[data-real-width]').forEach((button) => button.addEventListener('click', () => {
+    qa('[data-real-width]').forEach((other) => other.classList.toggle('is-active', other === button));
+    frame.style.width = button.dataset.realWidth || '100%';
+  }));
+}
+
 function initCommandPalette() {
   const palette = q('[data-command-palette]');
   const input = q('[data-command-input]', palette || document);
@@ -1994,6 +2005,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCommandPalette();
   initQuickLinkForm();
   initSeoFields();
+  initRealPreview();
   initAutoSubmit();
   initRowLinks();
   initAutoTabs();

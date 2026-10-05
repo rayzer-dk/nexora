@@ -20,7 +20,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class NewsletterController extends AbstractController
 {
-    public function __construct(private readonly StorefrontContextResolver $contexts,private readonly Connection $db,private readonly PublicIdFactory $ids,private readonly NotificationOutbox $outbox,private readonly NewsletterTokenService $unsubscribeTokens,private readonly \Commerce\Modules\Security\Spam\PublicFormProtection $protection){}
+    public function __construct(private readonly StorefrontContextResolver $contexts,private readonly Connection $db,private readonly PublicIdFactory $ids,private readonly NotificationOutbox $outbox,private readonly NewsletterTokenService $unsubscribeTokens,private readonly \Commerce\Modules\Security\Spam\PublicFormProtection $protection,private readonly \Commerce\Modules\Notification\Application\EmailConfirmationSettings $confirmation){}
 
     #[Route('/newsletter/subscribe',name:'storefront_newsletter_subscribe',methods:['POST'])]
     public function subscribe(Request $request): Response
@@ -32,6 +32,14 @@ final class NewsletterController extends AbstractController
         $token=rtrim(strtr(base64_encode(random_bytes(32)),'+/','-_'),'=');$hash=hash('sha256',$token,true);$now=$this->now();
         $existing=$this->db->fetchAssociative('SELECT id,status FROM mc_marketing_subscriber WHERE store_id=? AND email_normalized=? LIMIT 1',[$context->storeId,$email]);
         if(is_array($existing)&&$existing['status']==='active'){$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.marketing.http.newslettercontroller.tsei_email_uzhe_pidpysanyi'));return $this->redirect((string)($request->headers->get('referer')?:'/'));}
+        $confirmNeeded=$this->confirmation->required('newsletter');
+        if(!$confirmNeeded){
+            // The shop switched the confirmation off: the address counts at once.
+            $values=['email'=>$email,'locale'=>$context->locale,'status'=>'active','confirm_token_hash'=>null,'consent_at'=>$now,'confirmed_at'=>$now,'unsubscribed_at'=>null,'updated_at'=>$now];
+            if(is_array($existing))$this->db->update('mc_marketing_subscriber',$values,['id'=>(int)$existing['id']]);
+            else $this->db->insert('mc_marketing_subscriber',$values+['public_id'=>$this->ids->binary(),'store_id'=>$context->storeId,'email_normalized'=>$email,'consent_source'=>'storefront','created_at'=>$now]);
+            $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.marketing.http.newslettercontroller.tsei_email_uzhe_pidpysanyi'));return $this->redirect((string)($request->headers->get('referer')?:'/'));
+        }
         if(is_array($existing))$this->db->update('mc_marketing_subscriber',['email'=>$email,'locale'=>$context->locale,'status'=>'pending','confirm_token_hash'=>$hash,'consent_at'=>$now,'confirmed_at'=>null,'unsubscribed_at'=>null,'updated_at'=>$now],['id'=>(int)$existing['id']]);
         else $this->db->insert('mc_marketing_subscriber',['public_id'=>$this->ids->binary(),'store_id'=>$context->storeId,'email'=>$email,'email_normalized'=>$email,'locale'=>$context->locale,'status'=>'pending','confirm_token_hash'=>$hash,'consent_source'=>'storefront','consent_at'=>$now,'confirmed_at'=>null,'unsubscribed_at'=>null,'created_at'=>$now,'updated_at'=>$now]);
         $url=$request->getSchemeAndHttpHost().'/newsletter/confirm/'.rawurlencode($token);

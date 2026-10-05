@@ -1236,6 +1236,7 @@ return [
     'status.received' => 'Отримано',
     'status.resolved' => 'Вирішено',
     'status.draft' => 'Чернетка',
+    'status.archived' => 'Архівовано',
     'status.inactive' => 'Неактивна',
     'status.return_reason.changed_mind' => 'Передумав(ла)',
     'status.return_reason.wrong_item' => 'Не той товар',

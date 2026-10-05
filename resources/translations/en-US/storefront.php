@@ -1236,6 +1236,7 @@ return [
     'status.received' => 'Received',
     'status.resolved' => 'Resolved',
     'status.draft' => 'Draft',
+    'status.archived' => 'Archived',
     'status.inactive' => 'Inactive',
     'status.return_reason.changed_mind' => 'Changed mind',
     'status.return_reason.wrong_item' => 'Wrong item',

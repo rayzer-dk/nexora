@@ -13,9 +13,10 @@ use Symfony\Component\Uid\Uuid;
 
 final readonly class StockNotificationService
 {
-    public function __construct(private Connection $db, private PublicIdFactory $ids, private NotificationOutbox $notifications, private string $publicBaseUrl, private ?\Commerce\Modules\Automation\Application\AutomationEngine $automation = null) {}
+    public function __construct(private Connection $db, private PublicIdFactory $ids, private NotificationOutbox $notifications, private string $publicBaseUrl, private ?\Commerce\Modules\Automation\Application\AutomationEngine $automation = null, private ?\Commerce\Modules\Notification\Application\EmailConfirmationSettings $confirmation = null) {}
 
-    public function request(int $storeId, string $productPublicId, string $variantPublicId, string $email, string $locale): void
+    /** @return bool true when the request waits at once (no e-mail confirmation asked) */
+    public function request(int $storeId, string $productPublicId, string $variantPublicId, string $email, string $locale): bool
     {
         $email=mb_strtolower(trim($email));
         if(filter_var($email,FILTER_VALIDATE_EMAIL)===false) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.inventory.application.stocknotificationservice.vkazhit_korektnyi_email'));
@@ -27,8 +28,14 @@ final readonly class StockNotificationService
         $public=$existing?Uuid::fromBinary((string)$existing['public_id']):$this->ids->generate();
         if($existing){$this->db->update('mc_stock_notification_request',['product_id'=>(int)$row['product_id'],'email'=>$email,'locale'=>$locale,'status'=>'pending','confirm_token_hash'=>$tokenHash,'confirmed_at'=>null,'notified_at'=>null,'updated_at'=>$now],['id'=>(int)$existing['id']]);}
         else{$this->db->insert('mc_stock_notification_request',['public_id'=>$public->toBinary(),'store_id'=>$storeId,'product_id'=>(int)$row['product_id'],'variant_id'=>(int)$row['variant_id'],'email'=>$email,'email_normalized'=>$email,'locale'=>$locale,'status'=>'pending','confirm_token_hash'=>$tokenHash,'confirmed_at'=>null,'notified_at'=>null,'created_at'=>$now,'updated_at'=>$now]);}
+        if($this->confirmation!==null&&!$this->confirmation->required('stock_notify')){
+            // Confirmation switched off: the request waits at once.
+            $this->confirm($public->toRfc4122(),$token);
+            return true;
+        }
         $url=rtrim($this->publicBaseUrl,'/').'/stock-alert/confirm/'.$public->toRfc4122().'/'.rawurlencode($token);
         $this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('stock_alert_confirm',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.inventory.application.stocknotificationservice.pidtverdit_spovishchennia'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.inventory.application.stocknotificationservice.pidtverdit_shcho_khochete_otrymaty_lyst_koly_tovar').(string)$row['name'].\Commerce\Core\I18n\CanonicalUiText::get('php.modules.inventory.application.stocknotificationservice.znovu_bude_dostupnyi'),['action_url'=>$url,'action_label'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.inventory.application.stocknotificationservice.pidtverdyty')],'generic'),$email,null,'stock-confirm:'.$public->toRfc4122().':'.hash('sha256',$token));
+        return false;
     }
 
     public function confirm(string $requestPublicId,string $token): bool
