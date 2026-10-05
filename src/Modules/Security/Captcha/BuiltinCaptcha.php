@@ -93,7 +93,7 @@ final class BuiltinCaptcha
             $size = random_int(30, 38);
             $tmp = imagecreatetruecolor($size, $size + 8);
             imagecopyresized($tmp, $glyph, 0, 0, 0, 0, $size, $size + 8, 16, 22);
-            $rot = imagerotate($tmp, random_int(-22, 22), imagecolorallocate($tmp, 244, 246, 250)) ?: $tmp;
+            $rot = imagerotate($tmp, random_int(-38, 38), imagecolorallocate($tmp, 244, 246, 250)) ?: $tmp;
             imagecopymerge($canvas, $rot, 8 + $i * $cell + random_int(0, 6), random_int(2, 8), 0, 0, imagesx($rot), imagesy($rot), 100);
         }
         for ($i = 0; $i < 4; $i++) {

@@ -42,6 +42,7 @@ final readonly class CheckoutOrderService
         private \Commerce\Modules\Fraud\Application\FraudService $fraud,
         private \Symfony\Component\HttpFoundation\RequestStack $requests,
         private \Commerce\Modules\Checkout\Application\CheckoutMethodSettings $methodSettings,
+        private \Commerce\Modules\Checkout\Application\CartWeightCalculator $weights,
         private \Commerce\Modules\Storefront\Infrastructure\PickupPointRepository $pickupPoints,
     ) {}
 
@@ -129,12 +130,12 @@ final readonly class CheckoutOrderService
             if ($promotionResult->couponMessage !== null && trim((string)($input['coupon_code']??'')) !== '') throw new \DomainException($promotionResult->couponMessage);
             $discount=$promotionResult->discountMinor;
             // Delivery and payment fees come from Admin → Delivery and payment methods; an order outside a method's limits is refused.
-            $afterDiscount=max(0,$subtotal-$discount);
+            $afterDiscount=max(0,$subtotal-$discount); $cartKg=$this->weights->kg($cartId);
             foreach(array_filter([$requiresShipping?$providerCode:null,$payment->code]) as $methodCode){
-                $limit=$this->methodSettings->limit($context->storeId,(string)$methodCode,$afterDiscount);
+                $limit=$this->methodSettings->limit($context->storeId,(string)$methodCode,$afterDiscount,$cartKg);
                 if($limit!==null)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout.error.method_limit.'.$limit));
             }
-            $shipping=($requiresShipping?$this->methodSettings->fee($context->storeId,$providerCode,$afterDiscount):0)+$this->methodSettings->fee($context->storeId,(string)$payment->code,$afterDiscount); $tax=0; $total=max(0,$subtotal-$discount+$shipping+$tax);
+            $shipping=($requiresShipping?$this->methodSettings->fee($context->storeId,$providerCode,$afterDiscount,$cartKg):0)+$this->methodSettings->fee($context->storeId,(string)$payment->code,$afterDiscount,$cartKg); $tax=0; $total=max(0,$subtotal-$discount+$shipping+$tax);
             // VAT is informational: prices are tax-inclusive, so it is recorded per line (after the proportional discount) and never added to the total.
             $taxLines=[]; $taxIncluded=0; $taxCountry=(string)$context->countryCode!==''?(string)$context->countryCode:(string)$db->fetchOne('SELECT default_country FROM mc_store WHERE id=?',[$context->storeId]);
             foreach($rows as $taxRow){

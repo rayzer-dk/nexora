@@ -30,7 +30,7 @@ final class CustomerExperienceAdminController extends AbstractController
         try{$questions=$this->db->fetchAllAssociative("SELECT q.id,q.author_name,q.guest_email,q.question,q.answer,q.status,q.created_at,pt.name product_name FROM mc_product_question q JOIN mc_product_translation pt ON pt.product_id=q.product_id AND pt.store_id=q.store_id AND pt.locale=? WHERE q.store_id=? ORDER BY FIELD(q.status,'pending','published','rejected'),q.id DESC LIMIT 1000",[$ctx->locale,$ctx->storeId]);}catch(\Throwable){$questions=[];}
         try{$withdrawals=$this->db->fetchAllAssociative('SELECT id,order_reference,customer_name,email,scope_note,status,received_at,acknowledged_at,order_id FROM mc_withdrawal_notice WHERE store_id=? ORDER BY id DESC LIMIT 1000',[$ctx->storeId]);}catch(\Throwable){$withdrawals=[];}
         $stats=$this->stats($ctx->storeId);
-        return $this->render('@storefront/admin/customer_experience/index.html.twig',['stats'=>$stats,'withdrawals'=>$withdrawals,'returns'=>$returns,'reviews'=>$reviews,'questions'=>$questions,'guests_allowed'=>$this->reviewSettings->guestsAllowed(),'return_statuses'=>ReturnRequestService::STATUSES]);
+        return $this->render('@storefront/admin/customer_experience/index.html.twig',['stats'=>$stats,'withdrawals'=>$withdrawals,'returns'=>$returns,'reviews'=>$reviews,'questions'=>$questions,'guests_allowed'=>$this->reviewSettings->guestsAllowed(),'email_required'=>$this->reviewSettings->emailRequired(),'return_statuses'=>ReturnRequestService::STATUSES]);
     }
 
 
@@ -67,7 +67,7 @@ final class CustomerExperienceAdminController extends AbstractController
     public function reviewSettings(Request $request):Response
     {
         if(!$this->isCsrfTokenValid('review_settings',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
-        $this->reviewSettings->setGuestsAllowed($request->request->getBoolean('guests'));
+        $this->reviewSettings->save($request->request->getBoolean('guests'),$request->request->getBoolean('email_required'));
         $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.reviews.settings_saved'));
         return $this->redirectToRoute('admin_customer_experience');
     }

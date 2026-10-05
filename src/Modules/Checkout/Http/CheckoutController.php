@@ -51,19 +51,21 @@ final class CheckoutController extends AbstractController
         private readonly OrderConfirmationQuery $confirmation,
         private readonly \Commerce\Modules\Rewards\Application\GiftCardService $giftCards,
         private readonly CheckoutLeadService $leads,
+        private readonly \Commerce\Modules\Checkout\Application\CartWeightCalculator $weights,
     ) {}
 
     /** Delivery and payment fee for the method the shopper has picked so far, for the advisory totals. */
-    private function previewShipping(Request $request, int $storeId, int $afterDiscountMinor): int
+    private function previewShipping(Request $request, int $storeId, int $afterDiscountMinor, int $cartId = 0): int
     {
         $carrier = trim((string) $request->request->get('carrier'));
         $pay = trim((string) $request->request->get('payment_method'));
         $fee = 0;
+        $kg = $cartId > 0 ? $this->weights->kg($cartId) : 0.0;
         if ($carrier !== '' && in_array($carrier, CheckoutMethodSettings::DELIVERY, true)) {
-            $fee += $this->methodSettings->fee($storeId, $carrier, $afterDiscountMinor);
+            $fee += $this->methodSettings->fee($storeId, $carrier, $afterDiscountMinor, $kg);
         }
         if ($pay !== '' && in_array($pay, CheckoutMethodSettings::PAYMENT, true)) {
-            $fee += $this->methodSettings->fee($storeId, $pay, $afterDiscountMinor);
+            $fee += $this->methodSettings->fee($storeId, $pay, $afterDiscountMinor, $kg);
         }
 
         return $fee;
@@ -146,7 +148,7 @@ final class CheckoutController extends AbstractController
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id());
         $result=$this->promotions->calculateForCart($context->storeId,$cart['id'],trim((string)$request->request->get('coupon_code')) ?: null,$customer instanceof CustomerUser ? $customer->id() : null,trim((string)$request->request->get('email')) ?: null);
-        $shipFee=$this->previewShipping($request,$context->storeId,$result->totalMinor);
+        $shipFee=$this->previewShipping($request,$context->storeId,$result->totalMinor,(int)$cart['id']);
         return $this->json([
             'ok'=>$result->couponMessage===null,
             'message'=>$result->couponMessage ?? ($result->discountMinor>0 ? \Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.znyzhku_zastosovano') : \Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.dlia_koshyka_nemaie_aktyvnoi_znyzhky')),
@@ -167,7 +169,7 @@ final class CheckoutController extends AbstractController
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         $customer=$this->getUser(); $customerId=$customer instanceof CustomerUser?$customer->id():null;
         $result=$this->promotions->calculateForCart($context->storeId,$cart['id'],trim((string)$request->request->get('coupon_code')) ?: null,$customerId,trim((string)$request->request->get('email')) ?: null);
-        $shipFee=$this->previewShipping($request,$context->storeId,$result->totalMinor);
+        $shipFee=$this->previewShipping($request,$context->storeId,$result->totalMinor,(int)$cart['id']);
         $left=$result->totalMinor+$shipFee; $messages=[]; $ok=true; $giftMinor=0; $loyaltyMinor=0;
         $code=trim((string)$request->request->get('gift_card_code'));
         if ($code !== '') {

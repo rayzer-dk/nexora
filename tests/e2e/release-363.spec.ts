@@ -1,0 +1,52 @@
+import { expect, test, type Page } from '@playwright/test';
+import { expectNoServerError } from './helpers';
+
+// Release 3.63.0: option price modes, weight in checkout methods, own search words, optional review e-mail.
+
+test.describe.configure({ mode: 'serial' });
+
+async function loginAdmin(page: Page): Promise<void> {
+  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
+  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
+  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
+  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
+}
+
+test('the product form offers the price action, weight and start stock of an option value', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('select[name^="option_value"][name$="[mode]"]').first()).toBeAttached();
+  await expect(page.locator('input[name^="option_value"][name$="[weight_g]"]').first()).toBeAttached();
+  await expect(page.locator('select[name^="option["][name$="[display]"]').first()).toBeAttached();
+});
+
+test('delivery methods take a price per kilogram and a weight limit', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/shipments/methods', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('input[name$="[per_kg]"]').first()).toBeAttached();
+  await expect(page.locator('input[name$="[max_kg]"]').first()).toBeAttached();
+});
+
+test('own search words typed with a hyphen make the storefront find the catalog word', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/search', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await page.locator('textarea[name="pairs"]').fill('очки-sunglasses');
+  await Promise.all([page.waitForURL(/\/admin\/catalog\/search/), page.locator('form[action$="/synonyms/bulk"] button[type="submit"]').click()]);
+  await page.goto('/catalog?q=' + encodeURIComponent('очки'), { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-product-card]').first()).toBeAttached();
+});
+
+test('a guest can write a review without an e-mail while the setting is off', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-product-card] h2 a').first().click();
+  await page.locator('[data-tab="reviews"]').first().click();
+  const form = page.locator('#reviews form.feedback-form');
+  await expect(form.locator('input[name="guest_email"]')).not.toHaveAttribute('required', '');
+});

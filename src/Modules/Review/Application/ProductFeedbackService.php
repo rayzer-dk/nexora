@@ -20,6 +20,7 @@ final class ProductFeedbackService
         private readonly PublicIdFactory $ids,
         private readonly MediaImageService $media,
         private readonly ?AutomationEngine $automation = null,
+        private readonly ?ReviewSettings $settings = null,
     ) {}
 
     /** @param list<UploadedFile> $images */
@@ -70,15 +71,15 @@ final class ProductFeedbackService
         return (int)$this->db->fetchOne('SELECT helpful_count FROM mc_product_review WHERE id=?',[$reviewId]);
     }
 
-    /** @return array{0:string,1:int|string,2:string,3:?string} SQL condition, its value, a clean guest e-mail and the hashed client mark */
+    /** @return array{0:string,1:int|string,2:string,3:?string} SQL condition, its value, a clean guest e-mail (may be empty) and the hashed client mark */
     private function identity(?int $customerId,string $guestEmail,string $clientMark):array
     {
         if($customerId!==null)return ['customer_id=?',$customerId,'',null];
         $email=mb_strtolower(trim($guestEmail));
-        if(filter_var($email,FILTER_VALIDATE_EMAIL)===false||mb_strlen($email)>190)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('review.guest.email_required'));
+        if($email===''&&$this->settings?->emailRequired()===true||$email!==''&&(filter_var($email,FILTER_VALIDATE_EMAIL)===false||mb_strlen($email)>190))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('review.guest.email_required'));
         $hash=substr(hash('sha256',$clientMark),0,40);
 
-        return ['guest_email=?',$email,$email,$hash];
+        return $email!==''?['guest_email=?',$email,$email,$hash]:['client_hash=?',$hash,'',$hash];
     }
 
     private function product(int $storeId,string $publicId):int

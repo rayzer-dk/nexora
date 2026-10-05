@@ -656,6 +656,8 @@ final readonly class DbalStorefrontCatalogQuery
                 'values' => $valueMap[(int) $row['id']] ?? [],
                 'sku' => (string) $row['sku'],
                 'price' => $this->money->format((int) $row['amount_minor'], (string) $row['currency'], $context->locale),
+                'price_minor' => (int) $row['amount_minor'],
+                'currency' => (string) $row['currency'],
                 'selected' => (int) $row['id'] === $selectedVariantId,
                 'available' => $available,
             ];
@@ -687,7 +689,7 @@ final readonly class DbalStorefrontCatalogQuery
     private function optionGroups(int $productId, string $locale): array
     {
         $options = $this->connection->fetchAllAssociative(
-            'SELECT po.id,COALESCE(pot.name,(SELECT x.name FROM mc_product_option_translation x WHERE x.option_id=po.id ORDER BY x.locale LIMIT 1),po.code) name FROM mc_product_option po LEFT JOIN mc_product_option_translation pot ON pot.option_id=po.id AND pot.locale=? WHERE po.product_id=? ORDER BY po.sort_order,po.id',
+            'SELECT po.id,po.display,COALESCE(pot.name,(SELECT x.name FROM mc_product_option_translation x WHERE x.option_id=po.id ORDER BY x.locale LIMIT 1),po.code) name FROM mc_product_option po LEFT JOIN mc_product_option_translation pot ON pot.option_id=po.id AND pot.locale=? WHERE po.product_id=? ORDER BY po.sort_order,po.id',
             [$locale, $productId],
         );
         $groups = [];
@@ -699,7 +701,7 @@ final readonly class DbalStorefrontCatalogQuery
             if ($values === []) {
                 continue;
             }
-            $groups[] = ['id' => (int) $option['id'], 'name' => (string) $option['name'], 'values' => array_map(static fn (array $v): array => ['id' => (int) $v['id'], 'label' => (string) $v['label'], 'swatch' => (string) ($v['swatch'] ?? ''), 'media_id' => $v['media_asset_id'] !== null ? (int) $v['media_asset_id'] : null], $values)];
+            $groups[] = ['id' => (int) $option['id'], 'name' => (string) $option['name'], 'display' => (string) ($option['display'] ?? 'buttons'), 'values' => array_map(static fn (array $v): array => ['id' => (int) $v['id'], 'label' => (string) $v['label'], 'swatch' => (string) ($v['swatch'] ?? ''), 'media_id' => $v['media_asset_id'] !== null ? (int) $v['media_asset_id'] : null], $values)];
         }
 
         return $groups;

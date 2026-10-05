@@ -33,6 +33,33 @@ final class SearchAdminController extends AbstractController
         return $this->redirectToRoute('admin_catalog_search');
     }
 
+    #[Route('/admin/catalog/search/synonyms/bulk', name: 'admin_catalog_search_synonym_bulk', methods: ['POST'])]
+    public function bulk(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('admin_search_synonym_create', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+        $context = $this->context->resolve($request);
+        $added = 0;
+        foreach (preg_split('/\R/u', (string) $request->request->get('pairs', '')) ?: [] as $line) {
+            // "word - Word", "word-word", "a = b = c": every part is the same word for the search.
+            $parts = preg_split('/\s+[-–—=]\s+|\s*[=→>]\s*|(?<=\S)-(?=\S)/u', trim($line), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $parts = array_values(array_filter(array_map('trim', $parts), static fn (string $p): bool => $p !== ''));
+            if (count($parts) < 2) {
+                continue;
+            }
+            try {
+                $this->synonyms->createGroup($context->storeId, $context->locale, mb_substr($parts[0], 0, 190), implode(',', $parts));
+                ++$added;
+            } catch (\Throwable) {
+                // a bad line must not stop the others
+            }
+        }
+        $this->addFlash($added > 0 ? 'success' : 'error', \Commerce\Core\I18n\CanonicalUiText::get($added > 0 ? 'admin.search.bulk_ok' : 'admin.search.bulk_none', ['count' => $added]));
+
+        return $this->redirectToRoute('admin_catalog_search');
+    }
+
     #[Route('/admin/catalog/search/synonyms/{id}/delete', name: 'admin_catalog_search_synonym_delete', methods: ['POST'])]
     public function delete(int $id,Request $request): Response
     {

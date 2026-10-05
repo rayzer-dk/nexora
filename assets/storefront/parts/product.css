@@ -430,6 +430,10 @@
 .option-value--swatch { padding: 0 var(--mc-space-3); }
 .option-value__dot { width: var(--mc-space-5); height: var(--mc-space-5); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-full); }
 .option-value__label { white-space: nowrap; }
+.option-group__select { width: 100%; min-height: var(--mc-control-height-md); padding: 0 var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); color: var(--mc-color-text); }
+.option-group__values--radio { flex-direction: column; align-items: stretch; }
+.option-group__values--radio .option-value::before { content: ""; width: var(--mc-space-4); height: var(--mc-space-4); border: 2px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-full); flex: none; }
+.option-group__values--radio .option-value.is-selected::before { border-color: var(--mc-color-primary); background: radial-gradient(circle, var(--mc-color-primary) 45%, transparent 50%); }
 
 /* Category Builder: the filter column switched off */
 @media (min-width: 1024px) {

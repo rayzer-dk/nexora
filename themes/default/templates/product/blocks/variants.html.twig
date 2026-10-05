@@ -3,7 +3,8 @@
     {% for group in product.option_groups %}
     <fieldset class="option-group" data-option-group="{{ group.id }}">
         <legend>{{ group.name }}: <strong data-option-current></strong></legend>
-        <div class="option-group__values">
+        {% if group.display|default('buttons') == 'dropdown' %}<select class="option-group__select" data-option-select="{{ group.id }}" aria-label="{{ group.name|e('html_attr') }}">{% for value in group.values %}<option value="{{ value.id }}">{{ value.label }}</option>{% endfor %}</select>{% endif %}
+        <div class="option-group__values{{ group.display|default('buttons') == 'radio' ? ' option-group__values--radio' : '' }}"{{ group.display|default('buttons') == 'dropdown' ? ' hidden' : '' }}>
             {% for value in group.values %}<button type="button" class="option-value{{ value.swatch ? ' option-value--swatch' : '' }}" data-option="{{ group.id }}" data-option-value="{{ value.id }}" data-label="{{ value.label|e('html_attr') }}" data-media="{{ value.media_id|default('') }}" aria-pressed="false" title="{{ value.label|e('html_attr') }}">{% if value.swatch %}<span class="option-value__dot" style="background:{{ value.swatch }}"></span>{% endif %}<span class="option-value__label">{{ value.label }}</span></button>{% endfor %}
         </div>
     </fieldset>

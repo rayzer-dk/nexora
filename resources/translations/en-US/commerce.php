@@ -92,4 +92,5 @@ Product: %product%',
     'scheduler.description.media_gc' => 'Daily removes image sizes of older generations and purges the trash after 30 days. Unused pictures are never removed automatically: review and remove them by hand in Media library > Cleanup.',
     'checkout.error.method_limit.min' => 'The order amount is too small for the chosen delivery or payment method.',
     'checkout.error.method_limit.max' => 'The order amount is too large for the chosen delivery or payment method.',
+    'checkout.error.method_limit.max_weight' => 'The order is too heavy for the chosen method.',
 ];

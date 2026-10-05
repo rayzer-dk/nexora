@@ -16,6 +16,6 @@ final class ReviewExtension extends AbstractExtension
 
     public function getFunctions(): array
     {
-        return [new TwigFunction('reviews_allow_guests', fn (): bool => $this->settings->guestsAllowed())];
+        return [new TwigFunction('reviews_allow_guests', fn (): bool => $this->settings->guestsAllowed()), new TwigFunction('reviews_email_required', fn (): bool => $this->settings->emailRequired())];
     }
 }

@@ -23,16 +23,16 @@ final readonly class ProductOptionService
     ) {
     }
 
-    /** @return list<array{id:int,name:string,values:list<array{id:int,label:string,swatch:string,delta:string,media_id:?int}>}> */
+    /** @return list<array{id:int,name:string,display:string,values:list<array{id:int,label:string,swatch:string,delta:string,mode:string,weight_g:int,quantity:?int,media_id:?int}>}> */
     public function forEdit(int $productId, string $locale): array
     {
         $result = [];
-        foreach ($this->db->fetchAllAssociative('SELECT po.id,COALESCE(pot.name,po.code) name FROM mc_product_option po LEFT JOIN mc_product_option_translation pot ON pot.option_id=po.id AND pot.locale=? WHERE po.product_id=? ORDER BY po.sort_order,po.id', [$locale, $productId]) as $option) {
+        foreach ($this->db->fetchAllAssociative('SELECT po.id,po.display,COALESCE(pot.name,po.code) name FROM mc_product_option po LEFT JOIN mc_product_option_translation pot ON pot.option_id=po.id AND pot.locale=? WHERE po.product_id=? ORDER BY po.sort_order,po.id', [$locale, $productId]) as $option) {
             $values = [];
-            foreach ($this->db->fetchAllAssociative('SELECT ov.id,ov.swatch,ov.price_delta_minor,ov.media_asset_id,COALESCE(ovt.name,ov.code) label FROM mc_product_option_value ov LEFT JOIN mc_product_option_value_translation ovt ON ovt.option_value_id=ov.id AND ovt.locale=? WHERE ov.option_id=? ORDER BY ov.sort_order,ov.id', [$locale, (int) $option['id']]) as $value) {
-                $values[] = ['id' => (int) $value['id'], 'label' => (string) $value['label'], 'swatch' => (string) ($value['swatch'] ?? ''), 'delta' => number_format(((int) $value['price_delta_minor']) / 100, 2, '.', ''), 'media_id' => $value['media_asset_id'] !== null ? (int) $value['media_asset_id'] : null];
+            foreach ($this->db->fetchAllAssociative('SELECT ov.id,ov.swatch,ov.price_delta_minor,ov.price_mode,ov.weight_delta_g,ov.initial_quantity,ov.media_asset_id,COALESCE(ovt.name,ov.code) label FROM mc_product_option_value ov LEFT JOIN mc_product_option_value_translation ovt ON ovt.option_value_id=ov.id AND ovt.locale=? WHERE ov.option_id=? ORDER BY ov.sort_order,ov.id', [$locale, (int) $option['id']]) as $value) {
+                $values[] = ['id' => (int) $value['id'], 'label' => (string) $value['label'], 'swatch' => (string) ($value['swatch'] ?? ''), 'delta' => number_format(((int) $value['price_delta_minor']) / 100, 2, '.', ''), 'mode' => (string) $value['price_mode'], 'weight_g' => (int) $value['weight_delta_g'], 'quantity' => $value['initial_quantity'] !== null ? (int) $value['initial_quantity'] : null, 'media_id' => $value['media_asset_id'] !== null ? (int) $value['media_asset_id'] : null];
             }
-            $result[] = ['id' => (int) $option['id'], 'name' => (string) $option['name'], 'values' => $values];
+            $result[] = ['id' => (int) $option['id'], 'name' => (string) $option['name'], 'display' => (string) $option['display'], 'values' => $values];
         }
 
         return $result;
@@ -77,6 +77,8 @@ final readonly class ProductOptionService
                 if ($name !== '') {
                     $this->translate($db, 'mc_product_option_translation', 'option_id', (int) $optionId, $locale, $name);
                 }
+                $display = (string) ($data['display'] ?? 'buttons');
+                $db->update('mc_product_option', ['display' => in_array($display, ['buttons', 'dropdown', 'radio'], true) ? $display : 'buttons'], ['id' => (int) $optionId]);
                 foreach ($this->splitValues((string) ($data['new_value'] ?? '')) as $label) {
                     $this->insertValue($db, (int) $optionId, $locale, $label);
                 }
@@ -94,7 +96,10 @@ final readonly class ProductOptionService
                 $swatch = strtolower(trim((string) ($data['swatch'] ?? '')));
                 $media = (int) ($data['media'] ?? 0);
                 $db->update('mc_product_option_value', [
-                    'price_delta_minor' => $this->minor((string) ($data['delta'] ?? '0')),
+                    'price_delta_minor' => abs($this->minor((string) ($data['delta'] ?? '0'))),
+                    'price_mode' => in_array((string) ($data['mode'] ?? 'add'), ['add', 'sub', 'set'], true) ? (string) $data['mode'] : 'add',
+                    'weight_delta_g' => max(-1000000, min(1000000, (int) ($data['weight_g'] ?? 0))),
+                    'initial_quantity' => trim((string) ($data['quantity'] ?? '')) === '' ? null : max(0, min(1000000, (int) $data['quantity'])),
                     'swatch' => preg_match('/^#[0-9a-f]{6}$/D', $swatch) === 1 ? $swatch : null,
                     'media_asset_id' => in_array($media, $pictures, true) ? $media : null,
                 ], ['id' => (int) $valueId]);
@@ -168,10 +173,29 @@ final readonly class ProductOptionService
         if (!is_array($main)) {
             throw new \DomainException(CanonicalUiText::get('admin.catalog.options.error_empty'));
         }
-        $deltas = [];
-        foreach ($this->db->fetchAllAssociative('SELECT ov.id,ov.price_delta_minor FROM mc_product_option_value ov JOIN mc_product_option po ON po.id=ov.option_id WHERE po.product_id=?', [$productId]) as $row) {
-            $deltas[(int) $row['id']] = (int) $row['price_delta_minor'];
+        $modes = [];
+        $weights = [];
+        $quantities = [];
+        foreach ($this->db->fetchAllAssociative('SELECT ov.id,ov.price_delta_minor,ov.price_mode,ov.weight_delta_g,ov.initial_quantity FROM mc_product_option_value ov JOIN mc_product_option po ON po.id=ov.option_id WHERE po.product_id=?', [$productId]) as $row) {
+            $modes[(int) $row['id']] = [(string) $row['price_mode'], (int) $row['price_delta_minor']];
+            $weights[(int) $row['id']] = (int) $row['weight_delta_g'];
+            $quantities[(int) $row['id']] = $row['initial_quantity'] !== null ? (int) $row['initial_quantity'] : null;
         }
+        // "+" adds, "-" subtracts, "=" sets the price of the whole combination (the last "=" of the combination wins).
+        $priceOf = static function (array $ids, int $base) use ($modes): int {
+            $price = $base;
+            $set = null;
+            foreach ($ids as $id) {
+                [$mode, $amount] = $modes[$id] ?? ['add', 0];
+                if ($mode === 'set') {
+                    $set = $amount;
+                } else {
+                    $price += $mode === 'sub' ? -$amount : $amount;
+                }
+            }
+
+            return $set !== null ? $set + ($price - $base) : $price;
+        };
         $existing = [];
         foreach ($this->db->fetchAllAssociative('SELECT vov.variant_id,vov.option_value_id FROM mc_variant_option_value vov JOIN mc_product_variant v ON v.id=vov.variant_id WHERE v.product_id=?', [$productId]) as $row) {
             $existing[(int) $row['variant_id']][] = (int) $row['option_value_id'];
@@ -184,7 +208,7 @@ final readonly class ProductOptionService
         $mainId = (int) $main['id'];
         $mainValues = $existing[$mainId] ?? [];
         $mainPrice = (int) $this->db->fetchOne("SELECT amount_minor FROM mc_price WHERE variant_id=? AND store_id=? AND customer_group='default' AND price_list_id IS NULL ORDER BY (market_id=?) DESC,min_quantity,id LIMIT 1", [$mainId, $storeId, $marketId]);
-        $base = $mainPrice - array_sum(array_map(static fn (int $id): int => $deltas[$id] ?? 0, $mainValues));
+        $base = $mainPrice - ($priceOf($mainValues, 0));
         $created = 0;
         $suffix = 0;
         foreach ($combinations as $combination) {
@@ -205,8 +229,10 @@ final readonly class ProductOptionService
                 $suffix++;
                 $sku = $main['sku'] . '-' . $suffix;
             } while ((int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_product_variant WHERE sku=?', [$sku]) > 0);
-            $price = max(0, $base + array_sum(array_map(static fn (int $id): int => $deltas[$id] ?? 0, $combination)));
-            $variant = $this->variants->create($productId, $storeId, $marketId, $sku, $price, '0', (string) $main['sale_unit_code']);
+            $price = max(0, $priceOf($combination, $base));
+            $weight = (float) $this->db->fetchOne('SELECT weight_kg FROM mc_product_variant WHERE id=?', [$mainId]) + array_sum(array_map(static fn (int $id): int => $weights[$id] ?? 0, $combination)) / 1000 - array_sum(array_map(static fn (int $id): int => $weights[$id] ?? 0, $mainValues)) / 1000;
+            $stocks = array_filter(array_map(static fn (int $id): ?int => $quantities[$id] ?? null, $combination), static fn (?int $q): bool => $q !== null);
+            $variant = $this->variants->create($productId, $storeId, $marketId, $sku, $price, (string) ($stocks === [] ? 0 : min($stocks)), (string) $main['sale_unit_code'], null, null, false, $weight > 0 ? round($weight, 3) : null);
             foreach ($combination as $valueId) {
                 $this->db->insert('mc_variant_option_value', ['variant_id' => $variant['id'], 'option_value_id' => $valueId]);
             }

@@ -407,8 +407,23 @@ function initOptionPicker() {
         }
     };
 
+    // What choosing this value would do to the price: "+50 ₴", "−20 ₴" or nothing, shown when hovering or focusing the value.
+    const diffLabel = (option, value) => {
+        const next = { ...chosen, [option]: Number(value) };
+        const candidate = variants.find((variant) => keyOf(variant) === Object.entries(next).map(([o, v]) => `${o}:${v}`).sort().join('|')) || variants.find((variant) => String((variant.values || {})[option]) === String(value));
+        const current = match() || initial;
+        if (!candidate || !current || typeof candidate.price_minor !== 'number' || candidate.price_minor === current.price_minor) return '';
+        const delta = candidate.price_minor - current.price_minor;
+        let amount = String(Math.abs(delta) / 100);
+        try { amount = new Intl.NumberFormat(document.documentElement.lang || undefined, { style: 'currency', currency: candidate.currency || undefined }).format(Math.abs(delta) / 100); } catch { /* plain number */ }
+        return `${delta > 0 ? '+' : '−'}${amount}`;
+    };
+
     const render = () => {
+        root.querySelectorAll('select[data-option-select]').forEach((select) => { if (chosen[select.dataset.optionSelect] !== undefined) select.value = String(chosen[select.dataset.optionSelect]); });
         buttons.forEach((button) => {
+            const diff = diffLabel(button.dataset.option || '', button.dataset.optionValue || '');
+            button.title = diff ? `${button.dataset.label || ''} · ${diff}` : (button.dataset.label || '');
             const option = button.dataset.option || '';
             const value = button.dataset.optionValue || '';
             const on = String(chosen[option]) === value;
@@ -422,6 +437,9 @@ function initOptionPicker() {
         });
     };
 
+    root.querySelectorAll('select[data-option-select]').forEach((select) => select.addEventListener('change', () => {
+        root.querySelector(`[data-option="${CSS.escape(select.dataset.optionSelect || '')}"][data-option-value="${CSS.escape(select.value)}"]`)?.click();
+    }));
     buttons.forEach((button) => button.addEventListener('click', () => {
         const option = button.dataset.option || '';
         const value = Number(button.dataset.optionValue);

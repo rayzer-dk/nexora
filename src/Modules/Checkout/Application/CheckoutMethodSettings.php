@@ -53,7 +53,7 @@ final class CheckoutMethodSettings
      * Prices and limits of every method: fee_minor, free_over_minor (0 = never free), min_minor / max_minor (0 = no limit of the order amount
      * after the discount), sort, and the title/text shown at checkout per language (empty = the built-in translation).
      *
-     * @return array<string,array{fee_minor:int,free_over_minor:int,min_minor:int,max_minor:int,sort:int,title:array<string,string>,text:array<string,string>}>
+     * @return array<string,array{fee_minor:int,free_over_minor:int,min_minor:int,max_minor:int,per_kg_minor:int,free_kg:float,max_kg:float,sort:int,title:array<string,string>,text:array<string,string>}>
      */
     public function config(int $storeId): array
     {
@@ -65,6 +65,7 @@ final class CheckoutMethodSettings
             $out[$code] = [
                 'fee_minor' => max(0, (int) ($c['fee_minor'] ?? 0)), 'free_over_minor' => max(0, (int) ($c['free_over_minor'] ?? 0)),
                 'min_minor' => max(0, (int) ($c['min_minor'] ?? 0)), 'max_minor' => max(0, (int) ($c['max_minor'] ?? 0)),
+                'per_kg_minor' => max(0, (int) ($c['per_kg_minor'] ?? 0)), 'free_kg' => max(0.0, (float) ($c['free_kg'] ?? 0)), 'max_kg' => max(0.0, (float) ($c['max_kg'] ?? 0)),
                 'sort' => (int) ($c['sort'] ?? 0),
                 'title' => self::texts($c['title'] ?? []), 'text' => self::texts($c['text'] ?? []),
             ];
@@ -73,19 +74,26 @@ final class CheckoutMethodSettings
         return $out;
     }
 
-    /** The fee of a delivery or payment method for an order of this amount (after the discount); free above the "free over" amount. */
-    public function fee(int $storeId, string $code, int $amountMinor): int
+    /**
+     * The fee of a delivery or payment method for an order of this amount (after the discount); free above the "free over" amount.
+     * With a price per kilogram, every started kilogram above the included weight adds to the fee (the weight of the products is set in the product).
+     */
+    public function fee(int $storeId, string $code, int $amountMinor, float $weightKg = 0.0): int
     {
         $c = $this->config($storeId)[$code] ?? null;
-        if ($c === null || $c['fee_minor'] === 0) {
+        if ($c === null) {
             return 0;
         }
+        if ($c['free_over_minor'] > 0 && $amountMinor >= $c['free_over_minor']) {
+            return 0;
+        }
+        $extra = $c['per_kg_minor'] > 0 ? $c['per_kg_minor'] * (int) ceil(max(0.0, $weightKg - $c['free_kg']) - 1e-9) : 0;
 
-        return $c['free_over_minor'] > 0 && $amountMinor >= $c['free_over_minor'] ? 0 : $c['fee_minor'];
+        return $c['fee_minor'] + $extra;
     }
 
-    /** @return 'min'|'max'|null which limit the order amount breaks for this method */
-    public function limit(int $storeId, string $code, int $amountMinor): ?string
+    /** @return 'min'|'max'|'max_weight'|null which limit the order amount or weight breaks for this method */
+    public function limit(int $storeId, string $code, int $amountMinor, float $weightKg = 0.0): ?string
     {
         $c = $this->config($storeId)[$code] ?? null;
         if ($c === null) {
@@ -93,6 +101,9 @@ final class CheckoutMethodSettings
         }
         if ($c['min_minor'] > 0 && $amountMinor < $c['min_minor']) {
             return 'min';
+        }
+        if ($c['max_kg'] > 0 && $weightKg > $c['max_kg']) {
+            return 'max_weight';
         }
 
         return $c['max_minor'] > 0 && $amountMinor > $c['max_minor'] ? 'max' : null;
@@ -117,6 +128,7 @@ final class CheckoutMethodSettings
             $raw[$code] = [
                 'fee_minor' => $money($m['fee'] ?? 0), 'free_over_minor' => $money($m['free_over'] ?? 0),
                 'min_minor' => $money($m['min'] ?? 0), 'max_minor' => $money($m['max'] ?? 0),
+                'per_kg_minor' => $money($m['per_kg'] ?? 0), 'free_kg' => max(0.0, (float) str_replace(',', '.', (string) ($m['free_kg'] ?? 0))), 'max_kg' => max(0.0, (float) str_replace(',', '.', (string) ($m['max_kg'] ?? 0))),
                 'sort' => (int) ($m['sort'] ?? 0),
                 'title' => self::texts($m['title'] ?? []), 'text' => self::texts($m['text'] ?? []),
             ];

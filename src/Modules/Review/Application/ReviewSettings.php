@@ -20,8 +20,14 @@ final class ReviewSettings
         return (bool) (($this->store->getArray(self::KEY) ?? [])['guests'] ?? true);
     }
 
-    public function setGuestsAllowed(bool $allowed): void
+    /** Whether a guest must leave an e-mail. Off by default: the shop only needs it to reply by e-mail. */
+    public function emailRequired(): bool
     {
-        $this->store->setArray(self::KEY, ['guests' => $allowed]);
+        return (bool) (($this->store->getArray(self::KEY) ?? [])['email_required'] ?? false);
+    }
+
+    public function save(bool $guestsAllowed, bool $emailRequired): void
+    {
+        $this->store->setArray(self::KEY, ['guests' => $guestsAllowed, 'email_required' => $emailRequired]);
     }
 }
