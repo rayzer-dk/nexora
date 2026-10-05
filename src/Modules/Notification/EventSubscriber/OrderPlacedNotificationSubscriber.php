@@ -26,6 +26,7 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
         private NotificationOutbox $notifications,
         private StorefrontUiTranslator $translator,
         private \Commerce\Modules\Order\Application\OrderMethodPresenter $methodLabels,
+        private ?\Commerce\Modules\Notification\Application\TelegramAlertSettings $alerts = null,
         #[\Symfony\Component\DependencyInjection\Attribute\Autowire('%commerce.app_public_url%')] private string $publicUrl = '',
     ) {
     }
@@ -87,6 +88,8 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
         if ($email !== '') {
             $this->notifications->enqueue(NotificationChannel::Email, $message, $email, null, 'event:' . $event->eventId . ':order-created:email');
         }
-        $this->notifications->enqueue(NotificationChannel::Telegram, $message, '', null, 'event:' . $event->eventId . ':order-created:telegram');
+        if ($this->alerts === null || $this->alerts->enabled('order_created')) {
+            $this->notifications->enqueue(NotificationChannel::Telegram, $message, '', null, 'event:' . $event->eventId . ':order-created:telegram');
+        }
     }
 }

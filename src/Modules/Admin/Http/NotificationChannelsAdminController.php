@@ -24,6 +24,7 @@ final class NotificationChannelsAdminController extends AbstractController
     public function __construct(
         private readonly AdminContextResolver $contexts,
         private readonly NotificationChannelSettings $settings,
+        private readonly \Commerce\Modules\Notification\Application\TelegramAlertSettings $telegramAlerts,
         private readonly EmailNotificationSender $mailSender,
         private readonly TelegramBotClient $bot,
         private readonly LoggerInterface $logger,
@@ -68,7 +69,18 @@ final class NotificationChannelsAdminController extends AbstractController
             'env_mail_is_null' => str_starts_with(trim($this->envDsn), 'null:'),
             'env_from' => $this->envFrom,
             'design' => $this->settings->design($storeId),
+            'tg_alerts' => $this->telegramAlerts->all(),
         ]);
+    }
+
+    #[Route('/admin/commerce/notification-channels/telegram-alerts', name: 'admin_commerce_notification_telegram_alerts', methods: ['POST'])]
+    public function telegramAlerts(Request $request): Response
+    {
+        $this->guard($request);
+        $this->telegramAlerts->save($request->request->all());
+        $this->addFlash('success', CanonicalUiText::get('admin.notify_channels.alerts_saved'));
+
+        return $this->redirectToRoute('admin_commerce_notification_channels');
     }
 
     #[Route('/admin/commerce/notification-channels/design', name: 'admin_commerce_notification_design', methods: ['POST'])]

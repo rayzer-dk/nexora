@@ -21,6 +21,7 @@ final class ProductFeedbackService
         private readonly MediaImageService $media,
         private readonly ?AutomationEngine $automation = null,
         private readonly ?ReviewSettings $settings = null,
+        private readonly ?\Commerce\Modules\Notification\Application\TelegramAlertSettings $telegram = null,
     ) {}
 
     /** @param list<UploadedFile> $images */
@@ -48,6 +49,7 @@ final class ProductFeedbackService
             foreach($validImages as $sort=>$image){$asset=$this->media->upload($image,$ctx->storeId,null,'reviews');$this->db->insert('mc_review_media',['review_id'=>$reviewId,'media_id'=>$asset->assetId,'sort_order'=>$sort]);}
             $this->db->commit();
         }catch(\Throwable $e){if($this->db->isTransactionActive())$this->db->rollBack();throw $e;}
+        $this->telegram?->alert('review',\Commerce\Core\I18n\CanonicalUiText::get('notify.tg.review'),$author.' · '.$rating.'/5'.($title!==''?' · '.$title:'')."\n".mb_substr($body,0,300),'review-tg:'.$reviewId);
         try{$this->automation?->fire($ctx->storeId,'review_created','review:'.$reviewId,['name'=>$author,'text'=>$author.' · '.$rating.'/5'.($title!==''?' · '.$title:''),'url'=>'/admin/customer-experience']);}catch(\Throwable){}
     }
 
