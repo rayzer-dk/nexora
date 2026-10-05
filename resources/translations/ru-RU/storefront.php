@@ -1015,4 +1015,12 @@ return [
     'status.carrier.gls' => 'GLS',
     'return_status_subject' => 'Возврат по заказу %number%: %status%',
     'return_status_text' => 'Статус вашего возврата по заказу %number% изменён: %status%.',
+    'digest_title' => 'Отчёт за вчера',
+    'digest_orders' => 'Заказов (позавчера)',
+    'digest_revenue' => 'Выручка (позавчера)',
+    'digest_visits' => 'Посещений',
+    'digest_warnings' => 'Предупреждения',
+    'digest_attention' => 'Требует внимания',
+    'digest_all_good' => 'Всё хорошо: срочно делать ничего не нужно.',
+    'digest_waiting' => 'Покупателей ждут товары, которых нет в наличии: %count%.',
 ];

@@ -2,10 +2,12 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.59.0 — 2026-10-05
+## 3.60.0 — 2026-10-05
 
-The shop suggests what to do.
+Lost demand, product tips, link check, early warnings and the daily report.
 
-- Missing pages: for every address visitors could not find the shop suggests the most similar page (product, category, brand, article) and creates the redirect in one click.
-- Dashboard "needs attention": orders unpaid for over a day, B2B waiting for approval, abandoned carts with contacts not yet reminded, searches with no results, missing pages visited 3+ times, gift cards expiring within 14 days.
-- Searches with no results: teach the search a synonym right from the analytics page.
+- Analytics: "Lost demand" — out-of-stock products by page views and shoppers waiting for them, with possible revenue; "Product tips" — looked at but not bought, sitting without sales, pairs bought together.
+- Broken links and pictures: a daily check of the menu, pages, articles, product descriptions and storefront settings (the shop only, no network); one click to create a redirect.
+- Early warnings: certificate about to expire, low disk space, no recent backup, goods that will run out within days at the current pace of sales.
+- Daily report to the owner by e-mail (results of yesterday, what needs attention, warnings), off until switched on in Admin → Quality → Early warnings.
+- Cart: the "left until free delivery" text showed a raw placeholder, fixed.

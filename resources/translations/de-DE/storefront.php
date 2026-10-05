@@ -862,4 +862,12 @@ return [
     'status.blocked' => 'Gesperrt',
     'status.event.admin.customer_edited' => 'Kundendaten geändert',
     'status.event.admin.customer_message' => 'E-Mail an den Kunden',
+    'digest_title' => 'Bericht für gestern',
+    'digest_orders' => 'Bestellungen (Vortag)',
+    'digest_revenue' => 'Umsatz (Vortag)',
+    'digest_visits' => 'Besuche',
+    'digest_warnings' => 'Warnungen',
+    'digest_attention' => 'Braucht Aufmerksamkeit',
+    'digest_all_good' => 'Alles gut: nichts Dringendes zu tun.',
+    'digest_waiting' => 'Kunden, die auf nicht vorrätige Artikel warten: %count%.',
 ];

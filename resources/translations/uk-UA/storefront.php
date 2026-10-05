@@ -1279,4 +1279,12 @@ return [
     'status.carrier.gls' => 'GLS',
     'return_status_subject' => 'Повернення до замовлення %number%: %status%',
     'return_status_text' => 'Статус вашого повернення до замовлення %number% змінено: %status%.',
+    'digest_title' => 'Звіт за вчора',
+    'digest_orders' => 'Замовлень (позавчора)',
+    'digest_revenue' => 'Виручка (позавчора)',
+    'digest_visits' => 'Відвідувань',
+    'digest_warnings' => 'Попередження',
+    'digest_attention' => 'Потребує уваги',
+    'digest_all_good' => 'Усе добре: нічого терміново робити не потрібно.',
+    'digest_waiting' => 'Покупців чекає на товари, яких немає в наявності: %count%.',
 ];

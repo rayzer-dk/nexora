@@ -1279,4 +1279,12 @@ return [
     'status.carrier.gls' => 'GLS',
     'return_status_subject' => 'Return for order %number%: %status%',
     'return_status_text' => 'The status of your return for order %number% changed: %status%.',
+    'digest_title' => 'Yesterday\'s report',
+    'digest_orders' => 'Orders (day before)',
+    'digest_revenue' => 'Revenue (day before)',
+    'digest_visits' => 'Visits',
+    'digest_warnings' => 'Warnings',
+    'digest_attention' => 'Needs attention',
+    'digest_all_good' => 'All good: nothing urgent to do.',
+    'digest_waiting' => 'Shoppers waiting for out-of-stock goods: %count%.',
 ];

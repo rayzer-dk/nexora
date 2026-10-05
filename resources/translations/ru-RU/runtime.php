@@ -25,4 +25,6 @@ return [
     'payment.stripe.no_session' => 'Stripe не вернул сеанс оплаты.',
     'payment.stripe.nothing_to_refund' => 'Платёж Stripe не завершён, возвращать нечего.',
     'shipping.error.http' => '%carrier%: ошибка HTTP %code%.',
+    'scheduler.label.daily_digest' => 'Ежедневный отчёт владельцу',
+    'scheduler.description.daily_digest' => 'Раз в день после выбранного часа отправляет короткий отчёт: итоги, что требует внимания, предупреждения.',
 ];

@@ -1,0 +1,15 @@
+{% extends '@storefront/email/base.html.twig' %}
+{% block content %}
+  {% set r = report %}
+  <h1 style="margin:0 0 6px;font-size:24px;line-height:1.25;">{{ ui_text('digest_title') }}</h1>
+  <p style="margin:0 0 18px;color:#667085;">{{ r.store }} · {{ r.date }}</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 22px;">
+    <tr><td style="padding:8px 0;color:#667085;">{{ ui_text('digest_orders') }}</td><td style="padding:8px 0;text-align:right;font-weight:600;">{{ r.kpi.orders }} <span style="color:#667085;font-weight:400;">({{ r.kpi.orders_prev }})</span></td></tr>
+    <tr><td style="padding:8px 0;color:#667085;">{{ ui_text('digest_revenue') }}</td><td style="padding:8px 0;text-align:right;font-weight:600;">{{ r.kpi.revenue }} <span style="color:#667085;font-weight:400;">({{ r.kpi.revenue_prev }})</span></td></tr>
+    <tr><td style="padding:8px 0;color:#667085;">{{ ui_text('digest_visits') }}</td><td style="padding:8px 0;text-align:right;font-weight:600;">{{ r.kpi.sessions }}</td></tr>
+  </table>
+  {% if r.warnings %}<h2 style="margin:0 0 8px;font-size:17px;">{{ ui_text('digest_warnings') }}</h2><ul style="margin:0 0 20px;padding-left:18px;line-height:1.6;">{% for w in r.warnings %}<li style="color:{{ w.level == 'fail' ? '#b42318' : '#b54708' }};"><a href="{{ w.url }}" style="color:inherit;">{{ w.text }}</a></li>{% endfor %}</ul>{% endif %}
+  {% if r.attention %}<h2 style="margin:0 0 8px;font-size:17px;">{{ ui_text('digest_attention') }}</h2><ul style="margin:0 0 20px;padding-left:18px;line-height:1.6;">{% for a in r.attention %}<li><a href="{{ a.url }}" style="color:#175cd3;">{{ a.label }}</a>: <strong>{{ a.count }}</strong></li>{% endfor %}</ul>{% endif %}
+  {% if not r.warnings and not r.attention %}<p style="margin:0 0 16px;">{{ ui_text('digest_all_good') }}</p>{% endif %}
+  {% if r.waiting %}<p style="margin:0;color:#475467;">{{ ui_text('digest_waiting', {count: r.waiting}) }}</p>{% endif %}
+{% endblock %}

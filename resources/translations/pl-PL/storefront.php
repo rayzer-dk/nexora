@@ -862,4 +862,12 @@ return [
     'status.blocked' => 'Zablokowane',
     'status.event.admin.customer_edited' => 'Zmieniono dane klienta',
     'status.event.admin.customer_message' => 'E-mail do klienta',
+    'digest_title' => 'Raport za wczoraj',
+    'digest_orders' => 'Zamówienia (przedwczoraj)',
+    'digest_revenue' => 'Przychód (przedwczoraj)',
+    'digest_visits' => 'Wizyty',
+    'digest_warnings' => 'Ostrzeżenia',
+    'digest_attention' => 'Wymaga uwagi',
+    'digest_all_good' => 'Wszystko dobrze: nic pilnego do zrobienia.',
+    'digest_waiting' => 'Klienci czekający na produkty niedostępne w magazynie: %count%.',
 ];

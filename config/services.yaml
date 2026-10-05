@@ -193,6 +193,15 @@ services:
 
 
 
+    Commerce\Modules\Quality\Application\EarlyWarningService:
+        arguments:
+            $publicUrl: '%commerce.app_public_url%'
+            $projectDir: '%kernel.project_dir%'
+
+    Commerce\Modules\Quality\Application\DailyDigestService:
+        arguments:
+            $publicUrl: '%commerce.app_public_url%'
+
     Commerce\Modules\Quality\Application\LinkCheckService:
         arguments:
             $projectDir: '%kernel.project_dir%'

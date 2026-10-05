@@ -2070,4 +2070,6 @@ return [
     'shipping.error.http' => '%carrier%: HTTP error %code%.',
     'scheduler.label.link_check' => 'Link and picture check',
     'scheduler.description.link_check' => 'Searches the shop content for links to missing pages and pictures without files.',
+    'scheduler.label.daily_digest' => 'Daily report to the owner',
+    'scheduler.description.daily_digest' => 'Once a day after the chosen hour sends a short report: results, what needs attention, warnings.',
 ];

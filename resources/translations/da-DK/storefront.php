@@ -929,4 +929,12 @@ return [
     'status.blocked' => 'Blokeret',
     'status.event.admin.customer_edited' => 'Kundeoplysninger ændret',
     'status.event.admin.customer_message' => 'E-mail til kunden',
+    'digest_title' => 'Rapport for i går',
+    'digest_orders' => 'Ordrer (i forgårs)',
+    'digest_revenue' => 'Omsætning (i forgårs)',
+    'digest_visits' => 'Besøg',
+    'digest_warnings' => 'Advarsler',
+    'digest_attention' => 'Kræver opmærksomhed',
+    'digest_all_good' => 'Alt er godt: intet haster.',
+    'digest_waiting' => 'Kunder, der venter på varer uden lager: %count%.',
 ];
