@@ -340,7 +340,7 @@ function tidyTimestamps() {
 function initFieldLangTabs() {
   const labels = qa('main [data-lang]');
   if (!labels.length) return;
-  const scopeOf = (el) => el.closest('fieldset, details, .admin-benefit, .admin-panel, form') || document.body;
+  const scopeOf = (el) => el.closest('fieldset, details, .admin-benefit, .admin-method, .admin-method__own, .admin-panel, form') || document.body;
   const scopes = new Map();
   labels.forEach((label) => {
     const scope = scopeOf(label);
