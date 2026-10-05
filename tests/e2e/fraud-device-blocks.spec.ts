@@ -35,8 +35,8 @@ async function fillCheckout(page: Page, email: string): Promise<void> {
   expect((await add).status()).toBeLessThan(500);
   await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-checkout-form]')).toBeVisible();
-  await page.locator('[name="name"]').fill('E2E Buyer');
-  await page.locator('[name="phone"]').fill('+380501234567');
+  await page.locator('[data-checkout-form] [name="name"]').fill('E2E Buyer');
+  await page.locator('[data-checkout-form] [name="phone"]').fill('+380501234567');
   const mail = page.locator('[data-checkout-form] [name="email"]');
   if (await mail.count()) await mail.fill(email);
   const city = page.locator('[data-delivery-city]');

@@ -27,8 +27,8 @@ async function placeLiqPayOrder(page: Page): Promise<{ payload: Record<string, s
   await page.locator('form[data-buy-actions] [data-primary-buy]').click();
   expect((await add).status()).toBeLessThan(500);
   await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
-  await page.locator('[name="name"]').fill('E2E LiqPay');
-  await page.locator('[name="phone"]').fill('+380501234567');
+  await page.locator('[data-checkout-form] [name="name"]').fill('E2E LiqPay');
+  await page.locator('[data-checkout-form] [name="phone"]').fill('+380501234567');
   const mail = page.locator('[data-checkout-form] [name="email"]');
   if (await mail.count()) await mail.fill(`liqpay-${Date.now()}@example.test`);
   const city = page.locator('[data-delivery-city]');

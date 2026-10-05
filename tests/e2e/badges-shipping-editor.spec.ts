@@ -81,8 +81,8 @@ test('delivery countries and regions can be activated selectively', async ({ pag
   const region = page.locator('select[name="delivery_region"]');
   await expect(region).toBeVisible();
   expect(await region.locator('option').count()).toBe(26); // 25 enabled regions + placeholder
-  await page.locator('[name="name"]').fill('E2E Region Customer');
-  await page.locator('[name="phone"]').fill('+380501234567');
+  await page.locator('[data-checkout-form] [name="name"]').fill('E2E Region Customer');
+  await page.locator('[data-checkout-form] [name="phone"]').fill('+380501234567');
   await page.locator('[data-delivery-city]').fill('Київ');
   await page.locator('[data-delivery-manual]').evaluate((el) => { (el as HTMLInputElement).value = 'Region test branch 1'; });
   const cod = page.locator('input[name="payment_method"][value="cash_on_delivery"]');
@@ -92,8 +92,8 @@ test('delivery countries and regions can be activated selectively', async ({ pag
   await expect(page.locator('.store-notice.is-error, [role="alert"]').first()).toBeVisible();
   await expect(page).toHaveURL(/\/checkout$/);
   await page.locator('select[name="delivery_region"]').selectOption({ index: 1 });
-  await page.locator('[name="name"]').fill('E2E Region Customer');
-  await page.locator('[name="phone"]').fill('+380501234567');
+  await page.locator('[data-checkout-form] [name="name"]').fill('E2E Region Customer');
+  await page.locator('[data-checkout-form] [name="phone"]').fill('+380501234567');
   await page.locator('[data-delivery-city]').fill('Київ');
   await page.locator('[data-delivery-manual]').evaluate((el) => { (el as HTMLInputElement).value = 'Region test branch 1'; });
   const cod2 = page.locator('input[name="payment_method"][value="cash_on_delivery"]');
