@@ -2740,6 +2740,7 @@ return [
     'admin.push.keys_confirm' => 'Regenerate keys? All subscriptions will be removed.',
     'admin.push.keys_regenerated' => 'Keys regenerated, subscriptions removed.',
     'admin.push.devices' => 'Devices',
+    'admin.push.disabled_hint' => 'Once enabled, devices, a test notification and a broadcast appear here.',
     'admin.push.devices_hint' => 'Receive order alerts and automation rule alerts.',
     'admin.push.admin_devices' => 'Admins',
     'admin.push.storefront_devices' => 'Customers',

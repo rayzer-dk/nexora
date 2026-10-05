@@ -1205,7 +1205,7 @@ function initToneFields() {
 /** Every plain colour input gets a HEX text box next to it (type or paste #ffffff). */
 function initColorHexInputs() {
   qa('input[type="color"]:not([data-color-picker])').forEach((picker) => {
-    if (picker.dataset.hexReady) return;
+    if (picker.dataset.hexReady || picker.closest('.admin-option__row')) return;
     picker.dataset.hexReady = '1';
     const hex = document.createElement('input');
     hex.type = 'text';

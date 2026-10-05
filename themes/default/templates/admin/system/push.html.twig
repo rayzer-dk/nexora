@@ -18,5 +18,6 @@
 <label>{{ ui_text('admin.push.msg_url') }}<input type="text" name="url" value="/" maxlength="500"></label>
 <label class="admin-form-wide">{{ ui_text('admin.push.msg_body') }}<textarea name="body" rows="2" maxlength="240" required></textarea></label>
 <div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit" data-confirm="{{ ui_text('admin.push.broadcast_confirm') }}">{{ ui_icon('send', 16) }}{{ ui_text('admin.push.broadcast_send') }}</button></div></form></section>
+{% else %}<div class="admin-notice is-info">{{ ui_text('admin.push.disabled_hint') }}</div>
 {% endif %}
 {{ shell.end() }}

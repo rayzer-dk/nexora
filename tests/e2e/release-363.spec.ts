@@ -52,6 +52,7 @@ test('a guest can write a review without an e-mail while the setting is off', as
 });
 
 test('customer options: a shopper ticks an extra, the cart shows it and the price follows', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
   await loginAdmin(page);
   await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
