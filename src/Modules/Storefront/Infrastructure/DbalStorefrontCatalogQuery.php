@@ -24,6 +24,7 @@ final readonly class DbalStorefrontCatalogQuery
         private CategoryTreeIndex $tree,
         private ?\Commerce\Modules\Search\Application\SqlSearchIndex $searchIndex = null,
         private ?\Commerce\Modules\Catalog\Application\ProductAddonService $addons = null,
+        private ?\Commerce\Modules\Catalog\Application\ImageAltService $imageAlt = null,
     ) {
     }
 
@@ -610,7 +611,7 @@ final readonly class DbalStorefrontCatalogQuery
         $product['condition'] = 'https://schema.org/NewCondition';
         $product['country_of_origin'] = $row['country_of_origin'] ?: null;
         $product['tax']['display_mode'] = (string) ($row['consumer_display_mode'] ?: 'price_only');
-        $product['images'] = $this->productImages((int)$row['id'], (string)$row['name']);
+        $product['images'] = $this->productImages((int)$row['id'], (string)$row['name'], (string)($row['brand_name'] ?? ''), (string)($row['sku'] ?? ''));
         $product['gallery'] = $this->gallery((int)$row['id'], (string)$row['name'], $product['images']);
         // The detail query has no card image column: use the first gallery image (feeds JSON-LD, sharing and the "recently viewed" cards).
         if (($product['images'][0]['url'] ?? '') !== '') { $product['image'] = (string) $product['images'][0]['url']; }
@@ -1030,17 +1031,19 @@ final readonly class DbalStorefrontCatalogQuery
      *
      * @return list<array{url:string,alt:string,srcset:string,sizes:string,width:int,height:int,thumb:string,full:string}>
      */
-    private function productImages(int $productId, string $name): array
+    private function productImages(int $productId, string $name, string $brand = '', string $sku = ''): array
     {
         $rows=$this->connection->fetchAllAssociative("SELECT ma.id media_id,ma.storage_key,ma.width,ma.height,pm.alt_text,pm.sort_order,pm.role FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=? AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order ASC",[$productId]);
         if ($rows===[]) { return [['url'=>'/assets/product-placeholder.svg','alt'=>$name,'srcset'=>'','sizes'=>'(max-width: 900px) 100vw, 50vw','width'=>640,'height'=>640,'thumb'=>'/assets/product-placeholder.svg','full'=>'/assets/product-placeholder.svg']]; }
         $lowest=(int)min(array_map(static fn(array $r):int=>(int)$r['sort_order'],$rows));
-        return array_map(function(array $r) use ($name,$lowest): array {
+        $position=0;
+        return array_map(function(array $r) use ($name,$lowest,$brand,$sku,&$position): array {
+            ++$position;
             $master=$this->mediaUrl($r['storage_key']);
             return [
                 'media_id'=>(int)$r['media_id'],
                 'url'=>$this->variants->url($master,'product'),
-                'alt'=>(string)($r['alt_text']?:$name),
+                'alt'=>(string)($r['alt_text']?:($this->imageAlt?->fallback($name,$position,$brand,$sku)?:$name)),
                 'srcset'=>$this->variants->srcset($master,['product','zoom']),
                 'avif_srcset'=>$this->variants->avifEnabled()?$this->variants->srcset($master,['product','zoom'],'avif'):'',
                 'sort_order'=>$r['role']==='primary'?$lowest:(int)$r['sort_order'],

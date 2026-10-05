@@ -1,0 +1,18 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.image_alt.title'),'image_alt') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.image_alt.title') }}</span></nav><h1>{{ ui_text('admin.image_alt.title') }}</h1><p>{{ ui_text('admin.image_alt.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.image_alt.kicker') }}</small><h2>{{ ui_text('admin.image_alt.templates') }}</h2></div></div>
+<form method="post" action="{{ path('admin_catalog_image_alt_save') }}" class="admin-form-grid" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_image_alt') }}">
+<label class="admin-form-wide admin-check"><input type="checkbox" name="enabled" value="1"{{ s.enabled ? ' checked' : '' }}><span><strong>{{ ui_text('admin.image_alt.enabled') }}</strong><small>{{ ui_text('admin.image_alt.enabled_hint') }}</small></span></label>
+<label>{{ ui_text('admin.image_alt.main') }}<input type="text" name="main" maxlength="240" value="{{ s.main }}"></label>
+<label>{{ ui_text('admin.image_alt.extra') }}<input type="text" name="extra" maxlength="240" value="{{ s.extra }}"></label>
+<p class="admin-hint admin-form-wide">{{ ui_text('admin.image_alt.variables') }}: {% for v in variables %}<code>{{ '{' ~ v ~ '}' }}</code> {% endfor %}</p>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div>
+</form></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.image_alt.kicker') }}</small><h2>{{ ui_text('admin.image_alt.preview') }}</h2></div><span class="admin-badge">{{ total }}</span></div>
+<p class="admin-hint">{{ overwrite ? ui_text('admin.image_alt.preview_all') : ui_text('admin.image_alt.preview_empty') }} <a href="{{ path('admin_catalog_image_alt', {overwrite: overwrite ? 0 : 1}) }}">{{ overwrite ? ui_text('admin.image_alt.show_empty') : ui_text('admin.image_alt.show_all') }}</a></p>
+{% if plan %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.image_alt.product') }}</th><th>#</th><th>{{ ui_text('admin.image_alt.current') }}</th><th>{{ ui_text('admin.image_alt.new') }}</th></tr></thead><tbody>{% for row in plan %}<tr><td>{{ row.name }}</td><td>{{ row.position }}</td><td>{{ row.current ?: '—' }}</td><td><strong>{{ row.alt }}</strong></td></tr>{% endfor %}</tbody></table></div>
+<form method="post" action="{{ path('admin_catalog_image_alt_apply') }}" data-confirm="{{ ui_text('admin.image_alt.apply_confirm') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_image_alt') }}"><input type="hidden" name="overwrite" value="{{ overwrite ? 1 : 0 }}"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 16) }} {{ ui_text('admin.image_alt.apply') }} ({{ total }})</button></form>
+{% else %}<p class="admin-hint">{{ ui_text('admin.image_alt.nothing') }}</p>{% endif %}</section>
+{{ shell.end() }}
