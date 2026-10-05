@@ -1,5 +1,17 @@
 DirectoryIndex index.php
 
+# No directory listings, and never serve dotfiles, backups, dumps, logs or config copies if they end up in the web root.
+Options -Indexes
+<FilesMatch "(?i)(^\.|~$|\.(bak|old|orig|dist|sql|sqlite|log|ini|yml|yaml|lock|sh|swp|zip|tar|7z)$)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
 # --- Compression -------------------------------------------------------------
 # Precompressed Brotli/Gzip files produced by `npm run build:production` are served as-is;
 # dynamic HTML/JSON/XML is compressed on the fly.

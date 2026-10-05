@@ -127,6 +127,7 @@ parameters:
     commerce.google_ucp.enabled: '%env(bool:GOOGLE_UCP_ENABLED)%'
     commerce.google_ucp.version: '%env(GOOGLE_UCP_VERSION)%'
     commerce.app_public_url: '%env(resolve:APP_PUBLIC_URL)%'
+    env(COMMERCE_CANONICAL_REDIRECT): '1'
     commerce.core_update.public_key: '%env(CORE_UPDATE_PUBLIC_KEY)%'
     commerce.monobank.enabled: '%env(bool:MONOBANK_ACQUIRING_ENABLED)%'
     commerce.monobank.api_base: '%env(MONOBANK_ACQUIRING_API_BASE)%'
@@ -437,6 +438,11 @@ services:
     Commerce\Modules\Notification\Application\NotificationDispatcher:
         arguments:
             $senders: !tagged_iterator commerce.notification_sender
+
+    Commerce\Modules\Seo\Http\CanonicalHostSubscriber:
+        arguments:
+            $publicUrl: '%commerce.app_public_url%'
+            $enabled: '%env(bool:COMMERCE_CANONICAL_REDIRECT)%'
 
     Commerce\Modules\Forum\Application\ForumMediaService:
         arguments:

@@ -22,7 +22,8 @@ final class SitemapController extends AbstractController
     #[Route('/robots.txt',name:'public_robots_txt',methods:['GET'])]
     public function robots(): Response
     {
-        $body="User-agent: *\nDisallow: /admin\nDisallow: /checkout\nDisallow: /account\nDisallow: /api\nDisallow: /graphql\nSitemap: ".$this->absolute('/sitemap.xml')."\n";
+        $rules=['/admin','/checkout','/cart','/account','/api','/graphql','/compare','/wishlist','/*?*sort=','/*?*per_page=','/*?*limit=','/*?*min_price=','/*?*max_price=','/*?*rating=','/*?*after=','/*?*variant=','/*?*utm_','/*?*gclid=','/*?*fbclid='];
+        $body="User-agent: *\n".implode("\n",array_map(static fn(string $r):string=>'Disallow: '.$r,$rules))."\nSitemap: ".$this->absolute('/sitemap.xml')."\n";
         if($this->bots->config()['robots_ai']){$ai='';foreach(\Commerce\Modules\Security\Bots\BotProtection::ROBOTS_AI as $agent)$ai.='User-agent: '.$agent."\nDisallow: /\n";$body=$ai."\n".$body;}
         return new Response($body,200,['Content-Type'=>'text/plain; charset=UTF-8','Cache-Control'=>'public, max-age=3600']);
     }
