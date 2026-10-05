@@ -416,7 +416,7 @@ test('promotion created in admin changes checkout totals and disabling it stops 
   await toggle.locator('button[type="submit"]').click();
   expect((await toggleResponsePromise).status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('table.admin-table tbody tr').filter({ hasText: name })).toContainText('disabled');
+  await expect(page.locator('table.admin-table tbody tr').filter({ hasText: name })).toContainText(/disabled|Вимкнено|Disabled/i);
 
   await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
   await page.locator('details[data-checkout-block="coupon"]').evaluate((element) => { (element as HTMLDetailsElement).open = true; });
