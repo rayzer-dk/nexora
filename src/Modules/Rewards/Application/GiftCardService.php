@@ -55,7 +55,49 @@ final readonly class GiftCardService
         $db->insert('mc_gift_card_transaction',['gift_card_id'=>(int)$tx['gift_card_id'],'order_id'=>$orderId,'tx_type'=>'restore_'.$reason,'amount_minor'=>$amount,'balance_after_minor'=>$balance,'idempotency_key'=>$key,'created_at'=>$now]);
     }
 
-    public function list(int $storeId): array { return $this->db->fetchAllAssociative("SELECT id,code_last4,currency,initial_minor,balance_minor,status,expires_at,created_at FROM mc_gift_card WHERE store_id=? ORDER BY id DESC LIMIT 200",[$storeId]); }
+    /** Blocks a card (it cannot be spent) or makes it usable again; a card with no balance stays exhausted. */
+    public function setStatus(int $storeId,int $cardId,string $status): void
+    {
+        if(!in_array($status,['active','blocked'],true)) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.bad_status'));
+        $row=$this->db->fetchAssociative('SELECT balance_minor FROM mc_gift_card WHERE id=? AND store_id=?',[$cardId,$storeId]);
+        if(!is_array($row)) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.card_not_found'));
+        if($status==='active' && (int)$row['balance_minor']===0) $status='exhausted';
+        $this->db->update('mc_gift_card',['status'=>$status,'updated_at'=>$this->now()],['id'=>$cardId,'store_id'=>$storeId]);
+    }
+
+    /** Manual correction of the balance (plus or minus); the balance never goes below zero. */
+    public function adjust(int $storeId,int $cardId,int $deltaMinor): void
+    {
+        if($deltaMinor===0) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.adjust_zero'));
+        $this->db->transactional(function(Connection $db) use($storeId,$cardId,$deltaMinor):void{
+            $row=$db->fetchAssociative('SELECT balance_minor,status FROM mc_gift_card WHERE id=? AND store_id=? FOR UPDATE',[$cardId,$storeId]);
+            if(!is_array($row)) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.card_not_found'));
+            $balance=(int)$row['balance_minor']+$deltaMinor;
+            if($balance<0) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.adjust_below_zero'));
+            $status=(string)$row['status']; if($status==='exhausted'&&$balance>0)$status='active'; if($status==='active'&&$balance===0)$status='exhausted';
+            $now=$this->now();
+            $db->update('mc_gift_card',['balance_minor'=>$balance,'status'=>$status,'updated_at'=>$now],['id'=>$cardId]);
+            $db->insert('mc_gift_card_transaction',['gift_card_id'=>$cardId,'order_id'=>null,'tx_type'=>'adjust','amount_minor'=>$deltaMinor,'balance_after_minor'=>$balance,'idempotency_key'=>'adjust:'.$cardId.':'.bin2hex(random_bytes(6)),'created_at'=>$now]);
+        });
+    }
+
+    public function setExpiry(int $storeId,int $cardId,?string $expiresAt): void
+    {
+        $value=null;
+        if($expiresAt!==null&&trim($expiresAt)!==''){try{$value=(new \DateTimeImmutable(trim($expiresAt),new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');}catch(\Throwable){throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.bad_date'));}}
+        $this->db->update('mc_gift_card',['expires_at'=>$value,'updated_at'=>$this->now()],['id'=>$cardId,'store_id'=>$storeId]);
+    }
+
+    /** @param list<int> $cardIds @return array<int,list<array<string,mixed>>> history of the cards, newest first */
+    public function history(array $cardIds): array
+    {
+        if($cardIds===[]) return [];
+        $in=implode(',',array_map('intval',$cardIds)); $out=[];
+        foreach($this->db->fetchAllAssociative("SELECT t.gift_card_id,t.tx_type,t.amount_minor,t.balance_after_minor,t.created_at,o.order_number FROM mc_gift_card_transaction t LEFT JOIN mc_sales_order o ON o.id=t.order_id WHERE t.gift_card_id IN ($in) ORDER BY t.id DESC LIMIT 2000") as $r){$out[(int)$r['gift_card_id']][]=$r;}
+        return $out;
+    }
+
+    public function list(int $storeId): array { return $this->db->fetchAllAssociative("SELECT id,code_last4,currency,initial_minor,balance_minor,status,expires_at,created_at,(SELECT COALESCE(SUM(-t.amount_minor),0) FROM mc_gift_card_transaction t WHERE t.gift_card_id=mc_gift_card.id AND t.tx_type='redeem') spent_minor FROM mc_gift_card WHERE store_id=? ORDER BY id DESC LIMIT 200",[$storeId]); }
     private function hash(string $code): string { return hash('sha256',strtoupper(preg_replace('/\s+/','',trim($code))??'')); }
     private function now(): string { return gmdate('Y-m-d H:i:s.u'); }
 }

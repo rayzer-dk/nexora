@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class RewardsAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts,private readonly GiftCardService $cards,private readonly Connection $db){}
+    public function __construct(private readonly AdminContextResolver $contexts,private readonly GiftCardService $cards,private readonly Connection $db,private readonly \Commerce\Modules\Rewards\Application\LoyaltyService $loyalty){}
 
     #[Route('/admin/rewards',name:'admin_rewards',methods:['GET','POST'])]
     public function index(Request $request): Response
@@ -27,6 +27,18 @@ final class RewardsAdminController extends AbstractController
                     $major=(float)str_replace(',','.',(string)$request->request->get('amount','0')); $amount=(int)round($major*100);
                     $issued=$this->cards->issue($ctx->storeId,$amount,(string)$request->request->get('currency',$ctx->currency),null,trim((string)$request->request->get('expires_at'))?:null);
                     $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.rewards.http.rewardsadmincontroller.podarunkovu_kartku_stvoreno_kod_pokazuietsia_lyshe_z'));
+                } elseif($action==='card_status'){
+                    $this->cards->setStatus($ctx->storeId,$request->request->getInt('card_id'),(string)$request->request->get('status'));
+                    $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.saved'));
+                } elseif($action==='card_adjust'){
+                    $this->cards->adjust($ctx->storeId,$request->request->getInt('card_id'),(int)round(((float)str_replace(',','.',(string)$request->request->get('delta','0')))*100));
+                    $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.saved'));
+                } elseif($action==='card_expiry'){
+                    $this->cards->setExpiry($ctx->storeId,$request->request->getInt('card_id'),(string)$request->request->get('expires_at'));
+                    $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.saved'));
+                } elseif($action==='loyalty_adjust'){
+                    $this->loyalty->adjust($ctx->storeId,(string)$request->request->get('email'),$request->request->getInt('points'));
+                    $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.saved'));
                 } elseif($action==='loyalty'){
                     $earn=max(0,min(1000,$request->request->getInt('earn_points_per_major',1)));$redeem=max(1,min(10000,$request->request->getInt('redeem_minor_per_point',1)));$min=max(1,min(1000000,$request->request->getInt('min_redeem_points',100)));$enabled=$request->request->getBoolean('enabled');
                     $this->db->executeStatement('INSERT INTO mc_loyalty_config(store_id,enabled,earn_points_per_major,redeem_minor_per_point,min_redeem_points,updated_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE enabled=VALUES(enabled),earn_points_per_major=VALUES(earn_points_per_major),redeem_minor_per_point=VALUES(redeem_minor_per_point),min_redeem_points=VALUES(min_redeem_points),updated_at=VALUES(updated_at)',[$ctx->storeId,$enabled?1:0,$earn,$redeem,$min]);
@@ -35,6 +47,8 @@ final class RewardsAdminController extends AbstractController
             }catch(\DomainException $e){$this->addFlash('error',$e->getMessage());}
         }
         $cfg=$this->db->fetchAssociative('SELECT * FROM mc_loyalty_config WHERE store_id=?',[$ctx->storeId])?:['enabled'=>1,'earn_points_per_major'=>1,'redeem_minor_per_point'=>1,'min_redeem_points'=>100];
-        return $this->render('@storefront/admin/rewards/index.html.twig',['cards'=>$this->cards->list($ctx->storeId),'config'=>$cfg,'issued'=>$issued,'store_currency'=>$ctx->currency]);
+        $cards=$this->cards->list($ctx->storeId); $stats=['active'=>0,'liability_minor'=>0];
+        foreach($cards as $c){if($c['status']==='active'){$stats['active']++;$stats['liability_minor']+=(int)$c['balance_minor'];}}
+        return $this->render('@storefront/admin/rewards/index.html.twig',['card_stats'=>$stats,'card_history'=>$this->cards->history(array_map(static fn(array $c):int=>(int)$c['id'],array_slice($cards,0,50))),'loyalty_overview'=>$this->loyalty->overview($ctx->storeId),'cards'=>$cards,'config'=>$cfg,'issued'=>$issued,'store_currency'=>$ctx->currency]);
     }
 }

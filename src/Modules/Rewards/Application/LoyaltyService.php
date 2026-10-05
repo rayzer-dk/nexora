@@ -57,5 +57,32 @@ final readonly class LoyaltyService
         $db->update('mc_loyalty_account',['points_balance'=>$balance,'lifetime_earned'=>max(0,(int)$a['lifetime_earned']-$points),'updated_at'=>$now],['store_id'=>$sid,'customer_id'=>$cid]);
         $db->insert('mc_loyalty_transaction',['store_id'=>$sid,'customer_id'=>$cid,'order_id'=>$orderId,'tx_type'=>'earn_reverse','points'=>-$removed,'balance_after'=>$balance,'idempotency_key'=>$key,'created_at'=>$now]);
     }
+    /** Manual bonus correction for a customer found by e-mail: plus gives points, minus takes them (never below zero). */
+    public function adjust(int $storeId,string $email,int $points): void
+    {
+        if($points===0) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.adjust_zero'));
+        $email=mb_strtolower(trim($email));
+        $customer=$this->db->fetchOne("SELECT id FROM mc_customer WHERE email_normalized=? AND status='active' LIMIT 1",[$email]);
+        if($customer===false) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.b2b.http.b2badmincontroller.pokuptsia_z_takym_email_ne_znaideno'));
+        $this->db->transactional(function(Connection $db) use($storeId,$customer,$points):void{
+            $now=$this->now();
+            $db->executeStatement('INSERT IGNORE INTO mc_loyalty_account(store_id,customer_id,points_balance,lifetime_earned,lifetime_spent,updated_at) VALUES (?,?,0,0,0,?)',[$storeId,(int)$customer,$now]);
+            $balance=(int)$db->fetchOne('SELECT points_balance FROM mc_loyalty_account WHERE store_id=? AND customer_id=? FOR UPDATE',[$storeId,(int)$customer]);
+            $next=$balance+$points; if($next<0) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.rewards.adjust_below_zero'));
+            $db->executeStatement('UPDATE mc_loyalty_account SET points_balance=?,lifetime_earned=lifetime_earned+?,updated_at=? WHERE store_id=? AND customer_id=?',[$next,max(0,$points),$now,$storeId,(int)$customer]);
+            $db->insert('mc_loyalty_transaction',['store_id'=>$storeId,'customer_id'=>(int)$customer,'order_id'=>null,'tx_type'=>'adjust','points'=>$points,'balance_after'=>$next,'idempotency_key'=>'adjust:'.$customer.':'.bin2hex(random_bytes(6)),'created_at'=>$now]);
+        });
+    }
+
+    /** @return array{accounts:list<array<string,mixed>>,transactions:list<array<string,mixed>>,total_points:int} */
+    public function overview(int $storeId): array
+    {
+        return [
+            'accounts'=>$this->db->fetchAllAssociative('SELECT c.display_name,c.email,a.points_balance,a.lifetime_earned,a.lifetime_spent,a.updated_at FROM mc_loyalty_account a JOIN mc_customer c ON c.id=a.customer_id WHERE a.store_id=? ORDER BY a.points_balance DESC LIMIT 50',[$storeId]),
+            'transactions'=>$this->db->fetchAllAssociative('SELECT c.display_name,c.email,t.tx_type,t.points,t.balance_after,t.created_at FROM mc_loyalty_transaction t JOIN mc_customer c ON c.id=t.customer_id WHERE t.store_id=? ORDER BY t.id DESC LIMIT 50',[$storeId]),
+            'total_points'=>(int)$this->db->fetchOne('SELECT COALESCE(SUM(points_balance),0) FROM mc_loyalty_account WHERE store_id=?',[$storeId]),
+        ];
+    }
+
     private function now(): string { return gmdate('Y-m-d H:i:s.u'); }
 }
