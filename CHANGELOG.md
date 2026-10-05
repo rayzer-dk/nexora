@@ -2,10 +2,10 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.56.0 — 2026-10-05
+## 3.57.0 — 2026-10-05
 
-Gift cards and loyalty, notification centre, language tabs by method.
+Fixes for MySQL 8.4 and the release gates.
 
-- Gift cards: block and unblock, correct the balance, change the expiry date, history of every card, liability total; loyalty: accounts with balances, recent bonus events, manual points correction.
-- Notification centre: filters by status, channel and text, retry of failed messages, purge of old sent messages.
-- Language tabs are built per delivery or payment method.
+- Migrations for the order "edited" mark and scheduled campaigns now run on MySQL 8.4 as well as MariaDB.
+- Messages of the Stripe, PayPal, DHL and GLS integrations are translated.
+- Admin activity log: date range filter and CSV export.

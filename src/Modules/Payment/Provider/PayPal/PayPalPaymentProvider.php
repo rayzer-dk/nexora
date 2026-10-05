@@ -53,7 +53,7 @@ final readonly class PayPalPaymentProvider implements OnlinePaymentProviderInter
             }
         }
         if ($id === '' || $url === '') {
-            throw new \RuntimeException('PayPal did not return an approval link.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('payment.paypal.no_approval'));
         }
 
         return new OnlinePaymentSession($id, $url, null, ['provider' => 'paypal']);
@@ -94,7 +94,7 @@ final readonly class PayPalPaymentProvider implements OnlinePaymentProviderInter
         $order = $this->client->request('GET', '/v2/checkout/orders/' . rawurlencode($providerReference));
         $capture = $order['purchase_units'][0]['payments']['captures'][0] ?? null;
         if (!is_array($capture) || ($capture['id'] ?? '') === '') {
-            throw new \RuntimeException('The PayPal payment was not captured, nothing to refund.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('payment.paypal.nothing_to_refund'));
         }
         $data = $this->client->request('POST', '/v2/payments/captures/' . rawurlencode((string) $capture['id']) . '/refund', [
             'amount' => ['currency_code' => (string) $capture['amount']['currency_code'], 'value' => number_format($amountMinor / 100, 2, '.', '')],

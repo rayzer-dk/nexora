@@ -37,7 +37,7 @@ final class PayPalClient
         ]);
         $data = $response->toArray(false);
         if ($response->getStatusCode() !== 200 || ($data['access_token'] ?? '') === '') {
-            throw new \RuntimeException('PayPal: authentication failed.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('payment.paypal.auth_failed'));
         }
 
         return $this->token = (string) $data['access_token'];

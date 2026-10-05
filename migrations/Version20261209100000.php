@@ -21,13 +21,13 @@ final class Version20261209100000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE mc_sales_order ADD COLUMN IF NOT EXISTS customer_edited_at DATETIME(6) NULL');
-        $this->addSql('ALTER TABLE mc_sales_order ADD COLUMN IF NOT EXISTS customer_edited_by VARCHAR(190) NULL');
+        $this->addSql('ALTER TABLE mc_sales_order ADD customer_edited_at DATETIME(6) NULL');
+        $this->addSql('ALTER TABLE mc_sales_order ADD customer_edited_by VARCHAR(190) NULL');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE mc_sales_order DROP COLUMN IF EXISTS customer_edited_by');
-        $this->addSql('ALTER TABLE mc_sales_order DROP COLUMN IF EXISTS customer_edited_at');
+        $this->addSql('ALTER TABLE mc_sales_order DROP COLUMN customer_edited_by');
+        $this->addSql('ALTER TABLE mc_sales_order DROP COLUMN customer_edited_at');
     }
 }

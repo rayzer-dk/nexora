@@ -31,7 +31,7 @@ final readonly class DhlTransport
             return [];
         }
         if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
-            throw new RuntimeException('DHL: HTTP ' . $response->getStatusCode());
+            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('shipping.error.http', ['carrier' => 'DHL', 'code' => (string) $response->getStatusCode()]));
         }
 
         return $response->toArray(false);

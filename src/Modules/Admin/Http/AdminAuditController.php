@@ -32,6 +32,19 @@ final class AdminAuditController extends AbstractController
             $where[] = 'a.actor_id=?';
             $params[] = (string) $actor;
         }
+        $from = trim((string) $request->query->get('from', ''));
+        $to = trim((string) $request->query->get('to', ''));
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/D', $from) === 1) {
+            $where[] = 'a.created_at>=?';
+            $params[] = $from . ' 00:00:00';
+        }
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/D', $to) === 1) {
+            $where[] = 'a.created_at<?';
+            $params[] = gmdate('Y-m-d', strtotime($to . ' UTC') + 86400) . ' 00:00:00';
+        }
+        if ($request->query->getBoolean('export')) {
+            return $this->export($where, $params);
+        }
         $sqlWhere = implode(' AND ', $where);
         $count = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_audit_log a LEFT JOIN mc_admin_user u ON u.id=CAST(a.actor_id AS UNSIGNED) WHERE {$sqlWhere}", $params);
         $pages = max(1, (int) ceil($count / $limit));
@@ -51,6 +64,26 @@ final class AdminAuditController extends AbstractController
         }
         unset($row);
         $admins = $this->db->fetchAllAssociative("SELECT id,display_name,email FROM mc_admin_user WHERE status='active' ORDER BY display_name,email");
-        return $this->render('@storefront/admin/system/activity.html.twig', compact('rows', 'admins', 'search', 'actor', 'page', 'pages', 'count'));
+        return $this->render('@storefront/admin/system/activity.html.twig', compact('rows', 'admins', 'search', 'actor', 'page', 'pages', 'count', 'from', 'to'));
+    }
+
+    /** @param list<string> $where @param list<string> $params */
+    private function export(array $where, array $params): Response
+    {
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT a.created_at,u.email,a.action,a.entity_id,a.metadata FROM mc_audit_log a LEFT JOIN mc_admin_user u ON u.id=CAST(a.actor_id AS UNSIGNED) WHERE ' . implode(' AND ', $where) . ' ORDER BY a.id DESC LIMIT 20000',
+            $params,
+        );
+        $out = fopen('php://temp', 'r+');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['time', 'admin', 'action', 'entity', 'details'], ';');
+        foreach ($rows as $r) {
+            fputcsv($out, [$r['created_at'], $r['email'], $r['action'], $r['entity_id'], $r['metadata']], ';');
+        }
+        rewind($out);
+        $csv = (string) stream_get_contents($out);
+        fclose($out);
+
+        return new Response($csv, 200, ['Content-Type' => 'text/csv; charset=utf-8', 'Content-Disposition' => 'attachment; filename="admin-activity.csv"']);
     }
 }

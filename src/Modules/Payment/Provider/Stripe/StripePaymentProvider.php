@@ -40,7 +40,7 @@ final readonly class StripePaymentProvider implements OnlinePaymentProviderInter
         $id = trim((string) ($session['id'] ?? ''));
         $url = trim((string) ($session['url'] ?? ''));
         if ($id === '' || $url === '') {
-            throw new \RuntimeException('Stripe did not return a Checkout session.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('payment.stripe.no_session'));
         }
 
         return new OnlinePaymentSession($id, $url, null, ['provider' => 'stripe']);
@@ -51,7 +51,7 @@ final readonly class StripePaymentProvider implements OnlinePaymentProviderInter
         $session = $this->client->get('/checkout/sessions/' . rawurlencode($providerReference));
         $intent = trim((string) ($session['payment_intent'] ?? ''));
         if ($intent === '') {
-            throw new \RuntimeException('The Stripe payment was not completed, nothing to refund.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('payment.stripe.nothing_to_refund'));
         }
         $data = $this->client->post('/refunds', ['payment_intent' => $intent, 'amount' => $amountMinor], 'refund-' . $idempotencyKey);
         $status = (string) ($data['status'] ?? 'pending');

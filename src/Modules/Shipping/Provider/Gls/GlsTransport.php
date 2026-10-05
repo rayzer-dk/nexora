@@ -35,7 +35,7 @@ final readonly class GlsTransport
             'timeout' => 4.0,
         ]);
         if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
-            throw new RuntimeException('GLS: HTTP ' . $response->getStatusCode());
+            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('shipping.error.http', ['carrier' => 'GLS', 'code' => (string) $response->getStatusCode()]));
         }
 
         return $response->toArray(false);

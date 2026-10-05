@@ -2064,4 +2064,10 @@ return [
     'payment.paypal.currency_unsupported' => 'PayPal не приймає валюту цього замовлення.',
     'shipping.error.dhl_not_configured' => 'DHL не налаштовано: вкажіть DHL_API_KEY.',
     'shipping.error.gls_not_configured' => 'GLS не налаштовано: вкажіть GLS_API_BASE і GLS_POINTS_PATH.',
+    'payment.paypal.auth_failed' => 'PayPal: не вдалося пройти автентифікацію.',
+    'payment.paypal.no_approval' => 'PayPal не повернув посилання для підтвердження оплати.',
+    'payment.paypal.nothing_to_refund' => 'Платіж PayPal не був отримано, повертати нічого.',
+    'payment.stripe.no_session' => 'Stripe не повернув сеанс оплати.',
+    'payment.stripe.nothing_to_refund' => 'Платіж Stripe не завершено, повертати нічого.',
+    'shipping.error.http' => '%carrier%: помилка HTTP %code%.',
 ];

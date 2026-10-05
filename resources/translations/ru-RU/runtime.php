@@ -19,4 +19,10 @@ return [
     'payment.method.stripe' => 'Карта через Stripe',
     'payment.method.paypal' => 'PayPal',
     'payment.paypal.currency_unsupported' => 'PayPal не принимает валюту этого заказа.',
+    'payment.paypal.auth_failed' => 'PayPal: не удалось пройти аутентификацию.',
+    'payment.paypal.no_approval' => 'PayPal не вернул ссылку для подтверждения оплаты.',
+    'payment.paypal.nothing_to_refund' => 'Платёж PayPal не был получен, возвращать нечего.',
+    'payment.stripe.no_session' => 'Stripe не вернул сеанс оплаты.',
+    'payment.stripe.nothing_to_refund' => 'Платёж Stripe не завершён, возвращать нечего.',
+    'shipping.error.http' => '%carrier%: ошибка HTTP %code%.',
 ];

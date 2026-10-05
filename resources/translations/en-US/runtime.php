@@ -2062,4 +2062,10 @@ return [
     'payment.paypal.currency_unsupported' => 'PayPal does not accept the currency of this order.',
     'shipping.error.dhl_not_configured' => 'DHL is not configured: set DHL_API_KEY.',
     'shipping.error.gls_not_configured' => 'GLS is not configured: set GLS_API_BASE and GLS_POINTS_PATH.',
+    'payment.paypal.auth_failed' => 'PayPal: authentication failed.',
+    'payment.paypal.no_approval' => 'PayPal did not return an approval link.',
+    'payment.paypal.nothing_to_refund' => 'The PayPal payment was not captured, nothing to refund.',
+    'payment.stripe.no_session' => 'Stripe did not return a Checkout session.',
+    'payment.stripe.nothing_to_refund' => 'The Stripe payment was not completed, nothing to refund.',
+    'shipping.error.http' => '%carrier%: HTTP error %code%.',
 ];
