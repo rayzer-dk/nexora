@@ -796,7 +796,8 @@ initEcommerceEvents();
       marks.forEach((node) => {
         const body = data.icons?.[node.getAttribute('data-icon')];
         if (!body) return;
-        node.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`;
+        const svg = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + body + '</svg>', 'image/svg+xml').documentElement;
+        if (svg.nodeName.toLowerCase() === 'svg') node.replaceChildren(document.importNode(svg, true));
       });
     })
     .catch(() => {});

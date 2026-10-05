@@ -90,6 +90,6 @@ Product: %product%',
     'scheduler.description.media_warm' => 'Every 15 minutes makes the thumbnail, card and product-page sizes of the main product photos that still lack them, for example after an import. Other photos get their sizes on first view.',
     'scheduler.label.media_gc' => 'Image cleanup',
     'scheduler.description.media_gc' => 'Daily removes image sizes of older generations and purges the trash after 30 days. Unused pictures are never removed automatically: review and remove them by hand in Media library > Cleanup.',
-    'checkout.error.method_limit_min' => 'The order amount is too small for the chosen delivery or payment method.',
-    'checkout.error.method_limit_max' => 'The order amount is too large for the chosen delivery or payment method.',
+    'checkout.error.method_limit.min' => 'The order amount is too small for the chosen delivery or payment method.',
+    'checkout.error.method_limit.max' => 'The order amount is too large for the chosen delivery or payment method.',
 ];

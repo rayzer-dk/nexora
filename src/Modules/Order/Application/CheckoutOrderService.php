@@ -132,7 +132,7 @@ final readonly class CheckoutOrderService
             $afterDiscount=max(0,$subtotal-$discount);
             foreach(array_filter([$requiresShipping?$providerCode:null,$payment->code]) as $methodCode){
                 $limit=$this->methodSettings->limit($context->storeId,(string)$methodCode,$afterDiscount);
-                if($limit!==null)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout.error.method_limit_'.$limit));
+                if($limit!==null)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout.error.method_limit.'.$limit));
             }
             $shipping=($requiresShipping?$this->methodSettings->fee($context->storeId,$providerCode,$afterDiscount):0)+$this->methodSettings->fee($context->storeId,(string)$payment->code,$afterDiscount); $tax=0; $total=max(0,$subtotal-$discount+$shipping+$tax);
             // VAT is informational: prices are tax-inclusive, so it is recorded per line (after the proportional discount) and never added to the total.

@@ -27,6 +27,7 @@ final class StorefrontUiTwigExtension extends AbstractExtension
             new TwigFunction('ui_catalog', $this->catalog(...), ['needs_context' => true]),
             new TwigFunction('ui_catalog_json', $this->catalogJson(...), ['needs_context' => true, 'is_safe' => ['html']]),
             new TwigFunction('ui_icon', $this->icon(...), ['is_safe' => ['html']]),
+            new TwigFunction('status_badge', $this->statusBadge(...), ['needs_context' => true, 'is_safe' => ['html']]),
         ];
     }
 
@@ -35,7 +36,6 @@ final class StorefrontUiTwigExtension extends AbstractExtension
         return [
             new TwigFilter('forum_ugc', $this->forumUgc(...), ['is_safe' => ['html']]),
             new TwigFilter('status_label', $this->statusLabel(...), ['needs_context' => true]),
-            new \Twig\TwigFunction('status_badge', $this->statusBadge(...), ['needs_context' => true, 'is_safe' => ['html']]),
         ];
     }
 

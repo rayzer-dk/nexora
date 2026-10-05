@@ -2,9 +2,9 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.53.0 — 2026-10-05
+## 3.54.0 — 2026-10-05
 
-More ways to pay and deliver.
+Analytics and release-gate fixes.
 
-- Online payment with Stripe (card, Apple Pay, Google Pay on the Stripe page) and PayPal; webhooks, refunds from the order card, keys in `.env` (guide in Admin → Integrations).
-- Delivery with DHL (service points and lockers by city) and GLS (ParcelShops); both are off until switched on in "Delivery and payment methods".
+- Analytics: any date range, comparison with the previous period, revenue by day, split by payment and delivery method, order statuses, new and returning buyers, top customers, CSV export.
+- Release gates fixed: design tokens, CSS coverage, translations for German, Danish and Polish, safe icon rendering, PHPStan.

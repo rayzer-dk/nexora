@@ -44,7 +44,7 @@ final class MarketingAutomationAdminController extends AbstractController
      * What the reminders achieved: how many went out, how many shoppers ordered afterwards (and when, for how much),
      * and how many ordered at once without any reminder.
      *
-     * @return array{stats:array<string,int|float>,rows:list<array<string,mixed>>}
+     * @return array{stats:array<string,int|float|string>,rows:list<array<string,mixed>>}
      */
     private function recoveryAnalytics(int $storeId):array
     {

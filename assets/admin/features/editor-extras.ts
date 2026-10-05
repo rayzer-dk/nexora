@@ -127,7 +127,10 @@ export const InlineIcon = Node.create({
       dom.contentEditable = 'false';
       void loadIcons().then((icons) => {
         const body = icons[String(node.attrs.name)];
-        if (body) dom.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+        if (body) {
+          const svg = new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + '</svg>', 'image/svg+xml').documentElement;
+          if (svg.nodeName.toLowerCase() === 'svg') dom.replaceChildren(document.importNode(svg, true));
+        }
       });
       return { dom };
     };
