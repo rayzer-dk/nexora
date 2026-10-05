@@ -40,6 +40,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
             new TwigFunction('active_theme_stylesheet', [$this, 'activeThemeStylesheet']),
             new TwigFunction('storefront_identity', [$this, 'identity']),
             new TwigFunction('contact_widget', [$this, 'contactWidget']),
+            new TwigFunction('header_contacts', [$this, 'headerContacts']),
             new TwigFunction('chat_widget', [$this, 'chatWidget']),
             new TwigFunction('storefront_locales', [$this, 'locales']),
             new TwigFunction('storefront_currencies', [$this, 'currencies']),
@@ -55,6 +56,36 @@ final class StorefrontPresentationExtension extends AbstractExtension
             return $ctx === null ? null : $this->contactWidget->storefront($ctx->storeId);
         } catch (\Throwable) {
             return null;
+        }
+    }
+
+    /** The shop's own phone and e-mail (contact widget first, then the company profile) for the header. @return array{phone:string,phone_href:string,email:string} */
+    public function headerContacts(): array
+    {
+        $empty = ['phone' => '', 'phone_href' => '', 'email' => ''];
+        try {
+            $ctx = $this->context();
+            if ($ctx === null) {
+                return $empty;
+            }
+            $widget = $this->contactWidget();
+            $profile = $this->connection->fetchAssociative('SELECT phone,email FROM mc_store_profile WHERE store_id=?', [$ctx->storeId]) ?: [];
+            $phone = '';
+            foreach ((array) ($widget['actions'] ?? []) as $action) {
+                if (($action['code'] ?? '') === 'call' && str_starts_with((string) $action['href'], 'tel:')) {
+                    $phone = (string) substr((string) $action['href'], 4);
+                }
+            }
+            $display = trim((string) ($profile['phone'] ?? ''));
+            $digits = $phone !== '' ? $phone : (preg_replace('/[^0-9+]/', '', $display) ?? '');
+
+            return [
+                'phone' => $display !== '' ? $display : $digits,
+                'phone_href' => $digits !== '' ? 'tel:' . $digits : '',
+                'email' => trim((string) ($profile['email'] ?? '')),
+            ];
+        } catch (\Throwable) {
+            return $empty;
         }
     }
 

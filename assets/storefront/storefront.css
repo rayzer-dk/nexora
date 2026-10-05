@@ -1212,17 +1212,7 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 .support-chat__tg:hover { color: var(--mc-color-primary); }
 
 /* Theme toggle: a thin moon in the light theme, a sun in the dark theme. */
-.reference-theme-toggle__moon { display: inline-flex; }
-.reference-theme-toggle__sun { display: none; }
 .reference-theme-toggle__moon .ui-icon, .admin-theme-toggle__moon .ui-icon { stroke-width: 1.25; }
-:root[data-theme="dark"] .reference-theme-toggle__moon { display: none; }
-:root[data-theme="dark"] .reference-theme-toggle__sun { display: inline-flex; }
-:root[data-color-scheme="dark"]:not([data-theme="light"]) .reference-theme-toggle__moon { display: none; }
-:root[data-color-scheme="dark"]:not([data-theme="light"]) .reference-theme-toggle__sun { display: inline-flex; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__moon { display: none; }
-  :root:not([data-theme="light"]):not([data-theme="dark"]) .reference-theme-toggle__sun { display: inline-flex; }
-}
 
 /* Benefit cards fill the row without empty cells, whatever their number; a phone can show only the first few. */
 .reference-benefits { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)); }
@@ -1237,3 +1227,19 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 .cart-freeship { display: grid; gap: var(--mc-space-2); padding: var(--mc-space-3); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-subtle); font-size: var(--mc-font-size-sm); }
 .cart-freeship i { display: block; height: 6px; border-radius: var(--mc-radius-sm); background: linear-gradient(90deg, var(--mc-color-primary) calc(var(--cart-freeship) * 1%), var(--mc-color-border) 0); }
 .cart-freeship.is-reached { color: var(--mc-color-success); }
+
+/* Subcategories on a category page: compact round chips, clearly not product cards. */
+.category-tiles--chips { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); }
+.category-tiles--chips > .reference-category { display: inline-flex; flex-direction: row; align-items: center; gap: var(--mc-space-2); width: auto; min-width: 0; padding: 4px var(--mc-space-4) 4px 4px; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-full); background: var(--mc-color-primary-soft, var(--mc-color-surface)); box-shadow: none; }
+.category-tiles--chips > .reference-category:hover { border-color: var(--mc-color-primary); text-decoration: none; }
+.category-tiles--chips .reference-category__image { display: block; flex: none; width: 40px; height: 40px; overflow: hidden; border-radius: 50%; background: var(--mc-color-surface); }
+.category-tiles--chips .reference-category__image img, .category-tiles--chips .reference-category__image picture { display: block; width: 100%; height: 100%; object-fit: cover; }
+.category-tiles--chips .reference-category__copy { display: flex; align-items: baseline; gap: var(--mc-space-2); min-width: 0; }
+.category-tiles--chips .reference-category__copy strong { font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); }
+.category-tiles--chips .reference-category__copy small { color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); }
+.category-tiles--chips .reference-category__arrow { display: none; }
+.category-tiles--chips > .reference-category--text { padding-left: var(--mc-space-4); }
+
+/* Gift card and bonus fields span the whole row, like the coupon field. */
+.ck-grid[data-rewards] { grid-template-columns: minmax(0, 1fr); }
+.ck-grid[data-rewards] .coupon-row { width: 100%; }

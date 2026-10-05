@@ -69,7 +69,7 @@ return [
     'no_products_title' => 'Ingen produkter matcher disse betingelser',
     'no_products_text' => 'Ændr søgeordet eller filtrene.',
     'filter_search' => 'Søg',
-    'filter_search_placeholder' => 'Navn, SKU, GTIN, mærke, egenskab',
+    'filter_search_placeholder' => 'Navn, varekode, mærke, egenskab',
     'brand' => 'Mærke',
     'all_brands' => 'Alle mærker',
     'price_from' => 'Pris fra',

@@ -320,7 +320,7 @@
 .spec-list dt { color: var(--mc-color-muted); }
 .spec-list dd { font-weight: var(--mc-font-weight-medium); }
 .pp-delivery__grid { display: grid; gap: var(--mc-space-3); }
-.pp-delivery__item { display: flex; align-items: flex-start; gap: var(--mc-space-3); padding: var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); color: var(--mc-color-text); }
+.pp-delivery__item { display: flex; align-items: flex-start; gap: var(--mc-space-3); padding: var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: color-mix(in srgb, var(--mc-color-surface) 94%, var(--mc-color-text) 6%); color: var(--mc-color-text); }
 .pp-delivery__item:hover { border-color: var(--mc-color-primary); text-decoration: none; }
 .pp-delivery__item > svg { flex: none; margin-top: var(--mc-space-1); color: var(--mc-color-primary); }
 .pp-delivery__item span { display: grid; gap: var(--mc-space-1); font-size: var(--mc-font-size-sm); }

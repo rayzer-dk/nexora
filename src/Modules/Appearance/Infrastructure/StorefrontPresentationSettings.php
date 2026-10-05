@@ -143,7 +143,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'density' => 'comfortable',
                 'color_scheme' => 'light',
                 'toggle' => '1',
-                'container' => '1600',
+                'container' => '1500',
                 'font' => 'system',
             ],
             // Blog: which blocks the list and the article show.
@@ -157,7 +157,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             'colors' => ['background' => '', 'text' => '', 'heading' => '', 'header_bg' => '', 'footer_bg' => '', 'primary_hover' => '', 'primary_active' => '', 'buy_button' => '', 'buy_hover' => '', 'buy_active' => ''],
             'display' => [
                 'card_style' => 'classic',
-                'card_columns' => '4',
+                'card_columns' => '5',
                 'card_ratio' => 'square',
                 'card_actions' => 'visible',
                 'category_style' => 'classic',

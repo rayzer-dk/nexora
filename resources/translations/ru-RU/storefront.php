@@ -69,7 +69,7 @@ return [
     'no_products_title' => 'По заданным условиям товары не найдены',
     'no_products_text' => 'Измените поисковый запрос или фильтры.',
     'filter_search' => 'Поиск',
-    'filter_search_placeholder' => 'Название, SKU, GTIN, бренд, характеристика',
+    'filter_search_placeholder' => 'Название, код товара, бренд, характеристика',
     'brand' => 'Бренд',
     'all_brands' => 'Все бренды',
     'price_from' => 'Цена от',

@@ -1,6 +1,6 @@
 {#- Photo tiles of categories (home page block and subcategories of a category page). Options: layout grid|scroll, columns 2-6, show_image, show_count. -#}
 {% set opts = options|default({}) %}
-{% set layout = opts.layout|default('grid') == 'scroll' ? 'scroll' : 'grid' %}
+{% set layout = opts.layout|default('grid') in ['scroll', 'chips'] ? opts.layout : 'grid' %}
 {% set cols = max(2, min(6, opts.columns|default(4) ?: 4)) %}
 <div class="reference-categories category-tiles category-tiles--{{ layout }}" style="--tile-cols: {{ cols }}"{% if opts.label|default('') %} role="list" aria-label="{{ opts.label }}"{% endif %}>
 {% for category in items %}

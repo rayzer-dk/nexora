@@ -63,5 +63,5 @@
 /* Support chat: setup steps */
 .admin-steps { display: grid; gap: var(--mc-space-2); margin: 0; padding-left: var(--mc-space-6); }
 .admin-steps li { line-height: var(--mc-line-height-snug); }
-.lang-flag { width: 20px; height: 14px; border-radius: var(--mc-radius-sm); box-shadow: 0 0 0 1px var(--mc-color-border); object-fit: cover; flex: none; }
+.lang-flag { width: 21px; height: 14px; border-radius: var(--mc-radius-xs); box-shadow: 0 0 0 1px var(--mc-color-border); object-fit: cover; flex: none; }
 .lang-tabs__code.is-flagged { display: none; }

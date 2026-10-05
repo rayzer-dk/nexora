@@ -1070,11 +1070,21 @@ function installationSuccessResponse(bool $demoInstalled): never
     }
     $title = e(it('installer.install_success_title'));
     $features = [
-        ['layout-grid', 'feat_builder'], ['languages', 'feat_languages'], ['credit-card', 'feat_payments'], ['search', 'feat_seo'],
-        ['gift', 'feat_marketing'], ['shield-check', 'feat_security'], ['zap', 'feat_speed'], ['users', 'feat_business'],
+        ['layout-grid', it('installer.feat_builder'), it('installer.feat_builder_text')],
+        ['languages', it('installer.feat_languages'), it('installer.feat_languages_text')],
+        ['credit-card', it('installer.feat_payments'), it('installer.feat_payments_text')],
+        ['search', it('installer.feat_seo'), it('installer.feat_seo_text')],
+        ['gift', it('installer.feat_marketing'), it('installer.feat_marketing_text')],
+        ['shield-check', it('installer.feat_security'), it('installer.feat_security_text')],
+        ['zap', it('installer.feat_speed'), it('installer.feat_speed_text')],
+        ['users', it('installer.feat_business'), it('installer.feat_business_text')],
     ];
-    $steps = [['step1_title', 'step1_text'], ['step2_title', 'step2_text'], ['step3_title', 'step3_text']];
-    $why = ['why1', 'why2', 'why3'];
+    $steps = [
+        [it('installer.step1_title'), it('installer.step1_text')],
+        [it('installer.step2_title'), it('installer.step2_text')],
+        [it('installer.step3_title'), it('installer.step3_text')],
+    ];
+    $why = [it('installer.why1'), it('installer.why2'), it('installer.why3')];
     $css = <<<'CSS'
 *{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#172033;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
 .wrap{max-width:1120px;margin:0 auto;padding:32px 20px 56px}
@@ -1112,15 +1122,15 @@ CSS;
     $out .= '<div class="pane p2"><div class="frame"><div class="bar"><i></i><i></i><i></i><span>/admin</span></div><img src="/assets/branding/welcome-admin.webp" alt="" width="1200" height="750"></div></div></div></div></section>';
     $out .= '<h2>' . e(it('installer.next_title')) . '</h2><div class="steps">';
     foreach ($steps as [$st, $sx]) {
-        $out .= '<div class="step"><strong>' . e(it('installer.' . $st)) . '</strong><p>' . e(it('installer.' . $sx)) . '</p></div>';
+        $out .= '<div class="step"><strong>' . e($st) . '</strong><p>' . e($sx) . '</p></div>';
     }
     $out .= '</div><h2>' . e(it('installer.features_title')) . '</h2><div class="grid">';
-    foreach ($features as [$icon, $key]) {
-        $out .= '<div class="card"><span class="ico">' . installerIcon($icon) . '</span><strong>' . e(it('installer.' . $key)) . '</strong><p>' . e(it('installer.' . $key . '_text')) . '</p></div>';
+    foreach ($features as [$icon, $name, $text]) {
+        $out .= '<div class="card"><span class="ico">' . installerIcon($icon) . '</span><strong>' . e($name) . '</strong><p>' . e($text) . '</p></div>';
     }
     $out .= '</div><h2>' . e(it('installer.why_title')) . '</h2><div class="why">';
-    foreach ($why as $key) {
-        $out .= '<div>' . installerIcon('circle-check') . '<p>' . e(it('installer.' . $key)) . '</p></div>';
+    foreach ($why as $line) {
+        $out .= '<div>' . installerIcon('circle-check') . '<p>' . e($line) . '</p></div>';
     }
     $out .= '</div><p class="foot">Nexora Commerce' . ($version !== '' ? ' v' . e($version) : '') . '</p></div></body></html>';
     echo $out;

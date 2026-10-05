@@ -69,7 +69,7 @@ return [
     'no_products_title' => 'No products match these conditions',
     'no_products_text' => 'Change the search query or filters.',
     'filter_search' => 'Search',
-    'filter_search_placeholder' => 'Name, SKU, GTIN, brand, attribute',
+    'filter_search_placeholder' => 'Name, product code, brand, attribute',
     'brand' => 'Brand',
     'all_brands' => 'All brands',
     'price_from' => 'Price from',

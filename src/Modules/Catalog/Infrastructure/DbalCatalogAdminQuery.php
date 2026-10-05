@@ -233,7 +233,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         $where = 'sc.store_id = ? AND ct.locale = ?'; $params = [$storeId, $locale];
         if (trim($search) !== '') { $where .= ' AND ct.name LIKE ?'; $params[] = '%' . trim($search) . '%'; }
         $total = (int) $this->connection->fetchOne("SELECT COUNT(*) FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=sc.store_id WHERE {$where}", $params);
-        $rows = $this->connection->fetchAllAssociative("SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=sc.store_id WHERE {$where} ORDER BY c.sort_order,c.id LIMIT {$limit} OFFSET {$offset}", $params);
+        $rows = $this->connection->fetchAllAssociative("SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name,(SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id LIMIT 1) AS image_key FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=sc.store_id WHERE {$where} ORDER BY c.sort_order,c.id LIMIT {$limit} OFFSET {$offset}", $params);
         foreach ($rows as &$row) { $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122(); }
         return ['items' => $rows, 'total' => $total, 'page' => $page, 'limit' => $limit];
     }
@@ -248,7 +248,8 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     {
         $rows = $this->connection->fetchAllAssociative(
             'SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name,
-                    (SELECT COUNT(*) FROM mc_product_category pc WHERE pc.category_id=c.id) AS product_count
+                    (SELECT COUNT(*) FROM mc_product_category pc WHERE pc.category_id=c.id) AS product_count,
+                    (SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id LIMIT 1) AS image_key
              FROM mc_category c
              JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=?
              JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=sc.store_id AND ct.locale=?

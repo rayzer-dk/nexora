@@ -69,7 +69,7 @@ return [
     'no_products_title' => 'Brak produktów spełniających te warunki',
     'no_products_text' => 'Zmień zapytanie lub filtry.',
     'filter_search' => 'Szukaj',
-    'filter_search_placeholder' => 'Nazwa, SKU, GTIN, marka, atrybut',
+    'filter_search_placeholder' => 'Nazwa, kod produktu, marka, atrybut',
     'brand' => 'Marka',
     'all_brands' => 'Wszystkie marki',
     'price_from' => 'Cena od',

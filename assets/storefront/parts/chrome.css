@@ -270,3 +270,16 @@
 .site-footer__links h2, .site-footer__contacts h2 { margin: 0 0 var(--mc-space-2); font-size: var(--mc-font-size-sm); }
 .site-footer__links a { color: inherit; opacity: .85; }
 .site-footer__links a:hover { opacity: 1; }
+
+/* Header: a shorter search field and the shop's contacts on the right. */
+.reference-contacts { display: none; }
+@media (min-width: 1024px) {
+  .reference-header__main { grid-template-columns: auto minmax(0, 520px) 1fr; }
+  .reference-header__main:has(.reference-contacts) { grid-template-columns: auto minmax(0, 480px) 1fr auto; }
+  .reference-header__actions { justify-self: end; }
+  .reference-contacts { display: grid; gap: 2px; justify-self: end; min-width: 0; }
+  .reference-contacts a { display: inline-flex; align-items: center; gap: var(--mc-space-2); color: var(--mc-color-text); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); white-space: nowrap; }
+  .reference-contacts a:hover { color: var(--mc-color-primary); text-decoration: none; }
+  .reference-contacts .ui-icon { color: var(--mc-color-primary); }
+}
+@media (max-width: 1280px) { .reference-contacts a:nth-child(2) { display: none; } }

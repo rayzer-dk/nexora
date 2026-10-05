@@ -75,7 +75,7 @@ final class BlogService
         $pages = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($page, $pages));
         $rows = $this->db->fetchAllAssociative(
-            "SELECT ce.id, ce.status, ce.published_at, ce.updated_at, ct.title, bm.category_id, bm.featured, bm.reading_minutes,
+            "SELECT ce.id, ce.status, ce.published_at, ce.updated_at, ct.title, bm.category_id, bm.featured, bm.reading_minutes, bm.cover_url,
                     (SELECT ct2.title FROM mc_content_translation ct2 WHERE ct2.content_id = ce.id ORDER BY ct2.id LIMIT 1) AS any_title,
                     (SELECT GROUP_CONCAT(ct3.locale) FROM mc_content_translation ct3 WHERE ct3.content_id = ce.id) AS locales
              " . $from . ' ORDER BY COALESCE(ce.published_at, ce.updated_at) DESC, ce.id DESC LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage),

@@ -303,6 +303,9 @@ final class StorefrontChromeExtension extends AbstractExtension
     private function flagRegion(string $locale): string
     {
         $parts = explode('-', str_replace('_', '-', $locale));
+        if (strtolower($parts[0]) === 'en') {
+            return 'GB'; // English is shown with the British flag whichever regional variant the locale carries
+        }
         if (isset($parts[1]) && preg_match('/^[A-Za-z]{2}$/', $parts[1]) === 1) {
             return strtoupper($parts[1]);
         }

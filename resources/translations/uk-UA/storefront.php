@@ -69,7 +69,7 @@ return [
     'no_products_title' => 'За заданими умовами товарів не знайдено',
     'no_products_text' => 'Змініть пошуковий запит або фільтри.',
     'filter_search' => 'Пошук',
-    'filter_search_placeholder' => 'Назва, SKU, GTIN, бренд, характеристика',
+    'filter_search_placeholder' => 'Назва, код товару, бренд, характеристика',
     'brand' => 'Бренд',
     'all_brands' => 'Усі бренди',
     'price_from' => 'Ціна від',
