@@ -1508,13 +1508,13 @@ function initCommandPalette() {
   if (!palette || !input || !results) return;
   const links = qa('[data-command-source] a').map((link) => {
     const path = new URL(link.href, window.location.origin).pathname.replace(/[/_-]+/g, ' ');
-    return { label: link.textContent.trim(), href: link.href, hay: `${link.textContent.trim()} ${path}`.toLocaleLowerCase('uk-UA').replace(/ё/g, 'е') };
+    return { label: link.textContent.trim(), href: link.href, hay: `${link.textContent.trim()} ${path}`.toLocaleLowerCase('uk-UA').replace(/\u0451/g, '\u0435') };
   }).filter((item) => item.label);
   // Typed in the other alphabet or on the wrong keyboard layout, or with one typo: the section is still found.
-  const cyr = 'йцукенгшщзхъфывапролджэячсмитьбюіїє';
+  const cyr = '\u0439\u0446\u0443\u043a\u0435\u043d\u0433\u0448\u0449\u0437\u0445\u044a\u0444\u044b\u0432\u0430\u043f\u0440\u043e\u043b\u0434\u0436\u044d\u044f\u0447\u0441\u043c\u0438\u0442\u044c\u0431\u044e\u0456\u0457\u0454';
   const lat = "qwertyuiop[]asdfghjkl;'zxcvbnm,.sie";
   const swapLayout = (text) => Array.from(text).map((ch) => { const a = cyr.indexOf(ch); if (a >= 0) return lat[a]; const b = lat.indexOf(ch); return b >= 0 ? cyr[b] : ch; }).join('');
-  const sound = { а: 'a', б: 'b', в: 'v', г: 'h', д: 'd', е: 'e', є: 'ye', ж: 'zh', з: 'z', и: 'y', і: 'i', ї: 'yi', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ь: '', ю: 'yu', я: 'ya', ы: 'y', э: 'e' };
+  const sound = { '\u0430': 'a', '\u0431': 'b', '\u0432': 'v', '\u0433': 'h', '\u0434': 'd', '\u0435': 'e', '\u0454': 'ye', '\u0436': 'zh', '\u0437': 'z', '\u0438': 'y', '\u0456': 'i', '\u0457': 'yi', '\u0439': 'y', '\u043a': 'k', '\u043b': 'l', '\u043c': 'm', '\u043d': 'n', '\u043e': 'o', '\u043f': 'p', '\u0440': 'r', '\u0441': 's', '\u0442': 't', '\u0443': 'u', '\u0444': 'f', '\u0445': 'kh', '\u0446': 'ts', '\u0447': 'ch', '\u0448': 'sh', '\u0449': 'shch', '\u044c': '', '\u044e': 'yu', '\u044f': 'ya', '\u044b': 'y', '\u044d': 'e' };
   const toLatin = (text) => Array.from(text).map((ch) => (ch in sound ? sound[ch] : ch)).join('');
   const near = (word, hay) => {
     if (word.length < 4) return false;
