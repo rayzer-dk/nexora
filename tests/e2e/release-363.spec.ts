@@ -170,7 +170,7 @@ test('the list of shoppers waiting for a product has search, period, sorting and
   await expect(page.locator('form.admin-filters input[name="q"]')).toBeVisible();
   await expect(page.locator('form.admin-filters input[name="from"]')).toHaveValue('2020-01-01');
   await expect(page.locator('a.admin-sort').first()).toBeVisible();
-  const csv = await page.request.get('/admin/commerce/stock-requests/export?status=active');
+  const csv = await page.request.get('/admin/commerce/stock-requests/export.csv?status=active');
   expect(csv.status()).toBe(200);
   expect(await csv.text()).toContain('email,product,sku,status');
 });

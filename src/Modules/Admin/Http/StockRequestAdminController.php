@@ -54,7 +54,7 @@ final class StockRequestAdminController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/commerce/stock-requests/export', name: 'admin_commerce_stock_requests_export', methods: ['GET'])]
+    #[Route('/admin/commerce/stock-requests/export.csv', name: 'admin_commerce_stock_requests_export', methods: ['GET'])]
     public function export(Request $request): Response
     {
         $context = $this->contexts->resolve($request);

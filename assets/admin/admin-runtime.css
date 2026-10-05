@@ -1432,6 +1432,7 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 .quality-check__icon { flex: none; color: var(--tone); }
 .quality-check__text { display: grid; flex: 1; gap: var(--mc-space-1); min-width: 0; }
 .quality-check__text small { color: var(--mc-color-muted); }
+@media (max-width: 640px) { .quality-check { flex-wrap: wrap; } .quality-check .admin-button { margin-left: calc(var(--mc-space-3) + 20px); } }
 @media (max-width: 640px) { .quality-hero { flex-direction: column; align-items: flex-start; } }
 
 /* ------------------------------------------------ 3.18 form builder */
