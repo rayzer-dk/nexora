@@ -5,8 +5,11 @@
     <header class="forum-hero forum-hero--compact"><div><span class="eyebrow">{{ ui_text('community') }}</span><h1>{{ ui_text('forum_profile') }}</h1><p>{{ ui_text('forum_profile_privacy') }}</p></div></header>
     {% for message in app.flashes('success') %}<div class="store-notice is-success">{{ message }}</div>{% endfor %}
     {% for message in app.flashes('error') %}<div class="store-notice is-error">{{ message }}</div>{% endfor %}
-    <form method="post" class="account-form">
+    <form method="post" enctype="multipart/form-data" class="account-form">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_profile') }}">
+        <div class="fx-avatar-edit">{% if profile.avatar_url %}<img class="fx-avatar" src="{{ profile.avatar_url }}" alt="" width="56" height="56">{% else %}<span class="fx-avatar" aria-hidden="true">{{ profile.nickname|first|upper }}</span>{% endif %}
+            <label>{{ ui_text('forum_avatar') }}<input type="file" name="avatar" accept="image/jpeg,image/png,image/webp,image/gif"><small class="fx-muted">{{ ui_text('forum_avatar_hint') }}</small></label>
+            {% if profile.avatar_url %}<label class="fx-check"><input type="checkbox" name="remove_avatar" value="1"> {{ ui_text('forum_avatar_remove') }}</label>{% endif %}</div>
         <label>{{ ui_text('forum_nickname') }}<input type="text" name="nickname" value="{{ profile.nickname }}" required minlength="3" maxlength="64"></label>
         <label>{{ ui_text('forum_bio') }}<textarea name="bio" maxlength="500" rows="5">{{ profile.bio }}</textarea></label>
         <label><input type="checkbox" name="show_email" value="1" {{ profile.show_email ? 'checked' : '' }}> {{ ui_text('forum_show_email') }}</label>

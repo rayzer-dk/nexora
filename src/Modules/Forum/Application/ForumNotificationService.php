@@ -44,6 +44,8 @@ final readonly class ForumNotificationService
             [$storeId, (int) $post['topic_id'], (int) ($post['customer_id'] ?? 0)],
         );
 
+        $this->notifyMentions($storeId, $post, $subscribers);
+
         $base = rtrim($this->publicBaseUrl, '/');
         $url = $base . '/forum/t/' . (int) $post['topic_id'] . '/' . rawurlencode((string) $post['slug']) . '#post-' . $postId;
         foreach ($subscribers as $subscriber) {
@@ -72,6 +74,49 @@ final readonly class ForumNotificationService
                 $email,
                 null,
                 'forum-reply:' . $postId . ':customer:' . (int) $subscriber['customer_id'],
+            );
+        }
+    }
+
+    /**
+     * @param array<string,mixed> $post
+     * @param list<array<string,mixed>> $subscribers
+     */
+    private function notifyMentions(int $storeId, array $post, array $subscribers): void
+    {
+        if (preg_match_all('/(?:^|[\s(])@([\p{L}\p{N}_-]{2,64})/u', (string) ($post['body_text'] ?? ''), $found) < 1) {
+            return;
+        }
+        $names = array_values(array_unique(array_map(static fn (string $n): string => mb_strtolower($n, 'UTF-8'), $found[1])));
+        $in = implode(',', array_fill(0, count($names), '?'));
+        $members = $this->connection->fetchAllAssociative(
+            "SELECT p.customer_id,c.email,c.locale
+             FROM mc_forum_profile p JOIN mc_customer c ON c.id=p.customer_id
+             WHERE p.store_id=? AND c.status='active' AND LOWER(p.nickname) IN ({$in}) LIMIT 20",
+            [$storeId, ...$names],
+        );
+        $already = array_map(static fn (array $s): int => (int) $s['customer_id'], $subscribers);
+        $postId = (int) $post['id'];
+        $url = rtrim($this->publicBaseUrl, '/') . '/forum/t/' . (int) $post['topic_id'] . '/' . rawurlencode((string) $post['slug']) . '#post-' . $postId;
+        foreach ($members as $member) {
+            $id = (int) $member['customer_id'];
+            $email = trim((string) ($member['email'] ?? ''));
+            if ($email === '' || $id === (int) ($post['customer_id'] ?? 0) || in_array($id, $already, true)) {
+                continue;
+            }
+            $locale = trim((string) ($member['locale'] ?? '')) ?: 'uk-UA';
+            $this->notifications->enqueue(
+                NotificationChannel::Email,
+                new NotificationMessage(
+                    'forum.mention',
+                    $this->translator->translate('forum_mention_subject', $locale, ['topic' => (string) $post['title']]),
+                    $this->translator->translate('forum_mention_text', $locale, ['topic' => (string) $post['title'], 'url' => $url]),
+                    ['locale' => $locale, 'topic_id' => (int) $post['topic_id'], 'post_id' => $postId, 'url' => $url],
+                    'generic',
+                ),
+                $email,
+                null,
+                'forum-mention:' . $postId . ':customer:' . $id,
             );
         }
     }

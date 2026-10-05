@@ -18,7 +18,7 @@ final readonly class ForumProfileService
     public function getOrCreate(int $storeId, int $customerId): array
     {
         $row = $this->connection->fetchAssociative(
-            'SELECT id,nickname,bio,show_email,show_phone,allow_private_messages FROM mc_forum_profile WHERE store_id=? AND customer_id=? LIMIT 1',
+            'SELECT id,nickname,avatar_url,bio,show_email,show_phone,allow_private_messages FROM mc_forum_profile WHERE store_id=? AND customer_id=? LIMIT 1',
             [$storeId, $customerId],
         );
         if (is_array($row)) {
@@ -33,7 +33,9 @@ final readonly class ForumProfileService
         // UUIDv7 starts with a timestamp, so using its leading bytes creates identical
         // nicknames for customers registered in the same time window. Hash the full public
         // identifier instead to keep the generated nickname deterministic and collision-safe.
-        $nickname = 'member-' . substr(hash('sha256', $customer['public_id']), 0, 12) . '-' . base_convert((string) $customerId, 10, 36);
+        $name = (string) $this->connection->fetchOne('SELECT display_name FROM mc_customer WHERE id=?', [$customerId]);
+        $base = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower((string) (new \Symfony\Component\String\Slugger\AsciiSlugger('uk'))->slug(mb_substr($name, 0, 40, 'UTF-8')))), '-');
+        $nickname = ($base !== '' ? substr($base, 0, 24) : 'member') . '-' . substr(hash('sha256', $customer['public_id']), 0, 4) . base_convert((string) $customerId, 10, 36);
         $now = $this->now();
         try {
             $this->connection->insert('mc_forum_profile', [
@@ -51,7 +53,7 @@ final readonly class ForumProfileService
             // Two concurrent first visits can both observe no profile. If another request
             // created this customer's profile first, return it instead of surfacing a 500.
             $existing = $this->connection->fetchAssociative(
-                'SELECT id,nickname,bio,show_email,show_phone,allow_private_messages FROM mc_forum_profile WHERE store_id=? AND customer_id=? LIMIT 1',
+                'SELECT id,nickname,avatar_url,bio,show_email,show_phone,allow_private_messages FROM mc_forum_profile WHERE store_id=? AND customer_id=? LIMIT 1',
                 [$storeId, $customerId],
             );
             if (is_array($existing)) {
@@ -63,6 +65,7 @@ final readonly class ForumProfileService
         return [
             'id' => (int) $this->connection->lastInsertId(),
             'nickname' => $nickname,
+            'avatar_url' => null,
             'bio' => null,
             'show_email' => 0,
             'show_phone' => 0,
@@ -112,7 +115,7 @@ final readonly class ForumProfileService
     public function publicProfile(int $storeId, int $customerId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT p.customer_id,p.nickname,p.bio,p.show_email,p.show_phone,p.allow_private_messages,
+            "SELECT p.customer_id,p.nickname,p.avatar_url,p.bio,p.show_email,p.show_phone,p.allow_private_messages,
                     c.email,c.phone_e164,c.created_at
              FROM mc_forum_profile p
              JOIN mc_customer c ON c.id=p.customer_id

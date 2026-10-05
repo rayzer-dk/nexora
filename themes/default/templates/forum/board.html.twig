@@ -43,13 +43,19 @@
         <span class="eyebrow">{{ ui_text('new_topic') }}</span>
         <h2 id="forum-compose-title">{{ ui_text('create_topic_in')|replace({'%board%': board.name}) }}</h2>
         <p>{{ ui_text('forum_posting_as')|replace({'%name%': forum_nickname}) }} {{ ui_text('topic_moderation_text') }}</p>
-        <form method="post" action="{{ path('storefront_forum_topic_create',{slug:board.slug}) }}" data-store-async-form>
+        <form method="post" enctype="multipart/form-data" action="{{ path('storefront_forum_topic_create',{slug:board.slug}) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_topic_' ~ board.id) }}">
             <input type="hidden" name="rendered_at" value="{{ form_rendered_at }}">
             <label class="forum-honeypot" aria-hidden="true">{{ ui_text('company') }}<input name="company" tabindex="-1" autocomplete="off"></label>
             <label><span>{{ ui_text('topic_title') }}</span><input name="title" required maxlength="240"></label>
-            <label class="fx-editor"><span>{{ ui_text('message') }}</span>{% include '@storefront/forum/_toolbar.html.twig' %}<textarea name="body" required minlength="3" maxlength="20000" rows="8"></textarea></label>
+            <label class="fx-editor"><span>{{ ui_text('message') }}</span>{% include '@storefront/forum/_toolbar.html.twig' %}<textarea name="body" required minlength="3" maxlength="20000" rows="5"></textarea></label>
             <small class="fx-muted">{{ ui_text('forum_format_hint') }}</small>
+            <div class="fx-extras"><label class="fx-file"><span>{{ ui_text('forum_attach_images') }}</span><input type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple></label>
+            <details class="fx-pop fx-pollform"><summary class="fx-act">{{ ui_icon('chart-column', 14) }}{{ ui_text('forum_poll_add') }}</summary>
+                <label><span>{{ ui_text('forum_poll_question') }}</span><input name="poll_question" maxlength="240"></label>
+                <label><span>{{ ui_text('forum_poll_options') }}</span><textarea name="poll_options" rows="4"></textarea></label>
+                <label class="fx-check"><input type="checkbox" name="poll_multiple" value="1"> {{ ui_text('forum_poll_multiple') }}</label>
+            </details></div>
             {% include '@storefront/components/captcha.html.twig' with {form:'forum'} only %}<div class="modal__actions"><button class="button button--secondary" type="button" data-forum-compose-close>{{ ui_text('cancel') }}</button><button class="button button--primary" type="submit">{{ ui_text('send_for_moderation') }}</button></div>
         </form>
     </section>

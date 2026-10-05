@@ -472,4 +472,8 @@ return [
     'forum.runtime.vote_own' => 'Свои сообщения оценивать нельзя.',
     'forum.runtime.solution_author_only' => 'Отметить решение может только автор темы.',
     'forum.runtime.board_parent_invalid' => 'Подраздел можно добавить только к разделу верхнего уровня, который сам не является подразделом.',
+    'forum.runtime.image_invalid' => 'Изображение не подошло: нужен JPG, PNG, WebP или GIF до 5 МБ.',
+    'forum.runtime.poll_invalid' => 'Для опроса нужны вопрос и минимум два варианта.',
+    'forum.runtime.poll_choose' => 'Выберите вариант ответа.',
+    'forum.runtime.poll_voted' => 'Вы уже проголосовали.',
 ];

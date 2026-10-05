@@ -4,7 +4,7 @@
     <nav class="forum-breadcrumbs" aria-label="{{ ui_text('navigation') }}"><a href="/forum">{{ ui_text('forum') }}</a><span class="breadcrumbs__sep" aria-hidden="true">{{ ui_icon('chevron-right', 14) }}</span><span>{{ member.nickname }}</span></nav>
     <header class="forum-hero forum-hero--compact">
         <div>
-            <span class="forum-avatar" aria-hidden="true">{{ member.nickname|first|upper }}</span>
+            {% if member.avatar_url %}<img class="fx-avatar" src="{{ member.avatar_url }}" alt="" width="56" height="56">{% else %}<span class="forum-avatar" aria-hidden="true">{{ member.nickname|first|upper }}</span>{% endif %}
             <h1>{{ member.nickname }}</h1>
             <p>{{ ui_text('forum_member_since')|replace({'%date%': member.created_at}) }}</p>
             {% if member.bio %}<p>{{ member.bio }}</p>{% endif %}

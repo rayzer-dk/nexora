@@ -2075,4 +2075,8 @@ return [
     'forum.runtime.vote_own' => 'You cannot rate your own message.',
     'forum.runtime.solution_author_only' => 'Only the topic author can mark the solution.',
     'forum.runtime.board_parent_invalid' => 'A subforum can only be placed under a top-level section that is not itself a subforum.',
+    'forum.runtime.image_invalid' => 'This image was not accepted: use JPG, PNG, WebP or GIF up to 5 MB.',
+    'forum.runtime.poll_invalid' => 'A poll needs a question and at least two options.',
+    'forum.runtime.poll_choose' => 'Choose an answer.',
+    'forum.runtime.poll_voted' => 'You have already voted.',
 ];

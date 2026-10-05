@@ -28,6 +28,23 @@
     {% for message in app.flashes('success') %}<div class="store-notice is-success" data-store-toast-source>{{ message }}</div>{% endfor %}
     {% for message in app.flashes('error') %}<div class="store-notice is-error" data-store-toast-source>{{ message }}</div>{% endfor %}
 
+    {% if poll %}
+    <section class="fx-poll" id="poll" aria-labelledby="poll-title">
+        <h2 id="poll-title">{{ ui_icon('chart-column', 18) }}<span>{{ poll.question }}</span></h2>
+        {% if app.user and not poll.voted %}
+            <form method="post" action="{{ path('storefront_forum_poll_vote',{id:topic.id,slug:topic.slug,pollId:poll.id}) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_poll_' ~ poll.id) }}">
+                <ul class="fx-poll__list">{% for o in poll.options %}<li><label><input type="{{ poll.multiple ? 'checkbox' : 'radio' }}" name="option[]" value="{{ o.id }}"{{ poll.multiple ? '' : ' required' }}><span>{{ o.label }}</span></label></li>{% endfor %}</ul>
+                <button class="button button--primary" type="submit">{{ ui_text('forum_poll_vote') }}</button>
+            </form>
+        {% else %}
+            <ul class="fx-poll__list">{% for o in poll.options %}<li class="fx-poll__result{{ o.mine ? ' is-mine' : '' }}"><span class="fx-poll__label">{{ o.label }}</span><span class="fx-poll__bar"><i style="width: {{ o.percent }}%"></i></span><b>{{ o.percent }}% · {{ o.votes }}</b></li>{% endfor %}</ul>
+            {% if not app.user %}<a class="fx-muted" href="{{ path('customer_login') }}">{{ ui_text('forum_poll_login') }}</a>{% endif %}
+        {% endif %}
+        <small class="fx-muted">{{ poll.voters }} {{ ui_text('forum_poll_votes') }}</small>
+    </section>
+    {% endif %}
+
     <div class="fx-posts">
         {% for post in posts %}
             {% set card = cards[post.customer_id]|default(null) %}
@@ -41,6 +58,7 @@
                 <div class="fx-post__content">
                     <header class="fx-post__head"><time datetime="{{ post.published_at|default(post.created_at) }}">{{ (post.published_at|default(post.created_at))|slice(0,16) }}</time>{% if post.edited_at %}<span>· {{ ui_text('forum_edited') }}</span>{% endif %}{% if is_solution %}<span class="fx-tag is-ok">{{ ui_icon('check', 12) }}{{ ui_text('forum_solution_post') }}</span>{% endif %}<a class="fx-post__anchor" href="#post-{{ post.id }}" aria-label="#">#{{ loop.index + (page - 1) * 30 }}</a></header>
                     <div class="fx-post__body">{{ post.body_text|forum_format(mentions) }}</div>
+                    {% if attachments[post.id] is defined %}<div class="fx-gallery">{% for img in attachments[post.id] %}<a href="{{ img.url }}" target="_blank" rel="noopener"><img src="{{ img.url }}" alt="{{ img.name }}" width="{{ img.width }}" height="{{ img.height }}" loading="lazy"></a>{% endfor %}</div>{% endif %}
                     <footer class="fx-post__foot">
                         <span class="fx-vote">
                             {% if app.user and current_customer_id != post.customer_id %}
@@ -95,11 +113,12 @@
     <section class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="forum-reply-title">
         <button class="modal__close button button--ghost button--icon" type="button" data-forum-compose-close aria-label="{{ ui_text('close') }}" title="{{ ui_text('close') }}">{{ ui_icon('x', 20) }}</button>
         <span class="eyebrow">{{ ui_text('reply_label') }}</span><h2 id="forum-reply-title">{{ ui_text('add_reply') }}</h2><p>{{ ui_text('forum_posting_as')|replace({'%name%': forum_nickname}) }} {{ ui_text('reply_moderation_text') }}</p>
-        <form method="post" action="{{ path('storefront_forum_reply',{id:topic.id,slug:topic.slug}) }}">
+        <form method="post" enctype="multipart/form-data" action="{{ path('storefront_forum_reply',{id:topic.id,slug:topic.slug}) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_reply_' ~ topic.id) }}"><input type="hidden" name="rendered_at" value="{{ form_rendered_at }}">
             <label class="forum-honeypot" aria-hidden="true">{{ ui_text('company') }}<input name="company" tabindex="-1" autocomplete="off"></label>
             <label class="fx-editor"><span>{{ ui_text('message') }}</span>{% include '@storefront/forum/_toolbar.html.twig' %}<textarea name="body" required minlength="3" maxlength="20000" rows="8"></textarea></label>
             <small class="fx-muted">{{ ui_text('forum_format_hint') }}</small>
+            <label class="fx-file"><span>{{ ui_text('forum_attach_images') }}</span><input type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/gif" multiple></label>
             {% include '@storefront/components/captcha.html.twig' with {form:'forum'} only %}<div class="modal__actions"><button class="button button--secondary" type="button" data-forum-compose-close>{{ ui_text('cancel') }}</button><button class="button button--primary" type="submit">{{ ui_text('send_for_moderation') }}</button></div>
         </form>
     </section>

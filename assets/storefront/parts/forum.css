@@ -131,3 +131,21 @@
 .fx-editor textarea { border-top-left-radius: 0; border-top-right-radius: 0; }
 .button.is-on { border-color: var(--mc-color-warning); color: var(--mc-color-warning); }
 .fx-topic__num--views { color: var(--mc-color-muted); }
+
+.fx-poll { display: grid; gap: var(--mc-space-2); margin-bottom: var(--mc-space-3); padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-lg); background: var(--mc-color-surface); }
+.fx-poll h2 { display: flex; align-items: center; gap: var(--mc-space-2); margin: 0; font-size: var(--mc-font-size-md); }
+.fx-poll__list { display: grid; gap: var(--mc-space-1); margin: 0; padding: 0; list-style: none; }
+.fx-poll__list label { display: flex; align-items: center; gap: var(--mc-space-2); cursor: pointer; }
+.fx-poll__result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(80px, 2fr) auto; align-items: center; gap: var(--mc-space-2); font-size: var(--mc-font-size-sm); }
+.fx-poll__result.is-mine .fx-poll__label { font-weight: var(--mc-font-weight-semibold); color: var(--mc-color-primary); }
+.fx-poll__bar { height: 8px; border-radius: var(--mc-radius-full); background: var(--mc-color-surface-subtle); overflow: hidden; }
+.fx-poll__bar i { display: block; height: 100%; border-radius: inherit; background: var(--mc-color-primary); }
+.fx-gallery { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); margin-top: var(--mc-space-2); }
+.fx-gallery img { display: block; width: auto; max-width: 100%; max-height: 220px; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); object-fit: cover; }
+.fx-file { display: grid; gap: var(--mc-space-1); font-size: var(--mc-font-size-sm); }
+.fx-pollform { padding: var(--mc-space-2) 0; }
+.fx-pollform label { display: grid; gap: var(--mc-space-1); margin-top: var(--mc-space-2); }
+.fx-check { display: flex; align-items: center; gap: var(--mc-space-2); }
+.fx-avatar-edit { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-3); }
+img.fx-avatar { border-radius: var(--mc-radius-full); object-fit: cover; }
+.fx-extras { display: grid; gap: var(--mc-space-2); }

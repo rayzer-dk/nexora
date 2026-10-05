@@ -59,4 +59,29 @@ test('forum votes, favorites and the formatting toolbar work for a signed-in mem
   await textarea.evaluate((el: HTMLTextAreaElement) => { el.focus(); el.setSelectionRange(0, 5); });
   await dialog.locator('.fx-toolbar button').first().click();
   await expect(textarea).toHaveValue(/\*\*hello\*\*/);
+
+  // Avatar upload re-encodes the picture and shows it on the profile.
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8z8BQz0AEYBxVSF+FABJADveWkH6oAAAAAElFTkSuQmCC', 'base64');
+  await page.goto('/forum/profile', { waitUntil: 'domcontentloaded' });
+  await page.locator('input[name="avatar"]').setInputFiles({ name: 'me.png', mimeType: 'image/png', buffer: png });
+  await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('form.account-form button[type="submit"]').click()]);
+  await expectNoServerError(page);
+  await expect(page.locator('.fx-avatar-edit img.fx-avatar')).toHaveAttribute('src', /\/media\/forum\/avatars\/.+\.webp$/);
+
+  // A new topic can carry a picture and a poll (it still waits for moderation).
+  await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-forum-compose-open]').first().click();
+  const topicForm = page.locator('form[action="/forum/general/topics"]');
+  await expect(topicForm.locator('input[name="title"]')).toBeVisible();
+  await topicForm.locator('input[name="title"]').fill(`Poll topic ${suffix}`);
+  await topicForm.locator('textarea[name="body"]').fill('Which one do you prefer? @someone');
+  await topicForm.locator('input[name="images[]"]').setInputFiles({ name: 'pic.png', mimeType: 'image/png', buffer: png });
+  await topicForm.locator('.fx-pollform summary').click();
+  await topicForm.locator('input[name="poll_question"]').fill('Best colour?');
+  await topicForm.locator('textarea[name="poll_options"]').fill('Red\nBlue');
+  const consent = page.locator('[data-commerce-consent] button').last();
+  if (await consent.isVisible()) await consent.click();
+  await Promise.all([page.waitForLoadState('domcontentloaded'), topicForm.locator('button[type="submit"]').click()]);
+  await expectNoServerError(page);
+  await expect(page.locator('.store-notice.is-success, [data-store-toast-source]').first()).toBeAttached();
 });

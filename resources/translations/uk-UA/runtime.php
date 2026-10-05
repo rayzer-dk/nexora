@@ -2077,4 +2077,8 @@ return [
     'forum.runtime.vote_own' => 'Свої повідомлення оцінювати не можна.',
     'forum.runtime.solution_author_only' => 'Позначити рішення може лише автор теми.',
     'forum.runtime.board_parent_invalid' => 'Підрозділ можна додати лише до розділу верхнього рівня, який сам не є підрозділом.',
+    'forum.runtime.image_invalid' => 'Зображення не підійшло: потрібен JPG, PNG, WebP або GIF до 5 МБ.',
+    'forum.runtime.poll_invalid' => 'Для опитування потрібні питання та щонайменше два варіанти.',
+    'forum.runtime.poll_choose' => 'Оберіть варіант відповіді.',
+    'forum.runtime.poll_voted' => 'Ви вже проголосували.',
 ];

@@ -7,6 +7,8 @@ namespace Commerce\Modules\Forum\Http;
 use Commerce\Modules\Forum\Application\ForumService;
 use Commerce\Modules\Forum\Application\ForumCommunityService;
 use Commerce\Modules\Forum\Application\ForumEngagementService;
+use Commerce\Modules\Forum\Application\ForumMediaService;
+use Commerce\Modules\Forum\Application\ForumPollService;
 use Commerce\Modules\Forum\Application\ForumAccessPolicy;
 use Commerce\Modules\Forum\Application\ForumProfileService;
 use Commerce\Modules\Forum\Application\ForumDirectMessageService;
@@ -26,6 +28,8 @@ final class ForumController extends AbstractController
         private readonly ForumService $forum,
         private readonly ForumCommunityService $community,
         private readonly ForumEngagementService $engagement,
+        private readonly ForumMediaService $media,
+        private readonly ForumPollService $polls,
         private readonly ForumAccessPolicy $accessPolicy,
         private readonly ForumProfileService $profiles,
         private readonly ForumDirectMessageService $directMessages,
@@ -130,7 +134,7 @@ final class ForumController extends AbstractController
         }
         try {
             $this->accessPolicy->assertCanParticipate($context->storeId, $user->id());
-            $this->forum->createTopic(
+            $topicId = $this->forum->createTopic(
                 $context->storeId,
                 $slug,
                 $user->id(),
@@ -138,6 +142,12 @@ final class ForumController extends AbstractController
                 (string) $request->request->get('title', ''),
                 (string) $request->request->get('body', ''),
             );
+            $firstPostId = (int) $this->forum->firstPostId($topicId);
+            $this->saveUploads($request, $firstPostId, $user->id());
+            $pollQuestion = trim((string) $request->request->get('poll_question', ''));
+            if ($pollQuestion !== '') {
+                $this->polls->create($topicId, $pollQuestion, preg_split('/\R/u', (string) $request->request->get('poll_options', '')) ?: [], $request->request->getBoolean('poll_multiple'));
+            }
             $this->rememberSessionPost($request);
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.temu_nadislano_na_moderatsiiu_pislia_perevirky_vona_'));
         } catch (Throwable $e) {
@@ -175,6 +185,8 @@ final class ForumController extends AbstractController
             'topic' => $topic,
             'posts' => $posts,
             'cards' => $cards,
+            'attachments' => $this->media->forPosts(array_map(static fn (array $p): int => (int) $p['id'], $posts)),
+            'poll' => $this->polls->forTopic($id, $customerId),
             'mentions' => $this->mentionMap($context->storeId, $posts),
             'page' => $page,
             'pages' => $pages,
@@ -223,13 +235,14 @@ final class ForumController extends AbstractController
         }
         try {
             $this->accessPolicy->assertCanParticipate($context->storeId, $user->id());
-            $this->forum->createReply(
+            $postId = $this->forum->createReply(
                 $context->storeId,
                 $id,
                 $user->id(),
                 $this->profiles->nickname($context->storeId, $user->id()),
                 (string) $request->request->get('body', ''),
             );
+            $this->saveUploads($request, $postId, $user->id());
             $this->rememberSessionPost($request);
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.vidpovid_nadislano_na_moderatsiiu'));
         } catch (Throwable $e) {
@@ -284,6 +297,12 @@ final class ForumController extends AbstractController
                 throw $this->createAccessDeniedException();
             }
             try {
+                $avatar = $request->files->get('avatar');
+                if ($request->request->getBoolean('remove_avatar')) {
+                    $this->media->removeAvatar($context->storeId, $user->id());
+                } elseif ($avatar instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) {
+                    $this->media->saveAvatar($context->storeId, $user->id(), $avatar);
+                }
                 $this->profiles->update(
                     $context->storeId,
                     $user->id(),
@@ -446,6 +465,23 @@ final class ForumController extends AbstractController
         return $this->redirect($this->generateUrl('storefront_forum_topic', ['id' => $id, 'slug' => $slug]) . '#post-' . $postId, 303);
     }
 
+    #[Route('/forum/t/{id}/{slug}/poll/{pollId}/vote', name: 'storefront_forum_poll_vote', methods: ['POST'], requirements: ['id' => '\\d+', 'pollId' => '\\d+'], priority: 290)]
+    public function pollVote(Request $request, int $id, string $slug, int $pollId): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant($context->storeId);
+        if (!$this->isCsrfTokenValid('forum_poll_' . $pollId, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->polls->vote($pollId, $user->id(), array_map('intval', (array) $request->request->all('option')));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirect($this->generateUrl('storefront_forum_topic', ['id' => $id, 'slug' => $slug]) . '#poll', 303);
+    }
+
     #[Route('/forum/t/{id}/{slug}/posts/{postId}/solution', name: 'storefront_forum_post_solution', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]
     public function solution(Request $request, int $id, string $slug, int $postId): Response
     {
@@ -515,6 +551,14 @@ final class ForumController extends AbstractController
      * @param list<array<string,mixed>> $posts
      * @return array<string,string> lower-case nickname => member page
      */
+    private function saveUploads(Request $request, int $postId, int $customerId): void
+    {
+        $files = array_values(array_filter((array) $request->files->get('images', []), static fn (mixed $f): bool => $f instanceof \Symfony\Component\HttpFoundation\File\UploadedFile));
+        if ($files !== [] && $postId > 0) {
+            $this->media->attach($postId, $customerId, $files);
+        }
+    }
+
     private function mentionMap(int $storeId, array $posts): array
     {
         $names = [];

@@ -438,6 +438,10 @@ services:
         arguments:
             $senders: !tagged_iterator commerce.notification_sender
 
+    Commerce\Modules\Forum\Application\ForumMediaService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     Commerce\Modules\Forum\Application\ForumNotificationService:
         arguments:
             $publicBaseUrl: '%commerce.app_public_url%'

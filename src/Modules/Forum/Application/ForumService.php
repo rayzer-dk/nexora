@@ -197,6 +197,11 @@ final readonly class ForumService
         });
     }
 
+    public function firstPostId(int $topicId): int
+    {
+        return (int) $this->connection->fetchOne('SELECT MIN(id) FROM mc_forum_post WHERE topic_id=?', [$topicId]);
+    }
+
     public function createReply(int $storeId, int $topicId, int $customerId, string $author, string $body): int
     {
         $author = $this->plain($author, 120, \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.application.customerregistrationservice.vkazhit_imia'));
