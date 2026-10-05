@@ -1005,4 +1005,12 @@ return [
     'ck_custom_address_ph' => 'Город, улица, дом, комментарий',
     'free_shipping_left' => 'До бесплатной доставки осталось %amount%',
     'free_shipping_reached' => 'Доставка бесплатная',
+    'method.payment.stripe' => 'Карта, Apple Pay, Google Pay (Stripe)',
+    'method.payment.paypal' => 'PayPal',
+    'status.payment_method.stripe' => 'Stripe',
+    'status.payment_method.paypal' => 'PayPal',
+    'method.delivery.dhl' => 'DHL',
+    'method.delivery.gls' => 'GLS',
+    'status.carrier.dhl' => 'DHL',
+    'status.carrier.gls' => 'GLS',
 ];

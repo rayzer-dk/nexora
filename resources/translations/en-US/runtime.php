@@ -2057,4 +2057,9 @@ return [
     'extension.sdk.task_undeclared' => 'The trusted extension attempted to register an undeclared scheduled task: ',
     'extension.scheduled_task.invalid' => 'scheduled_tasks must list up to 16 tasks of a trusted_release extension, each with a code (a-z, 0-9, _), an interval of 300 to 604800 seconds and a label.',
     'extension.sdk.translation_provider_invalid' => 'The translation provider code is empty, taken, not a-z0-9_ or reserved: ',
+    'payment.method.stripe' => 'Card via Stripe',
+    'payment.method.paypal' => 'PayPal',
+    'payment.paypal.currency_unsupported' => 'PayPal does not accept the currency of this order.',
+    'shipping.error.dhl_not_configured' => 'DHL is not configured: set DHL_API_KEY.',
+    'shipping.error.gls_not_configured' => 'GLS is not configured: set GLS_API_BASE and GLS_POINTS_PATH.',
 ];

@@ -1269,4 +1269,12 @@ return [
     'ck_custom_address_ph' => 'City, street, house, comment',
     'free_shipping_left' => '%amount% left until free delivery',
     'free_shipping_reached' => 'Delivery is free',
+    'method.payment.stripe' => 'Card, Apple Pay, Google Pay (Stripe)',
+    'method.payment.paypal' => 'PayPal',
+    'status.payment_method.stripe' => 'Stripe',
+    'status.payment_method.paypal' => 'PayPal',
+    'method.delivery.dhl' => 'DHL',
+    'method.delivery.gls' => 'GLS',
+    'status.carrier.dhl' => 'DHL',
+    'status.carrier.gls' => 'GLS',
 ];

@@ -2059,4 +2059,9 @@ return [
     'extension.sdk.task_undeclared' => 'Trusted-розширення намагалося зареєструвати неоголошену заплановану задачу: ',
     'extension.scheduled_task.invalid' => 'scheduled_tasks — до 16 задач розширення trusted_release, кожна з кодом (a-z, 0-9, _), інтервалом 300–604800 секунд і назвою.',
     'extension.sdk.translation_provider_invalid' => 'Код провайдера перекладу порожній, зайнятий, не a-z0-9_ або зарезервований: ',
+    'payment.method.stripe' => 'Картка через Stripe',
+    'payment.method.paypal' => 'PayPal',
+    'payment.paypal.currency_unsupported' => 'PayPal не приймає валюту цього замовлення.',
+    'shipping.error.dhl_not_configured' => 'DHL не налаштовано: вкажіть DHL_API_KEY.',
+    'shipping.error.gls_not_configured' => 'GLS не налаштовано: вкажіть GLS_API_BASE і GLS_POINTS_PATH.',
 ];

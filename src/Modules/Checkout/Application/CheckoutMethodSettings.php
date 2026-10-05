@@ -13,7 +13,9 @@ use Commerce\Core\Configuration\SystemSettingStore;
  */
 final class CheckoutMethodSettings
 {
-    public const DELIVERY = ['nova_post', 'ukrposhta', 'meest', 'delivery_auto', 'self_pickup'];
+    public const DELIVERY = ['nova_post', 'ukrposhta', 'meest', 'delivery_auto', 'self_pickup', 'dhl', 'gls'];
+    /** Carriers that need your own contract or API key: off until the owner switches them on. */
+    private const OFF_BY_DEFAULT = ['dhl', 'gls'];
     public const PAYMENT = ['cash_on_delivery', 'bank_transfer'];
 
     /** @var array<int,array<string,bool>> */
@@ -35,7 +37,7 @@ final class CheckoutMethodSettings
         $stored = $this->store->getArray($this->key($storeId)) ?? [];
         $out = [];
         foreach ($this->codes() as $code) {
-            $out[$code] = !array_key_exists($code, $stored) || (bool) $stored[$code];
+            $out[$code] = array_key_exists($code, $stored) ? (bool) $stored[$code] : !in_array($code, self::OFF_BY_DEFAULT, true);
         }
 
         return $this->cache[$storeId] = $out;

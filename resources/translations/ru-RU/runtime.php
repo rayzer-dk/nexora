@@ -16,4 +16,7 @@ return [
     'php.modules.demo.application.demoseeder.poshuk_tovariv_brendiv_abo_katehorii' => 'Поиск товаров, брендов или категорий…',
     'php.modules.demo.application.demoseeder.ukraina' => 'Украина',
     'php.modules.demo.application.demoshowcasequery.smartfony_ta_hadzhety' => 'Смартфоны и гаджеты',
+    'payment.method.stripe' => 'Карта через Stripe',
+    'payment.method.paypal' => 'PayPal',
+    'payment.paypal.currency_unsupported' => 'PayPal не принимает валюту этого заказа.',
 ];

@@ -59,6 +59,14 @@ parameters:
     env(LIQPAY_PUBLIC_KEY): ''
     env(LIQPAY_PRIVATE_KEY): ''
     env(LIQPAY_SANDBOX): '0'
+    env(STRIPE_ENABLED): '0'
+    env(STRIPE_SECRET_KEY): ''
+    env(STRIPE_WEBHOOK_SECRET): ''
+    env(PAYPAL_ENABLED): '0'
+    env(PAYPAL_CLIENT_ID): ''
+    env(PAYPAL_SECRET): ''
+    env(PAYPAL_SANDBOX): '0'
+    env(PAYPAL_WEBHOOK_ID): ''
     env(WAYFORPAY_ENABLED): '0'
     env(WAYFORPAY_MERCHANT_ACCOUNT): ''
     env(WAYFORPAY_SECRET_KEY): ''
@@ -76,6 +84,11 @@ parameters:
     env(UKRPOSHTA_API_BASE): ''
     env(UKRPOSHTA_BEARER): ''
     env(DELIVERY_AUTO_API_BASE): ''
+    env(DHL_API_KEY): ''
+    env(DHL_LOCATION_API_BASE): 'https://api.dhl.com/location-finder/v1'
+    env(GLS_API_BASE): ''
+    env(GLS_API_TOKEN): ''
+    env(GLS_POINTS_PATH): ''
     env(MEEST_API_BASE): ''
     env(MEEST_API_TOKEN): ''
     env(MEEST_CITIES_PATH): ''
@@ -300,6 +313,17 @@ services:
         arguments:
             $apiBase: '%commerce.delivery_auto.api_base%'
 
+    Commerce\Modules\Shipping\Provider\Dhl\DhlTransport:
+        arguments:
+            $apiBase: '%env(DHL_LOCATION_API_BASE)%'
+            $apiKey: '%env(DHL_API_KEY)%'
+
+    Commerce\Modules\Shipping\Provider\Gls\GlsTransport:
+        arguments:
+            $apiBase: '%env(GLS_API_BASE)%'
+            $token: '%env(GLS_API_TOKEN)%'
+            $pointsPath: '%env(GLS_POINTS_PATH)%'
+
     Commerce\Modules\Shipping\Provider\Meest\MeestTransport:
         arguments:
             $apiBase: '%commerce.meest.api_base%'
@@ -428,6 +452,26 @@ services:
     Commerce\Modules\Payment\Provider\LiqPay\LiqPayPaymentProvider:
         arguments:
             $isEnabled: '%env(bool:LIQPAY_ENABLED)%'
+
+    Commerce\Modules\Payment\Provider\Stripe\StripeClient:
+        arguments:
+            $secretKey: '%env(STRIPE_SECRET_KEY)%'
+            $webhookSecret: '%env(STRIPE_WEBHOOK_SECRET)%'
+
+    Commerce\Modules\Payment\Provider\Stripe\StripePaymentProvider:
+        arguments:
+            $isEnabled: '%env(bool:STRIPE_ENABLED)%'
+
+    Commerce\Modules\Payment\Provider\PayPal\PayPalClient:
+        arguments:
+            $clientId: '%env(PAYPAL_CLIENT_ID)%'
+            $secret: '%env(PAYPAL_SECRET)%'
+            $sandbox: '%env(bool:PAYPAL_SANDBOX)%'
+            $webhookId: '%env(PAYPAL_WEBHOOK_ID)%'
+
+    Commerce\Modules\Payment\Provider\PayPal\PayPalPaymentProvider:
+        arguments:
+            $isEnabled: '%env(bool:PAYPAL_ENABLED)%'
 
     Commerce\Modules\Payment\Provider\WayForPay\WayForPayClient:
         arguments:

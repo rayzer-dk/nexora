@@ -1,7 +1,7 @@
 {% if cart.requires_shipping %}
 {% set options = delivery_options|default([]) %}
 {% set current = old.carrier|default('') in options ? old.carrier : (options|first|default('')) %}
-{% set carrier_desc = {nova_post: 'delivery_branch_locker_courier', ukrposhta: 'delivery_branch_courier', meest: 'delivery_branch_locker', delivery_auto: 'delivery_warehouse_courier', self_pickup: 'ck_pickup_desc'} %}
+{% set carrier_desc = {nova_post: 'delivery_branch_locker_courier', ukrposhta: 'delivery_branch_courier', meest: 'delivery_branch_locker', delivery_auto: 'delivery_warehouse_courier', self_pickup: 'ck_pickup_desc', dhl: 'delivery_branch_locker_courier', gls: 'delivery_branch_courier'} %}
 <section class="checkout-card is-active checkout-builder-block" data-checkout-block="shipping" data-delivery-block>
   <div class="checkout-card__head"><b>{{ number }}</b><div><strong>{{ block.props.title|default(ui_text('receive')) }}</strong></div></div>
   {% if options is empty %}

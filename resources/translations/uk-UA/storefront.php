@@ -1269,4 +1269,12 @@ return [
     'ck_custom_address_ph' => 'Місто, вулиця, будинок, коментар',
     'free_shipping_left' => 'До безкоштовної доставки залишилось %amount%',
     'free_shipping_reached' => 'Доставка безкоштовна',
+    'method.payment.stripe' => 'Картка, Apple Pay, Google Pay (Stripe)',
+    'method.payment.paypal' => 'PayPal',
+    'status.payment_method.stripe' => 'Stripe',
+    'status.payment_method.paypal' => 'PayPal',
+    'method.delivery.dhl' => 'DHL',
+    'method.delivery.gls' => 'GLS',
+    'status.carrier.dhl' => 'DHL',
+    'status.carrier.gls' => 'GLS',
 ];
