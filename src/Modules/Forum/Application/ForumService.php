@@ -182,7 +182,7 @@ final readonly class ForumService
     public function moderationQueue(int $storeId): array
     {
         $boards = $this->connection->fetchAllAssociative(
-            'SELECT id,slug,name,description,status,sort_order,created_at FROM mc_forum_board WHERE store_id=? ORDER BY sort_order,id',
+            'SELECT b.id,b.slug,b.name,b.description,b.status,b.sort_order,b.created_at,(SELECT COUNT(*) FROM mc_forum_topic t WHERE t.board_id=b.id) AS topic_count FROM mc_forum_board b WHERE b.store_id=? ORDER BY b.sort_order,b.id',
             [$storeId],
         );
         $topics = $this->connection->fetchAllAssociative(
@@ -220,6 +220,32 @@ final readonly class ForumService
             'description' => $description !== '' ? $description : null, 'status' => 'active', 'sort_order' => $sortOrder,
             'created_at' => $now, 'updated_at' => $now,
         ]);
+    }
+
+    /** Rename a section, change its description, order or visibility (active/hidden). */
+    public function updateBoard(int $storeId, int $boardId, string $name, string $description, int $sortOrder, string $status): void
+    {
+        $name = $this->plain($name, 190, \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.application.forumservice.vkazhit_nazvu_rozdilu'));
+        $description = mb_substr(trim(strip_tags($description)), 0, 1000, 'UTF-8');
+        if (!in_array($status, ['active', 'hidden'], true)) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.forum.board.bad_status'));
+        }
+        $changed = $this->connection->update('mc_forum_board', [
+            'name' => $name, 'description' => $description !== '' ? $description : null, 'sort_order' => max(-100000, min(100000, $sortOrder)),
+            'status' => $status, 'updated_at' => $this->now(),
+        ], ['id' => $boardId, 'store_id' => $storeId]);
+        if ($changed === 0 && $this->connection->fetchOne('SELECT id FROM mc_forum_board WHERE id=? AND store_id=?', [$boardId, $storeId]) === false) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.forum.board.not_found'));
+        }
+    }
+
+    /** Only a section without topics can be deleted; otherwise hide it. */
+    public function deleteBoard(int $storeId, int $boardId): void
+    {
+        if ((int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_forum_topic WHERE board_id=?', [$boardId]) > 0) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.forum.board.not_empty'));
+        }
+        $this->connection->delete('mc_forum_board', ['id' => $boardId, 'store_id' => $storeId]);
     }
 
     public function moderateTopic(int $storeId, int $topicId, string $action): void

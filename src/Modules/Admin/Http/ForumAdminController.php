@@ -70,6 +70,38 @@ final class ForumAdminController extends AbstractController
         return $this->redirectToRoute('admin_forum');
     }
 
+    #[Route('/admin/forum/boards/{id}/update', name: 'admin_forum_board_update', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function updateBoard(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_board_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->forum->updateBoard($context->storeId, $id, (string) $request->request->get('name', ''), (string) $request->request->get('description', ''), $request->request->getInt('sort_order', 0), (string) $request->request->get('status', 'active'));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.board.saved'));
+        } catch (Throwable $e) {
+            $this->addFlash('error', $this->safeMessage($e));
+        }
+        return $this->redirectToRoute('admin_forum');
+    }
+
+    #[Route('/admin/forum/boards/{id}/delete', name: 'admin_forum_board_delete', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function deleteBoard(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_board_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->forum->deleteBoard($context->storeId, $id);
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.board.deleted'));
+        } catch (Throwable $e) {
+            $this->addFlash('error', $this->safeMessage($e));
+        }
+        return $this->redirectToRoute('admin_forum');
+    }
+
     #[Route('/admin/forum/topics/{id}/{action}', name: 'admin_forum_topic_moderate', methods: ['POST'], requirements: ['id' => '\\d+', 'action' => 'approve|reject|lock|unlock|pin|unpin'])]
     public function moderateTopic(Request $request, int $id, string $action): Response
     {
