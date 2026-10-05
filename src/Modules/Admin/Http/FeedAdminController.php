@@ -20,6 +20,7 @@ final class FeedAdminController extends AbstractController
         private readonly Connection $db,
         private readonly FeedStorageService $feeds,
         private readonly \Commerce\Modules\Feeds\Application\ProductFeedGenerator $generator,
+        private readonly \Commerce\Modules\Feeds\Application\FeedRulesService $rules,
         private readonly string $publicBaseUrl,
     ) {}
 
@@ -52,7 +53,19 @@ final class FeedAdminController extends AbstractController
         $categories=$this->db->fetchAllAssociative('SELECT c.id,ct.name FROM mc_category c JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? WHERE c.status=? ORDER BY ct.name',[$context->storeId,$context->locale,'active']);
         $mappings=$this->db->fetchAllAssociative('SELECT m.platform,m.category_id,m.external_category_id,m.external_category_name,ct.name category_name FROM mc_feed_category_mapping m JOIN mc_category_translation ct ON ct.category_id=m.category_id AND ct.store_id=m.store_id AND ct.locale=? WHERE m.store_id=? ORDER BY m.platform,ct.name',[$context->locale,$context->storeId]);
         $storeLocales=array_map('strval',$this->db->fetchFirstColumn('SELECT locale_code FROM mc_store_locale WHERE store_id=? AND enabled=1 ORDER BY locale_code',[$context->storeId]));
-        return $this->render('@storefront/admin/commerce/feeds.html.twig',['store_locales'=>$storeLocales,'rows'=>$rows,'store'=>$store,'locale'=>$context->locale,'categories'=>$categories,'mappings'=>$mappings]);
+        return $this->render('@storefront/admin/commerce/feeds.html.twig',['store_locales'=>$storeLocales,'rows'=>$rows,'store'=>$store,'locale'=>$context->locale,'categories'=>$categories,'mappings'=>$mappings,'feed_rules'=>$this->rules->all($context->storeId)]);
+    }
+
+    #[Route('/admin/commerce/feeds/{platform}/rules', name:'admin_commerce_feed_rules', methods:['POST'], requirements:['platform'=>'[a-z0-9_]{2,30}'])]
+    public function saveRules(Request $request,string $platform): Response
+    {
+        $context=$this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('feed_rules_'.$platform,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+        try{
+            $this->rules->save($context->storeId,$platform,$request->request->all());
+            $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.feedrules.saved'));
+        }catch(\Throwable $e){$this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
+        return $this->redirectToRoute('admin_commerce_feeds');
     }
 
     #[Route('/admin/commerce/feeds/{platform}/generate', name:'admin_commerce_feed_generate', methods:['POST'], requirements:['platform'=>'[a-z0-9_]{2,30}'])]

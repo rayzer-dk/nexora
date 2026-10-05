@@ -9,7 +9,7 @@ use DOMDocument;
 
 final readonly class ProductFeedGenerator
 {
-    public function __construct(private CanonicalProductExportService $catalog, private Connection $db, private string $publicBaseUrl, private ?\Commerce\Core\Extension\ExtensionServiceRegistry $extensions = null) {}
+    public function __construct(private CanonicalProductExportService $catalog, private Connection $db, private string $publicBaseUrl, private ?\Commerce\Core\Extension\ExtensionServiceRegistry $extensions = null, private ?FeedRulesService $rules = null) {}
 
     /** @return array<string,\Commerce\Modules\Feeds\Contract\FeedFormatProviderInterface> formats of signed modules by code; built-in codes cannot be replaced */
     public function extensionFormats(): array
@@ -22,7 +22,7 @@ final readonly class ProductFeedGenerator
     /** @return array{content:string,content_type:string,extension:string,count:int,skipped:int,warnings:list<string>} */
     public function generate(string $platform,int $storeId,int $marketId,string $locale,string $currency,bool $inStockOnly=false): array
     {
-        $platform=strtolower($platform);$all=$this->catalog->products($storeId,$marketId,$locale,$currency,$inStockOnly);$warnings=[];$products=[];
+        $platform=strtolower($platform);$all=$this->catalog->products($storeId,$marketId,$locale,$currency,$inStockOnly);$ruledOut=0;if($this->rules!==null){[$all,$ruledOut]=$this->rules->apply($storeId,$platform,$all);}$warnings=[];$products=[];
         foreach($all as $product){$reason=$this->validationError($platform,$product,$storeId);if($reason!==null){if(count($warnings)<50)$warnings[]=$product['sku'].': '.$reason;continue;}$products[]=$product;}
         $result=match($platform){
             'google'=>$this->googleXml($products),
@@ -36,7 +36,7 @@ final readonly class ProductFeedGenerator
             'csv'=>$this->catalogCsv($products,'generic'),
             default=>isset($this->extensionFormats()[$platform])?$this->extensionFormat($this->extensionFormats()[$platform],$products,$storeId,$locale,$currency):throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.0c8195565302')),
         };
-        return $result+['skipped'=>count($all)-count($products),'warnings'=>$warnings];
+        return $result+['skipped'=>count($all)-count($products)+$ruledOut,'warnings'=>$warnings];
     }
 
 

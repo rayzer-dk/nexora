@@ -59,7 +59,8 @@ final class SmsAdminController extends AbstractController
         return $this->render('@storefront/admin/commerce/sms.html.twig', [
             's' => $s,
             'env_enabled' => !$s['configured'] && $this->sms->enabled($storeId),
-            'log' => $this->sms->log($storeId, null, 20),
+            'log' => $this->sms->log($storeId, null, 50),
+            'stats' => $this->sms->stats($storeId),
             'events' => SmsSettings::EVENTS,
         ]);
     }
@@ -71,6 +72,17 @@ final class SmsAdminController extends AbstractController
         $storeId = $this->contexts->resolve($request)->storeId;
         $result = $this->sms->sendTest($storeId, (string) $request->request->get('phone', ''), (string) $request->request->get('text', ''), $this->adminId());
         $this->flashResult($result, 'admin.sms.test_ok');
+
+        return $this->redirectToRoute('admin_commerce_sms');
+    }
+
+    #[Route('/admin/commerce/sms/{id}/retry', name: 'admin_commerce_sms_retry', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function retry(int $id, Request $request): Response
+    {
+        $this->guard($request);
+        $storeId = $this->contexts->resolve($request)->storeId;
+        $result = $this->sms->retry($storeId, $id, $this->adminId());
+        $this->flashResult($result, 'admin.sms.retry_ok');
 
         return $this->redirectToRoute('admin_commerce_sms');
     }

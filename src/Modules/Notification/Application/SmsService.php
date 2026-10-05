@@ -151,6 +151,44 @@ final readonly class SmsService
         }
     }
 
+    /** Sent / failed messages and their parts over the last days, plus a count of failures that can still be retried. @return array{sent:int,failed:int,parts:int,retryable:int} */
+    public function stats(int $storeId, int $days = 30): array
+    {
+        $since = gmdate('Y-m-d H:i:s', time() - max(1, $days) * 86400);
+        try {
+            $rows = $this->db->fetchAllAssociative('SELECT status, COUNT(*) n, SUM(segments) parts FROM mc_sms_log WHERE store_id=? AND created_at>=? GROUP BY status', [$storeId, $since]);
+        } catch (\Throwable) {
+            return ['sent' => 0, 'failed' => 0, 'parts' => 0, 'retryable' => 0];
+        }
+        $out = ['sent' => 0, 'failed' => 0, 'parts' => 0, 'retryable' => 0];
+        foreach ($rows as $row) {
+            if ($row['status'] === 'sent') {
+                $out['sent'] = (int) $row['n'];
+                $out['parts'] = (int) $row['parts'];
+            } elseif ($row['status'] === 'failed') {
+                $out['failed'] = (int) $row['n'];
+            }
+        }
+        $out['retryable'] = $out['failed'];
+
+        return $out;
+    }
+
+    /** Sends a failed message again; the old row is marked "retried" when the new attempt succeeds. @return array{ok:bool,error:string} */
+    public function retry(int $storeId, int $logId, ?int $adminId): array
+    {
+        $row = $this->db->fetchAssociative("SELECT * FROM mc_sms_log WHERE id=? AND store_id=? AND status='failed'", [$logId, $storeId]);
+        if ($row === false) {
+            return ['ok' => false, 'error' => 'missing'];
+        }
+        $result = $this->deliver($storeId, $row['order_id'] !== null ? (int) $row['order_id'] : null, (string) $row['recipient'], (string) $row['body'], (string) $row['mode'], (string) $row['event'], $adminId);
+        if ($result['ok']) {
+            $this->db->update('mc_sms_log', ['status' => 'retried'], ['id' => $logId]);
+        }
+
+        return $result;
+    }
+
     /** Phone as the gateway expects it: digits with a leading +; a Ukrainian national number (0XXXXXXXXX) gets +38. */
     public static function normalizePhone(string $phone): ?string
     {
