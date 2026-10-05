@@ -12,7 +12,7 @@
     <label class="ck-choice{% if code == current %} is-selected{% endif %}" data-carrier="{{ code }}">
       <input type="radio" name="carrier" value="{{ code }}"{% if code == current %} checked{% endif %}>
       <span class="ck-choice__icon" aria-hidden="true">{{ ui_icon(code == 'self_pickup' ? 'store' : 'truck', 18) }}</span>
-      <span class="ck-choice__text"><strong>{{ ui_text('method.delivery.' ~ code) }}</strong><small>{{ ui_text(carrier_desc[code]) }}</small></span>
+      {% set mc = method_config[code]|default({}) %}<span class="ck-choice__text"><strong>{{ mc.title|default('') ?: ui_text('method.delivery.' ~ code) }}</strong><small>{{ mc.text|default('') ?: ui_text(carrier_desc[code]) }}</small></span>{% if mc.fee|default('') %}<span class="ck-choice__fee">+{{ mc.fee }}{% if mc.free_over|default('') %}<small>{{ ui_text('ck_free_over', {amount: mc.free_over}) }}</small>{% endif %}</span>{% endif %}
     </label>
     {% endfor %}
   </div>

@@ -1976,3 +1976,24 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-view-chips > a { display: inline-flex; align-items: center; min-height: var(--mc-control-height-sm); padding: 0 var(--mc-space-3); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-full); background: var(--mc-color-surface-raised); color: var(--mc-color-text); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-medium); text-decoration: none; }
 .admin-view-chips > a:hover { border-color: var(--mc-color-primary); color: var(--mc-color-primary); }
 .admin-view-chips > a[aria-current="page"] { border-color: var(--mc-color-primary); background: var(--mc-color-primary-soft); color: var(--mc-color-primary); text-decoration: none; }
+
+/* Per-language fields shown one language at a time under tabs. */
+.lang-tabs--inline { grid-column: 1 / -1; margin-bottom: var(--mc-space-2); }
+.has-lang-tabs .lang-suffix { display: none; }
+[data-lang][hidden] { display: none !important; }
+
+/* Delivery / payment method cards. */
+.admin-method { padding: var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); }
+.admin-method + .admin-method { margin-top: var(--mc-space-3); }
+.admin-method__head { margin-bottom: var(--mc-space-3); }
+.admin-method__grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+/* Customer card: notes of the team. */
+.admin-note { padding: var(--mc-space-3); border-top: 1px solid var(--mc-color-border); }
+.admin-note__meta { display: flex; align-items: center; gap: var(--mc-space-3); }
+.admin-note__meta > small { color: var(--mc-color-text-muted); }
+.admin-note__meta > form { margin-inline-start: auto; }
+.admin-note > p { margin: var(--mc-space-1) 0 0; overflow-wrap: anywhere; }
+.admin-stat-link { display: block; color: inherit; text-decoration: none; }
+.admin-stat-link.is-active > article { border-color: var(--mc-color-primary); box-shadow: 0 0 0 2px var(--mc-color-primary); }
+.admin-badge.is-unverified { background: var(--mc-color-surface-subtle); color: var(--mc-color-muted); }

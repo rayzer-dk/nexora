@@ -8,6 +8,7 @@
   <div class="summary-totals">
     <div class="summary-total"><span>{{ ui_text('products_sum') }}</span><strong data-summary-subtotal>{{ cart.subtotal }}</strong></div>
     {% if cart.discount_minor > 0 %}<div class="summary-total is-discount" data-discount-row><span>{{ ui_text('discount') }}</span><strong data-summary-discount>−{{ cart.discount }}</strong></div>{% else %}<div class="summary-total is-discount" data-discount-row hidden><span>{{ ui_text('discount') }}</span><strong data-summary-discount></strong></div>{% endif %}
+    <div class="summary-total" data-shipping-row hidden><span>{{ ui_text('shipping_cost') }}</span><strong data-summary-shipping></strong></div>
     <div class="summary-total summary-total--grand"><span>{{ ui_text('amount_due') }}</span><strong data-summary-total>{{ cart.total }}</strong></div>
   </div>
   <div class="checkout-bar">

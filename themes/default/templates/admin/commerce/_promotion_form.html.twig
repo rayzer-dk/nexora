@@ -1,0 +1,24 @@
+{# Promotion form shared by "new" and "edit". promo = null or the prefilled values prepared by the controller. #}
+{% import '@storefront/admin/_multiselect.html.twig' as ms %}
+{% macro form(promo, action, csrf_id, submit_label, markets, category_options, group_options) %}
+{% import '@storefront/admin/_multiselect.html.twig' as ms %}
+{% set p = promo|default({}) %}
+<form method="post"{% if action %} action="{{ action }}"{% endif %} class="admin-form-grid"><input type="hidden" name="_csrf_token" value="{{ csrf_token(csrf_id) }}">
+<label><span>{{ ui_text('admin.commerce.promotions.nazva') }}</span><input type="text" name="name" required maxlength="190" value="{{ p.name|default('') }}"></label>
+<label><span>{{ ui_text('admin.commerce.promotions.mekhanika') }}</span><select name="trigger_type"><option value="automatic"{{ p.trigger_type|default('automatic') == 'automatic' ? ' selected' : '' }}>{{ ui_text('admin.commerce.promotions.avtomatychna') }}</option><option value="coupon"{{ p.trigger_type|default('') == 'coupon' ? ' selected' : '' }}>{{ ui_text('admin.commerce.promotions.promokod') }}</option></select></label>
+<label><span>{{ ui_text('admin.commerce.promotions.promokod') }}</span><input type="text" name="code" maxlength="64" placeholder="SAVE10" value="{{ p.code|default('') }}"></label>
+<label><span>{{ ui_text('admin.commerce.promotions.typ_znyzhky') }}</span><select name="discount_type"><option value="percent"{{ p.discount_type|default('percent') == 'percent' ? ' selected' : '' }}>{{ ui_text('admin.commerce.promotions.vidsotok') }}</option><option value="fixed"{{ p.discount_type|default('') == 'fixed' ? ' selected' : '' }}>{{ ui_text('admin.commerce.promotions.fiksovana_suma') }}</option></select></label>
+<label><span>{{ ui_text('admin.commerce.promotions.rozmir') }}</span><input type="number" name="discount_value" step="0.01" min="0.01" required value="{{ p.discount_value|default('') }}"></label>
+<label><span>{{ ui_text('admin.commerce.promotions.minimalna_suma_koshyka') }}</span><input type="number" name="min_subtotal" step="0.01" min="0" value="{{ p.min_subtotal|default(0) }}"></label>
+<label><span>{{ ui_text('admin.commerce.promotions.zahalnyi_limit') }}</span><input type="number" name="usage_limit" min="0" value="{{ p.usage_limit|default(0) }}"><small>{{ ui_text('admin.commerce.promotions.0_bez_limitu') }}</small></label>
+<label><span>{{ ui_text('admin.commerce.promotions.limit_na_kliienta') }}</span><input type="number" name="per_customer_limit" min="0" value="{{ p.per_customer_limit|default(0) }}"></label>
+<label><span>{{ ui_text('admin.commerce.promotions.priorytet') }}</span><input type="number" name="priority" value="{{ p.priority|default(100) }}"><small>{{ ui_text('admin.commerce.promotions.combination_hint') }}</small></label>
+<label><span>{{ ui_text('admin.commerce.promotions.pochatok') }}</span><input type="datetime-local" name="starts_at" value="{{ p.starts_at|default('') }}"></label>
+<label><span>{{ ui_text('admin.commerce.promotions.zavershennia') }}</span><input type="datetime-local" name="ends_at" value="{{ p.ends_at|default('') }}"></label>
+<label><span>{{ ui_text('admin.commerce.promotions.id_tovariv') }}</span><input type="text" name="product_ids" placeholder="12, 15, 18" value="{{ p.product_ids|default('') }}"><small>{{ ui_text('admin.commerce.promotions.porozhno_usi_tovary') }}</small></label>
+<div class="admin-multiselect-field">{{ ms.field('category_ids', ui_text('admin.commerce.promotions.katehorii'), category_options, p.category_ids|default([]), true, ui_text('admin.commerce.promotions.usi_katehorii')) }}<small>{{ ui_text('admin.commerce.promotions.porozhno_usi_katehorii') }}</small></div>
+<div class="admin-multiselect-field">{{ ms.field('customer_groups', ui_text('admin.commerce.promotions.hrupy_pokuptsiv'), group_options, p.customer_groups|default([]), false, ui_text('admin.commerce.promotions.usi_hrupy')) }}<small>{{ ui_text('admin.commerce.promotions.porozhno_usi_hrupy_guest_nezareiestrovani') }}</small></div>
+{% if markets|length > 1 %}<fieldset class="admin-fieldset"><legend>{{ ui_text('admin.commerce.promotions.markets') }}</legend>{% for m in markets %}<label class="admin-check"><input type="checkbox" name="market_ids[]" value="{{ m.id }}"{{ (m.id ~ '') in (p.market_ids|default([])) ? ' checked' : '' }}><span>{{ m.name }} · {{ m.default_currency }}</span></label>{% endfor %}<small>{{ ui_text('admin.commerce.promotions.markets_hint') }}</small></fieldset>{% endif %}
+<label class="admin-check"><input type="checkbox" name="stop_processing" value="1"{{ p.stop_processing|default(false) ? ' checked' : '' }}><span>{{ ui_text('admin.commerce.promotions.ne_zastosovuvaty_nyzhchi_za_priorytetom_aktsii_p') }}</span></label>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ submit_label }}</button></div></form>
+{% endmacro %}

@@ -53,6 +53,42 @@ final class CheckoutController extends AbstractController
         private readonly CheckoutLeadService $leads,
     ) {}
 
+    /** Delivery and payment fee for the method the shopper has picked so far, for the advisory totals. */
+    private function previewShipping(Request $request, int $storeId, int $afterDiscountMinor): int
+    {
+        $carrier = trim((string) $request->request->get('carrier'));
+        $pay = trim((string) $request->request->get('payment_method'));
+        $fee = 0;
+        if ($carrier !== '' && in_array($carrier, CheckoutMethodSettings::DELIVERY, true)) {
+            $fee += $this->methodSettings->fee($storeId, $carrier, $afterDiscountMinor);
+        }
+        if ($pay !== '' && in_array($pay, CheckoutMethodSettings::PAYMENT, true)) {
+            $fee += $this->methodSettings->fee($storeId, $pay, $afterDiscountMinor);
+        }
+
+        return $fee;
+    }
+
+    /**
+     * For every delivery and payment method: the owner's title and text (per language, may be empty) and how much it costs.
+     *
+     * @return array<string,array{title:string,text:string,fee:string,free_over:string}>
+     */
+    private function methodLabels(int $storeId, string $locale, string $currency): array
+    {
+        $out = [];
+        foreach ($this->methodSettings->config($storeId) as $code => $c) {
+            $out[$code] = [
+                'title' => $this->methodSettings->label($storeId, $code, 'title', $locale),
+                'text' => $this->methodSettings->label($storeId, $code, 'text', $locale),
+                'fee' => $c['fee_minor'] > 0 ? $this->money->format($c['fee_minor'], $currency, $locale) : '',
+                'free_over' => $c['fee_minor'] > 0 && $c['free_over_minor'] > 0 ? $this->money->format($c['free_over_minor'], $currency, $locale) : '',
+            ];
+        }
+
+        return $out;
+    }
+
     #[Route('/checkout/lead', name: 'storefront_checkout_lead', methods: ['POST'], priority: 100)]
     public function lead(Request $request): JsonResponse
     {
@@ -95,7 +131,7 @@ final class CheckoutController extends AbstractController
         $old=$this->flashBag($request)?->get('checkout_old')??[]; $old=is_array($old[0]??null)?$old[0]:[];
         $response = $this->render('@storefront/checkout/show.html.twig', [
             'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.oformlennia_zamovlennia'),'store_name'=>$context->storeName,'cart'=>$summary,'country_code'=>$context->countryCode,'delivery_regions'=>$this->shippingCountries->enabledRegions($context->storeId,$context->countryCode),'checkout_layout'=>$layout,
-            'payment_methods'=>$methods,'checkout_key'=>$key,'delivery_options'=>$deliveryOptions,'pickup_points'=>$pickupPoints,'old'=>$old,'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
+            'method_config'=>$this->methodLabels($context->storeId,$context->locale,$context->currency),'payment_methods'=>$methods,'checkout_key'=>$key,'delivery_options'=>$deliveryOptions,'pickup_points'=>$pickupPoints,'old'=>$old,'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
             'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/checkout','robots'=>'noindex,nofollow'],
         ]);
         if ($cart['created']) $response->headers->setCookie(Cookie::create('mc_cart',$cart['token'])->withExpires(new \DateTimeImmutable('+7 days'))->withPath('/')->withSecure($request->isSecure())->withHttpOnly(true)->withSameSite(Cookie::SAMESITE_LAX));
@@ -110,13 +146,15 @@ final class CheckoutController extends AbstractController
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id());
         $result=$this->promotions->calculateForCart($context->storeId,$cart['id'],trim((string)$request->request->get('coupon_code')) ?: null,$customer instanceof CustomerUser ? $customer->id() : null,trim((string)$request->request->get('email')) ?: null);
+        $shipFee=$this->previewShipping($request,$context->storeId,$result->totalMinor);
         return $this->json([
             'ok'=>$result->couponMessage===null,
             'message'=>$result->couponMessage ?? ($result->discountMinor>0 ? \Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.znyzhku_zastosovano') : \Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.dlia_koshyka_nemaie_aktyvnoi_znyzhky')),
-            'subtotal_minor'=>$result->subtotalMinor,'discount_minor'=>$result->discountMinor,'total_minor'=>$result->totalMinor,
+            'subtotal_minor'=>$result->subtotalMinor,'discount_minor'=>$result->discountMinor,'total_minor'=>$result->totalMinor+$shipFee,'shipping_minor'=>$shipFee,
             'subtotal'=>$this->money->format($result->subtotalMinor,$context->currency,$context->locale),
             'discount'=>$this->money->format($result->discountMinor,$context->currency,$context->locale),
-            'total'=>$this->money->format($result->totalMinor,$context->currency,$context->locale),
+            'shipping'=>$shipFee>0?$this->money->format($shipFee,$context->currency,$context->locale):'',
+            'total'=>$this->money->format($result->totalMinor+$shipFee,$context->currency,$context->locale),
             'applied'=>$result->applied,
         ]);
     }
@@ -129,7 +167,8 @@ final class CheckoutController extends AbstractController
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         $customer=$this->getUser(); $customerId=$customer instanceof CustomerUser?$customer->id():null;
         $result=$this->promotions->calculateForCart($context->storeId,$cart['id'],trim((string)$request->request->get('coupon_code')) ?: null,$customerId,trim((string)$request->request->get('email')) ?: null);
-        $left=$result->totalMinor; $messages=[]; $ok=true; $giftMinor=0; $loyaltyMinor=0;
+        $shipFee=$this->previewShipping($request,$context->storeId,$result->totalMinor);
+        $left=$result->totalMinor+$shipFee; $messages=[]; $ok=true; $giftMinor=0; $loyaltyMinor=0;
         $code=trim((string)$request->request->get('gift_card_code'));
         if ($code !== '') {
             $gift=$this->giftCards->preview($context->storeId,$code,$context->currency,$left);
@@ -148,7 +187,7 @@ final class CheckoutController extends AbstractController
             }
         }
         if ($messages === []) { $ok=false; $messages[]=$text('reward_none'); }
-        return $this->json(['ok'=>$ok,'message'=>implode(' ',$messages),'gift_minor'=>$giftMinor,'loyalty_minor'=>$loyaltyMinor,'total_minor'=>max(0,$left),'total'=>$this->money->format(max(0,$left),$context->currency,$context->locale)]);
+        return $this->json(['ok'=>$ok,'message'=>implode(' ',$messages),'gift_minor'=>$giftMinor,'loyalty_minor'=>$loyaltyMinor,'shipping_minor'=>$shipFee,'shipping'=>$shipFee>0?$this->money->format($shipFee,$context->currency,$context->locale):'','total_minor'=>max(0,$left),'total'=>$this->money->format(max(0,$left),$context->currency,$context->locale)]);
     }
 
     #[Route('/checkout/place', name: 'storefront_checkout_place', methods: ['POST'], priority: 100)]

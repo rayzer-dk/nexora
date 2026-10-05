@@ -22,6 +22,7 @@ final class AdminCheckoutMethodsController extends AbstractController
         private readonly CheckoutMethodSettings $settings,
         private readonly PaymentProviderRegistry $payments,
         private readonly PickupPointRepository $pickup,
+        private readonly \Doctrine\DBAL\Connection $db,
     ) {
     }
 
@@ -42,6 +43,9 @@ final class AdminCheckoutMethodsController extends AbstractController
             'payment_codes' => CheckoutMethodSettings::PAYMENT,
             'other_payments' => $online,
             'pickup_points' => count($this->pickup->all($ctx->storeId, true)),
+            'config' => $this->settings->config($ctx->storeId),
+            'currency' => $ctx->currency,
+            'store_locales' => $this->db->fetchAllAssociative('SELECT sl.locale_code code,COALESCE(l.native_name,sl.locale_code) native_name FROM mc_store_locale sl LEFT JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.store_id=? AND sl.enabled=1 ORDER BY sl.is_default DESC,sl.locale_code', [$ctx->storeId]),
         ]);
     }
 
@@ -53,6 +57,7 @@ final class AdminCheckoutMethodsController extends AbstractController
         }
         $ctx = $this->contexts->resolve($request);
         $this->settings->save($ctx->storeId, array_map('strval', (array) $request->request->all('methods')));
+        $this->settings->saveConfig($ctx->storeId, (array) $request->request->all('cfg'));
         $this->addFlash('success', CanonicalUiText::get('admin.checkout_methods.saved'));
 
         return $this->redirectToRoute('admin_shipment_methods');

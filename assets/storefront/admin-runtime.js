@@ -334,6 +334,68 @@ function tidyTimestamps() {
   });
 }
 
+// Fields that exist once per store language (label[data-lang]) get language tabs, like OpenCart: pick a language once and every
+// such group on the page follows; a tab shows a mark when that language has text.
+function initFieldLangTabs() {
+  const labels = qa('main [data-lang]');
+  if (!labels.length) return;
+  const scopeOf = (el) => el.closest('fieldset, details, .admin-benefit, .admin-panel, form') || document.body;
+  const scopes = new Map();
+  labels.forEach((label) => {
+    const scope = scopeOf(label);
+    if (!scopes.has(scope)) scopes.set(scope, []);
+    scopes.get(scope).push(label);
+  });
+  let saved = '';
+  try { saved = window.localStorage.getItem('mc_admin_lang') || ''; } catch (_) { /* storage may be blocked */ }
+  const bars = [];
+  const select = (code) => {
+    bars.forEach(({ scope, items, tabs }) => {
+      const has = items.some((item) => item.dataset.lang === code);
+      const active = has ? code : items[0].dataset.lang;
+      items.forEach((item) => { item.hidden = item.dataset.lang !== active; });
+      tabs.forEach((tab) => { const on = tab.dataset.code === active; tab.setAttribute('aria-selected', on ? 'true' : 'false'); tab.closest('.lang-tabs__item').classList.toggle('is-current', on); });
+      scope.classList.add('has-lang-tabs');
+    });
+    try { window.localStorage.setItem('mc_admin_lang', code); } catch (_) { /* ignore */ }
+  };
+  const mark = (items, code) => items.filter((item) => item.dataset.lang === code).some((item) => Array.from(item.querySelectorAll('input, textarea')).some((field) => field.value.trim() !== ''));
+  scopes.forEach((items, scope) => {
+    const codes = Array.from(new Set(items.map((item) => item.dataset.lang)));
+    if (codes.length < 2) return;
+    const nav = document.createElement('nav');
+    nav.className = 'lang-tabs lang-tabs--inline';
+    nav.setAttribute('aria-label', t('js_lang_tabs'));
+    const list = document.createElement('ul');
+    list.className = 'lang-tabs__list';
+    const tabs = [];
+    codes.forEach((code) => {
+      const first = items.find((item) => item.dataset.lang === code);
+      const li = document.createElement('li');
+      li.className = 'lang-tabs__item';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'lang-tabs__tab';
+      button.dataset.code = code;
+      button.lang = code;
+      const short = document.createElement('span'); short.className = 'lang-tabs__code'; short.textContent = code.slice(0, 2).toUpperCase();
+      const name = document.createElement('span'); name.className = 'lang-tabs__name'; name.textContent = first.dataset.langName || code;
+      const flag = document.createElement('span'); flag.className = 'lang-tabs__mark'; flag.textContent = mark(items, code) ? '✓' : '•';
+      li.classList.add(mark(items, code) ? 'is-done' : 'is-missing');
+      button.append(short, name, flag);
+      button.addEventListener('click', () => select(code));
+      li.append(button);
+      list.append(li);
+      tabs.push(button);
+    });
+    nav.append(list);
+    items[0].parentElement.insertBefore(nav, items[0]);
+    scope.addEventListener('input', () => codes.forEach((code, i) => { const done = mark(items, code); const li = tabs[i].closest('.lang-tabs__item'); li.classList.toggle('is-done', done); li.classList.toggle('is-missing', !done); tabs[i].querySelector('.lang-tabs__mark').textContent = done ? '✓' : '•'; }));
+    bars.push({ scope, items, tabs });
+  });
+  if (bars.length) select(saved || labels[0].dataset.lang);
+}
+
 function initConfirmations() {
   const modal = ensureConfirmDialog();
   const message = q('[data-confirm-message]', modal);
@@ -1809,6 +1871,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFlashToasts();
   initAdminAjaxForms();
   tidyTimestamps();
+  initFieldLangTabs();
   initConfirmations();
   initIconPickers();
   initDirtyGuard();

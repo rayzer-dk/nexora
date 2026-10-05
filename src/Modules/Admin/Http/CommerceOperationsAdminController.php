@@ -47,13 +47,9 @@ final class CommerceOperationsAdminController extends AbstractController
         if($request->isMethod('POST')){
             if(!$this->isCsrfTokenValid('promotion_save',(string)$request->request->get('_csrf_token'))){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.ai.http.aiadmincontroller.nediisnyi_token_bezpeky'));return $this->redirectToRoute('admin_commerce_promotions');}
             try{
-                $name=trim((string)$request->request->get('name'));$trigger=(string)$request->request->get('trigger_type','automatic');$code=$trigger==='coupon'?mb_strtoupper(trim((string)$request->request->get('code'))):null;$type=(string)$request->request->get('discount_type','percent');
-                if($name===''||mb_strlen($name)>190)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.vkazhit_nazvu_aktsii')); if(!in_array($trigger,['automatic','coupon'],true))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.nekorektnyi_typ_aktsii')); if($trigger==='coupon'&&($code===''||!preg_match('/^[A-Z0-9_-]{3,64}$/',$code)))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.promokod_3_64_symvoly_a_z_0_9_abo')); if(!in_array($type,['percent','fixed'],true))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.nekorektnyi_typ_znyzhky'));
-                $valueRaw=str_replace(',','.',trim((string)$request->request->get('discount_value','0'))); if(!is_numeric($valueRaw)||(float)$valueRaw<=0)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.vkazhit_rozmir_znyzhky')); $discountValue=$type==='percent'?(int)round(min(100,(float)$valueRaw)*100):(int)round((float)$valueRaw*100);
-                $minRaw=str_replace(',','.',trim((string)$request->request->get('min_subtotal','0')));$minMinor=max(0,(int)round(((float)$minRaw)*100));
-                $conditions=['product_ids'=>array_values(array_filter(array_map('intval',preg_split('/[\s,;]+/',(string)$request->request->get('product_ids',''),-1,PREG_SPLIT_NO_EMPTY)?:[]))),'category_ids'=>array_values(array_filter(array_map('intval',$request->request->all('category_ids')))),'market_ids'=>array_values(array_filter(array_map('intval',$request->request->all('market_ids')))),'customer_groups'=>array_values(array_unique(array_filter(array_map(static fn($v)=>strtolower(trim((string)$v)),$request->request->all('customer_groups')))))];
+                $payload=$this->promotionPayload($request);
                 $now=$this->now();
-                $this->db->insert('mc_promotion',['public_id'=>$this->ids->binary(),'store_id'=>$context->storeId,'name'=>$name,'code'=>$code,'status'=>'active','trigger_type'=>$trigger,'discount_type'=>$type,'discount_value'=>$discountValue,'min_subtotal_minor'=>$minMinor,'max_discount_minor'=>null,'usage_limit'=>($v=(int)$request->request->get('usage_limit',0))>0?$v:null,'usage_count'=>0,'per_customer_limit'=>($v2=(int)$request->request->get('per_customer_limit',0))>0?$v2:null,'priority'=>(int)$request->request->get('priority',100),'stop_processing'=>$request->request->has('stop_processing')?1:0,'conditions_json'=>json_encode($conditions,JSON_THROW_ON_ERROR),'starts_at'=>$this->dateOrNull((string)$request->request->get('starts_at')),'ends_at'=>$this->dateOrNull((string)$request->request->get('ends_at')),'created_at'=>$now,'updated_at'=>$now]);
+                $this->db->insert('mc_promotion',['public_id'=>$this->ids->binary(),'store_id'=>$context->storeId,'name'=>$payload['name'],'code'=>$payload['code'],'status'=>'active','trigger_type'=>$payload['trigger_type'],'discount_type'=>$payload['discount_type'],'discount_value'=>$payload['discount_value'],'min_subtotal_minor'=>$payload['min_subtotal_minor'],'max_discount_minor'=>null,'usage_limit'=>($v=(int)$request->request->get('usage_limit',0))>0?$v:null,'usage_count'=>0,'per_customer_limit'=>($v2=(int)$request->request->get('per_customer_limit',0))>0?$v2:null,'priority'=>(int)$request->request->get('priority',100),'stop_processing'=>$request->request->has('stop_processing')?1:0,'conditions_json'=>$payload['conditions_json'],'starts_at'=>$this->dateOrNull((string)$request->request->get('starts_at')),'ends_at'=>$this->dateOrNull((string)$request->request->get('ends_at')),'created_at'=>$now,'updated_at'=>$now]);
                 $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.aktsiiu_stvoreno_vona_odrazu_vrakhovuietsia_serverny'));
             }catch(\Throwable $e){$this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.aktsiiu_ne_vdalosia_stvoryty'));}
             return $this->redirectToRoute('admin_commerce_promotions');
@@ -63,7 +59,84 @@ final class CommerceOperationsAdminController extends AbstractController
         $categoryOptions=array_map(static fn(array $r):array=>['value'=>(string)$r['id'],'label'=>(string)$r['name']],$this->db->fetchAllAssociative("SELECT c.id,COALESCE(t.name,CONCAT('#',c.id)) name FROM mc_category c LEFT JOIN mc_category_translation t ON t.category_id=c.id AND t.locale=? WHERE c.status='active' ORDER BY c.parent_id,c.sort_order,c.id",[$context->locale]));
         $groupCodes=array_unique(array_merge(['default','vip','wholesale'],array_map('strval',$this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer WHERE customer_group_code IS NOT NULL AND customer_group_code<>''"))));
         $groupOptions=array_map(static fn(string $g):array=>['value'=>$g,'label'=>$g],array_values($groupCodes));
-        return $this->render('@storefront/admin/commerce/promotions.html.twig',['promotions'=>$rows,'markets'=>$markets,'category_options'=>$categoryOptions,'group_options'=>$groupOptions]);
+        return $this->render('@storefront/admin/commerce/promotions.html.twig',['promotions'=>$rows,'markets'=>$markets,'category_options'=>$categoryOptions,'group_options'=>$groupOptions,'stats'=>$this->promotionStats($context->storeId)]);
+    }
+
+    /** @return array<int,array{discount_minor:int,orders:int}> what every promotion has given away so far */
+    private function promotionStats(int $storeId):array
+    {
+        $out=[];
+        try{foreach($this->db->fetchAllAssociative('SELECT r.promotion_id,COUNT(*) orders,COALESCE(SUM(r.discount_minor),0) discount_minor FROM mc_promotion_redemption r JOIN mc_promotion p ON p.id=r.promotion_id WHERE p.store_id=? GROUP BY r.promotion_id',[$storeId]) as $r)$out[(int)$r['promotion_id']]=['discount_minor'=>(int)$r['discount_minor'],'orders'=>(int)$r['orders']];}catch(\Throwable){}
+        return $out;
+    }
+
+    private function promotionOptions(int $storeId,string $locale):array
+    {
+        $categoryOptions=array_map(static fn(array $r):array=>['value'=>(string)$r['id'],'label'=>(string)$r['name']],$this->db->fetchAllAssociative("SELECT c.id,COALESCE(t.name,CONCAT('#',c.id)) name FROM mc_category c LEFT JOIN mc_category_translation t ON t.category_id=c.id AND t.locale=? WHERE c.status='active' ORDER BY c.parent_id,c.sort_order,c.id",[$locale]));
+        $groupCodes=array_unique(array_merge(['default','vip','wholesale'],array_map('strval',$this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer WHERE customer_group_code IS NOT NULL AND customer_group_code<>''"))));
+        return [$categoryOptions,array_map(static fn(string $g):array=>['value'=>$g,'label'=>$g],array_values($groupCodes))];
+    }
+
+    #[Route('/admin/commerce/promotions/{id}/edit', name:'admin_commerce_promotion_edit', methods:['GET','POST'], requirements:['id'=>'\d+'])]
+    public function editPromotion(int $id,Request $request): Response
+    {
+        $context=$this->contexts->resolve($request);
+        $row=$this->db->fetchAssociative('SELECT * FROM mc_promotion WHERE id=? AND store_id=?',[$id,$context->storeId]); if(!is_array($row))throw $this->createNotFoundException();
+        if($request->isMethod('POST')){
+            if(!$this->isCsrfTokenValid('promotion_edit_'.$id,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+            try{
+                $payload=$this->promotionPayload($request);
+                $this->db->update('mc_promotion',['name'=>$payload['name'],'code'=>$payload['code'],'trigger_type'=>$payload['trigger_type'],'discount_type'=>$payload['discount_type'],'discount_value'=>$payload['discount_value'],'min_subtotal_minor'=>$payload['min_subtotal_minor'],'usage_limit'=>($v=(int)$request->request->get('usage_limit',0))>0?$v:null,'per_customer_limit'=>($v2=(int)$request->request->get('per_customer_limit',0))>0?$v2:null,'priority'=>(int)$request->request->get('priority',100),'stop_processing'=>$request->request->has('stop_processing')?1:0,'conditions_json'=>$payload['conditions_json'],'starts_at'=>$this->dateOrNull((string)$request->request->get('starts_at')),'ends_at'=>$this->dateOrNull((string)$request->request->get('ends_at')),'updated_at'=>$this->now()],['id'=>$id]);
+                $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.promo.saved'));
+            }catch(\Throwable $e){$this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('admin.promo.save_failed'));}
+            return $this->redirectToRoute('admin_commerce_promotion_edit',['id'=>$id]);
+        }
+        $cond=json_decode((string)$row['conditions_json'],true);$cond=is_array($cond)?$cond:[];
+        $local=static fn(?string $v):string=>$v===null?'':(new \DateTimeImmutable($v,new \DateTimeZone('UTC')))->format('Y-m-d\TH:i');
+        $promo=$row+[
+            'discount_value'=>number_format(((int)$row['discount_value'])/100,2,'.',''),'min_subtotal'=>number_format(((int)$row['min_subtotal_minor'])/100,2,'.',''),
+            'starts_at'=>$local($row['starts_at']),'ends_at'=>$local($row['ends_at']),'product_ids'=>implode(', ',array_map('intval',(array)($cond['product_ids']??[]))),
+            'category_ids'=>array_map('strval',(array)($cond['category_ids']??[])),'customer_groups'=>array_map('strval',(array)($cond['customer_groups']??[])),'market_ids'=>array_map('strval',(array)($cond['market_ids']??[])),
+            'stop_processing'=>(bool)$row['stop_processing'],'usage_limit'=>(int)($row['usage_limit']??0),'per_customer_limit'=>(int)($row['per_customer_limit']??0),
+        ];
+        try{
+            $s=$this->db->fetchAssociative('SELECT COUNT(*) used,COALESCE(SUM(r.discount_minor),0) discount_minor,COUNT(DISTINCT COALESCE(r.customer_id,r.email_normalized)) customers,MAX(r.created_at) last,COALESCE(SUM(o.total_minor),0) revenue_minor FROM mc_promotion_redemption r LEFT JOIN mc_sales_order o ON o.id=r.order_id WHERE r.promotion_id=?',[$id])?:[];
+            $redemptions=$this->db->fetchAllAssociative('SELECT r.created_at,r.coupon_code,r.discount_minor,o.order_number,o.public_id order_public_id FROM mc_promotion_redemption r LEFT JOIN mc_sales_order o ON o.id=r.order_id WHERE r.promotion_id=? ORDER BY r.id DESC LIMIT 50',[$id]);
+            foreach($redemptions as &$r){$r['order_public_id']=$r['order_public_id']!==null?\Symfony\Component\Uid\Uuid::fromBinary((string)$r['order_public_id'])->toRfc4122():null;}unset($r);
+        }catch(\Throwable){$s=[];$redemptions=[];}
+        $stats=['used'=>(int)($s['used']??0),'discount_minor'=>(int)($s['discount_minor']??0),'customers'=>(int)($s['customers']??0),'last'=>$s['last']??null,'revenue_minor'=>(int)($s['revenue_minor']??0)];
+        [$categoryOptions,$groupOptions]=$this->promotionOptions($context->storeId,$context->locale);
+        return $this->render('@storefront/admin/commerce/promotion_edit.html.twig',['promo'=>$promo,'stats'=>$stats,'redemptions'=>$redemptions,'markets'=>$this->db->fetchAllAssociative('SELECT id,name,default_currency FROM mc_market WHERE store_id=? ORDER BY id',[$context->storeId]),'category_options'=>$categoryOptions,'group_options'=>$groupOptions]);
+    }
+
+    #[Route('/admin/commerce/promotions/{id}/duplicate', name:'admin_commerce_promotion_duplicate', methods:['POST'], requirements:['id'=>'\d+'])]
+    public function duplicatePromotion(int $id,Request $request): Response
+    {
+        $context=$this->contexts->resolve($request); if(!$this->isCsrfTokenValid('promotion_toggle_'.$id,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+        $row=$this->db->fetchAssociative('SELECT * FROM mc_promotion WHERE id=? AND store_id=?',[$id,$context->storeId]); if(!is_array($row))throw $this->createNotFoundException();
+        unset($row['id']);$now=$this->now();$row['public_id']=$this->ids->binary();$row['name']=mb_substr((string)$row['name'].' (copy)',0,190);$row['code']=null;$row['trigger_type']='automatic';$row['status']='disabled';$row['usage_count']=0;$row['created_at']=$now;$row['updated_at']=$now;
+        $this->db->insert('mc_promotion',$row);$newId=(int)$this->db->lastInsertId();
+        return $this->redirectToRoute('admin_commerce_promotion_edit',['id'=>$newId]);
+    }
+
+    #[Route('/admin/commerce/promotions/{id}/delete', name:'admin_commerce_promotion_delete', methods:['POST'], requirements:['id'=>'\d+'])]
+    public function deletePromotion(int $id,Request $request): Response
+    {
+        $context=$this->contexts->resolve($request); if(!$this->isCsrfTokenValid('promotion_toggle_'.$id,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+        try{$this->db->delete('mc_promotion',['id'=>$id,'store_id'=>$context->storeId]);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.promo.deleted'));}
+        catch(\Throwable){$this->db->update('mc_promotion',['status'=>'disabled','updated_at'=>$this->now()],['id'=>$id,'store_id'=>$context->storeId]);$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('admin.promo.delete_blocked'));}
+        return $this->redirectToRoute('admin_commerce_promotions');
+    }
+
+    /** @return array{name:string,code:?string,trigger_type:string,discount_type:string,discount_value:int,min_subtotal_minor:int,conditions_json:string} the validated fields of the promotion form */
+    private function promotionPayload(Request $request):array
+    {
+        $name=trim((string)$request->request->get('name'));$trigger=(string)$request->request->get('trigger_type','automatic');$code=$trigger==='coupon'?mb_strtoupper(trim((string)$request->request->get('code'))):null;$type=(string)$request->request->get('discount_type','percent');
+        if($name===''||mb_strlen($name)>190)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.vkazhit_nazvu_aktsii')); if(!in_array($trigger,['automatic','coupon'],true))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.nekorektnyi_typ_aktsii')); if($trigger==='coupon'&&($code===''||!preg_match('/^[A-Z0-9_-]{3,64}$/',$code)))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.promokod_3_64_symvoly_a_z_0_9_abo')); if(!in_array($type,['percent','fixed'],true))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.nekorektnyi_typ_znyzhky'));
+        $valueRaw=str_replace(',','.',trim((string)$request->request->get('discount_value','0'))); if(!is_numeric($valueRaw)||(float)$valueRaw<=0)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.vkazhit_rozmir_znyzhky')); $discountValue=$type==='percent'?(int)round(min(100,(float)$valueRaw)*100):(int)round((float)$valueRaw*100);
+        $minRaw=str_replace(',','.',trim((string)$request->request->get('min_subtotal','0')));$minMinor=max(0,(int)round(((float)$minRaw)*100));
+        $conditions=['product_ids'=>array_values(array_filter(array_map('intval',preg_split('/[\s,;]+/',(string)$request->request->get('product_ids',''),-1,PREG_SPLIT_NO_EMPTY)?:[]))),'category_ids'=>array_values(array_filter(array_map('intval',$request->request->all('category_ids')))),'market_ids'=>array_values(array_filter(array_map('intval',$request->request->all('market_ids')))),'customer_groups'=>array_values(array_unique(array_filter(array_map(static fn($v)=>strtolower(trim((string)$v)),$request->request->all('customer_groups')))))];
+        return ['name'=>$name,'code'=>$code,'trigger_type'=>$trigger,'discount_type'=>$type,'discount_value'=>$discountValue,'min_subtotal_minor'=>$minMinor,'conditions_json'=>json_encode($conditions,JSON_THROW_ON_ERROR)];
     }
 
     #[Route('/admin/commerce/promotions/{id}/toggle', name:'admin_commerce_promotion_toggle', methods:['POST'], requirements:['id'=>'\\d+'])]
@@ -84,8 +157,16 @@ final class CommerceOperationsAdminController extends AbstractController
             $group=strtolower(trim((string)$request->request->get('customer_group_code','default')));if(preg_match('/^[a-z0-9_-]{1,64}$/D',$group)!==1)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.nekorektnyi_kod_hrupy'));
             $this->db->update('mc_customer',['customer_group_code'=>$group,'updated_at'=>$this->now()],['id'=>$id]);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.hrupu_pokuptsia_onovleno'));return $this->redirectToRoute('admin_commerce_customers');
         }
-        $rows=$this->db->fetchAllAssociative("SELECT c.id,c.display_name,c.email,c.phone_e164,c.status,c.customer_group_code,c.created_at,(SELECT COUNT(*) FROM mc_sales_order o WHERE o.customer_id=c.id AND o.status NOT IN ('cancelled','expired')) orders_count,(SELECT COALESCE(SUM(o.total_minor),0) FROM mc_sales_order o WHERE o.customer_id=c.id AND o.status NOT IN ('cancelled','expired')) spent_minor,(SELECT o.currency FROM mc_sales_order o WHERE o.customer_id=c.id ORDER BY o.id DESC LIMIT 1) currency,(SELECT MAX(o.created_at) FROM mc_sales_order o WHERE o.customer_id=c.id) last_order_at FROM mc_customer c ORDER BY c.id DESC LIMIT 2000");
-        return $this->render('@storefront/admin/commerce/customers.html.twig',['rows'=>$rows]);
+        $q=trim((string)$request->query->get('q',''));$group=trim((string)$request->query->get('group',''));$status=(string)$request->query->get('status','');$sort=(string)$request->query->get('sort','new');
+        $where=['1=1'];$params=[];
+        if($q!==''){$like='%'.addcslashes($q,'%_\\').'%';$where[]='(c.display_name LIKE ? OR c.email LIKE ? OR c.phone_e164 LIKE ?)';array_push($params,$like,$like,$like);}
+        if($group!==''){$where[]='c.customer_group_code=?';$params[]=$group;}
+        if(in_array($status,['active','blocked'],true)){$where[]='c.status=?';$params[]=$status;}
+        $orderBy=match($sort){'spent'=>'spent_minor DESC','orders'=>'orders_count DESC','last'=>'last_order_at IS NULL, last_order_at DESC',default=>'c.id DESC'};
+        $rows=$this->db->fetchAllAssociative("SELECT c.id,c.display_name,c.email,c.phone_e164,c.status,c.customer_group_code,c.created_at,(SELECT COUNT(*) FROM mc_sales_order o WHERE o.customer_id=c.id AND o.status NOT IN ('cancelled','expired')) orders_count,(SELECT COALESCE(SUM(o.total_minor),0) FROM mc_sales_order o WHERE o.customer_id=c.id AND o.status NOT IN ('cancelled','expired')) spent_minor,(SELECT o.currency FROM mc_sales_order o WHERE o.customer_id=c.id ORDER BY o.id DESC LIMIT 1) currency,(SELECT MAX(o.created_at) FROM mc_sales_order o WHERE o.customer_id=c.id) last_order_at FROM mc_customer c WHERE ".implode(' AND ',$where)." ORDER BY $orderBy LIMIT 2000",$params);
+        $groups=array_map('strval',$this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer WHERE customer_group_code IS NOT NULL AND customer_group_code<>'' ORDER BY 1"));
+        $totals=$this->db->fetchAssociative("SELECT COUNT(*) total,SUM(status='blocked') blocked,SUM(created_at>=UTC_TIMESTAMP(6)-INTERVAL 30 DAY) new30 FROM mc_customer")?:[];
+        return $this->render('@storefront/admin/commerce/customers.html.twig',['rows'=>$rows,'filters'=>['q'=>$q,'group'=>$group,'status'=>$status,'sort'=>$sort],'groups'=>$groups,'totals'=>$totals]);
     }
 
     #[Route('/admin/commerce/inquiries', name:'admin_commerce_inquiries', methods:['GET','POST'])]
@@ -99,8 +180,15 @@ final class CommerceOperationsAdminController extends AbstractController
             $this->db->update('mc_customer_inquiry',['status'=>$status,'admin_note'=>mb_substr(trim((string)$request->request->get('admin_note')),0,4000),'updated_at'=>$this->now()],['id'=>$id,'store_id'=>$context->storeId]);
             $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.zvernennia_onovleno'));return $this->redirectToRoute('admin_commerce_inquiries');
         }
-        $rows=$this->db->fetchAllAssociative('SELECT i.*,i.customer_name AS name,pt.name product_name FROM mc_customer_inquiry i LEFT JOIN mc_product_translation pt ON pt.product_id=i.product_id AND pt.store_id=i.store_id AND pt.locale=? WHERE i.store_id=? ORDER BY FIELD(i.status,\'new\',\'in_progress\',\'resolved\',\'closed\'),i.id DESC LIMIT 1000',[$context->locale,$context->storeId]);
-        return $this->render('@storefront/admin/commerce/inquiries.html.twig',['rows'=>$rows]);
+        $q=trim((string)$request->query->get('q',''));$status=(string)$request->query->get('status','');$type=(string)$request->query->get('type','');
+        $where=['i.store_id=?'];$params=[$context->locale,$context->storeId];
+        if(in_array($status,['new','in_progress','resolved','closed'],true)){$where[]='i.status=?';$params[]=$status;}
+        if($type!==''&&preg_match('/^[a-z_]{1,32}$/D',$type)===1){$where[]='i.inquiry_type=?';$params[]=$type;}
+        if($q!==''){$like='%'.addcslashes($q,'%_\\').'%';$where[]='(i.customer_name LIKE ? OR i.email LIKE ? OR i.phone LIKE ? OR i.message LIKE ?)';array_push($params,$like,$like,$like,$like);}
+        $rows=$this->db->fetchAllAssociative("SELECT i.*,i.customer_name AS name,pt.name product_name FROM mc_customer_inquiry i LEFT JOIN mc_product_translation pt ON pt.product_id=i.product_id AND pt.store_id=i.store_id AND pt.locale=? WHERE ".implode(' AND ',$where)." ORDER BY FIELD(i.status,'new','in_progress','resolved','closed'),i.id DESC LIMIT 500",$params);
+        $counts=$this->db->fetchAllKeyValue('SELECT status,COUNT(*) FROM mc_customer_inquiry WHERE store_id=? GROUP BY status',[$context->storeId]);
+        $types=array_map('strval',$this->db->fetchFirstColumn('SELECT DISTINCT inquiry_type FROM mc_customer_inquiry WHERE store_id=? ORDER BY 1',[$context->storeId]));
+        return $this->render('@storefront/admin/commerce/inquiries.html.twig',['rows'=>$rows,'counts'=>$counts,'types'=>$types,'filters'=>['q'=>$q,'status'=>$status,'type'=>$type]]);
     }
 
     #[Route('/admin/commerce/import-export', name:'admin_commerce_import_export', methods:['GET','POST'])]

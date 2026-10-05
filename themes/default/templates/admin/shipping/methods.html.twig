@@ -1,16 +1,24 @@
+{% macro method(kind, code, enabled, cfg, note, locales, currency, extra) %}
+<section class="admin-method">
+<div class="admin-method__head"><label class="admin-check"><input type="checkbox" name="methods[]" value="{{ code }}"{{ enabled ? ' checked' : '' }}><span><strong>{{ ui_text('method.' ~ kind ~ '.' ~ code) }}</strong><small>{{ note }}{% if extra %} · <a href="{{ path('admin_system_storefront_contacts') }}">{{ ui_text('admin.checkout_methods.pickup_points') }} ({{ extra }})</a>{% endif %}</small></span></label></div>
+<div class="admin-form-grid admin-method__grid">
+<label>{{ ui_text('admin.checkout_methods.fee') }} ({{ currency }})<input type="number" min="0" step="0.01" name="cfg[{{ code }}][fee]" value="{{ cfg.fee_minor ? (cfg.fee_minor / 100)|number_format(2, '.', '') : '' }}" placeholder="0"></label>
+<label>{{ ui_text('admin.checkout_methods.free_over') }} ({{ currency }})<input type="number" min="0" step="0.01" name="cfg[{{ code }}][free_over]" value="{{ cfg.free_over_minor ? (cfg.free_over_minor / 100)|number_format(2, '.', '') : '' }}" placeholder="—"></label>
+<label>{{ ui_text('admin.checkout_methods.min') }} ({{ currency }})<input type="number" min="0" step="0.01" name="cfg[{{ code }}][min]" value="{{ cfg.min_minor ? (cfg.min_minor / 100)|number_format(2, '.', '') : '' }}" placeholder="—"></label>
+<label>{{ ui_text('admin.checkout_methods.max') }} ({{ currency }})<input type="number" min="0" step="0.01" name="cfg[{{ code }}][max]" value="{{ cfg.max_minor ? (cfg.max_minor / 100)|number_format(2, '.', '') : '' }}" placeholder="—"></label>
+{% for l in locales %}<label data-lang="{{ l.code }}" data-lang-name="{{ l.native_name }}">{{ ui_text('admin.checkout_methods.title_field') }}<span class="lang-suffix"> · {{ l.native_name }}</span><input type="text" maxlength="120" name="cfg[{{ code }}][title][{{ l.code }}]" value="{{ cfg.title[l.code]|default('') }}" placeholder="{{ ui_text('method.' ~ kind ~ '.' ~ code) }}"></label><label data-lang="{{ l.code }}" data-lang-name="{{ l.native_name }}">{{ ui_text('admin.checkout_methods.text_field') }}<span class="lang-suffix"> · {{ l.native_name }}</span><input type="text" maxlength="240" name="cfg[{{ code }}][text][{{ l.code }}]" value="{{ cfg.text[l.code]|default('') }}"></label>{% endfor %}
+</div>
+</section>
+{% endmacro %}
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}{{ shell.start(ui_text('admin.checkout_methods.title'),'shipping_methods') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.checkout_methods.title') }}</span></nav><h1>{{ ui_text('admin.checkout_methods.title') }}</h1><p>{{ ui_text('admin.checkout_methods.intro') }}</p></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
 <form method="post" action="{{ path('admin_shipment_methods_save') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('shipping_methods') }}">
 <section class="admin-panel" data-no-table-tools><div class="admin-panel__header"><h2>{{ ui_text('admin.checkout_methods.delivery') }}</h2></div>
-<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.badges.enabled') }}</th><th>{{ ui_text('admin.checkout_methods.method') }}</th><th>{{ ui_text('admin.checkout_methods.note') }}</th></tr></thead><tbody>
-{% for code in delivery_codes %}<tr><td><input type="checkbox" name="methods[]" value="{{ code }}"{{ enabled[code] ? ' checked' : '' }} aria-label="{{ ui_text('method.delivery.' ~ code) }}"></td><td><strong>{{ ui_text('method.delivery.' ~ code) }}</strong></td><td>{{ ui_text('admin.checkout_methods.note.' ~ code) }}{% if code == 'self_pickup' %} <a href="{{ path('admin_system_storefront_contacts') }}">{{ ui_text('admin.checkout_methods.pickup_points') }} ({{ pickup_points }})</a>{% endif %}</td></tr>{% endfor %}
-</tbody></table></div>
+{% for code in delivery_codes %}{{ _self.method('delivery', code, enabled[code], config[code], ui_text('admin.checkout_methods.note.' ~ code), store_locales, currency, code == 'self_pickup' ? pickup_points : 0) }}{% endfor %}
 {{ help.hint(ui_text('admin.checkout_methods.delivery_hint')) }}</section>
 <section class="admin-panel" data-no-table-tools><div class="admin-panel__header"><h2>{{ ui_text('admin.checkout_methods.payment') }}</h2></div>
-<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.badges.enabled') }}</th><th>{{ ui_text('admin.checkout_methods.method') }}</th><th>{{ ui_text('admin.checkout_methods.note') }}</th></tr></thead><tbody>
-{% for code in payment_codes %}<tr><td><input type="checkbox" name="methods[]" value="{{ code }}"{{ enabled[code] ? ' checked' : '' }} aria-label="{{ ui_text('method.payment.' ~ code) }}"></td><td><strong>{{ ui_text('method.payment.' ~ code) }}</strong></td><td>{{ ui_text('admin.checkout_methods.note.' ~ code) }}</td></tr>{% endfor %}
-</tbody></table></div>
+{% for code in payment_codes %}{{ _self.method('payment', code, enabled[code], config[code], ui_text('admin.checkout_methods.note.' ~ code), store_locales, currency, 0) }}{% endfor %}
 {% if other_payments %}{{ help.hint(ui_text('admin.checkout_methods.online_hint', {methods: other_payments|join(', ')})) }}{% else %}{{ help.hint(ui_text('admin.checkout_methods.online_none')) }}{% endif %}
 </section>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.badges.save') }}</button></div></form>

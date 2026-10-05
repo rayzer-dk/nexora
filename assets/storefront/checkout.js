@@ -300,6 +300,42 @@ if (checkout) {
   });
   q('[data-checkout-flash]')?.scrollIntoView({ block: 'center' });
 
+  // ---- Delivery and payment fees: the totals follow the chosen methods (advisory; the order is recalculated on the server) ----
+  const methodParams = () => ({
+    carrier: form.querySelector('[name="carrier"]:checked')?.value || form.querySelector('[name="carrier"][type="hidden"]')?.value || '',
+    payment_method: form.querySelector('[name="payment_method"]:checked')?.value || '',
+  });
+  const applyShipping = (data) => {
+    const row = q('[data-shipping-row]', form);
+    const value = q('[data-summary-shipping]', form);
+    if (row) row.hidden = !(Number(data.shipping_minor || 0) > 0);
+    if (value) value.textContent = data.shipping || '';
+  };
+  let refreshTimer = 0;
+  const refreshTotals = () => {
+    window.clearTimeout(refreshTimer);
+    refreshTimer = window.setTimeout(async () => {
+      const token = q('[data-promotion-token]', form);
+      if (!token) return;
+      try {
+        const body = new URLSearchParams({
+          _token: token.value,
+          coupon_code: q('[data-coupon-code]', form)?.value || '',
+          gift_card_code: q('[data-reward-gift]', form)?.value || '',
+          loyalty_points: q('[data-reward-points]', form)?.value || '0',
+          email: form.querySelector('[name="email"]')?.value || '',
+          ...methodParams(),
+        });
+        const response = await fetch('/checkout/rewards/preview', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
+        const data = await response.json();
+        applyShipping(data);
+        if (data.total) qa('[data-summary-total]', form).forEach((node) => { node.textContent = data.total; });
+      } catch (_) { /* the totals stay as they were */ }
+    }, 250);
+  };
+  form.addEventListener('change', (event) => { if (event.target?.matches?.('[name="carrier"], [name="payment_method"]')) refreshTotals(); });
+  refreshTotals();
+
   // ---- Promotion preview (advisory only; CheckoutOrderService recalculates everything transactionally) ------------
   const promotionButton = q('[data-coupon-apply]');
   promotionButton?.addEventListener('click', async () => {
@@ -309,7 +345,7 @@ if (checkout) {
     if (!code || !token || !message) return;
     promotionButton.disabled = true;
     try {
-      const body = new URLSearchParams({ _token: token.value, coupon_code: code.value, email: form.querySelector('[name="email"]')?.value || '' });
+      const body = new URLSearchParams({ _token: token.value, coupon_code: code.value, email: form.querySelector('[name="email"]')?.value || '', ...methodParams() });
       const response = await fetch('/checkout/promotion/preview', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
       const data = await response.json();
       message.textContent = data.message || i18n.promoFailed;
@@ -318,6 +354,7 @@ if (checkout) {
       if (discountRow) discountRow.hidden = !(Number(data.discount_minor || 0) > 0);
       const discount = q('[data-summary-discount]', form);
       if (discount) discount.textContent = data.discount ? `−${data.discount}` : '';
+      applyShipping(data);
       if (data.total) qa('[data-summary-total]', form).forEach((node) => { node.textContent = data.total; });
     } catch (_) {
       message.textContent = i18n.promoRetry;
@@ -340,11 +377,13 @@ if (checkout) {
         loyalty_points: q('[data-reward-points]', form)?.value || '0',
         coupon_code: q('[data-coupon-code]', form)?.value || '',
         email: form.querySelector('[name="email"]')?.value || '',
+        ...methodParams(),
       });
       const response = await fetch('/checkout/rewards/preview', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
       const data = await response.json();
       message.textContent = data.message || i18n.promoFailed;
       message.dataset.state = data.ok ? 'success' : 'error';
+      applyShipping(data);
       if (data.total) qa('[data-summary-total]', form).forEach((node) => { node.textContent = data.total; });
     } catch (_) {
       message.textContent = i18n.promoRetry;

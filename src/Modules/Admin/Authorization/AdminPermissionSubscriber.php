@@ -73,13 +73,14 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if ($route==='admin_icon_library') return AdminPermissionCatalog::DASHBOARD_VIEW;
         if (str_starts_with($route,'admin_commerce_campaign_')||str_starts_with($route,'admin_commerce_subscriber')) return $get?AdminPermissionCatalog::MARKETING_VIEW:AdminPermissionCatalog::MARKETING_MANAGE;
         if ($route==='admin_commerce_customers') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
+        if (str_starts_with($route,'admin_commerce_customer_')) return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if ($route==='admin_content_page_edit'||$route==='admin_content_page_new') return AdminPermissionCatalog::CONTENT_MANAGE;
         if (str_starts_with($route,'admin_content_')) return $get?AdminPermissionCatalog::CONTENT_VIEW:(str_contains($route,'delete')?AdminPermissionCatalog::CONTENT_DELETE:AdminPermissionCatalog::CONTENT_MANAGE);
         if (str_starts_with($route,'admin_appearance_builder')||$route==='admin_visual_store_editor') return AdminPermissionCatalog::APPEARANCE_MANAGE;
         if (str_starts_with($route,'admin_appearance_')) return $get?AdminPermissionCatalog::APPEARANCE_VIEW:AdminPermissionCatalog::APPEARANCE_MANAGE;
         if (str_starts_with($route,'admin_media_')) return $get?AdminPermissionCatalog::MEDIA_VIEW:(str_contains($route,'delete')?AdminPermissionCatalog::MEDIA_DELETE:AdminPermissionCatalog::MEDIA_MANAGE);
         if (str_starts_with($route,'admin_forum')) return $get?AdminPermissionCatalog::FORUM_VIEW:AdminPermissionCatalog::FORUM_MANAGE;
-        if (in_array($route,['admin_commerce_promotions','admin_commerce_campaigns','admin_commerce_marketing_automation'],true)||str_contains($route,'promotion_toggle')) return $get?AdminPermissionCatalog::MARKETING_VIEW:AdminPermissionCatalog::MARKETING_MANAGE;
+        if (in_array($route,['admin_commerce_promotions','admin_commerce_campaigns','admin_commerce_marketing_automation'],true)||str_starts_with($route,'admin_commerce_promotion_')||str_contains($route,'promotion_toggle')) return $get?AdminPermissionCatalog::MARKETING_VIEW:AdminPermissionCatalog::MARKETING_MANAGE;
         if (str_starts_with($route,'admin_commerce_feed')) return $get?AdminPermissionCatalog::FEEDS_VIEW:AdminPermissionCatalog::FEEDS_MANAGE;
         if (in_array($route,['admin_commerce_notifications','admin_commerce_notification_channels','admin_commerce_notification_channels_test','admin_commerce_sms','admin_commerce_sms_test','admin_commerce_notification_design','admin_commerce_notification_templates','admin_commerce_notification_templates_save','admin_commerce_notification_templates_preview','admin_email_preview','admin_email_preview_render'],true)) return $get?AdminPermissionCatalog::NOTIFICATIONS_VIEW:AdminPermissionCatalog::NOTIFICATIONS_MANAGE;
         if ($route==='admin_commerce_inquiries') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;

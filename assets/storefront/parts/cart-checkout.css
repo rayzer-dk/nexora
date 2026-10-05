@@ -236,3 +236,7 @@ html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-g
 .ck-hint--wide { grid-column: 1 / -1; }
 [data-reward-message][data-state="success"], [data-coupon-message][data-state="success"] { color: var(--mc-color-success); }
 [data-reward-message][data-state="error"], [data-coupon-message][data-state="error"] { color: var(--mc-color-danger); }
+
+/* Fee of a delivery or payment method next to its name. */
+.ck-choice__fee { margin-inline-start: auto; display: grid; justify-items: end; font-weight: var(--mc-font-weight-bold); white-space: nowrap; }
+.ck-choice__fee > small { color: var(--mc-color-muted); font-weight: var(--mc-font-weight-regular); }
