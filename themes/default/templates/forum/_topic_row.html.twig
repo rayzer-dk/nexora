@@ -1,0 +1,17 @@
+{# One topic in a list. Expects `topic`; `show_board` adds the section name. Unread topics are set in bold with a dot. #}
+<a class="fx-topic{{ topic.is_unread|default(false) ? ' is-unread' : '' }}{{ topic.is_pinned|default(false) ? ' is-pinned' : '' }}" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}">
+    <span class="fx-topic__state" aria-hidden="true">{% if topic.is_pinned|default(false) %}{{ ui_icon('pin', 16) }}{% elseif topic.solved_post_id|default(0) %}{{ ui_icon('circle-check', 16) }}{% else %}{{ ui_icon('message-square', 16) }}{% endif %}</span>
+    <span class="fx-topic__main">
+        <strong>{{ topic.title }}</strong>
+        <small>{% if show_board|default(false) %}<span class="fx-tag">{{ topic.board_name }}</span>{% endif %}{% if topic.author_name|default('') %}{{ topic.author_name }} · {% endif %}{{ (topic.published_at|default(topic.created_at|default('')))|slice(0,10) }}
+            {% if topic.is_pinned|default(false) %}<span class="fx-tag is-pin">{{ ui_text('pinned') }}</span>{% endif %}
+            {% if topic.solved_post_id|default(0) %}<span class="fx-tag is-ok">{{ ui_icon('check', 12) }}{{ ui_text('forum_solved') }}</span>{% endif %}
+            {% if topic.is_locked|default(false) %}<span class="fx-tag" data-topic-locked>{{ ui_icon('lock', 12) }}{{ ui_text('closed') }}</span>{% endif %}
+            {% if topic.is_followed|default(false) %}<span class="fx-tag is-fav">{{ ui_icon('star', 12) }}</span>{% endif %}
+            {% if topic.is_unread|default(false) %}<span class="fx-tag is-new">{{ ui_text('forum_unread') }}</span>{% endif %}
+        </small>
+    </span>
+    <span class="fx-topic__num"><b>{{ topic.post_count|default(0) }}</b><small>{{ ui_text('forum_replies_label') }}</small></span>
+    <span class="fx-topic__num fx-topic__num--views"><b>{{ topic.views_count|default(0) }}</b><small>{{ ui_text('forum_views') }}</small></span>
+    <span class="fx-topic__last"><b>{{ (topic.active_at|default(''))|slice(0,16) }}</b>{% if topic.last_author|default('') %}<small>{{ ui_text('forum_by') }} {{ topic.last_author }}</small>{% endif %}</span>
+</a>

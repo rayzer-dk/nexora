@@ -298,6 +298,31 @@ final readonly class ForumCommunityService
         }
     }
 
+    /**
+     * Member pages for nicknames written as @name in messages.
+     *
+     * @param list<string> $nicknames lower-case
+     * @param callable(int):string $url
+     * @return array<string,string>
+     */
+    public function memberUrls(int $storeId, array $nicknames, callable $url): array
+    {
+        $nicknames = array_slice(array_values(array_unique(array_filter($nicknames, static fn ($n): bool => is_string($n) && $n !== ''))), 0, 50);
+        if ($nicknames === []) {
+            return [];
+        }
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT customer_id,nickname FROM mc_forum_profile WHERE store_id=? AND nickname IN (' . implode(',', array_fill(0, count($nicknames), '?')) . ')',
+            [$storeId, ...$nicknames],
+        );
+        $out = [];
+        foreach ($rows as $row) {
+            $out[mb_strtolower((string) $row['nickname'], 'UTF-8')] = $url((int) $row['customer_id']);
+        }
+
+        return $out;
+    }
+
     private function assertPostInStore(int $storeId, int $postId): void
     {
         $ok = $this->connection->fetchOne(

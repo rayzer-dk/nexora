@@ -6,6 +6,7 @@ namespace Commerce\Modules\Forum\Http;
 
 use Commerce\Modules\Forum\Application\ForumService;
 use Commerce\Modules\Forum\Application\ForumCommunityService;
+use Commerce\Modules\Forum\Application\ForumEngagementService;
 use Commerce\Modules\Forum\Application\ForumAccessPolicy;
 use Commerce\Modules\Forum\Application\ForumProfileService;
 use Commerce\Modules\Forum\Application\ForumDirectMessageService;
@@ -24,6 +25,7 @@ final class ForumController extends AbstractController
         private readonly StorefrontContextResolver $contexts,
         private readonly ForumService $forum,
         private readonly ForumCommunityService $community,
+        private readonly ForumEngagementService $engagement,
         private readonly ForumAccessPolicy $accessPolicy,
         private readonly ForumProfileService $profiles,
         private readonly ForumDirectMessageService $directMessages,
@@ -41,6 +43,8 @@ final class ForumController extends AbstractController
             'store_name' => $context->storeName,
             'boards' => $this->forum->boards($context->storeId),
             'latest_topics' => $this->forum->latestTopics($context->storeId),
+            'overview' => $this->engagement->overview($context->storeId),
+            'unread_count' => $this->presence($context->storeId),
             'seo_head' => [
                 'canonical' => $request->getSchemeAndHttpHost() . '/forum',
                 'robots' => 'index,follow,max-image-preview:large',
@@ -73,11 +77,15 @@ final class ForumController extends AbstractController
         $page = max(1, $request->query->getInt('page', 1));
         $user = $this->getUser();
         $customerId = $user instanceof CustomerUser ? $user->id() : null;
+        $sort = in_array((string) $request->query->get('sort', 'activity'), ['activity', 'new', 'replies', 'views'], true) ? (string) $request->query->get('sort', 'activity') : 'activity';
+        $this->presence($context->storeId);
         return $this->render('@storefront/forum/board.html.twig', [
             'page_title' => (string) $board['name'],
             'store_name' => $context->storeName,
             'board' => $board,
-            'topics' => $this->forum->topics((int) $board['id'], $page, 30, $customerId),
+            'children' => array_values(array_filter($this->forum->boards($context->storeId), static fn (array $b): bool => (int) ($b['parent_id'] ?? 0) === (int) $board['id'])),
+            'sort' => $sort,
+            'topics' => $this->forum->topics((int) $board['id'], $page, 30, $customerId, $sort),
             'unread_count' => $customerId !== null ? $this->community->unreadCount($context->storeId, $customerId) : 0,
             'forum_nickname' => $customerId !== null ? $this->profiles->nickname($context->storeId, $customerId) : null,
             'page' => $page,
@@ -155,7 +163,9 @@ final class ForumController extends AbstractController
         $pageSize = 30;
         $pages = max(1, (int) ceil(((int) ($topic['post_count'] ?? 0)) / $pageSize));
         $page = min($pages, max(1, $request->query->getInt('page', 1)));
-        $posts = $this->forum->posts($context->storeId, $id, $page, $pageSize);
+        $posts = $this->forum->posts($context->storeId, $id, $page, $pageSize, $customerId);
+        $this->presence($context->storeId);
+        $cards = $this->engagement->memberCards($context->storeId, array_map(static fn (array $p): int => (int) ($p['customer_id'] ?? 0), $posts));
         if ($customerId !== null) {
             $this->community->markRead($context->storeId, $id, $customerId);
         }
@@ -164,6 +174,8 @@ final class ForumController extends AbstractController
             'store_name' => $context->storeName,
             'topic' => $topic,
             'posts' => $posts,
+            'cards' => $cards,
+            'mentions' => $this->mentionMap($context->storeId, $posts),
             'page' => $page,
             'pages' => $pages,
             'current_customer_id' => $customerId,
@@ -417,16 +429,38 @@ final class ForumController extends AbstractController
         return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug]);
     }
 
-    #[Route('/forum/t/{id}/{slug}/posts/{postId}/like', name: 'storefront_forum_post_like', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]
-    public function like(Request $request, int $id, string $slug, int $postId): Response
+    #[Route('/forum/t/{id}/{slug}/posts/{postId}/vote', name: 'storefront_forum_post_vote', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]
+    public function vote(Request $request, int $id, string $slug, int $postId): Response
     {
         $context = $this->contexts->resolve($request);
         $user = $this->requireForumParticipant($context->storeId);
-        if (!$this->isCsrfTokenValid('forum_like_' . $postId, (string) $request->request->get('_csrf_token'))) {
+        if (!$this->isCsrfTokenValid('forum_vote_' . $postId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
-        $this->community->toggleLike($context->storeId, $postId, $user->id());
-        return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
+        try {
+            $this->engagement->vote($context->storeId, $postId, $user->id(), (string) $request->request->get('direction', 'up'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirect($this->generateUrl('storefront_forum_topic', ['id' => $id, 'slug' => $slug]) . '#post-' . $postId, 303);
+    }
+
+    #[Route('/forum/t/{id}/{slug}/posts/{postId}/solution', name: 'storefront_forum_post_solution', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]
+    public function solution(Request $request, int $id, string $slug, int $postId): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant($context->storeId);
+        if (!$this->isCsrfTokenValid('forum_solution_' . $postId, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->engagement->setSolution($context->storeId, $id, $postId, $user->id());
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirect($this->generateUrl('storefront_forum_topic', ['id' => $id, 'slug' => $slug]) . '#post-' . $postId, 303);
     }
 
     #[Route('/forum/t/{id}/{slug}/posts/{postId}/report', name: 'storefront_forum_post_report', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]
@@ -463,6 +497,36 @@ final class ForumController extends AbstractController
             $this->addFlash('error', $e->getMessage());
         }
         return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
+    }
+
+    /** Marks a signed-in member as present and returns the number of topics with news for them. */
+    private function presence(int $storeId): int
+    {
+        $user = $this->getUser();
+        if (!$user instanceof CustomerUser) {
+            return 0;
+        }
+        $this->engagement->touch($user->id());
+
+        return $this->community->unreadCount($storeId, $user->id());
+    }
+
+    /**
+     * @param list<array<string,mixed>> $posts
+     * @return array<string,string> lower-case nickname => member page
+     */
+    private function mentionMap(int $storeId, array $posts): array
+    {
+        $names = [];
+        foreach ($posts as $post) {
+            if (preg_match_all('/(?:^|[\s(])@([\p{L}\p{N}_-]{2,64})/u', (string) ($post['body_text'] ?? ''), $found) > 0) {
+                foreach ($found[1] as $name) {
+                    $names[mb_strtolower($name, 'UTF-8')] = true;
+                }
+            }
+        }
+
+        return $this->community->memberUrls($storeId, array_keys($names), fn (int $id): string => $this->generateUrl('storefront_forum_member', ['id' => $id]));
     }
 
     private function requireForumParticipant(int $storeId): CustomerUser

@@ -5080,4 +5080,6 @@ return [
     'admin.catalog.categories.tree_move_failed' => "The category could not be moved.",
     'admin.catalog.categories.tree_toggle' => "Expand or collapse subcategories",
     'admin.catalog.categories.tree_drop_root' => "Drop here to make it a top-level category",
+    'admin.forum.board.parent' => "Subforum of",
+    'admin.forum.board.top_level' => "— top-level section —",
 ];

@@ -469,4 +469,7 @@ return [
     'php.modules.shipping.provider.novapost.gateway.label_endpoint_not_configured' => 'Endpoint этикетки Nova Poshta не настроен.',
     'php.modules.shipping.provider.novapost.gateway.label_endpoint_https_required' => 'Endpoint этикетки Nova Poshta должен использовать HTTPS.',
     'php.modules.shipping.provider.novapost.gateway.provider_error' => 'Nova Poshta: {message}',
+    'forum.runtime.vote_own' => 'Свои сообщения оценивать нельзя.',
+    'forum.runtime.solution_author_only' => 'Отметить решение может только автор темы.',
+    'forum.runtime.board_parent_invalid' => 'Подраздел можно добавить только к разделу верхнего уровня, который сам не является подразделом.',
 ];

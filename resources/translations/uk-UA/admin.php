@@ -5075,4 +5075,6 @@ return [
     'admin.catalog.categories.tree_move_failed' => "Не вдалося перемістити категорію.",
     'admin.catalog.categories.tree_toggle' => "Розгорнути або згорнути підкатегорії",
     'admin.catalog.categories.tree_drop_root' => "Перетягніть сюди, щоб зробити головною",
+    'admin.forum.board.parent' => "Підрозділ у",
+    'admin.forum.board.top_level' => "— розділ верхнього рівня —",
 ];

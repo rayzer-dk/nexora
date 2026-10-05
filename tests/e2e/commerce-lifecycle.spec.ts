@@ -129,7 +129,7 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   await expect(page.locator('.store-notice.is-success')).toBeVisible();
 
   await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('.forum-topic-row').filter({ hasText: forumTopicTitle })).toHaveCount(0);
+  await expect(page.locator('.fx-topic').filter({ hasText: forumTopicTitle })).toHaveCount(0);
 
   if (process.env.E2E_ADMIN_EMAIL && process.env.E2E_ADMIN_PASSWORD) {
     await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
@@ -153,9 +153,9 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
     await page.waitForLoadState('domcontentloaded');
 
     await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
-    const publicTopic = page.locator('.forum-topic-row').filter({ hasText: forumTopicTitle });
+    const publicTopic = page.locator('.fx-topic').filter({ hasText: forumTopicTitle });
     await expect(publicTopic).toBeVisible();
-    await expect(publicTopic.locator('.forum-lock')).toHaveCount(0);
+    await expect(publicTopic.locator('[data-topic-locked]')).toHaveCount(0);
 
     await page.goto('/admin/forum', { waitUntil: 'domcontentloaded' });
     await page.locator('.admin-tabs .admin-tab').nth(3).click();
@@ -170,7 +170,7 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
     await page.waitForLoadState('domcontentloaded');
 
     await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('.forum-topic-row').filter({ hasText: forumTopicTitle }).locator('.forum-lock')).toBeVisible();
+    await expect(page.locator('.fx-topic').filter({ hasText: forumTopicTitle }).locator('[data-topic-locked]')).toBeVisible();
 
     await page.goto('/admin/forum', { waitUntil: 'domcontentloaded' });
     const locked = page.locator('table.admin-table tbody tr').filter({ hasText: forumTopicTitle }).last();
@@ -183,6 +183,6 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
     await page.waitForLoadState('domcontentloaded');
 
     await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('.forum-topic-row').filter({ hasText: forumTopicTitle }).locator('.forum-lock')).toHaveCount(0);
+    await expect(page.locator('.fx-topic').filter({ hasText: forumTopicTitle }).locator('[data-topic-locked]')).toHaveCount(0);
   }
 });

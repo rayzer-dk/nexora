@@ -62,6 +62,7 @@ final class ForumAdminController extends AbstractController
                 (string) $request->request->get('slug', ''),
                 (string) $request->request->get('description', ''),
                 $request->request->getInt('sort_order', 0),
+                $request->request->getInt('parent_id', 0) ?: null,
             );
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.forumadmincontroller.rozdil_forumu_stvoreno'));
         } catch (Throwable $e) {
@@ -78,7 +79,7 @@ final class ForumAdminController extends AbstractController
             throw $this->createAccessDeniedException();
         }
         try {
-            $this->forum->updateBoard($context->storeId, $id, (string) $request->request->get('name', ''), (string) $request->request->get('description', ''), $request->request->getInt('sort_order', 0), (string) $request->request->get('status', 'active'));
+            $this->forum->updateBoard($context->storeId, $id, (string) $request->request->get('name', ''), (string) $request->request->get('description', ''), $request->request->getInt('sort_order', 0), (string) $request->request->get('status', 'active'), $request->request->getInt('parent_id', 0) ?: null);
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.board.saved'));
         } catch (Throwable $e) {
             $this->addFlash('error', $this->safeMessage($e));

@@ -2072,4 +2072,7 @@ return [
     'scheduler.description.link_check' => 'Searches the shop content for links to missing pages and pictures without files.',
     'scheduler.label.daily_digest' => 'Daily report to the owner',
     'scheduler.description.daily_digest' => 'Once a day after the chosen hour sends a short report: results, what needs attention, warnings.',
+    'forum.runtime.vote_own' => 'You cannot rate your own message.',
+    'forum.runtime.solution_author_only' => 'Only the topic author can mark the solution.',
+    'forum.runtime.board_parent_invalid' => 'A subforum can only be placed under a top-level section that is not itself a subforum.',
 ];

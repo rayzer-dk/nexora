@@ -97,6 +97,40 @@ function initAjaxForms() {
   });
 }
 
+function initForumToolbar() {
+  qa('[data-fx-toolbar]').forEach((bar) => {
+    const textarea = q('textarea', bar.closest('.fx-editor') || bar.parentElement);
+    if (!textarea || bar.dataset.ready) return;
+    bar.dataset.ready = '1';
+    const replace = (from, to, text, selectFrom, selectTo) => {
+      textarea.setRangeText(text, from, to, 'end');
+      textarea.focus();
+      textarea.setSelectionRange(selectFrom, selectTo);
+    };
+    bar.addEventListener('click', (event) => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const picked = textarea.value.slice(start, end);
+      if (button.dataset.fxWrap) {
+        const mark = button.dataset.fxWrap;
+        replace(start, end, mark + picked + mark, start + mark.length, start + mark.length + picked.length);
+      } else if (button.dataset.fxLine) {
+        const mark = button.dataset.fxLine;
+        const lines = (picked || '').split('\n').map((line) => mark + line).join('\n');
+        replace(start, end, lines, start, start + lines.length);
+      } else if (button.hasAttribute('data-fx-link')) {
+        const url = window.prompt('URL', 'https://');
+        if (!url || !/^https?:\/\//i.test(url)) return;
+        const text = picked || url;
+        const md = `[${text}](${url})`;
+        replace(start, end, md, start, start + md.length);
+      }
+    });
+  });
+}
+
 function initForumCompose() {
   const modal = q('[data-forum-compose]');
   if (!modal) return;
@@ -313,6 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
   try { initStoreNotices(); } catch (_) {}
   try { initAjaxForms(); } catch (_) {}
   try { initForumCompose(); } catch (_) {}
+  try { initForumToolbar(); } catch (_) {}
   try { initLiveSearch(); } catch (_) {}
   try { initMobileNavigation(); } catch (_) {}
   try { initProductCardCartActions(); } catch (_) {}

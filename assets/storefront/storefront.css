@@ -10,6 +10,7 @@
 @import url('./parts/content.css');
 @import url('./parts/product.css');
 @import url('./parts/home-blocks.css');
+@import url('./parts/forum.css');
 
 /* ========== 1. Base / reset ========== */
 *, *::before, *::after { box-sizing: border-box; }

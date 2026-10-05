@@ -21,8 +21,8 @@ final readonly class ForumService
     /** @return list<array<string,mixed>> */
     public function boards(int $storeId): array
     {
-        return $this->connection->fetchAllAssociative(
-            "SELECT b.id,b.slug,b.name,b.description,b.sort_order,
+        $rows = $this->connection->fetchAllAssociative(
+            "SELECT b.id,b.parent_id,b.slug,b.name,b.description,b.sort_order,
                 (SELECT COUNT(*) FROM mc_forum_topic t WHERE t.board_id=b.id AND t.status='published') AS topic_count,
                 (SELECT COUNT(*) FROM mc_forum_post p JOIN mc_forum_topic t2 ON t2.id=p.topic_id WHERE t2.board_id=b.id AND t2.status='published' AND p.status='published') AS post_count,
                 (SELECT MAX(p2.published_at) FROM mc_forum_post p2 JOIN mc_forum_topic t3 ON t3.id=p2.topic_id WHERE t3.board_id=b.id AND t3.status='published' AND p2.status='published') AS last_post_at
@@ -31,36 +31,65 @@ final readonly class ForumService
              ORDER BY b.sort_order,b.id",
             [$storeId],
         );
+        foreach ($rows as &$row) {
+            $last = $this->connection->fetchAssociative(
+                "SELECT t.id,t.title,t.slug,COALESCE(t.last_post_at,t.published_at,t.created_at) AS active_at,
+                        (SELECT COALESCE(NULLIF(fp.nickname,''),p.author_name) FROM mc_forum_post p LEFT JOIN mc_forum_profile fp ON fp.customer_id=p.customer_id AND fp.store_id=?
+                         WHERE p.topic_id=t.id AND p.status='published' ORDER BY p.id DESC LIMIT 1) AS last_author
+                 FROM mc_forum_topic t WHERE t.board_id=? AND t.status='published'
+                 ORDER BY COALESCE(t.last_post_at,t.published_at,t.created_at) DESC,t.id DESC LIMIT 1",
+                [$storeId, (int) $row['id']],
+            );
+            $row['last_topic'] = is_array($last) ? $last : null;
+        }
+        unset($row);
+
+        return $rows;
     }
 
     /** @return array<string,mixed>|null */
     public function board(int $storeId, string $slug): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT id,slug,name,description,sort_order FROM mc_forum_board WHERE store_id=? AND slug=? AND status='active' LIMIT 1",
+            "SELECT b.id,b.parent_id,b.slug,b.name,b.description,b.sort_order,pb.slug AS parent_slug,pb.name AS parent_name
+             FROM mc_forum_board b LEFT JOIN mc_forum_board pb ON pb.id=b.parent_id
+             WHERE b.store_id=? AND b.slug=? AND b.status='active' LIMIT 1",
             [$storeId, $slug],
         );
         return is_array($row) ? $row : null;
     }
 
     /** @return list<array<string,mixed>> */
-    public function topics(int $boardId, int $page = 1, int $limit = 30, ?int $customerId = null): array
+    public function topics(int $boardId, int $page = 1, int $limit = 30, ?int $customerId = null, string $sort = 'activity'): array
     {
         $limit = max(1, min(100, $limit));
         $offset = (max(1, $page) - 1) * $limit;
+        $order = match ($sort) {
+            'new' => 'COALESCE(t.published_at,t.created_at) DESC,t.id DESC',
+            'replies' => 'post_count DESC,t.id DESC',
+            'views' => 't.views_count DESC,t.id DESC',
+            default => 'COALESCE(t.last_post_at,t.published_at,t.created_at) DESC,t.id DESC',
+        };
+
         return $this->connection->fetchAllAssociative(
-            "SELECT t.id,t.customer_id,t.title,t.slug,CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE t.author_name END AS author_name,t.is_pinned,t.is_locked,t.views_count,t.created_at,t.published_at,t.last_post_at,
+            "SELECT t.id,t.customer_id,t.title,t.slug,t.is_pinned,t.is_locked,t.views_count,t.solved_post_id,t.created_at,t.published_at,
+                CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE t.author_name END AS author_name,
                 (SELECT COUNT(*) FROM mc_forum_post p WHERE p.topic_id=t.id AND p.status='published') AS post_count,
-                CASE WHEN ? <= 0 THEN 0 WHEN tr.id IS NULL OR tr.read_at < COALESCE(t.last_post_at,t.published_at,t.created_at) THEN 1 ELSE 0 END AS is_unread
+                COALESCE(t.last_post_at,t.published_at,t.created_at) AS active_at,
+                (SELECT COALESCE(NULLIF(lfp.nickname,''),lp.author_name) FROM mc_forum_post lp LEFT JOIN mc_forum_profile lfp ON lfp.customer_id=lp.customer_id AND lfp.store_id=b0.store_id
+                 WHERE lp.topic_id=t.id AND lp.status='published' ORDER BY lp.id DESC LIMIT 1) AS last_author,
+                CASE WHEN ? <= 0 THEN 0 WHEN tr.id IS NULL OR tr.read_at < COALESCE(t.last_post_at,t.published_at,t.created_at) THEN 1 ELSE 0 END AS is_unread,
+                CASE WHEN ? <= 0 THEN 0 WHEN sub.id IS NULL THEN 0 ELSE 1 END AS is_followed
              FROM mc_forum_topic t
              JOIN mc_forum_board b0 ON b0.id=t.board_id
              LEFT JOIN mc_customer c ON c.id=t.customer_id
              LEFT JOIN mc_forum_profile fp ON fp.customer_id=t.customer_id AND fp.store_id=b0.store_id
              LEFT JOIN mc_forum_topic_read tr ON tr.topic_id=t.id AND tr.customer_id=?
+             LEFT JOIN mc_forum_subscription sub ON sub.topic_id=t.id AND sub.customer_id=?
              WHERE t.board_id=? AND t.status='published'
-             ORDER BY t.is_pinned DESC,COALESCE(t.last_post_at,t.published_at,t.created_at) DESC,t.id DESC
+             ORDER BY t.is_pinned DESC,{$order}
              LIMIT {$limit} OFFSET {$offset}",
-            [$customerId ?? 0, $customerId ?? 0, $boardId],
+            [$customerId ?? 0, $customerId ?? 0, $customerId ?? 0, $customerId ?? 0, $boardId],
         );
     }
 
@@ -90,7 +119,7 @@ final readonly class ForumService
     public function topic(int $storeId, int $topicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT t.id,t.customer_id,t.title,t.slug,CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE t.author_name END AS author_name,t.is_pinned,t.is_locked,t.views_count,t.created_at,t.published_at,b.id AS board_id,b.slug AS board_slug,b.name AS board_name,
+            "SELECT t.id,t.customer_id,t.title,t.slug,CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE t.author_name END AS author_name,t.is_pinned,t.is_locked,t.views_count,t.solved_post_id,t.created_at,t.published_at,b.id AS board_id,b.slug AS board_slug,b.name AS board_name,
                 (SELECT COUNT(*) FROM mc_forum_post p2 WHERE p2.topic_id=t.id AND p2.status='published') AS post_count
              FROM mc_forum_topic t
              JOIN mc_forum_board b ON b.id=t.board_id
@@ -103,13 +132,13 @@ final readonly class ForumService
     }
 
     /** @return list<array<string,mixed>> */
-    public function posts(int $storeId, int $topicId, int $page = 1, int $limit = 30): array
+    public function posts(int $storeId, int $topicId, int $page = 1, int $limit = 30, ?int $customerId = null): array
     {
         $limit = max(1, min(100, $limit));
         $offset = (max(1, $page) - 1) * $limit;
         return $this->connection->fetchAllAssociative(
-            "SELECT p.id,p.customer_id,CASE WHEN p.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE p.author_name END AS author_name,p.body_text,p.created_at,p.published_at,p.edited_at,p.edit_count,\n                (SELECT COUNT(*) FROM mc_forum_reaction r WHERE r.post_id=p.id AND r.reaction='like') AS like_count\n             FROM mc_forum_post p\n             JOIN mc_forum_topic t ON t.id=p.topic_id\n             JOIN mc_forum_board b ON b.id=t.board_id\n             LEFT JOIN mc_customer c ON c.id=p.customer_id\n             LEFT JOIN mc_forum_profile fp ON fp.customer_id=p.customer_id AND fp.store_id=b.store_id\n             WHERE p.topic_id=? AND b.store_id=? AND p.status='published' ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}",
-            [$topicId, $storeId],
+            "SELECT p.id,p.customer_id,CASE WHEN p.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE p.author_name END AS author_name,p.body_text,p.created_at,p.published_at,p.edited_at,p.edit_count,\n                (SELECT COALESCE(SUM(CASE WHEN r.reaction IN ('like','up') THEN 1 WHEN r.reaction='down' THEN -1 ELSE 0 END),0) FROM mc_forum_reaction r WHERE r.post_id=p.id) AS score,\n                (SELECT CASE WHEN r2.reaction='down' THEN -1 ELSE 1 END FROM mc_forum_reaction r2 WHERE r2.post_id=p.id AND r2.customer_id=? AND r2.reaction IN ('like','up','down') LIMIT 1) AS my_vote\n             FROM mc_forum_post p\n             JOIN mc_forum_topic t ON t.id=p.topic_id\n             JOIN mc_forum_board b ON b.id=t.board_id\n             LEFT JOIN mc_customer c ON c.id=p.customer_id\n             LEFT JOIN mc_forum_profile fp ON fp.customer_id=p.customer_id AND fp.store_id=b.store_id\n             WHERE p.topic_id=? AND b.store_id=? AND p.status='published' ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}",
+            [$customerId ?? 0, $topicId, $storeId],
         );
     }
 
@@ -204,7 +233,7 @@ final readonly class ForumService
     public function moderationQueue(int $storeId): array
     {
         $boards = $this->connection->fetchAllAssociative(
-            'SELECT b.id,b.slug,b.name,b.description,b.status,b.sort_order,b.created_at,(SELECT COUNT(*) FROM mc_forum_topic t WHERE t.board_id=b.id) AS topic_count FROM mc_forum_board b WHERE b.store_id=? ORDER BY b.sort_order,b.id',
+            'SELECT b.id,b.parent_id,b.slug,b.name,b.description,b.status,b.sort_order,b.created_at,(SELECT COUNT(*) FROM mc_forum_topic t WHERE t.board_id=b.id) AS topic_count FROM mc_forum_board b WHERE b.store_id=? ORDER BY b.sort_order,b.id',
             [$storeId],
         );
         $topics = $this->connection->fetchAllAssociative(
@@ -225,8 +254,9 @@ final readonly class ForumService
         return ['boards' => $boards, 'topics' => $topics, 'posts' => $posts, 'published_topics' => $publishedTopics];
     }
 
-    public function createBoard(int $storeId, string $name, string $slug, string $description, int $sortOrder): void
+    public function createBoard(int $storeId, string $name, string $slug, string $description, int $sortOrder, ?int $parentId = null): void
     {
+        $parentId = $this->validParent($storeId, $parentId, null);
         $name = $this->plain($name, 190, \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.application.forumservice.vkazhit_nazvu_rozdilu'));
         $description = trim(strip_tags($description));
         $description = mb_substr($description, 0, 1000, 'UTF-8');
@@ -239,14 +269,15 @@ final readonly class ForumService
         $now = $this->now();
         $this->connection->insert('mc_forum_board', [
             'public_id' => $this->publicIds->binary(), 'store_id' => $storeId, 'slug' => $slug, 'name' => $name,
-            'description' => $description !== '' ? $description : null, 'status' => 'active', 'sort_order' => $sortOrder,
+            'description' => $description !== '' ? $description : null, 'status' => 'active', 'sort_order' => $sortOrder, 'parent_id' => $parentId,
             'created_at' => $now, 'updated_at' => $now,
         ]);
     }
 
     /** Rename a section, change its description, order or visibility (active/hidden). */
-    public function updateBoard(int $storeId, int $boardId, string $name, string $description, int $sortOrder, string $status): void
+    public function updateBoard(int $storeId, int $boardId, string $name, string $description, int $sortOrder, string $status, ?int $parentId = null): void
     {
+        $parentId = $this->validParent($storeId, $parentId, $boardId);
         $name = $this->plain($name, 190, \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.application.forumservice.vkazhit_nazvu_rozdilu'));
         $description = mb_substr(trim(strip_tags($description)), 0, 1000, 'UTF-8');
         if (!in_array($status, ['active', 'hidden'], true)) {
@@ -254,7 +285,7 @@ final readonly class ForumService
         }
         $changed = $this->connection->update('mc_forum_board', [
             'name' => $name, 'description' => $description !== '' ? $description : null, 'sort_order' => max(-100000, min(100000, $sortOrder)),
-            'status' => $status, 'updated_at' => $this->now(),
+            'status' => $status, 'parent_id' => $parentId, 'updated_at' => $this->now(),
         ], ['id' => $boardId, 'store_id' => $storeId]);
         if ($changed === 0 && $this->connection->fetchOne('SELECT id FROM mc_forum_board WHERE id=? AND store_id=?', [$boardId, $storeId]) === false) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.forum.board.not_found'));
@@ -326,6 +357,23 @@ final readonly class ForumService
                 $db->update('mc_forum_topic', ['last_post_at' => $now, 'updated_at' => $now], ['id' => (int) $row['topic_id']]);
             }
         });
+    }
+
+    /** A subforum must hang under an existing top-level section of the same store; a section with subforums cannot become one. */
+    private function validParent(int $storeId, ?int $parentId, ?int $boardId): ?int
+    {
+        if ($parentId === null || $parentId <= 0) {
+            return null;
+        }
+        if ($boardId !== null && ($parentId === $boardId || (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_forum_board WHERE parent_id=? AND store_id=?', [$boardId, $storeId]) > 0)) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.board_parent_invalid'));
+        }
+        $ok = $this->connection->fetchOne('SELECT id FROM mc_forum_board WHERE id=? AND store_id=? AND parent_id IS NULL', [$parentId, $storeId]);
+        if ($ok === false) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.board_parent_invalid'));
+        }
+
+        return $parentId;
     }
 
     private function guardPosting(int $storeId, int $customerId, string $body, bool $topic): void
