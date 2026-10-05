@@ -2070,4 +2070,6 @@ return [
     'payment.stripe.no_session' => 'Stripe не повернув сеанс оплати.',
     'payment.stripe.nothing_to_refund' => 'Платіж Stripe не завершено, повертати нічого.',
     'shipping.error.http' => '%carrier%: помилка HTTP %code%.',
+    'scheduler.label.link_check' => 'Перевірка посилань і картинок',
+    'scheduler.description.link_check' => 'Шукає в контенті магазину посилання на неіснуючі сторінки та картинки без файлів.',
 ];

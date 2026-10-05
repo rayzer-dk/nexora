@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AnalyticsAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly CommerceAnalyticsService $analytics) {}
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly CommerceAnalyticsService $analytics, private readonly \Commerce\Modules\Analytics\Application\LostDemandService $lostDemand) {}
 
     #[Route('/admin/analytics', name:'admin_analytics', methods:['GET'])]
     public function index(Request $request): Response
@@ -21,7 +21,7 @@ final class AnalyticsAdminController extends AbstractController
         $ctx=$this->contexts->resolve($request);
         $days=$request->query->getInt('days',30);
         $from=trim((string)$request->query->get('from','')); $to=trim((string)$request->query->get('to',''));
-        return $this->render('@storefront/admin/analytics/index.html.twig',['report'=>$this->analytics->report($ctx->storeId,$days,$from!==''?$from:null,$to!==''?$to:null)]);
+        return $this->render('@storefront/admin/analytics/index.html.twig',['lost_demand'=>$this->lostDemand->report($ctx->storeId,$ctx->locale),'report'=>$this->analytics->report($ctx->storeId,$days,$from!==''?$from:null,$to!==''?$to:null)]);
     }
 
     #[Route('/admin/analytics/export.csv', name:'admin_analytics_export', methods:['GET'], priority:10)]

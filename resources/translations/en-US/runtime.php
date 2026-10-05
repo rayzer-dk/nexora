@@ -2068,4 +2068,6 @@ return [
     'payment.stripe.no_session' => 'Stripe did not return a Checkout session.',
     'payment.stripe.nothing_to_refund' => 'The Stripe payment was not completed, nothing to refund.',
     'shipping.error.http' => '%carrier%: HTTP error %code%.',
+    'scheduler.label.link_check' => 'Link and picture check',
+    'scheduler.description.link_check' => 'Searches the shop content for links to missing pages and pictures without files.',
 ];
