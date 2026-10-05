@@ -6,7 +6,7 @@
 .mc-builder { gap: var(--mc-space-4); }
 .mc-builder-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--mc-space-2); margin-bottom: var(--mc-space-4); }
 .mc-builder-toolbar select { width: min(320px, 100%); }
-.mc-builder-workspace { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(280px, 0.9fr) minmax(320px, 1.2fr); gap: var(--mc-space-4); align-items: start; }
+.mc-builder-workspace { display: grid; grid-template-columns: minmax(360px, 1.25fr) minmax(280px, 0.9fr) minmax(300px, 1fr); gap: var(--mc-space-4); align-items: start; }
 .mc-builder-list, .mc-builder-inspector { min-width: 0; }
 .mc-builder-list { display: grid; gap: var(--mc-space-2); }
 .mc-builder-block {
@@ -232,4 +232,6 @@
 /* Real preview of the saved draft: the storefront page itself in a frame whose width is the device */
 .mc-real-preview { display: flex; justify-content: center; padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-subtle); }
 .mc-real-preview iframe { width: 100%; max-width: 100%; height: 70vh; border: 0; border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); transition: width 0.2s; }
-.mc-builder-block .mc-builder-select strong { white-space: normal; overflow-wrap: anywhere; }
+.mc-builder-block .mc-builder-select strong { white-space: normal; overflow-wrap: break-word; word-break: normal; hyphens: auto; }
+.mc-builder-inspector label:has(> input[type="checkbox"]) { display: flex; align-items: center; gap: var(--mc-space-2); font-weight: var(--mc-font-weight-medium); }
+.mc-builder-inspector label > input[type="checkbox"] { flex: none; }

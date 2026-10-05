@@ -4125,6 +4125,7 @@ return [
     'admin.support_chat.connection_kicker' => 'Connection',
     'admin.support_chat.connection_title' => 'Telegram webhook',
     'admin.support_chat.connection_help' => 'Telegram will deliver new messages to:',
+    'admin.support_chat.connection_empty' => 'The address appears after you save the bot token.',
     'admin.support_chat.connect' => 'Connect',
     'admin.support_chat.check' => 'Check',
     'admin.support_chat.disconnect' => 'Disconnect',

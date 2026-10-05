@@ -27,7 +27,7 @@
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.support_chat.save') }}</button></div></form></section>
 
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.support_chat.connection_kicker') }}</small><h2>{{ ui_text('admin.support_chat.connection_title') }}</h2></div>{% if s.bot_username %}<span class="admin-badge is-active">@{{ s.bot_username }}</span>{% endif %}</div>
-<p class="admin-card-note">{{ ui_text('admin.support_chat.connection_help') }}{% if webhook_url %} <code>{{ webhook_url }}</code>{% endif %}</p>
+<p class="admin-card-note">{{ ui_text('admin.support_chat.connection_help') }}{% if webhook_url %} <code>{{ webhook_url }}</code>{% else %} <em>{{ ui_text('admin.support_chat.connection_empty') }}</em>{% endif %}</p>
 <div class="admin-inline-actions">
 <form method="post" action="{{ path('admin_appearance_support_chat_connect') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_support_chat') }}"><button class="admin-button is-primary" type="submit">{{ ui_icon('plug', 16) }} {{ ui_text('admin.support_chat.connect') }}</button></form>
 <form method="post" action="{{ path('admin_appearance_support_chat_check') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_support_chat') }}"><button class="admin-button" type="submit">{{ ui_icon('check-circle', 16) }} {{ ui_text('admin.support_chat.check') }}</button></form>

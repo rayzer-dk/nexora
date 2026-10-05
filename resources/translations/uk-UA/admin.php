@@ -4120,6 +4120,7 @@ return [
     'admin.support_chat.connection_kicker' => 'Підключення',
     'admin.support_chat.connection_title' => 'Вебхук Telegram',
     'admin.support_chat.connection_help' => 'Telegram надсилатиме нові повідомлення на адресу:',
+    'admin.support_chat.connection_empty' => 'Адреса з’явиться після збереження токена бота.',
     'admin.support_chat.connect' => 'Підключити',
     'admin.support_chat.check' => 'Перевірити',
     'admin.support_chat.disconnect' => 'Відключити',
