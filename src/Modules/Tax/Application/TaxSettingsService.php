@@ -50,6 +50,23 @@ final readonly class TaxSettingsService
         return $rows;
     }
 
+    /** Standard VAT rates in percent, to add a country with one click (check them against the tax authority: rates change). */
+    public const STANDARD_RATES = ['UA' => '20', 'PL' => '23', 'DE' => '19', 'DK' => '25', 'CZ' => '21', 'SK' => '23', 'HU' => '27', 'RO' => '21', 'BG' => '20', 'LT' => '21', 'LV' => '21', 'EE' => '24', 'FR' => '20', 'ES' => '21', 'IT' => '22', 'NL' => '21', 'BE' => '21', 'AT' => '20', 'PT' => '23', 'SE' => '25', 'FI' => '25.5', 'IE' => '23', 'GR' => '24', 'HR' => '25', 'SI' => '22', 'LU' => '17', 'CY' => '19', 'MT' => '18', 'GB' => '20', 'NO' => '25'];
+
+    /** Adds the standard rate of a country for the "standard" class unless the country already has a rate in that class. */
+    public function addStandardRate(string $country): void
+    {
+        $country = strtoupper(trim($country));
+        if (!isset(self::STANDARD_RATES[$country])) {
+            throw new \InvalidArgumentException('country_invalid');
+        }
+        $classId = (int) $this->db->fetchOne("SELECT id FROM mc_tax_class WHERE code='standard' AND enabled=1");
+        if ((int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_tax_rate WHERE tax_class_id=? AND country_code=?', [$classId, $country]) > 0) {
+            throw new \InvalidArgumentException('exists');
+        }
+        $this->addRate($classId, $country, 'VAT ' . $country, self::STANDARD_RATES[$country]);
+    }
+
     public function addRate(int $classId, string $country, string $name, string $percent): void
     {
         $country = strtoupper(trim($country));

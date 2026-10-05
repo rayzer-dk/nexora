@@ -31,6 +31,7 @@ final class TaxAdminController extends AbstractController
             'modes' => TaxSettingsService::DISPLAY_MODES,
             'mode' => $this->tax->displayMode($storeId),
             'country' => (string) $this->db->fetchOne('SELECT default_country FROM mc_store WHERE id=?', [$storeId]),
+            'presets' => array_keys(TaxSettingsService::STANDARD_RATES),
         ]);
     }
 
@@ -47,6 +48,14 @@ final class TaxAdminController extends AbstractController
     {
         return $this->run($request, function () use ($request): void {
             $this->tax->addRate((int) $request->request->get('class_id', 0), (string) $request->request->get('country', ''), (string) $request->request->get('name', ''), (string) $request->request->get('percent', ''));
+        });
+    }
+
+    #[Route('/admin/system/tax/rates/standard', name: 'admin_system_tax_rate_standard', methods: ['POST'])]
+    public function standard(Request $request): RedirectResponse
+    {
+        return $this->run($request, function () use ($request): void {
+            $this->tax->addStandardRate((string) $request->request->get('country', ''));
         });
     }
 

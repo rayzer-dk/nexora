@@ -1,0 +1,19 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.seotemplates.title'),'seo_templates') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.seotemplates.title') }}</span></nav><h1>{{ ui_text('admin.seotemplates.title') }}</h1><p>{{ ui_text('admin.seotemplates.help') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+{% set type_labels = {product: ui_text('admin.seotemplates.type_product'), category: ui_text('admin.seotemplates.type_category'), article: ui_text('admin.seotemplates.type_article'), page: ui_text('admin.seotemplates.type_page')} %}
+<form method="post" action="{{ path('admin_system_seo_templates') }}" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_seo_templates') }}">
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.seotemplates.variables') }}</h2><small>{% for v in variables %}<code>{{ '{' ~ v ~ '}' }}</code> {% endfor %}</small></div></div><p class="admin-help">{{ ui_text('admin.seotemplates.example') }}</p></section>
+{% for type in types %}
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ type_labels[type] }}</h2></div></div>
+<div class="admin-form-grid">
+{% for locale in locales %}{% set row = templates[type][locale]|default({title: '', description: ''}) %}
+<label class="admin-form-wide"><span>{{ locale }} · {{ ui_text('admin.seotemplates.title_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][title]" value="{{ row.title }}" maxlength="200" placeholder="{name} | {store}"></label>
+<label class="admin-form-wide"><span>{{ locale }} · {{ ui_text('admin.seotemplates.description_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][description]" value="{{ row.description }}" maxlength="400"></label>
+{% endfor %}
+</div></section>
+{% endfor %}
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.seotemplates.save') }}</button></div>
+</form>
+{{ shell.end() }}

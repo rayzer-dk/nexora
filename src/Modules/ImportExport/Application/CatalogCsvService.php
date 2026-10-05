@@ -58,9 +58,24 @@ final readonly class CatalogCsvService
             try{if(trim((string)($row['currency']??''))===''){$row['currency']=$this->marketCurrency($storeId,$marketId);} $data=$this->normalize($row); if(!$apply){$stats['valid']++;continue;} $existing=$this->db->fetchAssociative('SELECT p.public_id FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? WHERE v.sku=? LIMIT 1',[$storeId,$data['sku']]);
                 if(is_array($existing)){$publicId=Uuid::fromBinary((string)$existing['public_id'])->toRfc4122();$current=$this->query->productForEdit($storeId,$marketId,$locale,$publicId);$this->writer->update(new UpdateProductCommand((int)$current['id'],$storeId,$marketId,$locale,$data['name'],$data['sku'],$data['price_minor'],$data['currency'],$data['stock_quantity'],$data['unit_code'],$data['category_ids'],(string)($current['slug']??''),$data['short_description'],$data['description']??($current['description']!==null?(string)$current['description']:null),$data['gtin'],$data['mpn'],$data['status'],$data['brand_id']??($current['brand_id']!==null?(int)$current['brand_id']:null)));$stats['updated']++;}
                 else{$this->writer->create(new CreateProductCommand($storeId,$marketId,$locale,$data['name'],$data['sku'],$data['price_minor'],$data['currency'],$data['stock_quantity'],$data['unit_code'],$data['product_type'],$data['category_ids'],$data['slug'],$data['short_description'],$data['description'],$data['gtin'],$data['mpn'],$data['brand_id']));$stats['created']++;}
+                $this->applyMeasures($data);
             }catch(\Throwable $e){if($apply)$stats['failed']++;else $stats['invalid']++;if(count($stats['errors'])<50)$stats['errors'][]=\Commerce\Core\I18n\CanonicalUiText::get('php.modules.importexport.application.catalogcsvservice.riadok').$line.': '.$e->getMessage();}
         }
         fclose($fh); return $stats;
+    }
+
+    /** Weight (kg) and size (mm) from the file are set on the variant that carries the SKU; empty cells leave the current values alone. @param array<string,mixed> $data */
+    private function applyMeasures(array $data): void
+    {
+        $set = [];
+        foreach (['weight_kg' => 3, 'length_mm' => 0, 'width_mm' => 0, 'height_mm' => 0] as $key => $decimals) {
+            if (($data[$key] ?? null) !== null && (float) $data[$key] >= 0) {
+                $set[$key] = $decimals === 0 ? (int) round((float) $data[$key]) : round((float) $data[$key], $decimals);
+            }
+        }
+        if ($set !== []) {
+            $this->db->update('mc_product_variant', $set, ['sku' => (string) $data['sku']]);
+        }
     }
 
     private function marketCurrency(int $storeId,int $marketId): string
@@ -82,8 +97,8 @@ final readonly class CatalogCsvService
         $stock=trim($row['stock_quantity']??'0');if(!preg_match('/^\d{1,12}(?:\.\d{1,6})?$/',$stock))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.importexport.application.catalogcsvservice.nekorektnyi_zalyshok'));
         $cats=array_values(array_filter(array_map('intval',preg_split('/[|,;]/',$row['category_ids']??'',-1,PREG_SPLIT_NO_EMPTY)?:[]),static fn(int $v)=>$v>0));
         $status=trim($row['status']??'draft');if(!in_array($status,['draft','published','archived'],true))$status='draft';$type=trim($row['product_type']??'physical');if(!in_array($type,['physical','digital'],true))$type='physical';
-        $brandId=(int)($row['brand_id']??0);if($brandId<1)$brandId=null;
+        $brandId=(int)($row['brand_id']??0);if($brandId<1){$brandId=null;$brandName=trim((string)($row['brand']??''));if($brandName!==''){$found=$this->db->fetchOne('SELECT id FROM mc_brand WHERE name=? LIMIT 1',[$brandName]);if($found!==false)$brandId=(int)$found;}}
         $slug=trim($row['slug']??''); if($slug!==''&&!preg_match('/^[\pL\pN][\pL\pN._~-]*$/u',$slug))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.importexport.application.catalogcsvservice.nekorektnyi_seo_slug'));
-        return ['sku'=>$sku,'name'=>$name,'price_minor'=>$minor,'currency'=>$currency,'stock_quantity'=>$stock,'unit_code'=>trim($row['unit_code']??'item')?:'item','category_ids'=>$cats,'status'=>$status,'product_type'=>$type,'gtin'=>trim($row['gtin']??'')?:null,'mpn'=>trim($row['mpn']??'')?:null,'brand_id'=>$brandId,'slug'=>$slug!==''?$slug:null,'short_description'=>trim($row['short_description']??'')?:null,'description'=>trim($row['description']??'')?:null];
+        $measure=static fn(string $k):?string=>(isset($row[$k])&&trim((string)$row[$k])!==''&&is_numeric(str_replace(',','.',trim((string)$row[$k]))))?str_replace(',','.',trim((string)$row[$k])):null; return ['weight_kg'=>$measure('weight_kg'),'length_mm'=>$measure('length_mm'),'width_mm'=>$measure('width_mm'),'height_mm'=>$measure('height_mm'),'sku'=>$sku,'name'=>$name,'price_minor'=>$minor,'currency'=>$currency,'stock_quantity'=>$stock,'unit_code'=>trim($row['unit_code']??'item')?:'item','category_ids'=>$cats,'status'=>$status,'product_type'=>$type,'gtin'=>trim($row['gtin']??'')?:null,'mpn'=>trim($row['mpn']??'')?:null,'brand_id'=>$brandId,'slug'=>$slug!==''?$slug:null,'short_description'=>trim($row['short_description']??'')?:null,'description'=>trim($row['description']??'')?:null];
     }
 }

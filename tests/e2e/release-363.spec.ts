@@ -83,3 +83,28 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   await openProductTab(page, 'sales');
   await page.locator('button[name="_option_action"][value^="delete_addon:"]').last().evaluate((el: HTMLElement) => { const b = el as HTMLButtonElement; b.removeAttribute('data-confirm'); b.click(); });
 });
+
+test('SEO templates and a standard VAT rate can be saved', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/system/seo-templates', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const title = page.locator('input[name="tpl[product][uk-UA][title]"]');
+  await title.fill('{name} | {store}');
+  await Promise.all([page.waitForURL(/seo-templates/), page.locator('form button[type="submit"]').last().click()]);
+  await expect(page.locator('input[name="tpl[product][uk-UA][title]"]')).toHaveValue('{name} | {store}');
+  // Products with a title of their own keep it; at least one product in the catalog has none and takes the pattern.
+  const hrefs = await (async () => { await page.goto('/catalog', { waitUntil: 'domcontentloaded' }); return page.locator('[data-product-card] h2 a').evaluateAll((els) => els.map((el) => (el as HTMLAnchorElement).getAttribute('href') || '')); })();
+  let patterned = false;
+  for (const href of hrefs.slice(0, 24)) {
+    await page.goto(href, { waitUntil: 'domcontentloaded' });
+    if ((await page.title()).includes('|')) { patterned = true; break; }
+  }
+  expect(patterned).toBe(true);
+  await page.goto('/admin/system/seo-templates', { waitUntil: 'domcontentloaded' });
+  await page.locator('input[name="tpl[product][uk-UA][title]"]').fill('');
+  await Promise.all([page.waitForURL(/seo-templates/), page.locator('form button[type="submit"]').last().click()]);
+  await page.goto('/admin/system/tax', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('form[data-tax-standard] select[name="country"]')).toBeAttached();
+});
