@@ -82,7 +82,7 @@
 <div class="admin-color-grid">{{ _self.colour('footer_bg', ui_text('admin.footer.bg'), ft.bg|default(''), '#0F172A') }}{{ _self.colour('footer_text_color', ui_text('admin.footer.text_color'), ft.text_color|default(''), '#FFFFFF') }}</div>
 </fieldset>
 <fieldset class="admin-fieldset"><legend>{{ ui_text('admin.footer.links') }}</legend><p class="admin-help">{{ ui_text('admin.footer.links_hint') }}</p>
-{% for column in ['company','buyers','legal'] %}<div class="admin-footer-links"><strong>{{ ui_text('admin.footer.col_' ~ column) }}</strong><div class="admin-check-grid">{% for key, def in footer_links %}{% if def[0] == column %}<label><input type="checkbox" name="footer_link_{{ key }}" value="1"{% if key not in ft.hidden_links|default([]) %} checked{% endif %}> {{ ui_text('admin.footer.link.' ~ key) }}</label>{% endif %}{% endfor %}</div></div>{% endfor %}
+{% for column in ['company','buyers','legal'] %}<div class="admin-footer-links"><strong>{{ ui_text('admin.footer.col.' ~ column) }}</strong><div class="admin-check-grid">{% for key, def in footer_links %}{% if def[0] == column %}<label><input type="checkbox" name="footer_link_{{ key }}" value="1"{% if key not in ft.hidden_links|default([]) %} checked{% endif %}> {{ ui_text('admin.footer.link.' ~ key) }}</label>{% endif %}{% endfor %}</div></div>{% endfor %}
 </fieldset>
 <fieldset class="admin-fieldset"><legend>{{ ui_text('admin.footer.custom') }}</legend><p class="admin-help">{{ ui_text('admin.footer.custom_hint') }}</p>
 {% for c in 0..2 %}{% set col = ft.columns[c]|default({}) %}

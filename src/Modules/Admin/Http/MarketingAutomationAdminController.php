@@ -36,7 +36,7 @@ final class MarketingAutomationAdminController extends AbstractController
         $context=$this->contexts->resolve($request);
         if(!$this->isCsrfTokenValid('cart_remind_'.$id,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
         $result=$this->automations->remindCart($context->storeId,$id);
-        $this->addFlash($result==='sent'?'success':'error',\Commerce\Core\I18n\CanonicalUiText::get('admin.carts.remind_'.$result));
+        $this->addFlash($result==='sent'?'success':'error',\Commerce\Core\I18n\CanonicalUiText::get('admin.carts.remind.'.$result));
         return $this->redirect($this->generateUrl('admin_commerce_marketing_automation').'#carts');
     }
 
