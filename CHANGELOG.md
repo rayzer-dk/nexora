@@ -2,11 +2,10 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.70.3 — 2026-10-05
+## 3.71.0 — 2026-10-05
 
-Audit of push, integrations and navigation, and fixes from the full end-to-end run.
+Checkout keeps the shopper's input; a new report on network and mail security.
 
-- The dashboard link for unreminded leads opens the automation page (it pointed at a missing address).
-- Product options: the value rows no longer overflow the panel (no second hex field, wider action column, the "required" label stays beside the delete button).
-- Push: while push is off the page says what appears after enabling it.
-- Integrations: the page description is in plain Ukrainian.
+- A rejected order (an expired checkout session, an invalid security token, a blocked country, a refusal by the shop) returns to the checkout with the name, phone, e-mail, delivery and payment choices still filled in. An expired security token no longer ends in an error page.
+- New page System → Network and security: HTTPS, TLS version, HTTP version, HSTS and a protective proxy in front of the site, plus SPF, DKIM and DMARC records of the sender domain read from DNS.
+- New guide `docs/NETWORK_SECURITY.md`: TLS 1.3, HTTP/2 and HTTP/3, HSTS preload, WAF and DDoS protection, e-mail records.

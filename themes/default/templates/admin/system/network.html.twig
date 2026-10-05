@@ -1,0 +1,28 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.network.title'),'network') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.network.title') }}</span></nav><h1>{{ ui_text('admin.network.title') }}</h1><p>{{ ui_text('admin.network.lead') }}</p></div></header>
+{% set t_names = {https: ui_text('admin.network.t_https'), tls: ui_text('admin.network.t_tls'), http: ui_text('admin.network.t_http'), hsts: ui_text('admin.network.t_hsts'), proxy: ui_text('admin.network.t_proxy')} %}
+{% set t_help = {https: ui_text('admin.network.h_https'), tls: ui_text('admin.network.h_tls'), http: ui_text('admin.network.h_http'), hsts: ui_text('admin.network.h_hsts'), proxy: ui_text('admin.network.h_proxy')} %}
+{% set m_help = {spf: ui_text('admin.network.m_spf'), dkim: ui_text('admin.network.m_dkim'), dmarc: ui_text('admin.network.m_dmarc')} %}
+{% set badge = {ok: 'is-active', warn: 'is-blocked', info: 'is-default'} %}
+{% set status_label = {ok: ui_text('admin.network.s_ok'), warn: ui_text('admin.network.s_warn'), info: ui_text('admin.network.s_info')} %}
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.network.transport_kicker') }}</small><h2>{{ ui_text('admin.network.transport') }}</h2></div></div>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.network.check') }}</th><th>{{ ui_text('admin.network.value') }}</th><th>{{ ui_text('admin.network.status') }}</th><th>{{ ui_text('admin.network.advice') }}</th></tr></thead><tbody>
+{% for row in transport %}<tr><td><strong>{{ t_names[row.code] }}</strong></td><td><code>{{ row.value }}</code></td><td><span class="admin-badge {{ badge[row.status] }}">{{ status_label[row.status] }}</span></td><td class="admin-muted">{{ t_help[row.code] }}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="admin-help">{{ ui_text('admin.network.h3_note') }}</p></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.network.mail_kicker') }}</small><h2>{{ ui_text('admin.network.mail') }}{% if mail_domain %} · {{ mail_domain }}{% endif %}</h2></div></div>
+{% if mail %}
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.network.check') }}</th><th>{{ ui_text('admin.network.value') }}</th><th>{{ ui_text('admin.network.status') }}</th><th>{{ ui_text('admin.network.advice') }}</th></tr></thead><tbody>
+{% for row in mail %}<tr><td><strong>{{ row.code|upper }}</strong></td><td><code>{{ row.value|length > 120 ? row.value|slice(0,120) ~ '…' : row.value }}</code></td><td><span class="admin-badge {{ badge[row.status] }}">{{ status_label[row.status] }}</span></td><td class="admin-muted">{{ m_help[row.code] }}</td></tr>{% endfor %}
+</tbody></table></div>
+<form method="get" class="admin-inline-form"><label>{{ ui_text('admin.network.selector') }}<input type="text" name="selector" value="{{ selector }}" maxlength="60" placeholder="default"></label><button class="admin-button" type="submit">{{ ui_icon('refresh-cw', 16) }}{{ ui_text('admin.network.recheck') }}</button></form>
+{% else %}<div class="admin-notice is-info">{{ ui_text('admin.network.no_domain') }}</div>{% endif %}</section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.network.shield_kicker') }}</small><h2>{{ ui_text('admin.network.shield') }}</h2></div></div>
+<ul class="admin-check-list">
+<li>{{ ui_icon('check', 16) }} {{ ui_text('admin.network.shield_bots') }} <a href="{{ path('admin_system_bots') }}">{{ ui_text('admin.bots.title') }}</a></li>
+<li>{{ ui_icon('check', 16) }} {{ ui_text('admin.network.shield_forms') }} <a href="{{ path('admin_system_captcha') }}">{{ ui_text('admin.network.captcha') }}</a></li>
+<li>{{ ui_icon('check', 16) }} {{ ui_text('admin.network.shield_headers') }}</li>
+<li>{{ ui_icon('info', 16) }} {{ ui_text('admin.network.shield_ddos') }}</li>
+</ul></section>
+{{ shell.end() }}

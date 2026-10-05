@@ -107,6 +107,17 @@ final class CheckoutController extends AbstractController
         return new JsonResponse(['ok' => $stored]);
     }
 
+    /** Keeps what the buyer typed (never the card or gift codes) so a rejected order does not wipe the form. */
+    private function rememberInput(Request $request): void
+    {
+        $keep = [];
+        foreach (['name','phone','email','customer_comment','company_name','company_tax_id','carrier','city_id','city_name','point_id','point_name','delivery_manual','custom_address','delivery_region','payment_method','coupon_code','purchase_order_number'] as $field) {
+            $value = $request->request->get($field, '');
+            $keep[$field] = mb_substr(is_scalar($value) ? (string) $value : '', 0, 500);
+        }
+        $this->flashBag($request)?->set('checkout_old', [$keep]);
+    }
+
     #[Route('/checkout', name: 'storefront_checkout', methods: ['GET'], priority: 100)]
     public function show(Request $request): Response
     {
@@ -195,17 +206,15 @@ final class CheckoutController extends AbstractController
     #[Route('/checkout/place', name: 'storefront_checkout_place', methods: ['POST'], priority: 100)]
     public function place(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('checkout_place', (string)$request->request->get('_token'))) throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
+        if (!$this->isCsrfTokenValid('checkout_place', (string)$request->request->get('_token'))) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf')); $this->rememberInput($request); return $this->redirectToRoute('storefront_checkout'); }
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
-        if (!$this->shippingCountries->allows($context->storeId, $context->countryCode)) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('checkout_country_blocked')); return $this->redirectToRoute('storefront_checkout'); }
+        if (!$this->shippingCountries->allows($context->storeId, $context->countryCode)) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('checkout_country_blocked')); $this->rememberInput($request); return $this->redirectToRoute('storefront_checkout'); }
         $key=(string)$request->request->get('checkout_key');
-        if ($key==='' || !hash_equals((string)$request->getSession()->get('checkout.idempotency_key',''),$key)) { $this->addFlash('checkout_error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_oformlennia_zastarila_onovit_storinku')); return $this->redirectToRoute('storefront_checkout'); }
+        if ($key==='' || !hash_equals((string)$request->getSession()->get('checkout.idempotency_key',''),$key)) { $this->addFlash('checkout_error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_oformlennia_zastarila_onovit_storinku')); $this->rememberInput($request); return $this->redirectToRoute('storefront_checkout'); }
         try { $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id()); $input=$request->request->all(); if(str_starts_with((string)($input['carrier']??''),'custom_ship_')){ $input['delivery_manual']=trim((string)($input['custom_address']??'')); } $order=$this->orders->place($context,$cart['id'],$input,$key,$customer instanceof CustomerUser ? $customer->id() : null); $this->attribution->attachOrder($order['public_id'],$request->getSession()); }
         catch (\DomainException $e) {
             $this->addFlash('checkout_error',$e->getMessage());
-            // Keep what the buyer typed (never the card/gift codes) so a validation error does not wipe the form.
-            $keep=[]; foreach(['name','phone','email','customer_comment','company_name','company_tax_id','carrier','city_id','city_name','point_id','point_name','delivery_manual','custom_address','delivery_region','payment_method','coupon_code','purchase_order_number'] as $field){$keep[$field]=mb_substr((string)$request->request->get($field,''),0,500);}
-            $this->flashBag($request)?->set('checkout_old',[$keep]);
+            $this->rememberInput($request);
             return $this->redirectToRoute('storefront_checkout');
         }
         try { $flow=$this->paymentFlow->afterOrderPlaced($order['public_id']); }

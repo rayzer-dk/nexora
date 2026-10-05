@@ -2044,3 +2044,6 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-option__head > select { flex: 0 1 12rem; min-width: 0; }
 .admin-option__head .admin-inline-label { flex: none; white-space: nowrap; }
 .admin-option__row > * { min-width: 0; }
+.admin-check-list { display: grid; gap: var(--mc-space-2); margin: 0; padding: 0; list-style: none; }
+.admin-check-list li { display: flex; align-items: flex-start; gap: var(--mc-space-2); }
+.admin-check-list .lucide, .admin-check-list svg { flex: none; margin-top: 2px; color: var(--mc-color-success); }

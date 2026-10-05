@@ -210,3 +210,36 @@ test('the layout builder shows the real draft in a preview frame', async ({ page
   expect(response.status()).toBeLessThan(400);
   expect(response.headers()['x-robots-tag'] ?? '').toContain('noindex');
 });
+
+test('a rejected order keeps what the shopper typed', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await page.goto('/catalog', { waitUntil: 'networkidle' });
+  const card = page.locator('[data-product-card]').filter({ has: page.locator('form[data-card-add-to-cart]') }).first();
+  await Promise.all([page.waitForResponse((r) => r.url().endsWith('/cart/add')), card.locator('form[data-card-add-to-cart] button[type="submit"]').click()]);
+  await page.goto('/checkout', { waitUntil: 'networkidle' });
+  const accept = page.locator('[data-consent-accept-all]').first();
+  if (await accept.isVisible().catch(() => false)) await accept.click();
+  const form = page.locator('[data-checkout-form]');
+  await form.locator('input[name="name"]').fill('Іван Тестовий');
+  await form.locator('input[name="phone"]').fill('+380501112233');
+  await form.locator('input[name="email"]').fill('ivan@example.test');
+  await form.locator('.ck-choice[data-carrier="self_pickup"]').click();
+  // a stale checkout session: the server refuses the order, the form must come back filled in
+  await page.evaluate(() => {
+    (document.querySelector('[name="checkout_key"]') as HTMLInputElement).value = 'stale';
+  });
+  await Promise.all([page.waitForURL(/\/checkout$/), form.locator('button.place-order').click()]);
+  await expect(form.locator('input[name="name"]')).toHaveValue('Іван Тестовий');
+  await expect(form.locator('input[name="phone"]')).toHaveValue('+380501112233');
+  await expect(form.locator('input[name="email"]')).toHaveValue('ivan@example.test');
+  await expect(form.locator('input[name="carrier"]:checked')).toHaveValue('self_pickup');
+});
+
+test('the network and security page reports transport and mail DNS', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/system/network', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('h1')).toBeVisible();
+  await expect(page.locator('.admin-table').first().locator('tbody tr')).toHaveCount(5);
+});
