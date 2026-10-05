@@ -50,9 +50,9 @@ test('options create variants and the storefront price follows the chosen value'
   const blackLabel = `Black ${stamp}`;
 
   await openProductTab(page, 'sales');
-  if (!(await page.locator('#options input[name="new_option[name]"]').isVisible())) await page.locator('#options .admin-inline-create summary').click();
-  await page.locator('#options input[name="new_option[name]"]').fill(`Colour ${stamp}`);
-  await page.locator('#options input[name="new_option[values]"]').fill(`${red}, ${blackLabel}`);
+  if (!(await page.locator('#options input[name="new_entry[name]"]').isVisible())) await page.locator('#options .admin-inline-create summary').click();
+  await page.locator('#options input[name="new_entry[name]"]').fill(`Colour ${stamp}`);
+  await page.locator('#options input[name="new_entry[values]"]').fill(`${red}, ${blackLabel}`);
   await submitOptions(page, 'save');
   await openProductTab(page, 'sales');
   const black = page.locator('#options .admin-option__row').filter({ has: page.locator(`input[value="${blackLabel}"]`) });

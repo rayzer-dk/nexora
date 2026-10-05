@@ -2024,5 +2024,6 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 @media (max-width: 768px) { .admin-quick-link { display: none; } }
 
 @media (max-width: 768px) { .admin-option__row { grid-template-columns: 1fr 1fr; } .admin-option__row.is-head { display: none; } }
-.admin-option__row--addon { grid-template-columns: minmax(7rem, 2fr) 3.5rem minmax(4.5rem, 1fr) minmax(4rem, 1fr) 3rem 2rem; }
-.admin-option__values:has(.admin-option__row--addon) .admin-option__row.is-head { grid-template-columns: minmax(7rem, 2fr) 3.5rem minmax(4.5rem, 1fr) minmax(4rem, 1fr) 3rem 2rem; }
+.admin-option__row--addon { grid-template-columns: minmax(7rem, 2fr) 3.5rem minmax(4.5rem, 1fr) minmax(4rem, 1fr) 3rem minmax(6rem, 1.5fr) 2rem; }
+.admin-option__values:has(.admin-option__row--addon) .admin-option__row.is-head { grid-template-columns: minmax(7rem, 2fr) 3.5rem minmax(4.5rem, 1fr) minmax(4rem, 1fr) 3rem minmax(6rem, 1.5fr) 2rem; }
+.admin-subhead { margin: var(--mc-space-4) 0 var(--mc-space-2); font-size: var(--mc-font-size-md); }

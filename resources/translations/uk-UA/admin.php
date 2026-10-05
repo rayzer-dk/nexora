@@ -4867,7 +4867,7 @@ return [
     'admin.checkout_methods.per_kg' => 'Доплата за кожен кг понад включену вагу',
     'admin.checkout_methods.free_kg' => 'Вага, включена в ціну, кг',
     'admin.checkout_methods.max_kg' => 'Максимальна вага замовлення, кг',
-    'admin.catalog.addons.title' => "Опції покупця",
+    'admin.catalog.addons.title' => "Вибір покупця (без окремих SKU)",
     'admin.catalog.addons.help' => "Поля, які покупець заповнює на сторінці товару: вибір одного, кілька, текст, дата, час. Кожен вибір може додати до ціни, відняти або задати її, а також змінити вагу. Суми — у головній валюті магазину; на сайті вони автоматично переводяться у валюту, обрану покупцем.",
     'admin.catalog.addons.kind' => "Тип",
     'admin.catalog.addons.kind_select' => "Вибір одного (список)",
@@ -4886,4 +4886,5 @@ return [
     'admin.catalog.addons.name_hint' => "Напр.: Гравіювання, Подарункове пакування",
     'admin.catalog.addons.saved' => "Опції покупця збережено.",
     'admin.catalog.options.currency_note' => "Суми — у головній валюті магазину; на сайті вони переводяться у валюту, обрану покупцем.",
+    'admin.catalog.options.variants_title' => "Варіанти товару (створюють окремі SKU)",
 ];

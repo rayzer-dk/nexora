@@ -503,6 +503,16 @@ function initAddons() {
         }
         form.dispatchEvent(new Event('click'));
     };
+    // A choice with a picture shows it in the gallery instead of the main photo.
+    root.addEventListener('change', (event) => {
+        const target = event.target;
+        const source = target instanceof HTMLSelectElement ? target.selectedOptions[0] : target;
+        const media = source && source.getAttribute ? source.getAttribute('data-media') : '';
+        if (media && (!(target instanceof HTMLInputElement) || target.checked || target.type === 'radio')) {
+            const thumb = document.querySelector(`[data-gallery-thumb][data-media-id="${CSS.escape(media)}"]`);
+            if (thumb instanceof HTMLElement) thumb.click();
+        }
+    });
     root.addEventListener('change', recalc);
     root.addEventListener('input', recalc);
     form.addEventListener('addons:rebase', recalc);

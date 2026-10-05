@@ -423,11 +423,28 @@ final class CatalogAdminPageController extends AbstractController
             $product = $this->query->productForEdit($context->storeId, $context->marketId, $context->locale, $publicId);
             $productId = (int) $product['id'];
             $action = (string) $request->request->get('_option_action', 'save');
-            $this->options->save($productId, $context->locale, (array) $request->request->all('option'), (array) $request->request->all('option_value'), (array) $request->request->all('new_option'));
+            // One panel: the new option is either a variant option (makes SKUs) or a choice/field the shopper fills in.
+            $entry = (array) $request->request->all('new_entry');
+            $newOption = (array) $request->request->all('new_option');
+            $newAddon = (array) $request->request->all('new_addon');
+            $type = (string) ($entry['type'] ?? '');
+            if (trim((string) ($entry['name'] ?? '')) !== '') {
+                if (str_starts_with($type, 'variant:')) {
+                    $newOption = ['name' => $entry['name'], 'values' => $entry['values'] ?? '', 'display' => substr($type, 8)];
+                } elseif (str_starts_with($type, 'addon:')) {
+                    $newAddon = ['name' => $entry['name'], 'kind' => substr($type, 6), 'values' => $entry['values'] ?? ''];
+                }
+            }
+            $this->options->save($productId, $context->locale, (array) $request->request->all('option'), (array) $request->request->all('option_value'), $newOption);
+            $this->addons->save($productId, $context->locale, (array) $request->request->all('addon'), (array) $request->request->all('addon_value'), $newAddon);
             if (str_starts_with($action, 'delete_option:')) {
                 $this->options->deleteOption($productId, (int) substr($action, 14));
             } elseif (str_starts_with($action, 'delete_value:')) {
                 $this->options->deleteValue($productId, (int) substr($action, 13));
+            } elseif (str_starts_with($action, 'delete_addon:')) {
+                $this->addons->deleteAddon($productId, (int) substr($action, 13));
+            } elseif (str_starts_with($action, 'delete_addon_value:')) {
+                $this->addons->deleteValue($productId, (int) substr($action, 19));
             } elseif ($action === 'generate') {
                 $created = $this->options->generate($productId, $context->storeId, $context->marketId);
                 $this->addFlash('success', sprintf(\Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.options.generated'), $created));

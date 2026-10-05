@@ -4872,7 +4872,7 @@ return [
     'admin.checkout_methods.per_kg' => 'Extra per kilogram above the included weight',
     'admin.checkout_methods.free_kg' => 'Weight included in the price, kg',
     'admin.checkout_methods.max_kg' => 'Maximum order weight, kg',
-    'admin.catalog.addons.title' => "Customer options",
+    'admin.catalog.addons.title' => "Shopper choices (no separate SKUs)",
     'admin.catalog.addons.help' => "Fields the shopper fills in on the product page: pick one, pick several, text, date, time. Each choice can add to the price, take from it or set it, and change the weight. Amounts are in the main currency of the store; the storefront converts them to the currency the shopper chose.",
     'admin.catalog.addons.kind' => "Type",
     'admin.catalog.addons.kind_select' => "Pick one (dropdown)",
@@ -4891,4 +4891,5 @@ return [
     'admin.catalog.addons.name_hint' => "E.g. Engraving, Gift wrap",
     'admin.catalog.addons.saved' => "Customer options saved.",
     'admin.catalog.options.currency_note' => "Amounts are in the main currency of the store; the storefront converts them to the currency the shopper chose.",
+    'admin.catalog.options.variants_title' => "Product variants (make separate SKUs)",
 ];

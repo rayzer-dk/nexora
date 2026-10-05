@@ -110,6 +110,8 @@ final readonly class ProductOptionService
                 $db->insert('mc_product_option', ['public_id' => $this->publicIds->binary(), 'product_id' => $productId, 'code' => 'o' . bin2hex(random_bytes(5)), 'sort_order' => $order]);
                 $optionId = (int) $db->lastInsertId();
                 $this->translate($db, 'mc_product_option_translation', 'option_id', $optionId, $locale, $name);
+                $newDisplay = (string) ($newOption['display'] ?? 'buttons');
+                $db->update('mc_product_option', ['display' => in_array($newDisplay, ['buttons', 'dropdown', 'radio'], true) ? $newDisplay : 'buttons'], ['id' => $optionId]);
                 foreach ($this->splitValues((string) ($newOption['values'] ?? '')) as $label) {
                     $this->insertValue($db, $optionId, $locale, $label);
                 }

@@ -58,16 +58,16 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   await expectNoServerError(page);
   const name = await page.locator('input[name="name"]').first().inputValue().catch(() => '');
   await openProductTab(page, 'sales');
-  if (!(await page.locator('#addons input[name="new_addon[name]"]').isVisible())) await page.locator('#addons .admin-inline-create summary').click();
-  await page.locator('input[name="new_addon[name]"]').fill('Gift wrap E2E');
-  await page.locator('select[name="new_addon[kind]"]').selectOption('checkbox');
-  await page.locator('input[name="new_addon[values]"]').fill('Paper');
-  await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_addon_action"][value="save"]').click()]);
+  if (!(await page.locator('#options input[name="new_entry[name]"]').isVisible())) await page.locator('#options .admin-inline-create summary').click();
+  await page.locator('input[name="new_entry[name]"]').fill('Gift wrap E2E');
+  await page.locator('select[name="new_entry[type]"]').selectOption('addon:checkbox');
+  await page.locator('input[name="new_entry[values]"]').fill('Paper');
+  await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_option_action"][value="save"]').click()]);
   await expectNoServerError(page);
   await openProductTab(page, 'sales');
   const amount = page.locator('input[name^="addon_value"][name$="[delta]"]').last();
   await amount.fill('5.00');
-  await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_addon_action"][value="save"]').click()]);
+  await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_option_action"][value="save"]').click()]);
   await expect(page.locator('input[name^="addon_value"][name$="[delta]"]').last()).toHaveValue('5.00');
   await page.goto('/catalog?q=' + encodeURIComponent(name.split(' ')[0] || 'Fashion'), { waitUntil: 'domcontentloaded' });
   await page.locator('[data-product-card] h2 a').first().click();
@@ -81,5 +81,5 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   // cleanup: remove the option again
   await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
   await openProductTab(page, 'sales');
-  await page.locator('button[name="_addon_action"][value^="delete_addon:"]').last().evaluate((el: HTMLElement) => { const b = el as HTMLButtonElement; b.removeAttribute('data-confirm'); b.click(); });
+  await page.locator('button[name="_option_action"][value^="delete_addon:"]').last().evaluate((el: HTMLElement) => { const b = el as HTMLButtonElement; b.removeAttribute('data-confirm'); b.click(); });
 });

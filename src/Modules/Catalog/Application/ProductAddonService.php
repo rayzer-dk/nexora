@@ -41,7 +41,7 @@ final class ProductAddonService
         foreach ($this->db->fetchAllAssociative('SELECT a.*,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_translation x WHERE x.addon_id=a.id ORDER BY x.locale LIMIT 1),a.code) name FROM mc_product_addon a LEFT JOIN mc_product_addon_translation t ON t.addon_id=a.id AND t.locale=? WHERE a.product_id=? ORDER BY a.sort_order,a.id', [$locale, $productId]) as $a) {
             $values = [];
             foreach ($this->db->fetchAllAssociative('SELECT v.*,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_value_translation x WHERE x.value_id=v.id ORDER BY x.locale LIMIT 1),CAST(v.id AS CHAR)) name FROM mc_product_addon_value v LEFT JOIN mc_product_addon_value_translation t ON t.value_id=v.id AND t.locale=? WHERE v.addon_id=? ORDER BY v.sort_order,v.id', [$locale, (int) $a['id']]) as $v) {
-                $values[] = ['id' => (int) $v['id'], 'name' => (string) $v['name'], 'mode' => (string) $v['price_mode'], 'delta' => number_format(((int) $v['price_delta_minor']) / 100, 2, '.', ''), 'weight_g' => (int) $v['weight_delta_g'], 'default' => (bool) $v['is_default']];
+                $values[] = ['id' => (int) $v['id'], 'name' => (string) $v['name'], 'mode' => (string) $v['price_mode'], 'delta' => number_format(((int) $v['price_delta_minor']) / 100, 2, '.', ''), 'weight_g' => (int) $v['weight_delta_g'], 'default' => (bool) $v['is_default'], 'media_id' => $v['media_asset_id'] !== null ? (int) $v['media_asset_id'] : null];
             }
             $out[] = ['id' => (int) $a['id'], 'name' => (string) $a['name'], 'kind' => (string) $a['kind'], 'required' => (bool) $a['required'], 'mode' => (string) $a['price_mode'], 'delta' => number_format(((int) $a['price_delta_minor']) / 100, 2, '.', ''), 'weight_g' => (int) $a['weight_delta_g'], 'max_length' => $a['max_length'] !== null ? (int) $a['max_length'] : null, 'values' => $values];
         }
@@ -84,7 +84,8 @@ final class ProductAddonService
                 if ($name !== '') {
                     $this->translate($db, 'mc_product_addon_value_translation', 'value_id', (int) $id, $locale, $name);
                 }
-                $db->update('mc_product_addon_value', ['price_mode' => $this->mode($data['mode'] ?? 'add'), 'price_delta_minor' => abs($this->minor((string) ($data['delta'] ?? '0'))), 'weight_delta_g' => $this->grams($data['weight_g'] ?? 0), 'is_default' => !empty($data['default']) ? 1 : 0], ['id' => (int) $id]);
+                $media = (int) ($data['media'] ?? 0);
+                $db->update('mc_product_addon_value', ['price_mode' => $this->mode($data['mode'] ?? 'add'), 'price_delta_minor' => abs($this->minor((string) ($data['delta'] ?? '0'))), 'weight_delta_g' => $this->grams($data['weight_g'] ?? 0), 'is_default' => !empty($data['default']) ? 1 : 0, 'media_asset_id' => $media > 0 && (int) $db->fetchOne('SELECT COUNT(*) FROM mc_product_media WHERE product_id=? AND media_asset_id=?', [$productId, $media]) > 0 ? $media : null], ['id' => (int) $id]);
             }
             $name = $this->text((string) ($new['name'] ?? ''), 190);
             if ($name !== '') {
@@ -130,7 +131,7 @@ final class ProductAddonService
             $item['unavailable'] = $effect === null && $a['price_delta_minor'] > 0;
             foreach ($a['values'] as $v) {
                 $e = $this->effect($storeId, $currency, $v['price_mode'], $v['price_delta_minor']);
-                $item['values'][] = ['id' => $v['id'], 'name' => $v['name'], 'default' => $v['is_default'], 'mode' => $v['price_mode'], 'amount_minor' => $e['amount'] ?? 0, 'label' => $e === null ? '' : $this->label($e, $currency, $locale), 'unavailable' => $e === null && $v['price_delta_minor'] > 0, 'weight_g' => $v['weight_delta_g']];
+                $item['values'][] = ['id' => $v['id'], 'name' => $v['name'], 'default' => $v['is_default'], 'mode' => $v['price_mode'], 'amount_minor' => $e['amount'] ?? 0, 'label' => $e === null ? '' : $this->label($e, $currency, $locale), 'unavailable' => $e === null && $v['price_delta_minor'] > 0, 'weight_g' => $v['weight_delta_g'], 'media_id' => $v['media_id']];
             }
             $out[] = $item;
         }
@@ -310,8 +311,8 @@ final class ProductAddonService
         $out = [];
         foreach ($this->db->fetchAllAssociative('SELECT a.id,a.kind,a.required,a.price_mode,a.price_delta_minor,a.weight_delta_g,a.max_length,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_translation x WHERE x.addon_id=a.id ORDER BY x.locale LIMIT 1),a.code) name FROM mc_product_addon a LEFT JOIN mc_product_addon_translation t ON t.addon_id=a.id AND t.locale=? WHERE a.product_id=? ORDER BY a.sort_order,a.id', [$locale, $productId]) as $a) {
             $values = [];
-            foreach ($this->db->fetchAllAssociative('SELECT v.id,v.price_mode,v.price_delta_minor,v.weight_delta_g,v.is_default,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_value_translation x WHERE x.value_id=v.id ORDER BY x.locale LIMIT 1),CAST(v.id AS CHAR)) name FROM mc_product_addon_value v LEFT JOIN mc_product_addon_value_translation t ON t.value_id=v.id AND t.locale=? WHERE v.addon_id=? ORDER BY v.sort_order,v.id', [$locale, (int) $a['id']]) as $v) {
-                $values[] = ['id' => (int) $v['id'], 'name' => (string) $v['name'], 'price_mode' => (string) $v['price_mode'], 'price_delta_minor' => (int) $v['price_delta_minor'], 'weight_delta_g' => (int) $v['weight_delta_g'], 'is_default' => (bool) $v['is_default']];
+            foreach ($this->db->fetchAllAssociative('SELECT v.id,v.price_mode,v.price_delta_minor,v.weight_delta_g,v.is_default,v.media_asset_id,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_value_translation x WHERE x.value_id=v.id ORDER BY x.locale LIMIT 1),CAST(v.id AS CHAR)) name FROM mc_product_addon_value v LEFT JOIN mc_product_addon_value_translation t ON t.value_id=v.id AND t.locale=? WHERE v.addon_id=? ORDER BY v.sort_order,v.id', [$locale, (int) $a['id']]) as $v) {
+                $values[] = ['id' => (int) $v['id'], 'name' => (string) $v['name'], 'price_mode' => (string) $v['price_mode'], 'price_delta_minor' => (int) $v['price_delta_minor'], 'weight_delta_g' => (int) $v['weight_delta_g'], 'is_default' => (bool) $v['is_default'], 'media_id' => $v['media_asset_id'] !== null ? (int) $v['media_asset_id'] : null];
             }
             $kind = (string) $a['kind'];
             if (in_array($kind, self::CHOICE, true) && $values === []) {
