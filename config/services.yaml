@@ -439,6 +439,10 @@ services:
         arguments:
             $senders: !tagged_iterator commerce.notification_sender
 
+    Commerce\Modules\Seo\Application\LlmsTxtBuilder:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
     Commerce\Modules\Seo\Http\CanonicalHostSubscriber:
         arguments:
             $publicUrl: '%commerce.app_public_url%'

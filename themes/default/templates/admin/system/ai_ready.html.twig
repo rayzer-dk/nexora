@@ -1,0 +1,21 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.ai_ready.title'),'ai_ready') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.ai_ready.title') }}</span></nav><h1>{{ ui_text('admin.ai_ready.title') }}</h1><p>{{ ui_text('admin.ai_ready.intro') }}</p></div><span><a class="admin-button" href="/llms.txt" target="_blank" rel="noopener">{{ ui_icon('external-link', 14) }} /llms.txt</a> <a class="admin-button" href="/llms-full.txt" target="_blank" rel="noopener">{{ ui_icon('external-link', 14) }} /llms-full.txt</a></span></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<form method="post" action="{{ path('admin_system_ai_ready') }}" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_ai_ready') }}">
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai_ready.kicker') }}</small><h2>{{ ui_text('admin.ai_ready.about') }}</h2></div></div>
+<div class="admin-form-grid">
+<label class="admin-form-wide admin-check"><input type="checkbox" name="enabled" value="1"{{ s.enabled ? ' checked' : '' }}><span><strong>{{ ui_text('admin.ai_ready.enabled') }}</strong><small>{{ ui_text('admin.ai_ready.enabled_hint') }}</small></span></label>
+<label class="admin-form-wide">{{ ui_text('admin.ai_ready.description') }}<textarea name="description" rows="4" maxlength="1500">{{ s.description }}</textarea><small>{{ ui_text('admin.ai_ready.description_hint') }}</small></label>
+<label class="admin-form-wide">{{ ui_text('admin.ai_ready.instructions') }}<textarea name="instructions" rows="3" maxlength="2000">{{ s.instructions }}</textarea><small>{{ ui_text('admin.ai_ready.instructions_hint') }}</small></label>
+<label class="admin-form-wide">{{ ui_text('admin.ai_ready.links') }}<textarea name="links" rows="3" maxlength="4000" placeholder="Delivery|/shipping|Terms and prices">{{ s.links }}</textarea><small>{{ ui_text('admin.ai_ready.links_hint') }}</small></label>
+<label>{{ ui_text('admin.ai_ready.categories') }}<input type="number" name="categories" min="0" max="500" value="{{ s.categories }}"></label>
+<label>{{ ui_text('admin.ai_ready.products') }}<input type="number" name="products" min="0" max="2000" value="{{ s.products }}"></label>
+<label>{{ ui_text('admin.ai_ready.articles') }}<input type="number" name="articles" min="0" max="200" value="{{ s.articles }}"></label>
+<label class="admin-check"><input type="checkbox" name="prices" value="1"{{ s.prices ? ' checked' : '' }}><span><strong>{{ ui_text('admin.ai_ready.prices') }}</strong></span></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div>
+</div></section>
+</form>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai_ready.kicker') }}</small><h2>{{ ui_text('admin.ai_ready.preview') }}</h2></div></div>
+<pre><code>{{ preview }}</code></pre></section>
+{{ shell.end() }}
