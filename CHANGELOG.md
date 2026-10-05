@@ -2,10 +2,11 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.71.0 — 2026-10-05
+## 3.72.0 — 2026-10-05
 
-Checkout keeps the shopper's input; a new report on network and mail security.
+A clearer, clickable dashboard.
 
-- A rejected order (an expired checkout session, an invalid security token, a blocked country, a refusal by the shop) returns to the checkout with the name, phone, e-mail, delivery and payment choices still filled in. An expired security token no longer ends in an error page.
-- New page System → Network and security: HTTPS, TLS version, HTTP version, HSTS and a protective proxy in front of the site, plus SPF, DKIM and DMARC records of the sender domain read from DNS.
-- New guide `docs/NETWORK_SECURITY.md`: TLS 1.3, HTTP/2 and HTTP/3, HSTS preload, WAF and DDoS protection, e-mail records.
+- A store health strip under the title: cron, backup, notifications, early warnings and network, each a link with a green, amber or red mark.
+- Setup progress and catalog quality sit side by side; quick actions are one tidy row (new order, product, promotions, campaigns, customers, visual editor, automation, open the store).
+- Eight clickable KPI cards (revenue, orders, average check, conversion, new customers, returns, visits, today) in a 4 × 2 grid; the title shows today's orders and new customers.
+- Recent orders get more room, and the "what to do now" groups no longer stretch to equal height.

@@ -58,7 +58,7 @@ test('manual order creates a real order and the dashboard reports it', async ({ 
   for (const days of ['7', '30', '90']) {
     await page.goto(`/admin?days=${days}`, { waitUntil: 'domcontentloaded' });
     await expectNoServerError(page);
-    await expect(page.locator('.dash-kpi')).toHaveCount(6);
+    await expect(page.locator('.dash-kpi')).toHaveCount(8);
     await expect(page.locator('.dash-group').first()).toBeVisible();
     await expect(page.locator('.dash-period')).toBeVisible();
   }

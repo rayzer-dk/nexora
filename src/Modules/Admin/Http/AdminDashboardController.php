@@ -66,11 +66,30 @@ final class AdminDashboardController extends AbstractController
             $created=$connection->fetchOne("SELECT created_at FROM mc_recovery_snapshot WHERE status IN ('ready','verified') ORDER BY id DESC LIMIT 1");
             if(is_string($created)&&$created!=='')$backupAge=max(0,(int)floor((time()-strtotime($created))/86400));
         } catch(\Throwable) {}
+        $tz = (string) ($store['timezone'] ?? 'UTC');
+        try {
+            $midnight = (new \DateTimeImmutable('today', new \DateTimeZone($tz !== '' ? $tz : 'UTC')))->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+        } catch (\Throwable) {
+            $midnight = gmdate('Y-m-d 00:00:00');
+        }
+        $today = [
+            'orders' => $this->count($connection, "SELECT COUNT(*) FROM mc_sales_order WHERE store_id=? AND status<>'cancelled' AND created_at>=?", [$context->storeId, $midnight]),
+            'customers' => $this->count($connection, 'SELECT COUNT(*) FROM mc_customer WHERE created_at>=?', [$midnight]),
+        ];
+        $cronBad = $this->cronStale($connection) + $this->count($connection, "SELECT COUNT(*) FROM mc_scheduled_task_state WHERE last_status='failed'");
+        $outboxFailed = $this->count($connection, "SELECT COUNT(*) FROM mc_notification_outbox WHERE status='failed'");
+        $health = [
+            ['key' => 'cron', 'icon' => 'clock', 'url' => '/admin/system/cron', 'status' => $cronBad > 0 ? 'bad' : 'ok'],
+            ['key' => 'backup', 'icon' => 'database', 'url' => '/admin/system/stability', 'status' => $backupAge === null ? 'bad' : ($backupAge > 7 ? 'warn' : 'ok'), 'days' => $backupAge],
+            ['key' => 'mail', 'icon' => 'mail', 'url' => '/admin/commerce/notifications', 'status' => $outboxFailed > 0 ? 'bad' : 'ok', 'count' => $outboxFailed],
+            ['key' => 'warnings', 'icon' => 'triangle-alert', 'url' => '/admin/system/early-warnings', 'status' => count($this->warnings->warnings($context->storeId)) > 0 ? 'warn' : 'ok', 'count' => count($this->warnings->warnings($context->storeId))],
+            ['key' => 'network', 'icon' => 'shield-check', 'url' => '/admin/system/network', 'status' => $request->isSecure() ? 'ok' : 'warn'],
+        ];
         $user=$this->getUser();
         $steps=$this->onboarding->steps($context->storeId,$user instanceof AdminUser?$user->id:0);
         $onboarding=['done'=>count(array_filter($steps,static fn(array $s):bool=>$s['done'])),'total'=>count($steps)];
         try{$cq=$this->catalogQuality->summary($context->storeId);}catch(\Throwable){$cq=null;}
-        return $this->render('@storefront/admin/dashboard.html.twig',['catalog_quality'=>$cq,'onboarding'=>$onboarding,'platform_version'=>PlatformVersion::VERSION,'store'=>$store,'counts'=>$counts,'groups'=>$groups,'report'=>$report,'chart'=>DashboardChart::layout($report['series'],$report['annotations']),'backup_age_days'=>$backupAge,'admin_name'=>$user instanceof AdminUser?$user->displayName:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')]);
+        return $this->render('@storefront/admin/dashboard.html.twig',['catalog_quality'=>$cq,'onboarding'=>$onboarding,'platform_version'=>PlatformVersion::VERSION,'store'=>$store,'counts'=>$counts,'groups'=>$groups,'today'=>$today,'health'=>$health,'report'=>$report,'chart'=>DashboardChart::layout($report['series'],$report['annotations']),'backup_age_days'=>$backupAge,'admin_name'=>$user instanceof AdminUser?$user->displayName:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')]);
     }
 
     /** 1 when the scheduler has not completed any task for over 15 minutes (or never), else 0. */
