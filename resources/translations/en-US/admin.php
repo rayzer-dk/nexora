@@ -4994,4 +4994,5 @@ return [
     'admin.stockrequests.deleted' => "Request deleted.",
     'admin.stockrequests.notified_ok' => "Messages sent to those waiting for this product.",
     'admin.stockrequests.empty' => "Nobody is waiting.",
+    'admin.catalog.addons.stock' => "Stock",
 ];

@@ -41,7 +41,7 @@ final class ProductAddonService
         foreach ($this->db->fetchAllAssociative('SELECT a.*,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_translation x WHERE x.addon_id=a.id ORDER BY x.locale LIMIT 1),a.code) name FROM mc_product_addon a LEFT JOIN mc_product_addon_translation t ON t.addon_id=a.id AND t.locale=? WHERE a.product_id=? ORDER BY a.sort_order,a.id', [$locale, $productId]) as $a) {
             $values = [];
             foreach ($this->db->fetchAllAssociative('SELECT v.*,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_value_translation x WHERE x.value_id=v.id ORDER BY x.locale LIMIT 1),CAST(v.id AS CHAR)) name FROM mc_product_addon_value v LEFT JOIN mc_product_addon_value_translation t ON t.value_id=v.id AND t.locale=? WHERE v.addon_id=? ORDER BY v.sort_order,v.id', [$locale, (int) $a['id']]) as $v) {
-                $values[] = ['id' => (int) $v['id'], 'name' => (string) $v['name'], 'mode' => (string) $v['price_mode'], 'delta' => number_format(((int) $v['price_delta_minor']) / 100, 2, '.', ''), 'weight_g' => (int) $v['weight_delta_g'], 'default' => (bool) $v['is_default'], 'media_id' => $v['media_asset_id'] !== null ? (int) $v['media_asset_id'] : null];
+                $values[] = ['id' => (int) $v['id'], 'name' => (string) $v['name'], 'mode' => (string) $v['price_mode'], 'delta' => number_format(((int) $v['price_delta_minor']) / 100, 2, '.', ''), 'weight_g' => (int) $v['weight_delta_g'], 'default' => (bool) $v['is_default'], 'media_id' => $v['media_asset_id'] !== null ? (int) $v['media_asset_id'] : null, 'stock' => $v['stock_quantity'] !== null ? (int) $v['stock_quantity'] : null];
             }
             $out[] = ['id' => (int) $a['id'], 'name' => (string) $a['name'], 'kind' => (string) $a['kind'], 'required' => (bool) $a['required'], 'mode' => (string) $a['price_mode'], 'delta' => number_format(((int) $a['price_delta_minor']) / 100, 2, '.', ''), 'weight_g' => (int) $a['weight_delta_g'], 'max_length' => $a['max_length'] !== null ? (int) $a['max_length'] : null, 'values' => $values];
         }
@@ -85,7 +85,7 @@ final class ProductAddonService
                     $this->translate($db, 'mc_product_addon_value_translation', 'value_id', (int) $id, $locale, $name);
                 }
                 $media = (int) ($data['media'] ?? 0);
-                $db->update('mc_product_addon_value', ['price_mode' => $this->mode($data['mode'] ?? 'add'), 'price_delta_minor' => abs($this->minor((string) ($data['delta'] ?? '0'))), 'weight_delta_g' => $this->grams($data['weight_g'] ?? 0), 'is_default' => !empty($data['default']) ? 1 : 0, 'media_asset_id' => $media > 0 && (int) $db->fetchOne('SELECT COUNT(*) FROM mc_product_media WHERE product_id=? AND media_asset_id=?', [$productId, $media]) > 0 ? $media : null], ['id' => (int) $id]);
+                $db->update('mc_product_addon_value', ['price_mode' => $this->mode($data['mode'] ?? 'add'), 'price_delta_minor' => abs($this->minor((string) ($data['delta'] ?? '0'))), 'weight_delta_g' => $this->grams($data['weight_g'] ?? 0), 'is_default' => !empty($data['default']) ? 1 : 0, 'stock_quantity' => trim((string) ($data['stock'] ?? '')) === '' ? null : max(0, min(1000000, (int) $data['stock'])), 'media_asset_id' => $media > 0 && (int) $db->fetchOne('SELECT COUNT(*) FROM mc_product_media WHERE product_id=? AND media_asset_id=?', [$productId, $media]) > 0 ? $media : null], ['id' => (int) $id]);
             }
             $name = $this->text((string) ($new['name'] ?? ''), 190);
             if ($name !== '') {
@@ -131,7 +131,7 @@ final class ProductAddonService
             $item['unavailable'] = $effect === null && $a['price_delta_minor'] > 0;
             foreach ($a['values'] as $v) {
                 $e = $this->effect($storeId, $currency, $v['price_mode'], $v['price_delta_minor']);
-                $item['values'][] = ['id' => $v['id'], 'name' => $v['name'], 'default' => $v['is_default'], 'mode' => $v['price_mode'], 'amount_minor' => $e['amount'] ?? 0, 'label' => $e === null ? '' : $this->label($e, $currency, $locale), 'unavailable' => $e === null && $v['price_delta_minor'] > 0, 'weight_g' => $v['weight_delta_g'], 'media_id' => $v['media_id']];
+                $item['values'][] = ['id' => $v['id'], 'name' => $v['name'], 'default' => $v['is_default'], 'mode' => $v['price_mode'], 'amount_minor' => $e['amount'] ?? 0, 'label' => $e === null ? '' : $this->label($e, $currency, $locale), 'unavailable' => $e === null && $v['price_delta_minor'] > 0, 'weight_g' => $v['weight_delta_g'], 'media_id' => $v['media_id'], 'sold_out' => $v['stock'] !== null && $v['stock'] <= 0];
             }
             $out[] = $item;
         }
@@ -172,6 +172,9 @@ final class ProductAddonService
                     if ($found === null) {
                         throw new \DomainException(CanonicalUiText::get('addon.error.invalid'));
                     }
+                    if ($enforceRequired && $found['stock'] !== null && $found['stock'] <= 0) {
+                        throw new \DomainException(CanonicalUiText::get('addon.error.sold_out', ['name' => $found['name']]));
+                    }
                     $chosen[] = $valueId;
                     $names[] = $found['name'];
                     [$add, $set, $weight] = $this->apply($storeId, $currency, $found['price_mode'], $found['price_delta_minor'], $found['weight_delta_g'], $add, $set, $weight);
@@ -205,6 +208,38 @@ final class ProductAddonService
     public static function unitPrice(int $baseMinor, array $resolved): int
     {
         return max(0, (($resolved['set_minor'] ?? null) ?? $baseMinor) + (int) ($resolved['add_minor'] ?? 0));
+    }
+
+    /**
+     * Takes the ordered quantity from the limited stock of the chosen choices (inside the order transaction); a choice with no stock note is unlimited.
+     *
+     * @param array<int,mixed> $selections
+     */
+    public function takeStock(Connection $db, int $productId, array $selections, int $quantity): void
+    {
+        foreach ($selections as $selection) {
+            foreach (is_array($selection) ? $selection : [] as $valueId) {
+                $stock = $db->fetchOne('SELECT v.stock_quantity FROM mc_product_addon_value v JOIN mc_product_addon a ON a.id=v.addon_id WHERE v.id=? AND a.product_id=? FOR UPDATE', [(int) $valueId, $productId]);
+                if ($stock === false || $stock === null) {
+                    continue;
+                }
+                if ((int) $stock < $quantity) {
+                    $name = (string) $db->fetchOne('SELECT COALESCE((SELECT name FROM mc_product_addon_value_translation WHERE value_id=? ORDER BY locale LIMIT 1),?)', [(int) $valueId, (string) $valueId]);
+                    throw new \DomainException(CanonicalUiText::get('addon.error.sold_out', ['name' => $name]));
+                }
+                $db->executeStatement('UPDATE mc_product_addon_value SET stock_quantity=stock_quantity-? WHERE id=?', [$quantity, (int) $valueId]);
+            }
+        }
+    }
+
+    /** Gives the quantity back (a cancelled order). @param array<int,mixed> $selections */
+    public function restoreStock(array $selections, int $quantity): void
+    {
+        foreach ($selections as $selection) {
+            foreach (is_array($selection) ? $selection : [] as $valueId) {
+                $this->db->executeStatement('UPDATE mc_product_addon_value SET stock_quantity=stock_quantity+? WHERE id=? AND stock_quantity IS NOT NULL', [$quantity, (int) $valueId]);
+            }
+        }
     }
 
     /** The choices stored in a cart line, checked again against the product as it is now (a removed choice is dropped, the price follows the shopper's currency). */
@@ -311,8 +346,8 @@ final class ProductAddonService
         $out = [];
         foreach ($this->db->fetchAllAssociative('SELECT a.id,a.kind,a.required,a.price_mode,a.price_delta_minor,a.weight_delta_g,a.max_length,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_translation x WHERE x.addon_id=a.id ORDER BY x.locale LIMIT 1),a.code) name FROM mc_product_addon a LEFT JOIN mc_product_addon_translation t ON t.addon_id=a.id AND t.locale=? WHERE a.product_id=? ORDER BY a.sort_order,a.id', [$locale, $productId]) as $a) {
             $values = [];
-            foreach ($this->db->fetchAllAssociative('SELECT v.id,v.price_mode,v.price_delta_minor,v.weight_delta_g,v.is_default,v.media_asset_id,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_value_translation x WHERE x.value_id=v.id ORDER BY x.locale LIMIT 1),CAST(v.id AS CHAR)) name FROM mc_product_addon_value v LEFT JOIN mc_product_addon_value_translation t ON t.value_id=v.id AND t.locale=? WHERE v.addon_id=? ORDER BY v.sort_order,v.id', [$locale, (int) $a['id']]) as $v) {
-                $values[] = ['id' => (int) $v['id'], 'name' => (string) $v['name'], 'price_mode' => (string) $v['price_mode'], 'price_delta_minor' => (int) $v['price_delta_minor'], 'weight_delta_g' => (int) $v['weight_delta_g'], 'is_default' => (bool) $v['is_default'], 'media_id' => $v['media_asset_id'] !== null ? (int) $v['media_asset_id'] : null];
+            foreach ($this->db->fetchAllAssociative('SELECT v.id,v.price_mode,v.price_delta_minor,v.weight_delta_g,v.is_default,v.media_asset_id,v.stock_quantity,COALESCE(t.name,(SELECT x.name FROM mc_product_addon_value_translation x WHERE x.value_id=v.id ORDER BY x.locale LIMIT 1),CAST(v.id AS CHAR)) name FROM mc_product_addon_value v LEFT JOIN mc_product_addon_value_translation t ON t.value_id=v.id AND t.locale=? WHERE v.addon_id=? ORDER BY v.sort_order,v.id', [$locale, (int) $a['id']]) as $v) {
+                $values[] = ['id' => (int) $v['id'], 'name' => (string) $v['name'], 'price_mode' => (string) $v['price_mode'], 'price_delta_minor' => (int) $v['price_delta_minor'], 'weight_delta_g' => (int) $v['weight_delta_g'], 'is_default' => (bool) $v['is_default'], 'media_id' => $v['media_asset_id'] !== null ? (int) $v['media_asset_id'] : null, 'stock' => $v['stock_quantity'] !== null ? (int) $v['stock_quantity'] : null];
             }
             $kind = (string) $a['kind'];
             if (in_array($kind, self::CHOICE, true) && $values === []) {

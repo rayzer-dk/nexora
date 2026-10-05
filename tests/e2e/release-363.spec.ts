@@ -69,11 +69,24 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   await amount.fill('5.00');
   await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_option_action"][value="save"]').click()]);
   await expect(page.locator('input[name^="addon_value"][name$="[delta]"]').last()).toHaveValue('5.00');
+  // a choice with no stock left is shown as sold out and cannot be ticked
+  await openProductTab(page, 'sales');
+  await page.locator('input[name^="addon_value"][name$="[stock]"]').last().fill('0');
+  await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_option_action"][value="save"]').click()]);
+  await page.waitForTimeout(9000); // the product page is cached for a few seconds
+  await page.goto('/catalog?q=' + encodeURIComponent(name.split(' ')[0] || 'Fashion'), { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-product-card] h2 a').first().click();
+  await expect(page.locator('[data-addon-picker] input[type="checkbox"]').last()).toBeDisabled();
+  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'sales');
+  await page.locator('input[name^="addon_value"][name$="[stock]"]').last().fill('');
+  await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_option_action"][value="save"]').click()]);
+  await page.waitForTimeout(9000);
   await page.goto('/catalog?q=' + encodeURIComponent(name.split(' ')[0] || 'Fashion'), { waitUntil: 'domcontentloaded' });
   await page.locator('[data-product-card] h2 a').first().click();
   const picker = page.locator('[data-addon-picker]');
   await expect(picker).toBeAttached();
-  await picker.locator('input[type="checkbox"]').first().check();
+  await picker.locator('input[type="checkbox"]').last().check();
   await Promise.all([page.waitForResponse((r) => r.url().includes('/cart/add')), page.locator('form[data-buy-actions] button[data-primary-buy]').click()]);
   await page.goto('/cart', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
@@ -81,7 +94,10 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   // cleanup: remove the option again
   await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
   await openProductTab(page, 'sales');
-  await page.locator('button[name="_option_action"][value^="delete_addon:"]').last().evaluate((el: HTMLElement) => { const b = el as HTMLButtonElement; b.removeAttribute('data-confirm'); b.click(); });
+  for (let guard = 0; guard < 5 && (await page.locator('button[name="_option_action"][value^="delete_addon:"]').count()) > 0; guard++) {
+    await Promise.all([page.waitForURL(/\/edit/), page.locator('button[name="_option_action"][value^="delete_addon:"]').first().evaluate((el: HTMLElement) => { const b = el as HTMLButtonElement; b.removeAttribute('data-confirm'); b.click(); })]);
+    await openProductTab(page, 'sales');
+  }
 });
 
 test('SEO templates and a standard VAT rate can be saved', async ({ page }, testInfo) => {

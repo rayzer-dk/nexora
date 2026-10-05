@@ -4989,4 +4989,5 @@ return [
     'admin.stockrequests.deleted' => "Очікування видалено.",
     'admin.stockrequests.notified_ok' => "Листи надіслано тим, хто чекає цей товар.",
     'admin.stockrequests.empty' => "Очікувань немає.",
+    'admin.catalog.addons.stock' => "Залишок",
 ];

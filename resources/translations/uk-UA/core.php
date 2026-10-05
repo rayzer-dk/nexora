@@ -33,4 +33,5 @@ return [
     'addon.error.invalid' => "Недопустиме значення опції.",
     'addon.error.required' => "Заповніть опцію «%name%».",
     'addon.error.currency' => "Ціна опції недоступна в обраній валюті.",
+    'addon.error.sold_out' => "Опція «%name%» закінчилась.",
 ];

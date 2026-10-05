@@ -151,6 +151,7 @@ test('push: settings page, public key and subscribe endpoint validation', async 
 });
 
 test('downloads centre: upload, public listing, download counter, type whitelist', async ({ page }) => {
+  const stamp = Date.now().toString(36);
   await loginAdmin(page);
   await page.goto('/admin/content/downloads', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
@@ -161,11 +162,11 @@ test('downloads centre: upload, public listing, download counter, type whitelist
   writeFileSync(bad, '<?php echo 1;');
   const form = page.locator('form[action$="/admin/content/downloads/upload"]');
   await form.locator('input[name="file"]').setInputFiles(good);
-  await form.locator('input[name="title"]').fill('E2E Price list');
+  await form.locator('input[name="title"]').fill(`E2E Price list ${stamp}`);
   await form.locator('input[name="group"]').fill('E2E Group');
   await Promise.all([page.waitForResponse((r) => r.url().includes('/downloads/upload') && r.request().method() === 'POST'), form.locator('button[type="submit"]').click()]);
   await page.goto('/admin/content/downloads', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('tr', { hasText: 'E2E Price list' })).toHaveCount(1);
+  await expect(page.locator('tr', { hasText: `E2E Price list ${stamp}` })).toHaveCount(1);
   await page.locator('form[action$="/admin/content/downloads/upload"] input[name="file"]').setInputFiles(bad);
   await page.locator('form[action$="/admin/content/downloads/upload"] input[name="title"]').fill('E2E Evil');
   await Promise.all([page.waitForResponse((r) => r.url().includes('/downloads/upload') && r.request().method() === 'POST'), page.locator('form[action$="/admin/content/downloads/upload"] button[type="submit"]').click()]);
@@ -175,7 +176,7 @@ test('downloads centre: upload, public listing, download counter, type whitelist
   const shop = await page.context().newPage();
   await shop.goto('/downloads', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(shop);
-  const item = shop.locator('.downloads__item', { hasText: 'E2E Price list' });
+  const item = shop.locator('.downloads__item', { hasText: `E2E Price list ${stamp}` });
   await expect(item).toHaveCount(1);
   const href = await item.getAttribute('href');
   const res = await shop.request.get(href!, { maxRedirects: 0 });

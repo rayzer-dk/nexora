@@ -33,4 +33,5 @@ return [
     'addon.error.invalid' => "Invalid option value.",
     'addon.error.required' => "Fill in the option \"%name%\".",
     'addon.error.currency' => "The option price is not available in the chosen currency.",
+    'addon.error.sold_out' => "The option \"%name%\" is sold out.",
 ];

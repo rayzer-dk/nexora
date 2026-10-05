@@ -2,9 +2,9 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.67.0 — 2026-10-05
+## 3.68.0 — 2026-10-05
 
-Shoppers waiting for a product.
+Stock of the shopper's choices.
 
-- Admin → Sales → Waiting for a product: who waits for what and since when, with search (product, SKU, e-mail), status, a period of dates, sorting by every column, paging, the products people wait for most, "Notify now" for products that are in stock again, delete and CSV export.
-- The shop owner is told when a shopper confirms the wait: the header bell counts new ones (until the list is opened), the Customer experience page shows the count, and a new automation trigger "A shopper waits for a product" sends it by e-mail, Telegram or push.
+- A choice in "Options" can have a limited stock (engraving slots, gift boxes): sold out ones are shown as unavailable on the product page, an order takes the quantity, a cancelled order gives it back. An empty field means unlimited.
+- Fix: the test of the downloads centre no longer depends on leftovers of earlier runs.
