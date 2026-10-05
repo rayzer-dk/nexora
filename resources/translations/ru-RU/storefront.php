@@ -1013,4 +1013,6 @@ return [
     'method.delivery.gls' => 'GLS',
     'status.carrier.dhl' => 'DHL',
     'status.carrier.gls' => 'GLS',
+    'return_status_subject' => 'Возврат по заказу %number%: %status%',
+    'return_status_text' => 'Статус вашего возврата по заказу %number% изменён: %status%.',
 ];

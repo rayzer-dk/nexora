@@ -2013,3 +2013,6 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-collapse > summary { cursor: pointer; font-weight: var(--mc-font-weight-semibold); display: flex; align-items: center; gap: var(--mc-space-2); }
 .admin-collapse[open] > summary { margin-bottom: var(--mc-space-3); }
 .admin-field { display: grid; gap: var(--mc-space-1); }
+.admin-meter { display: grid; grid-template-columns: minmax(70px, 140px) 1fr 40px; align-items: center; gap: var(--mc-space-2); font-size: var(--mc-font-size-sm); }
+.admin-meter i { display: block; height: 8px; border-radius: var(--mc-radius-sm); background: linear-gradient(90deg, var(--mc-color-primary) calc(var(--w) * 1%), var(--mc-color-border) 0); }
+.admin-meter b { text-align: end; }

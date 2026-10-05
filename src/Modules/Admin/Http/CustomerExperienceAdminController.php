@@ -17,7 +17,7 @@ use Symfony\Component\Uid\Uuid;
 
 final class CustomerExperienceAdminController extends AbstractController
 {
-    public function __construct(private readonly Connection $db,private readonly AdminContextResolver $contexts,private readonly ReturnRequestService $returns,private readonly NotificationOutbox $notifications){}
+    public function __construct(private readonly Connection $db,private readonly AdminContextResolver $contexts,private readonly ReturnRequestService $returns,private readonly NotificationOutbox $notifications,private readonly \Commerce\Core\I18n\StorefrontUiTranslator $translator){}
 
     #[Route('/admin/customer-experience',name:'admin_customer_experience',methods:['GET'])]
     public function index(Request $request):Response
@@ -29,7 +29,8 @@ final class CustomerExperienceAdminController extends AbstractController
         foreach($reviews as &$review){$media=$this->db->fetchAllAssociative('SELECT ma.storage_key FROM mc_review_media rm JOIN mc_media_asset ma ON ma.id=rm.media_id WHERE rm.review_id=? ORDER BY rm.sort_order,rm.media_id LIMIT 4',[(int)$review['id']]);$review['images']=array_map(static fn(array $m):string=>'/media/'.ltrim((string)$m['storage_key'],'/'),$media);}unset($review);
         try{$questions=$this->db->fetchAllAssociative("SELECT q.id,q.author_name,q.question,q.answer,q.status,q.created_at,pt.name product_name FROM mc_product_question q JOIN mc_product_translation pt ON pt.product_id=q.product_id AND pt.store_id=q.store_id AND pt.locale=? WHERE q.store_id=? ORDER BY FIELD(q.status,'pending','published','rejected'),q.id DESC LIMIT 1000",[$ctx->locale,$ctx->storeId]);}catch(\Throwable){$questions=[];}
         try{$withdrawals=$this->db->fetchAllAssociative('SELECT id,order_reference,customer_name,email,scope_note,status,received_at,acknowledged_at,order_id FROM mc_withdrawal_notice WHERE store_id=? ORDER BY id DESC LIMIT 1000',[$ctx->storeId]);}catch(\Throwable){$withdrawals=[];}
-        return $this->render('@storefront/admin/customer_experience/index.html.twig',['withdrawals'=>$withdrawals,'returns'=>$returns,'reviews'=>$reviews,'questions'=>$questions,'return_statuses'=>ReturnRequestService::STATUSES]);
+        $stats=$this->stats($ctx->storeId);
+        return $this->render('@storefront/admin/customer_experience/index.html.twig',['stats'=>$stats,'withdrawals'=>$withdrawals,'returns'=>$returns,'reviews'=>$reviews,'questions'=>$questions,'return_statuses'=>ReturnRequestService::STATUSES]);
     }
 
 
@@ -49,6 +50,7 @@ final class CustomerExperienceAdminController extends AbstractController
     {
         if(!$this->isCsrfTokenValid('return_status_'.$publicId,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();$ctx=$this->contexts->resolve($request);$u=$this->getUser();$adminId=$u instanceof AdminUser?$u->id:null;
         try{$this->returns->updateStatus($ctx->storeId,$publicId,(string)$request->request->get('status','requested'),$adminId,(string)$request->request->get('note',''),(string)$request->request->get('resolution',''),(string)$request->request->get('tracking_number',''));$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.customerexperienceadmincontroller.status_povernennia_onovleno'));}catch(\DomainException $e){$this->addFlash('error',$e->getMessage());}
+        $this->notifyReturnCustomer($ctx->storeId,$publicId,(string)$request->request->get('status',''),(string)$request->request->get('note',''));
         $back=(string)$request->request->get('_back','');
         return $back==='detail'?$this->redirectToRoute('admin_return_view',['publicId'=>$publicId]):$this->redirectToRoute('admin_customer_experience');
     }
@@ -80,5 +82,44 @@ final class CustomerExperienceAdminController extends AbstractController
         $this->db->update('mc_product_question',['status'=>$status,'answer'=>$answer!==''?$answer:null,'answered_at'=>$answer!==''?$now:null,'published_at'=>$status==='published'?$now:null],['id'=>$id,'store_id'=>$ctx->storeId]);
         if($status==='published'&&$answer!==''&&$answer!==(string)($row['answer']??'')&&filter_var((string)($row['email']??''),FILTER_VALIDATE_EMAIL)!==false){try{$this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('product.question.answer',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.customerexperienceadmincontroller.vidpovid_na_vashe_pytannia'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.customerexperienceadmincontroller.mahazyn_vidpoviv_na_vashe_pytannia_pro').(string)($row['product_name']??\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.customerexperienceadmincontroller.tovar')).'»: '.$answer,[],'generic'),(string)$row['email'],null,'question-answer:'.$ctx->storeId.':'.$id.':'.hash('sha256',$answer));}catch(\Throwable){}}
         return $this->redirectToRoute('admin_customer_experience');
+    }
+
+    /** Tells the buyer that the status of the return changed (best effort: a mail outage never blocks the admin). */
+    private function notifyReturnCustomer(int $storeId,string $publicId,string $status,string $note):void
+    {
+        if(!in_array($status,['approved','rejected','received','resolved'],true))return;
+        try{
+            $row=$this->db->fetchAssociative('SELECT o.order_number,o.customer_name,o.customer_email,o.locale,rr.resolution FROM mc_return_request rr JOIN mc_sales_order o ON o.id=rr.order_id WHERE rr.public_id=? AND rr.store_id=? LIMIT 1',[Uuid::fromString($publicId)->toBinary(),$storeId]);
+            $email=is_array($row)?trim((string)$row['customer_email']):'';
+            if($email===''||filter_var($email,FILTER_VALIDATE_EMAIL)===false)return;
+            $locale=trim((string)$row['locale'])?:'en-US';
+            $label=$this->translator->translate('status.'.$status,$locale);
+            $subject=$this->translator->translate('return_status_subject',$locale,['number'=>(string)$row['order_number'],'status'=>$label]);
+            $text=$this->translator->translate('return_status_text',$locale,['number'=>(string)$row['order_number'],'status'=>$label]);
+            $note=mb_substr(trim(strip_tags($note)),0,1000);
+            if($note!=='')$text.="\n\n".$note;
+            $this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('return.status',$subject,$text,['locale'=>$locale],'generic'),$email);
+        }catch(\Throwable){}
+    }
+
+    /** Headline numbers of the customer-service desk: open work, rating spread, why goods come back. @return array<string,mixed> */
+    private function stats(int $storeId):array
+    {
+        $one=fn(string $sql,array $p=[]):int=>(int)($this->db->fetchOne($sql,$p)?:0);
+        $out=['returns_open'=>0,'returns_90'=>0,'orders_90'=>0,'return_rate'=>0.0,'reasons'=>[],'reviews_pending'=>0,'reviews_total'=>0,'rating_avg'=>0.0,'rating_dist'=>[5=>0,4=>0,3=>0,2=>0,1=>0],'questions_open'=>0,'withdrawals_open'=>0];
+        try{
+            $since=gmdate('Y-m-d H:i:s',time()-90*86400);
+            $out['returns_open']=$one("SELECT COUNT(*) FROM mc_return_request WHERE store_id=? AND status IN ('requested','approved','in_transit','received')",[$storeId]);
+            $out['returns_90']=$one('SELECT COUNT(*) FROM mc_return_request WHERE store_id=? AND created_at>=?',[$storeId,$since]);
+            $out['orders_90']=$one("SELECT COUNT(*) FROM mc_sales_order WHERE store_id=? AND created_at>=? AND status NOT IN ('cancelled','expired')",[$storeId,$since]);
+            $out['return_rate']=$out['orders_90']>0?round($out['returns_90']*100/$out['orders_90'],1):0.0;
+            $out['reasons']=$this->db->fetchAllAssociative('SELECT reason_code code,COUNT(*) n FROM mc_return_request WHERE store_id=? AND created_at>=? GROUP BY reason_code ORDER BY n DESC LIMIT 6',[$storeId,$since]);
+            $out['reviews_pending']=$one("SELECT COUNT(*) FROM mc_product_review WHERE store_id=? AND status='pending'",[$storeId]);
+            foreach($this->db->fetchAllAssociative("SELECT rating,COUNT(*) n FROM mc_product_review WHERE store_id=? AND status='published' GROUP BY rating",[$storeId]) as $r){$out['rating_dist'][(int)$r['rating']]=(int)$r['n'];$out['reviews_total']+=(int)$r['n'];}
+            $sum=0;foreach($out['rating_dist'] as $star=>$n)$sum+=$star*$n;$out['rating_avg']=$out['reviews_total']>0?round($sum/$out['reviews_total'],2):0.0;
+            $out['questions_open']=$one("SELECT COUNT(*) FROM mc_product_question WHERE store_id=? AND status='pending'",[$storeId]);
+            $out['withdrawals_open']=$one("SELECT COUNT(*) FROM mc_withdrawal_notice WHERE store_id=? AND status='received'",[$storeId]);
+        }catch(\Throwable){}
+        return $out;
     }
 }
