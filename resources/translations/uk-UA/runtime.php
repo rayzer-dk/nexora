@@ -2094,4 +2094,11 @@ return [
     'notify.tg.inquiry_type.product_question' => 'Питання про товар',
     'notify.tg.inquiry_type.price_request' => 'Запит ціни',
     'notify.tg.inquiry_type.quick_order' => 'Швидке замовлення',
+    'supplier.runtime.invalid' => 'Вкажіть назву й коректне посилання на прайс (http/https).',
+    'supplier.runtime.failed' => 'Не вдалося прочитати прайс постачальника.',
+    'supplier.runtime.http' => 'Постачальник відповів помилкою %code%.',
+    'supplier.runtime.too_big' => 'Файл прайсу завеликий (понад 100 МБ).',
+    'supplier.runtime.empty' => 'Прайс порожній.',
+    'scheduler.label.supplier_sync' => 'Синхронізація постачальників',
+    'scheduler.description.supplier_sync' => 'Читає прайси постачальників за їхнім інтервалом і готує зміни цін і залишків (або застосовує їх у автоматичному режимі).',
 ];

@@ -1,0 +1,66 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.suppliers.title'),'suppliers') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_catalog_suppliers') }}">{{ ui_text('admin.suppliers.title') }}</a>{% if s %}{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ s.name }}</span>{% endif %}</nav><h1>{{ s ? s.name : ui_text('admin.suppliers.title') }}</h1><p>{{ ui_text('admin.suppliers.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+
+{% if not s %}
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.suppliers.kicker') }}</small><h2>{{ ui_text('admin.suppliers.list') }}</h2></div></div>
+{% if suppliers %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.suppliers.name') }}</th><th>{{ ui_text('admin.suppliers.format') }}</th><th>{{ ui_text('admin.suppliers.mode') }}</th><th>{{ ui_text('admin.suppliers.last_run') }}</th><th>{{ ui_text('admin.suppliers.pending') }}</th></tr></thead><tbody>
+{% for sup in suppliers %}<tr data-row-href="{{ path('admin_catalog_suppliers', {id: sup.id}) }}"><td><a href="{{ path('admin_catalog_suppliers', {id: sup.id}) }}"><strong>{{ sup.name }}</strong></a>{% if not sup.enabled %} <span class="admin-badge">{{ ui_text('admin.suppliers.off') }}</span>{% endif %}</td><td>{{ sup.format|upper }}</td><td>{{ sup.mode == 'auto' ? ui_text('admin.suppliers.mode_auto') : ui_text('admin.suppliers.mode_preview') }}</td><td>{{ sup.last_run_at ? sup.last_run_at|local_datetime : '—' }} {% if sup.last_status == 'failed' %}<span class="admin-badge is-danger">{{ sup.last_message }}</span>{% endif %}</td><td>{{ sup.pending }}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p class="admin-hint">{{ ui_text('admin.suppliers.none') }}</p>{% endif %}</section>
+{% endif %}
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.suppliers.kicker') }}</small><h2>{{ s ? ui_text('admin.suppliers.settings') : ui_text('admin.suppliers.add') }}</h2></div></div>
+<form method="post" action="{{ path('admin_catalog_supplier_save') }}" class="admin-form-grid" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_suppliers') }}">{% if s %}<input type="hidden" name="id" value="{{ s.id }}">{% endif %}
+<label>{{ ui_text('admin.suppliers.name') }} *<input name="name" required maxlength="190" value="{{ s.name|default('') }}"></label>
+<label>{{ ui_text('admin.suppliers.format') }}<select name="format">{% for f in formats %}<option value="{{ f }}"{{ (s.format|default('yml')) == f ? ' selected' : '' }}>{{ f|upper }}</option>{% endfor %}</select></label>
+<label class="admin-form-wide">{{ ui_text('admin.suppliers.url') }} *<input type="url" name="feed_url" required maxlength="1000" value="{{ s.feed_url|default('') }}" placeholder="https://supplier.example/price.xml"></label>
+<label>{{ ui_text('admin.suppliers.http_user') }}<input name="http_user" maxlength="190" autocomplete="off" value="{{ s.http_user|default('') }}"></label>
+<label>{{ ui_text('admin.suppliers.http_pass') }}<input type="password" name="http_pass" maxlength="190" autocomplete="new-password" placeholder="{{ s and s.http_pass_enc ? '••••••••' : '' }}"></label>
+<label>{{ ui_text('admin.suppliers.match_by') }}<select name="match_by">{% for m in ['sku','gtin','mpn'] %}<option value="{{ m }}"{{ (s.match_by|default('sku')) == m ? ' selected' : '' }}>{{ m|upper }}</option>{% endfor %}</select></label>
+<label>{{ ui_text('admin.suppliers.sku_prefix') }}<input name="sku_prefix" maxlength="40" value="{{ s.sku_prefix|default('') }}"><small>{{ ui_text('admin.suppliers.sku_prefix_hint') }}</small></label>
+<label>{{ ui_text('admin.suppliers.markup') }}<input type="number" step="0.01" name="markup_percent" value="{{ s.markup_percent|default(0) }}"></label>
+<label>{{ ui_text('admin.suppliers.rounding') }}<select name="rounding"><option value="none"{{ (s.rounding|default('none')) == 'none' ? ' selected' : '' }}>{{ ui_text('admin.suppliers.round_none') }}</option><option value="whole"{{ (s.rounding|default('')) == 'whole' ? ' selected' : '' }}>{{ ui_text('admin.suppliers.round_whole') }}</option><option value="tens"{{ (s.rounding|default('')) == 'tens' ? ' selected' : '' }}>{{ ui_text('admin.suppliers.round_tens') }}</option></select></label>
+<label class="admin-check"><input type="checkbox" name="apply_price" value="1"{{ s is null or s.apply_price ? ' checked' : '' }}><span><strong>{{ ui_text('admin.suppliers.apply_price') }}</strong></span></label>
+<label class="admin-check"><input type="checkbox" name="apply_stock" value="1"{{ s is null or s.apply_stock ? ' checked' : '' }}><span><strong>{{ ui_text('admin.suppliers.apply_stock') }}</strong></span></label>
+<label>{{ ui_text('admin.suppliers.stock_available') }}<input type="number" min="0" name="stock_when_available" value="{{ s.stock_when_available|default(5) }}"><small>{{ ui_text('admin.suppliers.stock_available_hint') }}</small></label>
+<label>{{ ui_text('admin.suppliers.interval') }}<input type="number" min="15" max="10080" name="interval_minutes" value="{{ s.interval_minutes|default(360) }}"></label>
+<label>{{ ui_text('admin.suppliers.mode') }}<select name="mode"><option value="preview"{{ (s.mode|default('preview')) == 'preview' ? ' selected' : '' }}>{{ ui_text('admin.suppliers.mode_preview') }}</option><option value="auto"{{ (s.mode|default('')) == 'auto' ? ' selected' : '' }}>{{ ui_text('admin.suppliers.mode_auto') }}</option></select><small>{{ ui_text('admin.suppliers.mode_hint') }}</small></label>
+<label class="admin-check"><input type="checkbox" name="enabled" value="1"{{ s is null or s.enabled ? ' checked' : '' }}><span><strong>{{ ui_text('admin.suppliers.enabled') }}</strong></span></label>
+<details class="admin-collapse admin-form-wide"><summary>{{ ui_text('admin.suppliers.mapping') }}</summary><div class="admin-form-grid"><p class="admin-hint admin-form-wide">{{ ui_text('admin.suppliers.mapping_hint') }}</p>
+{% for k in ['item','sku','name','price','stock','gtin'] %}<label>{{ k }}<input name="map_{{ k }}" maxlength="60" value="{{ mapping[k]|default('') }}"></label>{% endfor %}</div></details>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div>
+</form>
+{% if s %}<div class="admin-inline-actions">
+<form method="post" action="{{ path('admin_catalog_supplier_run', {id: s.id}) }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_suppliers') }}"><button class="admin-button" type="submit">{{ ui_icon('refresh-cw', 16) }} {{ ui_text('admin.suppliers.run') }}</button></form>
+<form method="post" action="{{ path('admin_catalog_supplier_delete', {id: s.id}) }}" data-confirm="{{ ui_text('admin.suppliers.delete_confirm') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_suppliers') }}"><button class="admin-button is-danger" type="submit">{{ ui_icon('trash-2', 16) }} {{ ui_text('admin.suppliers.delete') }}</button></form></div>{% endif %}
+</section>
+
+{% if s %}
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.suppliers.kicker') }}</small><h2>{{ ui_text('admin.suppliers.changes') }}</h2></div><span class="admin-badge">{{ changes_total }}</span></div>
+{% if changes %}
+<form method="post" action="{{ path('admin_catalog_supplier_apply', {id: s.id}) }}" id="supplier-changes"><input type="hidden" name="_token" value="{{ csrf_token('admin_suppliers') }}">
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th></th><th>{{ ui_text('admin.suppliers.product') }}</th><th>SKU</th><th>{{ ui_text('admin.suppliers.price') }}</th><th>{{ ui_text('admin.suppliers.stock') }}</th></tr></thead><tbody>
+{% for item in changes %}<tr><td><input type="checkbox" name="item[]" value="{{ item.id }}" aria-label="{{ item.product_name }}"></td><td>{{ item.product_name }}</td><td>{{ item.external_sku }}</td>
+<td>{% if item.new_price_minor is not null %}{{ (item.old_price_minor / 100)|number_format(2, '.', ' ') }} → <strong>{{ (item.new_price_minor / 100)|number_format(2, '.', ' ') }}</strong> {{ currency }}{% else %}—{% endif %}</td>
+<td>{% if item.new_stock is not null %}{{ item.old_stock + 0 }} → <strong>{{ item.new_stock + 0 }}</strong>{% else %}—{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="admin-hint">{{ ui_text('admin.suppliers.showing')|replace({'%count%': changes|length, '%total%': changes_total}) }}</p>
+<div class="admin-inline-actions">
+<button class="admin-button is-primary" type="submit" name="what" value="both">{{ ui_icon('check', 16) }} {{ ui_text('admin.suppliers.apply_selected') }}</button>
+<button class="admin-button" type="submit" name="what" value="price">{{ ui_text('admin.suppliers.apply_price_only') }}</button>
+<button class="admin-button" type="submit" name="what" value="stock">{{ ui_text('admin.suppliers.apply_stock_only') }}</button>
+<button class="admin-button" type="submit" formaction="{{ path('admin_catalog_supplier_skip', {id: s.id}) }}">{{ ui_text('admin.suppliers.skip') }}</button>
+<button class="admin-button is-danger" type="submit" name="scope" value="all" data-confirm="{{ ui_text('admin.suppliers.apply_all_confirm') }}">{{ ui_text('admin.suppliers.apply_all') }}</button>
+</div></form>
+{% else %}<p class="admin-hint">{{ ui_text('admin.suppliers.no_changes') }}</p>{% endif %}</section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.suppliers.kicker') }}</small><h2>{{ ui_text('admin.suppliers.new_offers') }}</h2></div><span class="admin-badge">{{ new_total }}</span></div>
+{% if new_offers %}<p class="admin-hint">{{ ui_text('admin.suppliers.new_hint') }} <a href="{{ path('admin_catalog_supplier_new_csv', {id: s.id}) }}">{{ ui_icon('download', 14) }} CSV</a></p>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>SKU</th><th>{{ ui_text('admin.suppliers.name') }}</th><th>{{ ui_text('admin.suppliers.price') }}</th></tr></thead><tbody>{% for item in new_offers %}<tr><td>{{ item.external_sku }}</td><td>{{ item.name }}</td><td>{{ (item.new_price_minor / 100)|number_format(2, '.', ' ') }} {{ currency }}</td></tr>{% endfor %}</tbody></table></div>
+{% else %}<p class="admin-hint">{{ ui_text('admin.suppliers.no_new') }}</p>{% endif %}</section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.suppliers.kicker') }}</small><h2>{{ ui_text('admin.suppliers.history') }}</h2></div></div>
+{% if runs %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.suppliers.last_run') }}</th><th>{{ ui_text('admin.suppliers.rows') }}</th><th>{{ ui_text('admin.suppliers.matched') }}</th><th>{{ ui_text('admin.suppliers.changes') }}</th><th>{{ ui_text('admin.suppliers.applied_col') }}</th><th>{{ ui_text('admin.suppliers.new_offers') }}</th><th></th></tr></thead><tbody>{% for r in runs %}<tr><td>{{ r.started_at|local_datetime }}</td><td>{{ r.rows_total }}</td><td>{{ r.matched }}</td><td>{{ r.changed }}</td><td>{{ r.applied }}</td><td>{{ r.new_total }}</td><td>{{ status_badge(r.status) }} {{ r.message }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}</section>
+{% endif %}
+{{ shell.end() }}

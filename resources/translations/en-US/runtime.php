@@ -2092,4 +2092,11 @@ return [
     'notify.tg.inquiry_type.product_question' => 'Product question',
     'notify.tg.inquiry_type.price_request' => 'Price request',
     'notify.tg.inquiry_type.quick_order' => 'Quick order',
+    'supplier.runtime.invalid' => 'Enter a name and a valid price list link (http/https).',
+    'supplier.runtime.failed' => 'The supplier price list could not be read.',
+    'supplier.runtime.http' => 'The supplier answered with error %code%.',
+    'supplier.runtime.too_big' => 'The price list file is too large (over 100 MB).',
+    'supplier.runtime.empty' => 'The price list is empty.',
+    'scheduler.label.supplier_sync' => 'Supplier sync',
+    'scheduler.description.supplier_sync' => 'Reads supplier price lists at their own interval and prepares price and stock changes (or applies them in automatic mode).',
 ];

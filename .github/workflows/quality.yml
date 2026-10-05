@@ -54,6 +54,7 @@ jobs:
       MAILER_DSN: null://null
       E2E_BASE_URL: http://127.0.0.1:8000
       TELEGRAM_API_BASE: http://127.0.0.1:8099
+      COMMERCE_SUPPLIER_ALLOW_PRIVATE_HOSTS: '1'
       APP_PUBLIC_URL: http://127.0.0.1:8000
       E2E_ADMIN_EMAIL: e2e-admin@example.test
       E2E_ADMIN_PASSWORD: Nexora-E2E-2026-Strong!

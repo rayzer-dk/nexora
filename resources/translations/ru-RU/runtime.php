@@ -489,4 +489,11 @@ return [
     'notify.tg.inquiry_type.product_question' => 'Вопрос о товаре',
     'notify.tg.inquiry_type.price_request' => 'Запрос цены',
     'notify.tg.inquiry_type.quick_order' => 'Быстрый заказ',
+    'supplier.runtime.invalid' => 'Укажите название и корректную ссылку на прайс (http/https).',
+    'supplier.runtime.failed' => 'Не удалось прочитать прайс поставщика.',
+    'supplier.runtime.http' => 'Поставщик ответил ошибкой %code%.',
+    'supplier.runtime.too_big' => 'Файл прайса слишком большой (более 100 МБ).',
+    'supplier.runtime.empty' => 'Прайс пустой.',
+    'scheduler.label.supplier_sync' => 'Синхронизация поставщиков',
+    'scheduler.description.supplier_sync' => 'Читает прайсы поставщиков по их интервалу и готовит изменения цен и остатков (или применяет их в автоматическом режиме).',
 ];

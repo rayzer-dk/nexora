@@ -12,6 +12,18 @@ $save = static function () use (&$state, $stateFile): void { file_put_contents($
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 header('Content-Type: application/json');
 
+// A supplier price list for the supplier-sync end-to-end test: /supplier-feed.xml?sku=A&price=12.5&stock=4 (YML with that one offer).
+if ($path === '/supplier-feed.xml') {
+    header('Content-Type: application/xml; charset=UTF-8');
+    $sku = htmlspecialchars((string) ($_GET['sku'] ?? ''), ENT_XML1);
+    $price = htmlspecialchars((string) ($_GET['price'] ?? '1'), ENT_XML1);
+    $stock = htmlspecialchars((string) ($_GET['stock'] ?? '1'), ENT_XML1);
+    echo '<?xml version="1.0" encoding="UTF-8"?><yml_catalog><shop><offers>'
+        . '<offer id="1" available="true"><vendorCode>' . $sku . '</vendorCode><name>Fixture offer</name><price>' . $price . '</price><stock_quantity>' . $stock . '</stock_quantity></offer>'
+        . '<offer id="2" available="true"><vendorCode>NEW-' . $sku . '</vendorCode><name>Brand new offer</name><price>9.99</price><stock_quantity>2</stock_quantity></offer>'
+        . '</offers></shop></yml_catalog>';
+    return;
+}
 if ($path === '/__log') {
     $lines = is_file($logFile) ? array_filter(explode("\n", (string) file_get_contents($logFile))) : [];
     echo json_encode(array_map(static fn (string $l): mixed => json_decode($l, true), array_values($lines)));
