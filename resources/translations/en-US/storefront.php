@@ -1291,4 +1291,6 @@ return [
     'guest_email' => 'E-mail',
     'guest_email_hint' => 'Not published. Needed so the shop can reply.',
     'guest_moderation_note' => 'Your message appears after a moderator has checked it.',
+    'addon_required' => "Required field",
+    'addon_none' => "None",
 ];

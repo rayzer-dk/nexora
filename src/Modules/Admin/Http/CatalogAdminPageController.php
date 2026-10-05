@@ -36,6 +36,7 @@ final class CatalogAdminPageController extends AbstractController
         private readonly \Commerce\Modules\ProductInfo\Application\ProductInfoService $productInfo,
         private readonly ProductWriter $products,
         private readonly \Commerce\Modules\Catalog\Application\ProductOptionService $options,
+        private readonly \Commerce\Modules\Catalog\Application\ProductAddonService $addons,
         private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus,
         private readonly CatalogMaintenanceService $maintenance,
         private readonly MediaImageService $media,
@@ -394,6 +395,7 @@ final class CatalogAdminPageController extends AbstractController
             'upload_folder' => $this->uploadFolder($request, $context->storeId),
             'variants' => $this->query->variantsForEdit((int) $product['id'], $context->storeId, $context->marketId),
             'product_options' => $this->options->forEdit((int) $product['id'], $context->locale),
+            'product_addons' => $this->addons->forEdit((int) $product['id'], $context->locale),
             'variant_labels' => $this->options->variantLabels((int) $product['id'], $context->locale),
             'option_pictures' => $this->options->pictures((int) $product['id']),
             'attributes' => $this->query->productAttributesForEdit((int) $product['id'], $context->locale),
@@ -436,6 +438,32 @@ final class CatalogAdminPageController extends AbstractController
             $this->addFlash('error', $e instanceof \InvalidArgumentException || $e instanceof \DomainException ? $e->getMessage() : \Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.options.failed'));
         }
         return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId, '_fragment' => 'options']);
+    }
+
+    #[Route('/admin/catalog/products/{publicId}/addons', name: 'admin_catalog_product_addons', methods: ['POST'])]
+    public function productAddons(string $publicId, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('admin_product_options_' . $publicId, (string) $request->request->get('_options_token'))) {
+            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.sesiiu_formy_variantiv_vtracheno_povtorit_diiu'));
+            return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId]);
+        }
+        try {
+            $context = $this->context->resolve($request);
+            $product = $this->query->productForEdit($context->storeId, $context->marketId, $context->locale, $publicId);
+            $productId = (int) $product['id'];
+            $action = (string) $request->request->get('_addon_action', 'save');
+            $this->addons->save($productId, $context->locale, (array) $request->request->all('addon'), (array) $request->request->all('addon_value'), (array) $request->request->all('new_addon'));
+            if (str_starts_with($action, 'delete_addon:')) {
+                $this->addons->deleteAddon($productId, (int) substr($action, 13));
+            } elseif (str_starts_with($action, 'delete_value:')) {
+                $this->addons->deleteValue($productId, (int) substr($action, 13));
+            }
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.addons.saved'));
+        } catch (\Throwable $e) {
+            $this->addFlash('error', $e instanceof \InvalidArgumentException || $e instanceof \DomainException ? $e->getMessage() : \Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.options.failed'));
+        }
+
+        return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId, '_fragment' => 'addons']);
     }
 
     #[Route('/admin/catalog/products/{publicId}/variants/create', name: 'admin_catalog_product_variant_create', methods: ['POST'])]

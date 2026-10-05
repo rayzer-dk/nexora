@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, openProductTab } from './helpers';
 
 // Release 3.63.0: option price modes, weight in checkout methods, own search words, optional review e-mail.
 
@@ -49,4 +49,37 @@ test('a guest can write a review without an e-mail while the setting is off', as
   await page.locator('[data-tab="reviews"]').first().click();
   const form = page.locator('#reviews form.feedback-form');
   await expect(form.locator('input[name="guest_email"]')).not.toHaveAttribute('required', '');
+});
+
+test('customer options: a shopper ticks an extra, the cart shows it and the price follows', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const name = await page.locator('input[name="name"]').first().inputValue().catch(() => '');
+  await openProductTab(page, 'sales');
+  if (!(await page.locator('#addons input[name="new_addon[name]"]').isVisible())) await page.locator('#addons .admin-inline-create summary').click();
+  await page.locator('input[name="new_addon[name]"]').fill('Gift wrap E2E');
+  await page.locator('select[name="new_addon[kind]"]').selectOption('checkbox');
+  await page.locator('input[name="new_addon[values]"]').fill('Paper');
+  await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_addon_action"][value="save"]').click()]);
+  await expectNoServerError(page);
+  await openProductTab(page, 'sales');
+  const amount = page.locator('input[name^="addon_value"][name$="[delta]"]').last();
+  await amount.fill('5.00');
+  await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_addon_action"][value="save"]').click()]);
+  await expect(page.locator('input[name^="addon_value"][name$="[delta]"]').last()).toHaveValue('5.00');
+  await page.goto('/catalog?q=' + encodeURIComponent(name.split(' ')[0] || 'Fashion'), { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-product-card] h2 a').first().click();
+  const picker = page.locator('[data-addon-picker]');
+  await expect(picker).toBeAttached();
+  await picker.locator('input[type="checkbox"]').first().check();
+  await Promise.all([page.waitForResponse((r) => r.url().includes('/cart/add')), page.locator('form[data-buy-actions] button[data-primary-buy]').click()]);
+  await page.goto('/cart', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('body')).toContainText('Gift wrap E2E');
+  // cleanup: remove the option again
+  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'sales');
+  await page.locator('button[name="_addon_action"][value^="delete_addon:"]').last().evaluate((el: HTMLElement) => { const b = el as HTMLButtonElement; b.removeAttribute('data-confirm'); b.click(); });
 });

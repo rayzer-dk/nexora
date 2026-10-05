@@ -30,4 +30,7 @@ return [
     'extension.localization.duplicate_key' => 'Дубльований ключ локалізації розширення: ',
     'extension.localization.namespace_collision' => 'Namespace локалізації конфліктує з уже встановленим розширенням: ',
     'review.guest.email_required' => 'Вкажіть коректну електронну пошту.',
+    'addon.error.invalid' => "Недопустиме значення опції.",
+    'addon.error.required' => "Заповніть опцію «%name%».",
+    'addon.error.currency' => "Ціна опції недоступна в обраній валюті.",
 ];

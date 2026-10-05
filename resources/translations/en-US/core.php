@@ -30,4 +30,7 @@ return [
     'extension.localization.duplicate_key' => 'Duplicate extension localization key: ',
     'extension.localization.namespace_collision' => 'The localization namespace conflicts with an already installed extension: ',
     'review.guest.email_required' => 'Enter a valid e-mail address.',
+    'addon.error.invalid' => "Invalid option value.",
+    'addon.error.required' => "Fill in the option \"%name%\".",
+    'addon.error.currency' => "The option price is not available in the chosen currency.",
 ];

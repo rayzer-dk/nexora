@@ -613,12 +613,12 @@ function initLiveTotal() {
   const out = q('[data-live-total]', form ?? document);
   const input = form ? q('[data-qty-input]', form) : null;
   if (!form || !out || !input) return;
-  const unit = Number(form.dataset.unitPrice) / 100;
   const currency = form.dataset.currency;
-  if (!(unit > 0) || !currency) return;
+  if (!(Number(form.dataset.unitPrice) > 0) || !currency) return;
   const format = (() => { try { return new Intl.NumberFormat(document.documentElement.lang || undefined, { style: 'currency', currency }); } catch { return null; } })();
   if (!format) return;
   const update = () => {
+    const unit = Number(form.dataset.unitPrice) / 100;
     const qty = Number(String(input.value).replace(',', '.'));
     if (!(qty > 0) || qty === 1) { out.hidden = true; return; }
     out.textContent = `${t('js_total')}: ${format.format(Math.round(unit * qty * 100) / 100)}`;

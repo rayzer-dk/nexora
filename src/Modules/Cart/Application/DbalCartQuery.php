@@ -12,7 +12,7 @@ use Doctrine\DBAL\Connection;
 
 final readonly class DbalCartQuery
 {
-    public function __construct(private Connection $connection, private StorefrontMoneyFormatter $money, private PromotionEngine $promotions)
+    public function __construct(private Connection $connection, private StorefrontMoneyFormatter $money, private PromotionEngine $promotions, private \Commerce\Modules\Catalog\Application\ProductAddonService $addons)
     {
     }
 
@@ -38,7 +38,7 @@ final readonly class DbalCartQuery
     public function summary(int $cartId, StorefrontContext $context): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT ci.id,ci.quantity,ci.unit_code,ci.unit_price_minor,COALESCE((SELECT GROUP_CONCAT(COALESCE(ovt.name,ov.code) ORDER BY po.sort_order,ov.sort_order SEPARATOR ' / ') FROM mc_variant_option_value vov JOIN mc_product_option_value ov ON ov.id=vov.option_value_id JOIN mc_product_option po ON po.id=ov.option_id LEFT JOIN mc_product_option_value_translation ovt ON ovt.option_value_id=ov.id AND ovt.locale=? WHERE vov.variant_id=ci.variant_id),'') AS options,v.sku,v.quantity_step,v.min_order_quantity,v.max_order_quantity,pt.name,p.product_type,sr.path,ma.storage_key
+            "SELECT ci.id,ci.quantity,ci.unit_code,ci.unit_price_minor,ci.metadata,v.product_id,COALESCE((SELECT GROUP_CONCAT(COALESCE(ovt.name,ov.code) ORDER BY po.sort_order,ov.sort_order SEPARATOR ' / ') FROM mc_variant_option_value vov JOIN mc_product_option_value ov ON ov.id=vov.option_value_id JOIN mc_product_option po ON po.id=ov.option_id LEFT JOIN mc_product_option_value_translation ovt ON ovt.option_value_id=ov.id AND ovt.locale=? WHERE vov.variant_id=ci.variant_id),'') AS options,v.sku,v.quantity_step,v.min_order_quantity,v.max_order_quantity,pt.name,p.product_type,sr.path,ma.storage_key
              FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id JOIN mc_product p ON p.id=v.product_id
              JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
              LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
@@ -50,7 +50,7 @@ final readonly class DbalCartQuery
         foreach($rows as $row){
             $quantity=Quantity::fromString((string)$row['quantity']); if ((string)$row['product_type'] !== 'digital') $requiresShipping=true; $line=intdiv(((int)$row['unit_price_minor']*$quantity->micros)+500000,1000000); $subtotal+=$line;
             $key=is_string($row['storage_key'])?str_replace('\\','/',trim($row['storage_key'])):'';
-            $items[]=['id'=>(int)$row['id'],'name'=>(string)$row['name'],'sku'=>(string)$row['sku'],'options'=>(string)$row['options'],'quantity'=>rtrim(rtrim((string)$row['quantity'],'0'),'.'),'unit_code'=>(string)$row['unit_code'],'quantity_step'=>rtrim(rtrim((string)$row['quantity_step'],'0'),'.'),'min_quantity'=>rtrim(rtrim((string)$row['min_order_quantity'],'0'),'.'),'max_quantity'=>$row['max_order_quantity']!==null?rtrim(rtrim((string)$row['max_order_quantity'],'0'),'.'):null,'unit_price'=>$this->money->format((int)$row['unit_price_minor'],$context->currency,$context->locale),'line_total'=>$this->money->format($line,$context->currency,$context->locale),'url'=>$row['path']?'/'.ltrim((string)$row['path'],'/'):'#','image'=>$key!==''&&!str_contains($key,'..')?'/media/'.ltrim($key,'/'):'/assets/product-placeholder.svg'];
+            $items[]=['id'=>(int)$row['id'],'name'=>(string)$row['name'],'sku'=>(string)$row['sku'],'options'=>trim((string)$row['options'].((string)$row['metadata']!==''?' · '.$this->addons->fromMetadata((int)$row['product_id'],$context->storeId,$context->locale,$context->currency,(string)$row['metadata'])['text']:''),' ·'),'quantity'=>rtrim(rtrim((string)$row['quantity'],'0'),'.'),'unit_code'=>(string)$row['unit_code'],'quantity_step'=>rtrim(rtrim((string)$row['quantity_step'],'0'),'.'),'min_quantity'=>rtrim(rtrim((string)$row['min_order_quantity'],'0'),'.'),'max_quantity'=>$row['max_order_quantity']!==null?rtrim(rtrim((string)$row['max_order_quantity'],'0'),'.'):null,'unit_price'=>$this->money->format((int)$row['unit_price_minor'],$context->currency,$context->locale),'line_total'=>$this->money->format($line,$context->currency,$context->locale),'url'=>$row['path']?'/'.ltrim((string)$row['path'],'/'):'#','image'=>$key!==''&&!str_contains($key,'..')?'/media/'.ltrim($key,'/'):'/assets/product-placeholder.svg'];
         }
         $promotion=$items!==[]?$this->promotions->calculateForCart($context->storeId,$cartId):null;
         $discount=$promotion?->discountMinor ?? 0; $total=max(0,$subtotal-$discount);

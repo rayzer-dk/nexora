@@ -21,6 +21,7 @@ final readonly class CartMutationService
         private PublicIdFactory $publicIds,
         private DbalStorefrontCatalogQuery $catalog,
         private B2bCommerceService $b2b,
+        private \Commerce\Modules\Catalog\Application\ProductAddonService $addons,
         private CustomerStoreMembershipService $memberships,
     ) {
     }
@@ -101,14 +102,14 @@ final readonly class CartMutationService
             if (!is_array($cart)) {
                 return false;
             }
-            $items = $db->fetchAllAssociative('SELECT ci.id,ci.quantity,v.public_id FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id WHERE ci.cart_id=?', [$cartId]);
+            $items = $db->fetchAllAssociative('SELECT ci.id,ci.quantity,ci.metadata,v.public_id,v.product_id FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id WHERE ci.cart_id=?', [$cartId]);
             $prices = [];
             foreach ($items as $item) {
                 $variant = $this->catalog->purchasableVariant($context, \Symfony\Component\Uid\Uuid::fromBinary((string) $item['public_id'])->toRfc4122());
                 if ($variant === null || (string) ($variant['currency'] ?? $context->currency) !== $context->currency) {
                     return false;
                 }
-                $prices[(int) $item['id']] = $this->b2b->priceFor((int) $cart['store_id'], $cart['customer_id'] === null ? null : (int) $cart['customer_id'], (int) $variant['variant_id'], (string) $item['quantity'], (int) $variant['price_minor'], $context->currency);
+                $prices[(int) $item['id']] = $this->b2b->priceFor((int) $cart['store_id'], $cart['customer_id'] === null ? null : (int) $cart['customer_id'], (int) $variant['variant_id'], (string) $item['quantity'], \Commerce\Modules\Catalog\Application\ProductAddonService::unitPrice((int) $variant['price_minor'], $this->addons->fromMetadata((int) $item['product_id'], (int) $cart['store_id'], $context->locale, $context->currency, $item['metadata'] !== null ? (string) $item['metadata'] : null)), $context->currency);
             }
             foreach ($prices as $itemId => $price) {
                 $db->update('mc_cart_item', ['unit_price_minor' => $price, 'updated_at' => $this->now()], ['id' => $itemId, 'cart_id' => $cartId]);
@@ -125,7 +126,7 @@ final readonly class CartMutationService
         $this->connection->executeStatement("UPDATE mc_cart SET customer_id=?,updated_at=? WHERE id=? AND store_id=? AND status='active'",[$customerId,$this->now(),$cartId,$storeId]);
     }
 
-    public function add(StorefrontContext $context, int $cartId, string $variantPublicId, string $quantity): void
+    public function add(StorefrontContext $context, int $cartId, string $variantPublicId, string $quantity, array $addonInput = []): void
     {
         $variant = $this->catalog->purchasableVariant($context, $variantPublicId);
         if ($variant === null) {
@@ -133,13 +134,15 @@ final readonly class CartMutationService
         }
         $requested = Quantity::fromString($quantity);
         $this->assertQuantity($requested, $variant['min_quantity'], $variant['max_quantity'], $variant['quantity_step']);
+        $addons = $this->addons->resolve((int) $variant['product_id'], $context->storeId, $context->locale, $context->currency, $addonInput);
+        $variant['price_minor'] = \Commerce\Modules\Catalog\Application\ProductAddonService::unitPrice((int) $variant['price_minor'], $addons);
 
-        $this->connection->transactional(function (Connection $db) use ($cartId, $variant, $requested): void {
+        $this->connection->transactional(function (Connection $db) use ($cartId, $variant, $requested, $addons): void {
             $cart = $db->fetchAssociative("SELECT id,store_id,customer_id,currency FROM mc_cart WHERE id=? AND status='active' AND expires_at>UTC_TIMESTAMP(6) FOR UPDATE", [$cartId]);
             if (!is_array($cart)) {
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.koshyk_bilshe_ne_aktyvnyi'));
             }
-            $existing = $db->fetchOne('SELECT quantity FROM mc_cart_item WHERE cart_id=? AND variant_id=? FOR UPDATE', [$cartId, $variant['variant_id']]);
+            $existing = $db->fetchOne('SELECT quantity FROM mc_cart_item WHERE cart_id=? AND variant_id=? AND addon_hash=? FOR UPDATE', [$cartId, $variant['variant_id'], $addons['hash']]);
             $totalMicros = $requested->micros + ($existing === false ? 0 : Quantity::fromString((string) $existing)->micros);
             $total = Quantity::fromMicros($totalMicros);
             $this->assertQuantity($total, $variant['min_quantity'], $variant['max_quantity'], $variant['quantity_step']);
@@ -153,12 +156,13 @@ final readonly class CartMutationService
                     'quantity' => $total->toDatabase(),
                     'unit_code' => $variant['unit_code'],
                     'unit_price_minor' => $this->b2b->priceFor((int)$cart['store_id'],$cart['customer_id']===null?null:(int)$cart['customer_id'],(int)$variant['variant_id'],$total->toDatabase(),(int)$variant['price_minor'],(string)$cart['currency']),
-                    'metadata' => null,
+                    'metadata' => \Commerce\Modules\Catalog\Application\ProductAddonService::metadata($addons['selections']),
+                    'addon_hash' => $addons['hash'],
                     'created_at' => $this->now(),
                     'updated_at' => $this->now(),
                 ]);
             } else {
-                $db->update('mc_cart_item', ['quantity' => $total->toDatabase(), 'unit_price_minor' => $this->b2b->priceFor((int)$cart['store_id'],$cart['customer_id']===null?null:(int)$cart['customer_id'],(int)$variant['variant_id'],$total->toDatabase(),(int)$variant['price_minor'],(string)$cart['currency']), 'updated_at' => $this->now()], ['cart_id' => $cartId, 'variant_id' => $variant['variant_id']]);
+                $db->update('mc_cart_item', ['quantity' => $total->toDatabase(), 'unit_price_minor' => $this->b2b->priceFor((int)$cart['store_id'],$cart['customer_id']===null?null:(int)$cart['customer_id'],(int)$variant['variant_id'],$total->toDatabase(),(int)$variant['price_minor'],(string)$cart['currency']), 'updated_at' => $this->now()], ['cart_id' => $cartId, 'variant_id' => $variant['variant_id'], 'addon_hash' => $addons['hash']]);
             }
             $this->touch($db, $cartId);
         });
@@ -177,7 +181,7 @@ final readonly class CartMutationService
             if (!is_array($cart)) {
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.koshyk_bilshe_ne_aktyvnyi'));
             }
-            $row = $db->fetchAssociative('SELECT v.public_id FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id WHERE ci.id=? AND ci.cart_id=? FOR UPDATE', [$itemId, $cartId]);
+            $row = $db->fetchAssociative('SELECT v.public_id,v.product_id,ci.metadata FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id WHERE ci.id=? AND ci.cart_id=? FOR UPDATE', [$itemId, $cartId]);
             if (!is_array($row)) {
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.cart.application.cartmutationservice.pozytsiiu_koshyka_ne_znaideno'));
             }
@@ -191,7 +195,7 @@ final readonly class CartMutationService
             }
             $db->update('mc_cart_item', [
                 'quantity' => $requested->toDatabase(),
-                'unit_price_minor' => $this->b2b->priceFor((int)$cart['store_id'],$cart['customer_id']===null?null:(int)$cart['customer_id'],(int)$variant['variant_id'],$requested->toDatabase(),(int)$variant['price_minor'],(string)$cart['currency']),
+                'unit_price_minor' => $this->b2b->priceFor((int)$cart['store_id'],$cart['customer_id']===null?null:(int)$cart['customer_id'],(int)$variant['variant_id'],$requested->toDatabase(),\Commerce\Modules\Catalog\Application\ProductAddonService::unitPrice((int)$variant['price_minor'],$this->addons->fromMetadata((int)$row['product_id'],(int)$cart['store_id'],$context->locale,(string)$cart['currency'],$row['metadata']!==null?(string)$row['metadata']:null)),(string)$cart['currency']),
                 'unit_code' => $variant['unit_code'],
                 'updated_at' => $this->now(),
             ], ['id' => $itemId, 'cart_id' => $cartId]);

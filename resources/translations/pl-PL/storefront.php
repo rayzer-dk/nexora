@@ -874,4 +874,6 @@ return [
     'guest_email' => 'E-mail',
     'guest_email_hint' => 'Nie jest publikowany. Potrzebny, aby sklep mógł odpowiedzieć.',
     'guest_moderation_note' => 'Wiadomość pojawi się po sprawdzeniu przez moderatora.',
+    'addon_required' => "Pole wymagane",
+    'addon_none' => "Brak wyboru",
 ];

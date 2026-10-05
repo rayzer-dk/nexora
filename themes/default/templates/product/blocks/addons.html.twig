@@ -1,0 +1,25 @@
+{# Options the shopper fills in (inside the buy form): single and multiple choice, text, date, time. Prices are in the currency chosen on the storefront. #}
+{% if product.addons|default([]) %}
+<div class="addon-picker" data-addon-picker data-currency="{{ product.currency|default('') }}">
+    {% for addon in product.addons %}
+    <fieldset class="addon" data-addon="{{ addon.id }}" data-addon-kind="{{ addon.kind }}">
+        <legend>{{ addon.name }}{% if addon.required %} <span class="addon__required" title="{{ ui_text('addon_required')|e('html_attr') }}">*</span>{% endif %}{% if addon.price_label %} <small class="addon__price">{{ addon.price_label }}</small>{% endif %}</legend>
+        {% if addon.kind == 'select' %}
+            <select name="addon[{{ addon.id }}]"{{ addon.required ? ' required' : '' }} data-addon-control>
+                {% if not addon.required %}<option value="" data-addon-mode="add" data-addon-amount="0">—</option>{% endif %}
+                {% for value in addon.values %}<option value="{{ value.id }}"{{ value.default ? ' selected' : '' }} data-addon-mode="{{ value.mode }}" data-addon-amount="{{ value.amount_minor }}">{{ value.name }}{% if value.label %} ({{ value.label }}){% endif %}</option>{% endfor %}
+            </select>
+        {% elseif addon.kind == 'radio' %}
+            <div class="addon__choices">{% if not addon.required %}<label class="addon__choice"><input type="radio" name="addon[{{ addon.id }}]" value="" checked data-addon-control data-addon-mode="add" data-addon-amount="0"> <span>{{ ui_text('addon_none') }}</span></label>{% endif %}
+            {% for value in addon.values %}<label class="addon__choice" title="{{ value.name|e('html_attr') }}{% if value.label %} · {{ value.label|e('html_attr') }}{% endif %}"><input type="radio" name="addon[{{ addon.id }}]" value="{{ value.id }}"{{ value.default or (addon.required and loop.first) ? ' checked' : '' }}{{ addon.required ? ' required' : '' }} data-addon-control data-addon-mode="{{ value.mode }}" data-addon-amount="{{ value.amount_minor }}"> <span>{{ value.name }}</span>{% if value.label %} <small>{{ value.label }}</small>{% endif %}</label>{% endfor %}</div>
+        {% elseif addon.kind == 'checkbox' %}
+            <div class="addon__choices">{% for value in addon.values %}<label class="addon__choice" title="{{ value.name|e('html_attr') }}{% if value.label %} · {{ value.label|e('html_attr') }}{% endif %}"><input type="checkbox" name="addon[{{ addon.id }}][]" value="{{ value.id }}"{{ value.default ? ' checked' : '' }} data-addon-control data-addon-mode="{{ value.mode }}" data-addon-amount="{{ value.amount_minor }}"> <span>{{ value.name }}</span>{% if value.label %} <small>{{ value.label }}</small>{% endif %}</label>{% endfor %}</div>
+        {% elseif addon.kind == 'textarea' %}
+            <textarea name="addon[{{ addon.id }}]" rows="3" maxlength="{{ addon.max_length|default(1000) }}"{{ addon.required ? ' required' : '' }} data-addon-control data-addon-mode="{{ addon.mode }}" data-addon-amount="{{ addon.amount_minor }}"></textarea>
+        {% else %}
+            <input type="{{ addon.kind == 'datetime' ? 'datetime-local' : (addon.kind in ['date','time'] ? addon.kind : 'text') }}" name="addon[{{ addon.id }}]"{% if addon.kind in ['text'] %} maxlength="{{ addon.max_length|default(255) }}"{% endif %}{{ addon.required ? ' required' : '' }} data-addon-control data-addon-mode="{{ addon.mode }}" data-addon-amount="{{ addon.amount_minor }}">
+        {% endif %}
+    </fieldset>
+    {% endfor %}
+</div>
+{% endif %}

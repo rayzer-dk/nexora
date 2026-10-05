@@ -58,7 +58,7 @@ final class CartController extends AbstractController
         $context = $this->contexts->resolve($request);
         $cart = $this->mutations->open($context, $request->cookies->get('mc_cart')); $this->bind($cart['id'],$context->storeId); $context=$this->mutations->contextFor($context,$cart);
         try {
-            $this->mutations->add($context, $cart['id'], (string) $request->request->get('variant_id'), (string) $request->request->get('quantity', '1'));
+            $this->mutations->add($context, $cart['id'], (string) $request->request->get('variant_id'), (string) $request->request->get('quantity', '1'), (array) $request->request->all('addon'));
             if ($this->wantsJson($request)) {
                 $summary = $this->query->summary($cart['id'], $context);
                 $response = new JsonResponse([

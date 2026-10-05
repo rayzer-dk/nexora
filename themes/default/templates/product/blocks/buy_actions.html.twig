@@ -7,6 +7,7 @@
 <form class="buy-actions" data-buy-actions data-unit-price="{{ product.price_minor|default(0) }}" data-currency="{{ product.currency|default('') }}" method="post" action="/cart/add">
     <input type="hidden" name="_token" value="{{ csrf_token('cart_mutation') }}">
     <input type="hidden" name="variant_id" value="{{ product.variant_id }}">
+    {% include '@storefront/product/blocks/addons.html.twig' %}
     <div class="buy-actions__qty">
         <commerce-quantity class="quantity">
             <button class="quantity__btn" type="button" data-qty-minus aria-label="{{ ui_text('decrease') }}">{{ ui_icon('minus', 16) }}</button>

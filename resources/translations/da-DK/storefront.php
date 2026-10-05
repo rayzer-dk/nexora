@@ -941,4 +941,6 @@ return [
     'guest_email' => 'E-mail',
     'guest_email_hint' => 'Offentliggøres ikke. Bruges, så butikken kan svare.',
     'guest_moderation_note' => 'Din besked vises efter en moderator har gennemgået den.',
+    'addon_required' => "Obligatorisk felt",
+    'addon_none' => "Intet valg",
 ];

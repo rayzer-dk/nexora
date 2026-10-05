@@ -177,6 +177,31 @@ final class CurrencyPriceSynchronizer
         return $markupBps > 0 ? sprintf('%.12F', (float) $rate * (1 + $markupBps / 10000)) : $rate;
     }
 
+    /**
+     * An amount kept in the store's main currency (extras of a product) in the currency the shopper chose, with the same rate, markup and
+     * rounding as the converted product prices; null when there is no valid rate.
+     */
+    public function convertAmount(int $storeId, int $amountMinor, string $currency): ?int
+    {
+        $currency = strtoupper($currency);
+        $base = strtoupper((string) $this->db->fetchOne('SELECT default_currency FROM mc_store WHERE id=?', [$storeId]));
+        if ($amountMinor === 0 || $base === '' || $base === $currency) {
+            return $amountMinor;
+        }
+        $target = $this->db->fetchAssociative('SELECT sc.rounding_increment_minor,sc.rate_source,sc.rate_markup_bps,c.minor_units FROM mc_store_currency sc JOIN mc_currency c ON c.code=sc.currency_code WHERE sc.store_id=? AND sc.currency_code=? AND sc.enabled=1', [$storeId, $currency]);
+        if (!is_array($target)) {
+            return null;
+        }
+        $rate = $this->rate($base, $currency, (string) ($target['rate_source'] ?? 'auto'));
+        if ($rate === null) {
+            return null;
+        }
+        $rate = self::withMarkup($rate, (int) ($target['rate_markup_bps'] ?? 0));
+        $baseUnits = (int) ($this->db->fetchOne('SELECT minor_units FROM mc_currency WHERE code=?', [$base]) ?: 2);
+
+        return $this->convert($amountMinor, $rate, $baseUnits, (int) $target['minor_units'], max(1, (int) $target['rounding_increment_minor']));
+    }
+
     private function convert(int $amountMinor, string $rate, int $baseUnits, int $targetUnits, int $increment): int
     {
         // amount (base minor units) * rate, expressed in target minor units, rounded half-up to the increment.

@@ -392,6 +392,7 @@ function initOptionPicker() {
 
     const apply = (variant) => {
         document.querySelectorAll('input[name="variant_id"]').forEach((input) => { input.value = variant.id; });
+        document.querySelectorAll('form[data-buy-actions]').forEach((buy) => { if (typeof variant.price_minor === 'number') { buy.dataset.baseUnitPrice = String(variant.price_minor); buy.dataset.unitPrice = String(variant.price_minor); buy.dispatchEvent(new Event('addons:rebase')); } });
         const price = document.querySelector('.product-price__current');
         if (price && variant.price) price.textContent = variant.price;
         if (variant.id !== initial.id) document.querySelectorAll('.product-price__old, .product-price__discount').forEach((node) => { node.hidden = true; });
@@ -459,6 +460,53 @@ function initOptionPicker() {
     render();
     const current = match() || initial;
     if (current) apply(current);
+}
+
+/**
+ * Options the shopper fills in: "+" adds to the price, "-" takes from it, "=" sets it; the price on the page and the total follow the choices.
+ * The server checks everything again when the item goes to the cart.
+ */
+function initAddons() {
+    const root = document.querySelector('[data-addon-picker]');
+    const form = root ? root.closest('form[data-buy-actions]') : null;
+    if (!(root instanceof HTMLElement) || !(form instanceof HTMLFormElement)) return;
+    const priceNode = () => document.querySelector('.product-price__current');
+    const base = () => Number(form.dataset.baseUnitPrice || form.dataset.unitPrice || 0);
+    if (!form.dataset.baseUnitPrice) form.dataset.baseUnitPrice = form.dataset.unitPrice || '0';
+    const original = priceNode() ? priceNode().textContent : '';
+    const initialBase = base();
+    const money = (minor) => new Intl.NumberFormat(document.documentElement.lang || undefined, { style: 'currency', currency: form.dataset.currency || root.dataset.currency }).format(minor / 100);
+    const active = (control) => {
+        if (control instanceof HTMLInputElement && (control.type === 'radio' || control.type === 'checkbox')) return control.checked && control.value !== '';
+        if (control instanceof HTMLSelectElement) return control.value !== '';
+        return String(control.value || '').trim() !== '';
+    };
+    const recalc = () => {
+        let add = 0;
+        let set = null;
+        root.querySelectorAll('[data-addon-control]').forEach((control) => {
+            const source = control instanceof HTMLSelectElement ? control.selectedOptions[0] : control;
+            if (!source || !active(control)) return;
+            const amount = Number(source.getAttribute('data-addon-amount') || 0);
+            const mode = source.getAttribute('data-addon-mode') || 'add';
+            if (mode === 'set') set = amount; else add += mode === 'sub' ? -amount : amount;
+        });
+        const unit = Math.max(0, (set === null ? base() : set) + add);
+        form.dataset.unitPrice = String(unit);
+        const node = priceNode();
+        const changed = set !== null || add !== 0;
+        if (node) {
+            try {
+                if (changed || base() !== initialBase) node.textContent = money(unit);
+                else if (original) node.textContent = original;
+            } catch { /* keep the shown price */ }
+        }
+        form.dispatchEvent(new Event('click'));
+    };
+    root.addEventListener('change', recalc);
+    root.addEventListener('input', recalc);
+    form.addEventListener('addons:rebase', recalc);
+    recalc();
 }
 
 /** Product detail tabs. Without JS every panel is visible and the tab bar is a list of in-page anchors. */
@@ -537,4 +585,4 @@ function initSharePopovers() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => { initProductTabs(); initOptionPicker(); initSharePopovers(); });
+document.addEventListener('DOMContentLoaded', () => { initProductTabs(); initOptionPicker(); initAddons(); initSharePopovers(); });
