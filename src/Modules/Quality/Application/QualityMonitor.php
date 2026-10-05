@@ -198,10 +198,10 @@ final class QualityMonitor
     private function content(int $storeId): array
     {
         $locale = (string) $this->db->fetchOne('SELECT default_locale FROM mc_store WHERE id=?', [$storeId]);
-        $active = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product WHERE status='active'");
-        $noImage = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product p WHERE p.status='active' AND NOT EXISTS (SELECT 1 FROM mc_product_media m WHERE m.product_id=p.id)");
-        $noText = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product p WHERE p.status='active' AND NOT EXISTS (SELECT 1 FROM mc_product_translation t WHERE t.product_id=p.id AND t.store_id=? AND t.locale=? AND t.description IS NOT NULL AND t.description<>'')", [$storeId, $locale]);
-        $noMeta = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product p WHERE p.status='active' AND NOT EXISTS (SELECT 1 FROM mc_product_translation t WHERE t.product_id=p.id AND t.store_id=? AND t.locale=? AND t.meta_title IS NOT NULL AND t.meta_title<>'')", [$storeId, $locale]);
+        $active = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product WHERE status='published'");
+        $noImage = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product p WHERE p.status='published' AND NOT EXISTS (SELECT 1 FROM mc_product_media m WHERE m.product_id=p.id)");
+        $noText = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product p WHERE p.status='published' AND NOT EXISTS (SELECT 1 FROM mc_product_translation t WHERE t.product_id=p.id AND t.store_id=? AND t.locale=? AND t.description IS NOT NULL AND t.description<>'')", [$storeId, $locale]);
+        $noMeta = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product p WHERE p.status='published' AND NOT EXISTS (SELECT 1 FROM mc_product_translation t WHERE t.product_id=p.id AND t.store_id=? AND t.locale=? AND t.meta_title IS NOT NULL AND t.meta_title<>'')", [$storeId, $locale]);
         $drafts = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_content_entry WHERE store_id=? AND system_key IS NOT NULL AND status='draft'", [$storeId]);
         $profile = $this->db->fetchAssociative('SELECT legal_name,email FROM mc_store_profile WHERE store_id=?', [$storeId]) ?: [];
         $profileOk = trim((string) ($profile['legal_name'] ?? '')) !== '' && trim((string) ($profile['email'] ?? '')) !== '';
@@ -223,7 +223,7 @@ final class QualityMonitor
         $low = 0;
         $untranslated = 0;
         $defaultLocale = (string) $overview['default_locale'];
-        $products = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product WHERE status='active'");
+        $products = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product WHERE status='published'");
         foreach ($overview['locales'] as $locale) {
             if (empty($locale['attached']) || (int) ($locale['ui_coverage'] ?? 100) >= 90) {
                 if (!empty($locale['attached']) && $locale['code'] !== $defaultLocale && $products > 0) {
@@ -252,7 +252,7 @@ final class QualityMonitor
     {
         $countries = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_shipping_country WHERE store_id=? AND enabled=1', [$storeId]);
         $rates = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_tax_rate WHERE enabled=1');
-        $soldOut = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product p WHERE p.status='active' AND NOT EXISTS (SELECT 1 FROM mc_product_variant v JOIN mc_variant_inventory_item vi ON vi.variant_id=v.id JOIN mc_stock_level s ON s.inventory_item_id=vi.inventory_item_id WHERE v.product_id=p.id AND s.stocked_quantity-s.reserved_quantity>0)");
+        $soldOut = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_product p WHERE p.status='published' AND NOT EXISTS (SELECT 1 FROM mc_product_variant v JOIN mc_variant_inventory_item vi ON vi.variant_id=v.id JOIN mc_stock_level s ON s.inventory_item_id=vi.inventory_item_id WHERE v.product_id=p.id AND s.stocked_quantity-s.reserved_quantity>0)");
         $stuck = (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_payment WHERE status='awaiting_payment' AND created_at < (UTC_TIMESTAMP() - INTERVAL 2 DAY)");
 
         return [

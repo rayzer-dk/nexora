@@ -1,0 +1,14 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.quicklinks.title'),'account') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.quicklinks.title') }}</span></nav><h1>{{ ui_text('admin.quicklinks.title') }}</h1><p>{{ ui_text('admin.quicklinks.help') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.quicklinks.current') }}</h2></div><span>{{ links|length }} / {{ max }}</span></div>
+{% if links %}<div class="admin-table-wrap"><table class="admin-table"><tbody>
+{% for link in links %}<tr><td>{{ ui_icon(link.icon, 18) }}</td><td><a href="{{ link.href }}">{{ link.label }}</a></td><td class="is-actions"><form method="post" action="{{ path('admin_account_quick_links_remove', {index: loop.index0}) }}" data-confirm="{{ ui_text('admin.quicklinks.remove_confirm')|e('html_attr') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_quick_links') }}"><button class="admin-icon-button is-sm is-danger" type="submit" title="{{ ui_text('admin.quicklinks.remove') }}" aria-label="{{ ui_text('admin.quicklinks.remove') }}">{{ ui_icon('trash-2', 16) }}</button></form></td></tr>
+{% endfor %}</tbody></table></div>{% else %}<p class="admin-help">{{ ui_text('admin.quicklinks.empty') }}</p>{% endif %}</section>
+{% if links|length < max %}<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.quicklinks.add') }}</h2></div></div>
+<form method="post" action="{{ path('admin_account_quick_links_add') }}" class="admin-form-grid" data-quicklink-form><input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_quick_links') }}"><input type="hidden" name="label" data-quicklink-label>
+<label>{{ ui_text('admin.quicklinks.page') }}<select name="href" data-quicklink-pages required></select></label>
+<div class="admin-inline-field"><span>{{ ui_text('admin.icons.field') }}</span>{% include '@storefront/admin/_icon_field.html.twig' with {name: 'icon', value: 'star'} only %}</div>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('plus', 18) }} {{ ui_text('admin.quicklinks.add_button') }}</button></div></form></section>{% endif %}
+{{ shell.end() }}

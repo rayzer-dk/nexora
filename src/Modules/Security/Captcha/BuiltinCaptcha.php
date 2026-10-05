@@ -99,10 +99,34 @@ final class BuiltinCaptcha
         for ($i = 0; $i < 4; $i++) {
             imageline($canvas, random_int(0, 30), random_int(0, $h), random_int($w - 30, $w), random_int(0, $h), imagecolorallocate($canvas, random_int(80, 160), random_int(80, 160), random_int(80, 160)));
         }
+        $canvas = $this->warp($canvas, $w, $h);
         ob_start();
         imagepng($canvas);
 
         return (string) ob_get_clean();
+    }
+
+    /** Sine-wave distortion of columns and rows: easy for a person to read, hard for plain OCR. */
+    private function warp(\GdImage $src, int $w, int $h): \GdImage
+    {
+        $out = imagecreatetruecolor($w, $h);
+        imagefill($out, 0, 0, imagecolorallocate($out, 244, 246, 250));
+        $phaseX = random_int(0, 628) / 100;
+        $phaseY = random_int(0, 628) / 100;
+        $ampX = random_int(2, 3);
+        $ampY = random_int(2, 4);
+        for ($x = 0; $x < $w; ++$x) {
+            $dy = (int) round(sin($x / 11 + $phaseX) * $ampY);
+            for ($y = 0; $y < $h; ++$y) {
+                $sx = $x + (int) round(sin($y / 9 + $phaseY) * $ampX);
+                $sy = $y + $dy;
+                if ($sx >= 0 && $sx < $w && $sy >= 0 && $sy < $h) {
+                    imagesetpixel($out, $x, $y, imagecolorat($src, $sx, $sy));
+                }
+            }
+        }
+
+        return $out;
     }
 
     private function sign(string $nonce, int $exp): string

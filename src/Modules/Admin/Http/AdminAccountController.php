@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /** Self-service for the signed-in administrator: display name and password. Two-factor lives next door. */
 final class AdminAccountController extends AbstractController
 {
-    public function __construct(private readonly Connection $db, private readonly UserPasswordHasherInterface $passwords)
+    public function __construct(private readonly Connection $db, private readonly UserPasswordHasherInterface $passwords, private readonly \Commerce\Modules\Admin\Application\AdminQuickLinks $quickLinks)
     {
     }
 
@@ -30,6 +30,46 @@ final class AdminAccountController extends AbstractController
         }
 
         return $this->render('@storefront/admin/account.html.twig', ['admin' => $user]);
+    }
+
+    #[Route('/admin/account/quick-links', name: 'admin_account_quick_links', methods: ['GET'])]
+    public function quickLinksPage(): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof AdminUser) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $this->render('@storefront/admin/quick_links.html.twig', ['links' => $this->quickLinks->forAdmin($user->id), 'max' => \Commerce\Modules\Admin\Application\AdminQuickLinks::MAX]);
+    }
+
+    #[Route('/admin/account/quick-links/add', name: 'admin_account_quick_links_add', methods: ['POST'])]
+    public function quickLinksAdd(Request $request): RedirectResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof AdminUser || !$this->isCsrfTokenValid('admin_quick_links', (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->quickLinks->add($user->id, (string) $request->request->get('label', ''), (string) $request->request->get('href', ''), (string) $request->request->get('icon', ''));
+            $this->addFlash('success', CanonicalUiText::get('admin.quicklinks.added'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_account_quick_links');
+    }
+
+    #[Route('/admin/account/quick-links/{index}/remove', name: 'admin_account_quick_links_remove', methods: ['POST'], requirements: ['index' => '\d+'])]
+    public function quickLinksRemove(int $index, Request $request): RedirectResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof AdminUser || !$this->isCsrfTokenValid('admin_quick_links', (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->quickLinks->remove($user->id, $index);
+
+        return $this->redirectToRoute('admin_account_quick_links');
     }
 
     #[Route('/admin/account/profile', name: 'admin_account_profile', methods: ['POST'])]

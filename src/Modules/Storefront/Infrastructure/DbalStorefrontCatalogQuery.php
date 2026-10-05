@@ -22,6 +22,7 @@ final readonly class DbalStorefrontCatalogQuery
         private \Commerce\Modules\Media\Application\MediaVariantService $variants,
         private \Commerce\Modules\Media\Application\ProductVideoService $videos,
         private CategoryTreeIndex $tree,
+        private ?\Commerce\Modules\Search\Application\SqlSearchIndex $searchIndex = null,
     ) {
     }
 
@@ -230,6 +231,20 @@ final readonly class DbalStorefrontCatalogQuery
             } else {
                 $tokens = $this->searchTokens($filter->search);
                 $tokenGroups = $this->synonyms->expandTokenGroups($context->storeId, $context->locale, $tokens);
+                if ($this->searchIndex !== null && $this->searchIndex->isAvailable($context->storeId, $context->locale)) {
+                    // Built-in index: names in every language, brand, categories, SKU; word forms, typos, the other alphabet and keyboard layout.
+                    $prepared = $this->searchIndex->prepare($context->storeId, $context->locale, array_map(static fn (array $g): array => array_slice($g, 0, 6), $tokenGroups));
+                    foreach ($prepared['groups'] as $stems) {
+                        $likes = [];
+                        foreach ($stems as $stem) {
+                            $likes[] = "sd.document LIKE ? ESCAPE '!'";
+                            $filterParams[] = '%' . $this->escapeLike($stem) . '%';
+                        }
+                        $conditions[] = '(EXISTS (SELECT 1 FROM mc_search_document sd WHERE sd.store_id=? AND sd.locale=? AND sd.product_id=p.id AND (' . implode(' OR ', $likes) . ')))';
+                        array_splice($filterParams, count($filterParams) - count($stems), 0, [$context->storeId, $context->locale]);
+                    }
+                    $tokenGroups = [];
+                }
                 foreach ($tokenGroups as $alternatives) {
                     $alternativeSql = [];
                     foreach (array_slice($alternatives, 0, 6) as $token) {

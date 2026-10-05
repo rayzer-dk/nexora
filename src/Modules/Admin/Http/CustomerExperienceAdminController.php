@@ -17,7 +17,7 @@ use Symfony\Component\Uid\Uuid;
 
 final class CustomerExperienceAdminController extends AbstractController
 {
-    public function __construct(private readonly Connection $db,private readonly AdminContextResolver $contexts,private readonly ReturnRequestService $returns,private readonly NotificationOutbox $notifications,private readonly \Commerce\Core\I18n\StorefrontUiTranslator $translator){}
+    public function __construct(private readonly \Commerce\Modules\Review\Application\ReviewSettings $reviewSettings,private readonly Connection $db,private readonly AdminContextResolver $contexts,private readonly ReturnRequestService $returns,private readonly NotificationOutbox $notifications,private readonly \Commerce\Core\I18n\StorefrontUiTranslator $translator){}
 
     #[Route('/admin/customer-experience',name:'admin_customer_experience',methods:['GET'])]
     public function index(Request $request):Response
@@ -25,12 +25,12 @@ final class CustomerExperienceAdminController extends AbstractController
         $ctx=$this->contexts->resolve($request);
         $returns=$this->db->fetchAllAssociative("SELECT rr.public_id,rr.status,rr.reason_code,rr.resolution,rr.created_at,o.order_number,o.currency,o.total_minor,c.display_name customer_name,COUNT(ri.id) item_count FROM mc_return_request rr JOIN mc_sales_order o ON o.id=rr.order_id LEFT JOIN mc_customer c ON c.id=rr.customer_id LEFT JOIN mc_return_item ri ON ri.return_id=rr.id WHERE rr.store_id=? GROUP BY rr.id ORDER BY rr.id DESC LIMIT 1000",[$ctx->storeId]);
         foreach($returns as &$r){$r['public_id']=Uuid::fromBinary((string)$r['public_id'])->toRfc4122();$r['item_count']=(int)$r['item_count'];}unset($r);
-        $reviews=$this->db->fetchAllAssociative("SELECT r.id,r.author_name,r.rating,r.title,r.body,r.verified_purchase,r.helpful_count,r.merchant_reply,r.status,r.created_at,pt.name product_name FROM mc_product_review r JOIN mc_product_translation pt ON pt.product_id=r.product_id AND pt.store_id=r.store_id AND pt.locale=? WHERE r.store_id=? ORDER BY FIELD(r.status,'pending','published','rejected','spam'),r.id DESC LIMIT 1000",[$ctx->locale,$ctx->storeId]);
+        $reviews=$this->db->fetchAllAssociative("SELECT r.id,r.author_name,r.guest_email,r.rating,r.title,r.body,r.verified_purchase,r.helpful_count,r.merchant_reply,r.status,r.created_at,pt.name product_name FROM mc_product_review r JOIN mc_product_translation pt ON pt.product_id=r.product_id AND pt.store_id=r.store_id AND pt.locale=? WHERE r.store_id=? ORDER BY FIELD(r.status,'pending','published','rejected','spam'),r.id DESC LIMIT 1000",[$ctx->locale,$ctx->storeId]);
         foreach($reviews as &$review){$media=$this->db->fetchAllAssociative('SELECT ma.storage_key FROM mc_review_media rm JOIN mc_media_asset ma ON ma.id=rm.media_id WHERE rm.review_id=? ORDER BY rm.sort_order,rm.media_id LIMIT 4',[(int)$review['id']]);$review['images']=array_map(static fn(array $m):string=>'/media/'.ltrim((string)$m['storage_key'],'/'),$media);}unset($review);
-        try{$questions=$this->db->fetchAllAssociative("SELECT q.id,q.author_name,q.question,q.answer,q.status,q.created_at,pt.name product_name FROM mc_product_question q JOIN mc_product_translation pt ON pt.product_id=q.product_id AND pt.store_id=q.store_id AND pt.locale=? WHERE q.store_id=? ORDER BY FIELD(q.status,'pending','published','rejected'),q.id DESC LIMIT 1000",[$ctx->locale,$ctx->storeId]);}catch(\Throwable){$questions=[];}
+        try{$questions=$this->db->fetchAllAssociative("SELECT q.id,q.author_name,q.guest_email,q.question,q.answer,q.status,q.created_at,pt.name product_name FROM mc_product_question q JOIN mc_product_translation pt ON pt.product_id=q.product_id AND pt.store_id=q.store_id AND pt.locale=? WHERE q.store_id=? ORDER BY FIELD(q.status,'pending','published','rejected'),q.id DESC LIMIT 1000",[$ctx->locale,$ctx->storeId]);}catch(\Throwable){$questions=[];}
         try{$withdrawals=$this->db->fetchAllAssociative('SELECT id,order_reference,customer_name,email,scope_note,status,received_at,acknowledged_at,order_id FROM mc_withdrawal_notice WHERE store_id=? ORDER BY id DESC LIMIT 1000',[$ctx->storeId]);}catch(\Throwable){$withdrawals=[];}
         $stats=$this->stats($ctx->storeId);
-        return $this->render('@storefront/admin/customer_experience/index.html.twig',['stats'=>$stats,'withdrawals'=>$withdrawals,'returns'=>$returns,'reviews'=>$reviews,'questions'=>$questions,'return_statuses'=>ReturnRequestService::STATUSES]);
+        return $this->render('@storefront/admin/customer_experience/index.html.twig',['stats'=>$stats,'withdrawals'=>$withdrawals,'returns'=>$returns,'reviews'=>$reviews,'questions'=>$questions,'guests_allowed'=>$this->reviewSettings->guestsAllowed(),'return_statuses'=>ReturnRequestService::STATUSES]);
     }
 
 
@@ -63,12 +63,21 @@ final class CustomerExperienceAdminController extends AbstractController
         return $this->redirectToRoute('admin_customer_experience');
     }
 
+    #[Route('/admin/customer-experience/review-settings',name:'admin_review_settings',methods:['POST'])]
+    public function reviewSettings(Request $request):Response
+    {
+        if(!$this->isCsrfTokenValid('review_settings',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+        $this->reviewSettings->setGuestsAllowed($request->request->getBoolean('guests'));
+        $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.reviews.settings_saved'));
+        return $this->redirectToRoute('admin_customer_experience');
+    }
+
     #[Route('/admin/customer-experience/reviews/{id}',name:'admin_review_moderate',methods:['POST'],requirements:['id'=>'\\d+'])]
     public function review(int $id,Request $request):Response
     {
         if(!$this->isCsrfTokenValid('review_moderate_'.$id,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();$ctx=$this->contexts->resolve($request);$status=(string)$request->request->get('status','pending');if(!in_array($status,['pending','published','rejected','spam'],true))throw $this->createNotFoundException();
         $reply=mb_substr(trim(strip_tags((string)$request->request->get('merchant_reply',''))),0,8000);$now=gmdate('Y-m-d H:i:s.u');
-        $row=$this->db->fetchAssociative("SELECT r.customer_id,r.merchant_reply,c.email,pt.name product_name FROM mc_product_review r LEFT JOIN mc_customer c ON c.id=r.customer_id LEFT JOIN mc_product_translation pt ON pt.product_id=r.product_id AND pt.store_id=r.store_id AND pt.locale=? WHERE r.id=? AND r.store_id=? LIMIT 1",[$ctx->locale,$id,$ctx->storeId]);if(!is_array($row))throw $this->createNotFoundException();
+        $row=$this->db->fetchAssociative("SELECT r.customer_id,r.merchant_reply,COALESCE(c.email,r.guest_email) email,pt.name product_name FROM mc_product_review r LEFT JOIN mc_customer c ON c.id=r.customer_id LEFT JOIN mc_product_translation pt ON pt.product_id=r.product_id AND pt.store_id=r.store_id AND pt.locale=? WHERE r.id=? AND r.store_id=? LIMIT 1",[$ctx->locale,$id,$ctx->storeId]);if(!is_array($row))throw $this->createNotFoundException();
         $data=['status'=>$status,'published_at'=>$status==='published'?$now:null,'merchant_reply'=>$reply!==''?$reply:null,'merchant_replied_at'=>$reply!==''?$now:null];$this->db->update('mc_product_review',$data,['id'=>$id,'store_id'=>$ctx->storeId]);
         if($status==='published'&&$reply!==''&&$reply!==(string)($row['merchant_reply']??'')&&filter_var((string)($row['email']??''),FILTER_VALIDATE_EMAIL)!==false){try{$this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('review.reply',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.customerexperienceadmincontroller.mahazyn_vidpoviv_na_vash_vidhuk'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.customerexperienceadmincontroller.do_vashoho_vidhuku_pro').(string)($row['product_name']??\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.customerexperienceadmincontroller.tovar')).\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.customerexperienceadmincontroller.dodano_vidpovid_mahazynu').$reply,[],'generic'),(string)$row['email'],null,'review-reply:'.$ctx->storeId.':'.$id.':'.hash('sha256',$reply));}catch(\Throwable){}}
         return $this->redirectToRoute('admin_customer_experience');

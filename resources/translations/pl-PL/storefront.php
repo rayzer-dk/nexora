@@ -870,4 +870,8 @@ return [
     'digest_attention' => 'Wymaga uwagi',
     'digest_all_good' => 'Wszystko dobrze: nic pilnego do zrobienia.',
     'digest_waiting' => 'Klienci czekający na produkty niedostępne w magazynie: %count%.',
+    'guest_name' => 'Twoje imię',
+    'guest_email' => 'E-mail',
+    'guest_email_hint' => 'Nie jest publikowany. Potrzebny, aby sklep mógł odpowiedzieć.',
+    'guest_moderation_note' => 'Wiadomość pojawi się po sprawdzeniu przez moderatora.',
 ];

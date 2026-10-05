@@ -57,7 +57,7 @@ final class QualityFixer
         $locale = (string) $this->db->fetchOne('SELECT default_locale FROM mc_store WHERE id=?', [$storeId]);
 
         return (int) $this->db->executeStatement(
-            "UPDATE mc_product_translation t JOIN mc_product p ON p.id=t.product_id AND p.status='active'
+            "UPDATE mc_product_translation t JOIN mc_product p ON p.id=t.product_id AND p.status='published'
              SET t.meta_title=LEFT(t.name,70) WHERE t.store_id=? AND t.locale=? AND (t.meta_title IS NULL OR t.meta_title='') AND t.name<>''",
             [$storeId, $locale],
         );

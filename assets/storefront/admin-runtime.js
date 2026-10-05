@@ -1478,12 +1478,58 @@ function initSidebarCollapse() {
   });
 }
 
+// Quick buttons: the page list is the sidebar itself, so it always matches what this administrator may open.
+function initQuickLinkForm() {
+  const form = q('[data-quicklink-form]');
+  const select = form ? q('[data-quicklink-pages]', form) : null;
+  const label = form ? q('[data-quicklink-label]', form) : null;
+  if (!form || !select || !label) return;
+  const seen = new Set();
+  qa('[data-command-source] a').forEach((link) => {
+    const url = new URL(link.href, window.location.origin);
+    const href = url.pathname + url.search;
+    const text = link.textContent.trim();
+    if (!text || !href.startsWith('/admin') || seen.has(href)) return;
+    seen.add(href);
+    const option = document.createElement('option');
+    option.value = href;
+    option.textContent = text;
+    select.appendChild(option);
+  });
+  const sync = () => { label.value = select.selectedOptions[0] ? select.selectedOptions[0].textContent : ''; };
+  select.addEventListener('change', sync);
+  sync();
+}
+
 function initCommandPalette() {
   const palette = q('[data-command-palette]');
   const input = q('[data-command-input]', palette || document);
   const results = q('[data-command-results]', palette || document);
   if (!palette || !input || !results) return;
-  const links = qa('[data-command-source] a').map((link) => ({ label: link.textContent.trim(), href: link.href })).filter((item) => item.label);
+  const links = qa('[data-command-source] a').map((link) => {
+    const path = new URL(link.href, window.location.origin).pathname.replace(/[/_-]+/g, ' ');
+    return { label: link.textContent.trim(), href: link.href, hay: `${link.textContent.trim()} ${path}`.toLocaleLowerCase('uk-UA').replace(/ё/g, 'е') };
+  }).filter((item) => item.label);
+  // Typed in the other alphabet or on the wrong keyboard layout, or with one typo: the section is still found.
+  const cyr = 'йцукенгшщзхъфывапролджэячсмитьбюіїє';
+  const lat = "qwertyuiop[]asdfghjkl;'zxcvbnm,.sie";
+  const swapLayout = (text) => Array.from(text).map((ch) => { const a = cyr.indexOf(ch); if (a >= 0) return lat[a]; const b = lat.indexOf(ch); return b >= 0 ? cyr[b] : ch; }).join('');
+  const sound = { а: 'a', б: 'b', в: 'v', г: 'h', д: 'd', е: 'e', є: 'ye', ж: 'zh', з: 'z', и: 'y', і: 'i', ї: 'yi', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ь: '', ю: 'yu', я: 'ya', ы: 'y', э: 'e' };
+  const toLatin = (text) => Array.from(text).map((ch) => (ch in sound ? sound[ch] : ch)).join('');
+  const near = (word, hay) => {
+    if (word.length < 4) return false;
+    return hay.split(/\s+/).some((candidate) => {
+      if (Math.abs(candidate.length - word.length) > 1) return false;
+      let diff = 0; let i = 0; let j = 0;
+      while (i < word.length && j < candidate.length && diff < 2) {
+        if (word[i] === candidate[j]) { i += 1; j += 1; continue; }
+        diff += 1;
+        if (word.length > candidate.length) i += 1; else if (word.length < candidate.length) j += 1; else { i += 1; j += 1; }
+      }
+      return diff + (word.length - i) + (candidate.length - j) <= 1;
+    });
+  };
+  const isMatch = (item, needle) => needle.split(/\s+/).every((token) => [token, swapLayout(token), toLatin(token)].some((variant) => item.hay.includes(variant) || near(variant, item.hay)));
   let remote = [];
   let timer = 0;
   let sequence = 0;
@@ -1499,7 +1545,7 @@ function initCommandPalette() {
   };
   const render = (query = '') => {
     const needle = query.trim().toLocaleLowerCase('uk-UA');
-    const matches = links.filter((item) => !needle || item.label.toLocaleLowerCase('uk-UA').includes(needle)).slice(0, 12);
+    const matches = links.filter((item) => !needle || isMatch(item, needle)).slice(0, 12);
     results.innerHTML = '';
     matches.forEach((item, index) => results.appendChild(row(item, index)));
     remote.forEach((item, index) => results.appendChild(row(item, index)));
@@ -1884,6 +1930,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavAccordion();
   initHotkeys();
   initCommandPalette();
+  initQuickLinkForm();
   initAutoSubmit();
   initRowLinks();
   initAutoTabs();

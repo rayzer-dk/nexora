@@ -937,4 +937,8 @@ return [
     'digest_attention' => 'Kræver opmærksomhed',
     'digest_all_good' => 'Alt er godt: intet haster.',
     'digest_waiting' => 'Kunder, der venter på varer uden lager: %count%.',
+    'guest_name' => 'Dit navn',
+    'guest_email' => 'E-mail',
+    'guest_email_hint' => 'Offentliggøres ikke. Bruges, så butikken kan svare.',
+    'guest_moderation_note' => 'Din besked vises efter en moderator har gennemgået den.',
 ];

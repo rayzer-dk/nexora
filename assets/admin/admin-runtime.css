@@ -2018,3 +2018,7 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-meter b { text-align: end; }
 .admin-inline-label { display: inline-flex; align-items: center; gap: var(--mc-space-2); }
 .admin-inline-label input { width: 5rem; }
+
+/* Quick buttons in the header: each administrator's own icon shortcuts; the narrow header keeps only the essentials. */
+.admin-quick-link { flex: 0 0 auto; }
+@media (max-width: 768px) { .admin-quick-link { display: none; } }

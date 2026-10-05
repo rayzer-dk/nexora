@@ -29,4 +29,5 @@ return [
     'extension.localization.namespace_invalid' => 'The extension localization key must belong to the namespace ',
     'extension.localization.duplicate_key' => 'Duplicate extension localization key: ',
     'extension.localization.namespace_collision' => 'The localization namespace conflicts with an already installed extension: ',
+    'review.guest.email_required' => 'Enter a valid e-mail address.',
 ];

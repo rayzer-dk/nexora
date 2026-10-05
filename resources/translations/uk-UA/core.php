@@ -29,4 +29,5 @@ return [
     'extension.localization.namespace_invalid' => 'Ключ локалізації розширення має належати namespace ',
     'extension.localization.duplicate_key' => 'Дубльований ключ локалізації розширення: ',
     'extension.localization.namespace_collision' => 'Namespace локалізації конфліктує з уже встановленим розширенням: ',
+    'review.guest.email_required' => 'Вкажіть коректну електронну пошту.',
 ];

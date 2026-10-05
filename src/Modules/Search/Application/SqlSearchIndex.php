@@ -67,7 +67,22 @@ final class SqlSearchIndex
             }
             if (!$this->anyDocumentContains($storeId, $locale, $out)) {
                 $original = (string) ($alternatives[0] ?? '');
-                $fixed = $this->correct($storeId, $locale, self::normalize($original));
+                $normalizedOriginal = self::normalize($original);
+                $fixed = $this->correct($storeId, $locale, $normalizedOriginal);
+                if ($fixed === null) {
+                    // Typed in the other script or with the wrong keyboard layout: "самсунг" for Samsung, "ыфьыгтп" for samsung.
+                    foreach (self::scriptVariants($normalizedOriginal) as $variant) {
+                        if ($this->anyDocumentContains($storeId, $locale, [self::stem($variant)])) {
+                            $fixed = $variant;
+                            break;
+                        }
+                        $near = $this->correct($storeId, $locale, $variant);
+                        if ($near !== null) {
+                            $fixed = $near;
+                            break;
+                        }
+                    }
+                }
                 if ($fixed !== null) {
                     $corrections[$original] = $fixed;
                     $out[] = self::stem($fixed);
@@ -145,6 +160,43 @@ final class SqlSearchIndex
         $text = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $text) ?? $text;
 
         return trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+    }
+
+    /**
+     * Other spellings of a word typed in a single script: the same letters on the other keyboard layout, then the
+     * sound written in the other alphabet (самсунг -> samsung, samsung -> самсунг).
+     *
+     * @return list<string>
+     */
+    public static function scriptVariants(string $word): array
+    {
+        if ($word === '' || str_contains($word, ' ') || preg_match('/\d/', $word) === 1) {
+            return [];
+        }
+        $cyrillic = preg_match('/^\p{Cyrillic}+$/u', $word) === 1;
+        $latin = preg_match('/^[a-z]+$/', $word) === 1;
+        if (!$cyrillic && !$latin) {
+            return [];
+        }
+        $layoutCyr = ['й' => 'q', 'ц' => 'w', 'у' => 'e', 'к' => 'r', 'е' => 't', 'н' => 'y', 'г' => 'u', 'ш' => 'i', 'щ' => 'o', 'з' => 'p', 'х' => '[', 'ъ' => ']', 'ф' => 'a', 'ы' => 's', 'і' => 's', 'в' => 'd', 'а' => 'f', 'п' => 'g', 'р' => 'h', 'о' => 'j', 'л' => 'k', 'д' => 'l', 'ж' => ';', 'э' => "'", 'є' => "'", 'я' => 'z', 'ч' => 'x', 'с' => 'c', 'м' => 'v', 'и' => 'b', 'т' => 'n', 'ь' => 'm', 'б' => ',', 'ю' => '.'];
+        $layoutLat = [];
+        foreach ($layoutCyr as $cyr => $lat) {
+            if (!isset($layoutLat[$lat]) && $cyr !== 'і') {
+                $layoutLat[$lat] = $cyr;
+            }
+        }
+        $toLat = ['а' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'h', 'ґ' => 'g', 'д' => 'd', 'е' => 'e', 'є' => 'ye', 'ж' => 'zh', 'з' => 'z', 'и' => 'y', 'і' => 'i', 'ї' => 'yi', 'й' => 'y', 'к' => 'k', 'л' => 'l', 'м' => 'm', 'н' => 'n', 'о' => 'o', 'п' => 'p', 'р' => 'r', 'с' => 's', 'т' => 't', 'у' => 'u', 'ф' => 'f', 'х' => 'kh', 'ц' => 'ts', 'ч' => 'ch', 'ш' => 'sh', 'щ' => 'shch', 'ъ' => '', 'ы' => 'y', 'ь' => '', 'э' => 'e', 'ю' => 'yu', 'я' => 'ya'];
+        $toCyr = ['shch' => 'щ', 'sch' => 'щ', 'kh' => 'х', 'zh' => 'ж', 'ts' => 'ц', 'ch' => 'ч', 'sh' => 'ш', 'yu' => 'ю', 'ya' => 'я', 'ye' => 'є', 'ck' => 'к', 'ph' => 'ф', 'ee' => 'і', 'oo' => 'у', 'a' => 'а', 'b' => 'б', 'c' => 'к', 'd' => 'д', 'e' => 'е', 'f' => 'ф', 'g' => 'г', 'h' => 'х', 'i' => 'і', 'j' => 'дж', 'k' => 'к', 'l' => 'л', 'm' => 'м', 'n' => 'н', 'o' => 'о', 'p' => 'п', 'q' => 'к', 'r' => 'р', 's' => 'с', 't' => 'т', 'u' => 'у', 'v' => 'в', 'w' => 'в', 'x' => 'кс', 'y' => 'и', 'z' => 'з'];
+        $variants = [];
+        if ($cyrillic) {
+            $variants[] = strtr($word, $layoutCyr);
+            $variants[] = strtr($word, $toLat);
+        } else {
+            $variants[] = strtr($word, $layoutLat);
+            $variants[] = strtr($word, $toCyr);
+        }
+
+        return array_values(array_unique(array_filter($variants, static fn (string $v): bool => $v !== '' && $v !== $word && mb_strlen($v, 'UTF-8') >= 3)));
     }
 
     /** Light suffix stripping so that word forms (ноутбуки/ноутбук, smartphones/smartphone) match. */

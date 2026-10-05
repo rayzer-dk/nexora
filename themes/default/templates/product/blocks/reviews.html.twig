@@ -10,14 +10,15 @@
             <div class="review__actions"><small>{{ ui_text('helpful_review') }}: {{ review.helpful }}</small>{% if app.user and is_granted('ROLE_CUSTOMER') %}<form method="post" action="{{ path('product_review_helpful',{id:review.id}) }}" data-ajax-form><input type="hidden" name="_token" value="{{ csrf_token('review_helpful_' ~ review.id) }}"><button type="submit" class="button button--secondary button--sm">{{ ui_icon('thumbs-up', 16) }}{{ ui_text('helpful') }}</button></form>{% endif %}</div>
         </article>
     {% else %}<p>{{ ui_text('no_reviews') }}</p>{% endfor %}
-    {% if app.user and is_granted('ROLE_CUSTOMER') %}
+    {% if (app.user and is_granted('ROLE_CUSTOMER')) or reviews_allow_guests() %}
         <form method="post" action="{{ path('product_review_submit',{product:product.id}) }}" class="feedback-form" enctype="multipart/form-data" data-ajax-form data-ajax-reset>
             <input type="hidden" name="_token" value="{{ csrf_token('review_' ~ product.id) }}"><input type="hidden" name="_rendered_at" value="{{ 'now'|date('U') }}"><input class="hp-field" type="text" name="_website" value="" tabindex="-1" autocomplete="off" aria-hidden="true">
+            {% if not (app.user and is_granted('ROLE_CUSTOMER')) %}<label>{{ ui_text('guest_name') }}<input type="text" name="author" maxlength="190" required autocomplete="name"></label><label>{{ ui_text('guest_email') }}<input type="email" name="guest_email" maxlength="190" required autocomplete="email"><small>{{ ui_text('guest_email_hint') }}</small></label>{% endif %}
             <label>{{ ui_text('rating') }}<select name="rating" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select></label>
             <label>{{ ui_text('title') }}<input type="text" name="title" maxlength="255"></label>
             <label>{{ ui_text('your_review') }}<textarea name="body" rows="4" maxlength="8000" required></textarea></label>
             <label>{{ ui_text('product_photo') }} <small>{{ ui_text('review_image_limits') }}</small><input type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/avif" multiple></label>
-            {% include '@storefront/components/captcha.html.twig' with {form:'review'} only %}<button class="button button--primary" type="submit">{{ ui_text('send_review') }}</button>
+            {% include '@storefront/components/captcha.html.twig' with {form:'review'} only %}<button class="button button--primary" type="submit">{{ ui_text('send_review') }}</button>{% if not (app.user and is_granted('ROLE_CUSTOMER')) %}<small>{{ ui_text('guest_moderation_note') }}</small>{% endif %}
         </form>
     {% else %}<p><a href="{{ path('customer_login') }}">{{ ui_text('sign_in_prompt') }}</a>, {{ ui_text('to_leave_review') }}</p>{% endif %}
 </section>

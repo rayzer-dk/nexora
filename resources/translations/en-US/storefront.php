@@ -1287,4 +1287,8 @@ return [
     'digest_attention' => 'Needs attention',
     'digest_all_good' => 'All good: nothing urgent to do.',
     'digest_waiting' => 'Shoppers waiting for out-of-stock goods: %count%.',
+    'guest_name' => 'Your name',
+    'guest_email' => 'E-mail',
+    'guest_email_hint' => 'Not published. Needed so the shop can reply.',
+    'guest_moderation_note' => 'Your message appears after a moderator has checked it.',
 ];

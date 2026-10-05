@@ -20,11 +20,20 @@ final class AdminContextTwigExtension extends AbstractExtension
         private readonly Security $security,
         private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo,
         private readonly \Commerce\Core\Update\PendingMigrations $migrations,
+        private readonly \Commerce\Modules\Admin\Application\AdminQuickLinks $quickLinks,
     ) {}
 
     public function getFunctions(): array
     {
-        return [new TwigFunction('admin_context_switcher', [$this, 'contextSwitcher']), new TwigFunction('admin_undo_pending', [$this, 'undoPending']), new TwigFunction('admin_pending_migrations', [$this, 'pendingMigrations']), new TwigFunction('admin_attention', [$this, 'attention'])];
+        return [new TwigFunction('admin_context_switcher', [$this, 'contextSwitcher']), new TwigFunction('admin_undo_pending', [$this, 'undoPending']), new TwigFunction('admin_pending_migrations', [$this, 'pendingMigrations']), new TwigFunction('admin_attention', [$this, 'attention']), new TwigFunction('admin_quick_links', [$this, 'quickLinks'])];
+    }
+
+    /** @return list<array{label:string,href:string,icon:string}> */
+    public function quickLinks(): array
+    {
+        $user = $this->security->getUser();
+
+        return $user instanceof AdminUser ? $this->quickLinks->forAdmin($user->id) : [];
     }
 
     /**

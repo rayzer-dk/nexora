@@ -3,7 +3,7 @@
 <section class="shell account-auth"><div class="account-card">
 <div class="account-card__head"><span class="eyebrow">{{ ui_text('withdrawal_eyebrow') }}</span><h1>{{ ui_text('withdrawal_title') }}</h1><p>{{ ui_text(step == 'confirm' ? 'withdrawal_confirm_intro' : 'withdrawal_intro') }}</p></div>
 {% if error %}<div class="store-notice is-error" role="alert">{{ ui_text(error) }}</div>{% endif %}
-<form method="post" action="{{ path('storefront_withdrawal') }}" class="account-form" data-withdrawal-form="{{ step }}">
+<form method="post" action="{{ path('storefront_withdrawal') }}" class="account-form" data-withdrawal-form="{{ step }}">{% include '@storefront/components/spam_fields.html.twig' %}
 <input type="hidden" name="_csrf_token" value="{{ csrf_token('withdrawal') }}">
 {% if step == 'confirm' %}
 <input type="hidden" name="stage" value="confirm">
