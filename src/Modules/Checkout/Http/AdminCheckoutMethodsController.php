@@ -63,8 +63,11 @@ final class AdminCheckoutMethodsController extends AbstractController
                 $rows[] = $row;
             }
         }
+        $before = array_column($this->settings->custom(), 'code');
         $this->settings->saveCustom($rows);
-        $this->settings->save($ctx->storeId, array_map('strval', (array) $request->request->all('methods')));
+        $created = array_values(array_diff(array_column($this->settings->custom(), 'code'), $before));
+        // A method that was just added has no checkbox in the submitted form yet: it starts switched on.
+        $this->settings->save($ctx->storeId, [...array_map('strval', (array) $request->request->all('methods')), ...$created]);
         $this->settings->saveConfig($ctx->storeId, (array) $request->request->all('cfg'));
         $this->addFlash('success', CanonicalUiText::get('admin.checkout_methods.saved'));
 

@@ -79,7 +79,7 @@ final class CheckoutController extends AbstractController
         $out = [];
         foreach ($this->methodSettings->config($storeId) as $code => $c) {
             $out[$code] = [
-                'title' => $this->methodSettings->label($storeId, $code, 'title', $locale),
+                'title' => $this->methodSettings->label($storeId, $code, 'title', $locale) ?: $this->methodSettings->customName($code, $locale),
                 'text' => $this->methodSettings->label($storeId, $code, 'text', $locale),
                 'fee' => $c['fee_minor'] > 0 ? $this->money->format($c['fee_minor'], $currency, $locale) : '',
                 'free_over' => $c['fee_minor'] > 0 && $c['free_over_minor'] > 0 ? $this->money->format($c['free_over_minor'], $currency, $locale) : '',

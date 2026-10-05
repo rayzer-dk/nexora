@@ -2,10 +2,9 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.57.0 — 2026-10-05
+## 3.58.0 — 2026-10-05
 
-Fixes for MySQL 8.4 and the release gates.
+Own redirects and fixes of own delivery methods.
 
-- Migrations for the order "edited" mark and scheduled campaigns now run on MySQL 8.4 as well as MariaDB.
-- Messages of the Stripe, PayPal, DHL and GLS integrations are translated.
-- Admin activity log: date range filter and CSV export.
+- SEO: own redirects (old address → new address, 301/302/307/308) with list import, hit counters, and a list of pages visitors could not find with a one-click "create redirect".
+- Own delivery methods: fixed a server error at checkout, address check on the form, a method just added starts switched on.

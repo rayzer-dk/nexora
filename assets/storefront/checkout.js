@@ -238,7 +238,11 @@ if (checkout) {
     if (email && email.value.trim() !== '' && !email.checkValidity() && !email.classList.contains('is-invalid')) problems.push(markInvalid(email, i18n.invalidEmail, `f${n++}`));
     const phone = form.querySelector('input[name="phone"]');
     if (phone && phone.value.trim() !== '' && phone.value.replace(/\D/g, '').length < 9 && !phone.classList.contains('is-invalid')) problems.push(markInvalid(phone, i18n.invalidPhone, `f${n++}`));
-    if (hasDelivery()) {
+    const isCustom = () => carrierRadios.some((radio) => radio.checked && radio.hasAttribute('data-custom'));
+    if (hasDelivery() && isCustom()) {
+      const address = customPanel?.querySelector('input');
+      if (address && address.value.trim() === '') problems.push(markInvalid(address, i18n.pickDelivery, `f${n++}`));
+    } else if (hasDelivery()) {
       if (isPickup()) syncPickup();
       const manual = (manualInput?.value || '').trim();
       const ok = isPickup() ? Boolean(pointId?.value) : Boolean(pointId?.value) || manual !== '';
