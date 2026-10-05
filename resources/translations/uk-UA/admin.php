@@ -4656,4 +4656,12 @@ return [
     'admin.b2b.companies_replace_hint' => 'Обрані компанії замінюють поточний список (Ctrl/Cmd — кілька).',
     'admin.b2b.price_list_delete_confirm' => 'Видалити прайс-лист разом з усіма цінами?',
     'admin.b2b.tier_delete_confirm' => 'Видалити цю цінову позицію?',
+    'admin.notifications.queue' => 'Черга',
+    'admin.notifications.maintenance' => 'Обслуговування черги',
+    'admin.notifications.retry_failed' => 'Повторити невдалі',
+    'admin.notifications.purge_sent' => 'Очистити надіслані',
+    'admin.notifications.purge_confirm' => 'Видалити надіслані повідомлення старші за вказаний термін?',
+    'admin.notifications.older_than' => 'старші за',
+    'admin.notifications.retried' => 'Поставлено на повторну відправку: %n%.',
+    'admin.notifications.purged' => 'Видалено записів: %n%.',
 ];

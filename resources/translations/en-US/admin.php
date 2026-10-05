@@ -4661,4 +4661,12 @@ return [
     'admin.b2b.companies_replace_hint' => 'The selected companies replace the current list (Ctrl/Cmd for several).',
     'admin.b2b.price_list_delete_confirm' => 'Delete the price list with all its prices?',
     'admin.b2b.tier_delete_confirm' => 'Delete this price tier?',
+    'admin.notifications.queue' => 'Queue',
+    'admin.notifications.maintenance' => 'Queue maintenance',
+    'admin.notifications.retry_failed' => 'Retry failed',
+    'admin.notifications.purge_sent' => 'Purge sent',
+    'admin.notifications.purge_confirm' => 'Delete sent messages older than the given age?',
+    'admin.notifications.older_than' => 'older than',
+    'admin.notifications.retried' => 'Queued for another attempt: %n%.',
+    'admin.notifications.purged' => 'Records deleted: %n%.',
 ];

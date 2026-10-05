@@ -273,6 +273,23 @@ final class CommerceOperationsAdminController extends AbstractController
         return $this->render('@storefront/admin/commerce/campaigns.html.twig',['locales'=>$locales,'rows'=>$rows,'subscribers'=>$subscribers,'segments'=>$this->segments->labels(),'templates'=>$this->campaignTemplates->list($context->storeId)]);
     }
 
+    #[Route('/admin/commerce/notifications/maintenance', name:'admin_commerce_notifications_maintenance', methods:['POST'])]
+    public function notificationsMaintenance(Request $request): Response
+    {
+        $this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('notification_maintenance',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+        $action=(string)$request->request->get('action','');
+        if($action==='retry_failed'){
+            $n=$this->db->executeStatement("UPDATE mc_notification_outbox SET status='pending',attempts=0,last_error=NULL,locked_at=NULL,lock_token=NULL,available_at=UTC_TIMESTAMP(6) WHERE status='failed'");
+            $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.notifications.retried',['n'=>(string)$n]));
+        }elseif($action==='purge_sent'){
+            $days=max(7,min(3650,$request->request->getInt('days',30)));
+            $n=$this->db->executeStatement("DELETE FROM mc_notification_outbox WHERE status='sent' AND sent_at<?",[gmdate('Y-m-d H:i:s',time()-$days*86400)]);
+            $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.notifications.purged',['n'=>(string)$n]));
+        }
+        return $this->redirectToRoute('admin_commerce_notifications');
+    }
+
     #[Route('/admin/commerce/notifications', name:'admin_commerce_notifications', methods:['GET','POST'])]
     public function notifications(Request $request): Response
     {
@@ -282,9 +299,15 @@ final class CommerceOperationsAdminController extends AbstractController
             try{$channel=NotificationChannel::from((string)$request->request->get('channel'));$recipient=trim((string)$request->request->get('recipient'));$message=new NotificationMessage('admin.test',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.testove_povidomlennia'),\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kanal_spovishchen_nalashtovano_tse_testove_povidomle'),[],'generic');$this->notifications->enqueue($channel,$message,$recipient);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.testove_povidomlennia_dodano_v_cherhu_rezultat_ziavy'));}catch(\Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
             return $this->redirectToRoute('admin_commerce_notifications');
         }
-        $rows=$this->db->fetchAllAssociative('SELECT id,channel,notification_type,recipient,status,attempts,last_error,created_at,sent_at FROM mc_notification_outbox ORDER BY id DESC LIMIT 500');
+$status=(string)$request->query->get('status',''); $channel=(string)$request->query->get('channel',''); $search=trim((string)$request->query->get('q',''));
+        $where=['1=1']; $params=[];
+        if(in_array($status,['pending','processing','sent','failed'],true)){$where[]='status=?';$params[]=$status;}
+        if(in_array($channel,['email','telegram','sms','web_push'],true)){$where[]='channel=?';$params[]=$channel;}
+        if($search!==''){$where[]='(recipient LIKE ? OR notification_type LIKE ?)';$params[]='%'.$search.'%';$params[]='%'.$search.'%';}
+        $rows=$this->db->fetchAllAssociative('SELECT id,channel,notification_type,recipient,status,attempts,last_error,created_at,sent_at FROM mc_notification_outbox WHERE '.implode(' AND ',$where).' ORDER BY id DESC LIMIT 200',$params);
         $counts=$this->db->fetchAllKeyValue('SELECT status,COUNT(*) FROM mc_notification_outbox GROUP BY status');
-        return $this->render('@storefront/admin/commerce/notifications.html.twig',['rows'=>$rows,'counts'=>$counts]);
+        $channels=$this->db->fetchFirstColumn('SELECT DISTINCT channel FROM mc_notification_outbox ORDER BY channel');
+        return $this->render('@storefront/admin/commerce/notifications.html.twig',['rows'=>$rows,'counts'=>$counts,'status'=>$status,'channel'=>$channel,'q'=>$search,'channels'=>$channels]);
     }
 
     private function now(): string{return(new DateTimeImmutable('now',new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');}
