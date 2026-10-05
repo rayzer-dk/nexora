@@ -15,6 +15,7 @@ final readonly class ForumService
     public function __construct(
         private Connection $connection,
         private PublicIdFactory $publicIds,
+        private ForumSettings $settings,
     ) {
     }
 
@@ -158,8 +159,11 @@ final readonly class ForumService
             $slug = 'topic';
         }
         $now = $this->now();
+        $live = $this->autoPublish($storeId, $customerId, $body, true);
+        $status = $live ? 'published' : 'pending';
+        $livenow = $live ? $now : null;
 
-        return $this->connection->transactional(function (Connection $db) use ($storeId, $board, $customerId, $author, $title, $body, $slug, $now): int {
+        return $this->connection->transactional(function (Connection $db) use ($storeId, $board, $customerId, $author, $title, $body, $slug, $now, $status, $livenow): int {
             $db->insert('mc_forum_topic', [
                 'public_id' => $this->publicIds->binary(),
                 'board_id' => (int) $board['id'],
@@ -167,13 +171,13 @@ final readonly class ForumService
                 'title' => $title,
                 'slug' => mb_substr($slug, 0, 240, 'UTF-8'),
                 'author_name' => $author,
-                'status' => 'pending',
+                'status' => $status,
                 'is_pinned' => 0,
                 'is_locked' => 0,
                 'created_at' => $now,
                 'updated_at' => $now,
-                'published_at' => null,
-                'last_post_at' => null,
+                'published_at' => $livenow,
+                'last_post_at' => $livenow,
             ]);
             $topicId = (int) $db->lastInsertId();
             $db->insert('mc_forum_post', [
@@ -182,10 +186,10 @@ final readonly class ForumService
                 'customer_id' => $customerId,
                 'author_name' => $author,
                 'body_text' => $body,
-                'status' => 'pending',
+                'status' => $status,
                 'created_at' => $now,
                 'updated_at' => $now,
-                'published_at' => null,
+                'published_at' => $livenow,
             ]);
             $db->insert('mc_forum_subscription', [
                 'store_id' => $storeId,
@@ -195,6 +199,30 @@ final readonly class ForumService
             ]);
             return $topicId;
         });
+    }
+
+    public function isPostPublished(int $postId): bool
+    {
+        return $this->connection->fetchOne('SELECT status FROM mc_forum_post WHERE id=?', [$postId]) === 'published';
+    }
+
+    private function autoPublish(int $storeId, int $customerId, string $body, bool $topic): bool
+    {
+        $config = $this->settings->all();
+        $mode = $topic ? $config['topics_mode'] : $config['replies_mode'];
+        if ($mode === 'moderate' || preg_match_all('~https?://|www\.~i', $body) > $config['max_links']) {
+            return false;
+        }
+        if ($mode === 'authorized') {
+            return true;
+        }
+        $approved = (int) $this->connection->fetchOne(
+            "SELECT COUNT(*) FROM mc_forum_post p JOIN mc_forum_topic t ON t.id=p.topic_id JOIN mc_forum_board b ON b.id=t.board_id
+             WHERE b.store_id=? AND p.customer_id=? AND p.status='published'",
+            [$storeId, $customerId],
+        );
+
+        return $approved >= $config['trusted_after'];
     }
 
     public function firstPostId(int $topicId): int
@@ -215,18 +243,22 @@ final readonly class ForumService
         }
         $this->guardPosting($storeId, $customerId, $body, false);
         $now = $this->now();
+        $live = $this->autoPublish($storeId, $customerId, $body, false);
         $this->connection->insert('mc_forum_post', [
             'public_id' => $this->publicIds->binary(),
             'topic_id' => $topicId,
             'customer_id' => $customerId,
             'author_name' => $author,
             'body_text' => $body,
-            'status' => 'pending',
+            'status' => $live ? 'published' : 'pending',
             'created_at' => $now,
             'updated_at' => $now,
-            'published_at' => null,
+            'published_at' => $live ? $now : null,
         ]);
         $postId = (int) $this->connection->lastInsertId();
+        if ($live) {
+            $this->connection->update('mc_forum_topic', ['last_post_at' => $now, 'updated_at' => $now], ['id' => $topicId]);
+        }
         $this->connection->executeStatement(
             'INSERT IGNORE INTO mc_forum_subscription(store_id,topic_id,customer_id,created_at) VALUES (?,?,?,?)',
             [$storeId, $topicId, $customerId, $now],

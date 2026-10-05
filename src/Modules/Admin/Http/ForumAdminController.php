@@ -10,6 +10,8 @@ use Commerce\Modules\Forum\Application\ForumCommunityService;
 use Commerce\Modules\Forum\Application\ForumNotificationService;
 use Commerce\Modules\Forum\Application\ForumDirectMessageService;
 use Commerce\Modules\Forum\Application\ForumModerationService;
+use Commerce\Modules\Forum\Application\ForumSettings;
+use Commerce\Modules\Forum\Application\ForumStaffService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,6 +27,8 @@ final class ForumAdminController extends AbstractController
         private readonly ForumNotificationService $notifications,
         private readonly ForumDirectMessageService $directMessages,
         private readonly ForumModerationService $moderation,
+        private readonly ForumSettings $settings,
+        private readonly ForumStaffService $staff,
     ) {
     }
 
@@ -44,6 +48,7 @@ final class ForumAdminController extends AbstractController
         return $this->render('@storefront/admin/forum/index.html.twig', [
             'platform_version' => PlatformVersion::VERSION,
             'queue' => $queue,
+            'forum_settings' => $this->settings->all(),
         ]);
     }
 
@@ -201,6 +206,104 @@ final class ForumAdminController extends AbstractController
         $this->moderation->revoke($context->storeId, $id);
         $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.flash.ban_revoked'));
         return $this->redirectToRoute('admin_forum');
+    }
+
+    #[Route('/admin/forum/settings', name: 'admin_forum_settings', methods: ['POST'])]
+    public function saveSettings(Request $request): Response
+    {
+        $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_settings', (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->settings->save($request->request->all());
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.flash.settings_saved'));
+
+        return $this->redirectToRoute('admin_forum');
+    }
+
+    #[Route('/admin/forum/new-topic', name: 'admin_forum_topic_create', methods: ['POST'])]
+    public function createTopic(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_staff_topic', (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $id = $this->staff->createTopic($context->storeId, $request->request->getInt('board_id'), (string) $request->request->get('author', ''), (string) $request->request->get('title', ''), (string) $request->request->get('body', ''), $request->request->getBoolean('pinned'));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.flash.topic_created'));
+
+            return $this->redirectToRoute('admin_forum_topic_view', ['id' => $id]);
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_forum');
+    }
+
+    #[Route('/admin/forum/topic/{id}', name: 'admin_forum_topic_view', methods: ['GET'], requirements: ['id' => '\\d+'])]
+    public function topicView(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $data = $this->staff->topicWithAllPosts($context->storeId, $id);
+        if ($data === null) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->render('@storefront/admin/forum/topic.html.twig', ['platform_version' => PlatformVersion::VERSION] + $data);
+    }
+
+    #[Route('/admin/forum/topic/{id}/reply', name: 'admin_forum_topic_reply', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function topicReply(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_staff_reply_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->staff->reply($context->storeId, $id, (string) $request->request->get('author', ''), (string) $request->request->get('body', ''));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.flash.reply_added'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_forum_topic_view', ['id' => $id]);
+    }
+
+    #[Route('/admin/forum/topic/{id}/{action}', name: 'admin_forum_topic_staff', methods: ['POST'], requirements: ['id' => '\\d+', 'action' => 'hide|restore|delete'])]
+    public function topicStaff(Request $request, int $id, string $action): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_topic_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->staff->topicAction($context->storeId, $id, $action);
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.forumadmincontroller.stan_temy_onovleno'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $action === 'delete' ? $this->redirectToRoute('admin_forum') : $this->redirectToRoute('admin_forum_topic_view', ['id' => $id]);
+    }
+
+    #[Route('/admin/forum/message/{id}/{action}', name: 'admin_forum_post_staff', methods: ['POST'], requirements: ['id' => '\\d+', 'action' => 'hide|restore|delete'])]
+    public function postStaff(Request $request, int $id, string $action): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_post_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $topicId = 0;
+        try {
+            $topicId = $this->staff->postAction($context->storeId, $id, $action);
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.forumadmincontroller.povidomlennia_obrobleno'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $topicId > 0 && $this->staff->topicWithAllPosts($context->storeId, $topicId) !== null
+            ? $this->redirectToRoute('admin_forum_topic_view', ['id' => $topicId])
+            : $this->redirectToRoute('admin_forum');
     }
 
     private function safeMessage(Throwable $e): string

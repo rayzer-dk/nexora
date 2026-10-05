@@ -42,10 +42,21 @@
 
 <section class="admin-panel" data-tab="t4">
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.forum.index.moderatsiia') }}</small><h2>{{ ui_text('admin.forum.published_topics') }}</h2></div><span class="admin-badge">{{ queue.published_topics|length }}</span></div>
+    <details class="admin-collapse"><summary>{{ ui_icon('plus', 14) }} {{ ui_text('admin.forum.new_topic') }}</summary>
+        <form method="post" action="{{ path('admin_forum_topic_create') }}" class="admin-form-grid">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_staff_topic') }}">
+            <label><span>{{ ui_text('admin.forum.col.board') }}</span><select name="board_id" required>{% for board in queue.boards %}<option value="{{ board.id }}">{{ board.name }}</option>{% endfor %}</select></label>
+            <label><span>{{ ui_text('admin.forum.author_name') }}</span><input name="author" maxlength="120" value="{{ ui_text('admin.forum.team_name') }}"></label>
+            <label class="is-wide"><span>{{ ui_text('admin.forum.col.topic') }}</span><input name="title" maxlength="240" required></label>
+            <label class="is-wide"><span>{{ ui_text('admin.forum.message') }}</span><textarea name="body" rows="5" required minlength="3"></textarea></label>
+            <label class="admin-check"><input type="checkbox" name="pinned" value="1"> {{ ui_text('admin.forum.pin') }}</label>
+            <button class="admin-button is-primary" type="submit">{{ ui_text('admin.forum.publish') }}</button>
+        </form>
+    </details>
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.forum.col.topic') }}</th><th>{{ ui_text('admin.forum.col.board') }}</th><th>{{ ui_text('admin.forum.col.views') }}</th><th>{{ ui_text('admin.forum.col.state') }}</th><th class="is-actions">{{ ui_text('admin.forum.col.actions') }}</th></tr></thead><tbody>
     {% for topic in queue.published_topics %}
         <tr>
-            <td><strong>{{ topic.title }}</strong><small class="admin-cell-sub">{{ topic.author_name }} · {{ topic.last_post_at|local_datetime }}</small></td>
+            <td><a href="{{ path('admin_forum_topic_view',{id:topic.id}) }}"><strong>{{ topic.title }}</strong></a><small class="admin-cell-sub">{{ topic.author_name }} · {{ topic.last_post_at|local_datetime }}</small></td>
             <td>{{ topic.board_name }}</td><td>{{ topic.views_count }}</td>
             <td><span class="admin-badge">{{ ui_text(topic.is_pinned ? 'admin.forum.state.pinned' : 'admin.forum.state.normal') }} · {{ ui_text(topic.is_locked ? 'admin.forum.state.locked' : 'admin.forum.state.open') }}</span></td>
             <td class="is-actions">
@@ -118,5 +129,20 @@
         </table>
     </div>
 </section>
+
+<section class="admin-panel" data-tab="t8">
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.forum.index.moderatsiia') }}</small><h2>{{ ui_text('admin.forum.settings') }}</h2></div></div>
+    <form method="post" action="{{ path('admin_forum_settings') }}" class="admin-form-grid">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_settings') }}">
+        {% set modes = {moderate: ui_text('admin.forum.mode.moderate'), trusted: ui_text('admin.forum.mode.trusted'), authorized: ui_text('admin.forum.mode.authorized')} %}
+        <label><span>{{ ui_text('admin.forum.settings.topics') }}</span><select name="topics_mode">{% for key, label in modes %}<option value="{{ key }}"{{ forum_settings.topics_mode == key ? ' selected' : '' }}>{{ label }}</option>{% endfor %}</select></label>
+        <label><span>{{ ui_text('admin.forum.settings.replies') }}</span><select name="replies_mode">{% for key, label in modes %}<option value="{{ key }}"{{ forum_settings.replies_mode == key ? ' selected' : '' }}>{{ label }}</option>{% endfor %}</select></label>
+        <label><span>{{ ui_text('admin.forum.settings.trusted_after') }}</span><input type="number" name="trusted_after" min="1" max="100" value="{{ forum_settings.trusted_after }}"></label>
+        <label><span>{{ ui_text('admin.forum.settings.max_links') }}</span><input type="number" name="max_links" min="0" max="20" value="{{ forum_settings.max_links }}"></label>
+        <p class="admin-help is-wide">{{ ui_text('admin.forum.settings.help') }}</p>
+        <button class="admin-button is-primary" type="submit">{{ ui_text('admin.forum.settings.save') }}</button>
+    </form>
+</section>
+
 </div>
 {{ shell.end() }}

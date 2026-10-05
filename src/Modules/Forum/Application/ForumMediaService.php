@@ -59,6 +59,22 @@ final readonly class ForumMediaService
         return $saved;
     }
 
+    /** @param list<int> $postIds */
+    public function deleteForPosts(array $postIds): void
+    {
+        if ($postIds === []) {
+            return;
+        }
+        $in = implode(',', array_map('intval', $postIds));
+        foreach ($this->connection->fetchFirstColumn("SELECT storage_path FROM mc_forum_attachment WHERE post_id IN ({$in})") as $path) {
+            $path = (string) $path;
+            if (str_starts_with($path, '/media/forum/posts/') && !str_contains($path, '..')) {
+                @unlink(rtrim($this->projectDir, '/\\') . '/public' . $path);
+            }
+        }
+        $this->connection->executeStatement("DELETE FROM mc_forum_attachment WHERE post_id IN ({$in})");
+    }
+
     /**
      * @param list<int> $postIds
      * @return array<int,list<array{url:string,name:string,width:int,height:int}>>

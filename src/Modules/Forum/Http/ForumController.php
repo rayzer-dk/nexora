@@ -8,6 +8,7 @@ use Commerce\Modules\Forum\Application\ForumService;
 use Commerce\Modules\Forum\Application\ForumCommunityService;
 use Commerce\Modules\Forum\Application\ForumEngagementService;
 use Commerce\Modules\Forum\Application\ForumMediaService;
+use Commerce\Modules\Forum\Application\ForumNotificationService;
 use Commerce\Modules\Forum\Application\ForumPollService;
 use Commerce\Modules\Forum\Application\ForumAccessPolicy;
 use Commerce\Modules\Forum\Application\ForumProfileService;
@@ -30,6 +31,7 @@ final class ForumController extends AbstractController
         private readonly ForumEngagementService $engagement,
         private readonly ForumMediaService $media,
         private readonly ForumPollService $polls,
+        private readonly ForumNotificationService $notifications,
         private readonly ForumAccessPolicy $accessPolicy,
         private readonly ForumProfileService $profiles,
         private readonly ForumDirectMessageService $directMessages,
@@ -149,7 +151,15 @@ final class ForumController extends AbstractController
                 $this->polls->create($topicId, $pollQuestion, preg_split('/\R/u', (string) $request->request->get('poll_options', '')) ?: [], $request->request->getBoolean('poll_multiple'));
             }
             $this->rememberSessionPost($request);
-            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.temu_nadislano_na_moderatsiiu_pislia_perevirky_vona_'));
+            if ($this->forum->isPostPublished($firstPostId)) {
+                $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.topic_published'));
+                $created = $this->forum->topic($context->storeId, $topicId);
+                if (is_array($created)) {
+                    return $this->redirectToRoute('storefront_forum_topic', ['id' => $topicId, 'slug' => (string) $created['slug']]);
+                }
+            } else {
+                $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.temu_nadislano_na_moderatsiiu_pislia_perevirky_vona_'));
+            }
         } catch (Throwable $e) {
             $this->addFlash('error', $this->safeMessage($e));
         }
@@ -244,6 +254,16 @@ final class ForumController extends AbstractController
             );
             $this->saveUploads($request, $postId, $user->id());
             $this->rememberSessionPost($request);
+            if ($this->forum->isPostPublished($postId)) {
+                $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.reply_published'));
+                try {
+                    $this->notifications->notifyPublishedReply($context->storeId, $postId);
+                } catch (Throwable) {
+                    // Notification delivery is asynchronous and must never block posting.
+                }
+
+                return $this->redirect($this->generateUrl('storefront_forum_topic', $target) . '#post-' . $postId);
+            }
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.vidpovid_nadislano_na_moderatsiiu'));
         } catch (Throwable $e) {
             $this->addFlash('error', $this->safeMessage($e));

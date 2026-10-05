@@ -2081,4 +2081,6 @@ return [
     'forum.runtime.poll_invalid' => 'Для опитування потрібні питання та щонайменше два варіанти.',
     'forum.runtime.poll_choose' => 'Оберіть варіант відповіді.',
     'forum.runtime.poll_voted' => 'Ви вже проголосували.',
+    'forum.runtime.topic_published' => 'Тему опубліковано.',
+    'forum.runtime.reply_published' => 'Відповідь опубліковано.',
 ];

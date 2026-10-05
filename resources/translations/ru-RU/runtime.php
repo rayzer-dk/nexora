@@ -476,4 +476,6 @@ return [
     'forum.runtime.poll_invalid' => 'Для опроса нужны вопрос и минимум два варианта.',
     'forum.runtime.poll_choose' => 'Выберите вариант ответа.',
     'forum.runtime.poll_voted' => 'Вы уже проголосовали.',
+    'forum.runtime.topic_published' => 'Тема опубликована.',
+    'forum.runtime.reply_published' => 'Ответ опубликован.',
 ];

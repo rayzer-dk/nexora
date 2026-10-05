@@ -1,0 +1,45 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(topic.title,'forum') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_forum') }}">{{ ui_text('admin.forum.index.forum') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ topic.board_name }}</span></nav><h1>{{ topic.title }}</h1><p>{{ status_badge(topic.status) }} {{ topic.author_name }}</p></div>
+    <div class="admin-page-actions">
+        {% if topic.status == 'published' %}<a class="admin-button" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}" target="_blank" rel="noopener">{{ ui_icon('external-link', 14) }} {{ ui_text('admin.forum.index.vidkryty_forum') }}</a>{% endif %}
+        {% set hide_action = topic.status == 'hidden' ? 'restore' : 'hide' %}
+        <form method="post" action="{{ path('admin_forum_topic_staff',{id:topic.id,action:hide_action}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_topic_' ~ topic.id) }}"><button class="admin-button" type="submit">{{ ui_icon(topic.status == 'hidden' ? 'eye' : 'eye-off', 14) }} {{ ui_text(topic.status == 'hidden' ? 'admin.forum.restore' : 'admin.forum.hide') }}</button></form>
+        <form method="post" action="{{ path('admin_forum_topic_staff',{id:topic.id,action:'delete'}) }}" data-confirm="{{ ui_text('admin.forum.delete_topic_confirm') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_topic_' ~ topic.id) }}"><button class="admin-button is-danger" type="submit">{{ ui_icon('trash-2', 14) }} {{ ui_text('admin.forum.board.delete') }}</button></form>
+    </div>
+</header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.forum.index.moderatsiia') }}</small><h2>{{ ui_text('admin.forum.messages') }}</h2></div><span class="admin-badge">{{ posts|length }}</span></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.forum.message') }}</th><th>{{ ui_text('admin.forum.index.avtor') }}</th><th>{{ ui_text('admin.forum.index.status') }}</th><th class="is-actions">{{ ui_text('admin.forum.col.actions') }}</th></tr></thead><tbody>
+    {% for post in posts %}
+        <tr>
+            <td><span>{{ post.body_text|slice(0,400) }}</span><small class="admin-cell-sub">{{ post.created_at|local_datetime }}{% if post.pictures > 0 %} · {{ ui_icon('image', 12) }} {{ post.pictures }}{% endif %}</small></td>
+            <td>{{ post.author_name }}{% if post.customer_id %}<small class="admin-cell-sub">ID {{ post.customer_id }}</small>{% endif %}</td>
+            <td>{{ status_badge(post.status) }}</td>
+            <td class="is-actions">
+                {% if post.status == 'pending' %}<form method="post" action="{{ path('admin_forum_post_moderate',{id:post.id,action:'approve'}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_post_' ~ post.id) }}"><button class="admin-icon-button" type="submit" title="{{ ui_text('admin.forum.publish') }}" aria-label="{{ ui_text('admin.forum.publish') }}">{{ ui_icon('check', 18) }}</button></form>{% endif %}
+                <form method="post" action="{{ path('admin_forum_post_staff',{id:post.id,action:post.status == 'hidden' ? 'restore' : 'hide'}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_post_' ~ post.id) }}"><button class="admin-icon-button" type="submit" title="{{ ui_text(post.status == 'hidden' ? 'admin.forum.restore' : 'admin.forum.hide') }}" aria-label="{{ ui_text(post.status == 'hidden' ? 'admin.forum.restore' : 'admin.forum.hide') }}">{{ ui_icon(post.status == 'hidden' ? 'eye' : 'eye-off', 18) }}</button></form>
+                <form method="post" action="{{ path('admin_forum_post_staff',{id:post.id,action:'delete'}) }}" data-confirm="{{ ui_text('admin.forum.delete_post_confirm') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_post_' ~ post.id) }}"><button class="admin-icon-button is-danger" type="submit" title="{{ ui_text('admin.forum.board.delete') }}" aria-label="{{ ui_text('admin.forum.board.delete') }}">{{ ui_icon('trash-2', 18) }}</button></form>
+                {% if post.customer_id %}<details class="admin-collapse"><summary title="{{ ui_text('admin.forum.index.apply_ban') }}">{{ ui_icon('ban', 18) }}</summary>
+                    <form method="post" action="{{ path('admin_forum_ban_create') }}" class="admin-inline-form" data-confirm="{{ ui_text('admin.confirm.ban') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_ban_create') }}"><input type="hidden" name="customer_id" value="{{ post.customer_id }}">
+                        <label><span>{{ ui_text('admin.forum.index.ban_days') }}</span><input type="number" min="1" max="3650" name="duration_days" placeholder="{{ ui_text('admin.forum.index.permanent') }}"></label>
+                        <label class="is-wide"><span>{{ ui_text('admin.forum.index.ban_reason') }}</span><input type="text" name="reason" maxlength="1000" required></label>
+                        <button type="submit">{{ ui_text('admin.forum.index.apply_ban') }}</button></form></details>{% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody></table></div>
+</section>
+
+<section class="admin-panel">
+    <div class="admin-panel__header"><div><small>{{ ui_text('admin.forum.index.moderatsiia') }}</small><h2>{{ ui_text('admin.forum.reply_as_team') }}</h2></div></div>
+    <form method="post" action="{{ path('admin_forum_topic_reply',{id:topic.id}) }}" class="admin-form-grid">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_staff_reply_' ~ topic.id) }}">
+        <label><span>{{ ui_text('admin.forum.author_name') }}</span><input name="author" maxlength="120" value="{{ ui_text('admin.forum.team_name') }}"></label>
+        <label class="is-wide"><span>{{ ui_text('admin.forum.message') }}</span><textarea name="body" rows="4" required minlength="3"></textarea></label>
+        <button class="admin-button is-primary" type="submit">{{ ui_text('admin.forum.publish') }}</button>
+    </form>
+</section>
+{{ shell.end() }}

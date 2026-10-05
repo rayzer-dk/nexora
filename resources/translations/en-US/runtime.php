@@ -2079,4 +2079,6 @@ return [
     'forum.runtime.poll_invalid' => 'A poll needs a question and at least two options.',
     'forum.runtime.poll_choose' => 'Choose an answer.',
     'forum.runtime.poll_voted' => 'You have already voted.',
+    'forum.runtime.topic_published' => 'Topic published.',
+    'forum.runtime.reply_published' => 'Reply published.',
 ];
