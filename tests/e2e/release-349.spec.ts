@@ -62,7 +62,7 @@ test('the footer links, newsletter text and own column are editable', async ({ p
   const faq = form.locator('input[name="footer_link_faq"]');
   const faqWasShown = await faq.isChecked();
   await faq.setChecked(false, { force: true });
-  await form.locator('details:has(input[name^="footer_col_title[0]"]) summary').click();
+  await form.locator('details:has(input[name^="footer_col_title[0]"])').evaluate((d) => { (d as HTMLDetailsElement).open = true; });
   await form.locator('input[name^="footer_col_title[0]"]').first().fill('QA column');
   await form.locator('input[name^="footer_link_label[0][0]"]').first().fill('QA link');
   await form.locator('input[name="footer_link_url[0][0]"]').fill('/catalog');
@@ -80,7 +80,7 @@ test('the footer links, newsletter text and own column are editable', async ({ p
     const restore = page.locator('form[data-dirty-guard]');
     await restore.locator('input[name^="footer_nl_title["]').first().fill(originalTitle);
     await restore.locator('input[name="footer_link_faq"]').setChecked(faqWasShown, { force: true });
-    await restore.locator('details:has(input[name^="footer_col_title[0]"]) summary').click();
+    await restore.locator('details:has(input[name^="footer_col_title[0]"])').evaluate((d) => { (d as HTMLDetailsElement).open = true; });
     await restore.locator('input[name^="footer_col_title[0]"]').first().fill('');
     await restore.locator('input[name^="footer_link_label[0][0]"]').first().fill('');
     await restore.locator('input[name="footer_link_url[0][0]"]').fill('');
