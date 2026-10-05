@@ -152,7 +152,7 @@ test('display variants: card style, columns, layout, sticky header, quick order 
 
     await page.goto('/admin/commerce/inquiries', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toContainText('Quick Buyer');
-    await expect(page.locator('body')).toContainText('quick_order');
+    await expect(page.locator('body')).toContainText(/Швидке замовлення|Quick order|quick_order/);
   } finally {
     await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
     const p = page.locator('[data-display-settings]');

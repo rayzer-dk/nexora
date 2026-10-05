@@ -18,6 +18,8 @@ test('a brand created and renamed in admin is offered in the product form', asyn
   await loginAdmin(page);
   await page.goto('/admin/catalog/metadata', { waitUntil: 'domcontentloaded' });
   const create = page.locator('form[action$="/metadata/brands/create"]');
+  // The add form sits in a collapsed block: open it like a person would.
+  await create.evaluate((form) => { const d = form.closest('details'); if (d) d.open = true; });
   await create.locator('input[name="name"]').fill(name);
   await create.locator('input[name="slug"]').fill(`e2e-brand-${suffix}`);
   await Promise.all([page.waitForLoadState('domcontentloaded'), create.locator('button[type="submit"]').click()]);

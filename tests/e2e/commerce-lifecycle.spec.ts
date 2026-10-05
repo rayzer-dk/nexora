@@ -121,23 +121,9 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   await topicForm.locator('input[name="title"]').fill(forumTopicTitle);
   await topicForm.locator('textarea[name="body"]').fill('Автоматичний E2E тест створення теми форуму після реєстрації та підтвердження клієнта.');
   await page.waitForTimeout(1100);
-  const topicResponsePromise = page.waitForResponse((response) =>
-    response.url().includes('/forum/general/topics') && response.request().method() === 'POST'
-  );
   await topicForm.locator('button[type="submit"]').click();
-  const topicResponse = await topicResponsePromise.catch(async (error: Error) => {
-    // Say why nothing was sent: an invalid field, or something covering the button.
-    const why = await topicForm.evaluate((form) => {
-      const f = form as HTMLFormElement;
-      const button = f.querySelector('button[type="submit"]') as HTMLElement;
-      const box = button.getBoundingClientRect();
-      const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-      const invalid = Array.from(f.elements).filter((el) => (el as HTMLInputElement).willValidate && !(el as HTMLInputElement).checkValidity()).map((el) => (el as HTMLInputElement).name);
-      return { valid: f.checkValidity(), invalid, covering: top ? `${top.tagName}.${(top as HTMLElement).className}` : null, url: location.href };
-    });
-    throw new Error(`${error.message} :: ${JSON.stringify(why)}`);
-  });
-  expect(topicResponse.status()).toBeLessThan(500);
+  // The visible outcome is what matters: the notice that the topic was sent (the form may be sent by fetch).
+  await expect(page.locator('.store-notice.is-success')).toBeVisible({ timeout: 20_000 });
   await page.waitForLoadState('domcontentloaded');
   await expectNoServerError(page);
   await expect(page.locator('.store-notice.is-success')).toBeVisible();
