@@ -17,5 +17,18 @@
             <div class="forum-empty"><h2>{{ ui_text('no_forum_sections') }}</h2><p>{{ ui_text('admin_create_forum_sections') }}</p></div>
         {% endfor %}
     </div>
+    {% if latest_topics|default([]) %}
+    <h2 class="forum-section-title">{{ ui_text('forum_latest_topics') }}</h2>
+    <div class="forum-topic-list">
+        {% for topic in latest_topics %}
+            <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:topic.id,slug:topic.slug}) }}">
+                <span class="forum-topic-row__status badge">{{ topic.board_name }}</span>
+                <span class="forum-topic-row__body"><strong>{{ topic.title }}</strong><small>{{ topic.active_at|slice(0,16) }}</small></span>
+                <span class="forum-topic-row__count"><b>{{ topic.post_count }}</b><small>{{ ui_text('messages_count_label') }}</small><b>{{ topic.views_count|default(0) }}</b><small>{{ ui_text('forum_views') }}</small></span>
+                {% if topic.is_locked %}<span class="forum-lock badge" title="{{ ui_text('topic_closed') }}">{{ ui_icon('lock', 14) }}{{ ui_text('closed') }}</span>{% endif %}
+            </a>
+        {% endfor %}
+    </div>
+    {% endif %}
 </section>
 {% endblock %}

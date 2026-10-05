@@ -64,6 +64,28 @@ final readonly class ForumService
         );
     }
 
+    /**
+     * The most recently active published topics of the store, across all boards (for the forum home page).
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function latestTopics(int $storeId, int $limit = 8): array
+    {
+        $limit = max(1, min(30, $limit));
+
+        return $this->connection->fetchAllAssociative(
+            "SELECT t.id,t.title,t.slug,b.name AS board_name,b.slug AS board_slug,t.is_pinned,t.is_locked,t.views_count,
+                    COALESCE(t.last_post_at,t.published_at,t.created_at) AS active_at,
+                    (SELECT COUNT(*) FROM mc_forum_post p WHERE p.topic_id=t.id AND p.status='published') AS post_count
+             FROM mc_forum_topic t
+             JOIN mc_forum_board b ON b.id=t.board_id AND b.store_id=?
+             WHERE t.status='published'
+             ORDER BY COALESCE(t.last_post_at,t.published_at,t.created_at) DESC,t.id DESC
+             LIMIT {$limit}",
+            [$storeId],
+        );
+    }
+
     /** @return array<string,mixed>|null */
     public function topic(int $storeId, int $topicId): ?array
     {

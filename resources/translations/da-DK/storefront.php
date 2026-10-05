@@ -943,4 +943,5 @@ return [
     'guest_moderation_note' => 'Din besked vises efter en moderator har gennemgået den.',
     'addon_required' => "Obligatorisk felt",
     'addon_none' => "Intet valg",
+    'forum_latest_topics' => 'Seneste emner',
 ];

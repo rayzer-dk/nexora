@@ -1243,3 +1243,4 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 /* Gift card and bonus fields span the whole row, like the coupon field. */
 .ck-grid[data-rewards] { grid-template-columns: minmax(0, 1fr); }
 .ck-grid[data-rewards] .coupon-row { width: 100%; }
+.forum-section-title { margin: var(--mc-space-6) 0 var(--mc-space-3); font-size: var(--mc-font-size-lg); }

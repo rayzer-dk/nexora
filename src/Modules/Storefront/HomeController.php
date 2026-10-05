@@ -41,6 +41,11 @@ final class HomeController extends AbstractController
         $settings = $this->capabilities->get($context->storeId);
         $features = is_array($settings['features'] ?? null) ? $settings['features'] : [];
 
+        // A site installed as a forum opens on the forum itself, not on a shop-style home page.
+        if (($settings['mode'] ?? '') === SiteCapabilitySettings::MODE_FORUM && (bool) ($features['forum'] ?? false)) {
+            return $this->redirectToRoute('storefront_forum_index');
+        }
+
         // Optional homepage blocks are isolated from each other. A broken catalog/blog query
         // removes only that block; it must not make the whole storefront unavailable.
         $categories = [];

@@ -40,6 +40,7 @@ final class ForumController extends AbstractController
             'page_title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.http.forumcontroller.forum'),
             'store_name' => $context->storeName,
             'boards' => $this->forum->boards($context->storeId),
+            'latest_topics' => $this->forum->latestTopics($context->storeId),
             'seo_head' => [
                 'canonical' => $request->getSchemeAndHttpHost() . '/forum',
                 'robots' => 'index,follow,max-image-preview:large',

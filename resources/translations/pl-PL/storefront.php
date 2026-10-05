@@ -876,4 +876,5 @@ return [
     'guest_moderation_note' => 'Wiadomość pojawi się po sprawdzeniu przez moderatora.',
     'addon_required' => "Pole wymagane",
     'addon_none' => "Brak wyboru",
+    'forum_latest_topics' => 'Najnowsze tematy',
 ];

@@ -876,4 +876,5 @@ return [
     'guest_moderation_note' => 'Ihre Nachricht erscheint nach der Prüfung durch einen Moderator.',
     'addon_required' => "Pflichtfeld",
     'addon_none' => "Keine Auswahl",
+    'forum_latest_topics' => 'Neueste Themen',
 ];

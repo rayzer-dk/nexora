@@ -1294,4 +1294,5 @@ return [
     'guest_moderation_note' => 'Your message appears after a moderator has checked it.',
     'addon_required' => "Required field",
     'addon_none' => "None",
+    'forum_latest_topics' => 'Latest topics',
 ];
