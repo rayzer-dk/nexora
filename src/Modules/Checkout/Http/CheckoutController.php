@@ -8,6 +8,7 @@ use Commerce\Modules\Cart\Application\CartMutationService;
 use Commerce\Modules\Cart\Application\DbalCartQuery;
 use Commerce\Modules\B2B\Application\B2bCommerceService;
 use Commerce\Modules\Checkout\Application\CheckoutLayoutService;
+use Commerce\Modules\Checkout\Application\CheckoutLeadService;
 use Commerce\Modules\Checkout\Application\CheckoutMethodSettings;
 use Commerce\Modules\Order\Application\OrderConfirmationQuery;
 use Commerce\Modules\Storefront\Infrastructure\PickupPointRepository;
@@ -49,7 +50,24 @@ final class CheckoutController extends AbstractController
         private readonly PickupPointRepository $pickupPoints,
         private readonly OrderConfirmationQuery $confirmation,
         private readonly \Commerce\Modules\Rewards\Application\GiftCardService $giftCards,
+        private readonly CheckoutLeadService $leads,
     ) {}
+
+    #[Route('/checkout/lead', name: 'storefront_checkout_lead', methods: ['POST'], priority: 100)]
+    public function lead(Request $request): JsonResponse
+    {
+        if (!$this->isCsrfTokenValid('checkout_lead', (string) $request->request->get('_token'))) {
+            return new JsonResponse(['ok' => false], 403);
+        }
+        $context = $this->contexts->resolve($request);
+        $cart = $this->carts->find($context, $request->cookies->get('mc_cart'));
+        if ($cart === null) {
+            return new JsonResponse(['ok' => false], 404);
+        }
+        $stored = $this->leads->capture($context->storeId, (int) $cart['id'], (string) $request->request->get('name'), (string) $request->request->get('email'), (string) $request->request->get('phone'), $context->locale);
+
+        return new JsonResponse(['ok' => $stored]);
+    }
 
     #[Route('/checkout', name: 'storefront_checkout', methods: ['GET'], priority: 100)]
     public function show(Request $request): Response

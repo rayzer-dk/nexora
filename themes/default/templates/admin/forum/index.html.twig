@@ -14,7 +14,7 @@
         <label><span>{{ ui_text('admin.forum.index.poriadok') }}</span><input name="sort_order" type="number" value="0"></label>
         <button type="submit">{{ ui_text('admin.forum.index.dodaty_rozdil') }}</button>
     </form>
-    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.forum.index.rozdil') }}</th><th>URL</th><th>{{ ui_text('admin.forum.index.status') }}</th><th>{{ ui_text('admin.forum.index.poriadok') }}</th></tr></thead><tbody>{% for board in queue.boards %}<tr><td><strong>{{ board.name }}</strong><small class="admin-cell-sub">{{ board.description }}</small></td><td>/forum/{{ board.slug }}</td><td><span class="admin-badge {{ board.status == 'active' ? 'is-active' : '' }}">{{ board.status }}</span></td><td>{{ board.sort_order }}</td></tr>{% else %}<tr><td colspan="4">{{ ui_text('admin.forum.index.rozdiliv_shche_nemaie') }}</td></tr>{% endfor %}</tbody></table></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.forum.index.rozdil') }}</th><th>URL</th><th>{{ ui_text('admin.forum.index.status') }}</th><th>{{ ui_text('admin.forum.index.poriadok') }}</th></tr></thead><tbody>{% for board in queue.boards %}<tr><td><strong>{{ board.name }}</strong><small class="admin-cell-sub">{{ board.description }}</small></td><td>/forum/{{ board.slug }}</td><td><span class="admin-badge {{ board.status == 'active' ? 'is-active' : '' }}">{{ board.status|status_label }}</span></td><td>{{ board.sort_order }}</td></tr>{% else %}<tr><td colspan="4">{{ ui_text('admin.forum.index.rozdiliv_shche_nemaie') }}</td></tr>{% endfor %}</tbody></table></div>
 </section>
 
 <section class="admin-panel" data-tab="t2">

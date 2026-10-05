@@ -1,13 +1,16 @@
 {# Newsletter block + site footer. Variables come from base.html.twig (presentation, capabilities, storefront_brand_name). #}
 {% set footer_contact = storefront_contact() %}
-<section class="newsletter-signup" aria-labelledby="newsletter-title">
+{% set fcfg = presentation.footer|default({}) %}{% set fnl = fcfg.newsletter|default({}) %}{% set fhide = fcfg.hidden_links|default([]) %}
+{% set footer_style %}{% if fcfg.bg|default('') %}--footer-bg:{{ fcfg.bg }};{% endif %}{% if fcfg.text_color|default('') %}--footer-text:{{ fcfg.text_color }};{% endif %}{% endset %}
+{% set nl_style %}{% if fnl.bg|default('') %}--newsletter-bg:{{ fnl.bg }};{% endif %}{% if fnl.text_color|default('') %}--newsletter-text:{{ fnl.text_color }};{% endif %}{% endset %}
+{% if fnl.enabled is not same as(false) %}<section class="newsletter-signup" aria-labelledby="newsletter-title"{% if nl_style|trim %} style="{{ nl_style|trim }}"{% endif %}>
     <div class="shell newsletter-signup__inner">
         <div class="newsletter-signup__copy">
-            <span class="newsletter-signup__icon" aria-hidden="true">{{ ui_icon('mail', 24) }}</span>
+            {% set nl_icon = fnl.icon is defined ? fnl.icon : 'mail' %}{% if nl_icon %}<span class="newsletter-signup__icon" aria-hidden="true">{{ ui_icon(nl_icon, 24) }}</span>{% endif %}
             <div class="newsletter-signup__text">
-                <small>{{ ui_text('news_offers') }}</small>
-                <h2 id="newsletter-title">{{ ui_text('newsletter_title') }}</h2>
-                <p>{{ ui_text('newsletter_text') }}</p>
+                <small>{{ fnl.eyebrow|default('') ?: ui_text('news_offers') }}</small>
+                <h2 id="newsletter-title">{{ fnl.title|default('') ?: ui_text('newsletter_title') }}</h2>
+                <p>{{ fnl.text|default('') ?: ui_text('newsletter_text') }}</p>
                 {% set push_key = push_public_key() %}{% if push_key %}<button class="push-toggle" type="button" data-push-subscribe data-push-key="{{ push_key }}" hidden>{{ ui_icon('bell', 16) }}<span>{{ ui_text('push_subscribe') }}</span></button>{% endif %}
             </div>
         </div>
@@ -15,22 +18,26 @@
             <input type="hidden" name="_token" value="{{ csrf_token('newsletter_subscribe') }}">
             {% include '@storefront/components/spam_fields.html.twig' %}
             <label class="sr-only" for="newsletter-email">{{ ui_text('email') }}</label>
-            <input class="newsletter-signup__email" id="newsletter-email" type="email" name="email" required autocomplete="email" placeholder="you@example.com">
+            <input class="newsletter-signup__email" id="newsletter-email" type="email" name="email" required autocomplete="email" placeholder="{{ fnl.placeholder|default('') ?: 'you@example.com' }}">
             {% include '@storefront/components/captcha.html.twig' with {form:'newsletter'} only %}
-            <button class="button button--primary button--lg newsletter-signup__submit" type="submit">{{ ui_text('subscribe') }}</button>
+            <button class="button button--primary button--lg newsletter-signup__submit" type="submit">{{ fnl.button|default('') ?: ui_text('subscribe') }}</button>
         </form>
     </div>
-</section>
-<footer class="site-footer">
+</section>{% endif %}
+<footer class="site-footer"{% if footer_style|trim %} style="{{ footer_style|trim }}"{% endif %}>
     <div class="shell site-footer__brand">
         <div class="site-footer__brand-copy">
             <div class="brand brand--footer">{% if presentation.brand.logo %}<img class="brand__logo" src="{{ presentation.brand.logo }}" alt="{{ storefront_brand_name }}">{% elseif presentation.brand.icon %}<img class="brand__icon" src="{{ presentation.brand.icon }}" alt="">{% else %}<span class="reference-brand__bag" aria-hidden="true">{{ ui_icon('shopping-bag', 20) }}</span>{% endif %}<span><strong>{{ storefront_brand_name }}</strong><small>{{ presentation.brand.subtitle ?: ui_text('modern_ecommerce') }}</small></span></div>
-            <p>{{ ui_text('platform_tagline') }}</p>
+            <p>{{ fcfg.tagline|default('') ?: ui_text('platform_tagline') }}</p>
         </div>
         <div class="site-footer__grid{{ footer_contact.has_any or storefront_menu('footer') ? ' has-contacts' : '' }}">
-            <section><h2>{{ ui_text('company') }}</h2>{% if capabilities.features.content %}<a href="/about-us">{{ ui_text('about') }}</a><a href="/contact">{{ ui_text('contacts') }}</a>{% endif %}{% if capabilities.features.blog %}<a href="/blog">{{ ui_text('blog') }}</a>{% endif %}{% if capabilities.features.forum|default(false) %}<a href="/forum">{{ ui_text('forum') }}</a>{% endif %}{% for placed_page in placed_pages('footer') %}<a href="{{ placed_page.url }}">{{ placed_page.title }}</a>{% endfor %}</section>
-            {% if capabilities.features.content %}<section><h2>{{ ui_text('buyers') }}</h2><a href="/shipping">{{ ui_text('shipping') }}</a><a href="/payment">{{ ui_text('payment') }}</a><a href="/returns">{{ ui_text('returns_exchange') }}</a><a href="/warranty">{{ ui_text('warranty') }}</a><a href="/faq">{{ ui_text('faq') }}</a></section>{% endif %}
-            <section><h2>{{ ui_text('legal') }}</h2><a href="{{ path('storefront_withdrawal') }}" data-withdrawal-link>{{ ui_text('withdrawal_footer_link') }}</a><a href="{{ path('storefront_accessibility_statement') }}">{{ ui_text('a11y_footer_link') }}</a>{% if capabilities.features.content %}<a href="/privacy-policy">{{ ui_text('privacy_policy') }}</a><a href="/cookie-policy">{{ ui_text('cookie_policy') }}</a><a href="/terms-and-conditions">{{ ui_text('terms') }}</a>{% endif %}<button class="footer-link-button" type="button" data-consent-open>{{ ui_text('cookie_settings') }}</button></section>
+            {% set company_links %}{% if capabilities.features.content and 'about' not in fhide %}<a href="/about-us">{{ ui_text('about') }}</a>{% endif %}{% if capabilities.features.content and 'contacts' not in fhide %}<a href="/contact">{{ ui_text('contacts') }}</a>{% endif %}{% if capabilities.features.blog and 'blog' not in fhide %}<a href="/blog">{{ ui_text('blog') }}</a>{% endif %}{% if capabilities.features.forum|default(false) and 'forum' not in fhide %}<a href="/forum">{{ ui_text('forum') }}</a>{% endif %}{% for placed_page in placed_pages('footer') %}<a href="{{ placed_page.url }}">{{ placed_page.title }}</a>{% endfor %}{% endset %}
+            {% if company_links|trim %}<section><h2>{{ ui_text('company') }}</h2>{{ company_links }}</section>{% endif %}
+            {% set buyer_links %}{% if capabilities.features.content %}{% if 'shipping' not in fhide %}<a href="/shipping">{{ ui_text('shipping') }}</a>{% endif %}{% if 'payment' not in fhide %}<a href="/payment">{{ ui_text('payment') }}</a>{% endif %}{% if 'returns' not in fhide %}<a href="/returns">{{ ui_text('returns_exchange') }}</a>{% endif %}{% if 'warranty' not in fhide %}<a href="/warranty">{{ ui_text('warranty') }}</a>{% endif %}{% if 'faq' not in fhide %}<a href="/faq">{{ ui_text('faq') }}</a>{% endif %}{% endif %}{% endset %}
+            {% if buyer_links|trim %}<section><h2>{{ ui_text('buyers') }}</h2>{{ buyer_links }}</section>{% endif %}
+            {% set legal_links %}{% if 'withdrawal' not in fhide %}<a href="{{ path('storefront_withdrawal') }}" data-withdrawal-link>{{ ui_text('withdrawal_footer_link') }}</a>{% endif %}{% if 'a11y' not in fhide %}<a href="{{ path('storefront_accessibility_statement') }}">{{ ui_text('a11y_footer_link') }}</a>{% endif %}{% if capabilities.features.content %}{% if 'privacy' not in fhide %}<a href="/privacy-policy">{{ ui_text('privacy_policy') }}</a>{% endif %}{% if 'cookie_policy' not in fhide %}<a href="/cookie-policy">{{ ui_text('cookie_policy') }}</a>{% endif %}{% if 'terms' not in fhide %}<a href="/terms-and-conditions">{{ ui_text('terms') }}</a>{% endif %}{% endif %}{% if 'cookie_settings' not in fhide %}<button class="footer-link-button" type="button" data-consent-open>{{ ui_text('cookie_settings') }}</button>{% endif %}{% endset %}
+            {% if legal_links|trim %}<section><h2>{{ ui_text('legal') }}</h2>{{ legal_links }}</section>{% endif %}
+            {% for fcol in fcfg.columns|default([]) %}<section class="site-footer__links"><h2>{{ fcol.title }}</h2>{% for fl in fcol.links %}<a href="{{ fl.url }}"{% if fl.new_tab %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ fl.label }}</a>{% endfor %}</section>{% endfor %}
             {% set footer_menu = storefront_menu('footer') %}{% if footer_menu %}<section class="site-footer__links"><h2>{{ ui_text('footer_links') }}</h2>{% for item in footer_menu %}<a href="{{ item.url }}"{% if item.open_new_tab %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ item.name }}</a>{% endfor %}</section>{% endif %}
             {% if footer_contact.has_any %}
             <section class="site-footer__contacts"><h2>{{ ui_text('contacts') }}</h2>
@@ -42,5 +49,5 @@
             {% endif %}
         </div>
     </div>
-    <div class="shell site-footer__bottom"><span>© {{ 'now'|date('Y') }} {{ storefront_brand_name }}</span>{% if footer_contact.social %}{% include '@storefront/components/social_links.html.twig' with {social: footer_contact.social, variant: 'light'} only %}{% endif %}</div>
+    <div class="shell site-footer__bottom"><span>{% if fcfg.copyright|default('') %}{{ fcfg.copyright|replace({'{year}': 'now'|date('Y'), '{brand}': storefront_brand_name}) }}{% else %}© {{ 'now'|date('Y') }} {{ storefront_brand_name }}{% endif %}</span>{% if footer_contact.social %}{% include '@storefront/components/social_links.html.twig' with {social: footer_contact.social, variant: 'light'} only %}{% endif %}</div>
 </footer>

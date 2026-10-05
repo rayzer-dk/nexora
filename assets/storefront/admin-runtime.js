@@ -149,10 +149,179 @@ function ensureConfirmDialog() {
   dialog.append(closeButton, iconWrap, title, message, actions);
   modal.replaceChildren(make('div', 'admin-modal__backdrop', { 'data-confirm-cancel': '' }), dialog);
   q('#admin-confirm-title', modal).textContent = t('js_confirm_title');
-  q('button[data-confirm-cancel]', modal).textContent = t('js_cancel');
+  q('.admin-modal__actions [data-confirm-cancel]', modal).textContent = t('js_cancel');
   q('[data-confirm-accept]', modal).textContent = t('js_continue');
   document.body.appendChild(modal);
   return modal;
+}
+
+// Icon picker: every Lucide icon in a blurred modal; the owner picks the icon for a card, banner or menu entry.
+// Markup: <div data-icon-picker><input type="hidden" data-icon-input name="…" value="…"><button type="button" data-icon-open>…</button></div>
+let iconLibraryPromise = null;
+function loadIconLibrary() {
+  iconLibraryPromise ??= window.fetch('/admin/icons.json', { credentials: 'same-origin' })
+    .then((response) => (response.ok ? response.json() : Promise.reject(new Error('icons'))))
+    .then((data) => data.icons || {})
+    .catch(() => { iconLibraryPromise = null; return {}; });
+  return iconLibraryPromise;
+}
+
+function iconSvg(body, size = 20) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  for (const [name, value] of Object.entries({ width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.75, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', focusable: 'false' })) svg.setAttribute(name, String(value));
+  svg.classList.add('ui-icon');
+  // The bodies come from our own icon library file, never from user input.
+  svg.innerHTML = body;
+  return svg;
+}
+
+function ensureIconDialog() {
+  let modal = q('[data-icon-dialog]');
+  if (modal) return modal;
+  modal = document.createElement('div');
+  modal.className = 'admin-modal admin-icon-modal';
+  modal.hidden = true;
+  modal.setAttribute('data-icon-dialog', '');
+  modal.innerHTML = `<div class="admin-modal__backdrop" data-icon-close></div>
+    <section class="admin-modal__dialog admin-icon-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="admin-icon-title">
+      <header class="admin-icon-modal__head"><h2 id="admin-icon-title"></h2><button class="admin-modal__close" type="button" data-icon-close></button></header>
+      <input class="admin-icon-modal__search" type="search" data-icon-search autocomplete="off">
+      <div class="admin-icon-modal__meta"><span data-icon-count></span><button type="button" class="admin-button is-sm" data-icon-none></button></div>
+      <div class="admin-icon-modal__grid" data-icon-grid role="listbox"></div>
+    </section>`;
+  q('#admin-icon-title', modal).textContent = t('js_icon_title');
+  const close = q('.admin-modal__close', modal);
+  close.setAttribute('aria-label', t('js_close'));
+  close.append(lucideIconNode('x', 18));
+  q('[data-icon-search]', modal).setAttribute('placeholder', t('js_icon_search'));
+  q('[data-icon-none]', modal).textContent = t('js_icon_none');
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function initIconPickers() {
+  const fields = qa('[data-icon-picker]');
+  if (!fields.length) return;
+  const modal = ensureIconDialog();
+  const grid = q('[data-icon-grid]', modal);
+  const search = q('[data-icon-search]', modal);
+  const count = q('[data-icon-count]', modal);
+  const none = q('[data-icon-none]', modal);
+  let library = {};
+  let names = [];
+  let shown = [];
+  let rendered = 0;
+  let active = null;
+  const CHUNK = 240;
+
+  const paint = (field, name, silent = false) => {
+    const input = q('[data-icon-input]', field);
+    const preview = q('[data-icon-preview]', field);
+    const label = q('[data-icon-name]', field);
+    input.value = name;
+    if (preview) preview.replaceChildren(name && library[name] ? iconSvg(library[name], 20) : document.createTextNode(''));
+    if (label) label.textContent = name || t('js_icon_none');
+    if (!silent) input.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
+  const renderMore = () => {
+    const fragment = document.createDocumentFragment();
+    const current = active ? q('[data-icon-input]', active).value : '';
+    for (const name of shown.slice(rendered, rendered + CHUNK)) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'admin-icon-modal__item';
+      button.setAttribute('role', 'option');
+      button.dataset.icon = name;
+      button.title = name;
+      if (name === current) { button.classList.add('is-active'); button.setAttribute('aria-selected', 'true'); }
+      button.append(iconSvg(library[name], 24));
+      const caption = document.createElement('span');
+      caption.textContent = name;
+      button.append(caption);
+      fragment.append(button);
+    }
+    rendered += CHUNK;
+    grid.append(fragment);
+  };
+
+  const filter = () => {
+    const needle = search.value.trim().toLowerCase().replace(/\s+/g, '-');
+    shown = needle ? names.filter((name) => name.includes(needle)) : names;
+    rendered = 0;
+    grid.replaceChildren();
+    grid.scrollTop = 0;
+    count.textContent = t('js_icon_count', { count: shown.length });
+    if (!shown.length) {
+      const empty = document.createElement('p');
+      empty.className = 'admin-help';
+      empty.textContent = t('js_icon_empty');
+      grid.append(empty);
+      return;
+    }
+    renderMore();
+  };
+
+  const close = () => {
+    modal.hidden = true;
+    modal.classList.remove('is-open');
+    document.body.classList.remove('has-admin-modal');
+    active?.querySelector('[data-icon-open]')?.focus();
+    active = null;
+  };
+
+  grid.addEventListener('scroll', () => { if (rendered < shown.length && grid.scrollTop + grid.clientHeight > grid.scrollHeight - 240) renderMore(); });
+  search.addEventListener('input', filter);
+  qa('[data-icon-close]', modal).forEach((node) => node.addEventListener('click', close));
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !modal.hidden) { event.preventDefault(); close(); } });
+  grid.addEventListener('click', (event) => {
+    const item = event.target.closest('[data-icon]');
+    if (!item || !active) return;
+    paint(active, item.dataset.icon);
+    close();
+  });
+  none.addEventListener('click', () => { if (active) paint(active, ''); close(); });
+
+  const open = async (field) => {
+    active = field;
+    modal.hidden = false;
+    document.body.classList.add('has-admin-modal');
+    requestAnimationFrame(() => modal.classList.add('is-open'));
+    none.hidden = !field.hasAttribute('data-icon-clearable');
+    if (!names.length) {
+      count.textContent = t('js_icon_loading');
+      library = await loadIconLibrary();
+      names = Object.keys(library).sort();
+    }
+    search.value = '';
+    filter();
+    const current = q('.is-active', grid);
+    if (current) current.scrollIntoView({ block: 'center' });
+    search.focus();
+  };
+
+  // Show the chosen icon in the field right away (the page only renders the name).
+  loadIconLibrary().then((data) => {
+    library = data;
+    fields.forEach((field) => { const input = q('[data-icon-input]', field); paint(field, input.value, true); });
+  });
+  fields.forEach((field) => q('[data-icon-open]', field)?.addEventListener('click', () => open(field)));
+}
+
+// Dates arrive from the database with seconds, microseconds and a zone; people read "2026-10-05 04:00".
+function tidyTimestamps() {
+  const pattern = /^(\s*)(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}):\d{2}(?:\.\d+)?(?:Z|[+-]00:?00)?(\s*)$/;
+  const walker = document.createTreeWalker(q('main') || document.body, window.NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach((node) => {
+    if (node.parentElement?.closest('input, textarea, script, style, pre, code, [data-keep-timestamp]')) return;
+    const match = node.nodeValue.match(pattern);
+    if (match) {
+      node.nodeValue = `${match[1]}${match[2]} ${match[3]}${match[4]}`;
+      node.parentElement?.closest('td')?.classList.add('is-nowrap');
+    }
+  });
 }
 
 function initConfirmations() {
@@ -196,6 +365,10 @@ function initConfirmations() {
     event.preventDefault();
     pending = trigger;
     message.textContent = trigger.dataset.confirm || t('js_confirm_question');
+    // Only a destructive action gets the red button; a harmless one (send a reminder, apply) stays primary.
+    const target = `${form?.getAttribute('action') || ''} ${trigger.getAttribute('href') || ''} ${trigger.dataset.confirmTone || ''}`;
+    accept.classList.toggle('is-danger', /delete|remove|disable|uninstall|restore|rollback|revoke|purge|reset|archive|ban|clear|wipe|cancel|refund|danger/i.test(target));
+    accept.classList.toggle('is-primary', !accept.classList.contains('is-danger'));
     modal.hidden = false;
     requestAnimationFrame(() => modal.classList.add('is-open'));
     document.body.classList.add('has-admin-modal');
@@ -718,7 +891,7 @@ function enhanceTable(table) {
 
   let query = '';
   let searchBox = null;
-  if (!serverPaged && rows.length > 10 && !table.hasAttribute('data-no-search')) {
+  if (!serverPaged && rows.length > 10 && !table.hasAttribute('data-no-search') && !document.querySelector('main form[method="get"] input[name="q"]')) {
     searchBox = document.createElement('input');
     searchBox.type = 'search';
     searchBox.className = 'admin-table-search';
@@ -1625,7 +1798,9 @@ function initAdminPush() {
 document.addEventListener('DOMContentLoaded', () => {
   initFlashToasts();
   initAdminAjaxForms();
+  tidyTimestamps();
   initConfirmations();
+  initIconPickers();
   initDirtyGuard();
   initImagePreviews();
   initSidebar();

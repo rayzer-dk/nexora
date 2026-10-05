@@ -353,4 +353,35 @@ if (checkout) {
       button.disabled = false;
     }
   }));
+  // Keep what the shopper typed even if they leave: the shop can then see who abandoned the cart and write to them.
+  const leadToken = q('[data-lead-token]', form);
+  if (leadToken && form) {
+    let leadTimer = 0;
+    let leadSent = '';
+    const sendLead = () => {
+      const field = (name) => (form.elements[name] ? String(form.elements[name].value || '').trim() : '');
+      const payload = { name: field('name'), email: field('email'), phone: field('phone') };
+      const digits = payload.phone.replace(/\D/g, '');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email) && digits.length < 7) return;
+      const key = JSON.stringify(payload);
+      if (key === leadSent) return;
+      leadSent = key;
+      const body = new URLSearchParams({ ...payload, _token: leadToken.value });
+      try {
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon('/checkout/lead', body);
+        } else {
+          window.fetch('/checkout/lead', { method: 'POST', body, credentials: 'same-origin', keepalive: true });
+        }
+      } catch (_) { /* the lead is a bonus, never block the checkout */ }
+    };
+    ['name', 'email', 'phone'].forEach((name) => {
+      const input = form.elements[name];
+      if (!input || typeof input.addEventListener !== 'function') return;
+      input.addEventListener('change', () => { window.clearTimeout(leadTimer); leadTimer = window.setTimeout(sendLead, 400); });
+    });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') sendLead(); });
+    window.addEventListener('pagehide', sendLead);
+    sendLead();
+  }
 }

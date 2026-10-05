@@ -9,7 +9,7 @@
     {% for message in app.flashes('checkout_error') %}<div class="store-notice is-error" role="alert" data-checkout-flash>{{ ui_icon('circle-alert', 18) }}<span>{{ message }}</span></div>{% endfor %}
     <div class="store-notice is-error ck-errors" role="alert" tabindex="-1" data-checkout-errors hidden></div>
     <form method="post" action="/checkout/place" class="checkout-builder-layout" data-checkout-form novalidate>
-      <input type="hidden" name="_token" value="{{ csrf_token('checkout_place') }}"><input type="hidden" name="checkout_key" value="{{ checkout_key }}"><input type="hidden" data-promotion-token value="{{ csrf_token('checkout_promotion') }}">
+      <input type="hidden" name="_token" value="{{ csrf_token('checkout_place') }}"><input type="hidden" name="checkout_key" value="{{ checkout_key }}"><input type="hidden" data-promotion-token value="{{ csrf_token('checkout_promotion') }}"><input type="hidden" data-lead-token value="{{ csrf_token('checkout_lead') }}">
       {% if not cart.requires_shipping %}<input type="hidden" name="carrier" value="digital">{% endif %}
       <input type="hidden" name="city_id" data-city-id value="{{ old.city_id|default('') }}"><input type="hidden" name="city_name" data-city-name value="{{ old.city_name|default('') }}"><input type="hidden" name="point_id" data-point-id value="{{ old.point_id|default('') }}"><input type="hidden" name="point_name" data-point-name value="{{ old.point_name|default('') }}"><input type="hidden" name="service_type" value="pickup_point" data-service-type>
       {% include '@storefront/checkout/_extension_slot.html.twig' with {slot:'checkout.before_contact'} only %}

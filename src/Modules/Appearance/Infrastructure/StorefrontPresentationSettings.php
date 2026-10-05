@@ -20,6 +20,17 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
     /** Icons offered for the benefit cards (all are Lucide icons shipped with the admin). */
     public const BENEFIT_ICONS = ['truck', 'shield-check', 'package', 'credit-card', 'star', 'headset', 'refresh-cw', 'lock', 'gift', 'clock', 'heart', 'thumbs-up', 'phone', 'map-pin', 'badge-percent'];
 
+    /**
+     * The links the footer brings by itself: key => [column, address]. The owner switches single links off and adds own columns.
+     * An address starting with "route:" is a named route, "js:" a button handled by the storefront script.
+     */
+    public const FOOTER_LINKS = [
+        'about' => ['company', '/about-us'], 'contacts' => ['company', '/contact'], 'blog' => ['company', '/blog'], 'forum' => ['company', '/forum'],
+        'shipping' => ['buyers', '/shipping'], 'payment' => ['buyers', '/payment'], 'returns' => ['buyers', '/returns'], 'warranty' => ['buyers', '/warranty'], 'faq' => ['buyers', '/faq'],
+        'withdrawal' => ['legal', 'route:storefront_withdrawal'], 'a11y' => ['legal', 'route:storefront_accessibility_statement'], 'privacy' => ['legal', '/privacy-policy'],
+        'cookie_policy' => ['legal', '/cookie-policy'], 'terms' => ['legal', '/terms-and-conditions'], 'cookie_settings' => ['legal', 'js:consent'],
+    ];
+
     /** @return array<string,mixed> */
     public function get(int $storeId): array
     {
@@ -139,7 +150,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             'blog' => ['index' => ['show_intro' => true, 'show_categories' => true, 'show_search' => true, 'show_featured' => true, 'show_tags' => true, 'show_rss' => true, 'layout' => 'grid', 'columns' => '3'], 'article' => ['show_toc' => true, 'show_author' => true, 'show_reading_time' => true, 'show_tags' => true, 'show_share' => true, 'show_products' => true, 'show_related' => true, 'show_neighbors' => true]],
             // Announcement bar above the header. Empty text falls back to the demo showcase text while the demo is installed.
             'announcement' => [
-                'enabled' => true, 'text' => '', 'link_label' => '', 'link_url' => '', 'mode' => 'marquee_mobile', 'bg' => '',
+                'enabled' => true, 'text' => '', 'link_label' => '', 'link_url' => '', 'mode' => 'marquee_mobile', 'bg' => '', 'fg' => '', 'items' => [], 'devices' => ['desktop' => true, 'tablet' => true, 'mobile' => true],
                 'pages' => ['home' => true, 'catalog' => true, 'category' => true, 'product' => true, 'cart' => true, 'blog' => true, 'content' => true],
             ],
             // Optional overrides of single colours; an empty value keeps the colour of the chosen preset and colour scheme.
@@ -162,9 +173,17 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             ],
             // Empty title/text mean "use the translated default", so every language keeps a correct notice until the owner writes their own.
             'consent' => ['title' => '', 'text' => '', 'position' => 'bar', 'tone' => 'light', 'show_icon' => true],
+            // Footer: newsletter block and columns. Empty texts keep the translated defaults; own columns are added after the built-in ones.
+            'footer' => [
+                'tagline' => '', 'copyright' => '', 'bg' => '', 'text_color' => '',
+                'newsletter' => ['enabled' => true, 'icon' => 'mail', 'eyebrow' => '', 'title' => '', 'text' => '', 'button' => '', 'placeholder' => '', 'bg' => '', 'text_color' => ''],
+                'hidden_links' => [],
+                'columns' => [],
+            ],
             'header' => [
                 'search_placeholder' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.poshuk_tovariv_katehorii_brendiv'),
                 'show_category_nav' => true,
+                'show_topbar' => true,
             ],
             // Benefit cards under the categories: own icon, title and text per language; where they show and how many on a phone.
             'benefits' => ['items' => [], 'devices' => ['desktop' => true, 'tablet' => true, 'mobile' => true], 'mobile_limit' => '0'],
@@ -238,6 +257,24 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $mode = (string) ($an['mode'] ?? 'marquee_mobile');
         $out['announcement']['mode'] = in_array($mode, ['marquee_mobile', 'marquee', 'static'], true) ? $mode : 'marquee_mobile';
         $out['announcement']['bg'] = $this->hex($an['bg'] ?? '', '');
+        $out['announcement']['fg'] = $this->hex($an['fg'] ?? '', '');
+        foreach (['desktop', 'tablet', 'mobile'] as $device) {
+            $out['announcement']['devices'][$device] = (bool) (is_array($an['devices'] ?? null) ? ($an['devices'][$device] ?? false) : true);
+        }
+        // Further messages: several are shown one after another (or in the ticker); each has its own text, link label and address.
+        $extra = [];
+        foreach (array_slice(is_array($an['items'] ?? null) ? array_values($an['items']) : [], 0, 4) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $itemText = $this->text($item['text'] ?? '', 200);
+            $filled = is_array($itemText) ? array_filter($itemText, static fn (string $v): bool => $v !== '') !== [] : $itemText !== '';
+            if (!$filled) {
+                continue;
+            }
+            $extra[] = ['text' => $itemText, 'link_label' => $this->text($item['link_label'] ?? '', 40), 'link_url' => trim((string) ($item['link_url'] ?? '')) === '' ? '' : $this->url($item['link_url'])];
+        }
+        $out['announcement']['items'] = $extra;
         foreach (array_keys($defaults['announcement']['pages']) as $page) {
             $out['announcement']['pages'][$page] = (bool) (is_array($an['pages'] ?? null) ? ($an['pages'][$page] ?? false) : $defaults['announcement']['pages'][$page]);
         }
@@ -274,7 +311,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 continue;
             }
             $icon = (string) ($item['icon'] ?? 'shield-check');
-            $items[] = ['icon' => in_array($icon, self::BENEFIT_ICONS, true) ? $icon : 'shield-check', 'title' => $title, 'text' => $this->text($item['text'] ?? '', 90)];
+            $items[] = ['icon' => $this->icon($icon, 'shield-check'), 'title' => $title, 'text' => $this->text($item['text'] ?? '', 90)];
         }
         $out['benefits']['items'] = $items;
         foreach (['desktop', 'tablet', 'mobile'] as $device) {
@@ -287,8 +324,50 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $out['consent']['position'] = $choice($c['position'] ?? 'bar', ['bar', 'card_left', 'card_right'], 'bar');
         $out['consent']['tone'] = $choice($c['tone'] ?? 'light', ['light', 'dark', 'brand'], 'light');
         $out['consent']['show_icon'] = (bool) ($c['show_icon'] ?? $defaults['consent']['show_icon']);
+        $ft = is_array($input['footer'] ?? null) ? $input['footer'] : [];
+        $out['footer']['tagline'] = $this->text($ft['tagline'] ?? '', 200);
+        $out['footer']['copyright'] = $this->text($ft['copyright'] ?? '', 160);
+        $out['footer']['bg'] = $this->hex($ft['bg'] ?? '', '');
+        $out['footer']['text_color'] = $this->hex($ft['text_color'] ?? '', '');
+        $fn = is_array($ft['newsletter'] ?? null) ? $ft['newsletter'] : [];
+        $out['footer']['newsletter']['enabled'] = (bool) ($fn['enabled'] ?? $defaults['footer']['newsletter']['enabled']);
+        $out['footer']['newsletter']['icon'] = $this->icon((string) ($fn['icon'] ?? 'mail'), 'mail', true);
+        foreach (['eyebrow' => 60, 'title' => 120, 'text' => 240, 'button' => 40, 'placeholder' => 60] as $key => $max) {
+            $out['footer']['newsletter'][$key] = $this->text($fn[$key] ?? '', $max);
+        }
+        $out['footer']['newsletter']['bg'] = $this->hex($fn['bg'] ?? '', '');
+        $out['footer']['newsletter']['text_color'] = $this->hex($fn['text_color'] ?? '', '');
+        $out['footer']['hidden_links'] = array_values(array_filter(
+            array_map('strval', is_array($ft['hidden_links'] ?? null) ? array_values($ft['hidden_links']) : []),
+            static fn (string $key): bool => isset(self::FOOTER_LINKS[$key]),
+        ));
+        $columns = [];
+        foreach (array_slice(is_array($ft['columns'] ?? null) ? array_values($ft['columns']) : [], 0, 3) as $column) {
+            if (!is_array($column)) {
+                continue;
+            }
+            $title = $this->text($column['title'] ?? '', 40);
+            $links = [];
+            foreach (array_slice(is_array($column['links'] ?? null) ? array_values($column['links']) : [], 0, 8) as $link) {
+                if (!is_array($link)) {
+                    continue;
+                }
+                $label = $this->text($link['label'] ?? '', 60);
+                $filled = is_array($label) ? array_filter($label, static fn (string $v): bool => $v !== '') !== [] : $label !== '';
+                if (!$filled || trim((string) ($link['url'] ?? '')) === '') {
+                    continue;
+                }
+                $links[] = ['label' => $label, 'url' => $this->url($link['url']), 'new_tab' => (bool) ($link['new_tab'] ?? false)];
+            }
+            $titleFilled = is_array($title) ? array_filter($title, static fn (string $v): bool => $v !== '') !== [] : $title !== '';
+            if ($titleFilled && $links !== []) {
+                $columns[] = ['title' => $title, 'links' => $links];
+            }
+        }
+        $out['footer']['columns'] = $columns;
         $out['header']['search_placeholder'] = $this->text($input['header']['search_placeholder'] ?? '', 160);
         $out['header']['show_category_nav'] = (bool) ($input['header']['show_category_nav'] ?? false);
+        $out['header']['show_topbar'] = (bool) ($input['header']['show_topbar'] ?? $defaults['header']['show_topbar']);
         foreach (array_keys($defaults['home']) as $key) {
             $out['home'][$key] = (bool) ($input['home'][$key] ?? false);
         }
@@ -305,6 +384,19 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             $out[$slot]['url'] = $this->url($input[$slot]['url'] ?? '/catalog');
         }
         return $out;
+    }
+
+    /** A Lucide icon name from the admin icon picker; anything that is not in the library falls back. */
+    private function icon(string $name, string $fallback, bool $allowEmpty = false): string
+    {
+        static $library = null;
+        $name = trim($name);
+        if ($name === '' && $allowEmpty) {
+            return '';
+        }
+        $library ??= \Commerce\Core\I18n\StorefrontUiTwigExtension::loadIconLibrary();
+
+        return preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $name) === 1 && (isset($library[$name]) || in_array($name, self::BENEFIT_ICONS, true)) ? $name : $fallback;
     }
 
     private function hex(mixed $value, string $fallback): string

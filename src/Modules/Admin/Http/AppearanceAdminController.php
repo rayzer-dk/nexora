@@ -33,16 +33,18 @@ final class AppearanceAdminController extends AbstractController
                 return $this->redirectToRoute('admin_appearance_storefront');
             }
             $bool = static fn (string $key): bool => $request->request->has($key);
+            // A text field is sent once per store language (name[locale]); an old form sends a plain string.
+            $tx = static fn (string $key): string|array => is_array($request->request->all()[$key] ?? null) ? $request->request->all($key) : (string) $request->request->get($key, '');
             try {
                 $this->settings->save($context->storeId, [
                     'utility' => [
-                        'location' => $request->request->get('utility_location',''),
-                        'delivery' => $request->request->get('utility_delivery',''),
-                        'support' => $request->request->get('utility_support',''),
+                        'location' => $tx('utility_location'),
+                        'delivery' => $tx('utility_delivery'),
+                        'support' => $tx('utility_support'),
                     ],
                     'brand' => [
-                        'title' => $request->request->get('brand_title',''),
-                        'subtitle' => $request->request->get('brand_subtitle',''),
+                        'title' => $tx('brand_title'),
+                        'subtitle' => $tx('brand_subtitle'),
                         'logo' => $request->request->get('brand_logo',''),
                         'icon' => $request->request->get('brand_icon',''),
                         'favicon' => $request->request->get('brand_favicon',''),
@@ -102,11 +104,14 @@ final class AppearanceAdminController extends AbstractController
                     ],
                     'announcement' => [
                         'enabled' => $bool('announcement_enabled'),
-                        'text' => $request->request->get('announcement_text', ''),
-                        'link_label' => $request->request->get('announcement_link_label', ''),
+                        'text' => $tx('announcement_text'),
+                        'link_label' => $tx('announcement_link_label'),
                         'link_url' => $request->request->get('announcement_link_url', ''),
                         'mode' => $request->request->get('announcement_mode', 'marquee_mobile'),
                         'bg' => $request->request->getBoolean('announcement_bg_on') ? (string) $request->request->get('announcement_bg', '') : '',
+                        'fg' => $request->request->getBoolean('announcement_fg_on') ? (string) $request->request->get('announcement_fg', '') : '',
+                        'devices' => ['desktop' => $bool('announcement_dev_desktop'), 'tablet' => $bool('announcement_dev_tablet'), 'mobile' => $bool('announcement_dev_mobile')],
+                        'items' => $this->announcementItems($request),
                         'pages' => array_combine(
                             ['home', 'catalog', 'category', 'product', 'cart', 'blog', 'content'],
                             array_map(static fn (string $page): bool => $request->request->getBoolean('announcement_page_' . $page), ['home', 'catalog', 'category', 'product', 'cart', 'blog', 'content']),
@@ -120,15 +125,17 @@ final class AppearanceAdminController extends AbstractController
                         ),
                     ),
                     'consent' => [
-                        'title' => $request->request->get('consent_title',''),
-                        'text' => $request->request->get('consent_text',''),
+                        'title' => $tx('consent_title'),
+                        'text' => $tx('consent_text'),
                         'position' => $request->request->get('consent_position','bar'),
                         'tone' => $request->request->get('consent_tone','light'),
                         'show_icon' => $bool('consent_show_icon'),
                     ],
+                    'footer' => $this->footerSettings($request, $bool),
                     'header' => [
-                        'search_placeholder' => $request->request->get('search_placeholder',''),
+                        'search_placeholder' => $tx('search_placeholder'),
                         'show_category_nav' => $bool('show_category_nav'),
+                        'show_topbar' => $bool('show_topbar'),
                     ],
                     'benefits' => [
                         'items' => $this->benefitItems($request),
@@ -143,23 +150,23 @@ final class AppearanceAdminController extends AbstractController
                         'show_articles' => $bool('show_articles'),
                     ],
                     'hero' => [
-                        'eyebrow' => $request->request->get('hero_eyebrow',''),
-                        'title' => $request->request->get('hero_title',''),
-                        'subtitle' => $request->request->get('hero_subtitle',''),
-                        'text' => $request->request->get('hero_text',''),
+                        'eyebrow' => $tx('hero_eyebrow'),
+                        'title' => $tx('hero_title'),
+                        'subtitle' => $tx('hero_subtitle'),
+                        'text' => $tx('hero_text'),
                         'image' => $request->request->get('hero_image',''),
-                        'button_label' => $request->request->get('hero_button_label',''),
+                        'button_label' => $tx('hero_button_label'),
                         'button_url' => $request->request->get('hero_button_url',''),
                     ],
                     'promo_left' => [
-                        'title' => $request->request->get('promo_left_title',''),
-                        'text' => $request->request->get('promo_left_text',''),
+                        'title' => $tx('promo_left_title'),
+                        'text' => $tx('promo_left_text'),
                         'image' => $request->request->get('promo_left_image',''),
                         'url' => $request->request->get('promo_left_url',''),
                     ],
                     'promo_right' => [
-                        'title' => $request->request->get('promo_right_title',''),
-                        'text' => $request->request->get('promo_right_text',''),
+                        'title' => $tx('promo_right_title'),
+                        'text' => $tx('promo_right_text'),
                         'image' => $request->request->get('promo_right_image',''),
                         'url' => $request->request->get('promo_right_url',''),
                     ],
@@ -174,8 +181,11 @@ final class AppearanceAdminController extends AbstractController
         $store = $connection->fetchAssociative('SELECT name FROM mc_store WHERE id=?', [$context->storeId]) ?: [];
         return $this->render('@storefront/admin/appearance/storefront.html.twig', [
             'settings' => $this->settings->get($context->storeId),
+            'raw' => $this->settings->getRaw($context->storeId),
             'raw_benefits' => $this->settings->getRaw($context->storeId)['benefits'] ?? [],
             'benefit_icons' => \Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings::BENEFIT_ICONS,
+            'raw_footer' => $this->settings->getRaw($context->storeId)['footer'] ?? [],
+            'footer_links' => \Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings::FOOTER_LINKS,
             'store_locales' => $connection->fetchAllAssociative('SELECT sl.locale_code code,COALESCE(l.native_name,sl.locale_code) native_name FROM mc_store_locale sl LEFT JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.store_id=? AND sl.enabled=1 ORDER BY sl.is_default DESC,sl.locale_code', [$context->storeId]),
             'store' => $store,
             'platform_version' => PlatformVersion::VERSION,
@@ -206,6 +216,74 @@ final class AppearanceAdminController extends AbstractController
     {
         $user = $this->getUser();
         return $user instanceof AdminUser ? 'admin:' . $user->id : 'admin';
+    }
+
+    /**
+     * Further announcement messages from the form: a text and a link label per language and one address.
+     *
+     * @return list<array{text:array<string,string>,link_label:array<string,string>,link_url:string}>
+     */
+    private function announcementItems(Request $request): array
+    {
+        $texts = $request->request->all('ann_item_text');
+        $labels = $request->request->all('ann_item_label');
+        $urls = $request->request->all('ann_item_url');
+        $items = [];
+        foreach ($texts as $index => $text) {
+            $items[] = ['text' => is_array($text) ? $text : [], 'link_label' => is_array($labels[$index] ?? null) ? $labels[$index] : [], 'link_url' => (string) ($urls[$index] ?? '')];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Footer from the form: texts per language, colours, which built-in links stay and up to three own columns.
+     *
+     * @param callable(string):bool $bool
+     * @return array<string,mixed>
+     */
+    private function footerSettings(Request $request, callable $bool): array
+    {
+        $r = $request->request;
+        $map = static fn (string $key): array => is_array($r->all($key)) ? $r->all($key) : [];
+        $colour = static fn (string $key): string => $r->getBoolean($key . '_on') ? (string) $r->get($key, '') : '';
+        $hidden = [];
+        foreach (array_keys(\Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings::FOOTER_LINKS) as $key) {
+            if (!$r->getBoolean('footer_link_' . $key)) {
+                $hidden[] = $key;
+            }
+        }
+        $columns = [];
+        foreach ($map('footer_col_title') as $c => $title) {
+            $links = [];
+            $labels = $r->all('footer_link_label')[$c] ?? [];
+            $urls = $r->all('footer_link_url')[$c] ?? [];
+            $tabs = $r->all('footer_link_tab')[$c] ?? [];
+            foreach (is_array($urls) ? $urls : [] as $j => $url) {
+                $links[] = ['label' => is_array($labels[$j] ?? null) ? $labels[$j] : [], 'url' => (string) $url, 'new_tab' => !empty($tabs[$j])];
+            }
+            $columns[] = ['title' => is_array($title) ? $title : [], 'links' => $links];
+        }
+
+        return [
+            'tagline' => $map('footer_tagline'),
+            'copyright' => $map('footer_copyright'),
+            'bg' => $colour('footer_bg'),
+            'text_color' => $colour('footer_text_color'),
+            'newsletter' => [
+                'enabled' => $bool('footer_nl_enabled'),
+                'icon' => (string) $r->get('footer_nl_icon', 'mail'),
+                'eyebrow' => $map('footer_nl_eyebrow'),
+                'title' => $map('footer_nl_title'),
+                'text' => $map('footer_nl_text'),
+                'button' => $map('footer_nl_button'),
+                'placeholder' => $map('footer_nl_placeholder'),
+                'bg' => $colour('footer_nl_bg'),
+                'text_color' => $colour('footer_nl_text_color'),
+            ],
+            'hidden_links' => $hidden,
+            'columns' => $columns,
+        ];
     }
 
     /**

@@ -68,7 +68,9 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (preg_match('/^admin_catalog_(?:product|category)_(?:edit|new|translations|translation_save)$/D',$route)===1 || str_contains($route,'products_bulk_edit')) return AdminPermissionCatalog::CATALOG_MANAGE;
         if (str_starts_with($route,'admin_catalog_')) return $get?AdminPermissionCatalog::CATALOG_VIEW:AdminPermissionCatalog::CATALOG_MANAGE;
         if (in_array($route,['admin_commerce_customers_export','admin_commerce_subscribers_export'],true)) return AdminPermissionCatalog::CUSTOMERS_EXPORT;
-        if ($route==='admin_commerce_campaign_test') return AdminPermissionCatalog::MARKETING_MANAGE;
+        if ($route==='admin_commerce_campaign_test'||$route==='admin_commerce_marketing_cart_remind') return AdminPermissionCatalog::MARKETING_MANAGE;
+        // The icon library only lists drawings; any admin who can open the dashboard may use the picker.
+        if ($route==='admin_icon_library') return AdminPermissionCatalog::DASHBOARD_VIEW;
         if (str_starts_with($route,'admin_commerce_campaign_')||str_starts_with($route,'admin_commerce_subscriber')) return $get?AdminPermissionCatalog::MARKETING_VIEW:AdminPermissionCatalog::MARKETING_MANAGE;
         if ($route==='admin_commerce_customers') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if ($route==='admin_content_page_edit'||$route==='admin_content_page_new') return AdminPermissionCatalog::CONTENT_MANAGE;

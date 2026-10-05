@@ -17,8 +17,8 @@ async function saveConsent(page: Page, values: { title: string; text: string; po
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
   const panel = page.locator('[data-consent-settings]');
-  await panel.locator('input[name="consent_title"]').fill(values.title);
-  await panel.locator('textarea[name="consent_text"]').fill(values.text);
+  await panel.locator('input[name^="consent_title["]').first().fill(values.title);
+  await panel.locator('textarea[name^="consent_text["]').first().fill(values.text);
   await panel.locator(`input[name="consent_position"][value="${values.position}"]`).check({ force: true });
   await panel.locator(`input[name="consent_tone"][value="${values.tone}"]`).check({ force: true });
   await panel.locator('input[name="consent_show_icon"]').setChecked(values.icon);

@@ -19,7 +19,7 @@ final class MarketingAutomationAdminController extends AbstractController
         if($request->isMethod('POST')){
             $type=(string)$request->request->get('automation_type');
             if(!$this->isCsrfTokenValid('marketing_automation_'.$type,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
-            try{$this->automations->upsert($context->storeId,$type,$request->request->getBoolean('enabled'),(int)$request->request->get('delay_hours',24),(string)$request->request->get('subject'),(string)$request->request->get('body'),(string)$request->request->get('coupon_code'),$request->request->getBoolean('is_html'));$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.marketingautomationadmincontroller.avtomatyzatsiiu_zberezheno'));}
+            try{$this->automations->upsert($context->storeId,$type,$request->request->getBoolean('enabled'),(int)$request->request->get('delay_hours',24),(string)$request->request->get('subject'),(string)$request->request->get('body'),(string)$request->request->get('coupon_code'),$request->request->getBoolean('is_html'),$request->request->getBoolean('include_leads'));$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.marketingautomationadmincontroller.avtomatyzatsiiu_zberezheno'));}
             catch(\Throwable $e){$this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.marketingautomationadmincontroller.ne_vdalosia_zberehty_avtomatyzatsiiu'));}
             return $this->redirectToRoute('admin_commerce_marketing_automation');
         }
@@ -30,6 +30,16 @@ final class MarketingAutomationAdminController extends AbstractController
         return $this->render('@storefront/admin/commerce/marketing_automation.html.twig',['abandoned'=>$abandoned,'abandoned_stats'=>$abandonedStats,'types'=>$this->automations->types(),'automations'=>$map,'stats'=>$stats,'attribution'=>$attribution,'segments'=>$this->segments->labels()]);
     }
 
+    #[Route('/admin/commerce/marketing-automation/cart/{id}/remind',name:'admin_commerce_marketing_cart_remind',requirements:['id'=>'\d+'],methods:['POST'])]
+    public function remind(int $id,Request $request):Response
+    {
+        $context=$this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('cart_remind_'.$id,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+        $result=$this->automations->remindCart($context->storeId,$id);
+        $this->addFlash($result==='sent'?'success':'error',\Commerce\Core\I18n\CanonicalUiText::get('admin.carts.remind_'.$result));
+        return $this->redirect($this->generateUrl('admin_commerce_marketing_automation').'#carts');
+    }
+
     /**
      * Carts that were left for at least an hour: who, what, how much, when, and whether the reminder email went out.
      *
@@ -38,14 +48,14 @@ final class MarketingAutomationAdminController extends AbstractController
     private function abandonedCarts(int $storeId,string $locale):array
     {
         try{
-            $carts=$this->db->fetchAllAssociative("SELECT c.id,c.currency,c.updated_at,cu.display_name,cu.email,cu.phone_e164,SUM(ci.quantity*ci.unit_price_minor) total_minor,COUNT(ci.id) line_count FROM mc_cart c JOIN mc_cart_item ci ON ci.cart_id=c.id LEFT JOIN mc_customer cu ON cu.id=c.customer_id WHERE c.store_id=? AND c.status='active' AND c.updated_at<(UTC_TIMESTAMP(6)-INTERVAL 1 HOUR) AND c.updated_at>(UTC_TIMESTAMP(6)-INTERVAL 60 DAY) GROUP BY c.id,c.currency,c.updated_at,cu.display_name,cu.email,cu.phone_e164 ORDER BY c.updated_at DESC LIMIT 100",[$storeId]);
+            $carts=$this->db->fetchAllAssociative("SELECT c.id,c.currency,c.updated_at,COALESCE(NULLIF(cu.display_name,''),l.customer_name) display_name,COALESCE(cu.email,l.email) email,COALESCE(cu.phone_e164,l.phone) phone_e164,SUM(ci.quantity*ci.unit_price_minor) total_minor,COUNT(ci.id) line_count,MAX(l.id) IS NOT NULL from_checkout FROM mc_cart c JOIN mc_cart_item ci ON ci.cart_id=c.id LEFT JOIN mc_customer cu ON cu.id=c.customer_id LEFT JOIN mc_checkout_lead l ON l.cart_id=c.id WHERE c.store_id=? AND c.status='active' AND c.updated_at<(UTC_TIMESTAMP(6)-INTERVAL 1 HOUR) AND c.updated_at>(UTC_TIMESTAMP(6)-INTERVAL 60 DAY) GROUP BY c.id,c.currency,c.updated_at,cu.display_name,l.customer_name,cu.email,l.email,cu.phone_e164,l.phone ORDER BY (COALESCE(cu.email,l.email) IS NULL AND COALESCE(cu.phone_e164,l.phone) IS NULL),c.updated_at DESC LIMIT 100",[$storeId]);
         }catch(\Throwable){return [[],['total'=>0,'with_contact'=>0,'emailed'=>0,'recovered'=>0,'value_minor'=>0]];}
         $ids=array_map(static fn(array $c):int=>(int)$c['id'],$carts);
         $items=[];$mail=[];
         if($ids!==[]){
             $in=implode(',',array_fill(0,count($ids),'?'));
-            foreach($this->db->fetchAllAssociative("SELECT ci.cart_id,ci.quantity,COALESCE(pt.name,v.sku) name FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id LEFT JOIN mc_product_translation pt ON pt.product_id=v.product_id AND pt.locale=? WHERE ci.cart_id IN ($in) ORDER BY ci.id",[$locale,...$ids]) as $r){
-                $items[(int)$r['cart_id']][]=['name'=>(string)$r['name'],'quantity'=>(float)$r['quantity']];
+            foreach($this->db->fetchAllAssociative("SELECT ci.cart_id,ci.quantity,ci.unit_price_minor,v.product_id,COALESCE(pt.name,v.sku) name,(SELECT ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=v.product_id ORDER BY pm.sort_order,pm.media_asset_id LIMIT 1) image_key FROM mc_cart_item ci JOIN mc_product_variant v ON v.id=ci.variant_id LEFT JOIN mc_product_translation pt ON pt.product_id=v.product_id AND pt.locale=? WHERE ci.cart_id IN ($in) ORDER BY ci.id",[$locale,...$ids]) as $r){
+                $items[(int)$r['cart_id']][]=['name'=>(string)$r['name'],'quantity'=>(float)$r['quantity'],'price_minor'=>(int)$r['unit_price_minor'],'product_id'=>(int)$r['product_id'],'image'=>($r['image_key']??'')!==''?'/media/'.ltrim((string)$r['image_key'],'/'):''];
             }
             try{
                 foreach($this->db->fetchAllAssociative("SELECT d.cart_id,d.status,d.sent_at,d.redeemed_at,d.created_at FROM mc_marketing_automation_delivery d WHERE d.cart_id IN ($in) ORDER BY d.id",$ids) as $r){$mail[(int)$r['cart_id']]=$r;}
@@ -54,10 +64,10 @@ final class MarketingAutomationAdminController extends AbstractController
         $stats=['total'=>0,'with_contact'=>0,'emailed'=>0,'recovered'=>0,'value_minor'=>0];
         foreach($carts as &$c){
             $id=(int)$c['id'];$c['items']=$items[$id]??[];$d=$mail[$id]??null;
-            $c['mail_state']=$d===null?(($c['email']??'')===''?'no_contact':'not_sent'):($d['redeemed_at']!==null?'recovered':($d['sent_at']!==null?'sent':'queued'));
+            $c['mail_state']=$d===null?(($c['email']??'')===''?(($c['phone_e164']??'')===''?'no_contact':'phone_only'):'not_sent'):($d['redeemed_at']!==null?'recovered':($d['sent_at']!==null?'sent':'queued'));
             $c['mail_at']=$d['sent_at']??null;
             $stats['total']++;$stats['value_minor']+=(int)$c['total_minor'];
-            if(($c['email']??'')!=='')$stats['with_contact']++;
+            if(($c['email']??'')!==''||($c['phone_e164']??'')!=='')$stats['with_contact']++;
             if(in_array($c['mail_state'],['sent','recovered'],true))$stats['emailed']++;
             if($c['mail_state']==='recovered')$stats['recovered']++;
         }

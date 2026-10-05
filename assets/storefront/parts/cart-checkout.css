@@ -20,7 +20,7 @@
 /* ========== Cart drawer ========== */
 .cart-drawer { position: fixed; inset: 0; z-index: var(--mc-z-modal); }
 .cart-drawer[hidden] { display: none; }
-.cart-drawer__backdrop { position: absolute; inset: 0; background: color-mix(in srgb, var(--mc-color-ink) 55%, transparent); opacity: 0; transition: opacity calc(var(--mc-transition) * 2); }
+.cart-drawer__backdrop { position: absolute; inset: 0; background: color-mix(in srgb, var(--mc-color-ink) 55%, transparent); opacity: 0; transition: opacity calc(var(--mc-transition) * 2); backdrop-filter: blur(3px); }
 .cart-drawer__panel {
   position: absolute; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column;
   width: 100%; max-width: 100%; background: var(--mc-color-surface-raised); color: var(--mc-color-text);

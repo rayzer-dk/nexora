@@ -1,0 +1,9 @@
+{# Icon picker field. Vars: name, value, clearable (optional). The modal with every icon is opened by admin-runtime.js. #}
+<div class="admin-icon-field" data-icon-picker{% if clearable|default(false) %} data-icon-clearable{% endif %}>
+    <input type="hidden" name="{{ name }}" value="{{ value|default('') }}" data-icon-input>
+    <button class="admin-icon-field__button" type="button" data-icon-open aria-haspopup="dialog" title="{{ ui_text('admin.icons.choose') }}">
+        <span class="admin-icon-field__preview" data-icon-preview aria-hidden="true">{{ ui_icon(value|default(''), 20) }}</span>
+        <span class="admin-icon-field__name" data-icon-name>{{ value|default('') ?: ui_text('admin.icons.none') }}</span>
+        {{ ui_icon('chevron-down', 14) }}
+    </button>
+</div>

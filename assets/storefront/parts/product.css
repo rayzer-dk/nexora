@@ -74,7 +74,7 @@
 .cf-chips__clear:hover { color: var(--mc-color-danger); }
 
 /* Filters: bottom sheet on small screens, sticky sidebar on desktop */
-.cf-backdrop { position: fixed; inset: 0; z-index: var(--mc-z-toast); background: color-mix(in srgb, var(--mc-color-ink) 55%, transparent); }
+.cf-backdrop { position: fixed; inset: 0; z-index: var(--mc-z-toast); background: color-mix(in srgb, var(--mc-color-ink) 55%, transparent); backdrop-filter: blur(3px); }
 .cf-backdrop[hidden] { display: none; }
 .cf {
   position: fixed; inset: auto 0 0 0; z-index: var(--mc-z-toast); display: flex; flex-direction: column; max-height: 88vh;

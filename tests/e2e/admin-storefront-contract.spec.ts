@@ -73,10 +73,10 @@ test('appearance settings change computed storefront design tokens and brand sub
   await loginAdmin(page);
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
   const form = page.locator('form[data-appearance-media]');
-  const subtitle = form.locator('input[name="brand_subtitle"]');
+  const subtitle = form.locator('input[name^="brand_subtitle["]').first();
   const primary = form.locator('input[name="theme_primary"]');
   const radius = form.locator('input[name="theme_radius"]');
-  const heroTitle = form.locator('input[name="hero_title"]');
+  const heroTitle = form.locator('input[name^="hero_title["]').first();
   const showProducts = form.locator('input[name="show_products"]');
   const showPromos = form.locator('input[name="show_promos"]');
   const originalSubtitle = await subtitle.inputValue();
@@ -121,8 +121,8 @@ test('appearance settings change computed storefront design tokens and brand sub
   } finally {
     await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
     const restore = page.locator('form[data-appearance-media]');
-    await restore.locator('input[name="brand_subtitle"]').fill(originalSubtitle);
-    await restore.locator('input[name="hero_title"]').fill(originalHeroTitle);
+    await restore.locator('input[name^="brand_subtitle["]').first().fill(originalSubtitle);
+    await restore.locator('input[name^="hero_title["]').first().fill(originalHeroTitle);
     const restoreProducts = restore.locator('input[name="show_products"]');
     const restorePromos = restore.locator('input[name="show_promos"]');
     if (originalShowProducts) await restoreProducts.check(); else await restoreProducts.uncheck();

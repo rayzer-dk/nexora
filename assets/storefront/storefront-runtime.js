@@ -763,3 +763,24 @@ function initEcommerceEvents() {
   }, true);
 }
 initEcommerceEvents();
+
+// Announcement bar in "static" mode with several messages: show one at a time and rotate.
+(() => {
+  const bar = document.querySelector('[data-announcement][data-mode="static"]');
+  if (!bar) return;
+  const items = Array.from(bar.querySelectorAll('[data-ann-item]'));
+  if (items.length < 2) return;
+  const mainLink = bar.querySelector('[data-ann-main-link]');
+  bar.setAttribute('data-rotating', '');
+  let index = 0;
+  const show = (next) => {
+    index = next % items.length;
+    items.forEach((item, i) => { item.hidden = i !== index; });
+    if (mainLink) mainLink.hidden = index !== 0;
+  };
+  show(0);
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  let timer = window.setInterval(() => show(index + 1), 5000);
+  bar.addEventListener('mouseenter', () => window.clearInterval(timer));
+  bar.addEventListener('mouseleave', () => { timer = window.setInterval(() => show(index + 1), 5000); });
+})();

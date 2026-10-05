@@ -109,7 +109,7 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   await expectNoServerError(page);
   const appearanceForm = page.locator('form[data-appearance-media]');
   await expect(appearanceForm).toBeVisible();
-  const subtitle = appearanceForm.locator('input[name="brand_subtitle"]');
+  const subtitle = appearanceForm.locator('input[name^="brand_subtitle["]').first();
   const originalSubtitle = await subtitle.inputValue();
   const originalRadius = await appearanceForm.locator('input[name="theme_radius"]').inputValue();
   const qaSubtitle = `Nexora E2E presentation ${Date.now()}`;
@@ -129,7 +129,7 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   const saveAppearanceResponse = await saveAppearance;
   expect(saveAppearanceResponse.status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('input[name="brand_subtitle"]')).toHaveValue(qaSubtitle);
+  await expect(page.locator('input[name^="brand_subtitle["]').first()).toHaveValue(qaSubtitle);
   await expect(page.locator('input[name="theme_radius"]')).toHaveValue(qaRadius);
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -138,7 +138,7 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
 
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
   const restoreAppearance = page.locator('form[data-appearance-media]');
-  await restoreAppearance.locator('input[name="brand_subtitle"]').fill(originalSubtitle);
+  await restoreAppearance.locator('input[name^="brand_subtitle["]').first().fill(originalSubtitle);
   await restoreAppearance.locator('input[name="theme_radius"]').evaluate((element, value) => {
     const input = element as HTMLInputElement;
     input.value = String(value);
@@ -153,7 +153,7 @@ test('admin settings persist and extension lifecycle is operational', async ({ p
   const restoreAppearanceResponse = await restoreAppearanceResponsePromise;
   expect(restoreAppearanceResponse.status()).toBeLessThan(400);
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.locator('input[name="brand_subtitle"]')).toHaveValue(originalSubtitle);
+  await expect(page.locator('input[name^="brand_subtitle["]').first()).toHaveValue(originalSubtitle);
   await expect(page.locator('input[name="theme_radius"]')).toHaveValue(originalRadius);
 
   await expectNoServerError(page);

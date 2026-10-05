@@ -15,7 +15,7 @@ async function save(page: Page, v: { enabled: boolean; text: string; mode: strin
   await expectNoServerError(page);
   const panel = page.locator('[data-announcement-settings]');
   await panel.locator('input[name="announcement_enabled"]').setChecked(v.enabled);
-  await panel.locator('input[name="announcement_text"]').fill(v.text);
+  await panel.locator('input[name^="announcement_text["]').first().fill(v.text);
   await panel.locator(`input[name="announcement_mode"][value="${v.mode}"]`).check({ force: true });
   if (v.bg) {
     await panel.locator('input[name="announcement_bg"]').fill(v.bg);
