@@ -262,13 +262,15 @@ final class CommerceOperationsAdminController extends AbstractController
         $context=$this->contexts->resolve($request);
         if($request->isMethod('POST')){
             if(!$this->isCsrfTokenValid('campaign_send',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
-            try{$r=$this->campaigns->createAndEnqueue($context->storeId,(string)$request->request->get('subject'),(string)$request->request->get('body'),(string)$request->request->get('segment','all_subscribers'),5000,(string)$request->request->get('format','text'));$this->addFlash('success',sprintf(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kampaniiu_dodano_v_cherhu_dlia_d_pidtverdzhenykh_pid'),$r['recipients']));}
+            try{$r=$this->campaigns->createAndEnqueue($context->storeId,(string)$request->request->get('subject'),(string)$request->request->get('body'),(string)$request->request->get('segment','all_subscribers'),5000,(string)$request->request->get('format','text'),(string)$request->request->get('send_at',''),(string)$request->request->get('locale',''));$this->addFlash('success',sprintf(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kampaniiu_dodano_v_cherhu_dlia_d_pidtverdzhenykh_pid'),$r['recipients']));}
             catch(\Throwable $e){$this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.kampaniiu_ne_vdalosia_stvoryty'));}
             return $this->redirectToRoute('admin_commerce_campaigns');
         }
-        $rows=$this->db->fetchAllAssociative('SELECT id,subject,segment_code,status,recipient_count,created_at,enqueued_at FROM mc_marketing_campaign WHERE store_id=? ORDER BY id DESC LIMIT 100',[$context->storeId]);
+        $rows=$this->db->fetchAllAssociative('SELECT id,subject,segment_code,status,recipient_count,created_at,enqueued_at,send_at,locale FROM mc_marketing_campaign WHERE store_id=? ORDER BY id DESC LIMIT 100',[$context->storeId]);
+        foreach($rows as &$row){$delivery=$this->db->fetchAllKeyValue('SELECT status,COUNT(*) FROM mc_notification_outbox WHERE dedupe_key LIKE ? GROUP BY status',['campaign:'.(int)$row['id'].':%']);$row['sent']=(int)($delivery['sent']??0);$row['failed']=(int)($delivery['failed']??0)+(int)($delivery['dead']??0);$row['pending']=(int)($delivery['pending']??0)+(int)($delivery['processing']??0);}unset($row);
+        $locales=$this->db->fetchAllAssociative('SELECT locale,COUNT(*) n FROM mc_marketing_subscriber WHERE store_id=? AND status=\'active\' GROUP BY locale ORDER BY n DESC',[$context->storeId]);
         $subscribers=(int)$this->db->fetchOne("SELECT COUNT(*) FROM mc_marketing_subscriber WHERE store_id=? AND status='active'",[$context->storeId]);
-        return $this->render('@storefront/admin/commerce/campaigns.html.twig',['rows'=>$rows,'subscribers'=>$subscribers,'segments'=>$this->segments->labels(),'templates'=>$this->campaignTemplates->list($context->storeId)]);
+        return $this->render('@storefront/admin/commerce/campaigns.html.twig',['locales'=>$locales,'rows'=>$rows,'subscribers'=>$subscribers,'segments'=>$this->segments->labels(),'templates'=>$this->campaignTemplates->list($context->storeId)]);
     }
 
     #[Route('/admin/commerce/notifications', name:'admin_commerce_notifications', methods:['GET','POST'])]

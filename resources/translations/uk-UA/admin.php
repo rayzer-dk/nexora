@@ -4620,4 +4620,12 @@ return [
     'admin.cx.withdrawals_hint' => 'очікують обробки',
     'admin.cx.rating_spread' => 'Розподіл оцінок',
     'admin.cx.return_reasons' => 'Причини повернень (90 днів)',
+    'admin.campaigns.language' => 'Мова підписників',
+    'admin.campaigns.language_all' => 'Усі мови',
+    'admin.campaigns.send_at' => 'Надіслати о (UTC)',
+    'admin.campaigns.send_at_hint' => 'Порожньо — відправити одразу. Час вказується за UTC.',
+    'admin.campaigns.delivery' => 'Доставка',
+    'admin.campaigns.scheduled' => 'Заплановано',
+    'admin.campaigns.bad_send_at' => 'Некоректна дата відправки.',
+    'admin.tpl.type.return_status' => 'Статус повернення',
 ];

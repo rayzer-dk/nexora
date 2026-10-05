@@ -18,6 +18,7 @@ final class NotificationTemplateService
     public const CATALOG = [
         'order.created' => ['order_number', 'customer_name', 'total', 'store_name'],
         'order.status_updated' => ['order_number', 'customer_name', 'status', 'payment_status', 'fulfillment_status', 'tracking_number', 'total', 'store_name'],
+        'return.status' => ['order_number', 'status', 'store_name'],
         'inquiry_received' => ['store_name'],
         'newsletter.confirm' => ['store_name'],
     ];
@@ -46,6 +47,7 @@ final class NotificationTemplateService
                 'subject' => $t('order_update_subject', ['number' => '%order_number%']),
                 'body' => implode(' ', [$t('plain_order_status', ['status' => '%status%']), $t('plain_payment_status', ['status' => '%payment_status%']), $t('plain_delivery_status', ['status' => '%fulfillment_status%']), $t('plain_tracking_number', ['number' => '%tracking_number%'])]),
             ],
+            'return.status' => ['subject' => $t('return_status_subject', ['number' => '%order_number%', 'status' => '%status%']), 'body' => $t('return_status_text', ['number' => '%order_number%', 'status' => '%status%'])],
             'inquiry_received' => ['subject' => CanonicalUiText::get('customer.inquiry.received_subject'), 'body' => CanonicalUiText::get('customer.inquiry.received_text')],
             'newsletter.confirm' => ['subject' => CanonicalUiText::get('php.modules.marketing.http.newslettercontroller.pidtverdit_pidpysku'), 'body' => CanonicalUiText::get('php.modules.marketing.http.newslettercontroller.pidtverdit_email_shchob_otrymuvaty_novyny_ta_propozy')],
             default => ['subject' => '', 'body' => ''],

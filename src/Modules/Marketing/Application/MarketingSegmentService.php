@@ -22,13 +22,13 @@ final readonly class MarketingSegmentService
         ];
     }
 
-    public function count(int $storeId,string $segment): int
+    public function count(int $storeId,string $segment,?string $locale=null): int
     {
-        return count($this->recipients($storeId,$segment,5000,0));
+        return count($this->recipients($storeId,$segment,5000,0,$locale));
     }
 
     /** @return list<array{id:int,public_id:string,email:string}> */
-    public function recipients(int $storeId,string $segment,int $limit,int $afterId=0): array
+    public function recipients(int $storeId,string $segment,int $limit,int $afterId=0,?string $locale=null): array
     {
         if(!isset($this->labels()[$segment])) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.marketing.application.marketingsegmentservice.nevidomyi_sehment_kampanii'));
         $limit=max(1,min(5000,$limit));
@@ -39,6 +39,8 @@ final readonly class MarketingSegmentService
             'lapsed_180d'=>"EXISTS(SELECT 1 FROM mc_sales_order o WHERE o.store_id=s.store_id AND o.customer_email_normalized=s.email_normalized AND o.status NOT IN ('cancelled','expired')) AND NOT EXISTS(SELECT 1 FROM mc_sales_order o2 WHERE o2.store_id=s.store_id AND o2.customer_email_normalized=s.email_normalized AND o2.status NOT IN ('cancelled','expired') AND o2.created_at>=UTC_TIMESTAMP(6)-INTERVAL 180 DAY)",
             default=>'1=1',
         };
-        return $this->db->fetchAllAssociative("SELECT s.id,s.public_id,s.email FROM mc_marketing_subscriber s WHERE s.store_id=? AND s.status='active' AND s.id>? AND $condition ORDER BY s.id ASC LIMIT $limit",[$storeId,$afterId]);
+        $params=[$storeId,$afterId]; $language='';
+        if($locale!==null && $locale!==''){ $language=' AND s.locale=?'; $params[]=$locale; }
+        return $this->db->fetchAllAssociative("SELECT s.id,s.public_id,s.email FROM mc_marketing_subscriber s WHERE s.store_id=? AND s.status='active' AND s.id>? AND $condition$language ORDER BY s.id ASC LIMIT $limit",$params);
     }
 }

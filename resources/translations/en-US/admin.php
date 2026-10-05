@@ -4625,4 +4625,12 @@ return [
     'admin.cx.withdrawals_hint' => 'waiting to be processed',
     'admin.cx.rating_spread' => 'Rating spread',
     'admin.cx.return_reasons' => 'Return reasons (90 days)',
+    'admin.campaigns.language' => 'Subscriber language',
+    'admin.campaigns.language_all' => 'All languages',
+    'admin.campaigns.send_at' => 'Send at (UTC)',
+    'admin.campaigns.send_at_hint' => 'Empty — send right away. The time is in UTC.',
+    'admin.campaigns.delivery' => 'Delivery',
+    'admin.campaigns.scheduled' => 'Scheduled',
+    'admin.campaigns.bad_send_at' => 'Invalid send date.',
+    'admin.tpl.type.return_status' => 'Return status',
 ];

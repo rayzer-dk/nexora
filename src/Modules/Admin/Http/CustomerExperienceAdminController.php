@@ -98,7 +98,7 @@ final class CustomerExperienceAdminController extends AbstractController
             $text=$this->translator->translate('return_status_text',$locale,['number'=>(string)$row['order_number'],'status'=>$label]);
             $note=mb_substr(trim(strip_tags($note)),0,1000);
             if($note!=='')$text.="\n\n".$note;
-            $this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('return.status',$subject,$text,['locale'=>$locale],'generic'),$email);
+            $this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('return.status',$subject,$text,['locale'=>$locale,'order_number'=>(string)$row['order_number'],'status'=>$label],'generic'),$email);
         }catch(\Throwable){}
     }
 
