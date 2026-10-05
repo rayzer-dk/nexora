@@ -3,6 +3,7 @@
 <h1>{{ customer.display_name|default('—') }} {{ status_badge(customer.status) }}</h1>
 <p>{% if admin_can('personal_data.view') %}{{ customer.email }}{% if customer.phone_e164 %} · <a href="tel:{{ customer.phone_e164 }}">{{ customer.phone_e164 }}</a>{% endif %}{% else %}{{ ui_text('admin.commerce.customers.prykhovano') }}{% endif %}</p></div>
 <a class="admin-button" href="{{ path('admin_commerce_customers') }}">{{ ui_icon('arrow-left', 16) }} {{ ui_text('admin.customers.back') }}</a></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 <section class="admin-stats">
 <article><span>{{ ui_text('admin.customers.orders') }}</span><strong>{{ stats.orders }}</strong><small>{% if stats.last_order %}{{ ui_text('admin.customers.last') }}: {{ stats.last_order|slice(0, 10) }}{% else %}—{% endif %}</small></article>
 <article><span>{{ ui_text('admin.customers.spent') }}</span><strong>{{ (stats.spent_minor / 100)|number_format(2, ',', ' ') }} {{ stats.currency }}</strong><small>{{ ui_text('admin.customers.avg') }}: {{ (stats.avg_minor / 100)|number_format(2, ',', ' ') }}</small></article>

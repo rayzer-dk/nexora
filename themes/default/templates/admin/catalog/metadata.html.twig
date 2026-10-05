@@ -1,5 +1,6 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.catalog.metadata.brendy_ta_kharakterystyky'),'metadata') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.catalog.metadata.kataloh') }}</span></nav><h1>{{ ui_text('admin.catalog.metadata.brendy_ta_kharakterystyky') }}</h1><p>{{ ui_text('admin.catalog.metadata.yedyne_mistse_dlia_dovidnykiv_iaki_vykorystovuiu') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 {% import '@storefront/admin/_lang_tabs.html.twig' as langs %}{% set brand_tabs = brand_lang_tabs() %}{% if brand_tabs|length > 1 %}<div class="admin-panel admin-panel--tabs">{{ langs.bar(brand_tabs) }}<p class="lang-tabs__note">{{ ui_text('admin.lang_tabs.brands_note') }}</p></div>{% endif %}
 <div data-tabs="metadata" data-tabs-flex>
 <section class="admin-panel" data-tab="brands" data-tab-icon="tag"><div class="admin-panel__header"><h2>{{ ui_text('admin.catalog.metadata.brendy') }}</h2><span>{{ brands|length }}</span></div>

@@ -76,8 +76,8 @@ test('custom units appear in product forms and the HTML editor offers links, lib
   const unitName = `Ящик ${Date.now() % 100000}`;
   await page.goto('/admin/catalog/units', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  for (const input of await page.locator('input[name^="name["]').all()) await input.fill(unitName);
-  for (const input of await page.locator('input[name^="short["]').all()) await input.fill('ящ.');
+  for (const input of await page.locator('input[name^="name["]').all()) await input.fill(unitName, { force: true });
+  for (const input of await page.locator('input[name^="short["]').all()) await input.fill('ящ.', { force: true });
   await page.locator('form[action$="/units/create"] button[type="submit"]').click();
   await expect(page.locator('.admin-notice.is-success')).toBeAttached();
   await expect(page.locator('.admin-table')).toContainText(unitName);

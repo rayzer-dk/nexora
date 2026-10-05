@@ -208,7 +208,7 @@ test('navigation and content edits are reflected by the storefront', async ({ pa
   await navForm.locator('input[name="url"]').fill('/contact');
   const labels = navForm.locator('input[name^="label["]');
   const labelCount = await labels.count();
-  for (let i = 0; i < labelCount; i += 1) await labels.nth(i).fill(menuLabel);
+  for (let i = 0; i < labelCount; i += 1) await labels.nth(i).fill(menuLabel, { force: true });
   const navSave = page.waitForResponse((response) =>
     response.url().includes('/admin/appearance/navigation/save') && response.request().method() === 'POST'
   );
