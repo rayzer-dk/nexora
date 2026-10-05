@@ -4996,4 +4996,6 @@ return [
     'admin.downloads.search' => "Пошук",
     'admin.downloads.search_placeholder' => "Назва, група або опис",
     'admin.downloads.search_apply' => "Знайти",
+    'admin.stockrequests.prev' => "Назад",
+    'admin.stockrequests.next' => "Далі",
 ];

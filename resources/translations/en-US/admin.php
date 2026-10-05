@@ -5001,4 +5001,6 @@ return [
     'admin.downloads.search' => "Search",
     'admin.downloads.search_placeholder' => "Name, group or description",
     'admin.downloads.search_apply' => "Find",
+    'admin.stockrequests.prev' => "Previous",
+    'admin.stockrequests.next' => "Next",
 ];
