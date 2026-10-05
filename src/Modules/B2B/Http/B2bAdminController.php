@@ -24,6 +24,7 @@ final class B2bAdminController extends AbstractController
     {
         $ctx=$this->contexts->resolve($request);
         $companies=$this->db->fetchAllAssociative("SELECT c.*,COUNT(DISTINCT m.customer_id) member_count,COUNT(DISTINCT pc.price_list_id) price_list_count FROM mc_b2b_company c LEFT JOIN mc_b2b_company_member m ON m.company_id=c.id LEFT JOIN mc_b2b_price_list_company pc ON pc.company_id=c.id WHERE c.store_id=? GROUP BY c.id ORDER BY c.name",[$ctx->storeId]);
+        foreach($companies as &$co){$st=$this->db->fetchAssociative("SELECT COUNT(*) orders,COALESCE(SUM(CASE WHEN status NOT IN ('cancelled','expired') THEN total_minor ELSE 0 END),0) turnover,COALESCE(SUM(CASE WHEN payment_status NOT IN ('paid','refunded') AND status NOT IN ('cancelled','expired') THEN total_minor ELSE 0 END),0) unpaid FROM mc_sales_order WHERE store_id=? AND b2b_company_id=?",[$ctx->storeId,(int)$co['id']])?:[];$co['order_count']=(int)($st['orders']??0);$co['turnover_minor']=(int)($st['turnover']??0);$co['unpaid_minor']=(int)($st['unpaid']??0);}unset($co);
         $lists=$this->db->fetchAllAssociative("SELECT pl.*,COUNT(DISTINCT pc.company_id) company_count,COUNT(DISTINCT t.id) tier_count FROM mc_b2b_price_list pl LEFT JOIN mc_b2b_price_list_company pc ON pc.price_list_id=pl.id LEFT JOIN mc_b2b_price_tier t ON t.price_list_id=pl.id WHERE pl.store_id=? GROUP BY pl.id ORDER BY pl.priority,pl.name",[$ctx->storeId]);
         $members=$this->db->fetchAllAssociative("SELECT m.company_id,m.customer_id,m.role,m.status,m.spending_limit_minor,c.display_name,c.email,bc.name company_name FROM mc_b2b_company_member m JOIN mc_customer c ON c.id=m.customer_id JOIN mc_b2b_company bc ON bc.id=m.company_id WHERE bc.store_id=? ORDER BY bc.name,c.display_name,c.email",[$ctx->storeId]);
         $tiers=$this->db->fetchAllAssociative("SELECT t.*,pl.name price_list_name,v.sku FROM mc_b2b_price_tier t JOIN mc_b2b_price_list pl ON pl.id=t.price_list_id JOIN mc_product_variant v ON v.id=t.variant_id WHERE pl.store_id=? ORDER BY pl.priority,pl.name,v.sku,t.min_quantity",[$ctx->storeId]);
@@ -73,6 +74,55 @@ final class B2bAdminController extends AbstractController
         $amount=$this->money($request,'price'); if($amount<1)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.b2b.http.b2badmincontroller.tsina_maie_buty_bilshoiu_za_nul')); $now=$this->now();
         $this->db->executeStatement("INSERT INTO mc_b2b_price_tier(price_list_id,variant_id,min_quantity,max_quantity,amount_minor,created_at,updated_at) VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE max_quantity=VALUES(max_quantity),amount_minor=VALUES(amount_minor),updated_at=VALUES(updated_at)",[$list,(int)$variant,$min,$max,$amount,$now,$now]);
         $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.b2b.http.b2badmincontroller.tsinovyi_riven_zberezheno')); return $this->redirectToRoute('admin_b2b');
+    }
+
+    #[Route('/admin/b2b/company/{id}/update', name:'admin_b2b_company_update', methods:['POST'], requirements:['id'=>'\\d+'])]
+    public function companyUpdate(int $id, Request $request): Response
+    {
+        $ctx=$this->contexts->resolve($request); $this->csrf($request,'b2b_company_'.$id);
+        if((int)$this->db->fetchOne('SELECT id FROM mc_b2b_company WHERE id=? AND store_id=?',[$id,$ctx->storeId])!==$id) throw $this->createNotFoundException();
+        $name=mb_substr(trim((string)$request->request->get('name','')),0,190); if($name==='') throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.b2b.http.b2badmincontroller.vkazhit_nazvu_kompanii'));
+        $status=(string)$request->request->get('status','active'); if(!in_array($status,['pending','active','suspended'],true))$status='pending';
+        $this->db->update('mc_b2b_company',['name'=>$name,'legal_name'=>$this->text($request,'legal_name',255),'tax_id'=>$this->text($request,'tax_id',64),'vat_id'=>$this->text($request,'vat_id',64),'status'=>$status,'credit_limit_minor'=>$this->money($request,'credit_limit'),'payment_terms_days'=>$this->smallInt($request,'payment_terms_days',0,365),'approval_threshold_minor'=>$this->nullableMoney($request,'approval_threshold'),'updated_at'=>$this->now()],['id'=>$id,'store_id'=>$ctx->storeId]);
+        $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.b2b.company_saved')); return $this->redirectToRoute('admin_b2b');
+    }
+
+    #[Route('/admin/b2b/member/{company}/{customer}/remove', name:'admin_b2b_member_remove', methods:['POST'], requirements:['company'=>'\\d+','customer'=>'\\d+'])]
+    public function memberRemove(int $company, int $customer, Request $request): Response
+    {
+        $ctx=$this->contexts->resolve($request); $this->csrf($request,'b2b_member_'.$company.'_'.$customer);
+        if((int)$this->db->fetchOne('SELECT id FROM mc_b2b_company WHERE id=? AND store_id=?',[$company,$ctx->storeId])!==$company) throw $this->createNotFoundException();
+        $this->db->delete('mc_b2b_company_member',['company_id'=>$company,'customer_id'=>$customer]);
+        $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.b2b.member_removed')); return $this->redirectToRoute('admin_b2b');
+    }
+
+    #[Route('/admin/b2b/price-list/{id}/update', name:'admin_b2b_price_list_update', methods:['POST'], requirements:['id'=>'\\d+'])]
+    public function priceListUpdate(int $id, Request $request): Response
+    {
+        $ctx=$this->contexts->resolve($request); $this->csrf($request,'b2b_price_list_'.$id);
+        if((int)$this->db->fetchOne('SELECT id FROM mc_b2b_price_list WHERE id=? AND store_id=?',[$id,$ctx->storeId])!==$id) throw $this->createNotFoundException();
+        $name=mb_substr(trim((string)$request->request->get('name','')),0,190); if($name==='') throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.b2b.http.b2badmincontroller.vkazhit_nazvu_prais_lysta'));
+        $status=(string)$request->request->get('status','active'); if(!in_array($status,['active','disabled'],true))$status='active';
+        $this->db->update('mc_b2b_price_list',['name'=>$name,'priority'=>max(0,min(9999,$request->request->getInt('priority',100))),'status'=>$status,'updated_at'=>$this->now()],['id'=>$id]);
+        $this->db->delete('mc_b2b_price_list_company',['price_list_id'=>$id]);
+        foreach(array_unique(array_map('intval',(array)$request->request->all('company_ids'))) as $company){if($company<1)continue;if((int)$this->db->fetchOne('SELECT id FROM mc_b2b_company WHERE id=? AND store_id=?',[$company,$ctx->storeId])===$company)$this->db->insert('mc_b2b_price_list_company',['price_list_id'=>$id,'company_id'=>$company]);}
+        $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.b2b.price_list_saved')); return $this->redirectToRoute('admin_b2b');
+    }
+
+    #[Route('/admin/b2b/price-list/{id}/delete', name:'admin_b2b_price_list_delete', methods:['POST'], requirements:['id'=>'\\d+'])]
+    public function priceListDelete(int $id, Request $request): Response
+    {
+        $ctx=$this->contexts->resolve($request); $this->csrf($request,'b2b_price_list_'.$id);
+        $this->db->delete('mc_b2b_price_list',['id'=>$id,'store_id'=>$ctx->storeId]);
+        $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.b2b.price_list_deleted')); return $this->redirectToRoute('admin_b2b');
+    }
+
+    #[Route('/admin/b2b/price-tier/{id}/delete', name:'admin_b2b_price_tier_delete', methods:['POST'], requirements:['id'=>'\\d+'])]
+    public function tierDelete(int $id, Request $request): Response
+    {
+        $ctx=$this->contexts->resolve($request); $this->csrf($request,'b2b_tier_'.$id);
+        $this->db->executeStatement('DELETE t FROM mc_b2b_price_tier t JOIN mc_b2b_price_list pl ON pl.id=t.price_list_id WHERE t.id=? AND pl.store_id=?',[$id,$ctx->storeId]);
+        $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.b2b.tier_deleted')); return $this->redirectToRoute('admin_b2b');
     }
 
     #[Route('/admin/b2b/order/{id}/decision', name:'admin_b2b_order_decision', methods:['POST'])]

@@ -2,9 +2,11 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.54.0 — 2026-10-05
+## 3.55.0 — 2026-10-05
 
-Analytics and release-gate fixes.
+Returns and reviews, campaigns, forum, B2B.
 
-- Analytics: any date range, comparison with the previous period, revenue by day, split by payment and delivery method, order statuses, new and returning buyers, top customers, CSV export.
-- Release gates fixed: design tokens, CSS coverage, translations for German, Danish and Polish, safe icon rendering, PHPStan.
+- Customer service: open returns, return rate, average rating and rating spread, return reasons; the buyer gets an e-mail when a return is approved, rejected, received or resolved (the text is editable in e-mail templates).
+- Campaigns: scheduled sending, subscriber language filter, delivery counters (sent, waiting, failed) per campaign.
+- Forum: sections can be edited, hidden and deleted (when empty), with topic counts.
+- B2B: edit companies (details, credit limit, payment terms, approval threshold, status), turnover and unpaid amounts per company, remove members, edit and delete price lists and price tiers.
