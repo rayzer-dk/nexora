@@ -1,0 +1,29 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.bots.title'),'bots') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.bots.title') }}</span></nav><h1>{{ ui_text('admin.bots.title') }}</h1><p>{{ ui_text('admin.bots.help') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+{% set labels = {scanners: ui_text('admin.bots.cat_scanners'), scrapers: ui_text('admin.bots.cat_scrapers'), seo: ui_text('admin.bots.cat_seo'), ai: ui_text('admin.bots.cat_ai')} %}
+{% set hints = {scanners: ui_text('admin.bots.cat_scanners_hint'), scrapers: ui_text('admin.bots.cat_scrapers_hint'), seo: ui_text('admin.bots.cat_seo_hint'), ai: ui_text('admin.bots.cat_ai_hint')} %}
+<form method="post" action="{{ path('admin_system_bots') }}" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_bots') }}">
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.bots.kicker') }}</small><h2>{{ ui_text('admin.bots.lists') }}</h2></div></div>
+<div class="admin-check-grid admin-form-wide"><label><input type="checkbox" name="enabled" value="1"{{ config.enabled ? ' checked' : '' }}> {{ ui_text('admin.bots.enabled') }}</label></div>
+<div class="admin-form-grid">
+{% for code, cat in categories %}<label class="admin-form-wide admin-check"><input type="checkbox" name="categories[]" value="{{ code }}"{{ code in config.categories ? ' checked' : '' }}><span><strong>{{ labels[code] }}</strong><small>{{ hints[code] }}</small><small class="admin-muted">{{ cat.agents|join(', ') }}</small></span></label>{% endfor %}
+<label class="admin-form-wide admin-check"><input type="checkbox" name="empty_ua" value="1"{{ config.empty_ua ? ' checked' : '' }}><span><strong>{{ ui_text('admin.bots.empty_ua') }}</strong><small>{{ ui_text('admin.bots.empty_ua_hint') }}</small></span></label>
+<label class="admin-form-wide admin-check"><input type="checkbox" name="robots_ai" value="1"{{ config.robots_ai ? ' checked' : '' }}><span><strong>{{ ui_text('admin.bots.robots_ai') }}</strong><small>{{ ui_text('admin.bots.robots_ai_hint') }} <span class="admin-muted">{{ ai_robots|join(', ') }}</span></small></span></label>
+</div></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.bots.own_kicker') }}</small><h2>{{ ui_text('admin.bots.own') }}</h2></div></div>
+<div class="admin-form-grid">
+<label class="admin-form-wide">{{ ui_text('admin.bots.custom_agents') }}<textarea name="custom_agents" rows="4" maxlength="20000" placeholder="badbot&#10;SomeScraper/2.0">{{ config.custom_agents|join("\n") }}</textarea><small>{{ ui_text('admin.bots.custom_agents_hint') }}</small></label>
+<label class="admin-form-wide">{{ ui_text('admin.bots.ips') }}<textarea name="ips" rows="4" maxlength="20000" placeholder="203.0.113.7&#10;198.51.100.0/24&#10;2001:db8::/32">{{ config.ips|join("\n") }}</textarea><small>{{ ui_text('admin.bots.ips_hint') }} {{ ui_text('admin.bots.your_ip') }}: <code>{{ my_ip }}</code></small></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.bots.save') }}</button></div>
+</div></section>
+</form>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.bots.test_kicker') }}</small><h2>{{ ui_text('admin.bots.test') }}</h2></div></div>
+<form method="post" action="{{ path('admin_system_bots') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_bots') }}"><input type="hidden" name="action" value="test">
+<label class="admin-form-wide">User-Agent<input type="text" name="test_ua" maxlength="400" value="{{ my_ua }}" placeholder="Mozilla/5.0 (compatible; GPTBot/1.0)"></label>
+<label>IP<input type="text" name="test_ip" maxlength="45" placeholder="203.0.113.7"></label>
+<div class="admin-form-actions"><button class="admin-button" type="submit">{{ ui_icon('activity', 16) }} {{ ui_text('admin.bots.test_run') }}</button></div></form></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.bots.stats_kicker') }}</small><h2>{{ ui_text('admin.bots.stats') }}</h2></div></div>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.bots.day') }}</th><th>{{ ui_text('admin.bots.blocked') }}</th></tr></thead><tbody>{% for day, hits in stats %}<tr><td>{{ day }}</td><td>{% if hits %}{% for reason, n in hits %}<span class="admin-badge">{{ reason }}: {{ n }}</span> {% endfor %}{% else %}<span class="admin-muted">—</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div></section>
+{{ shell.end() }}

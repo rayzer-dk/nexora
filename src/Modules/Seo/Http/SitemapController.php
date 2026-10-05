@@ -17,12 +17,13 @@ final class SitemapController extends AbstractController
     public const VISIBLE_ARTICLE="(sr.entity_type<>'blog_article' OR EXISTS (SELECT 1 FROM mc_content_entry pe JOIN mc_content_translation pt ON pt.content_id=pe.id AND pt.locale=sr.locale WHERE pe.public_id=sr.entity_public_id AND pe.store_id=sr.store_id AND pe.status='published' AND (pe.published_at IS NULL OR pe.published_at<=UTC_TIMESTAMP(6))))";
 
     private const PAGE_SIZE=20000;
-    public function __construct(private readonly Connection $db,private readonly string $publicBaseUrl,private readonly SystemPageRouteCatalog $systemPages){}
+    public function __construct(private readonly Connection $db,private readonly string $publicBaseUrl,private readonly SystemPageRouteCatalog $systemPages,private readonly \Commerce\Modules\Security\Bots\BotProtection $bots){}
 
     #[Route('/robots.txt',name:'public_robots_txt',methods:['GET'])]
     public function robots(): Response
     {
         $body="User-agent: *\nDisallow: /admin\nDisallow: /checkout\nDisallow: /account\nDisallow: /api\nDisallow: /graphql\nSitemap: ".$this->absolute('/sitemap.xml')."\n";
+        if($this->bots->config()['robots_ai']){$ai='';foreach(\Commerce\Modules\Security\Bots\BotProtection::ROBOTS_AI as $agent)$ai.='User-agent: '.$agent."\nDisallow: /\n";$body=$ai."\n".$body;}
         return new Response($body,200,['Content-Type'=>'text/plain; charset=UTF-8','Cache-Control'=>'public, max-age=3600']);
     }
 

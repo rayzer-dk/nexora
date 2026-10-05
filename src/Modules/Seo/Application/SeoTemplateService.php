@@ -48,6 +48,21 @@ final class SeoTemplateService
         unset($this->cache[$storeId]);
     }
 
+    /** Fills {variables} written straight into a title or description of an item; text without variables comes back unchanged. @param array<string,string> $vars */
+    public function expand(string $text, array $vars): string
+    {
+        if (!str_contains($text, '{')) {
+            return $text;
+        }
+        $map = [];
+        foreach (self::VARIABLES as $name) {
+            $map['{' . $name . '}'] = trim((string) ($vars[$name] ?? ''));
+        }
+        $out = trim((string) preg_replace('/\s{2,}/u', ' ', strtr($text, $map)));
+
+        return trim($out, " \t-–—|·,:") !== '' ? $out : $text;
+    }
+
     /**
      * The pattern of a field filled with the values of the item, or $fallback when there is no pattern (or it ends up empty).
      *

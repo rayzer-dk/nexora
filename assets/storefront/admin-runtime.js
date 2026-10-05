@@ -1501,6 +1501,68 @@ function initQuickLinkForm() {
   sync();
 }
 
+// SEO fields: a compact counter with the recommended length, a correct example and the {variables} that are filled in on the page.
+function initSeoFields() {
+  const kindOf = (field) => {
+    const name = field.getAttribute('name') || '';
+    if (/(^|\[|_)(meta_title|seo_title)(\]|$)/.test(name) || /^tpl\[[a-z]+\]\[[^\]]+\]\[title\]$/.test(name)) return 'title';
+    if (/(^|\[|_)(meta_description|seo_description)(\]|$)/.test(name) || /^tpl\[[a-z]+\]\[[^\]]+\]\[description\]$/.test(name)) return 'description';
+    return '';
+  };
+  const range = { title: [30, 60], description: [70, 160] };
+  qa('input[name], textarea[name]').forEach((field) => {
+    if (field.dataset.seoReady || !(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return;
+    const kind = kindOf(field);
+    if (!kind) return;
+    field.dataset.seoReady = '1';
+    const [min, max] = range[kind];
+    const box = document.createElement('div');
+    box.className = 'seo-hint';
+    const count = document.createElement('span');
+    count.className = 'seo-hint__count';
+    const advice = document.createElement('span');
+    advice.className = 'seo-hint__advice';
+    advice.textContent = `${t(`admin.seo.${kind}_advice`, { min, max })} ${t(`admin.seo.${kind}_example`)}`;
+    box.append(count, advice);
+    const form = field.closest('form');
+    const tpl = /^tpl\[([a-z]+)\]/.exec(field.getAttribute('name') || '');
+    const product = tpl ? tpl[1] === 'product' : Boolean(form && form.querySelector('[name="sku"], [name="brand_id"]'));
+    const names = product ? ['name', 'store', 'price', 'brand', 'category', 'sku'] : ['name', 'store'];
+    const chips = document.createElement('div');
+    chips.className = 'seo-chips';
+    const label = document.createElement('span');
+    label.textContent = t('admin.seo.variables');
+    chips.append(label);
+    names.forEach((name) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'seo-chip';
+      chip.textContent = `{${name}}`;
+      chip.title = t(`admin.seo.var_${name}`);
+      chip.addEventListener('click', () => {
+        const start = field.selectionStart ?? field.value.length;
+        const end = field.selectionEnd ?? field.value.length;
+        field.value = `${field.value.slice(0, start)}{${name}}${field.value.slice(end)}`;
+        field.focus();
+        field.setSelectionRange(start + name.length + 2, start + name.length + 2);
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      chips.append(chip);
+    });
+    const anchor = field.closest('label') ?? field;
+    anchor.insertAdjacentElement('afterend', box);
+    box.insertAdjacentElement('afterend', chips);
+    const update = () => {
+      const length = Array.from(field.value).length;
+      count.textContent = t('admin.seo.chars', { count: length, max: max });
+      count.classList.toggle('is-ok', length >= min && length <= max);
+      count.classList.toggle('is-warn', length > 0 && (length < min || length > max));
+    };
+    field.addEventListener('input', update);
+    update();
+  });
+}
+
 function initCommandPalette() {
   const palette = q('[data-command-palette]');
   const input = q('[data-command-input]', palette || document);
@@ -1931,6 +1993,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHotkeys();
   initCommandPalette();
   initQuickLinkForm();
+  initSeoFields();
   initAutoSubmit();
   initRowLinks();
   initAutoTabs();

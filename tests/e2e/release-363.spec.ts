@@ -108,3 +108,40 @@ test('SEO templates and a standard VAT rate can be saved', async ({ page }, test
   await expectNoServerError(page);
   await expect(page.locator('form[data-tax-standard] select[name="country"]')).toBeAttached();
 });
+
+test('bot blocking answers 403 to a listed crawler and lets browsers and search engines in', async ({ page, request }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/system/bots', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await page.locator('input[name="enabled"]').check();
+  await page.locator('input[name="categories[]"][value="ai"]').check();
+  await Promise.all([page.waitForURL(/system\/bots/), page.locator('form[data-dirty-guard] button[type="submit"]').click()]);
+  await expect(page.locator('input[name="enabled"]')).toBeChecked();
+  const blocked = await request.get('/', { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; GPTBot/1.1)' } });
+  expect(blocked.status()).toBe(403);
+  const google = await request.get('/', { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' } });
+  expect(google.status()).toBe(200);
+  const hooks = await request.post('/webhooks/payments/stripe', { headers: { 'User-Agent': 'GPTBot' }, data: '{}' });
+  expect(hooks.status()).not.toBe(403);
+  // switch it off again
+  await page.goto('/admin/system/bots', { waitUntil: 'domcontentloaded' });
+  await page.locator('input[name="enabled"]').uncheck();
+  await page.locator('input[name="categories[]"][value="ai"]').uncheck();
+  await Promise.all([page.waitForURL(/system\/bots/), page.locator('form[data-dirty-guard] button[type="submit"]').click()]);
+  const after = await request.get('/', { headers: { 'User-Agent': 'GPTBot' } });
+  expect(after.status()).toBe(200);
+});
+
+test('SEO fields show a counter, an example and variable chips; a variable typed in the title is filled on the page', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await openProductTab(page, 'seo');
+  const field = page.locator('input[name="meta_title"]');
+  await expect(page.locator('.seo-hint').first()).toBeVisible();
+  await field.fill('');
+  await page.locator('.seo-chip', { hasText: '{name}' }).first().click();
+  await expect(field).toHaveValue('{name}');
+  await expect(page.locator('.seo-hint__count').first()).toContainText('/ 60');
+});

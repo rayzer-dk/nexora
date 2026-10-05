@@ -2,11 +2,9 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.65.0 — 2026-10-05
+## 3.66.0 — 2026-10-05
 
-Audit of tax, SEO and import: standard VAT rates, SEO templates, weight and brand in the CSV import.
+Bot blocking and a faster way to fill meta tags.
 
-- Tax: "Standard rate of a country" adds the standard VAT rate of a country (30 countries) for the Standard class in one click.
-- SEO: Admin → System → SEO templates — default page title and description per language for products, categories, articles and pages without their own; variables {name} {store} {price} {brand} {category} {sku}.
-- Import: CSV columns weight_kg, length_mm, width_mm, height_mm and brand (by name) are understood.
-- Audit result without changes needed: anti-fraud (score, velocity, blocklist, device confirmation, auto-block on a fraud decision), blog and page forms (schedule, tags, canonical, product links), form builder (10 field types, files, e-mail notice, export).
+- Admin → System → Bot blocking: ready lists of vulnerability scanners, site copiers, SEO crawlers and AI-training crawlers (each on its own switch), requests without a User-Agent, the shop's own User-Agent words and IP addresses or networks, a ready robots.txt block for AI crawlers, a check field to try a User-Agent, and daily counters. A blocked request gets a bare 403 before any work is done; payment and scheduler callbacks and search engines are never touched. Everything is built in and offline: no API keys or external services.
+- Meta tags: every title and description field (products, categories, articles, pages, templates) has a compact counter with the recommended length, a correct example and {variable} chips ({name} {store} {price} {brand} {category} {sku}); variables typed into a title or description are filled in on the page, so one pattern can serve many items.
