@@ -145,6 +145,7 @@ final class StorefrontLayoutExtension extends AbstractExtension
                 'url' => $url,
                 'badge' => ($row['badge'] ?? null) !== null && trim((string) $row['badge']) !== '' ? trim((string) $row['badge']) : null,
                 'open_new_tab' => !empty($row['open_new_tab']),
+                'icon' => (string) ($row['icon'] ?? ''),
                 'children' => $this->mapMenu(is_array($row['children'] ?? null) ? $row['children'] : []),
             ];
         }

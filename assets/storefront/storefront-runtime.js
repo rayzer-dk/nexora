@@ -784,3 +784,20 @@ initEcommerceEvents();
   bar.addEventListener('mouseenter', () => window.clearInterval(timer));
   bar.addEventListener('mouseleave', () => { timer = window.setInterval(() => show(index + 1), 5000); });
 })();
+
+// Icons written into a text with the rich-text editor: <span class="mc-inline-icon" data-icon="name">; draw them from the icon feed.
+(() => {
+  const marks = Array.from(document.querySelectorAll('.mc-inline-icon[data-icon]')).filter((node) => !node.firstChild);
+  if (!marks.length) return;
+  const names = Array.from(new Set(marks.map((node) => node.getAttribute('data-icon')))).slice(0, 60);
+  window.fetch(`/icons.json?names=${encodeURIComponent(names.join(','))}`, { credentials: 'same-origin' })
+    .then((response) => (response.ok ? response.json() : { icons: {} }))
+    .then((data) => {
+      marks.forEach((node) => {
+        const body = data.icons?.[node.getAttribute('data-icon')];
+        if (!body) return;
+        node.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`;
+      });
+    })
+    .catch(() => {});
+})();

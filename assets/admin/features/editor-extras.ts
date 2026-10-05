@@ -2,6 +2,9 @@ import { Extension, Node, mergeAttributes } from '@tiptap/core';
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
+    inlineIcon: {
+      insertInlineIcon: (name: string) => ReturnType;
+    };
     blockAnchor: {
       setBlockAnchor: (id: string) => ReturnType;
       unsetBlockAnchor: () => ReturnType;
@@ -87,6 +90,54 @@ export const Video = Node.create({
           const embed = videoEmbedUrl(src);
           return embed ? commands.insertContent({ type: this.name, attrs: { src: embed, title: title || null } }) : false;
         },
+    };
+  },
+});
+
+let iconLibrary: Promise<Record<string, string>> | null = null;
+const loadIcons = (): Promise<Record<string, string>> => {
+  iconLibrary ??= window.fetch('/admin/icons.json', { credentials: 'same-origin' })
+    .then((response) => (response.ok ? response.json() : { icons: {} }))
+    .then((data: { icons?: Record<string, string> }) => data.icons ?? {})
+    .catch(() => ({}));
+  return iconLibrary;
+};
+
+/** A Lucide icon inside a line of text. Stored as <span class="mc-inline-icon" data-icon="name">; the pages draw the picture from the name. */
+export const InlineIcon = Node.create({
+  name: 'inlineIcon',
+  group: 'inline',
+  inline: true,
+  atom: true,
+  selectable: true,
+  addAttributes() {
+    return { name: { default: '' } };
+  },
+  parseHTML() {
+    return [{ tag: 'span.mc-inline-icon[data-icon]', getAttrs: (element) => ({ name: (element as HTMLElement).getAttribute('data-icon') ?? '' }) }];
+  },
+  renderHTML({ node }) {
+    return ['span', { class: 'mc-inline-icon', 'data-icon': String(node.attrs.name) }];
+  },
+  addNodeView() {
+    return ({ node }) => {
+      const dom = document.createElement('span');
+      dom.className = 'mc-inline-icon';
+      dom.setAttribute('data-icon', String(node.attrs.name));
+      dom.contentEditable = 'false';
+      void loadIcons().then((icons) => {
+        const body = icons[String(node.attrs.name)];
+        if (body) dom.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+      });
+      return { dom };
+    };
+  },
+  addCommands() {
+    return {
+      insertInlineIcon:
+        (name) =>
+        ({ commands }) =>
+          /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name) ? commands.insertContent({ type: this.name, attrs: { name } }) : false,
     };
   },
 });

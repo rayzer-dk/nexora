@@ -55,7 +55,7 @@ final class ProductBadgeService
             $list = array_map(static fn (array $r): array => [
                 'id' => (int) $r['id'], 'code' => (string) $r['code'], 'kind' => (string) $r['kind'], 'tone' => (string) $r['tone'],
                 'labels' => json_decode((string) $r['labels_json'], true) ?: [], 'window_days' => (int) $r['window_days'],
-                'min_sold' => (int) $r['min_sold'], 'priority' => (int) $r['priority'], 'enabled' => (int) $r['enabled'],
+                'min_sold' => (int) $r['min_sold'], 'priority' => (int) $r['priority'], 'enabled' => (int) $r['enabled'], 'icon' => (string) ($r['icon'] ?? ''),
             ], $rows);
         }
         if (!$includeDisabled) {
@@ -107,6 +107,7 @@ final class ProductBadgeService
         $row = [
             'kind' => $kind, 'tone' => in_array($tone, self::TONES, true) ? $tone : (preg_match('/^#[0-9a-fA-F]{6}$/', $tone) === 1 ? strtolower($tone) : 'primary'),
             'labels_json' => json_encode($labels, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            'icon' => preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', (string) ($d['icon'] ?? '')) === 1 ? (string) $d['icon'] : null,
             'window_days' => max(0, min(3650, (int) ($d['window_days'] ?? 30))), 'min_sold' => max(0, min(1000000, (int) ($d['min_sold'] ?? 5))),
             'priority' => max(-1000, min(1000, (int) ($d['priority'] ?? 100))), 'enabled' => !empty($d['enabled']) ? 1 : 0, 'updated_at' => $now,
         ];
@@ -173,7 +174,7 @@ final class ProductBadgeService
                     default => isset($set[$id]),
                 };
                 if ($match && count($item['badges']) < 3) {
-                    $item['badges'][] = ['code' => $rule['code'], 'tone' => str_starts_with((string) $rule['tone'], '#') ? 'custom' : $rule['tone'], 'color' => str_starts_with((string) $rule['tone'], '#') ? (string) $rule['tone'] : '', 'fg' => str_starts_with((string) $rule['tone'], '#') ? self::contrastOn((string) $rule['tone']) : '', 'label' => $this->label($rule, $locale)];
+                    $item['badges'][] = ['code' => $rule['code'], 'tone' => str_starts_with((string) $rule['tone'], '#') ? 'custom' : $rule['tone'], 'color' => str_starts_with((string) $rule['tone'], '#') ? (string) $rule['tone'] : '', 'fg' => str_starts_with((string) $rule['tone'], '#') ? self::contrastOn((string) $rule['tone']) : '', 'label' => $this->label($rule, $locale), 'icon' => (string) ($rule['icon'] ?? '')];
                 }
             }
             unset($item);

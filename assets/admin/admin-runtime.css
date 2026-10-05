@@ -708,11 +708,11 @@ div.admin-empty { border: 1px dashed var(--mc-color-border-strong); border-radiu
   white-space: nowrap;
 }
 .admin-badge .ui-icon { width: var(--mc-icon-size-xs); height: var(--mc-icon-size-xs); }
-.admin-badge.is-info, .admin-badge.is-primary, .admin-badge.is-blue, .admin-badge.is-new, .admin-badge.is-pending, .admin-badge.is-sent, .admin-badge.is-confirmed { background: var(--admin-info-soft); color: var(--mc-color-primary); }
-.admin-badge.is-success, .admin-badge.is-ok, .admin-badge.is-active, .admin-badge.is-ready, .admin-badge.is-published, .admin-badge.is-restored, .admin-badge.is-completed, .admin-badge.is-paid, .admin-badge.is-approved, .admin-badge.is-delivered, .admin-badge.is-done, .admin-badge.is-enabled, .admin-badge.is-succeeded { background: var(--mc-color-success-soft); color: var(--mc-color-success); }
-.admin-badge.is-warning, .admin-badge.is-warn, .admin-badge.is-staged, .admin-badge.is-creating, .admin-badge.is-processing, .admin-badge.is-in_progress, .admin-badge.is-draft, .admin-badge.is-requested, .admin-badge.is-hold { background: var(--mc-color-warning-soft); color: var(--mc-color-warning); }
-.admin-badge.is-danger, .admin-badge.is-error, .admin-badge.is-bad, .admin-badge.is-failed, .admin-badge.is-quarantined, .admin-badge.is-cancelled, .admin-badge.is-canceled, .admin-badge.is-rejected, .admin-badge.is-refunded, .admin-badge.is-spam, .admin-badge.is-banned { background: var(--mc-color-danger-soft); color: var(--mc-color-danger); }
-.admin-badge.is-muted, .admin-badge.is-disabled, .admin-badge.is-archived, .admin-badge.is-default, .admin-badge.is-inactive { background: var(--mc-color-surface-subtle); color: var(--mc-color-muted); }
+.admin-badge.is-info, .admin-badge.is-primary, .admin-badge.is-blue, .admin-badge.is-new, .admin-badge.is-pending, .admin-badge.is-sent, .admin-badge.is-confirmed, .admin-badge.is-in_transit, .admin-badge.is-shipped, .admin-badge.is-authorized, .admin-badge.is-ready_for_pickup, .admin-badge.is-returning, .admin-badge.is-placed, .admin-badge.is-label_ready, .admin-badge.is-registered, .admin-badge.is-in_stock { background: var(--admin-info-soft); color: var(--mc-color-primary); }
+.admin-badge.is-success, .admin-badge.is-ok, .admin-badge.is-active, .admin-badge.is-ready, .admin-badge.is-published, .admin-badge.is-restored, .admin-badge.is-completed, .admin-badge.is-paid, .admin-badge.is-approved, .admin-badge.is-delivered, .admin-badge.is-done, .admin-badge.is-enabled, .admin-badge.is-succeeded, .admin-badge.is-resolved, .admin-badge.is-received, .admin-badge.is-recovered, .admin-badge.is-redeemed, .admin-badge.is-verified, .admin-badge.is-valid, .admin-badge.is-ok { background: var(--mc-color-success-soft); color: var(--mc-color-success); }
+.admin-badge.is-warning, .admin-badge.is-warn, .admin-badge.is-staged, .admin-badge.is-creating, .admin-badge.is-processing, .admin-badge.is-in_progress, .admin-badge.is-draft, .admin-badge.is-requested, .admin-badge.is-hold, .admin-badge.is-awaiting_payment, .admin-badge.is-preparing, .admin-badge.is-queued, .admin-badge.is-partially_refunded, .admin-badge.is-low, .admin-badge.is-pending_confirmation, .admin-badge.is-not_sent { background: var(--mc-color-warning-soft); color: var(--mc-color-warning); }
+.admin-badge.is-danger, .admin-badge.is-error, .admin-badge.is-bad, .admin-badge.is-failed, .admin-badge.is-quarantined, .admin-badge.is-cancelled, .admin-badge.is-canceled, .admin-badge.is-rejected, .admin-badge.is-refunded, .admin-badge.is-spam, .admin-badge.is-banned, .admin-badge.is-expired, .admin-badge.is-blocked, .admin-badge.is-exception, .admin-badge.is-payment_failed, .admin-badge.is-out_of_stock, .admin-badge.is-overdue, .admin-badge.is-invalid { background: var(--mc-color-danger-soft); color: var(--mc-color-danger); }
+.admin-badge.is-muted, .admin-badge.is-disabled, .admin-badge.is-archived, .admin-badge.is-default, .admin-badge.is-inactive, .admin-badge.is-closed, .admin-badge.is-deleted, .admin-badge.is-unfulfilled, .admin-badge.is-suspended, .admin-badge.is-not_required, .admin-badge.is-returned, .admin-badge.is-used { background: var(--mc-color-surface-subtle); color: var(--mc-color-muted); }
 .admin-quality { display: grid; grid-template-columns: repeat(2, max-content); gap: var(--mc-space-1); }
 .admin-chip-list { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); }
 .admin-chip {
@@ -1613,7 +1613,7 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-pager__nav { display: flex; align-items: center; gap: var(--mc-space-1); flex-wrap: wrap; }
 .admin-segmented__item { cursor: pointer; }
 .admin-view-chips a[aria-current="page"] { font-weight: var(--mc-font-weight-bold); text-decoration: underline; text-underline-offset: 4px; }
-.admin-content input[type="color"] { width: 48px; height: 40px; min-height: 40px; padding: 2px; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-raised); cursor: pointer; }
+.admin-content input[type="color"] { width: 36px; height: var(--mc-control-height-sm); min-height: var(--mc-control-height-sm); padding: 2px; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-raised); cursor: pointer; }
 .admin-color-custom input[type=color] { width: 48px; height: 40px; }
 @media (min-width: 1280px) { .admin-toolbar > form.admin-toolbar:not(.admin-toolbar__end) { flex-wrap: nowrap; } .admin-toolbar > form.admin-toolbar .admin-search { flex: 1 1 280px; min-width: 200px; } }
 .admin-howto ol { margin: var(--mc-space-2) 0 0; padding-left: 1.4em; display: grid; gap: var(--mc-space-1); color: var(--mc-color-muted); }
@@ -1822,7 +1822,7 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-tone__swatch--info { --swatch: var(--mc-color-info, var(--mc-color-primary)); }
 .admin-tone__swatch--neutral { --swatch: var(--mc-color-muted); }
 .admin-tone__custom { display: inline-flex; align-items: center; gap: var(--mc-space-2); }
-.admin-tone__custom input[type="color"] { width: 44px; height: var(--mc-control-height-md); padding: 2px; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); }
+.admin-tone__custom input[type="color"] { width: 36px; height: var(--mc-control-height-sm); padding: 2px; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); }
 .admin-tone__custom input[type="text"] { width: 8rem; font-family: var(--mc-font-mono, monospace); text-transform: lowercase; }
 .admin-label-langs { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--mc-space-3); }
 

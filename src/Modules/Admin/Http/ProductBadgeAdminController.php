@@ -55,6 +55,7 @@ final class ProductBadgeAdminController extends AbstractController
                 'kind' => is_array($existing) ? $existing['kind'] : (string) $request->request->get('kind', 'manual'),
                 'tone' => (string) $request->request->get('tone', 'primary') === 'custom' ? (string) $request->request->get('tone_custom', '') : (string) $request->request->get('tone', 'primary'),
                 'labels' => $this->labelsFromRequest($request),
+                'icon' => (string) $request->request->get('icon', ''),
                 'window_days' => $request->request->getInt('window_days', 30), 'min_sold' => $request->request->getInt('min_sold', 5),
                 'priority' => $request->request->getInt('priority', 100), 'enabled' => $request->request->getBoolean('enabled'),
             ]);

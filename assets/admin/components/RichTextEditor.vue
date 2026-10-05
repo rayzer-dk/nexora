@@ -13,11 +13,11 @@ import { TextStyleKit } from '@tiptap/extension-text-style';
 import {
   Bold, Italic, Underline, Strikethrough, Subscript as SubIcon, Superscript as SupIcon, Highlighter, List, ListOrdered, Quote, Minus, Table2,
   ImagePlus, Link2, Unlink, RemoveFormatting, Code, Undo2, Redo2, Maximize2, Minimize2, X, FolderOpen,
-  Palette, PaintBucket, Anchor as AnchorIcon, Video as VideoIcon, Ellipsis, ChevronDown,
+  Palette, PaintBucket, Anchor as AnchorIcon, Video as VideoIcon, Smile, Ellipsis, ChevronDown,
   TextAlignStart, TextAlignCenter, TextAlignEnd, TextAlignJustify, Rows3, Columns3, Trash2,
 } from '@lucide/vue';
 import { BlockAlign } from '../features/editor-align';
-import { BlockAnchor, Video, videoEmbedUrl } from '../features/editor-extras';
+import { BlockAnchor, InlineIcon, Video, videoEmbedUrl } from '../features/editor-extras';
 import { pickMedia } from '../features/media-picker';
 import { CODE_THEME_LABELS } from '../features/html-code-editor';
 import type { CodeThemeName, HtmlCodeEditor } from '../features/html-code-editor';
@@ -36,6 +36,7 @@ const editor = new Editor({
     Superscript,
     BlockAlign,
     BlockAnchor,
+    InlineIcon,
     Video,
     TextStyleKit,
     TableKit.configure({ table: { resizable: false } }),
@@ -228,6 +229,14 @@ const removeAnchor = () => {
 // ---- video dialog ----
 const videoDialog = reactive({ open: false, url: '' });
 const videoInput = ref<HTMLInputElement | null>(null);
+// The icon picker modal lives in the admin runtime; it hands back the chosen name.
+const openIconPicker = async () => {
+  const pick = (window as unknown as { mcPickIcon?: () => Promise<string | null> }).mcPickIcon;
+  if (!pick) return;
+  const name = await pick();
+  if (name) editor.chain().focus().insertInlineIcon(name).run();
+  else editor.commands.focus();
+};
 const openVideo = async () => {
   videoDialog.url = '';
   videoDialog.open = true;
@@ -337,6 +346,7 @@ const words = (): number => {
       <button type="button" :title="tr('unlink')" :aria-label="tr('unlink')" :disabled="sourceMode || !editor.isActive('link')" @click="removeLink"><Unlink :size="16" /></button>
       <button type="button" :title="tr('image')" :aria-label="tr('image')" :disabled="sourceMode" @click="openImage"><ImagePlus :size="16" /></button>
       <button type="button" :title="tr('video')" :aria-label="tr('video')" :disabled="sourceMode" @click="openVideo"><VideoIcon :size="16" /></button>
+      <button type="button" :title="tr('icon')" :aria-label="tr('icon')" :disabled="sourceMode" @click="openIconPicker"><Smile :size="16" /></button>
       <button type="button" :title="tr('table')" :aria-label="tr('table')" :disabled="sourceMode" @click="insertTable"><Table2 :size="16" /></button>
       <span class="rich-editor__menu-host rich-editor__more">
         <button type="button" :title="tr('more_tools')" :aria-label="tr('more_tools')" :aria-expanded="moreOpen" :disabled="sourceMode" @click="moreOpen = !moreOpen"><Ellipsis :size="16" /></button>

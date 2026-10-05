@@ -9,6 +9,7 @@
 <form method="post" action="{{ path('admin_catalog_badge_save') }}" class="admin-form-grid"><input type="hidden" name="_csrf_token" value="{{ csrf_token('catalog_badges') }}"><input type="hidden" name="id" value="{{ rule.id }}">
 {{ _self.label_fields(locales, rule.labels) }}
 <div class="admin-form-wide"><span class="admin-field-label">{{ ui_text('admin.badges.tone') }}</span>{{ _self.color_field(tones, tone_labels, rule.tone) }}</div>
+<div class="admin-form-wide admin-inline-field"><span class="admin-field-label">{{ ui_text('admin.icons.field') }}</span>{% include '@storefront/admin/_icon_field.html.twig' with {name: 'icon', value: rule.icon|default(''), clearable: true} only %}</div>
 <label>{{ ui_text('admin.badges.priority') }}<input type="number" name="priority" value="{{ rule.priority }}" min="-1000" max="1000"></label>
 {% if rule.kind in ['new','bestseller'] %}<label>{{ ui_text('admin.badges.window_days') }}<input type="number" name="window_days" value="{{ rule.window_days }}" min="1" max="3650"></label>{% endif %}
 {% if rule.kind == 'bestseller' %}<label>{{ ui_text('admin.badges.min_sold') }}<input type="number" name="min_sold" value="{{ rule.min_sold }}" min="1"></label>{% endif %}
@@ -23,6 +24,7 @@
 <label>{{ ui_text('admin.badges.code') }}<input type="text" name="code" required pattern="[a-z0-9_-]{1,32}" maxlength="32"></label>
 {{ _self.label_fields(locales, {}) }}
 <div class="admin-form-wide"><span class="admin-field-label">{{ ui_text('admin.badges.tone') }}</span>{{ _self.color_field(tones, tone_labels, 'primary') }}</div>
+<div class="admin-form-wide admin-inline-field"><span class="admin-field-label">{{ ui_text('admin.icons.field') }}</span>{% include '@storefront/admin/_icon_field.html.twig' with {name: 'icon', value: '', clearable: true} only %}</div>
 <label>{{ ui_text('admin.badges.priority') }}<input type="number" name="priority" value="100"></label>
 <label class="admin-form-wide">{{ ui_text('admin.badges.skus') }}<textarea name="skus" rows="2"></textarea><small>{{ ui_text('admin.badges.skus_hint') }}</small></label>
 <input type="hidden" name="enabled" value="1"><div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('plus', 18) }} {{ ui_text('admin.badges.create') }}</button></div></form></section>

@@ -201,7 +201,7 @@ function ensureIconDialog() {
 
 function initIconPickers() {
   const fields = qa('[data-icon-picker]');
-  if (!fields.length) return;
+  // The picker is also offered to scripts (the text editor inserts icons into the text): window.mcPickIcon(current) → Promise<name|null>.
   const modal = ensureIconDialog();
   const grid = q('[data-icon-grid]', modal);
   const search = q('[data-icon-search]', modal);
@@ -226,7 +226,7 @@ function initIconPickers() {
 
   const renderMore = () => {
     const fragment = document.createDocumentFragment();
-    const current = active ? q('[data-icon-input]', active).value : '';
+    const current = active && typeof active.resolve !== 'function' ? q('[data-icon-input]', active).value : '';
     for (const name of shown.slice(rendered, rendered + CHUNK)) {
       const button = document.createElement('button');
       button.type = 'button';
@@ -262,11 +262,15 @@ function initIconPickers() {
     renderMore();
   };
 
-  const close = () => {
+  const closeSilently = () => {
     modal.hidden = true;
     modal.classList.remove('is-open');
     document.body.classList.remove('has-admin-modal');
-    active?.querySelector('[data-icon-open]')?.focus();
+  };
+  const close = () => {
+    closeSilently();
+    if (active && typeof active.resolve === 'function') active.resolve(null);
+    else active?.querySelector?.('[data-icon-open]')?.focus();
     active = null;
   };
 
@@ -277,17 +281,22 @@ function initIconPickers() {
   grid.addEventListener('click', (event) => {
     const item = event.target.closest('[data-icon]');
     if (!item || !active) return;
+    if (typeof active.resolve === 'function') { const done = active.resolve; active = null; closeSilently(); done(item.dataset.icon); return; }
     paint(active, item.dataset.icon);
     close();
   });
-  none.addEventListener('click', () => { if (active) paint(active, ''); close(); });
+  none.addEventListener('click', () => {
+    if (active && typeof active.resolve === 'function') { const done = active.resolve; active = null; closeSilently(); done(''); return; }
+    if (active) paint(active, '');
+    close();
+  });
 
   const open = async (field) => {
     active = field;
     modal.hidden = false;
     document.body.classList.add('has-admin-modal');
     requestAnimationFrame(() => modal.classList.add('is-open'));
-    none.hidden = !field.hasAttribute('data-icon-clearable');
+    none.hidden = typeof field.resolve !== 'function' && !field.hasAttribute('data-icon-clearable');
     if (!names.length) {
       count.textContent = t('js_icon_loading');
       library = await loadIconLibrary();
@@ -306,6 +315,7 @@ function initIconPickers() {
     fields.forEach((field) => { const input = q('[data-icon-input]', field); paint(field, input.value, true); });
   });
   fields.forEach((field) => q('[data-icon-open]', field)?.addEventListener('click', () => open(field)));
+  window.mcPickIcon = () => new Promise((resolve) => { open({ resolve }); });
 }
 
 // Dates arrive from the database with seconds, microseconds and a zone; people read "2026-10-05 04:00".

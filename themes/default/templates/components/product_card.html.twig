@@ -1,7 +1,7 @@
 {% set capabilities = site_capabilities() %}
 <article class="catalog-card" data-product-card data-track-id="{{ product.sku|default('')|e('html_attr') }}" data-track-name="{{ product.name|e('html_attr') }}" data-track-price="{{ product.price_minor|default(0) }}" data-track-currency="{{ product.currency|default('')|e('html_attr') }}">
     <a class="catalog-card__media" href="{{ product.url }}" aria-label="{{ product.name }}">
-        {% if product.badges|default([]) %}<span class="catalog-card__badges">{% for badge in product.badges %}<span class="product-badge product-badge--{{ badge.tone }}"{% if badge.color|default('') %} style="background:{{ badge.color }};color:{{ badge.fg }}"{% endif %} data-badge="{{ badge.code }}">{{ badge.label }}</span>{% endfor %}</span>{% endif %}
+        {% if product.badges|default([]) %}<span class="catalog-card__badges">{% for badge in product.badges %}<span class="product-badge product-badge--{{ badge.tone }}"{% if badge.color|default('') %} style="background:{{ badge.color }};color:{{ badge.fg }}"{% endif %} data-badge="{{ badge.code }}">{% if badge.icon|default('') %}{{ ui_icon(badge.icon, 14) }}{% endif %}{{ badge.label }}</span>{% endfor %}</span>{% endif %}
         {{ media_picture(product.image, 'card', ['thumb', 'card', 'product'], '(min-width: 1280px) 22vw, (min-width: 768px) 30vw, 48vw', {alt: (product.name), width: '640', height: '640', loading: 'lazy', decoding: 'async'}) }}
         {% if product.discount_percent|default(0) > 0 %}<span class="catalog-card__discount">-{{ product.discount_percent }}%</span>{% endif %}
     </a>

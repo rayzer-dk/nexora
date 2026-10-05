@@ -111,3 +111,7 @@ a.banner:hover .banner__media img { transform: scale(1.03); }
 @media (min-width: 1024px) {
   .video-hero__title { font-size: var(--mc-font-size-4xl); }
 }
+
+/* Category tile: the icon chosen in the admin sits in the corner of the photo. */
+.reference-category { position: relative; }
+.reference-category__icon { position: absolute; top: var(--mc-space-2); inset-inline-start: var(--mc-space-2); z-index: var(--mc-z-raised); display: grid; place-items: center; width: var(--mc-control-height-md); height: var(--mc-control-height-md); border-radius: var(--mc-radius-full); background: var(--mc-color-surface-raised); color: var(--mc-color-primary); box-shadow: var(--mc-shadow-sm); }

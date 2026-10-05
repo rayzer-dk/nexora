@@ -88,7 +88,7 @@ final readonly class DbalStorefrontCatalogQuery
         $limit = max(1, min(200, $limit));
         $parentSql = $parentId === null ? 'c.parent_id IS NULL' : 'c.parent_id=' . (int) $parentId;
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT c.id,c.public_id,ct.name,ct.description,sr.path,
+            "SELECT c.id,c.public_id,c.icon,ct.name,ct.description,sr.path,
                     (SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id LIMIT 1) AS image_key
              FROM mc_category c
              JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active'
@@ -113,6 +113,7 @@ final readonly class DbalStorefrontCatalogQuery
                 ) ?: null;
             }
             $tile = $this->categoryRow($row);
+            $tile['icon'] = (string) ($row['icon'] ?? '');
             $tile['product_count'] = (int) $this->connection->fetchOne(
                 "SELECT COUNT(DISTINCT p.id) FROM mc_product p
                  JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active'

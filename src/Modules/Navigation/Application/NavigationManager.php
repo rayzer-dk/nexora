@@ -28,7 +28,7 @@ final class NavigationManager
     public function items(int $storeId, string $menuCode, string $locale): array
     {
         $rows = $this->db->fetchAllAssociative(
-            "SELECT n.id,n.parent_id,n.item_type,n.target_ref,n.url,n.open_new_tab,COALESCE(t.label,tf.label,'') label,COALESCE(t.badge,tf.badge) badge
+            "SELECT n.id,n.parent_id,n.item_type,n.target_ref,n.url,n.open_new_tab,n.icon,COALESCE(t.label,tf.label,'') label,COALESCE(t.badge,tf.badge) badge
              FROM mc_navigation_item n
              LEFT JOIN mc_navigation_item_translation t ON t.navigation_item_id=n.id AND t.locale=?
              LEFT JOIN mc_navigation_item_translation tf ON tf.navigation_item_id=n.id AND tf.locale=(SELECT default_locale FROM mc_store WHERE id=n.store_id)
@@ -115,6 +115,7 @@ final class NavigationManager
                 'status' => ($data['status'] ?? 'active') === 'disabled' ? 'disabled' : 'active',
                 'sort_order' => $sort,
                 'open_new_tab' => !empty($data['open_new_tab']) ? 1 : 0,
+                'icon' => preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', (string) ($data['icon'] ?? '')) === 1 ? (string) $data['icon'] : null,
                 'updated_at' => $now,
             ];
             if ($id && $db->fetchOne('SELECT id FROM mc_navigation_item WHERE id=? AND store_id=?', [$id, $storeId]) !== false) {

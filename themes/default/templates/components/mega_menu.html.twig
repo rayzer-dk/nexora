@@ -35,7 +35,7 @@
                 {% endif %}
                 <div class="mega__foot"><a class="mega__all" href="/catalog">{{ ui_icon('layout-grid', 16) }}{{ ui_text('mega_all_products') }}{{ ui_icon('arrow-right', 14) }}</a></div>
                 {% if presentation.header.show_category_nav and primary_navigation %}
-                <div class="mega__extra"><h2 class="mega__extra-title">{{ ui_text('mega_menu_section') }}</h2><ul>{% for item in primary_navigation %}<li><a href="{{ item.url }}"{% if item.open_new_tab|default(false) %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ item.name }}</a></li>{% endfor %}</ul></div>
+                <div class="mega__extra"><h2 class="mega__extra-title">{{ ui_text('mega_menu_section') }}</h2><ul>{% for item in primary_navigation %}<li><a href="{{ item.url }}"{% if item.open_new_tab|default(false) %} target="_blank" rel="noopener noreferrer"{% endif %}>{% if item.icon|default('') %}{{ ui_icon(item.icon, 16) }} {% endif %}{{ item.name }}</a></li>{% endfor %}</ul></div>
                 {% endif %}
                 <div class="mega__extra"><h2 class="mega__extra-title">{{ ui_text('mega_information') }}</h2><ul>{% if capabilities.features.content %}<li><a href="/about-us">{{ ui_text('about') }}</a></li><li><a href="/shipping">{{ ui_text('shipping_payment') }}</a></li><li><a href="/returns">{{ ui_text('returns') }}</a></li>{% endif %}{% if capabilities.features.blog %}<li><a href="/blog">{{ ui_text('blog') }}</a></li>{% endif %}{% if capabilities.features.forum|default(false) %}<li><a href="/forum">{{ ui_text('forum') }}</a></li>{% endif %}{% if capabilities.features.content %}<li><a href="/contact">{{ ui_text('contacts') }}</a></li>{% endif %}</ul></div>
             </div>

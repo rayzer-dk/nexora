@@ -13,7 +13,8 @@ framework:
                 allow_attributes:
                     style: ['span', 'p', 'h1', 'h2', 'h3', 'h4', 'li', 'td', 'th']
                     id: ['h1', 'h2', 'h3', 'h4', 'p']
-                    class: ['iframe']
+                    class: ['iframe', 'span']
+                    data-icon: ['span']
                 with_attribute_sanitizers:
                     - 'Commerce\Core\Text\RichTextAttributeSanitizer'
             # The shop owner's own HTML e-mails: https links and images only, layout tables and a fixed set of inline CSS.

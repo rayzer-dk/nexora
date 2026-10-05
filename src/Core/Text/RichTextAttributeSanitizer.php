@@ -24,13 +24,24 @@ final class RichTextAttributeSanitizer implements AttributeSanitizerInterface
 
     public function getSupportedAttributes(): ?array
     {
-        return ['style', 'id', 'src'];
+        return ['style', 'id', 'src', 'class', 'data-icon'];
     }
 
     public function sanitizeAttribute(string $element, string $attribute, string $value, HtmlSanitizerConfig $config): ?string
     {
         if ($attribute === 'src') {
             return $element === 'iframe' ? self::embedUrl($value) : $value;
+        }
+        if ($attribute === 'data-icon') {
+            return $element === 'span' && preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $value) === 1 ? $value : null;
+        }
+        if ($attribute === 'class') {
+            // The inline icon marker is the only class a span may carry; an iframe keeps its player classes.
+            if ($element === 'span') {
+                return $value === 'mc-inline-icon' ? $value : null;
+            }
+
+            return preg_match('/^[A-Za-z0-9 _-]{1,80}$/D', $value) === 1 ? $value : null;
         }
         if ($attribute === 'id') {
             return preg_match('/^[A-Za-z][A-Za-z0-9_-]{0,63}$/D', $value) === 1 ? $value : null;

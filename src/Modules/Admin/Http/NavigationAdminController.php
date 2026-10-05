@@ -37,7 +37,7 @@ final class NavigationAdminController extends AbstractController
             $menu = 'header';
         }
         $rows = $this->db->fetchAllAssociative(
-            'SELECT n.id,n.parent_id,n.menu_code,n.item_type,n.target_ref,n.url,n.status,n.sort_order,n.open_new_tab FROM mc_navigation_item n WHERE n.store_id=? AND n.menu_code=? ORDER BY n.parent_id IS NOT NULL,n.sort_order,n.id',
+            'SELECT n.id,n.parent_id,n.menu_code,n.item_type,n.target_ref,n.url,n.status,n.sort_order,n.open_new_tab,n.icon FROM mc_navigation_item n WHERE n.store_id=? AND n.menu_code=? ORDER BY n.parent_id IS NOT NULL,n.sort_order,n.id',
             [$ctx->storeId, $menu],
         );
         $locales = $this->db->fetchAllAssociative(
@@ -93,6 +93,7 @@ final class NavigationAdminController extends AbstractController
                 'target_ref' => $type === 'category' || $type === 'product' ? strtolower($target) : $target,
                 'url' => $request->request->get('url', ''), 'status' => $request->request->get('status', 'active'),
                 'sort_order' => $request->request->getInt('sort_order', 0), 'open_new_tab' => $request->request->getBoolean('open_new_tab'),
+                'icon' => (string) $request->request->get('icon', ''),
             ], $labels);
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.navigationadmincontroller.punkt_meniu_zberezheno'));
         } catch (\DomainException $e) {

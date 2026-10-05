@@ -175,6 +175,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
                 'url' => (string) ($row['url'] ?? '#'),
                 'badge' => $row['badge'] ?? null,
                 'open_new_tab' => !empty($row['open_new_tab']),
+                'icon' => (string) ($row['icon'] ?? ''),
                 'children' => $this->mapNavigationRows(is_array($row['children'] ?? null) ? $row['children'] : []),
             ];
         }, $rows);

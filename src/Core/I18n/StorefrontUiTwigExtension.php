@@ -35,6 +35,7 @@ final class StorefrontUiTwigExtension extends AbstractExtension
         return [
             new TwigFilter('forum_ugc', $this->forumUgc(...), ['is_safe' => ['html']]),
             new TwigFilter('status_label', $this->statusLabel(...), ['needs_context' => true]),
+            new \Twig\TwigFunction('status_badge', $this->statusBadge(...), ['needs_context' => true, 'is_safe' => ['html']]),
         ];
     }
 
@@ -152,6 +153,15 @@ final class StorefrontUiTwigExtension extends AbstractExtension
 
     /** @param array<string,mixed> $context */
     /** Human label for an order/payment/fulfilment status code; unknown codes fall back to a readable form of the code. @param array<string,mixed> $context */
+    /** A coloured status chip for admin tables: the colour follows the status code, the text is its translation. */
+    public function statusBadge(array $context, mixed $code, string $group = ''): string
+    {
+        $raw = trim((string) $code);
+        $class = preg_replace('/[^a-z0-9_]/', '', strtolower($raw)) ?? '';
+
+        return sprintf('<span class="admin-badge is-%s">%s</span>', $class !== '' ? $class : 'muted', htmlspecialchars($this->statusLabel($context, $raw, $group), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+    }
+
     public function statusLabel(array $context, mixed $code, string $group = ''): string
     {
         $code = trim((string) $code);

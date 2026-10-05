@@ -174,6 +174,7 @@ final class CatalogAdminPageController extends AbstractController
                         (int) $request->request->get('sort_order', 0),
                     ));
                     $this->categoryTexts->save((int) $created['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), '');
+                    $this->saveCategoryIcon((int) $created['id'], $request);
                     if (($imageId = $this->categoryImages->imageFromRequest($request)) !== false) {
                         $this->categoryImages->set((int) $created['id'], $context->storeId, $imageId, (string) $request->request->get('name', ''));
                     }
@@ -230,6 +231,13 @@ final class CatalogAdminPageController extends AbstractController
         return $this->render('@storefront/admin/catalog/product_form.html.twig', ['categories' => $categories, 'brands' => $brands, 'product' => null, 'images' => [], 'videos' => [], 'media_items' => [], 'media_folders' => $this->mediaFolderChoices($context->storeId), 'upload_folder' => $this->uploadFolder($request, $context->storeId), 'currency' => $context->currency, 'csrf_id' => 'admin_product_create', 'sku_template' => $this->skus->template()]);
     }
 
+    /** The icon chosen in the icon picker; anything that is not a Lucide-style name clears it. */
+    private function saveCategoryIcon(int $categoryId, Request $request): void
+    {
+        $icon = (string) $request->request->get('icon', '');
+        $this->db->update('mc_category', ['icon' => preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $icon) === 1 ? $icon : null], ['id' => $categoryId]);
+    }
+
     #[Route('/admin/catalog/categories/{publicId}/edit', name: 'admin_catalog_category_edit', methods: ['GET', 'POST'])]
     public function categoryEdit(string $publicId, Request $request): Response
     {
@@ -249,6 +257,7 @@ final class CatalogAdminPageController extends AbstractController
                         status: (string) $request->request->get('status', 'active'),
                     ));
                     $this->categoryTexts->save((int) $category['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), '');
+                    $this->saveCategoryIcon((int) $category['id'], $request);
                     if (($imageId = $this->categoryImages->imageFromRequest($request)) !== false) {
                         $this->categoryImages->set((int) $category['id'], $context->storeId, $imageId, (string) $request->request->get('name', ''));
                     }
