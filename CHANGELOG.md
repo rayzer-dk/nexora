@@ -2,9 +2,10 @@
 
 Nexora Commerce has a single product line on the `main` branch. Only release-level changes are listed.
 
-## 3.58.0 — 2026-10-05
+## 3.59.0 — 2026-10-05
 
-Own redirects and fixes of own delivery methods.
+The shop suggests what to do.
 
-- SEO: own redirects (old address → new address, 301/302/307/308) with list import, hit counters, and a list of pages visitors could not find with a one-click "create redirect".
-- Own delivery methods: fixed a server error at checkout, address check on the form, a method just added starts switched on.
+- Missing pages: for every address visitors could not find the shop suggests the most similar page (product, category, brand, article) and creates the redirect in one click.
+- Dashboard "needs attention": orders unpaid for over a day, B2B waiting for approval, abandoned carts with contacts not yet reminded, searches with no results, missing pages visited 3+ times, gift cards expiring within 14 days.
+- Searches with no results: teach the search a synonym right from the analytics page.

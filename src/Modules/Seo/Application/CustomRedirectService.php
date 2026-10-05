@@ -145,6 +145,51 @@ final class CustomRedirectService
         return $this->db->fetchAllAssociative('SELECT id,path,hit_count,referer,last_seen_at FROM mc_not_found_log ORDER BY hit_count DESC,last_seen_at DESC LIMIT ' . max(1, min(200, $limit)));
     }
 
+    /**
+     * The page of the shop that an unknown address most likely meant: the slug in the old address is compared with the slugs of products,
+     * categories, brands and articles (the default language first). @return array{target:string,label:string,entity_type:string,score:int}|null
+     */
+    public function suggest(string $path): ?array
+    {
+        $last = rawurldecode((string) basename(rtrim((string) parse_url($path, PHP_URL_PATH), '/')));
+        $slug = trim((string) preg_replace('/[^a-z0-9]+/', '-', mb_strtolower((string) preg_replace('/\.(?:html?|php|aspx?)$/i', '', $last))), '-');
+        if (mb_strlen($slug) < 3) {
+            return null;
+        }
+        $likes = [];
+        $params = [$slug];
+        foreach (array_unique(array_filter(explode('-', $slug), static fn (string $t): bool => strlen($t) >= 4)) as $token) {
+            $likes[] = 's.slug LIKE ?';
+            $params[] = '%' . addcslashes($token, '%_\\') . '%';
+            if (count($likes) >= 4) {
+                break;
+            }
+        }
+        $likes[] = "REPLACE(s.slug,'-','') LIKE ?";
+        $params[] = '%' . str_replace('-', '', $slug) . '%';
+        $where = 's.slug = ?' . ' OR ' . implode(' OR ', $likes);
+        $rows = $this->db->fetchAllAssociative(
+            "SELECT s.slug,s.path,s.entity_type,s.locale,COALESCE(sl.url_prefix,'') AS url_prefix,COALESCE(sl.is_default,0) AS is_default FROM mc_seo_route s LEFT JOIN mc_store_locale sl ON sl.store_id=s.store_id AND sl.locale_code=s.locale WHERE s.indexable=1 AND ($where) LIMIT 300",
+            $params,
+        );
+        $best = null;
+        $bestScore = 0;
+        foreach ($rows as $r) {
+            similar_text(str_replace('-', '', $slug), str_replace('-', '', (string) $r['slug']), $percent);
+            $score = (int) round($percent) + ((int) $r['is_default'] === 1 ? 3 : 0);
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $r;
+            }
+        }
+        if ($best === null || $bestScore < 58) {
+            return null;
+        }
+        $prefix = trim((string) $best['url_prefix'], '/');
+
+        return ['target' => '/' . ($prefix !== '' ? $prefix . '/' : '') . ltrim((string) $best['path'], '/'), 'label' => (string) $best['slug'], 'entity_type' => (string) $best['entity_type'], 'score' => min(100, $bestScore)];
+    }
+
     public function clearNotFound(): void
     {
         $this->db->executeStatement('DELETE FROM mc_not_found_log');

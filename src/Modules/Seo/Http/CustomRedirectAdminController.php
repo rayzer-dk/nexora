@@ -25,7 +25,7 @@ final class CustomRedirectAdminController extends AbstractController
 
         return $this->render('@storefront/admin/system/custom_redirects.html.twig', [
             'rows' => $this->redirects->all($search),
-            'not_found' => $this->redirects->topNotFound(50),
+            'not_found' => array_map(fn (array $n): array => $n + ['suggestion' => $this->redirects->suggest((string) $n['path'])], $this->redirects->topNotFound(50)),
             'search' => $search,
             'prefill' => CustomRedirectService::normalizePath((string) $request->query->get('source', '')) !== '/' ? (string) $request->query->get('source', '') : '',
         ]);
