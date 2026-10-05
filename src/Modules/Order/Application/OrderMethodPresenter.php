@@ -9,12 +9,15 @@ use Commerce\Core\I18n\StorefrontUiTranslator;
 /** Human readable names of the delivery / payment method stored on an order (success page, e-mails, admin order view). */
 final readonly class OrderMethodPresenter
 {
-    public function __construct(private StorefrontUiTranslator $translator)
+    public function __construct(private StorefrontUiTranslator $translator, private ?\Commerce\Modules\Checkout\Application\CheckoutMethodSettings $custom = null)
     {
     }
 
     public function delivery(string $code, string $locale): string
     {
+        if (str_starts_with($code, 'custom_') && ($name = $this->custom?->customName($code, $locale)) !== null && $name !== '') {
+            return $name;
+        }
         $key = 'method.delivery.' . $code;
         $label = $this->translator->translate($key, $locale);
 
@@ -23,6 +26,9 @@ final readonly class OrderMethodPresenter
 
     public function payment(string $code, string $locale): string
     {
+        if (str_starts_with($code, 'custom_') && ($name = $this->custom?->customName($code, $locale)) !== null && $name !== '') {
+            return $name;
+        }
         $key = 'method.payment.' . $code;
         $label = $this->translator->translate($key, $locale);
 

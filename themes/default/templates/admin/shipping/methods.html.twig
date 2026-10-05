@@ -1,12 +1,20 @@
-{% macro method(kind, code, enabled, cfg, note, locales, currency, extra) %}
+{% macro custom_row(idx, kind, row, locales) %}
+<div class="admin-form-grid admin-method__own">
+<input type="hidden" name="custom[{{ idx }}][kind]" value="{{ kind }}">{% if row.code|default('') %}<input type="hidden" name="custom[{{ idx }}][code]" value="{{ row.code }}">{% endif %}
+<div class="admin-field"><span>{{ ui_text('admin.checkout_methods.custom_icon') }}</span>{% include '@storefront/admin/_icon_field.html.twig' with {name: 'custom[' ~ idx ~ '][icon]', value: row.icon|default(''), clearable: true} only %}</div>
+{% for l in locales %}<label data-lang="{{ l.code }}" data-lang-name="{{ l.native_name }}">{{ ui_text('admin.checkout_methods.custom_name') }}<span class="lang-suffix"> · {{ l.native_name }}</span><input type="text" maxlength="120" name="custom[{{ idx }}][name][{{ l.code }}]" value="{{ row.name[l.code]|default('') }}"></label>{% endfor %}
+{% if row.code|default('') %}<label class="admin-check"><input type="checkbox" name="custom[{{ idx }}][remove]" value="1"><span>{{ ui_text('admin.checkout_methods.custom_remove') }}</span></label>{% endif %}
+</div>
+{% endmacro %}
+{% macro method(kind, code, enabled, cfg, note, locales, currency, extra, label) %}
 <section class="admin-method">
-<div class="admin-method__head"><label class="admin-check"><input type="checkbox" name="methods[]" value="{{ code }}"{{ enabled ? ' checked' : '' }}><span><strong>{{ ui_text('method.' ~ kind ~ '.' ~ code) }}</strong><small>{{ note }}{% if extra %} · <a href="{{ path('admin_system_storefront_contacts') }}">{{ ui_text('admin.checkout_methods.pickup_points') }} ({{ extra }})</a>{% endif %}</small></span></label></div>
+<div class="admin-method__head"><label class="admin-check"><input type="checkbox" name="methods[]" value="{{ code }}"{{ enabled ? ' checked' : '' }}><span><strong>{{ label|default('') ?: ui_text('method.' ~ kind ~ '.' ~ code) }}</strong><small>{{ note }}{% if extra %} · <a href="{{ path('admin_system_storefront_contacts') }}">{{ ui_text('admin.checkout_methods.pickup_points') }} ({{ extra }})</a>{% endif %}</small></span></label></div>
 <div class="admin-form-grid admin-method__grid">
 <label>{{ ui_text('admin.checkout_methods.fee') }} ({{ currency }})<input type="number" min="0" step="0.01" name="cfg[{{ code }}][fee]" value="{{ cfg.fee_minor ? (cfg.fee_minor / 100)|number_format(2, '.', '') : '' }}" placeholder="0"></label>
 <label>{{ ui_text('admin.checkout_methods.free_over') }} ({{ currency }})<input type="number" min="0" step="0.01" name="cfg[{{ code }}][free_over]" value="{{ cfg.free_over_minor ? (cfg.free_over_minor / 100)|number_format(2, '.', '') : '' }}" placeholder="—"></label>
 <label>{{ ui_text('admin.checkout_methods.min') }} ({{ currency }})<input type="number" min="0" step="0.01" name="cfg[{{ code }}][min]" value="{{ cfg.min_minor ? (cfg.min_minor / 100)|number_format(2, '.', '') : '' }}" placeholder="—"></label>
 <label>{{ ui_text('admin.checkout_methods.max') }} ({{ currency }})<input type="number" min="0" step="0.01" name="cfg[{{ code }}][max]" value="{{ cfg.max_minor ? (cfg.max_minor / 100)|number_format(2, '.', '') : '' }}" placeholder="—"></label>
-{% for l in locales %}<label data-lang="{{ l.code }}" data-lang-name="{{ l.native_name }}">{{ ui_text('admin.checkout_methods.title_field') }}<span class="lang-suffix"> · {{ l.native_name }}</span><input type="text" maxlength="120" name="cfg[{{ code }}][title][{{ l.code }}]" value="{{ cfg.title[l.code]|default('') }}" placeholder="{{ ui_text('method.' ~ kind ~ '.' ~ code) }}"></label><label data-lang="{{ l.code }}" data-lang-name="{{ l.native_name }}">{{ ui_text('admin.checkout_methods.text_field') }}<span class="lang-suffix"> · {{ l.native_name }}</span><input type="text" maxlength="240" name="cfg[{{ code }}][text][{{ l.code }}]" value="{{ cfg.text[l.code]|default('') }}"></label>{% endfor %}
+{% for l in locales %}<label data-lang="{{ l.code }}" data-lang-name="{{ l.native_name }}">{{ ui_text('admin.checkout_methods.title_field') }}<span class="lang-suffix"> · {{ l.native_name }}</span><input type="text" maxlength="120" name="cfg[{{ code }}][title][{{ l.code }}]" value="{{ cfg.title[l.code]|default('') }}" placeholder="{{ label|default('') ?: ui_text('method.' ~ kind ~ '.' ~ code) }}"></label><label data-lang="{{ l.code }}" data-lang-name="{{ l.native_name }}">{{ ui_text('admin.checkout_methods.text_field') }}<span class="lang-suffix"> · {{ l.native_name }}</span><input type="text" maxlength="240" name="cfg[{{ code }}][text][{{ l.code }}]" value="{{ cfg.text[l.code]|default('') }}"></label>{% endfor %}
 </div>
 </section>
 {% endmacro %}
@@ -16,9 +24,13 @@
 <form method="post" action="{{ path('admin_shipment_methods_save') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('shipping_methods') }}">
 <section class="admin-panel" data-no-table-tools><div class="admin-panel__header"><h2>{{ ui_text('admin.checkout_methods.delivery') }}</h2></div>
 {% for code in delivery_codes %}{{ _self.method('delivery', code, enabled[code], config[code], ui_text('admin.checkout_methods.note.' ~ code), store_locales, currency, code == 'self_pickup' ? pickup_points : 0) }}{% endfor %}
+{% for m in custom_methods %}{% if m.kind == 'delivery' %}<div class="admin-method-own">{{ _self.method('delivery', m.code, enabled[m.code]|default(true), config[m.code], ui_text('admin.checkout_methods.custom_note'), store_locales, currency, 0, m.name[store_locales[0].code]|default(m.code)) }}{{ _self.custom_row('c' ~ loop.index, 'delivery', m, store_locales) }}</div>{% endif %}{% endfor %}
+<details class="admin-collapse"><summary>{{ ui_icon('plus', 16) }} {{ ui_text('admin.checkout_methods.add_delivery') }}</summary>{{ _self.custom_row('nd', 'delivery', {}, store_locales) }}<p class="admin-help">{{ ui_text('admin.checkout_methods.add_delivery_hint') }}</p></details>
 {{ help.hint(ui_text('admin.checkout_methods.delivery_hint')) }}</section>
 <section class="admin-panel" data-no-table-tools><div class="admin-panel__header"><h2>{{ ui_text('admin.checkout_methods.payment') }}</h2></div>
 {% for code in payment_codes %}{{ _self.method('payment', code, enabled[code], config[code], ui_text('admin.checkout_methods.note.' ~ code), store_locales, currency, 0) }}{% endfor %}
+{% for m in custom_methods %}{% if m.kind == 'payment' %}<div class="admin-method-own">{{ _self.method('payment', m.code, enabled[m.code]|default(true), config[m.code], ui_text('admin.checkout_methods.custom_note'), store_locales, currency, 0, m.name[store_locales[0].code]|default(m.code)) }}{{ _self.custom_row('c' ~ loop.index, 'payment', m, store_locales) }}</div>{% endif %}{% endfor %}
+<details class="admin-collapse"><summary>{{ ui_icon('plus', 16) }} {{ ui_text('admin.checkout_methods.add_payment') }}</summary>{{ _self.custom_row('np', 'payment', {}, store_locales) }}<p class="admin-help">{{ ui_text('admin.checkout_methods.add_payment_hint') }}</p></details>
 {% if other_payments %}{{ help.hint(ui_text('admin.checkout_methods.online_hint', {methods: other_payments|join(', ')})) }}{% else %}{{ help.hint(ui_text('admin.checkout_methods.online_none')) }}{% endif %}
 </section>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.badges.save') }}</button></div></form>

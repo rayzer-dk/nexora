@@ -1234,3 +1234,6 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 /* An icon inside a text (inserted with the editor's icon button). */
 .mc-inline-icon { display: inline-flex; width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
 .mc-inline-icon > svg { width: 100%; height: 100%; }
+.cart-freeship { display: grid; gap: var(--mc-space-2); padding: var(--mc-space-3); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-subtle); font-size: var(--mc-font-size-sm); }
+.cart-freeship i { display: block; height: 6px; border-radius: var(--mc-radius-sm); background: linear-gradient(90deg, var(--mc-color-primary) calc(var(--cart-freeship) * 1%), var(--mc-color-border) 0); }
+.cart-freeship.is-reached { color: var(--mc-color-success); }

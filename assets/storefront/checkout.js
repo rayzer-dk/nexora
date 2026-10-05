@@ -28,6 +28,7 @@ if (checkout) {
   const carrierRadios = qa('input[name="carrier"]');
   const remotePanel = q('[data-delivery-remote]');
   const pickupPanel = q('[data-delivery-pickup]');
+  const customPanel = q('[data-delivery-custom]');
   const cityInput = q('[data-delivery-city]');
   const pointInput = q('[data-delivery-point]');
   const cityResults = q('[data-city-results]');
@@ -104,8 +105,10 @@ if (checkout) {
   const applyCarrier = (initial = false) => {
     const pickup = isPickup();
     carrierRadios.forEach((radio) => radio.closest('.ck-choice')?.classList.toggle('is-selected', radio.checked));
-    if (remotePanel) remotePanel.hidden = pickup;
+    const custom = carrierRadios.some((radio) => radio.checked && radio.hasAttribute('data-custom'));
+    if (remotePanel) remotePanel.hidden = pickup || custom;
     if (pickupPanel) pickupPanel.hidden = !pickup;
+    if (customPanel) { customPanel.hidden = !custom; const field = customPanel.querySelector('input'); if (field) field.required = custom; }
     if (serviceType) serviceType.value = pickup ? 'store_pickup' : 'pickup_point';
     if (pickup) syncPickup(); else if (!initial) resetRemote();
     if (deliveryError) deliveryError.hidden = true;

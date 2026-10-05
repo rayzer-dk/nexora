@@ -2,6 +2,7 @@ import '../admin/admin-runtime.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
 import { initDismissibleNotices } from '../shared/dismissible-notices.js';
 import { lucideIconNode } from '../shared/lucide-icons.js';
+import { decorateLangTabs } from '../shared/flags.js';
 
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
 const q = (selector, root = document) => root.querySelector(selector);
@@ -377,7 +378,7 @@ function initFieldLangTabs() {
       button.type = 'button';
       button.className = 'lang-tabs__tab';
       button.dataset.code = code;
-      button.lang = code;
+      button.lang = code; button.setAttribute('lang', code);
       const short = document.createElement('span'); short.className = 'lang-tabs__code'; short.textContent = code.slice(0, 2).toUpperCase();
       const name = document.createElement('span'); name.className = 'lang-tabs__name'; name.textContent = first.dataset.langName || code;
       const flag = document.createElement('span'); flag.className = 'lang-tabs__mark'; flag.textContent = mark(items, code) ? '✓' : '•';
@@ -394,6 +395,7 @@ function initFieldLangTabs() {
     bars.push({ scope, items, tabs });
   });
   if (bars.length) select(saved || labels[0].dataset.lang);
+  decorateLangTabs();
 }
 
 function initConfirmations() {
@@ -1872,6 +1874,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAdminAjaxForms();
   tidyTimestamps();
   initFieldLangTabs();
+  decorateLangTabs();
   initConfirmations();
   initIconPickers();
   initDirtyGuard();

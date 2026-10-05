@@ -1262,4 +1262,11 @@ return [
     'status.verified' => 'Verified',
     'status.unverified' => 'Not verified',
     'status.blocked' => 'Blocked',
+    'status.event.admin.customer_edited' => 'Customer details edited',
+    'status.event.admin.customer_message' => 'E-mail to the customer',
+    'email_attachments' => 'Attachments',
+    'ck_custom_address' => 'Delivery address or wishes',
+    'ck_custom_address_ph' => 'City, street, house, comment',
+    'free_shipping_left' => '%amount% left until free delivery',
+    'free_shipping_reached' => 'Delivery is free',
 ];

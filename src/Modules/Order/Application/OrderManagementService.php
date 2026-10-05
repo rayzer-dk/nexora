@@ -53,6 +53,72 @@ final readonly class OrderManagementService
         });
     }
 
+    /**
+     * Shop team corrects the customer details of an order; the order keeps an "edited" mark and the event log keeps the old values.
+     *
+     * @param array<string,string> $destination text fields of the delivery destination (city, address, ...)
+     */
+    public function updateCustomer(string $orderPublicId, string $name, string $email, string $phone, array $destination, string $actor): void
+    {
+        $name = trim($name);
+        $email = trim($email);
+        $phone = trim($phone);
+        if ($name === '' || mb_strlen($name) > 190 || mb_strlen($phone) > 40) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.order_edit.invalid'));
+        }
+        if ($email !== '' && (mb_strlen($email) > 190 || filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.order_edit.invalid_email'));
+        }
+
+        $this->db->transactional(function (Connection $db) use ($orderPublicId, $name, $email, $phone, $destination, $actor): void {
+            $order = $this->lockOrder($db, $orderPublicId);
+            $changes = [];
+            foreach (['customer_name' => $name, 'customer_email' => $email, 'customer_phone' => $phone] as $column => $value) {
+                if ((string) ($order[$column] ?? '') !== $value) {
+                    $changes[$column] = ['from' => (string) ($order[$column] ?? ''), 'to' => $value];
+                }
+            }
+            $fulfillment = $db->fetchAssociative('SELECT id,destination_snapshot FROM mc_fulfillment WHERE order_id=? ORDER BY id DESC LIMIT 1', [(int) $order['id']]);
+            if (is_array($fulfillment) && $destination !== []) {
+                $current = json_decode((string) $fulfillment['destination_snapshot'], true);
+                $current = is_array($current) ? $current : [];
+                $next = $current;
+                foreach ($destination as $key => $value) {
+                    $value = trim((string) $value);
+                    if (array_key_exists($key, $current) || $value !== '') {
+                        if ((string) ($current[$key] ?? '') !== $value) {
+                            $changes['destination.' . $key] = ['from' => (string) ($current[$key] ?? ''), 'to' => $value];
+                        }
+                        $next[$key] = $value;
+                    }
+                }
+                if ($next !== $current) {
+                    $db->update('mc_fulfillment', ['destination_snapshot' => json_encode($next, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)], ['id' => (int) $fulfillment['id']]);
+                }
+            }
+            if ($changes === []) {
+                return;
+            }
+            $db->update('mc_sales_order', [
+                'customer_name' => $name,
+                'customer_email' => $email !== '' ? $email : null,
+                'customer_phone' => $phone,
+                'customer_edited_at' => $this->now(),
+                'customer_edited_by' => mb_substr($actor, 0, 190),
+            ], ['id' => (int) $order['id']]);
+            $this->appendEvent($db, (int) $order['id'], 'admin.customer_edited', ['changes' => $changes], 'admin', $actor);
+        });
+    }
+
+    /** Writes a customer e-mail sent from the order card into the event log. */
+    public function recordCustomerMessage(string $orderPublicId, string $text, int $attachments, string $actor): void
+    {
+        $this->db->transactional(function (Connection $db) use ($orderPublicId, $text, $attachments, $actor): void {
+            $order = $this->lockOrder($db, $orderPublicId);
+            $this->appendEvent($db, (int) $order['id'], 'admin.customer_message', ['text' => mb_substr($text, 0, 4000), 'attachments' => $attachments], 'admin', $actor);
+        });
+    }
+
     public function updateFulfillment(string $orderPublicId, string $status, ?string $trackingNumber, string $actor): void
     {
         $status = trim($status);

@@ -25,6 +25,8 @@ final class CartController extends AbstractController
         private readonly DbalCartQuery $query,
         private readonly LoggerInterface $logger,
         private readonly \Commerce\Modules\Storefront\Application\CartLayoutService $layout,
+        private readonly \Commerce\Modules\Checkout\Application\CheckoutMethodSettings $methodSettings,
+        private readonly \Commerce\Modules\Storefront\Infrastructure\StorefrontMoneyFormatter $money,
     ) {
     }
 
@@ -34,7 +36,7 @@ final class CartController extends AbstractController
         // Viewing the cart must not create one: crawlers and first-time visitors follow the header link.
         $context=$this->contexts->resolve($request); $cart=$this->mutations->find($context,$request->cookies->get('mc_cart'));
         if($cart!==null){$this->bind($cart['id'],$context->storeId); $context=$this->mutations->contextFor($context,$cart);}
-        $response=$this->render('@storefront/cart/show.html.twig',['cart_layout'=>$this->layout->active($context->storeId),'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.cart.http.cartcontroller.koshyk'),'store_name'=>$context->storeName,'cart'=>$cart!==null?$this->query->summary($cart['id'],$context):$this->query->emptySummary($context),'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/cart','robots'=>'noindex,follow']]);
+        $summary=$cart!==null?$this->query->summary($cart['id'],$context):$this->query->emptySummary($context); $threshold=$summary['requires_shipping']?$this->methodSettings->freeShippingThreshold($context->storeId):null; $freeShip=null; if($threshold!==null&&$summary['count']>0){$paid=$summary['total_minor']; $freeShip=['reached'=>$paid>=$threshold,'percent'=>(int)min(100,floor($paid*100/$threshold)),'remaining'=>$this->money->format(max(0,$threshold-$paid),$summary['currency'],$context->locale),'threshold'=>$this->money->format($threshold,$summary['currency'],$context->locale)];} $response=$this->render('@storefront/cart/show.html.twig',['free_shipping'=>$freeShip,'cart_layout'=>$this->layout->active($context->storeId),'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.cart.http.cartcontroller.koshyk'),'store_name'=>$context->storeName,'cart'=>$summary,'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/cart','robots'=>'noindex,follow']]);
         if($cart!==null){$this->attachCookie($response,$request,$cart);} return $response;
     }
 

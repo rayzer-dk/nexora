@@ -314,7 +314,7 @@ final class OrderAdminController extends AbstractController
         $this->csrf($publicId, $request);
         try {
             $order = $this->order($publicId, $request);
-            if (!in_array((string) ($order['provider_code'] ?? ''), ['bank_transfer', 'cash_on_delivery'], true)) {
+            if (!in_array((string) ($order['provider_code'] ?? ''), ['bank_transfer', 'cash_on_delivery'], true) && !str_starts_with((string) ($order['provider_code'] ?? ''), 'custom_pay_')) {
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.orderadmincontroller.ruchne_pidtverdzhennia_dostupne_lyshe_dlia_bankivsko'));
             }
             $this->lifecycle->markManualPaid($publicId, $this->actor());
@@ -419,6 +419,72 @@ final class OrderAdminController extends AbstractController
             $this->addFlash('error', $e->getMessage());
         } catch (\Throwable) {
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.orderadmincontroller.ne_vdalosia_postavyty_povidomlennia_v_cherhu_zamovle'));
+        }
+        return $this->redirectToRoute('admin_order_view', ['publicId' => $publicId]);
+    }
+
+    #[Route('/admin/orders/{publicId}/message', name: 'admin_order_message', methods: ['POST'])]
+    public function messageCustomer(string $publicId, Request $request): Response
+    {
+        $this->csrf($publicId, $request);
+        try {
+            $text = trim((string) $request->request->get('message', ''));
+            if ($text === '' || mb_strlen($text) > 8000) {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.order_message.empty'));
+            }
+            $stored = [];
+            $dir = (string) $this->getParameter('kernel.project_dir') . '/var/order-mail/' . bin2hex(random_bytes(8));
+            $total = 0;
+            $allowed = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'zip'];
+            foreach ((array) $request->files->get('files', []) as $file) {
+                if (!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile || !$file->isValid()) {
+                    continue;
+                }
+                $ext = strtolower($file->getClientOriginalExtension());
+                $total += (int) $file->getSize();
+                if (!in_array($ext, $allowed, true) || $total > 10 * 1024 * 1024 || count($stored) >= 5) {
+                    throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.order_message.bad_file'));
+                }
+                if (!is_dir($dir)) {
+                    mkdir($dir, 0775, true);
+                }
+                $name = preg_replace('/[^A-Za-z0-9._ -]+/u', '_', basename($file->getClientOriginalName())) ?: ('file.' . $ext);
+                $file->move($dir, $name);
+                $stored[] = ['path' => $dir . '/' . $name, 'name' => $name];
+            }
+            if (!$this->notifications->enqueueMessage($publicId, $text, (string) $request->request->get('subject', ''), $stored)) {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.orderadmincontroller.u_zamovlennia_nemaie_korektnoho_email_pokuptsia'));
+            }
+            $this->orders->recordCustomerMessage($publicId, $text, count($stored), $this->actor());
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.order_message.queued'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+        return $this->redirectToRoute('admin_order_view', ['publicId' => $publicId]);
+    }
+
+    #[Route('/admin/orders/{publicId}/customer', name: 'admin_order_customer_edit', methods: ['POST'])]
+    public function editCustomer(string $publicId, Request $request): Response
+    {
+        $this->csrf($publicId, $request);
+        try {
+            $dest = [];
+            foreach ((array) $request->request->all('dest') as $key => $value) {
+                if (is_string($key) && preg_match('/^[a-z_]{1,40}$/', $key) === 1) {
+                    $dest[$key] = mb_substr(trim((string) $value), 0, 300);
+                }
+            }
+            $this->orders->updateCustomer(
+                $publicId,
+                (string) $request->request->get('customer_name', ''),
+                (string) $request->request->get('customer_email', ''),
+                (string) $request->request->get('customer_phone', ''),
+                $dest,
+                $this->actor(),
+            );
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.order_edit.saved'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
         }
         return $this->redirectToRoute('admin_order_view', ['publicId' => $publicId]);
     }

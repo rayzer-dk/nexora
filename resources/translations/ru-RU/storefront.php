@@ -998,4 +998,11 @@ return [
     'status.verified' => 'Подтверждён',
     'status.unverified' => 'Не подтверждён',
     'status.blocked' => 'Заблокирован',
+    'status.event.admin.customer_edited' => 'Данные клиента изменены',
+    'status.event.admin.customer_message' => 'Письмо клиенту',
+    'email_attachments' => 'Вложения',
+    'ck_custom_address' => 'Адрес или пожелания по доставке',
+    'ck_custom_address_ph' => 'Город, улица, дом, комментарий',
+    'free_shipping_left' => 'До бесплатной доставки осталось %amount%',
+    'free_shipping_reached' => 'Доставка бесплатная',
 ];

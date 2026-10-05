@@ -1262,4 +1262,11 @@ return [
     'status.verified' => 'Підтверджено',
     'status.unverified' => 'Не підтверджено',
     'status.blocked' => 'Заблокований',
+    'status.event.admin.customer_edited' => 'Дані клієнта змінено',
+    'status.event.admin.customer_message' => 'Лист клієнту',
+    'email_attachments' => 'Вкладення',
+    'ck_custom_address' => 'Адреса або побажання щодо доставки',
+    'ck_custom_address_ph' => 'Місто, вулиця, будинок, коментар',
+    'free_shipping_left' => 'До безкоштовної доставки залишилось %amount%',
+    'free_shipping_reached' => 'Доставка безкоштовна',
 ];

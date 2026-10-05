@@ -44,6 +44,7 @@ final class AdminCheckoutMethodsController extends AbstractController
             'other_payments' => $online,
             'pickup_points' => count($this->pickup->all($ctx->storeId, true)),
             'config' => $this->settings->config($ctx->storeId),
+            'custom_methods' => $this->settings->custom(),
             'currency' => $ctx->currency,
             'store_locales' => $this->db->fetchAllAssociative('SELECT sl.locale_code code,COALESCE(l.native_name,sl.locale_code) native_name FROM mc_store_locale sl LEFT JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.store_id=? AND sl.enabled=1 ORDER BY sl.is_default DESC,sl.locale_code', [$ctx->storeId]),
         ]);
@@ -56,6 +57,13 @@ final class AdminCheckoutMethodsController extends AbstractController
             throw $this->createAccessDeniedException(CanonicalUiText::get('common.security.invalid_csrf'));
         }
         $ctx = $this->contexts->resolve($request);
+        $rows = [];
+        foreach ((array) $request->request->all('custom') as $row) {
+            if (is_array($row) && empty($row['remove'])) {
+                $rows[] = $row;
+            }
+        }
+        $this->settings->saveCustom($rows);
         $this->settings->save($ctx->storeId, array_map('strval', (array) $request->request->all('methods')));
         $this->settings->saveConfig($ctx->storeId, (array) $request->request->all('cfg'));
         $this->addFlash('success', CanonicalUiText::get('admin.checkout_methods.saved'));

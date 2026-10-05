@@ -202,6 +202,55 @@ final class MarketingToolsAdminController extends AbstractController
         ]);
     }
 
+    #[Route('/admin/commerce/subscribers/import', name: 'admin_commerce_subscribers_import', methods: ['POST'])]
+    public function subscribersImport(Request $request): Response
+    {
+        $this->guardCampaign($request);
+        $ctx = $this->contexts->resolve($request);
+        if ($request->request->get('consent') !== '1') {
+            $this->addFlash('error', CanonicalUiText::get('admin.subscribers.import_consent_required'));
+
+            return $this->redirectToRoute('admin_commerce_subscribers');
+        }
+        $text = (string) $request->request->get('emails', '');
+        $file = $request->files->get('file');
+        if ($file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile && $file->isValid() && $file->getSize() <= 2 * 1024 * 1024) {
+            $text .= "\n" . (string) file_get_contents($file->getPathname());
+        }
+        $added = $skipped = 0;
+        $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
+        $seen = [];
+        foreach (preg_split('/[\r\n;,\t ]+/', $text) ?: [] as $token) {
+            $email = mb_strtolower(trim($token, " \t\"'<>"));
+            if ($email === '' || isset($seen[$email])) {
+                continue;
+            }
+            $seen[$email] = true;
+            if (count($seen) > 5000) {
+                break;
+            }
+            if (mb_strlen($email) > 320 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                if (str_contains($email, '@')) {
+                    ++$skipped;
+                }
+                continue;
+            }
+            if ($this->db->fetchOne('SELECT id FROM mc_marketing_subscriber WHERE store_id=? AND email_normalized=?', [$ctx->storeId, $email]) !== false) {
+                ++$skipped;
+                continue;
+            }
+            $this->db->insert('mc_marketing_subscriber', [
+                'public_id' => (new \Commerce\Core\Id\PublicIdFactory())->binary(), 'store_id' => $ctx->storeId, 'email' => $email, 'email_normalized' => $email,
+                'locale' => $ctx->locale, 'status' => 'active', 'confirm_token_hash' => null, 'consent_source' => 'admin_import',
+                'consent_at' => $now, 'confirmed_at' => $now, 'unsubscribed_at' => null, 'created_at' => $now, 'updated_at' => $now,
+            ]);
+            ++$added;
+        }
+        $this->addFlash('success', CanonicalUiText::get('admin.subscribers.import_done', ['added' => (string) $added, 'skipped' => (string) $skipped]));
+
+        return $this->redirectToRoute('admin_commerce_subscribers');
+    }
+
     #[Route('/admin/commerce/subscribers/{id}/delete', name: 'admin_commerce_subscriber_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function subscriberDelete(Request $request, int $id): Response
     {

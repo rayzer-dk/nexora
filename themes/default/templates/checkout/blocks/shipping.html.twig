@@ -10,13 +10,16 @@
   <div class="ck-choices ck-choices--carriers" role="radiogroup" aria-label="{{ ui_text('delivery_service') }}" data-carrier-group>
     {% for code in options %}
     <label class="ck-choice{% if code == current %} is-selected{% endif %}" data-carrier="{{ code }}">
-      <input type="radio" name="carrier" value="{{ code }}"{% if code == current %} checked{% endif %}>
-      <span class="ck-choice__icon" aria-hidden="true">{{ ui_icon(code == 'self_pickup' ? 'store' : 'truck', 18) }}</span>
+      <input type="radio" name="carrier" value="{{ code }}"{% if code == current %} checked{% endif %}{% if code in custom_delivery|default([]) %} data-custom{% endif %}>
+      <span class="ck-choice__icon" aria-hidden="true">{{ ui_icon(code == 'self_pickup' ? 'store' : (custom_icons[code]|default('') ?: 'truck'), 18) }}</span>
       {% set mc = method_config[code]|default({}) %}<span class="ck-choice__text"><strong>{{ mc.title|default('') ?: ui_text('method.delivery.' ~ code) }}</strong><small>{{ mc.text|default('') ?: ui_text(carrier_desc[code]) }}</small></span>{% if mc.fee|default('') %}<span class="ck-choice__fee">+{{ mc.fee }}{% if mc.free_over|default('') %}<small>{{ ui_text('ck_free_over', {amount: mc.free_over}) }}</small>{% endif %}</span>{% endif %}
     </label>
     {% endfor %}
   </div>
-  <div class="ck-panel" data-delivery-remote{% if current == 'self_pickup' %} hidden{% endif %}>
+  <div class="ck-panel" data-delivery-custom{% if current not in custom_delivery|default([]) %} hidden{% endif %}>
+    <label class="ck-field ck-field--wide"><span>{{ ui_text('ck_custom_address') }} *</span><input name="custom_address" type="text" maxlength="500" value="{{ old.custom_address|default('') }}" placeholder="{{ ui_text('ck_custom_address_ph') }}"{% if current in custom_delivery|default([]) %} required{% endif %}></label>
+  </div>
+  <div class="ck-panel" data-delivery-remote{% if current == 'self_pickup' or current in custom_delivery|default([]) %} hidden{% endif %}>
     {% if delivery_regions|default([]) is not empty %}<div class="ck-grid"><label class="ck-field ck-field--wide"><span>{{ ui_text('region') }} *</span><select name="delivery_region" required data-delivery-region><option value="">{{ ui_text('select_region') }}</option>{% for r in delivery_regions %}<option value="{{ r.code }}"{% if old.delivery_region|default('') == r.code %} selected{% endif %}>{{ r.name }}</option>{% endfor %}</select></label></div>{% endif %}
     <div class="ck-grid delivery-search">
       <label class="ck-field"><span>{{ ui_text('city') }} *</span><input data-delivery-city type="search" value="{{ old.city_name|default('') }}" placeholder="{{ ui_text('city_placeholder') }}" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="delivery-results" data-city-results hidden role="listbox"></div></label>

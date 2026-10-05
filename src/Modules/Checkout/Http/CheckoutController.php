@@ -126,12 +126,12 @@ final class CheckoutController extends AbstractController
         $methods=array_values(array_filter($this->payments->enabledMethods(),fn($m):bool=>($m->code!=='b2b_invoice'||$b2b!==null)&&$this->methodSettings->isEnabled($context->storeId,$m->code)));
         // Pay-on-receipt first: it is the most requested method for parcel and pickup orders.
         usort($methods,static fn($a,$b):int=>[$a->code==='cash_on_delivery'?0:1]<=>[$b->code==='cash_on_delivery'?0:1]);
-        $deliveryOptions=array_values(array_filter(CheckoutMethodSettings::DELIVERY,fn(string $code):bool=>$this->methodSettings->isEnabled($context->storeId,$code)));
+        $deliveryOptions=array_values(array_filter([...CheckoutMethodSettings::DELIVERY,...$this->methodSettings->customCodes('delivery')],fn(string $code):bool=>$this->methodSettings->isEnabled($context->storeId,$code)));
         $pickupPoints=in_array('self_pickup',$deliveryOptions,true)?$this->pickupPoints->forCheckout($context->storeId,$context->storeName):[];
         $old=$this->flashBag($request)?->get('checkout_old')??[]; $old=is_array($old[0]??null)?$old[0]:[];
         $response = $this->render('@storefront/checkout/show.html.twig', [
             'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.oformlennia_zamovlennia'),'store_name'=>$context->storeName,'cart'=>$summary,'country_code'=>$context->countryCode,'delivery_regions'=>$this->shippingCountries->enabledRegions($context->storeId,$context->countryCode),'checkout_layout'=>$layout,
-            'method_config'=>$this->methodLabels($context->storeId,$context->locale,$context->currency),'payment_methods'=>$methods,'checkout_key'=>$key,'delivery_options'=>$deliveryOptions,'pickup_points'=>$pickupPoints,'old'=>$old,'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
+            'method_config'=>$this->methodLabels($context->storeId,$context->locale,$context->currency),'payment_methods'=>$methods,'checkout_key'=>$key,'delivery_options'=>$deliveryOptions,'pickup_points'=>$pickupPoints,'old'=>$old,'custom_delivery'=>$this->methodSettings->customCodes('delivery'),'custom_icons'=>array_column($this->methodSettings->custom(),'icon','code'),'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
             'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/checkout','robots'=>'noindex,nofollow'],
         ]);
         if ($cart['created']) $response->headers->setCookie(Cookie::create('mc_cart',$cart['token'])->withExpires(new \DateTimeImmutable('+7 days'))->withPath('/')->withSecure($request->isSecure())->withHttpOnly(true)->withSameSite(Cookie::SAMESITE_LAX));
@@ -198,11 +198,11 @@ final class CheckoutController extends AbstractController
         if (!$this->shippingCountries->allows($context->storeId, $context->countryCode)) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('checkout_country_blocked')); return $this->redirectToRoute('storefront_checkout'); }
         $key=(string)$request->request->get('checkout_key');
         if ($key==='' || !hash_equals((string)$request->getSession()->get('checkout.idempotency_key',''),$key)) { $this->addFlash('checkout_error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_oformlennia_zastarila_onovit_storinku')); return $this->redirectToRoute('storefront_checkout'); }
-        try { $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id()); $order=$this->orders->place($context,$cart['id'],$request->request->all(),$key,$customer instanceof CustomerUser ? $customer->id() : null); $this->attribution->attachOrder($order['public_id'],$request->getSession()); }
+        try { $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id()); $input=$request->request->all(); if(str_starts_with((string)($input['carrier']??''),'custom_ship_')){ $input['delivery_manual']=trim((string)($input['custom_address']??'')); } $order=$this->orders->place($context,$cart['id'],$input,$key,$customer instanceof CustomerUser ? $customer->id() : null); $this->attribution->attachOrder($order['public_id'],$request->getSession()); }
         catch (\DomainException $e) {
             $this->addFlash('checkout_error',$e->getMessage());
             // Keep what the buyer typed (never the card/gift codes) so a validation error does not wipe the form.
-            $keep=[]; foreach(['name','phone','email','customer_comment','company_name','company_tax_id','carrier','city_id','city_name','point_id','point_name','delivery_manual','delivery_region','payment_method','coupon_code','purchase_order_number'] as $field){$keep[$field]=mb_substr((string)$request->request->get($field,''),0,500);}
+            $keep=[]; foreach(['name','phone','email','customer_comment','company_name','company_tax_id','carrier','city_id','city_name','point_id','point_name','delivery_manual','custom_address','delivery_region','payment_method','coupon_code','purchase_order_number'] as $field){$keep[$field]=mb_substr((string)$request->request->get($field,''),0,500);}
             $this->flashBag($request)?->set('checkout_old',[$keep]);
             return $this->redirectToRoute('storefront_checkout');
         }

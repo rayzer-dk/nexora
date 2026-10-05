@@ -1997,3 +1997,5 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-stat-link { display: block; color: inherit; text-decoration: none; }
 .admin-stat-link.is-active > article { border-color: var(--mc-color-primary); box-shadow: 0 0 0 2px var(--mc-color-primary); }
 .admin-badge.is-unverified { background: var(--mc-color-surface-subtle); color: var(--mc-color-muted); }
+.admin-method-own { margin-bottom: var(--mc-space-3); }
+.admin-method__own { padding: var(--mc-space-3); border: 1px dashed var(--mc-color-border); border-radius: var(--mc-radius-sm); margin-top: var(--mc-space-2); }

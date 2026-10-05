@@ -47,6 +47,13 @@ final class EmailNotificationSender implements NotificationSenderInterface
                 'custom_html' => ($override['html'] ?? false) ? ($override['body'] ?? '') : '',
             ]);
 
+        foreach ((array) ($message->context['attachments'] ?? []) as $file) {
+            $path = is_array($file) ? (string) ($file['path'] ?? '') : '';
+            if ($path !== '' && is_file($path) && str_contains(str_replace('\\', '/', $path), '/var/order-mail/')) {
+                $email->attachFromPath($path, (string) ($file['name'] ?? basename($path)));
+            }
+        }
+
         $this->mailer->send($email);
     }
 }

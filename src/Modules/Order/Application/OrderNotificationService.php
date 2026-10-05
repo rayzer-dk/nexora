@@ -80,6 +80,54 @@ final readonly class OrderNotificationService
         return true;
     }
 
+    /**
+     * A personal message from the shop to the customer, sent in the same e-mail design as the status updates.
+     *
+     * @param list<array{path:string,name:string}> $attachments files already stored on the server
+     */
+    public function enqueueMessage(string $orderPublicId, string $text, string $subject, array $attachments = []): bool
+    {
+        try {
+            $binary = Uuid::fromString($orderPublicId)->toBinary();
+        } catch (\Throwable) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.nekorektnyi_identyfikator_zamovlennia'));
+        }
+        $order = $this->db->fetchAssociative(
+            'SELECT o.order_number,o.status,o.payment_status,o.fulfillment_status,o.total_minor,o.currency,o.customer_name,o.customer_email,o.locale,f.tracking_number
+             FROM mc_sales_order o LEFT JOIN mc_fulfillment f ON f.order_id=o.id WHERE o.public_id=? ORDER BY f.id DESC LIMIT 1',
+            [$binary],
+        );
+        if (!is_array($order)) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.zamovlennia_ne_znaideno'));
+        }
+        $recipient = trim((string) ($order['customer_email'] ?? ''));
+        if ($recipient === '' || filter_var($recipient, FILTER_VALIDATE_EMAIL) === false) {
+            return false;
+        }
+        $locale = trim((string) ($order['locale'] ?? '')) ?: 'en-US';
+        $subject = trim($subject) !== '' ? trim($subject) : $this->translator->translate('order_update_subject', $locale, ['number' => (string) $order['order_number']]);
+        $this->outbox->enqueue(NotificationChannel::Email, new NotificationMessage(
+            type: 'order.message',
+            subject: $subject,
+            text: $text,
+            context: [
+                'locale' => $locale,
+                'order_number' => (string) $order['order_number'],
+                'customer_name' => (string) ($order['customer_name'] ?? ''),
+                'status' => (string) $order['status'],
+                'payment_status' => (string) $order['payment_status'],
+                'fulfillment_status' => (string) $order['fulfillment_status'],
+                'tracking_number' => (string) ($order['tracking_number'] ?? ''),
+                'total_minor' => (int) $order['total_minor'],
+                'currency' => (string) $order['currency'],
+                'message_text' => $text,
+                'attachments' => $attachments,
+            ],
+            emailTemplate: 'order_message',
+        ), $recipient);
+        return true;
+    }
+
     /** @param array<string,mixed> $order */
     private function plainText(array $order, string $locale): string
     {

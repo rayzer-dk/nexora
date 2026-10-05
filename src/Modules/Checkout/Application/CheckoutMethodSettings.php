@@ -19,6 +19,9 @@ final class CheckoutMethodSettings
     /** @var array<int,array<string,bool>> */
     private array $cache = [];
 
+    /** @var list<array{code:string,kind:string,icon:string,name:array<string,string>}>|null */
+    private ?array $custom = null;
+
     public function __construct(private readonly SystemSettingStore $store)
     {
     }
@@ -31,7 +34,7 @@ final class CheckoutMethodSettings
         }
         $stored = $this->store->getArray($this->key($storeId)) ?? [];
         $out = [];
-        foreach ([...self::DELIVERY, ...self::PAYMENT] as $code) {
+        foreach ($this->codes() as $code) {
             $out[$code] = !array_key_exists($code, $stored) || (bool) $stored[$code];
         }
 
@@ -55,7 +58,7 @@ final class CheckoutMethodSettings
         $stored = $this->store->getArray($this->key($storeId)) ?? [];
         $raw = is_array($stored['_config'] ?? null) ? $stored['_config'] : [];
         $out = [];
-        foreach ([...self::DELIVERY, ...self::PAYMENT] as $code) {
+        foreach ($this->codes() as $code) {
             $c = is_array($raw[$code] ?? null) ? $raw[$code] : [];
             $out[$code] = [
                 'fee_minor' => max(0, (int) ($c['fee_minor'] ?? 0)), 'free_over_minor' => max(0, (int) ($c['free_over_minor'] ?? 0)),
@@ -106,7 +109,7 @@ final class CheckoutMethodSettings
     {
         $stored = $this->store->getArray($this->key($storeId)) ?? [];
         $raw = [];
-        foreach ([...self::DELIVERY, ...self::PAYMENT] as $code) {
+        foreach ($this->codes() as $code) {
             $m = is_array($methods[$code] ?? null) ? $methods[$code] : [];
             $money = static fn (mixed $v): int => max(0, (int) round(((float) str_replace(',', '.', (string) $v)) * 100));
             $raw[$code] = [
@@ -141,13 +144,119 @@ final class CheckoutMethodSettings
     public function save(int $storeId, array $enabledCodes): void
     {
         $doc = $this->store->getArray($this->key($storeId)) ?? [];
-        foreach ([...self::DELIVERY, ...self::PAYMENT] as $code) {
+        foreach ($this->codes() as $code) {
             $doc[$code] = in_array($code, $enabledCodes, true);
         }
         if (!$this->store->setArray($this->key($storeId), $doc)) {
             throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));
         }
         unset($this->cache[$storeId]);
+    }
+
+    /** Order amount above which delivery becomes free, when every offered delivery method has a fee and a "free over" amount; the lowest such amount. */
+    public function freeShippingThreshold(int $storeId): ?int
+    {
+        $config = $this->config($storeId);
+        $enabled = $this->all($storeId);
+        $threshold = null;
+        foreach ([...self::DELIVERY, ...$this->customCodes('delivery')] as $code) {
+            if ($code === 'self_pickup' || !($enabled[$code] ?? true)) {
+                continue;
+            }
+            $c = $config[$code] ?? null;
+            if ($c === null || $c['fee_minor'] === 0) {
+                return null;
+            }
+            if ($c['free_over_minor'] > 0) {
+                $threshold = $threshold === null ? $c['free_over_minor'] : min($threshold, $c['free_over_minor']);
+            }
+        }
+
+        return $threshold;
+    }
+
+    /** @return list<string> built-in switchable methods followed by the shop's own ones */
+    private function codes(): array
+    {
+        return [...self::DELIVERY, ...self::PAYMENT, ...array_column($this->custom(), 'code')];
+    }
+
+    /**
+     * The shop's own delivery and payment methods (Admin → Shipping → Delivery and payment methods → "Add method").
+     * Shared by all stores of the installation; each store still switches them on or off and prices them itself.
+     *
+     * @return list<array{code:string,kind:string,icon:string,name:array<string,string>}>
+     */
+    public function custom(): array
+    {
+        if ($this->custom !== null) {
+            return $this->custom;
+        }
+        $rows = $this->store->getArray('checkout.custom_methods') ?? [];
+        $out = [];
+        foreach ($rows as $row) {
+            if (!is_array($row) || preg_match('/^custom_(?:ship|pay)_[a-f0-9]{6}$/D', (string) ($row['code'] ?? '')) !== 1) {
+                continue;
+            }
+            $out[] = [
+                'code' => (string) $row['code'],
+                'kind' => str_starts_with((string) $row['code'], 'custom_pay_') ? 'payment' : 'delivery',
+                'icon' => preg_match('/^[a-z0-9-]{1,60}$/D', (string) ($row['icon'] ?? '')) === 1 ? (string) $row['icon'] : '',
+                'name' => self::texts($row['name'] ?? []),
+            ];
+        }
+
+        return $this->custom = $out;
+    }
+
+    /** @return list<string> */
+    public function customCodes(string $kind): array
+    {
+        return array_values(array_column(array_filter($this->custom(), static fn (array $m): bool => $m['kind'] === $kind), 'code'));
+    }
+
+    /** Name of a custom method in a language (first written name when the language has none); '' for built-in methods. */
+    public function customName(string $code, string $locale): string
+    {
+        foreach ($this->custom() as $m) {
+            if ($m['code'] === $code) {
+                return $m['name'][$locale] ?? $m['name'][substr($locale, 0, 2)] ?? (string) (reset($m['name']) ?: $code);
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Replace the list of own methods: rows with an existing code are kept, rows without a code get a new one, methods missing from the list are removed.
+     *
+     * @param array<int,array<string,mixed>> $rows kind (delivery|payment), code, icon, name[locale]
+     */
+    public function saveCustom(array $rows): void
+    {
+        $existing = array_column($this->custom(), 'code');
+        $out = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $name = self::texts($row['name'] ?? []);
+            if ($name === []) {
+                continue;
+            }
+            $code = (string) ($row['code'] ?? '');
+            if (!in_array($code, $existing, true)) {
+                $code = ($row['kind'] ?? '') === 'payment' ? 'custom_pay_' : 'custom_ship_';
+                $code .= bin2hex(random_bytes(3));
+            }
+            $icon = trim((string) ($row['icon'] ?? ''));
+            $out[] = ['code' => $code, 'icon' => preg_match('/^[a-z0-9-]{1,60}$/D', $icon) === 1 ? $icon : '', 'name' => $name];
+        }
+        if (count($out) > 40 || !$this->store->setArray('checkout.custom_methods', $out)) {
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));
+        }
+        $this->custom = null;
+        $this->cache = [];
     }
 
     private function key(int $storeId): string
