@@ -243,3 +243,16 @@ test('the network and security page reports transport and mail DNS', async ({ pa
   await expect(page.locator('h1')).toBeVisible();
   await expect(page.locator('.admin-table').first().locator('tbody tr')).toHaveCount(5);
 });
+
+test('the category list collapses and expands like a tree', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/categories', { waitUntil: 'networkidle' });
+  const all = await page.locator('[data-cat-row]').count();
+  expect(all).toBeGreaterThan(5);
+  await page.locator('[data-tree-collapse]').click();
+  const top = await page.locator('[data-cat-row]:not([hidden])').count();
+  expect(top).toBeLessThan(all);
+  await page.locator('[data-tree-expand]').click();
+  await expect(page.locator('[data-cat-row]:not([hidden])')).toHaveCount(all);
+});

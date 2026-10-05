@@ -1769,6 +1769,115 @@ function initMediaPickers() {
   });
 }
 
+function initCategoryTree() {
+  const table = q('[data-category-tree]');
+  if (!table) return;
+  const rows = () => qa('[data-cat-row]', table);
+  const STORE = 'mc.catalog.collapsed';
+  let collapsed = new Set();
+  try { collapsed = new Set(JSON.parse(localStorage.getItem(STORE) || '[]')); } catch (_error) { collapsed = new Set(); }
+  const save = () => { try { localStorage.setItem(STORE, JSON.stringify([...collapsed])); } catch (_error) { /* storage can be blocked */ } };
+  const paint = () => {
+    const hidden = new Set();
+    rows().forEach((row) => {
+      const parent = row.dataset.catParent;
+      const isHidden = parent !== '' && (collapsed.has(parent) || hidden.has(parent));
+      if (isHidden) hidden.add(row.dataset.catNode);
+      row.hidden = isHidden;
+      const toggle = q('[data-tree-toggle]', row);
+      if (toggle) {
+        const open = !collapsed.has(row.dataset.catNode);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.classList.toggle('is-collapsed', !open);
+      }
+    });
+  };
+  table.addEventListener('click', (event) => {
+    const toggle = event.target.closest('[data-tree-toggle]');
+    if (!toggle) return;
+    event.stopPropagation();
+    const id = toggle.closest('[data-cat-row]').dataset.catNode;
+    if (collapsed.has(id)) collapsed.delete(id); else collapsed.add(id);
+    save();
+    paint();
+  });
+  const withChildren = () => rows().filter((row) => q('[data-tree-toggle]', row)).map((row) => row.dataset.catNode);
+  q('[data-tree-expand]')?.addEventListener('click', () => { collapsed.clear(); save(); paint(); });
+  q('[data-tree-collapse]')?.addEventListener('click', () => { collapsed = new Set(withChildren()); save(); paint(); });
+  paint();
+
+  const moveUrl = table.dataset.moveUrl;
+  if (!moveUrl) return;
+  let dragged = null;
+  const clear = () => {
+    qa('.is-drop-before, .is-drop-after, .is-drop-into', table).forEach((row) => row.classList.remove('is-drop-before', 'is-drop-after', 'is-drop-into'));
+    q('[data-tree-root-drop]')?.classList.remove('is-over');
+  };
+  const isDescendant = (row, ancestorNode) => {
+    let parent = row.dataset.catParent;
+    while (parent) {
+      if (parent === ancestorNode) return true;
+      parent = rows().find((r) => r.dataset.catNode === parent)?.dataset.catParent || '';
+    }
+    return false;
+  };
+  const zone = (event, row) => {
+    const box = row.getBoundingClientRect();
+    const ratio = (event.clientY - box.top) / Math.max(1, box.height);
+    return ratio < 0.25 ? 'before' : ratio > 0.75 ? 'after' : 'into';
+  };
+  const send = async (parent, before) => {
+    const body = new FormData();
+    body.append('_token', table.dataset.moveToken || '');
+    body.append('parent', parent);
+    body.append('before', before);
+    try {
+      const response = await fetch(moveUrl.replace('__ID__', dragged.dataset.catId), { method: 'POST', body, headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+      const data = await response.json().catch(() => ({ ok: false }));
+      if (!response.ok || !data.ok) throw new Error(data.error || 'move');
+      window.location.reload();
+    } catch (_error) {
+      toast(table.dataset.moveFailed || 'Error', 'error', 5000);
+    }
+  };
+  table.addEventListener('dragstart', (event) => {
+    const row = event.target.closest('[data-cat-row]');
+    if (!row) return;
+    dragged = row;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', row.dataset.catId);
+    row.classList.add('is-dragging');
+  });
+  table.addEventListener('dragend', () => { dragged?.classList.remove('is-dragging'); dragged = null; clear(); });
+  table.addEventListener('dragover', (event) => {
+    const row = event.target.closest('[data-cat-row]');
+    if (!dragged || !row || row === dragged || isDescendant(row, dragged.dataset.catNode)) return;
+    event.preventDefault();
+    clear();
+    row.classList.add('is-drop-' + zone(event, row));
+  });
+  table.addEventListener('drop', (event) => {
+    const row = event.target.closest('[data-cat-row]');
+    if (!dragged || !row || row === dragged || isDescendant(row, dragged.dataset.catNode)) return;
+    event.preventDefault();
+    const where = zone(event, row);
+    clear();
+    const idOf = (node) => rows().find((r) => r.dataset.catNode === node)?.dataset.catId || '';
+    if (where === 'into') return void send(row.dataset.catId, '');
+    const parentNode = row.dataset.catParent;
+    if (where === 'before') return void send(idOf(parentNode), row.dataset.catId);
+    const siblings = rows().filter((r) => r.dataset.catParent === parentNode && r !== dragged);
+    const next = siblings[siblings.indexOf(row) + 1];
+    send(idOf(parentNode), next ? next.dataset.catId : '');
+  });
+  const root = q('[data-tree-root-drop]');
+  if (root) {
+    root.addEventListener('dragover', (event) => { if (!dragged) return; event.preventDefault(); root.classList.add('is-over'); });
+    root.addEventListener('dragleave', () => root.classList.remove('is-over'));
+    root.addEventListener('drop', (event) => { if (!dragged) return; event.preventDefault(); root.classList.remove('is-over'); send('', ''); });
+  }
+}
+
 function initSlugGenerators() {
   const sources = ['name', 'title', 'label', 'h1'];
   qa('input[name="slug"], input[name$="[slug]"]').forEach((input) => {
@@ -2015,6 +2124,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initQuickLinkForm();
   initSeoFields();
   initRealPreview();
+  initCategoryTree();
   initAutoSubmit();
   initRowLinks();
   initAutoTabs();

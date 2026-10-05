@@ -158,6 +158,25 @@ final class CatalogAdminPageController extends AbstractController
         return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => true, 'order' => (int) $raw]);
     }
 
+    /** Drag and drop in the category tree: a category goes under another one or to the top level, before a sibling or to the end. Answers JSON. */
+    #[Route('/admin/catalog/categories/{publicId}/move', name: 'admin_catalog_category_move', methods: ['POST'])]
+    public function categoryMove(string $publicId, Request $request): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        $context = $this->context->resolve($request);
+        if (!$this->isCsrfTokenValid('admin_category_move', (string) $request->request->get('_token'))) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => false], 403);
+        }
+        try {
+            $this->categories->move($context->storeId, $context->marketId, $publicId, (string) $request->request->get('parent', ''), (string) $request->request->get('before', ''));
+        } catch (\DomainException $e) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => false, 'error' => $e->getMessage()], 422);
+        } catch (\Throwable) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => false, 'error' => 'save'], 422);
+        }
+
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => true]);
+    }
+
     #[Route('/admin/catalog/categories/new', name: 'admin_catalog_category_new', methods: ['GET', 'POST'])]
     public function categoryNew(Request $request): Response
     {

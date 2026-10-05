@@ -5069,4 +5069,10 @@ return [
     'admin.dashboard.kpi_sessions' => "Відвідування",
     'admin.dashboard.kpi_today' => "Сьогодні",
     'admin.dashboard.kpi_today_hint' => "нових клієнтів: %customers%",
+    'admin.catalog.categories.tree_expand_all' => "Розгорнути все",
+    'admin.catalog.categories.tree_collapse_all' => "Згорнути все",
+    'admin.catalog.categories.tree_drag_hint' => "Перетягніть категорію: на іншу — вона стане підкатегорією, між рядками — зміниться порядок.",
+    'admin.catalog.categories.tree_move_failed' => "Не вдалося перемістити категорію.",
+    'admin.catalog.categories.tree_toggle' => "Розгорнути або згорнути підкатегорії",
+    'admin.catalog.categories.tree_drop_root' => "Перетягніть сюди, щоб зробити головною",
 ];

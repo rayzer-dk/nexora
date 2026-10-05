@@ -5074,4 +5074,10 @@ return [
     'admin.dashboard.kpi_sessions' => "Visits",
     'admin.dashboard.kpi_today' => "Today",
     'admin.dashboard.kpi_today_hint' => "new customers: %customers%",
+    'admin.catalog.categories.tree_expand_all' => "Expand all",
+    'admin.catalog.categories.tree_collapse_all' => "Collapse all",
+    'admin.catalog.categories.tree_drag_hint' => "Drag a category: onto another one to make it a subcategory, between rows to change the order.",
+    'admin.catalog.categories.tree_move_failed' => "The category could not be moved.",
+    'admin.catalog.categories.tree_toggle' => "Expand or collapse subcategories",
+    'admin.catalog.categories.tree_drop_root' => "Drop here to make it a top-level category",
 ];

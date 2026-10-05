@@ -121,9 +121,19 @@ final class StorefrontPresentationExtension extends AbstractExtension
             } catch (\Throwable) {
                 // Schema can legitimately be older during a rolling upgrade; keep category fallback.
             }
+            // Every active top-level category of the market, in the shopper's language when translated, else in the shop's default language.
             $rows = $this->connection->fetchAllAssociative(
-                "SELECT ct.name,sr.path FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active' JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.status='active' AND c.parent_id IS NULL ORDER BY sc.sort_order,c.sort_order,c.id LIMIT 8",
-                [$ctx->storeId, $ctx->marketId, $ctx->storeId, $ctx->locale, $ctx->storeId, $ctx->locale],
+                "SELECT COALESCE(ct.name,dt.name) AS name,COALESCE(sr.path,dr.path) AS path
+                 FROM mc_category c
+                 JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active'
+                 JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active'
+                 LEFT JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=?
+                 LEFT JOIN mc_category_translation dt ON dt.category_id=c.id AND dt.store_id=? AND dt.locale=(SELECT default_locale FROM mc_store WHERE id=?)
+                 LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id
+                 LEFT JOIN mc_seo_route dr ON dr.store_id=? AND dr.locale=(SELECT default_locale FROM mc_store WHERE id=?) AND dr.entity_type='category' AND dr.entity_public_id=c.public_id
+                 WHERE c.status='active' AND c.parent_id IS NULL AND COALESCE(ct.name,dt.name) IS NOT NULL AND COALESCE(sr.path,dr.path) IS NOT NULL
+                 ORDER BY sc.sort_order,c.sort_order,c.id LIMIT 24",
+                [$ctx->storeId, $ctx->marketId, $ctx->storeId, $ctx->locale, $ctx->storeId, $ctx->storeId, $ctx->storeId, $ctx->locale, $ctx->storeId, $ctx->storeId],
             );
             return array_map(static fn (array $row): array => ['name' => (string) $row['name'], 'url' => '/' . ltrim((string) $row['path'], '/'), 'children'=>[]], $rows);
         } catch (\Throwable) {

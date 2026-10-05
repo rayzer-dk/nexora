@@ -45,6 +45,54 @@ final readonly class CategoryWriter
         });
     }
 
+    /**
+     * Moves a category in the tree: under another category (or to the top level) and before a sibling (or to the end).
+     * Positions of the siblings are renumbered in steps of ten so the order stays stable and gaps remain for manual edits.
+     */
+    public function move(int $storeId, int $marketId, string $publicId, ?string $parentPublicId, ?string $beforePublicId): void
+    {
+        $this->connection->transactional(function (Connection $db) use ($storeId, $marketId, $publicId, $parentPublicId, $beforePublicId): void {
+            $find = static function (string $uuid) use ($db, $storeId): ?int {
+                if (!Uuid::isValid($uuid)) {
+                    return null;
+                }
+                $id = $db->fetchOne('SELECT c.id FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? WHERE c.public_id=? FOR UPDATE', [$storeId, Uuid::fromString($uuid)->toBinary()]);
+
+                return $id === false ? null : (int) $id;
+            };
+            $id = $find($publicId);
+            if ($id === null) {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.6324b72effe1'));
+            }
+            $parentId = $parentPublicId !== null && $parentPublicId !== '' ? $find($parentPublicId) : null;
+            if ($parentPublicId !== null && $parentPublicId !== '' && $parentId === null) {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.6324b72effe1'));
+            }
+            if ($parentId !== null && ($parentId === $id || $this->wouldCreateCycle($db, $id, $parentId))) {
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.c8252316d3fa'));
+            }
+            $beforeId = $beforePublicId !== null && $beforePublicId !== '' ? $find($beforePublicId) : null;
+
+            $siblings = $db->fetchFirstColumn(
+                'SELECT c.id FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? WHERE ' . ($parentId === null ? 'c.parent_id IS NULL' : 'c.parent_id=' . $parentId) . ' AND c.id<>? ORDER BY sc.sort_order ASC,c.sort_order ASC,c.id ASC',
+                [$storeId, $id],
+            );
+            $siblings = array_map('intval', $siblings);
+            $at = $beforeId !== null ? array_search($beforeId, $siblings, true) : false;
+            array_splice($siblings, $at === false ? count($siblings) : (int) $at, 0, [$id]);
+
+            $now = $this->now();
+            $db->update('mc_category', ['parent_id' => $parentId, 'updated_at' => $now], ['id' => $id]);
+            foreach ($siblings as $index => $siblingId) {
+                $order = ($index + 1) * 10;
+                $db->update('mc_category', ['sort_order' => $order], ['id' => $siblingId]);
+                $db->update('mc_store_category', ['sort_order' => $order], ['store_id' => $storeId, 'category_id' => $siblingId]);
+                $db->update('mc_market_category', ['sort_order' => $order], ['market_id' => $marketId, 'category_id' => $siblingId]);
+            }
+            $this->events->publish($this->eventFactory->create(EventNames::CATEGORY_UPDATED, 'category', $publicId, ['store_id' => $storeId, 'market_id' => $marketId], ['source' => 'catalog']));
+        });
+    }
+
     /** Switches one category between active and inactive (the switch in the category list). */
     public function setStatus(int $storeId, int $marketId, string $publicId, string $status): void
     {
