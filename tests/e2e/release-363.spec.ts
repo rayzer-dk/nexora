@@ -145,3 +145,16 @@ test('SEO fields show a counter, an example and variable chips; a variable typed
   await expect(field).toHaveValue('{name}');
   await expect(page.locator('.seo-hint__count').first()).toContainText('/ 60');
 });
+
+test('the list of shoppers waiting for a product has search, period, sorting and a CSV export', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/commerce/stock-requests?sort=product&dir=asc&from=2020-01-01&to=2099-12-31&status=active', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  await expect(page.locator('form.admin-filters input[name="q"]')).toBeVisible();
+  await expect(page.locator('form.admin-filters input[name="from"]')).toHaveValue('2020-01-01');
+  await expect(page.locator('a.admin-sort').first()).toBeVisible();
+  const csv = await page.request.get('/admin/commerce/stock-requests/export?status=active');
+  expect(csv.status()).toBe(200);
+  expect(await csv.text()).toContain('email,product,sku,status');
+});

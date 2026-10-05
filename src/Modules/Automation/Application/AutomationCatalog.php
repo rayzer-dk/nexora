@@ -16,10 +16,11 @@ final class AutomationCatalog
     public const EVENT_INQUIRY_CREATED = 'inquiry_created';
     public const EVENT_REVIEW_CREATED = 'review_created';
     public const EVENT_RETURN_REQUESTED = 'return_requested';
+    public const EVENT_STOCK_WAITING = 'stock_waiting';
 
     public const EVENTS = [
         self::EVENT_ORDER_PLACED, self::EVENT_ORDER_COMPLETED, self::EVENT_ORDER_CANCELLED,
-        self::EVENT_CUSTOMER_REGISTERED, self::EVENT_INQUIRY_CREATED, self::EVENT_REVIEW_CREATED, self::EVENT_RETURN_REQUESTED,
+        self::EVENT_CUSTOMER_REGISTERED, self::EVENT_INQUIRY_CREATED, self::EVENT_REVIEW_CREATED, self::EVENT_RETURN_REQUESTED, self::EVENT_STOCK_WAITING,
     ];
 
     /** Events that carry an order total and therefore support the minimum-total condition. */

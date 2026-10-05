@@ -13,7 +13,7 @@ use Symfony\Component\Uid\Uuid;
 
 final readonly class StockNotificationService
 {
-    public function __construct(private Connection $db, private PublicIdFactory $ids, private NotificationOutbox $notifications, private string $publicBaseUrl) {}
+    public function __construct(private Connection $db, private PublicIdFactory $ids, private NotificationOutbox $notifications, private string $publicBaseUrl, private ?\Commerce\Modules\Automation\Application\AutomationEngine $automation = null) {}
 
     public function request(int $storeId, string $productPublicId, string $variantPublicId, string $email, string $locale): void
     {
@@ -38,7 +38,10 @@ final readonly class StockNotificationService
         if(!is_array($row)||!in_array((string)$row['status'],['pending','active'],true))return false;
         if(!hash_equals((string)$row['confirm_token_hash'],hash('sha256',$token,true)))return false;
         if((string)$row['status']==='active')return true;
-        $this->db->update('mc_stock_notification_request',['status'=>'active','confirmed_at'=>gmdate('Y-m-d H:i:s.u'),'updated_at'=>gmdate('Y-m-d H:i:s.u')],['id'=>(int)$row['id']]);return true;
+        $this->db->update('mc_stock_notification_request',['status'=>'active','confirmed_at'=>gmdate('Y-m-d H:i:s.u'),'updated_at'=>gmdate('Y-m-d H:i:s.u')],['id'=>(int)$row['id']]);
+        // The shop owner learns that a shopper is really waiting (rules: e-mail, Telegram, push; the header bell counts it too).
+        try{$info=$this->db->fetchAssociative('SELECT r.store_id,r.email,pt.name FROM mc_stock_notification_request r LEFT JOIN mc_product_translation pt ON pt.product_id=r.product_id AND pt.store_id=r.store_id AND pt.locale=r.locale WHERE r.id=?',[(int)$row['id']]);if(is_array($info))$this->automation?->fire((int)$info['store_id'],'stock_waiting','stock:'.(int)$row['id'],['name'=>(string)$info['email'],'text'=>(string)$info['email'].' · '.(string)($info['name']??''),'url'=>'/admin/commerce/stock-requests']);}catch(\Throwable){}
+        return true;
     }
 
     public function notifyAvailableProduct(string $productPublicId): void

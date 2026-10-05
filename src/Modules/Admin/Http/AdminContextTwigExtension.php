@@ -39,7 +39,7 @@ final class AdminContextTwigExtension extends AbstractExtension
     /**
      * New items that wait for a person: return requests, reviews, product questions and withdrawal notices (the header counter).
      *
-     * @return array{returns:int,reviews:int,questions:int,withdrawals:int,total:int}
+     * @return array{returns:int,reviews:int,questions:int,withdrawals:int,stock:int,total:int}
      */
     public function attention(): array
     {
@@ -47,7 +47,7 @@ final class AdminContextTwigExtension extends AbstractExtension
         if ($cache !== null) {
             return $cache;
         }
-        $zero = ['returns' => 0, 'reviews' => 0, 'questions' => 0, 'withdrawals' => 0, 'total' => 0];
+        $zero = ['returns' => 0, 'reviews' => 0, 'questions' => 0, 'withdrawals' => 0, 'stock' => 0, 'total' => 0];
         $request = $this->requests->getCurrentRequest();
         if ($request === null || !$this->security->getUser() instanceof AdminUser) {
             return $zero;
@@ -69,6 +69,7 @@ final class AdminContextTwigExtension extends AbstractExtension
             'reviews' => $count("SELECT COUNT(*) FROM mc_product_review WHERE store_id=? AND status='pending'"),
             'questions' => $count("SELECT COUNT(*) FROM mc_product_question WHERE store_id=? AND status='pending'"),
             'withdrawals' => $count('SELECT COUNT(*) FROM mc_withdrawal_notice WHERE store_id=? AND acknowledged_at IS NULL'),
+            'stock' => $count("SELECT COUNT(*) FROM mc_stock_notification_request WHERE store_id=? AND status='active' AND admin_seen_at IS NULL"),
         ];
         $out['total'] = array_sum($out);
 

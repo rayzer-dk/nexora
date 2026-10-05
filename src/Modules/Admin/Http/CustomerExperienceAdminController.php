@@ -115,7 +115,7 @@ final class CustomerExperienceAdminController extends AbstractController
     private function stats(int $storeId):array
     {
         $one=fn(string $sql,array $p=[]):int=>(int)($this->db->fetchOne($sql,$p)?:0);
-        $out=['returns_open'=>0,'returns_90'=>0,'orders_90'=>0,'return_rate'=>0.0,'reasons'=>[],'reviews_pending'=>0,'reviews_total'=>0,'rating_avg'=>0.0,'rating_dist'=>[5=>0,4=>0,3=>0,2=>0,1=>0],'questions_open'=>0,'withdrawals_open'=>0];
+        $out=['returns_open'=>0,'returns_90'=>0,'orders_90'=>0,'return_rate'=>0.0,'reasons'=>[],'reviews_pending'=>0,'reviews_total'=>0,'rating_avg'=>0.0,'rating_dist'=>[5=>0,4=>0,3=>0,2=>0,1=>0],'questions_open'=>0,'stock_waiting'=>0,'withdrawals_open'=>0];
         try{
             $since=gmdate('Y-m-d H:i:s',time()-90*86400);
             $out['returns_open']=$one("SELECT COUNT(*) FROM mc_return_request WHERE store_id=? AND status IN ('requested','approved','in_transit','received')",[$storeId]);
@@ -123,6 +123,7 @@ final class CustomerExperienceAdminController extends AbstractController
             $out['orders_90']=$one("SELECT COUNT(*) FROM mc_sales_order WHERE store_id=? AND created_at>=? AND status NOT IN ('cancelled','expired')",[$storeId,$since]);
             $out['return_rate']=$out['orders_90']>0?round($out['returns_90']*100/$out['orders_90'],1):0.0;
             $out['reasons']=$this->db->fetchAllAssociative('SELECT reason_code code,COUNT(*) n FROM mc_return_request WHERE store_id=? AND created_at>=? GROUP BY reason_code ORDER BY n DESC LIMIT 6',[$storeId,$since]);
+            $out['stock_waiting']=$one("SELECT COUNT(*) FROM mc_stock_notification_request WHERE store_id=? AND status='active'",[$storeId]);
             $out['reviews_pending']=$one("SELECT COUNT(*) FROM mc_product_review WHERE store_id=? AND status='pending'",[$storeId]);
             foreach($this->db->fetchAllAssociative("SELECT rating,COUNT(*) n FROM mc_product_review WHERE store_id=? AND status='published' GROUP BY rating",[$storeId]) as $r){$out['rating_dist'][(int)$r['rating']]=(int)$r['n'];$out['reviews_total']+=(int)$r['n'];}
             $sum=0;foreach($out['rating_dist'] as $star=>$n)$sum+=$star*$n;$out['rating_avg']=$out['reviews_total']>0?round($sum/$out['reviews_total'],2):0.0;
