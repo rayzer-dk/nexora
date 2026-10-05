@@ -26,6 +26,12 @@ final class BotProtectionAdminController extends AbstractController
             if (!$this->isCsrfTokenValid('admin_bots', (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException(CanonicalUiText::get('common.security.invalid_csrf'));
             }
+            if ($request->request->get('action') === 'lift') {
+                $this->bots->liftProbeBans();
+                $this->addFlash('success', CanonicalUiText::get('admin.bots.bans_lifted'));
+
+                return $this->redirectToRoute('admin_system_bots');
+            }
             if ($request->request->get('action') === 'test') {
                 $verdict = $this->bots->test((string) $request->request->get('test_ua', ''), (string) $request->request->get('test_ip', ''));
                 $this->addFlash($verdict === null ? 'success' : 'warning', $verdict === null ? CanonicalUiText::get('admin.bots.test_pass') : CanonicalUiText::get('admin.bots.test_blocked', ['reason' => CanonicalUiText::get(match ($verdict) {
@@ -34,6 +40,7 @@ final class BotProtectionAdminController extends AbstractController
                     'seo' => 'admin.bots.reason_seo',
                     'ai' => 'admin.bots.reason_ai',
                     'ip' => 'admin.bots.reason_ip',
+                    'probe' => 'admin.bots.reason_probe',
                     'empty_ua' => 'admin.bots.reason_empty_ua',
                     default => 'admin.bots.reason_custom',
                 })]));
@@ -51,6 +58,7 @@ final class BotProtectionAdminController extends AbstractController
             'config' => $config,
             'categories' => BotProtection::CATEGORIES,
             'stats' => $this->bots->stats(),
+            'probe_bans' => $this->bots->recentProbeBans(),
             'my_ip' => (string) $request->getClientIp(),
             'my_ua' => (string) $request->headers->get('User-Agent', ''),
             'ai_robots' => BotProtection::ROBOTS_AI,

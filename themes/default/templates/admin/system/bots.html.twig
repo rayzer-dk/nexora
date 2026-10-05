@@ -12,6 +12,21 @@
 <label class="admin-form-wide admin-check"><input type="checkbox" name="empty_ua" value="1"{{ config.empty_ua ? ' checked' : '' }}><span><strong>{{ ui_text('admin.bots.empty_ua') }}</strong><small>{{ ui_text('admin.bots.empty_ua_hint') }}</small></span></label>
 <label class="admin-form-wide admin-check"><input type="checkbox" name="robots_ai" value="1"{{ config.robots_ai ? ' checked' : '' }}><span><strong>{{ ui_text('admin.bots.robots_ai') }}</strong><small>{{ ui_text('admin.bots.robots_ai_hint') }} <span class="admin-muted">{{ ai_robots|join(', ') }}</span></small></span></label>
 </div></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.bots.probe_kicker') }}</small><h2>{{ ui_text('admin.bots.probe') }}</h2></div></div>
+<p class="admin-hint">{{ ui_text('admin.bots.probe_hint') }}</p>
+<div class="admin-form-grid">
+<label class="admin-form-wide admin-check"><input type="checkbox" name="probe_enabled" value="1"{{ config.probe_enabled ? ' checked' : '' }}><span><strong>{{ ui_text('admin.bots.probe_enabled') }}</strong></span></label>
+<label>{{ ui_text('admin.bots.probe_max') }}<input type="number" name="probe_max" min="5" max="500" value="{{ config.probe_max }}"></label>
+<label>{{ ui_text('admin.bots.probe_window') }}<input type="number" name="probe_window" min="1" max="120" value="{{ config.probe_window }}"></label>
+<label>{{ ui_text('admin.bots.probe_ban') }}<input type="number" name="probe_ban" min="5" max="10080" value="{{ config.probe_ban }}"></label>
+</div></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.bots.rep_kicker') }}</small><h2>{{ ui_text('admin.bots.rep') }}</h2></div></div>
+<p class="admin-hint">{{ ui_text('admin.bots.rep_hint') }}</p>
+<div class="admin-form-grid">
+<label class="admin-form-wide admin-check"><input type="checkbox" name="rep_sfs" value="1"{{ config.rep_sfs ? ' checked' : '' }}><span><strong>Stop Forum Spam</strong><small>{{ ui_text('admin.bots.rep_sfs_hint') }}</small></span></label>
+<label>AbuseIPDB API key<input type="text" name="rep_abuse_key" maxlength="120" value="{{ config.rep_abuse_key }}" autocomplete="off" spellcheck="false"></label>
+<label>{{ ui_text('admin.bots.rep_abuse_min') }}<input type="number" name="rep_abuse_min" min="10" max="100" value="{{ config.rep_abuse_min }}"></label>
+</div></section>
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.bots.own_kicker') }}</small><h2>{{ ui_text('admin.bots.own') }}</h2></div></div>
 <div class="admin-form-grid">
 <label class="admin-form-wide">{{ ui_text('admin.bots.custom_agents') }}<textarea name="custom_agents" rows="4" maxlength="20000" placeholder="badbot&#10;SomeScraper/2.0">{{ config.custom_agents|join("\n") }}</textarea><small>{{ ui_text('admin.bots.custom_agents_hint') }}</small></label>
@@ -26,4 +41,7 @@
 <div class="admin-form-actions"><button class="admin-button" type="submit">{{ ui_icon('activity', 16) }} {{ ui_text('admin.bots.test_run') }}</button></div></form></section>
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.bots.stats_kicker') }}</small><h2>{{ ui_text('admin.bots.stats') }}</h2></div></div>
 <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.bots.day') }}</th><th>{{ ui_text('admin.bots.blocked') }}</th></tr></thead><tbody>{% for day, hits in stats %}<tr><td>{{ day }}</td><td>{% if hits %}{% for reason, n in hits %}<span class="admin-badge">{{ reason }}: {{ n }}</span> {% endfor %}{% else %}<span class="admin-muted">—</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.bots.probe_kicker') }}</small><h2>{{ ui_text('admin.bots.probe_recent') }}</h2></div></div>
+{% if probe_bans %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>IP</th><th>{{ ui_text('admin.bots.day') }}</th><th>{{ ui_text('admin.bots.probe_ban') }}</th></tr></thead><tbody>{% for b in probe_bans %}<tr><td>{{ b.ip }}</td><td>{{ b.at|date('Y-m-d H:i') }}</td><td>{{ b.minutes }}</td></tr>{% endfor %}</tbody></table></div>
+<form method="post" action="{{ path('admin_system_bots') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_bots') }}"><input type="hidden" name="action" value="lift"><button class="admin-button" type="submit">{{ ui_icon('refresh-cw', 16) }} {{ ui_text('admin.bots.bans_lift') }}</button></form>{% else %}<p class="admin-hint">{{ ui_text('admin.bots.probe_none') }}</p>{% endif %}</section>
 {{ shell.end() }}

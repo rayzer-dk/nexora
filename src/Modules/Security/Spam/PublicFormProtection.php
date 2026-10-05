@@ -20,6 +20,7 @@ final class PublicFormProtection
         private readonly PublicFormSpamGuard $guard,
         private readonly CaptchaVerifier $captcha,
         #[Autowire(service: 'limiter.public_form')] private readonly RateLimiterFactoryInterface $publicFormLimiter,
+        private readonly ?\Commerce\Modules\Security\Bots\IpReputation $reputation = null,
     ) {
     }
 
@@ -38,6 +39,10 @@ final class PublicFormProtection
             $payload,
         );
         if (!$result->allowed) {
+            return false;
+        }
+
+        if ($this->reputation?->risky((string) $request->getClientIp()) !== null) {
             return false;
         }
 
