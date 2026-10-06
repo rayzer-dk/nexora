@@ -38,10 +38,11 @@ final class ProductExtrasService
         $sale = $this->saleRow($variantId, $storeId, $marketId);
         $published = $this->db->fetchOne('SELECT published_at FROM mc_store_product WHERE product_id=? AND store_id=?', [$productId, $storeId]);
 
-        $variant = $this->db->fetchAssociative('SELECT min_order_quantity,quantity_step,max_order_quantity FROM mc_product_variant WHERE id=?', [$variantId]) ?: [];
+        $variant = $this->db->fetchAssociative('SELECT min_order_quantity,quantity_step,max_order_quantity,manage_inventory FROM mc_product_variant WHERE id=?', [$variantId]) ?: [];
         $fmt = static fn (mixed $v): string => $v === null || $v === '' ? '' : rtrim(rtrim((string) $v, '0'), '.');
 
         return [
+            'track_stock' => (int) ($variant['manage_inventory'] ?? 1) === 1,
             'hidden' => (int) ($extra['hidden'] ?? 0) === 1,
             'reviews_off' => (int) ($extra['reviews_off'] ?? 0) === 1,
             'points_percent' => ($extra['points_percent'] ?? null) !== null ? (string) (int) $extra['points_percent'] : '',
@@ -108,6 +109,9 @@ final class ProductExtrasService
         if (array_key_exists('available_from', $in)) {
             $from = $this->fromLocalInput((string) $in['available_from']);
             $this->db->executeStatement('UPDATE mc_store_product SET published_at=? WHERE product_id=? AND store_id=?', [$from !== null && $from > $now ? $from : $now, $productId, $storeId]);
+        }
+        if (array_key_exists('track_present', $in)) {
+            $this->db->executeStatement("UPDATE mc_product_variant v JOIN mc_product p ON p.id=v.product_id SET v.manage_inventory=?,v.updated_at=? WHERE v.product_id=? AND p.product_type='physical'", [!empty($in['track_stock']) ? 1 : 0, $now, $productId]);
         }
         if (array_key_exists('group_prices', $in)) {
             $this->saveGroupPrices($variantId, $storeId, $marketId, $currency, (string) $in['group_prices'], $now);

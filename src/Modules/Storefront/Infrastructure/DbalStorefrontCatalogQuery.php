@@ -174,7 +174,7 @@ final readonly class DbalStorefrontCatalogQuery
 
         $stockExpression = "COALESCE((SELECT SUM(GREATEST(fsl.stocked_quantity-fsl.reserved_quantity-fsl.safety_stock,0)) FROM mc_variant_inventory_item fvii JOIN mc_stock_level fsl ON fsl.inventory_item_id=fvii.inventory_item_id JOIN mc_market_inventory_location fmil ON fmil.location_id=fsl.location_id AND fmil.market_id=? WHERE fvii.variant_id=v.id),0)";
         if ($filter->inStockOnly) {
-            $conditions[] = $stockExpression . ' > 0';
+            $conditions[] = '(' . $stockExpression . " > 0 OR EXISTS (SELECT 1 FROM mc_product_variant uv WHERE uv.product_id=p.id AND uv.manage_inventory=0 AND p.product_type='physical'))";
             $filterParams[] = $context->marketId;
         }
         if ($filter->minPriceMinor !== null) {
@@ -760,7 +760,7 @@ final readonly class DbalStorefrontCatalogQuery
     public function purchasableVariant(StorefrontContext $context, string $variantPublicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT v.id,v.product_id,v.public_id,v.sku,p.product_type,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.allow_backorder,pt.name,pr.amount_minor,pr.currency,
+            "SELECT v.id,v.product_id,v.public_id,v.sku,p.product_type,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.allow_backorder,v.manage_inventory,pt.name,pr.amount_minor,pr.currency,
                     COALESCE(ppp.mode,'auto') AS purchase_mode,
                     COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) AS available_quantity
              FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id AND p.status='published' JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active' JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
@@ -774,7 +774,7 @@ final readonly class DbalStorefrontCatalogQuery
         if (in_array($mode, ['coming_soon','sold_out','notify','price_request'], true)) {
             return null;
         }
-        $allowBackorder = (bool) ($row['allow_backorder'] ?? false) || in_array($mode, ['backorder','preorder'], true);
+        $allowBackorder = (bool) ($row['allow_backorder'] ?? false) || in_array($mode, ['backorder','preorder'], true) || ((int) ($row['manage_inventory'] ?? 1) === 0 && (string) $row['product_type'] === 'physical'); /* stock is not tracked: nothing to oversell */
         return ['variant_id'=>(int)$row['id'],'product_id'=>(int)$row['product_id'],'variant_public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'product_type'=>(string)$row['product_type'],'name'=>(string)$row['name'],'sku'=>(string)$row['sku'],'price_minor'=>(int)$row['amount_minor'],'currency'=>(string)$row['currency'],'unit_code'=>(string)$row['sale_unit_code'],'quantity_step'=>(string)$row['quantity_step'],'min_quantity'=>(string)$row['min_order_quantity'],'max_quantity'=>$row['max_order_quantity']!==null?(string)$row['max_order_quantity']:null,'available_quantity'=>(string)$row['available_quantity'],'allow_backorder'=>$allowBackorder];
     }
 
@@ -823,6 +823,24 @@ final readonly class DbalStorefrontCatalogQuery
         return $memo[$key];
     }
 
+    /** @return array<int,true> physical products whose stock is not tracked: always available, never oversold */
+    private function untrackedProducts(): array
+    {
+        static $ids = null;
+        if ($ids === null) {
+            $ids = [];
+            try {
+                foreach ($this->connection->fetchFirstColumn("SELECT DISTINCT v.product_id FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id WHERE v.manage_inventory=0 AND p.product_type='physical'") as $id) {
+                    $ids[(int) $id] = true;
+                }
+            } catch (\Throwable) {
+                $ids = [];
+            }
+        }
+
+        return $ids;
+    }
+
     private function taxDisplayMode(int $marketId): string
     {
         static $cache = [];
@@ -841,7 +859,7 @@ final readonly class DbalStorefrontCatalogQuery
     /** @return array{availability_label:string,availability:string,purchase_mode:string,purchase_allowed:bool,purchase_button_label:string,purchase_eta_text:?string,notify_available:bool,price_request:bool} */
     private function purchaseState(array $row): array
     {
-        $digital = (string) ($row['product_type'] ?? 'physical') === 'digital';
+        $digital = (string) ($row['product_type'] ?? 'physical') === 'digital' || isset($this->untrackedProducts()[(int) ($row['id'] ?? 0)]);
         $stock = (float) ($row['available_quantity'] ?? 0);
         $mode = (string) ($row['purchase_mode'] ?? 'auto');
         $variantBackorder = (bool) ($row['allow_backorder'] ?? false);

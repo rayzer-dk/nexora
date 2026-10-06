@@ -1,7 +1,7 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
 {{ shell.start(ui_text('admin.system.site.profil_saitu'),'site') }}
 <header class="admin-page-header">
-    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ store.name|default('Nexora Commerce') }} · v{{ platform_version }}</span></nav><h1>{{ ui_text('admin.system.site.profil_i_mozhlyvosti_saitu') }}</h1><p>{{ ui_text('admin.system.site.funktsii_mozhna_vmykaty_i_vymykaty_bez_perevstan') }}</p></div>
+    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ store.name|default('Nexora Commerce') }} · v{{ platform_version }}</span></nav><h1>{{ ui_text('admin.system.site.profil_i_mozhlyvosti_saitu') }} {% include '@storefront/admin/_tip.html.twig' with {key:'site_modes'} only %}</h1><p>{{ ui_text('admin.system.site.funktsii_mozhna_vmykaty_i_vymykaty_bez_perevstan') }}</p></div>
     <a class="admin-button is-primary" href="/" target="_blank" rel="noopener">{{ ui_text('admin.system.site.vidkryty_sait') }}</a>
 </header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}

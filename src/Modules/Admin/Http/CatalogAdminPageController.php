@@ -372,6 +372,8 @@ final class CatalogAdminPageController extends AbstractController
                             'labels' => $request->request->all('custom_label'),
                             'related' => (string) $request->request->get('related_skus', ''),
                             'complementary' => (string) $request->request->get('complementary_skus', ''),
+                            'track_present' => '1',
+                            'track_stock' => $request->request->getBoolean('track_stock'),
                             'visibility_present' => '1',
                             'hidden' => $request->request->getBoolean('hidden'),
                             'reviews_off' => $request->request->getBoolean('reviews_off'),

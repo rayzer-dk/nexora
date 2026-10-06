@@ -1,6 +1,6 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
 {{ shell.start(ui_text('admin.suppliers.title'),'suppliers') }}
-<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_catalog_suppliers') }}">{{ ui_text('admin.suppliers.title') }}</a>{% if s %}{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ s.name }}</span>{% endif %}</nav><h1>{{ s ? s.name : ui_text('admin.suppliers.title') }}</h1><p>{{ ui_text('admin.suppliers.intro') }}</p></div></header>
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_catalog_suppliers') }}">{{ ui_text('admin.suppliers.title') }}</a>{% if s %}{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ s.name }}</span>{% endif %}</nav><h1>{{ s ? s.name : ui_text('admin.suppliers.title') }} {% include '@storefront/admin/_tip.html.twig' with {key:'suppliers'} only %}</h1><p>{{ ui_text('admin.suppliers.intro') }}</p></div></header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 
 {% if not s %}
