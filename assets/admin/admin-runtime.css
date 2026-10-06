@@ -1797,9 +1797,9 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-group-form button { flex: none; white-space: nowrap; }
 
 /* Header counter of new returns, reviews and questions. */
-.admin-attention { position: relative; }
+.admin-attention, .admin-forum-attention { position: relative; }
 .admin-attention__count { position: absolute; top: calc(var(--mc-space-1) * -1); right: calc(var(--mc-space-1) * -1); display: grid; place-items: center; min-width: var(--mc-space-5); height: var(--mc-space-5); padding: 0 var(--mc-space-1); border-radius: var(--mc-radius-xl); background: var(--mc-color-danger); color: #fff; font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-bold); line-height: 1; }
-.admin-attention.has-items { color: var(--mc-color-danger); }
+.admin-attention.has-items, .admin-forum-attention.has-items { color: var(--mc-color-danger); }
 
 /* Abandoned carts. */
 .admin-cart-items { display: grid; gap: var(--mc-space-1); margin: 0; padding: 0; list-style: none; }
