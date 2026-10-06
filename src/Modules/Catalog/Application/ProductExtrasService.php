@@ -36,8 +36,12 @@ final class ProductExtrasService
             )));
         }
         $sale = $this->saleRow($variantId, $storeId, $marketId);
+        $published = $this->db->fetchOne('SELECT published_at FROM mc_store_product WHERE product_id=? AND store_id=?', [$productId, $storeId]);
 
         return [
+            'cost' => ($extra['cost_minor'] ?? null) !== null ? number_format(((int) $extra['cost_minor']) / 100, 2, '.', '') : '',
+            'available_from' => is_string($published) && $published !== '' && $published > gmdate('Y-m-d H:i:s') ? $this->toLocalInput($published) : '',
+            'tiers' => $this->tiersText($variantId, $storeId, $marketId),
             'canonical_url' => (string) ($extra['canonical_url'] ?? ''),
             'tags' => (string) ($extra['tags'] ?? ''),
             'labels' => $labels,
@@ -59,6 +63,13 @@ final class ProductExtrasService
         }
         $tags = $this->normalizeTags((string) ($in['tags'] ?? ''));
         $row = ['canonical_url' => $canonical !== '' ? $canonical : null, 'tags' => $tags !== '' ? $tags : null, 'updated_at' => $now];
+        if (array_key_exists('cost', $in)) {
+            $cost = trim(str_replace(',', '.', (string) $in['cost']));
+            if ($cost !== '' && preg_match('/^\d{1,9}(?:\.\d{1,2})?$/', $cost) !== 1) {
+                throw new \DomainException(CanonicalUiText::get('admin.product.extras.cost_invalid'));
+            }
+            $row['cost_minor'] = $cost === '' ? null : (int) round(((float) $cost) * 100);
+        }
         $labels = is_array($in['labels'] ?? null) ? $in['labels'] : [];
         for ($i = 0; $i < 5; ++$i) {
             $v = trim(mb_substr(strip_tags((string) ($labels[$i] ?? '')), 0, 100, 'UTF-8'));
@@ -75,6 +86,13 @@ final class ProductExtrasService
                 $this->replaceRelations($productId, $type, (string) $in[$type], $now);
             }
         }
+        if (array_key_exists('available_from', $in)) {
+            $from = $this->fromLocalInput((string) $in['available_from']);
+            $this->db->executeStatement('UPDATE mc_store_product SET published_at=? WHERE product_id=? AND store_id=?', [$from !== null && $from > $now ? $from : $now, $productId, $storeId]);
+        }
+        if (array_key_exists('tiers', $in)) {
+            $this->saveTiers($variantId, $storeId, $marketId, $currency, (string) $in['tiers'], $now);
+        }
         if (array_key_exists('sale_price', $in)) {
             $this->saveSale($variantId, $storeId, $marketId, $currency, (string) $in['sale_price'], (string) ($in['sale_starts'] ?? ''), (string) ($in['sale_ends'] ?? ''), $now);
         }
@@ -90,6 +108,82 @@ final class ProductExtrasService
             'tags' => array_values(array_filter(array_map('trim', explode(',', (string) ($extra['tags'] ?? ''))))),
             'labels' => array_values(array_filter(array_map(static fn (int $i): string => (string) ($extra['custom_label_' . $i] ?? ''), range(0, 4)))),
         ];
+    }
+
+    /** "5=450, 10=420" — from 5 pcs the unit price is 450, from 10 pcs 420. */
+    private function tiersText(int $variantId, int $storeId, int $marketId): string
+    {
+        $rows = $this->db->fetchAllAssociative(
+            "SELECT min_quantity,amount_minor FROM mc_price WHERE variant_id=? AND store_id=? AND market_id=? AND customer_group='default' AND price_list_id IS NULL AND min_quantity>1 AND starts_at IS NULL AND ends_at IS NULL AND priority=100 ORDER BY min_quantity",
+            [$variantId, $storeId, $marketId],
+        );
+
+        return implode(', ', array_map(static fn (array $r): string => rtrim(rtrim((string) $r['min_quantity'], '0'), '.') . '=' . number_format(((int) $r['amount_minor']) / 100, 2, '.', ''), $rows));
+    }
+
+    private function saveTiers(int $variantId, int $storeId, int $marketId, string $currency, string $raw, string $now): void
+    {
+        $base = $this->db->fetchOne(
+            "SELECT amount_minor FROM mc_price WHERE variant_id=? AND store_id=? AND market_id=? AND customer_group='default' AND price_list_id IS NULL AND max_quantity IS NULL AND starts_at IS NULL AND ends_at IS NULL AND min_quantity<=1 ORDER BY priority ASC,id DESC LIMIT 1",
+            [$variantId, $storeId, $marketId],
+        );
+        $tiers = [];
+        foreach (preg_split('/[,;\n]+/', $raw) ?: [] as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                continue;
+            }
+            if (preg_match('/^(\d{1,6})\s*[=:]\s*(\d{1,9}(?:[.,]\d{1,2})?)$/', $part, $m) !== 1) {
+                throw new \DomainException(CanonicalUiText::get('admin.product.extras.tiers_invalid'));
+            }
+            $qty = (int) $m[1];
+            $minor = (int) round(((float) str_replace(',', '.', $m[2])) * 100);
+            if ($qty < 2 || $minor <= 0 || ($base !== false && $minor >= (int) $base)) {
+                throw new \DomainException(CanonicalUiText::get('admin.product.extras.tiers_invalid'));
+            }
+            $tiers[$qty] = $minor;
+        }
+        ksort($tiers);
+        $prev = null;
+        foreach ($tiers as $minor) {
+            if ($prev !== null && $minor >= $prev) {
+                throw new \DomainException(CanonicalUiText::get('admin.product.extras.tiers_invalid'));
+            }
+            $prev = $minor;
+        }
+        $this->db->executeStatement(
+            "DELETE FROM mc_price WHERE variant_id=? AND store_id=? AND market_id=? AND customer_group='default' AND price_list_id IS NULL AND min_quantity>1 AND starts_at IS NULL AND ends_at IS NULL AND priority=100",
+            [$variantId, $storeId, $marketId],
+        );
+        foreach (array_slice($tiers, 0, 8, true) as $qty => $minor) {
+            $this->db->insert('mc_price', [
+                'variant_id' => $variantId, 'store_id' => $storeId, 'price_list_id' => null, 'market_id' => $marketId, 'currency' => $currency, 'customer_group' => 'default',
+                'min_quantity' => number_format($qty, 6, '.', ''), 'max_quantity' => null, 'amount_minor' => $minor, 'compare_at_minor' => null, 'tax_included' => 1,
+                'priority' => 100, 'starts_at' => null, 'ends_at' => null, 'created_at' => $now, 'updated_at' => $now,
+            ]);
+        }
+    }
+
+    /** @return list<array{quantity:int,minor:int}> */
+    public function tiersForStorefront(int $productId, int $storeId, string $currency): array
+    {
+        $rows = $this->db->fetchAllAssociative(
+            "SELECT px.min_quantity,MIN(px.amount_minor) amount_minor FROM mc_price px JOIN mc_product_variant v ON v.id=px.variant_id AND v.product_id=? AND v.sort_order=0 WHERE px.store_id=? AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity>1 AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) GROUP BY px.min_quantity ORDER BY px.min_quantity",
+            [$productId, $storeId, $currency],
+        );
+
+        return array_map(static fn (array $r): array => ['quantity' => (int) $r['min_quantity'], 'minor' => (int) $r['amount_minor']], $rows);
+    }
+
+    /** Unit price for a quantity: the best retail volume tier at or below it, never above the current price. */
+    public function tierPrice(int $variantId, int $storeId, string $currency, string $quantity, int $unitMinor): int
+    {
+        $tier = $this->db->fetchOne(
+            "SELECT amount_minor FROM mc_price WHERE variant_id=? AND store_id=? AND currency=? AND customer_group='default' AND price_list_id IS NULL AND min_quantity>1 AND min_quantity<=? AND (max_quantity IS NULL OR max_quantity>=?) AND (starts_at IS NULL OR starts_at<=UTC_TIMESTAMP(6)) AND (ends_at IS NULL OR ends_at>UTC_TIMESTAMP(6)) ORDER BY min_quantity DESC,id DESC LIMIT 1",
+            [$variantId, $storeId, $currency, $quantity, $quantity],
+        );
+
+        return $tier === false ? $unitMinor : min($unitMinor, (int) $tier);
     }
 
     private function normalizeTags(string $raw): string

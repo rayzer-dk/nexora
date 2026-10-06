@@ -5351,4 +5351,12 @@ return [
     'admin.product.extras.sale_not_lower' => 'The sale price must be lower than the regular price.',
     'admin.product.extras.sale_dates' => 'The sale must end after it starts.',
     'admin.blog.h1_hint' => 'Heading on the article page. Empty means the title is used.',
+    'admin.product.extras.cost' => 'Cost price',
+    'admin.product.extras.cost_hint' => 'Only you see it. Used for margin, never shown on the site.',
+    'admin.product.extras.available_from' => 'Available from',
+    'admin.product.extras.available_from_hint' => 'The product appears on the site at that moment. Empty means now.',
+    'admin.product.extras.tiers' => 'Volume prices',
+    'admin.product.extras.tiers_hint' => 'Format "quantity=price", comma separated: 5=450, 10=420. Unit price, lower than the base price and falling.',
+    'admin.product.extras.cost_invalid' => 'Cost price: a number such as 120.50.',
+    'admin.product.extras.tiers_invalid' => 'Volume prices: "5=450, 10=420", quantity from 2, prices below the base price and falling.',
 ];

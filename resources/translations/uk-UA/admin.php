@@ -5346,4 +5346,12 @@ return [
     'admin.product.extras.sale_not_lower' => 'Акційна ціна має бути нижчою за звичайну.',
     'admin.product.extras.sale_dates' => 'Кінець акції має бути пізніше за початок.',
     'admin.blog.h1_hint' => 'Заголовок на сторінці статті. Порожньо — береться назва.',
+    'admin.product.extras.cost' => 'Собівартість',
+    'admin.product.extras.cost_hint' => 'Бачите лише ви. Для розрахунку маржі, на сайті не показується.',
+    'admin.product.extras.available_from' => 'Доступний з',
+    'admin.product.extras.available_from_hint' => 'Товар з’явиться на сайті в цей момент. Порожньо — одразу.',
+    'admin.product.extras.tiers' => 'Ціни від кількості',
+    'admin.product.extras.tiers_hint' => 'Формат «кількість=ціна», через кому: 5=450, 10=420. Ціна за штуку, нижча за основну і спадна.',
+    'admin.product.extras.cost_invalid' => 'Собівартість: число, наприклад 120.50.',
+    'admin.product.extras.tiers_invalid' => 'Ціни від кількості: «5=450, 10=420», кількість від 2, ціни нижчі за основну і спадають.',
 ];

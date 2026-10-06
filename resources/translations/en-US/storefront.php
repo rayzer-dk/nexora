@@ -1448,4 +1448,6 @@ return [
     'landing.forms.consult.text' => 'Choose a topic and we will suggest the best option.',
     'landing.forms.consult.button' => 'Book a consultation',
     'landing.ui.yes' => 'Yes',
+    'product_tiers' => 'Volume pricing',
+    'product_tiers_from' => 'From %qty% pcs',
 ];

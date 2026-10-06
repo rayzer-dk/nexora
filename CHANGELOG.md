@@ -1,11 +1,9 @@
 # Changelog
 
-## 3.91.0 — 2026-10-06
+## 3.92.0 — 2026-10-06
 
-Product promotion fields in the editor: dated sale price, related products, tags, own canonical, Google labels; articles get their own H1.
+Volume prices, cost price and a "available from" date in the product editor.
 
-- Sale price with start and end: the regular price shows as the old one, the storefront counts down to the end and the price returns by itself afterwards.
-- "Similar products" and "Bought together" are picked by SKU right in the product editor.
-- Tags (shown on the product page as links to catalog search), own canonical URL and five Google Merchant custom labels (sent in the Google feed).
-- Blog articles: separate H1 field (empty means the title).
-- Schema 84 (mc_product_extra, h1 for content translations).
+- Volume prices ("5=450, 10=420"): shown as a table on the product page and applied in the cart and at checkout from the set quantity.
+- Cost price (only for the team, for margin) and an "available from" date after which the product appears on the site.
+- Schema 85 (cost price).

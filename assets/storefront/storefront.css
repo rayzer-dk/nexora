@@ -1254,3 +1254,7 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 .product-tags { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); margin: var(--mc-space-3) 0; }
 .product-tags__item { padding: var(--mc-space-1) var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-full); font-size: var(--mc-font-size-sm); color: var(--mc-color-muted); text-decoration: none; }
 .product-tags__item:hover { border-color: var(--mc-color-primary); color: var(--mc-color-primary); }
+.product-tiers { margin-top: var(--mc-space-6); }
+.product-tiers h2 { font-size: var(--mc-font-size-lg); margin: 0 0 var(--mc-space-3); }
+.product-tiers__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--mc-space-2); }
+.product-tiers__list li { display: flex; justify-content: space-between; gap: var(--mc-space-3); padding: var(--mc-space-2) 0; border-bottom: 1px solid var(--mc-color-border); }

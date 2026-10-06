@@ -34,6 +34,7 @@ final class StorefrontCatalogController extends AbstractController
         private readonly StorefrontContextResolver $contexts,
         private readonly CachedStorefrontCatalogQuery $catalog,
         private readonly \Commerce\Modules\Catalog\Application\ProductExtrasService $productExtras,
+        private readonly \Commerce\Modules\Storefront\Infrastructure\StorefrontMoneyFormatter $money,
         private readonly SeoRouteResolver $seo,
         private readonly \Commerce\Modules\Seo\Application\SeoTemplateService $seoTemplates,
         private readonly ProductPageLayoutLoader $layoutLoader,
@@ -428,9 +429,11 @@ final class StorefrontCatalogController extends AbstractController
         }
 
         $productExtra = $this->productExtras->forStorefront((int) ($product['internal_id'] ?? 0));
+        $productTiers = array_map(fn (array $t): array => ['quantity' => $t['quantity'], 'price' => $this->money->format($t['minor'], (string) $context->currency, $context->locale)], $this->productExtras->tiersForStorefront((int) ($product['internal_id'] ?? 0), $context->storeId, (string) $context->currency));
         return $this->render('@storefront/product/show.html.twig', [
             'page_title' => $product['name'],
             'product_extra' => $productExtra,
+            'product_tiers' => $productTiers,
             'store_name' => $context->storeName,
             'product' => $product,
             'layout' => $layout,

@@ -102,6 +102,7 @@
     <div class="shell product-extras">
         {% for block in extras %}{% include '@storefront/product/_block.html.twig' with {product: product, block: block} only %}{% endfor %}
         {% for b in info_extras %}{% include '@storefront/product/_info_block.html.twig' with {b: b} only %}{% endfor %}
+        {% if product_tiers|default([]) %}<section class="product-tiers detail-card"><h2>{{ ui_text('product_tiers') }}</h2><ul class="product-tiers__list">{% for t in product_tiers %}<li><span>{{ ui_text('product_tiers_from', {qty: t.quantity}) }}</span><strong>{{ t.price }}</strong></li>{% endfor %}</ul></section>{% endif %}
         {% if product_extra.tags|default([]) %}<p class="product-tags">{% for t in product_extra.tags %}<a class="product-tags__item" href="/catalog?q={{ t|url_encode }}">#{{ t }}</a>{% endfor %}</p>{% endif %}
         {% set product_articles_list = product_articles(product.internal_id) %}{% if product_articles_list %}<section class="product-articles detail-card"><h2>{{ ui_text('product_articles') }}</h2><ul class="product-articles__list">{% for a in product_articles_list %}<li><a href="{{ a.path }}">{{ a.title }}</a></li>{% endfor %}</ul></section>{% endif %}
     </div>

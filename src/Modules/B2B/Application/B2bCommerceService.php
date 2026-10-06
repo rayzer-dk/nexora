@@ -12,7 +12,7 @@ use Symfony\Component\Uid\Uuid;
 
 final readonly class B2bCommerceService
 {
-    public function __construct(private Connection $db, private PaymentLifecycleService $payments) {}
+    public function __construct(private Connection $db, private PaymentLifecycleService $payments, private ?\Commerce\Modules\Catalog\Application\ProductExtrasService $tiers = null) {}
 
     /** @return array<string,mixed>|null */
     public function membership(int $storeId, ?int $customerId): ?array
@@ -24,6 +24,7 @@ final readonly class B2bCommerceService
 
     public function priceFor(int $storeId, ?int $customerId, int $variantId, string $quantity, int $retailMinor, string $currency): int
     {
+        $retailMinor=$this->tiers?->tierPrice($variantId,$storeId,strtoupper($currency),$quantity,$retailMinor) ?? $retailMinor;
         $m=$this->membership($storeId,$customerId); if($m===null || strtoupper((string)$m['currency'])!==strtoupper($currency)) return $retailMinor;
         $price=$this->db->fetchOne("SELECT t.amount_minor FROM mc_b2b_price_tier t JOIN mc_b2b_price_list pl ON pl.id=t.price_list_id JOIN mc_b2b_price_list_company pc ON pc.price_list_id=pl.id WHERE pc.company_id=? AND pl.store_id=? AND pl.currency=? AND pl.status='active' AND (pl.starts_at IS NULL OR pl.starts_at<=UTC_TIMESTAMP(6)) AND (pl.ends_at IS NULL OR pl.ends_at>UTC_TIMESTAMP(6)) AND t.variant_id=? AND t.min_quantity<=? AND (t.max_quantity IS NULL OR t.max_quantity>=?) ORDER BY pl.priority ASC,t.min_quantity DESC,t.id DESC LIMIT 1",[(int)$m['company_id'],$storeId,strtoupper($currency),$variantId,$quantity,$quantity]);
         return $price===false?$retailMinor:min($retailMinor,max(0,(int)$price));

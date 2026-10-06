@@ -1448,4 +1448,6 @@ return [
     'landing.forms.consult.text' => 'Оберіть тему — підкажемо найкращий варіант.',
     'landing.forms.consult.button' => 'Записатися на консультацію',
     'landing.ui.yes' => 'Так',
+    'product_tiers' => 'Ціна від кількості',
+    'product_tiers_from' => 'Від %qty% шт',
 ];
