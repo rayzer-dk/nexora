@@ -1,7 +1,7 @@
 # Changelog
 
-## 3.96.4 — 2026-10-06
+## 3.96.5 — 2026-10-06
 
-Release gate fix: no hard-coded error texts.
+Browser installer writes the canonical-host and supplier-host settings.
 
-- Supplier price list errors and the Checkbox sign-in error are translated (Ukrainian and English) instead of being fixed English strings.
+- The installer now includes COMMERCE_CANONICAL_REDIRECT and COMMERCE_SUPPLIER_ALLOW_PRIVATE_HOSTS in the generated environment file (required by the production release check).
