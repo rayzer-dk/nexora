@@ -1187,6 +1187,7 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
   .admin-context label { flex: 1 1 140px; }
   .admin-context select { width: 100%; }
   .admin-user { margin-left: auto; padding-left: 0; border-left: 0; }
+  .admin-attention__count { right: 0; }
   .admin-search-trigger { flex: 1; width: auto; }
   .admin-extension-upload { grid-template-columns: minmax(0, 1fr); }
   .admin-ai-helper { grid-template-columns: minmax(0, 1fr); }
