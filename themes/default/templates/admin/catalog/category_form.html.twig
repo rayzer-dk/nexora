@@ -16,7 +16,7 @@
 <section class="admin-panel"><h2>{{ ui_text('admin.category.texts') }}</h2><p class="admin-help">{{ ui_text('admin.category.texts_hint') }}</p>
 <label><span>{{ ui_text('admin.category.text_single') }}</span><textarea name="description" rows="8" maxlength="100000" data-rich-editor>{{ (category.description|default('')) ~ (category.description_bottom|default('')) }}</textarea><small>{{ ui_text('admin.category.text_single_hint') }}</small></label>
 </section>
-<section class="admin-panel"><h2>{{ ui_text('admin.category.seo') }}</h2><p class="admin-help">{{ ui_text('admin.category.seo_hint') }}</p><div class="admin-form-grid">
+<section class="admin-panel"><h2>{{ ui_text('admin.category.seo') }} {% include '@storefront/admin/_seo_tip.html.twig' %}</h2><p class="admin-help">{{ ui_text('admin.category.seo_hint') }}</p><div class="admin-form-grid">
 <label><span>H1</span><input type="text" name="h1" maxlength="255" value="{{ category.h1|default('') }}" placeholder="{{ category.name|default('')|e('html_attr') }}"><small>{{ ui_text('admin.category.h1_hint') }}</small></label>
 <label><span>Title</span><input type="text" name="meta_title" maxlength="255" value="{{ category.meta_title|default('') }}" placeholder="{{ ui_text('admin.category.meta_placeholder')|e('html_attr') }}"><small>{{ ui_text('admin.category.title_hint') }}</small></label>
 <label class="admin-form-wide"><span>Description</span><textarea name="meta_description" rows="3" maxlength="500" placeholder="{{ ui_text('admin.category.meta_placeholder')|e('html_attr') }}">{{ category.meta_description|default('') }}</textarea><small>{{ ui_text('admin.category.description_hint') }}</small></label>

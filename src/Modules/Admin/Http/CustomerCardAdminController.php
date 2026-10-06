@@ -46,7 +46,7 @@ final class CustomerCardAdminController extends AbstractController
         $counts = [
             'wishlist' => (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_customer_wishlist WHERE customer_id=?', [$id]),
             'reviews' => (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_product_review WHERE customer_id=?', [$id]),
-            'inquiries' => (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_customer_inquiry WHERE customer_id=?', [$id]),
+            'inquiries' => (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_customer_inquiry WHERE LOWER(email)=?', [(string) $customer['email_normalized']]),
         ];
         $notes = $this->db->fetchAllAssociative('SELECT id,author,body,created_at FROM mc_customer_note WHERE customer_id=? ORDER BY id DESC LIMIT 100', [$id]);
         $groups = array_values(array_unique(array_merge(['default', 'vip', 'wholesale'], array_map('strval', $this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer WHERE customer_group_code IS NOT NULL AND customer_group_code<>''")))));

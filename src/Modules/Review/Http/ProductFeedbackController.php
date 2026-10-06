@@ -17,12 +17,13 @@ final class ProductFeedbackController extends AbstractController
     public function __construct(
         private readonly StorefrontContextResolver $contexts,
         private readonly ProductFeedbackService $feedback,
-        private readonly PublicFormSpamGuard $spamGuard,private readonly \Commerce\Modules\Review\Application\ReviewSettings $settings,private readonly \Commerce\Modules\Security\Captcha\CaptchaVerifier $captcha,
+        private readonly PublicFormSpamGuard $spamGuard,private readonly \Commerce\Modules\Catalog\Application\ProductExtrasService $extras,private readonly \Commerce\Modules\Review\Application\ReviewSettings $settings,private readonly \Commerce\Modules\Security\Captcha\CaptchaVerifier $captcha,
     ) {}
 
     #[Route('/product-feedback/{product}/review',name:'product_review_submit',methods:['POST'],priority:200)]
     public function review(string $product,Request $request):Response
     {
+        if($this->extras->reviewsOffByPublicId($product))throw $this->createNotFoundException();
         $user=$this->customerOrGuest();if(!$this->isCsrfTokenValid('review_'.$product,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();$ctx=$this->contexts->resolve($request);
         $guard=$this->spamGuard->check((string)$request->request->get('_website',''),(int)$request->request->get('_rendered_at',0),time(),strlen((string)$request->request->get('title','').(string)$request->request->get('body','')));
         if(!$guard->allowed||!$this->captcha->verify($request,'review')){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.review.http.productfeedbackcontroller.formu_ne_pryiniato_onovit_storinku_ta_sprobuite_shch'));return $this->redirect($this->back($request).'#reviews');}
@@ -34,6 +35,7 @@ final class ProductFeedbackController extends AbstractController
     #[Route('/product-feedback/{product}/question',name:'product_question_submit',methods:['POST'],priority:200)]
     public function question(string $product,Request $request):Response
     {
+        if($this->extras->reviewsOffByPublicId($product))throw $this->createNotFoundException();
         $user=$this->customerOrGuest();if(!$this->isCsrfTokenValid('question_'.$product,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();$ctx=$this->contexts->resolve($request);
         $guard=$this->spamGuard->check((string)$request->request->get('_website',''),(int)$request->request->get('_rendered_at',0),time(),strlen((string)$request->request->get('question','')));
         if(!$guard->allowed||!$this->captcha->verify($request,'question')){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.review.http.productfeedbackcontroller.formu_ne_pryiniato_onovit_storinku_ta_sprobuite_shch'));return $this->redirect($this->back($request).'#questions');}

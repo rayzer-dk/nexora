@@ -33,6 +33,6 @@ test('catalog mode shows products without cart, buy, notify, quick-order or chec
       expect(response?.status() ?? 0, `${path} must not be served in catalog mode`).toBeGreaterThanOrEqual(300);
     }
   } finally {
-    await setMode('shop');
+    await setMode('hybrid');
   }
 });

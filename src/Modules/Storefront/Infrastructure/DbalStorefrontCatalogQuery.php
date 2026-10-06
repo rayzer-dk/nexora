@@ -159,6 +159,7 @@ final readonly class DbalStorefrontCatalogQuery
             "mp.status='active'",
             '(sp.published_at IS NULL OR sp.published_at<=UTC_TIMESTAMP(6))',
             '(mp.published_at IS NULL OR mp.published_at<=UTC_TIMESTAMP(6))',
+            "NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)",
         ];
         $filterParams = [];
 
@@ -399,6 +400,7 @@ final readonly class DbalStorefrontCatalogQuery
             "mp.status='active'",
             '(sp.published_at IS NULL OR sp.published_at<=UTC_TIMESTAMP(6))',
             '(mp.published_at IS NULL OR mp.published_at<=UTC_TIMESTAMP(6))',
+            "NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)",
         ];
         $filterParams = [];
         if ($categoryId !== null) {
@@ -655,7 +657,10 @@ final readonly class DbalStorefrontCatalogQuery
         return array_map(function (array $row) use ($context, $selectedVariantId, $swatches, $valueMap): array {
             $available = (string) $row['product_type'] === 'digital' || (float) $row['available_quantity'] > 0 || (bool) $row['allow_backorder'];
             $amount = (int) $row['amount_minor'];
-            if ($context->groupDiscountBps > 0 && $amount > 0 && !($context->groupSkipsSale && (int) ($row['compare_at_minor'] ?? 0) > $amount)) {
+            $fixedVariantPrice = $context->customerGroup !== 'default' ? $this->groupFixedPrice((string) $row['public_id'], $context) : null;
+            if ($fixedVariantPrice !== null && $fixedVariantPrice < $amount) {
+                $amount = $fixedVariantPrice;
+            } elseif ($context->groupDiscountBps > 0 && $amount > 0 && !($context->groupSkipsSale && (int) ($row['compare_at_minor'] ?? 0) > $amount)) {
                 $amount = intdiv($amount * (10000 - min(9000, $context->groupDiscountBps)) + 5000, 10000);
             }
             return [
@@ -776,7 +781,9 @@ final readonly class DbalStorefrontCatalogQuery
     private function productCardRow(array $row, StorefrontContext $context): array
     {
         $priceMinor = (int)($row['amount_minor'] ?? 0); $compareMinor = $row['compare_at_minor'] !== null ? (int)$row['compare_at_minor'] : null; if ($compareMinor !== null && $compareMinor <= $priceMinor) { $compareMinor = null; } /* an "old price" that is not higher than the price is no discount */ $rate = (int)($row['rate_bps'] ?? 0);
-        if ($context->groupDiscountBps > 0 && $priceMinor > 0 && !($context->groupSkipsSale && $compareMinor !== null)) { /* customer-group price: the regular price becomes the "old" one */ $compareMinor = max($compareMinor ?? 0, $priceMinor); $priceMinor = intdiv($priceMinor * (10000 - min(9000, $context->groupDiscountBps)) + 5000, 10000); }
+        $fixedGroupPrice = $context->customerGroup !== 'default' ? $this->groupFixedPrice((string) ($row['variant_public_id'] ?? ''), $context) : null;
+        if ($fixedGroupPrice !== null && $fixedGroupPrice < $priceMinor) { /* an own price of the customer group beats the percentage */ $compareMinor = max($compareMinor ?? 0, $priceMinor); $priceMinor = $fixedGroupPrice; }
+        elseif ($context->groupDiscountBps > 0 && $priceMinor > 0 && !($context->groupSkipsSale && $compareMinor !== null)) { /* customer-group price: the regular price becomes the "old" one */ $compareMinor = max($compareMinor ?? 0, $priceMinor); $priceMinor = intdiv($priceMinor * (10000 - min(9000, $context->groupDiscountBps)) + 5000, 10000); }
         $taxMinor = $rate > 0 ? $priceMinor - intdiv(($priceMinor * 10000) + intdiv(10000 + $rate,2),10000+$rate) : 0;
         $mode = $this->taxDisplayMode((int) $context->marketId);
         $showNet = in_array($mode, ['net', 'net_with_gross'], true);
@@ -792,6 +799,28 @@ final readonly class DbalStorefrontCatalogQuery
             'rating'=>['value'=>round((float)($row['rating_value'] ?? 0),1),'count'=>(int)($row['review_count'] ?? 0)],
             'tax'=>['display_mode'=>$mode,'rate_label'=>$rate>0?($rate/100).'%':'0%','tax_amount'=>$this->money->format($taxMinor,(string)$row['currency'],$context->locale),'net_price'=>$this->money->format($priceMinor-$taxMinor,(string)$row['currency'],$context->locale),'gross_price'=>$this->money->format($priceMinor,(string)$row['currency'],$context->locale)],
         ];
+    }
+
+    private function groupFixedPrice(string $variantPublicIdBinary, StorefrontContext $context): ?int
+    {
+        static $memo = [];
+        if ($variantPublicIdBinary === '') {
+            return null;
+        }
+        $key = bin2hex($variantPublicIdBinary) . '|' . $context->customerGroup . '|' . $context->currency . '|' . $context->storeId;
+        if (!array_key_exists($key, $memo)) {
+            try {
+                $v = $this->connection->fetchOne(
+                    "SELECT px.amount_minor FROM mc_price px JOIN mc_product_variant v ON v.id=px.variant_id WHERE v.public_id=? AND px.store_id=? AND px.currency=? AND px.customer_group=? AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY px.id DESC LIMIT 1",
+                    [$variantPublicIdBinary, $context->storeId, $context->currency, $context->customerGroup],
+                );
+            } catch (\Throwable) {
+                $v = false;
+            }
+            $memo[$key] = $v === false ? null : (int) $v;
+        }
+
+        return $memo[$key];
     }
 
     private function taxDisplayMode(int $marketId): string

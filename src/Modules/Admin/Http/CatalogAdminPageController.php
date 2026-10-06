@@ -372,6 +372,14 @@ final class CatalogAdminPageController extends AbstractController
                             'labels' => $request->request->all('custom_label'),
                             'related' => (string) $request->request->get('related_skus', ''),
                             'complementary' => (string) $request->request->get('complementary_skus', ''),
+                            'visibility_present' => '1',
+                            'hidden' => $request->request->getBoolean('hidden'),
+                            'reviews_off' => $request->request->getBoolean('reviews_off'),
+                            'points_percent' => (string) $request->request->get('points_percent', ''),
+                            'group_prices' => (string) $request->request->get('group_prices', ''),
+                            'min_qty' => (string) $request->request->get('min_qty', ''),
+                            'step' => (string) $request->request->get('qty_step', ''),
+                            'max_qty' => (string) $request->request->get('max_qty', ''),
                             'cost' => (string) $request->request->get('cost_price', ''),
                             'available_from' => (string) $request->request->get('available_from', ''),
                             'tiers' => (string) $request->request->get('price_tiers', ''),
@@ -379,6 +387,9 @@ final class CatalogAdminPageController extends AbstractController
                             'sale_starts' => (string) $request->request->get('sale_starts', ''),
                             'sale_ends' => (string) $request->request->get('sale_ends', ''),
                         ]);
+                    }
+                    if ($request->request->has('extras_present') && $request->request->getBoolean('hidden')) {
+                        $this->seoUrls->setIndexable($context->storeId, $context->locale, \Commerce\Modules\Seo\Domain\SeoEntityType::Product, $publicId, false);
                     }
                     if ($request->request->has('tax_class_id')) {
                         $this->taxSettings->setProductClass((int) $product['id'], (int) $request->request->get('tax_class_id', 0));

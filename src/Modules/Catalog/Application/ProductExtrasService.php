@@ -38,7 +38,17 @@ final class ProductExtrasService
         $sale = $this->saleRow($variantId, $storeId, $marketId);
         $published = $this->db->fetchOne('SELECT published_at FROM mc_store_product WHERE product_id=? AND store_id=?', [$productId, $storeId]);
 
+        $variant = $this->db->fetchAssociative('SELECT min_order_quantity,quantity_step,max_order_quantity FROM mc_product_variant WHERE id=?', [$variantId]) ?: [];
+        $fmt = static fn (mixed $v): string => $v === null || $v === '' ? '' : rtrim(rtrim((string) $v, '0'), '.');
+
         return [
+            'hidden' => (int) ($extra['hidden'] ?? 0) === 1,
+            'reviews_off' => (int) ($extra['reviews_off'] ?? 0) === 1,
+            'points_percent' => ($extra['points_percent'] ?? null) !== null ? (string) (int) $extra['points_percent'] : '',
+            'group_prices' => $this->groupPricesText($variantId, $storeId, $marketId),
+            'min_qty' => $fmt($variant['min_order_quantity'] ?? null),
+            'step' => $fmt($variant['quantity_step'] ?? null),
+            'max_qty' => $fmt($variant['max_order_quantity'] ?? null),
             'cost' => ($extra['cost_minor'] ?? null) !== null ? number_format(((int) $extra['cost_minor']) / 100, 2, '.', '') : '',
             'available_from' => is_string($published) && $published !== '' && $published > gmdate('Y-m-d H:i:s') ? $this->toLocalInput($published) : '',
             'tiers' => $this->tiersText($variantId, $storeId, $marketId),
@@ -63,6 +73,15 @@ final class ProductExtrasService
         }
         $tags = $this->normalizeTags((string) ($in['tags'] ?? ''));
         $row = ['canonical_url' => $canonical !== '' ? $canonical : null, 'tags' => $tags !== '' ? $tags : null, 'updated_at' => $now];
+        if (array_key_exists('visibility_present', $in)) {
+            $row['hidden'] = !empty($in['hidden']) ? 1 : 0;
+            $row['reviews_off'] = !empty($in['reviews_off']) ? 1 : 0;
+            $pp = trim((string) ($in['points_percent'] ?? ''));
+            if ($pp !== '' && (preg_match('/^\d{1,4}$/', $pp) !== 1 || (int) $pp > 1000)) {
+                throw new \DomainException(CanonicalUiText::get('admin.product.extras.points_invalid'));
+            }
+            $row['points_percent'] = $pp === '' ? null : (int) $pp;
+        }
         if (array_key_exists('cost', $in)) {
             $cost = trim(str_replace(',', '.', (string) $in['cost']));
             if ($cost !== '' && preg_match('/^\d{1,9}(?:\.\d{1,2})?$/', $cost) !== 1) {
@@ -90,6 +109,12 @@ final class ProductExtrasService
             $from = $this->fromLocalInput((string) $in['available_from']);
             $this->db->executeStatement('UPDATE mc_store_product SET published_at=? WHERE product_id=? AND store_id=?', [$from !== null && $from > $now ? $from : $now, $productId, $storeId]);
         }
+        if (array_key_exists('group_prices', $in)) {
+            $this->saveGroupPrices($variantId, $storeId, $marketId, $currency, (string) $in['group_prices'], $now);
+        }
+        if (array_key_exists('min_qty', $in)) {
+            $this->saveQuantityRules($variantId, (string) $in['min_qty'], (string) ($in['step'] ?? ''), (string) ($in['max_qty'] ?? ''), $now);
+        }
         if (array_key_exists('tiers', $in)) {
             $this->saveTiers($variantId, $storeId, $marketId, $currency, (string) $in['tiers'], $now);
         }
@@ -98,16 +123,111 @@ final class ProductExtrasService
         }
     }
 
-    /** @return array{canonical_url:?string,tags:list<string>,labels:list<string>} */
+    public function reviewsOffByPublicId(string $publicId): bool
+    {
+        try {
+            $binary = \Symfony\Component\Uid\Uuid::fromString($publicId)->toBinary();
+        } catch (\Throwable) {
+            return false;
+        }
+
+        return (bool) $this->db->fetchOne('SELECT 1 FROM mc_product_extra e JOIN mc_product p ON p.id=e.product_id WHERE p.public_id=? AND e.reviews_off=1', [$binary]);
+    }
+
+    /** @return array{reviews_off:bool,canonical_url:?string,tags:list<string>,labels:list<string>} */
     public function forStorefront(int $productId): array
     {
         $extra = $this->db->fetchAssociative('SELECT * FROM mc_product_extra WHERE product_id=?', [$productId]) ?: [];
 
         return [
+            'reviews_off' => (int) ($extra['reviews_off'] ?? 0) === 1,
             'canonical_url' => ($extra['canonical_url'] ?? null) ?: null,
             'tags' => array_values(array_filter(array_map('trim', explode(',', (string) ($extra['tags'] ?? ''))))),
             'labels' => array_values(array_filter(array_map(static fn (int $i): string => (string) ($extra['custom_label_' . $i] ?? ''), range(0, 4)))),
         ];
+    }
+
+    private function groupPricesText(int $variantId, int $storeId, int $marketId): string
+    {
+        $rows = $this->db->fetchAllAssociative(
+            "SELECT customer_group,amount_minor FROM mc_price WHERE variant_id=? AND store_id=? AND market_id=? AND customer_group<>'default' AND price_list_id IS NULL AND min_quantity<=1 AND starts_at IS NULL AND ends_at IS NULL AND priority=100 ORDER BY customer_group",
+            [$variantId, $storeId, $marketId],
+        );
+
+        return implode(', ', array_map(static fn (array $r): string => $r['customer_group'] . '=' . number_format(((int) $r['amount_minor']) / 100, 2, '.', ''), $rows));
+    }
+
+    private function saveGroupPrices(int $variantId, int $storeId, int $marketId, string $currency, string $raw, string $now): void
+    {
+        $known = array_map('strval', $this->db->fetchFirstColumn("SELECT code FROM mc_customer_group WHERE code<>'default'"));
+        $prices = [];
+        foreach (preg_split('/[,;\n]+/', $raw) ?: [] as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                continue;
+            }
+            if (preg_match('/^([a-z0-9][a-z0-9_-]{0,63})\s*[=:]\s*(\d{1,9}(?:[.,]\d{1,2})?)$/i', $part, $m) !== 1 || !in_array(strtolower($m[1]), $known, true)) {
+                throw new \DomainException(CanonicalUiText::get('admin.product.extras.group_prices_invalid'));
+            }
+            $minor = (int) round(((float) str_replace(',', '.', $m[2])) * 100);
+            if ($minor <= 0) {
+                throw new \DomainException(CanonicalUiText::get('admin.product.extras.group_prices_invalid'));
+            }
+            $prices[strtolower($m[1])] = $minor;
+        }
+        $this->db->executeStatement(
+            "DELETE FROM mc_price WHERE variant_id=? AND store_id=? AND market_id=? AND customer_group<>'default' AND price_list_id IS NULL AND min_quantity<=1 AND starts_at IS NULL AND ends_at IS NULL AND priority=100",
+            [$variantId, $storeId, $marketId],
+        );
+        foreach ($prices as $group => $minor) {
+            $this->db->insert('mc_price', [
+                'variant_id' => $variantId, 'store_id' => $storeId, 'price_list_id' => null, 'market_id' => $marketId, 'currency' => $currency, 'customer_group' => $group,
+                'min_quantity' => '1.000000', 'max_quantity' => null, 'amount_minor' => $minor, 'compare_at_minor' => null, 'tax_included' => 1,
+                'priority' => 100, 'starts_at' => null, 'ends_at' => null, 'created_at' => $now, 'updated_at' => $now,
+            ]);
+        }
+    }
+
+    private function saveQuantityRules(int $variantId, string $min, string $step, string $max, string $now): void
+    {
+        $num = static function (string $v): ?float {
+            $v = trim(str_replace(',', '.', $v));
+
+            return $v === '' ? null : (preg_match('/^\d{1,9}(?:\.\d{1,3})?$/', $v) === 1 ? (float) $v : -1.0);
+        };
+        $minV = $num($min);
+        $stepV = $num($step);
+        $maxV = $num($max);
+        if ($minV === null && $stepV === null && $maxV === null) {
+            return;
+        }
+        $stepV ??= (float) $this->db->fetchOne('SELECT quantity_step FROM mc_product_variant WHERE id=?', [$variantId]);
+        $minV ??= $stepV;
+        if ($stepV <= 0 || $minV < $stepV || ($maxV !== null && ($maxV < $minV || $maxV < 0))) {
+            throw new \DomainException(CanonicalUiText::get('admin.product.extras.qty_invalid'));
+        }
+        $this->db->update('mc_product_variant', [
+            'quantity_step' => number_format($stepV, 6, '.', ''), 'min_order_quantity' => number_format($minV, 6, '.', ''),
+            'max_order_quantity' => $maxV === null ? null : number_format($maxV, 6, '.', ''), 'updated_at' => $now,
+        ], ['id' => $variantId]);
+    }
+
+    /** Unit price of the customer's own group for a variant (never above the current price). */
+    public function groupPrice(int $variantId, int $storeId, string $currency, ?int $customerId, int $unitMinor): int
+    {
+        if ($customerId === null) {
+            return $unitMinor;
+        }
+        $group = $this->db->fetchOne('SELECT customer_group_code FROM mc_customer WHERE id=?', [$customerId]);
+        if (!is_string($group) || $group === '' || $group === 'default') {
+            return $unitMinor;
+        }
+        $price = $this->db->fetchOne(
+            "SELECT amount_minor FROM mc_price WHERE variant_id=? AND store_id=? AND currency=? AND customer_group=? AND price_list_id IS NULL AND min_quantity<=1 AND (starts_at IS NULL OR starts_at<=UTC_TIMESTAMP(6)) AND (ends_at IS NULL OR ends_at>UTC_TIMESTAMP(6)) ORDER BY id DESC LIMIT 1",
+            [$variantId, $storeId, $currency, $group],
+        );
+
+        return $price === false ? $unitMinor : min($unitMinor, (int) $price);
     }
 
     /** "5=450, 10=420" — from 5 pcs the unit price is 450, from 10 pcs 420. */

@@ -418,6 +418,8 @@ final class StorefrontCatalogController extends AbstractController
 
         $layout = $this->layoutLoader->loadForStore($context->storeId);
         $regions = $this->composer->compose($layout);
+        $productExtra = $this->productExtras->forStorefront((int) ($product['internal_id'] ?? 0));
+        $reviewsEnabled = $reviewsEnabled && !$productExtra['reviews_off'];
         if (!$reviewsEnabled) {
             foreach ($regions as &$blocks) {
                 $blocks = array_values(array_filter(
@@ -428,7 +430,6 @@ final class StorefrontCatalogController extends AbstractController
             unset($blocks);
         }
 
-        $productExtra = $this->productExtras->forStorefront((int) ($product['internal_id'] ?? 0));
         $productTiers = array_map(fn (array $t): array => ['quantity' => $t['quantity'], 'price' => $this->money->format($t['minor'], (string) $context->currency, $context->locale)], $this->productExtras->tiersForStorefront((int) ($product['internal_id'] ?? 0), $context->storeId, (string) $context->currency));
         return $this->render('@storefront/product/show.html.twig', [
             'page_title' => $product['name'],
