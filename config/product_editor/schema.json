@@ -115,6 +115,7 @@
       "code": "seo",
       "fields": [
         "seo_slug",
+        "h1",
         "meta_title",
         "meta_description",
         "indexing",

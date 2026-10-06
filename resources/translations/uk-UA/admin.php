@@ -5303,4 +5303,7 @@ return [
     'admin.landing.ff_label' => 'Підпис',
     'admin.landing.ff_required' => 'Обов’язкове',
     'admin.landing.ff_options' => 'Варіанти списку',
+    'admin.catalog.product_form.h1' => 'Заголовок H1',
+    'admin.catalog.product_form.h1_hint' => 'Необов’язково. Порожнє поле — H1 дорівнює назві товару. Корисно, коли назва коротка для меню, а заголовок сторінки має бути розгорнутим.',
+    'admin.translations.field.h1' => 'Заголовок H1',
 ];

@@ -22,8 +22,8 @@ use Symfony\Component\Uid\Uuid;
 final readonly class CatalogTranslationService
 {
     /** field => max length */
-    public const PRODUCT_FIELDS = ['name' => 255, 'short_description' => 1000, 'description' => 100000, 'meta_title' => 255, 'meta_description' => 500];
-    public const CATEGORY_FIELDS = ['name' => 255, 'description' => 100000, 'description_bottom' => 100000, 'meta_title' => 255, 'meta_description' => 500];
+    public const PRODUCT_FIELDS = ['name' => 255, 'h1' => 255, 'short_description' => 1000, 'description' => 100000, 'meta_title' => 255, 'meta_description' => 500];
+    public const CATEGORY_FIELDS = ['name' => 255, 'h1' => 255, 'description' => 100000, 'description_bottom' => 100000, 'meta_title' => 255, 'meta_description' => 500];
     private const RICH = ['description', 'description_bottom'];
 
     public function __construct(

@@ -568,7 +568,7 @@ final readonly class DbalStorefrontCatalogQuery
     public function categoryByPublicId(StorefrontContext $context, string $publicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT c.id,c.public_id,c.parent_id,ct.name,ct.description,ct.description_bottom,ct.meta_title,ct.meta_description,sr.path,cma.storage_key AS cover_key,ci.alt_text AS cover_alt FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active' JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id LEFT JOIN mc_category_image ci ON ci.category_id=c.id LEFT JOIN mc_media_asset cma ON cma.id=ci.asset_id WHERE c.public_id=? AND c.status='active' LIMIT 1",
+            "SELECT c.id,c.public_id,c.parent_id,ct.name,ct.h1,ct.description,ct.description_bottom,ct.meta_title,ct.meta_description,sr.path,cma.storage_key AS cover_key,ci.alt_text AS cover_alt FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' JOIN mc_market_category mk ON mk.category_id=c.id AND mk.market_id=? AND mk.status='active' JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id LEFT JOIN mc_category_image ci ON ci.category_id=c.id LEFT JOIN mc_media_asset cma ON cma.id=ci.asset_id WHERE c.public_id=? AND c.status='active' LIMIT 1",
             [$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,Uuid::fromString($publicId)->toBinary()],
         );
         return is_array($row) ? $this->categoryRow($row) : null;
@@ -586,7 +586,7 @@ final readonly class DbalStorefrontCatalogQuery
             }
         }
         $row = $this->connection->fetchAssociative(
-            "SELECT p.id,p.public_id,p.product_type,p.condition_code,p.country_of_origin,pt.name,pt.short_description,pt.description,pt.meta_title,pt.meta_description,
+            "SELECT p.id,p.public_id,p.product_type,p.condition_code,p.country_of_origin,pt.name,pt.h1,pt.short_description,pt.description,pt.meta_title,pt.meta_description,
                     v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.allow_backorder,
                     pr.amount_minor,pr.compare_at_minor,pr.ends_at AS price_ends_at,pr.currency,pr.tax_included,sr.path,sr.indexable AS route_indexable,p.brand_id,COALESCE(b.name,'') AS brand_name,tr.rate_bps,
                     mtp.consumer_display_mode,COALESCE(ppp.mode,'auto') AS purchase_mode,ppp.button_label AS purchase_button_label,ppp.eta_text AS purchase_eta_text,
@@ -778,7 +778,7 @@ final readonly class DbalStorefrontCatalogQuery
         $netCompare = $compareMinor !== null ? $compareMinor - ($rate > 0 ? $compareMinor - intdiv(($compareMinor * 10000) + intdiv(10000 + $rate,2),10000+$rate) : 0) : null;
         return [
             'id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(), 'internal_id'=>(int)$row['id'], 'variant_id'=>Uuid::fromBinary((string)$row['variant_public_id'])->toRfc4122(),
-            'product_type'=>(string)($row['product_type'] ?? 'physical'), 'name'=>(string)$row['name'], 'meta_title'=>(string)($row['meta_title']??''), 'meta_description'=>(string)($row['meta_description']??''), 'indexable'=>(bool)($row['route_indexable']??1), 'brand'=>(string)($row['brand_name']??''), 'brand_id'=>isset($row['brand_id']) && $row['brand_id'] !== null ? (int)$row['brand_id'] : null, 'sku'=>(string)$row['sku'], 'url'=>'/'.ltrim((string)$row['path'],'/'),
+            'product_type'=>(string)($row['product_type'] ?? 'physical'), 'name'=>(string)$row['name'], 'h1'=>(string)($row['h1']??''), 'meta_title'=>(string)($row['meta_title']??''), 'meta_description'=>(string)($row['meta_description']??''), 'indexable'=>(bool)($row['route_indexable']??1), 'brand'=>(string)($row['brand_name']??''), 'brand_id'=>isset($row['brand_id']) && $row['brand_id'] !== null ? (int)$row['brand_id'] : null, 'sku'=>(string)$row['sku'], 'url'=>'/'.ltrim((string)$row['path'],'/'),
             'price'=>$this->money->format($showNet?$priceMinor-$taxMinor:$priceMinor,(string)$row['currency'],$context->locale), 'price_minor'=>$priceMinor,
             'compare_at_price'=>$compareMinor!==null?$this->money->format($showNet?(int)$netCompare:$compareMinor,(string)$row['currency'],$context->locale):null, 'discount_percent'=>($compareMinor!==null && $compareMinor>$priceMinor && $compareMinor>0)?max(1,min(99,(int)round((1-$priceMinor/$compareMinor)*100))):0, 'currency'=>(string)$row['currency'], 'gross_price'=>number_format($priceMinor/100,2,'.',''), 'merchant_price'=>number_format($priceMinor/100,2,'.',''),
             'sale_ends_at'=>($compareMinor!==null && $compareMinor>$priceMinor && !empty($row['price_ends_at']))?(new \DateTimeImmutable((string)$row['price_ends_at'],new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z'):null,
@@ -878,7 +878,7 @@ final readonly class DbalStorefrontCatalogQuery
 
     private function categoryRow(array $row): array
     {
-        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'description'=>(string)($row['description']??''),'description_bottom'=>(string)($row['description_bottom']??''),'meta_title'=>(string)($row['meta_title']??''),'meta_description'=>(string)($row['meta_description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null),'cover'=>isset($row['cover_key'])&&is_string($row['cover_key'])&&$row['cover_key']!==''?$this->mediaUrl($row['cover_key']):null,'cover_alt'=>(string)($row['cover_alt']??'')];
+        return ['id'=>(int)$row['id'],'public_id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(),'name'=>(string)$row['name'],'h1'=>(string)($row['h1']??''),'description'=>(string)($row['description']??''),'description_bottom'=>(string)($row['description_bottom']??''),'meta_title'=>(string)($row['meta_title']??''),'meta_description'=>(string)($row['meta_description']??''),'url'=>'/'.ltrim((string)$row['path'],'/'),'image'=>$this->mediaUrl($row['image_key']??null),'cover'=>isset($row['cover_key'])&&is_string($row['cover_key'])&&$row['cover_key']!==''?$this->mediaUrl($row['cover_key']):null,'cover_alt'=>(string)($row['cover_alt']??'')];
     }
 
     /** @return list<array<string,mixed>> */

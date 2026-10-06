@@ -354,6 +354,7 @@ final class CatalogAdminPageController extends AbstractController
                         metaTitle: trim((string) $request->request->get('meta_title', '')) ?: null,
                         metaDescription: trim((string) $request->request->get('meta_description', '')) ?: null,
                         updateSeoMeta: $request->request->has('meta_title'),
+                        h1: trim((string) $request->request->get('h1', '')) ?: null,
                         compareAtMinor: trim((string) $request->request->get('compare_at_price', '')) !== '' ? $this->moneyMinor((string) $request->request->get('compare_at_price', '0')) : null,
                         updateCompareAt: $request->request->has('compare_at_price'),
                     ));
@@ -386,7 +387,7 @@ final class CatalogAdminPageController extends AbstractController
                 'purchase_mode' => (string) $request->request->get('purchase_mode', 'auto'),
                 'purchase_button_label' => (string) $request->request->get('purchase_button_label', ''),
                 'purchase_eta_text' => (string) $request->request->get('purchase_eta_text', ''),
-                'meta_title' => (string) $request->request->get('meta_title', ''), 'meta_description' => (string) $request->request->get('meta_description', ''),
+                'h1' => (string) $request->request->get('h1', ''), 'meta_title' => (string) $request->request->get('meta_title', ''), 'meta_description' => (string) $request->request->get('meta_description', ''),
                 'compare_at_input' => (string) $request->request->get('compare_at_price', ''),
             ]);
         }

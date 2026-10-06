@@ -198,6 +198,7 @@ final readonly class ProductWriter
                 'updated_at' => $now,
             ];
             if ($command->updateSeoMeta) {
+                $translation['h1'] = $this->nullableShortText($command->h1, 255);
                 $translation['meta_title'] = $this->nullableShortText($command->metaTitle, 255);
                 $translation['meta_description'] = $this->nullableShortText($command->metaDescription, 500);
             }

@@ -36,6 +36,7 @@ final readonly class UpdateProductCommand
         public bool $updateSeoMeta = false,
         public ?int $compareAtMinor = null,
         public bool $updateCompareAt = false,
+        public ?string $h1 = null,
     ) {
         if ($metaTitle !== null && mb_strlen(trim($metaTitle), 'UTF-8') > 255) {
             throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.product.error.seo_title_long'));

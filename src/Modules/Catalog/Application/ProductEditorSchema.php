@@ -79,7 +79,7 @@ final readonly class ProductEditorSchema
                 ['code'=>'pricing_tax','label'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.catalog.application.producteditorschema.tsina'),'fields'=>['price_lists','tax_class_id']],
                 ['code'=>'inventory','label'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.catalog.application.producteditorschema.zalyshky'),'fields'=>['manage_inventory','inventory_items']],
                 ['code'=>'media','label'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.catalog.application.producteditorschema.media'),'fields'=>['gallery','alt_text']],
-                ['code'=>'seo','label'=>'SEO','fields'=>['seo_slug','meta_title','meta_description','indexing']],
+                ['code'=>'seo','label'=>'SEO','fields'=>['seo_slug','h1','meta_title','meta_description','indexing']],
             ],
         ];
     }

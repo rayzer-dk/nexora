@@ -7,7 +7,7 @@
         {% if product.badges|default([]) %}<div class="product-badges">{% for badge in product.badges %}<span class="product-badge product-badge--{{ badge.tone }}"{% if badge.color|default('') %} style="background:{{ badge.color }};color:{{ badge.fg }}"{% endif %} data-badge="{{ badge.code }}">{% if badge.icon|default('') %}{{ ui_icon(badge.icon, 14) }}{% endif %}{{ badge.label }}</span>{% endfor %}</div>{% endif %}
     </div>
     {% endif %}
-    <h1>{{ product.name }}</h1>
+    <h1>{{ product.h1|default(product.name) ?: product.name }}</h1>
     <div class="pp-title__meta">
         <div class="product-meta">
             <span>SKU {{ product.sku }}</span>

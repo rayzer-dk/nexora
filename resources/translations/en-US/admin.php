@@ -5308,4 +5308,7 @@ return [
     'admin.landing.ff_label' => 'Label',
     'admin.landing.ff_required' => 'Required',
     'admin.landing.ff_options' => 'List options',
+    'admin.catalog.product_form.h1' => 'H1 heading',
+    'admin.catalog.product_form.h1_hint' => 'Optional. Empty means the H1 is the product name. Useful when the name is short for menus but the page heading should be fuller.',
+    'admin.translations.field.h1' => 'H1 heading',
 ];
