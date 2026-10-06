@@ -13,6 +13,9 @@ final readonly class StorefrontContext
         public string $currency,
         public string $countryCode,
         public string $storeName,
+        public string $customerGroup = 'default',
+        public int $groupDiscountBps = 0,
+        public bool $groupSkipsSale = false,
     ) {
     }
 }

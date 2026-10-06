@@ -57,7 +57,7 @@ final class CommerceOperationsAdminController extends AbstractController
         $rows=$this->db->fetchAllAssociative('SELECT * FROM mc_promotion WHERE store_id=? ORDER BY status DESC,priority,id DESC',[$context->storeId]);
         $markets=$this->db->fetchAllAssociative('SELECT id,name,default_currency FROM mc_market WHERE store_id=? ORDER BY id',[$context->storeId]);
         $categoryOptions=array_map(static fn(array $r):array=>['value'=>(string)$r['id'],'label'=>(string)$r['name']],$this->db->fetchAllAssociative("SELECT c.id,COALESCE(t.name,CONCAT('#',c.id)) name FROM mc_category c LEFT JOIN mc_category_translation t ON t.category_id=c.id AND t.locale=? WHERE c.status='active' ORDER BY c.parent_id,c.sort_order,c.id",[$context->locale]));
-        $groupCodes=array_unique(array_merge(['default','vip','wholesale'],array_map('strval',$this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer WHERE customer_group_code IS NOT NULL AND customer_group_code<>''"))));
+        $groupCodes=array_unique(array_merge(array_map('strval',$this->db->fetchFirstColumn('SELECT code FROM mc_customer_group ORDER BY sort_order,code')),array_map('strval',$this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer WHERE customer_group_code IS NOT NULL AND customer_group_code<>''"))));
         $groupOptions=array_map(static fn(string $g):array=>['value'=>$g,'label'=>$g],array_values($groupCodes));
         return $this->render('@storefront/admin/commerce/promotions.html.twig',['promotions'=>$rows,'markets'=>$markets,'category_options'=>$categoryOptions,'group_options'=>$groupOptions,'stats'=>$this->promotionStats($context->storeId)]);
     }
@@ -73,7 +73,7 @@ final class CommerceOperationsAdminController extends AbstractController
     private function promotionOptions(int $storeId,string $locale):array
     {
         $categoryOptions=array_map(static fn(array $r):array=>['value'=>(string)$r['id'],'label'=>(string)$r['name']],$this->db->fetchAllAssociative("SELECT c.id,COALESCE(t.name,CONCAT('#',c.id)) name FROM mc_category c LEFT JOIN mc_category_translation t ON t.category_id=c.id AND t.locale=? WHERE c.status='active' ORDER BY c.parent_id,c.sort_order,c.id",[$locale]));
-        $groupCodes=array_unique(array_merge(['default','vip','wholesale'],array_map('strval',$this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer WHERE customer_group_code IS NOT NULL AND customer_group_code<>''"))));
+        $groupCodes=array_unique(array_merge(array_map('strval',$this->db->fetchFirstColumn('SELECT code FROM mc_customer_group ORDER BY sort_order,code')),array_map('strval',$this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer WHERE customer_group_code IS NOT NULL AND customer_group_code<>''"))));
         return [$categoryOptions,array_map(static fn(string $g):array=>['value'=>$g,'label'=>$g],array_values($groupCodes))];
     }
 

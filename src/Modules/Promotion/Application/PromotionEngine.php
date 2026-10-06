@@ -52,6 +52,23 @@ final readonly class PromotionEngine
         $cartCurrency = (string) $this->db->fetchOne('SELECT currency FROM mc_cart WHERE id=? LIMIT 1', [$cartId]);
         $discount = 0; $applied = []; $couponMatched = false;
         $customerGroup = $customerId !== null ? (string)($this->db->fetchOne('SELECT customer_group_code FROM mc_customer WHERE id=? LIMIT 1',[$customerId]) ?: 'default') : 'guest';
+        $groupRow = $customerId !== null ? $this->db->fetchAssociative("SELECT g.discount_bps,g.name,g.skip_sale_items FROM mc_customer_group g WHERE g.code=? LIMIT 1", [$customerGroup]) : false;
+        if (is_array($groupRow) && (int) $groupRow['discount_bps'] > 0 && $subtotal > 0) {
+            $groupBase = $subtotal;
+            if ((int) $groupRow['skip_sale_items'] === 1) {
+                foreach ($items as $item) {
+                    $onSale = $this->db->fetchOne("SELECT 1 FROM mc_price WHERE variant_id=? AND customer_group='default' AND price_list_id IS NULL AND compare_at_minor>amount_minor AND (starts_at IS NULL OR starts_at<=UTC_TIMESTAMP(6)) AND (ends_at IS NULL OR ends_at>UTC_TIMESTAMP(6)) LIMIT 1", [(int) $item['variant_id']]);
+                    if ($onSale) {
+                        $groupBase -= intdiv(((int) $item['unit_price_minor'] * (int) round(((float) $item['quantity']) * 1000000)) + 500000, 1000000);
+                    }
+                }
+            }
+            $groupAmount = intdiv(max(0, $groupBase) * min(9000, (int) $groupRow['discount_bps']), 10000);
+            if ($groupAmount > 0) {
+                $discount += $groupAmount;
+                $applied[] = ['id'=>0,'name'=>(string)$groupRow['name'],'code'=>null,'discount_minor'=>$groupAmount];
+            }
+        }
         $emailNormalized = $email !== null && trim($email) !== '' ? mb_strtolower(trim($email)) : null;
 
         foreach ($promotions as $promotion) {

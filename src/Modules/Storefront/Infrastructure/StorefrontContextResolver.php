@@ -10,8 +10,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 final readonly class StorefrontContextResolver
 {
-    public function __construct(private Connection $connection)
-    {
+    public function __construct(
+        private Connection $connection,
+        private ?\Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface $tokens = null,
+        private ?\Commerce\Modules\Customer\Application\CustomerGroupService $groups = null,
+    ) {
     }
 
     public function resolve(Request $request): StorefrontContext
@@ -49,7 +52,21 @@ final readonly class StorefrontContextResolver
         $request->setLocale($locale);
         \Commerce\Core\I18n\CanonicalUiText::useLocale($locale);
 
+        $groupCode = 'default';
+        $groupBps = 0;
+        $groupSkip = false;
+        $user = $this->tokens?->getToken()?->getUser();
+        if ($user instanceof \Commerce\Modules\Customer\Domain\CustomerUser && $this->groups !== null) {
+            $group = $this->groups->get($user->groupCode());
+            $groupCode = $group['code'];
+            $groupBps = $group['discount_bps'];
+            $groupSkip = $group['skip_sale_items'];
+        }
+
         return new StorefrontContext(
+            customerGroup: $groupCode,
+            groupDiscountBps: $groupBps,
+            groupSkipsSale: $groupSkip,
             storeId: $storeId,
             marketId: (int) $market['id'],
             locale: $locale,

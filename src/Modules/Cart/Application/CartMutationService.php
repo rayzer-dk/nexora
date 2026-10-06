@@ -92,7 +92,7 @@ final readonly class CartMutationService
             return $context;
         }
 
-        return new StorefrontContext($context->storeId, $context->marketId, $context->locale, $currency, $context->countryCode, $context->storeName);
+        return new StorefrontContext($context->storeId, $context->marketId, $context->locale, $currency, $context->countryCode, $context->storeName, $context->customerGroup, $context->groupDiscountBps, $context->groupSkipsSale);
     }
 
     private function switchCurrency(int $cartId, StorefrontContext $context): bool

@@ -637,7 +637,7 @@ final readonly class DbalStorefrontCatalogQuery
     private function productVariants(int $productId, StorefrontContext $context, int $selectedVariantId): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT v.id,v.public_id,v.sku,pr.amount_minor,pr.currency,
+            "SELECT v.id,v.public_id,v.sku,pr.amount_minor,pr.compare_at_minor,pr.currency,
                     COALESCE(NULLIF((SELECT GROUP_CONCAT(COALESCE(ovt.name,(SELECT x.name FROM mc_product_option_value_translation x WHERE x.option_value_id=ov.id ORDER BY x.locale LIMIT 1),ov.code) ORDER BY po.sort_order,ov.sort_order SEPARATOR ' / ') FROM mc_variant_option_value vov JOIN mc_product_option_value ov ON ov.id=vov.option_value_id JOIN mc_product_option po ON po.id=ov.option_id LEFT JOIN mc_product_option_value_translation ovt ON ovt.option_value_id=ov.id AND ovt.locale=? WHERE vov.variant_id=v.id),''),v.sku) label,
                     COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) available_quantity,
                     p.product_type,v.allow_backorder
@@ -654,14 +654,18 @@ final readonly class DbalStorefrontCatalogQuery
         $valueMap = $this->variantOptionValues(array_map(static fn (array $row): int => (int) $row['id'], $rows));
         return array_map(function (array $row) use ($context, $selectedVariantId, $swatches, $valueMap): array {
             $available = (string) $row['product_type'] === 'digital' || (float) $row['available_quantity'] > 0 || (bool) $row['allow_backorder'];
+            $amount = (int) $row['amount_minor'];
+            if ($context->groupDiscountBps > 0 && $amount > 0 && !($context->groupSkipsSale && (int) ($row['compare_at_minor'] ?? 0) > $amount)) {
+                $amount = intdiv($amount * (10000 - min(9000, $context->groupDiscountBps)) + 5000, 10000);
+            }
             return [
                 'id' => Uuid::fromBinary((string) $row['public_id'])->toRfc4122(),
                 'swatch' => $swatches[(int) $row['id']] ?? '',
                 'label' => (string) $row['label'],
                 'values' => $valueMap[(int) $row['id']] ?? [],
                 'sku' => (string) $row['sku'],
-                'price' => $this->money->format((int) $row['amount_minor'], (string) $row['currency'], $context->locale),
-                'price_minor' => (int) $row['amount_minor'],
+                'price' => $this->money->format($amount, (string) $row['currency'], $context->locale),
+                'price_minor' => $amount,
                 'currency' => (string) $row['currency'],
                 'selected' => (int) $row['id'] === $selectedVariantId,
                 'available' => $available,
@@ -772,6 +776,7 @@ final readonly class DbalStorefrontCatalogQuery
     private function productCardRow(array $row, StorefrontContext $context): array
     {
         $priceMinor = (int)($row['amount_minor'] ?? 0); $compareMinor = $row['compare_at_minor'] !== null ? (int)$row['compare_at_minor'] : null; if ($compareMinor !== null && $compareMinor <= $priceMinor) { $compareMinor = null; } /* an "old price" that is not higher than the price is no discount */ $rate = (int)($row['rate_bps'] ?? 0);
+        if ($context->groupDiscountBps > 0 && $priceMinor > 0 && !($context->groupSkipsSale && $compareMinor !== null)) { /* customer-group price: the regular price becomes the "old" one */ $compareMinor = max($compareMinor ?? 0, $priceMinor); $priceMinor = intdiv($priceMinor * (10000 - min(9000, $context->groupDiscountBps)) + 5000, 10000); }
         $taxMinor = $rate > 0 ? $priceMinor - intdiv(($priceMinor * 10000) + intdiv(10000 + $rate,2),10000+$rate) : 0;
         $mode = $this->taxDisplayMode((int) $context->marketId);
         $showNet = in_array($mode, ['net', 'net_with_gross'], true);

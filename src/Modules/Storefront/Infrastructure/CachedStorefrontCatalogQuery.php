@@ -132,6 +132,7 @@ final readonly class CachedStorefrontCatalogQuery
             'locale' => $context->locale,
             'currency' => $context->currency,
             'country' => $context->countryCode,
+            'group' => $context->customerGroup . ':' . $context->groupDiscountBps . ':' . ($context->groupSkipsSale ? 1 : 0),
             'parts' => $parts,
         ];
         return 'storefront.' . $scope . '.' . hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));

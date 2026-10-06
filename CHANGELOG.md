@@ -1,7 +1,11 @@
 # Changelog
 
-## 3.88.0 — 2026-10-06
+## 3.89.0 — 2026-10-06
 
-Окремий заголовок H1 для товару й категорії.
+Customer groups with a real discount: the group price shows in the catalog and product page after sign-in and is taken off in the cart.
 
-- У картці товару (блок SEO) та у вкладці «Переклади» товарів і категорій з’явилося поле «Заголовок H1»: порожнє — H1 дорівнює назві, заповнене — стає заголовком сторінки, назва лишається в меню, картках і хлібних крихтах.
+- New "Customer groups" admin page (code, name, discount %, "not for sale items" switch, customer count); the customer card and list now pick groups from it.
+- A signed-in customer in a discounted group sees the regular price crossed out and the group price, in cards, product page and variants.
+- The cart and checkout take the group discount off the order; items already on sale can be excluded per group.
+- The cart page now also honours promotions limited to customer groups.
+- Schema 83 (mc_customer_group).

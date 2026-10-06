@@ -72,6 +72,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         // The icon library only lists drawings; any admin who can open the dashboard may use the picker.
         if ($route==='admin_icon_library') return AdminPermissionCatalog::DASHBOARD_VIEW;
         if (str_starts_with($route,'admin_commerce_campaign_')||str_starts_with($route,'admin_commerce_subscriber')) return $get?AdminPermissionCatalog::MARKETING_VIEW:AdminPermissionCatalog::MARKETING_MANAGE;
+        if ($route==='admin_customer_groups') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if ($route==='admin_commerce_customers') return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if (str_starts_with($route,'admin_commerce_customer_')) return $get?AdminPermissionCatalog::CUSTOMERS_VIEW:AdminPermissionCatalog::CUSTOMERS_MANAGE;
         if ($route==='admin_content_page_edit'||$route==='admin_content_page_new') return AdminPermissionCatalog::CONTENT_MANAGE;
