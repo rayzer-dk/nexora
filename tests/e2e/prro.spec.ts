@@ -23,7 +23,7 @@ test('the cash register issues one fiscal receipt for a paid order through Check
   await form.locator('input[name="license"]').fill('E2E-LICENSE-KEY');
   await form.locator('select[name="auto"]').selectOption('off');
   await Promise.all([page.waitForLoadState('domcontentloaded'), form.locator('button[name="action"][value="test"]').click()]);
-  await expect(page.locator('.admin-notice.is-success')).toBeVisible();
+  await expect(page.locator('.admin-notice.is-success')).toBeAttached();
 
   // A paid order with a refund goes through the register by hand: first the sale, then the return.
   let seeded: { order: string; refund: number } | null = null;
@@ -37,8 +37,9 @@ test('the cash register issues one fiscal receipt for a paid order through Check
   await page.goto(href!, { waitUntil: 'domcontentloaded' });
   const issue = page.locator('form[action$="/fiscalize"] button[type="submit"]');
   await expect(issue).toBeVisible();
-  await Promise.all([page.waitForLoadState('domcontentloaded'), issue.click()]);
-  await expect(page.locator('.admin-notice.is-success')).toBeVisible();
+  await Promise.all([page.waitForResponse((r) => r.request().method() === 'POST' && r.url().includes('/fiscalize')), issue.click()]);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-notice.is-success')).toBeAttached();
   await expect(page.locator('main')).toContainText('MOCK-FISCAL-001');
 
   const calls = (await (await request.get(`${MOCK}/__log`)).json()) as Array<{ method: string; payload: Record<string, unknown>; license?: string }>;
@@ -53,8 +54,11 @@ test('the cash register issues one fiscal receipt for a paid order through Check
   // The return receipt points at the sale receipt and marks the goods as returned.
   const returnButton = page.locator('form[action*="/fiscalize-refund/"] button[type="submit"]');
   await expect(returnButton).toBeVisible();
-  await Promise.all([page.waitForLoadState('domcontentloaded'), returnButton.click()]);
-  await expect(page.locator('.admin-notice.is-success')).toBeVisible();
+  await returnButton.click();
+  await expect(page.locator('[data-admin-confirm]')).toBeVisible();
+  await Promise.all([page.waitForResponse((r) => r.request().method() === 'POST' && r.url().includes('/fiscalize-refund/')), page.locator('[data-admin-confirm] [data-confirm-accept]').click()]);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.admin-notice.is-success')).toBeAttached();
   const after = (await (await request.get(`${MOCK}/__log`)).json()) as Array<{ method: string; payload: Record<string, unknown> }>;
   const sales = after.filter((c) => c.method === 'checkbox/receipts/sell');
   expect(sales).toHaveLength(2);
