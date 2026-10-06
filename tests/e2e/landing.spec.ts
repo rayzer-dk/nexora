@@ -25,7 +25,7 @@ test('a landing-profile site opens on the one-page landing, editable from the ad
     await expect(page.locator('.lp-hero h1')).toBeVisible();
     await expect(page.locator('.lp-card')).toHaveCount(6);
     await expect(page.locator('.lp-faq details')).toHaveCount(5);
-    await expect(page.locator('form.lp-form')).toBeVisible();
+    await expect(page.locator('#contact form.lp-form')).toBeVisible();
     // The shop is switched off in this profile.
     expect((await page.goto('/cart'))?.status()).toBe(404);
 

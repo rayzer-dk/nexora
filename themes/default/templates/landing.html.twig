@@ -1,6 +1,29 @@
 {% extends '@storefront/base.html.twig' %}
 {% set page_kind = 'home' %}
 {% set presentation = storefront_presentation() %}
+{% macro form_fields(form) %}
+{% for f in form.fields %}{% if f.type %}
+    {% set req = f.required or f.type in ['name'] %}
+    {% if f.type == 'name' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="name" maxlength="190" autocomplete="name"{{ req ? ' required' : '' }}></label>
+    {% elseif f.type == 'phone' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="phone" type="tel" maxlength="32" autocomplete="tel"{{ req ? ' required' : '' }}></label>
+    {% elseif f.type == 'email' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="email" type="email" maxlength="190" autocomplete="email"{{ req ? ' required' : '' }}></label>
+    {% elseif f.type == 'message' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><textarea name="message" rows="3" maxlength="2000"{{ req ? ' required' : '' }}></textarea></label>
+    {% elseif f.type == 'text' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="extra[{{ f.label }}]" maxlength="300"{{ req ? ' required' : '' }}></label>
+    {% elseif f.type == 'select' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><select name="extra[{{ f.label }}]"{{ req ? ' required' : '' }}><option value="">—</option>{% for o in f.options|split('|') %}{% if o|trim %}<option>{{ o|trim }}</option>{% endif %}{% endfor %}</select></label>
+    {% elseif f.type == 'checkbox' %}<label class="lp-check"><input type="checkbox" name="extra[{{ f.label }}]" value="{{ ui_text('landing.ui.yes') }}"{{ req ? ' required' : '' }}><span>{{ f.label }}{{ req ? ' *' : '' }}</span></label>
+    {% endif %}
+{% endif %}{% endfor %}
+{% endmacro %}
+{% macro form_body(form, page_url, type) %}
+    {% import _self as lp %}
+    <input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="{{ type }}"><input type="hidden" name="source_url" value="{{ page_url }}"><input type="hidden" name="form_title" value="{{ form.title }}">
+    {{ lp.form_fields(form) }}
+    {% include '@storefront/components/captcha.html.twig' with {form: type == 'callback' ? 'callback' : 'contact'} only %}
+    <button class="lp-btn lp-btn--primary" type="submit">{{ ui_icon('send', 18) }}{{ form.button }}</button>
+    <small>{{ ui_text('landing.ui.privacy_note') }}</small>
+{% endmacro %}
+
+{% import _self as lp %}
 {% block site_header %}
 <header class="lp-header" data-lp-header>
     <div class="lp-wrap lp-header__inner">
@@ -84,17 +107,12 @@
     <div class="lp-wrap">
         <div class="lp-cta">
             <div class="lp-cta__copy"><h2>{{ landing.cta.title }}</h2><p>{{ landing.cta.text }}</p></div>
-            {% if landing.form.enabled %}
+            {% set main = landing.forms[0] %}
+            {% if main.enabled %}
             <form class="lp-form" method="post" action="/contact/send" data-cw-form>
-                <h3>{{ landing.form.title }}</h3>
-                <p>{{ landing.form.text }}</p>
-                <input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="contact"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
-                <label><span>{{ ui_text('landing.ui.name') }}</span><input name="name" required maxlength="190" autocomplete="name"></label>
-                <label><span>{{ ui_text('landing.ui.phone') }}</span><input name="phone" type="tel" required maxlength="32" autocomplete="tel"></label>
-                <label><span>{{ ui_text('landing.ui.message') }}</span><textarea name="message" rows="3" maxlength="2000"></textarea></label>
-                {% include '@storefront/components/captcha.html.twig' with {form:'contact'} only %}
-                <button class="lp-btn lp-btn--primary" type="submit">{{ ui_icon('send', 18) }}{{ landing.form.button }}</button>
-                <small>{{ ui_text('landing.ui.privacy_note') }}</small>
+                <h3>{{ main.title }}</h3>
+                <p>{{ main.text }}</p>
+                {{ lp.form_body(main, app.request.uri, 'contact') }}
             </form>
             {% else %}
             <a class="lp-btn lp-btn--primary" href="{{ landing.hero.primary_url }}">{{ landing.cta.button }}</a>
@@ -102,6 +120,23 @@
         </div>
     </div>
 </section>
+{% for form in landing.forms|slice(1) %}{% if form.enabled %}
+<dialog class="lp-dialog" id="form-{{ form.key }}" aria-labelledby="form-{{ form.key }}-title" data-lp-dialog>
+    <form class="lp-form" method="post" action="/contact/send" data-cw-form>
+        <button class="lp-dialog__close" type="button" data-lp-dialog-close aria-label="{{ ui_text('close') }}">{{ ui_icon('x', 20) }}</button>
+        <h3 id="form-{{ form.key }}-title">{{ form.title }}</h3>
+        <p>{{ form.text }}</p>
+        {{ lp.form_body(form, app.request.uri, form.key == 'callback' ? 'callback' : 'contact') }}
+    </form>
+</dialog>
+{% endif %}{% endfor %}
+<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">
+(function(){var d=document;function open(id){var el=d.getElementById(id);if(el&&el.tagName==='DIALOG'&&el.showModal){el.showModal();return true;}return false;}
+d.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href^="#form-"]');if(a&&open(a.getAttribute('href').slice(1))){e.preventDefault();return;}
+var c=e.target.closest&&e.target.closest('[data-lp-dialog-close]');if(c){c.closest('dialog').close();return;}
+if(e.target.matches&&e.target.matches('dialog[data-lp-dialog]'))e.target.close();});
+if(location.hash.indexOf('#form-')===0)open(location.hash.slice(1));})();
+</script>
 {% endblock %}
 {% block site_footer %}
 {% set hc = header_contacts() %}

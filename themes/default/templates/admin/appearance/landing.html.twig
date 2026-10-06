@@ -37,11 +37,28 @@
 <label><span>{{ ui_text('admin.landing.f.cta_title') }}</span><input name="cta[title]" maxlength="200" value="{{ content.cta.title }}"></label>
 <label><span>{{ ui_text('admin.landing.f.cta_button') }}</span><input name="cta[button]" maxlength="200" value="{{ content.cta.button }}"></label>
 <label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="cta[text]" maxlength="400" value="{{ content.cta.text }}"></label>
-<label><span>{{ ui_text('admin.landing.f.form_title') }}</span><input name="form[title]" maxlength="200" value="{{ content.form.title }}"></label>
-<label><span>{{ ui_text('admin.landing.f.form_button') }}</span><input name="form[button]" maxlength="200" value="{{ content.form.button }}"></label>
-<label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="form[text]" maxlength="400" value="{{ content.form.text }}"></label>
-<label class="admin-check"><input type="checkbox" name="form[enabled]" value="1"{{ content.form.enabled ? ' checked' : '' }}> {{ ui_text('admin.landing.f.form_enabled') }}</label>
 </div></section>
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.forms') }}</h2></div></div>
+<p class="admin-hint">{{ ui_text('admin.landing.forms_hint') }}</p>
+{% set form_names = {main: ui_text('admin.landing.form_main'), callback: ui_text('admin.landing.form_callback'), quote: ui_text('admin.landing.form_quote'), consult: ui_text('admin.landing.form_consult')} %}
+{% set type_names = {'': ui_text('admin.landing.ft_none'), name: ui_text('admin.landing.ft_name'), phone: ui_text('admin.landing.ft_phone'), email: ui_text('admin.landing.ft_email'), message: ui_text('admin.landing.ft_message'), text: ui_text('admin.landing.ft_text'), select: ui_text('admin.landing.ft_select'), checkbox: ui_text('admin.landing.ft_checkbox')} %}
+{% for form in content.forms %}{% set fi = loop.index0 %}
+<details class="admin-collapse"{{ loop.first ? ' open' : '' }}><summary><strong>{{ form_names[form.key] }}</strong>{% if form.key != 'main' %} <code>#form-{{ form.key }}</code>{% endif %}</summary>
+<div class="admin-form-grid">
+<label class="admin-check admin-form-wide"><input type="checkbox" name="forms[{{ fi }}][enabled]" value="1"{{ form.enabled ? ' checked' : '' }}><span><strong>{{ ui_text('admin.landing.form_enabled') }}</strong></span></label>
+<label><span>{{ ui_text('admin.landing.f.title') }}</span><input name="forms[{{ fi }}][title]" maxlength="200" value="{{ form.title }}"></label>
+<label><span>{{ ui_text('admin.landing.f.button') }}</span><input name="forms[{{ fi }}][button]" maxlength="120" value="{{ form.button }}"></label>
+<label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="forms[{{ fi }}][text]" maxlength="400" value="{{ form.text }}"></label>
+</div>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>#</th><th>{{ ui_text('admin.landing.ff_type') }}</th><th>{{ ui_text('admin.landing.ff_label') }}</th><th>{{ ui_text('admin.landing.ff_required') }}</th><th>{{ ui_text('admin.landing.ff_options') }}</th></tr></thead><tbody>
+{% for f in form.fields %}{% set ff = loop.index0 %}<tr><td>{{ loop.index }}</td>
+<td><select name="forms[{{ fi }}][fields][{{ ff }}][type]">{% for code, name in type_names %}<option value="{{ code }}"{{ f.type == code ? ' selected' : '' }}>{{ name }}</option>{% endfor %}</select></td>
+<td><input name="forms[{{ fi }}][fields][{{ ff }}][label]" maxlength="120" value="{{ f.label }}"></td>
+<td><input type="checkbox" name="forms[{{ fi }}][fields][{{ ff }}][required]" value="1"{{ f.required ? ' checked' : '' }} aria-label="{{ ui_text('admin.landing.ff_required') }}"></td>
+<td><input name="forms[{{ fi }}][fields][{{ ff }}][options]" maxlength="400" value="{{ f.options }}" placeholder="A|B|C"></td></tr>{% endfor %}
+</tbody></table></div></details>
+{% endfor %}</section>
 
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button><button class="admin-button" type="submit" name="reset" value="1" formnovalidate data-confirm="{{ ui_text('admin.landing.reset_confirm') }}">{{ ui_icon('refresh-cw', 16) }} {{ ui_text('admin.landing.reset') }}</button></div>
 </form>

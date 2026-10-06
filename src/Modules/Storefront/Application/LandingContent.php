@@ -17,6 +17,10 @@ final class LandingContent
     public const FEATURE_ICONS = ['zap', 'shield-check', 'smartphone', 'palette', 'trending-up', 'headset', 'sparkles', 'target', 'layers', 'globe', 'clock', 'heart', 'users', 'lock', 'credit-card', 'star'];
     private const KEY = 'landing.content';
     private const COUNTS = ['features' => 6, 'stats' => 4, 'steps' => 3, 'reviews' => 3, 'faq' => 5];
+    /** The request forms of the page: "main" sits in the contact section, the others open as a window from any link to #form-callback, #form-quote or #form-consult. */
+    public const FORM_KEYS = ['main', 'callback', 'quote', 'consult'];
+    public const FIELD_TYPES = ['name', 'phone', 'email', 'message', 'text', 'select', 'checkbox'];
+    public const FIELD_SLOTS = 6;
 
     public function __construct(private readonly SystemSettingStore $store, private readonly StorefrontUiTranslator $translator)
     {
@@ -28,7 +32,28 @@ final class LandingContent
         $defaults = $this->defaults($locale);
         $saved = ($this->store->getArray(self::KEY) ?? [])[$locale] ?? [];
 
-        return is_array($saved) ? $this->merge($defaults, $saved) : $defaults;
+        if (!is_array($saved)) {
+            return $defaults;
+        }
+        $savedForms = is_array($saved['forms'] ?? null) ? $saved['forms'] : [];
+        unset($saved['forms']);
+        $content = $this->merge($defaults, $saved);
+        // A form keeps exactly the fields the owner left (an empty slot is a removed field); only empty texts follow the language default.
+        foreach ($content['forms'] as $i => $form) {
+            $row = $savedForms[$i] ?? null;
+            if (!is_array($row) || !is_array($row['fields'] ?? null)) {
+                continue;
+            }
+            foreach (['title', 'text', 'button'] as $field) {
+                if (is_string($row[$field] ?? null) && $row[$field] !== '') {
+                    $content['forms'][$i][$field] = $row[$field];
+                }
+            }
+            $content['forms'][$i]['enabled'] = (bool) ($row['enabled'] ?? true);
+            $content['forms'][$i]['fields'] = array_pad(array_slice(array_values($row['fields']), 0, self::FIELD_SLOTS), self::FIELD_SLOTS, ['type' => '', 'label' => '', 'required' => false, 'options' => '']);
+        }
+
+        return $content;
     }
 
     /** @param array<string,mixed> $input */
@@ -50,6 +75,27 @@ final class LandingContent
                     $clean[$group][$i][$field] = $field === 'icon' && !in_array($value, self::FEATURE_ICONS, true) ? $defaults[$group][$i]['icon'] : $value;
                 }
             }
+        }
+        foreach (self::FORM_KEYS as $i => $key) {
+            $row = $input['forms'][$i] ?? [];
+            $entry = ['key' => $key, 'enabled' => !empty($row['enabled']), 'title' => $this->text($row['title'] ?? '', 200), 'text' => $this->text($row['text'] ?? '', 400), 'button' => $this->text($row['button'] ?? '', 120), 'fields' => []];
+            $hasContact = false;
+            for ($f = 0; $f < self::FIELD_SLOTS; ++$f) {
+                $type = (string) ($row['fields'][$f]['type'] ?? '');
+                $type = in_array($type, self::FIELD_TYPES, true) ? $type : '';
+                $hasContact = $hasContact || in_array($type, ['phone', 'email'], true);
+                $entry['fields'][$f] = ['type' => $type, 'label' => $this->text($row['fields'][$f]['label'] ?? '', 120), 'required' => !empty($row['fields'][$f]['required']), 'options' => $this->text($row['fields'][$f]['options'] ?? '', 400)];
+            }
+            if (!$hasContact) {
+                // A request without a way to answer is useless: the first free slot becomes a phone field.
+                foreach ($entry['fields'] as $f => $field) {
+                    if ($field['type'] === '') {
+                        $entry['fields'][$f] = ['type' => 'phone', 'label' => $this->translator->translate('landing.field.phone', $locale), 'required' => true, 'options' => ''];
+                        break;
+                    }
+                }
+            }
+            $clean['forms'][$i] = $entry;
         }
         $all[$locale] = $clean;
         $this->store->setArray(self::KEY, $all);
@@ -86,7 +132,29 @@ final class LandingContent
             'faq' => $list(5, fn (int $i): array => ['q' => $line("faq.$i.q"), 'a' => $line("faq.$i.a")]),
             'cta' => ['title' => $line('cta.title'), 'text' => $line('cta.text'), 'button' => $line('cta.button')],
             'form' => ['title' => $line('form.title'), 'text' => $line('form.text'), 'button' => $line('form.button'), 'enabled' => true],
+            'forms' => $this->defaultForms($line),
         ];
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function defaultForms(callable $line): array
+    {
+        $field = static fn (string $type, string $label, bool $required, string $options = ''): array => ['type' => $type, 'label' => $label, 'required' => $required, 'options' => $options];
+        $none = $field('', '', false);
+        $forms = [
+            'main' => [[$field('name', $line('field.name'), true), $field('phone', $line('field.phone'), true), $field('message', $line('field.message'), false)], $line('form.title'), $line('form.text'), $line('form.button')],
+            'callback' => [[$field('name', $line('field.name'), true), $field('phone', $line('field.phone'), true)], $line('forms.callback.title'), $line('forms.callback.text'), $line('forms.callback.button')],
+            'quote' => [[$field('name', $line('field.name'), true), $field('phone', $line('field.phone'), true), $field('email', $line('field.email'), false), $field('message', $line('field.quote_details'), false)], $line('forms.quote.title'), $line('forms.quote.text'), $line('forms.quote.button')],
+            'consult' => [[$field('name', $line('field.name'), true), $field('phone', $line('field.phone'), true), $field('select', $line('field.topic'), false, $line('field.topic_options')), $field('message', $line('field.message'), false)], $line('forms.consult.title'), $line('forms.consult.text'), $line('forms.consult.button')],
+        ];
+        $out = [];
+        foreach (self::FORM_KEYS as $key) {
+            [$fields, $title, $text, $button] = $forms[$key];
+            $fields = array_pad($fields, self::FIELD_SLOTS, $none);
+            $out[] = ['key' => $key, 'enabled' => true, 'title' => $title, 'text' => $text, 'button' => $button, 'fields' => $fields];
+        }
+
+        return $out;
     }
 
     /**
