@@ -20,7 +20,7 @@ $must = [
         'CustomerUser',
         'storefront_forum_search',
         'storefront_forum_subscription',
-        'storefront_forum_post_like',
+        'storefront_forum_post_vote',
         'storefront_forum_post_report',
         'storefront_forum_post_edit',
     ],
@@ -51,7 +51,7 @@ $must = [
     ],
     'themes/default/templates/forum/topic.html.twig' => [
         "storefront_forum_subscription",
-        "storefront_forum_post_like",
+        "storefront_forum_post_vote",
         "storefront_forum_post_report",
         "storefront_forum_post_edit",
         'data-forum-quote',

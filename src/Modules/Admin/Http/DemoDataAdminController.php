@@ -6,6 +6,7 @@ namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\Demo\Application\DemoSeeder;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,6 +22,7 @@ final class DemoDataAdminController extends AbstractController
     public function __construct(
         private readonly AdminContextResolver $contexts,
         private readonly DemoSeeder $seeder,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -46,7 +48,8 @@ final class DemoDataAdminController extends AbstractController
             $result = $this->seeder->install();
             $this->addFlash('success', CanonicalUiText::get('admin.demo.installed', ['categories' => $result['categories'], 'products' => $result['products'], 'articles' => $result['articles']]));
         } catch (\Throwable $e) {
-            $this->addFlash('error', CanonicalUiText::get('admin.demo.failed') . ' ' . $e->getMessage());
+            $this->logger->error('Demo data install failed', ['exception' => $e]);
+            $this->addFlash('error', CanonicalUiText::get('admin.demo.failed'));
         }
 
         return $this->redirectToRoute('admin_system_demo');
@@ -66,7 +69,8 @@ final class DemoDataAdminController extends AbstractController
             $this->seeder->remove();
             $this->addFlash('success', CanonicalUiText::get('admin.demo.removed'));
         } catch (\Throwable $e) {
-            $this->addFlash('error', CanonicalUiText::get('admin.demo.failed') . ' ' . $e->getMessage());
+            $this->logger->error('Demo data removal failed', ['exception' => $e]);
+            $this->addFlash('error', CanonicalUiText::get('admin.demo.failed'));
         }
 
         return $this->redirectToRoute('admin_system_demo');

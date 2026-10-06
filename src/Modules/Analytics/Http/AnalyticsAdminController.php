@@ -30,8 +30,8 @@ final class AnalyticsAdminController extends AbstractController
         $ctx=$this->contexts->resolve($request);
         $from=trim((string)$request->query->get('from','')); $to=trim((string)$request->query->get('to',''));
         $report=$this->analytics->report($ctx->storeId,$request->query->getInt('days',30),$from!==''?$from:null,$to!==''?$to:null);
-        $out=fopen('php://temp','r+'); fwrite($out,"\xEF\xBB\xBF"); fputcsv($out,['date','orders','revenue_'.$report['currency']],';');
-        foreach($report['daily'] as $d){ fputcsv($out,[$d['day'],$d['orders'],number_format($d['revenue_minor']/100,2,'.','')],';'); }
+        $out=fopen('php://temp','r+'); fwrite($out,"\xEF\xBB\xBF"); fputcsv($out,['date','orders','revenue_'.$report['currency']],';','"','');
+        foreach($report['daily'] as $d){ fputcsv($out,[$d['day'],$d['orders'],number_format($d['revenue_minor']/100,2,'.','')],';','"',''); }
         rewind($out); $csv=(string)stream_get_contents($out); fclose($out);
         return new Response($csv,200,['Content-Type'=>'text/csv; charset=utf-8','Content-Disposition'=>'attachment; filename="analytics-'.$report['from'].'-'.$report['to'].'.csv"']);
     }

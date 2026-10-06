@@ -95,7 +95,7 @@
                         {% endif %}
                         {% if is_moderator|default(false) and not loop.first %}
                             <form method="post" action="{{ path('storefront_forum_post_moderate',{id:topic.id,slug:topic.slug,postId:post.id,action:'hide'}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_mod_' ~ post.id) }}"><button type="submit" class="fx-act">{{ ui_icon('eye-off', 14) }}{{ ui_text('forum_mod_hide') }}</button></form>
-                            <form method="post" action="{{ path('storefront_forum_post_moderate',{id:topic.id,slug:topic.slug,postId:post.id,action:'delete'}) }}" onsubmit="return confirm(this.dataset.confirm)" data-confirm="{{ ui_text('forum_mod_delete_confirm')|e('html_attr') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_mod_' ~ post.id) }}"><button type="submit" class="fx-act">{{ ui_icon('trash-2', 14) }}{{ ui_text('forum_mod_delete') }}</button></form>
+                            <form method="post" action="{{ path('storefront_forum_post_moderate',{id:topic.id,slug:topic.slug,postId:post.id,action:'delete'}) }}" data-confirm="{{ ui_text('forum_mod_delete_confirm')|e('html_attr') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_mod_' ~ post.id) }}"><button type="submit" class="fx-act">{{ ui_icon('trash-2', 14) }}{{ ui_text('forum_mod_delete') }}</button></form>
                         {% endif %}
                     </footer>
                 </div>

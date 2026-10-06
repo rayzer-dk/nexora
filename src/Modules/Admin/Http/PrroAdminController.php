@@ -9,6 +9,7 @@ use Commerce\Modules\Prro\Application\CheckboxException;
 use Commerce\Modules\Prro\Application\FiscalizationService;
 use Commerce\Modules\Prro\Application\PrroSettings;
 use Doctrine\DBAL\Connection;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,7 +19,7 @@ use Symfony\Component\Uid\Uuid;
 /** Cash register (PRRO): account settings, a connection check, and a receipt for one order on demand. */
 final class PrroAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly PrroSettings $settings, private readonly FiscalizationService $fiscal, private readonly Connection $db)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly PrroSettings $settings, private readonly FiscalizationService $fiscal, private readonly Connection $db, private readonly LoggerInterface $logger)
     {
     }
 
@@ -43,7 +44,8 @@ final class PrroAdminController extends AbstractController
             } catch (\DomainException $e) {
                 $this->addFlash('error', $this->errorText($e->getMessage()));
             } catch (\Throwable $e) {
-                $this->addFlash('error', CanonicalUiText::get('admin.prro.provider_error', ['message' => mb_substr($e->getMessage(), 0, 200)]));
+                $this->logger->error('PRRO settings action failed', ['exception' => $e]);
+                $this->addFlash('error', CanonicalUiText::get('admin.prro.error.unknown'));
             }
 
             return $this->redirectToRoute('admin_system_prro');
@@ -83,7 +85,8 @@ final class PrroAdminController extends AbstractController
         } catch (\DomainException $e) {
             $this->addFlash('error', $this->errorText($e->getMessage()));
         } catch (\Throwable $e) {
-            $this->addFlash('error', CanonicalUiText::get('admin.prro.provider_error', ['message' => mb_substr($e->getMessage(), 0, 200)]));
+            $this->logger->error('PRRO fiscalization failed', ['exception' => $e]);
+            $this->addFlash('error', CanonicalUiText::get('admin.prro.error.unknown'));
         }
 
         return $this->redirectToRoute('admin_order_view', ['publicId' => $publicId]);
@@ -104,7 +107,8 @@ final class PrroAdminController extends AbstractController
         } catch (\DomainException $e) {
             $this->addFlash('error', $this->errorText($e->getMessage()));
         } catch (\Throwable $e) {
-            $this->addFlash('error', CanonicalUiText::get('admin.prro.provider_error', ['message' => mb_substr($e->getMessage(), 0, 200)]));
+            $this->logger->error('PRRO fiscalization failed', ['exception' => $e]);
+            $this->addFlash('error', CanonicalUiText::get('admin.prro.error.unknown'));
         }
 
         return $this->redirectToRoute('admin_order_view', ['publicId' => $publicId]);

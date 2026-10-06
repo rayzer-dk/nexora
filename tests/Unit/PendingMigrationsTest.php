@@ -26,6 +26,9 @@ final class PendingMigrationsTest extends TestCase
 
     protected function tearDown(): void
     {
+        if (!isset($this->dir)) {
+            return;
+        }
         foreach (glob($this->dir . '/migrations/*') ?: [] as $file) {
             @unlink($file);
         }

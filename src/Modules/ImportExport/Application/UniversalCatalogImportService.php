@@ -98,8 +98,8 @@ final readonly class UniversalCatalogImportService
         $fh=fopen($tmp,'wb');if($fh===false)throw new RuntimeException(CanonicalUiText::get('import.universal.error.temp_open'));
         $targets=array_keys($clean);if(!in_array('name',$targets,true))$targets[]='name';
         foreach(['slug','short_description','description'] as $field)if(!isset($clean[$field])&&isset($baseLocaleFields[$field]))$targets[]=$field;
-        fputcsv($fh,$targets);
-        $count=0;foreach($rows as $row){if(++$count>self::MAX_ROWS)break;$out=[];foreach($targets as $target){if(isset($clean[$target])){$source=$clean[$target];$out[]=(string)($row[$index[$source]]??'');continue;}$source=$baseLocaleFields[$target]??'';$out[]=$source!==''?(string)($row[$index[$source]]??''):'';}fputcsv($fh,$out);}fclose($fh);
+        fputcsv($fh,$targets,',','"','');
+        $count=0;foreach($rows as $row){if(++$count>self::MAX_ROWS)break;$out=[];foreach($targets as $target){if(isset($clean[$target])){$source=$clean[$target];$out[]=(string)($row[$index[$source]]??'');continue;}$source=$baseLocaleFields[$target]??'';$out[]=$source!==''?(string)($row[$index[$source]]??''):'';}fputcsv($fh,$out,',','"','');}fclose($fh);
         try{
             $result=$apply?$this->catalogCsv->import($tmp,$storeId,$marketId,$locale):$this->catalogCsv->preview($tmp,$storeId,$marketId,$locale);
             if($apply && $ml!==[]){
@@ -122,7 +122,7 @@ final readonly class UniversalCatalogImportService
     {
         $fh=fopen($path,'rb');if($fh===false)throw new RuntimeException(CanonicalUiText::get('import.universal.error.csv_open'));
         $first=fgets($fh);if($first===false){fclose($fh);return [];}$delimiter=$this->detectDelimiter($first);rewind($fh);
-        $rows=[];while(count($rows)<$limit&&($row=fgetcsv($fh,0,$delimiter))!==false)$rows[]=array_map('strval',$row);fclose($fh);return $rows;
+        $rows=[];while(count($rows)<$limit&&($row=fgetcsv($fh,0,$delimiter,'"',''))!==false)$rows[]=array_map('strval',$row);fclose($fh);return $rows;
     }
 
     /** @return list<list<string>> */

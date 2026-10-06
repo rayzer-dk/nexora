@@ -63,11 +63,11 @@ final class StockRequestAdminController extends AbstractController
         $response = new StreamedResponse(static function () use ($rows): void {
             $out = fopen('php://output', 'wb');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['email', 'product', 'sku', 'status', 'created_at', 'confirmed_at', 'notified_at', 'locale', 'in_stock']);
+            fputcsv($out, ['email', 'product', 'sku', 'status', 'created_at', 'confirmed_at', 'notified_at', 'locale', 'in_stock'],',','"','');
             foreach ($rows as $row) {
                 // Cells that start like a formula are neutralised so a spreadsheet never runs them.
                 $cells = [$row['email'], $row['product_name'], $row['sku'], $row['status'], $row['created_at'], $row['confirmed_at'], $row['notified_at'], $row['locale'], (float) $row['available'] > 0 ? 'yes' : 'no'];
-                fputcsv($out, array_map(static fn (mixed $c): string => preg_match('/^[=+\-@\t\r]/', (string) $c) === 1 ? "'" . $c : (string) $c, $cells));
+                fputcsv($out, array_map(static fn (mixed $c): string => preg_match('/^[=+\-@\t\r]/', (string) $c) === 1 ? "'" . $c : (string) $c, $cells),',','"','');
             }
             fclose($out);
         });

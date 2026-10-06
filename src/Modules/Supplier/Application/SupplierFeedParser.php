@@ -127,7 +127,7 @@ final class SupplierFeedParser
                     $delimiter = $candidate;
                 }
             }
-            $header = fgetcsv($fh, 0, $delimiter);
+            $header = fgetcsv($fh, 0, $delimiter,'"','');
             if (!is_array($header)) {
                 return;
             }
@@ -152,7 +152,7 @@ final class SupplierFeedParser
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.suppliers.error.csv_columns'));
             }
             $count = 0;
-            while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {
+            while (($row = fgetcsv($fh, 0, $delimiter,'"','')) !== false) {
                 $sku = trim((string) ($row[$iSku] ?? ''));
                 $price = $this->number((string) ($row[$iPrice] ?? ''));
                 if ($sku === '' || $price === null) {

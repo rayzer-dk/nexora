@@ -76,9 +76,9 @@ final class AdminAuditController extends AbstractController
         );
         $out = fopen('php://temp', 'r+');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['time', 'admin', 'action', 'entity', 'details'], ';');
+        fputcsv($out, ['time', 'admin', 'action', 'entity', 'details'], ';','"','');
         foreach ($rows as $r) {
-            fputcsv($out, [$r['created_at'], $r['email'], $r['action'], $r['entity_id'], $r['metadata']], ';');
+            fputcsv($out, [$r['created_at'], $r['email'], $r['action'], $r['entity_id'], $r['metadata']], ';','"','');
         }
         rewind($out);
         $csv = (string) stream_get_contents($out);

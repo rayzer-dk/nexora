@@ -343,6 +343,13 @@ function initMobileNavigation() {
   });
 }
 
+// CSP-safe confirmation for destructive storefront forms: <form data-confirm="Question?">.
+document.addEventListener('submit', (event) => {
+  const form = event.target instanceof HTMLFormElement ? event.target : null;
+  const question = form?.dataset.confirm;
+  if (question && !window.confirm(question)) event.preventDefault();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   try { initStoreNotices(); } catch (_) {}
   try { initAjaxForms(); } catch (_) {}

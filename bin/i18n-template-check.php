@@ -75,9 +75,13 @@ foreach ($templates as $file) {
     }
 }
 
+// Only uk-UA (reference) and en-US are maintained for now (owner decision 2026-10-06).
+// Add a locale code here to enforce full storefront-key coverage for it again.
+$enforcedExtraLocales = [];
+
 foreach (glob($root . '/resources/translations/*', GLOB_ONLYDIR) ?: [] as $dir) {
     $locale = basename($dir);
-    if (in_array($locale, ['uk-UA', 'en-US'], true) || !is_file($dir . '/storefront.php')) {
+    if (!in_array($locale, $enforcedExtraLocales, true) || !is_file($dir . '/storefront.php')) {
         continue;
     }
     $catalog = $load($locale);
