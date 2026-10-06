@@ -1251,3 +1251,6 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 .ck-grid[data-rewards] { grid-template-columns: minmax(0, 1fr); }
 .ck-grid[data-rewards] .coupon-row { width: 100%; }
 .forum-section-title { margin: var(--mc-space-6) 0 var(--mc-space-3); font-size: var(--mc-font-size-lg); }
+.product-tags { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); margin: var(--mc-space-3) 0; }
+.product-tags__item { padding: var(--mc-space-1) var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-full); font-size: var(--mc-font-size-sm); color: var(--mc-color-muted); text-decoration: none; }
+.product-tags__item:hover { border-color: var(--mc-color-primary); color: var(--mc-color-primary); }

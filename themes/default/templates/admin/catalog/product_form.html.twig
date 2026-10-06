@@ -43,6 +43,20 @@
 {% endif %}
 
 {% if editing %}
+{% if editing and extras is defined %}<input type="hidden" name="extras_present" value="1">
+<section class="admin-panel" data-product-tab="sales" id="promo"><h2>{{ ui_text('admin.product.extras.promo') }}</h2><p class="admin-help">{{ ui_text('admin.product.extras.promo_hint') }}</p><div class="admin-form-grid">
+<label><span>{{ ui_text('admin.product.extras.sale_price') }} {{ currency|default(product.currency|default('UAH')) }}</span><input type="text" inputmode="decimal" name="sale_price" value="{{ extras.sale_price }}" placeholder="0.00"><small>{{ ui_text('admin.product.extras.sale_price_hint') }}</small></label>
+<label><span>{{ ui_text('admin.product.extras.sale_starts') }}</span><input type="datetime-local" name="sale_starts" value="{{ extras.sale_starts }}"></label>
+<label><span>{{ ui_text('admin.product.extras.sale_ends') }}</span><input type="datetime-local" name="sale_ends" value="{{ extras.sale_ends }}"><small>{{ ui_text('admin.product.extras.sale_ends_hint') }}</small></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.product.extras.related') }}</span><input type="text" name="related_skus" value="{{ extras.related }}" placeholder="SKU-1, SKU-2"><small>{{ ui_text('admin.product.extras.related_hint') }}</small></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.product.extras.complementary') }}</span><input type="text" name="complementary_skus" value="{{ extras.complementary }}" placeholder="SKU-3, SKU-4"><small>{{ ui_text('admin.product.extras.complementary_hint') }}</small></label>
+</div></section>
+<section class="admin-panel" data-product-tab="seo" id="seo-extra"><h2>{{ ui_text('admin.product.extras.seo_extra') }}</h2><div class="admin-form-grid">
+<label class="admin-form-wide"><span>Canonical URL</span><input type="url" name="canonical_url" maxlength="500" value="{{ extras.canonical_url }}" placeholder="https://"><small>{{ ui_text('admin.product.extras.canonical_hint') }}</small></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.product.extras.tags') }}</span><input type="text" name="tags" maxlength="500" value="{{ extras.tags }}"><small>{{ ui_text('admin.product.extras.tags_hint') }}</small></label>
+{% for i in 0..4 %}<label><span>Google custom label {{ i }}</span><input type="text" name="custom_label[{{ i }}]" maxlength="100" value="{{ extras.labels[i]|default('') }}"></label>{% endfor %}
+<small class="admin-form-wide">{{ ui_text('admin.product.extras.labels_hint') }}</small>
+</div></section>{% endif %}
 {% if editing %}<section class="admin-panel" data-product-tab="sales" id="options"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.catalog.options.title') }}</h2><small>{{ ui_text('admin.catalog.options.help') }} {{ ui_text('admin.catalog.options.currency_note') }}</small></div></div>
 <input type="hidden" name="_options_token" value="{{ csrf_token('admin_product_options_' ~ product.public_id) }}">
 {% set options_action = path('admin_catalog_product_options', {publicId: product.public_id}) %}

@@ -104,7 +104,7 @@ final class BlogService
             return null;
         }
         $publicId = Uuid::fromBinary((string) $entry['public_id'])->toRfc4122();
-        $tr = $this->db->fetchAssociative('SELECT title, excerpt, body_html, meta_title, meta_description FROM mc_content_translation WHERE content_id = ? AND locale = ?', [$id, $locale]);
+        $tr = $this->db->fetchAssociative('SELECT title, h1, excerpt, body_html, meta_title, meta_description FROM mc_content_translation WHERE content_id = ? AND locale = ?', [$id, $locale]);
         $meta = $this->db->fetchAssociative('SELECT category_id, cover_url, cover_alt, image_size, image_align, author_name, featured, noindex, canonical_url, reading_minutes FROM mc_blog_article_meta WHERE content_id = ?', [$id]);
         $route = $this->routes->findByEntity($storeId, $locale, SeoEntityType::BlogArticle, $publicId);
         $tags = $this->db->fetchFirstColumn('SELECT tag_name FROM mc_blog_article_tag WHERE content_id = ? ORDER BY tag_name', [$id]);
@@ -115,6 +115,7 @@ final class BlogService
             'published_at' => $entry['published_at'] !== null ? substr((string) $entry['published_at'], 0, 16) : '',
             'has_translation' => is_array($tr),
             'title' => (string) ($tr['title'] ?? ''),
+            'h1' => (string) ($tr['h1'] ?? ''),
             'excerpt' => (string) ($tr['excerpt'] ?? ''),
             'body_html' => (string) ($tr['body_html'] ?? ''),
             'meta_title' => (string) ($tr['meta_title'] ?? ''),
@@ -198,6 +199,7 @@ final class BlogService
             }
             $fields = [
                 'title' => $title,
+                'h1' => $this->nullable((string) ($in['h1'] ?? ''), 255),
                 'excerpt' => $excerpt === '' ? null : mb_substr($excerpt, 0, 1000, 'UTF-8'),
                 'body_html' => $body === '' ? null : $body,
                 'meta_title' => $this->nullable((string) ($in['meta_title'] ?? ''), 255),

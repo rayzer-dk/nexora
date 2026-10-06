@@ -15,7 +15,7 @@
     <div class="article-main">
   <header class="article-header">
     <p class="article-header__kicker">{% if article.category %}<a class="blog-chip" href="/blog/category/{{ article.category.slug }}">{{ article.category.name }}</a>{% else %}<span class="eyebrow">{{ ui_text('blog') }}</span>{% endif %}</p>
-    <h1>{{ article.title }}</h1>
+    <h1>{{ article.h1|default(article.title) }}</h1>
     {% if article.excerpt %}<p class="article-header__lead">{{ article.excerpt }}</p>{% endif %}
     <p class="article-header__meta">
       {% if article.author and ba.show_author is not same as(false) %}<span>{{ ui_icon('user', 16) }}{{ ui_text('blog_by') }} {{ article.author }}</span>{% endif %}

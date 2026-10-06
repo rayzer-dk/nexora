@@ -50,6 +50,7 @@ final class CatalogAdminPageController extends AbstractController
         private readonly \Commerce\Modules\Localization\Application\ContentPolicyService $contentPolicy,
         private readonly \Commerce\Modules\Tax\Application\TaxSettingsService $taxSettings,
         private readonly \Commerce\Modules\Catalog\Application\CategoryImageService $categoryImages,
+        private readonly \Commerce\Modules\Catalog\Application\ProductExtrasService $extras,
         private readonly \Commerce\Modules\Media\Application\ProductVideoService $videos,
         private readonly \Commerce\Modules\Media\Application\ProductMediaOrder $mediaOrder,
         private readonly \Commerce\Modules\Media\Application\MediaLibraryService $mediaLibrary,
@@ -364,6 +365,18 @@ final class CatalogAdminPageController extends AbstractController
                         compareAtMinor: trim((string) $request->request->get('compare_at_price', '')) !== '' ? $this->moneyMinor((string) $request->request->get('compare_at_price', '0')) : null,
                         updateCompareAt: $request->request->has('compare_at_price'),
                     ));
+                    if ($request->request->has('extras_present')) {
+                        $this->extras->save((int) $product['id'], (int) $product['variant_id'], $context->storeId, $context->marketId, $context->currency, [
+                            'canonical_url' => (string) $request->request->get('canonical_url', ''),
+                            'tags' => (string) $request->request->get('tags', ''),
+                            'labels' => $request->request->all('custom_label'),
+                            'related' => (string) $request->request->get('related_skus', ''),
+                            'complementary' => (string) $request->request->get('complementary_skus', ''),
+                            'sale_price' => (string) $request->request->get('sale_price', ''),
+                            'sale_starts' => (string) $request->request->get('sale_starts', ''),
+                            'sale_ends' => (string) $request->request->get('sale_ends', ''),
+                        ]);
+                    }
                     if ($request->request->has('tax_class_id')) {
                         $this->taxSettings->setProductClass((int) $product['id'], (int) $request->request->get('tax_class_id', 0));
                     }
@@ -410,6 +423,7 @@ final class CatalogAdminPageController extends AbstractController
         $categories = $this->query->categories($context->storeId, $context->locale, 1, 100, '')['items'];
         $brands = $this->query->brands($context->storeId);
         return $this->render('@storefront/admin/catalog/product_form.html.twig', [
+            'extras' => $this->extras->forAdmin((int) $product['id'], (int) $product['variant_id'], $context->storeId, $context->marketId),
             'sku_template' => $this->skus->template(),
             'categories' => $categories,
             'brands' => $brands,

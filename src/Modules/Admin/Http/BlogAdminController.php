@@ -67,7 +67,7 @@ final class BlogAdminController extends AbstractController
             foreach ($this->languageTabs->tabs($ctx->storeId, $ctx->locale) as $tab) {
                 $source = $tab['is_default'] ? $this->blog->find($ctx->storeId, $id, $tab['code']) : null;
                 if ($source !== null && $source['has_translation']) {
-                    foreach (['title', 'excerpt', 'body_html', 'meta_title', 'meta_description'] as $field) {
+                    foreach (['title', 'h1', 'excerpt', 'body_html', 'meta_title', 'meta_description'] as $field) {
                         $article[$field] = $source[$field];
                     }
                     $article['prefilled'] = 'default';
@@ -106,7 +106,7 @@ final class BlogAdminController extends AbstractController
         }
         $admin = $this->getUser();
         try {
-            foreach (['title', 'excerpt', 'body_html', 'meta_title', 'meta_description'] as $field) {
+            foreach (['title', 'h1', 'excerpt', 'body_html', 'meta_title', 'meta_description'] as $field) {
                 $text = trim((string) ($source[$field] ?? ''));
                 $article[$field] = $text === '' ? '' : (string) ($this->ai->run($ctx->storeId, $admin !== null ? $admin->getUserIdentifier() : 'admin', 'translate', $provider, ['text' => $text, 'target' => $ctx->locale], $ctx->locale)['fields']['text'] ?? '');
             }
@@ -282,7 +282,7 @@ final class BlogAdminController extends AbstractController
      */
     private function merge(array $base, array $in): array
     {
-        foreach (['title', 'slug', 'excerpt', 'body_html', 'meta_title', 'meta_description', 'status', 'published_at', 'cover_alt', 'author_name', 'canonical_url', 'tags', 'product_skus', 'image_size', 'image_align'] as $key) {
+        foreach (['title', 'h1', 'slug', 'excerpt', 'body_html', 'meta_title', 'meta_description', 'status', 'published_at', 'cover_alt', 'author_name', 'canonical_url', 'tags', 'product_skus', 'image_size', 'image_align'] as $key) {
             if (array_key_exists($key, $in)) {
                 $base[$key] = (string) $in[$key];
             }
@@ -298,7 +298,7 @@ final class BlogAdminController extends AbstractController
     {
         return [
             'id' => null, 'public_id' => '', 'status' => 'draft', 'published_at' => '', 'has_translation' => false, 'title' => '', 'excerpt' => '',
-            'body_html' => '', 'meta_title' => '', 'meta_description' => '', 'slug' => '', 'path' => '', 'category_id' => 0, 'cover_url' => '',
+            'body_html' => '', 'h1' => '', 'meta_title' => '', 'meta_description' => '', 'slug' => '', 'path' => '', 'category_id' => 0, 'cover_url' => '',
             'cover_alt' => '', 'image_size' => 'm', 'image_align' => 'none', 'author_name' => '', 'featured' => false, 'noindex' => false, 'canonical_url' => '', 'tags' => '', 'product_skus' => '',
         ];
     }

@@ -25,13 +25,15 @@ final readonly class CanonicalProductExportService
                     COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) available_quantity,
                     sr.path seo_path,
                     COALESCE(gpo.google_category_id,gcm.google_category_id) google_category_id,
-                    COALESCE(gpo.product_type_path,gcm.google_category_path) product_type_path
+                    COALESCE(gpo.product_type_path,gcm.google_category_path) product_type_path,
+                    pex.custom_label_0,pex.custom_label_1,pex.custom_label_2,pex.custom_label_3,pex.custom_label_4
              FROM mc_product p
              JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active'
              JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active'
              JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
              JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active'
              LEFT JOIN mc_brand b ON b.id=p.brand_id
+             LEFT JOIN mc_product_extra pex ON pex.product_id=p.id
              LEFT JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority,px.id DESC LIMIT 1)
              LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id AND sr.indexable=1
              LEFT JOIN mc_google_product_override gpo ON gpo.product_id=p.id AND gpo.store_id=?
@@ -69,7 +71,7 @@ final readonly class CanonicalProductExportService
                 'availability'=>$qty>0?'in_stock':'out_of_stock','quantity'=>$qty,'price_minor'=>$price,'price'=>number_format($price/100,2,'.',''),'currency'=>strtoupper($currency),
                 'sale_price'=>$compare!==null&&$compare>$price?number_format($price/100,2,'.',''):null,'regular_price'=>$compare!==null&&$compare>$price?number_format($compare/100,2,'.',''):number_format($price/100,2,'.',''),
                 'brand'=>(string)$row['brand'],'gtin'=>trim((string)($row['gtin']??'')),'mpn'=>trim((string)($row['mpn']??'')),'condition'=>'new',
-                'google_product_category'=>$row['google_category_id']!==null?(string)$row['google_category_id']:'','product_type'=>(string)($row['product_type_path']??''),
+                'google_product_category'=>$row['google_category_id']!==null?(string)$row['google_category_id']:'','product_type'=>(string)($row['product_type_path']??''),'custom_labels'=>array_map(static fn(int $i): string=>trim((string)($row['custom_label_'.$i]??'')),range(0,4)),
                 'categories'=>$categories,'attributes'=>$attributes,'updated_at'=>(string)$row['updated_at'],
             ];
         }

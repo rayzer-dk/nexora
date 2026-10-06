@@ -33,6 +33,7 @@ final class StorefrontCatalogController extends AbstractController
     public function __construct(
         private readonly StorefrontContextResolver $contexts,
         private readonly CachedStorefrontCatalogQuery $catalog,
+        private readonly \Commerce\Modules\Catalog\Application\ProductExtrasService $productExtras,
         private readonly SeoRouteResolver $seo,
         private readonly \Commerce\Modules\Seo\Application\SeoTemplateService $seoTemplates,
         private readonly ProductPageLayoutLoader $layoutLoader,
@@ -426,8 +427,10 @@ final class StorefrontCatalogController extends AbstractController
             unset($blocks);
         }
 
+        $productExtra = $this->productExtras->forStorefront((int) ($product['internal_id'] ?? 0));
         return $this->render('@storefront/product/show.html.twig', [
             'page_title' => $product['name'],
+            'product_extra' => $productExtra,
             'store_name' => $context->storeName,
             'product' => $product,
             'layout' => $layout,
@@ -438,7 +441,7 @@ final class StorefrontCatalogController extends AbstractController
                 'description' => (string) ($product['meta_description'] ?? '') !== '' ? $this->seoTemplates->expand((string) $product['meta_description'], ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs'] ?? []) - 2]['name'] ?? ''))]) : $this->seoTemplates->render($context->storeId, $context->locale, 'product', 'description', ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs'] ?? []) - 2]['name'] ?? ''))], ((string) ($product['short_description'] ?? '') !== '' ? (string) $product['short_description'] : (string) ($product['description'] ?? ''))),
                 'image' => $this->shareImage($baseUrl, [$displayImage, ...array_map(static fn (array $image): string => (string) ($image['url'] ?? ''), $product['images'])]),
                 'type' => 'product',
-                'canonical' => $baseUrl . $product['url'],
+                'canonical' => $productExtra['canonical_url'] ?? ($baseUrl . $product['url']),
                 'robots' => ($product['indexable'] ?? true) === false ? 'noindex,follow' : 'index,follow,max-image-preview:large',
                 'hreflang' => [$context->locale => $baseUrl . $product['url'], 'x-default' => $baseUrl . $product['url']],
             ],
