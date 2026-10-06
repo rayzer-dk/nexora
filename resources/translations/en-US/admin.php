@@ -5324,4 +5324,10 @@ return [
     'admin.customer_groups.saved' => 'Group saved.',
     'admin.customer_groups.invalid_code' => 'Group code: latin letters, digits, hyphen or underscore.',
     'admin.customer_groups.default_locked' => 'The default group cannot be deleted.',
+    'admin.category.seo' => 'Category SEO',
+    'admin.category.seo_hint' => 'What search engines see. Empty fields are filled automatically from the name and the SEO templates (Settings → SEO).',
+    'admin.category.h1_hint' => 'Heading on the category page. Empty means the name is used.',
+    'admin.category.title_hint' => 'Title in Google results, up to ~60 characters.',
+    'admin.category.description_hint' => 'Description in Google results, up to ~160 characters.',
+    'admin.category.meta_placeholder' => 'Filled from the SEO template',
 ];

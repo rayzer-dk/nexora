@@ -5319,4 +5319,10 @@ return [
     'admin.customer_groups.saved' => 'Групу збережено.',
     'admin.customer_groups.invalid_code' => 'Код групи: латиниця, цифри, дефіс або підкреслення.',
     'admin.customer_groups.default_locked' => 'Групу за замовчуванням не можна видалити.',
+    'admin.category.seo' => 'SEO категорії',
+    'admin.category.seo_hint' => 'Те, що бачать пошукові системи. Порожні поля заповнюються автоматично з назви та SEO-шаблонів (Налаштування → SEO).',
+    'admin.category.h1_hint' => 'Заголовок на сторінці категорії. Порожньо — береться назва.',
+    'admin.category.title_hint' => 'Заголовок у видачі Google, до ~60 символів.',
+    'admin.category.description_hint' => 'Опис у видачі Google, до ~160 символів.',
+    'admin.category.meta_placeholder' => 'Заповниться за SEO-шаблоном',
 ];

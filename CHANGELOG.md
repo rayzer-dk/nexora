@@ -1,11 +1,8 @@
 # Changelog
 
-## 3.89.0 — 2026-10-06
+## 3.90.0 — 2026-10-06
 
-Customer groups with a real discount: the group price shows in the catalog and product page after sign-in and is taken off in the cart.
+Category editor now has its own SEO block: H1, Title, Description and an indexing switch, like products.
 
-- New "Customer groups" admin page (code, name, discount %, "not for sale items" switch, customer count); the customer card and list now pick groups from it.
-- A signed-in customer in a discounted group sees the regular price crossed out and the group price, in cards, product page and variants.
-- The cart and checkout take the group discount off the order; items already on sale can be excluded per group.
-- The cart page now also honours promotions limited to customer groups.
-- Schema 83 (mc_customer_group).
+- Category form: H1 (empty means the name), meta title, meta description, "allow indexing".
+- Empty fields keep filling automatically from the SEO templates.

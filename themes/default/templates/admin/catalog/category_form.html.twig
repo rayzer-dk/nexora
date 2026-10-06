@@ -15,6 +15,12 @@
 </section>{% include '@storefront/admin/_ai_box.html.twig' with {task:'category_text', label: ui_text('admin.ai.generate_category'), inputs:{name:'[name=name]'}, outputs:{top:'[name=description]'}} only %}
 <section class="admin-panel"><h2>{{ ui_text('admin.category.texts') }}</h2><p class="admin-help">{{ ui_text('admin.category.texts_hint') }}</p>
 <label><span>{{ ui_text('admin.category.text_single') }}</span><textarea name="description" rows="8" maxlength="100000" data-rich-editor>{{ (category.description|default('')) ~ (category.description_bottom|default('')) }}</textarea><small>{{ ui_text('admin.category.text_single_hint') }}</small></label>
-</section><div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ editing ? ui_text('admin.catalog.category_form.zberehty_katehoriiu') : ui_text('admin.catalog.category_form.stvoryty_katehoriiu') }}</button></div></form>
+</section>
+<section class="admin-panel"><h2>{{ ui_text('admin.category.seo') }}</h2><p class="admin-help">{{ ui_text('admin.category.seo_hint') }}</p><div class="admin-form-grid">
+<label><span>H1</span><input type="text" name="h1" maxlength="255" value="{{ category.h1|default('') }}" placeholder="{{ category.name|default('')|e('html_attr') }}"><small>{{ ui_text('admin.category.h1_hint') }}</small></label>
+<label><span>Title</span><input type="text" name="meta_title" maxlength="255" value="{{ category.meta_title|default('') }}" placeholder="{{ ui_text('admin.category.meta_placeholder')|e('html_attr') }}"><small>{{ ui_text('admin.category.title_hint') }}</small></label>
+<label class="admin-form-wide"><span>Description</span><textarea name="meta_description" rows="3" maxlength="500" placeholder="{{ ui_text('admin.category.meta_placeholder')|e('html_attr') }}">{{ category.meta_description|default('') }}</textarea><small>{{ ui_text('admin.category.description_hint') }}</small></label>
+{% if editing %}<label class="admin-switch admin-form-wide"><input type="hidden" name="seo_present" value="1"><input type="checkbox" role="switch" name="indexable" value="1"{{ category.indexable|default(1) ? ' checked' : '' }}><span>{{ ui_text('admin.catalog.product_form.indexable') }}</span></label>{% endif %}
+</div></section><div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ editing ? ui_text('admin.catalog.category_form.zberehty_katehoriiu') : ui_text('admin.catalog.category_form.stvoryty_katehoriiu') }}</button></div></form>
 {% include '@storefront/admin/extension/slot.html.twig' with {slot:'admin.category.after_main'} only %}
 {{ shell.end() }}

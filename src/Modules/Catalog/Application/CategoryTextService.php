@@ -30,6 +30,16 @@ final readonly class CategoryTextService
         $this->fallbackTexts->fillCategory($this->db, $storeId, $categoryId);
     }
 
+    /** H1, meta title and meta description of a category in one language; empty values fall back to the name and the SEO templates. */
+    public function saveSeo(int $categoryId, int $storeId, string $locale, string $h1, string $metaTitle, string $metaDescription): void
+    {
+        $cut = static fn (string $v, int $n): ?string => ($v = trim(strip_tags($v))) === '' ? null : mb_substr($v, 0, $n, 'UTF-8');
+        $this->db->executeStatement(
+            'UPDATE mc_category_translation SET h1=?,meta_title=?,meta_description=? WHERE category_id=? AND store_id=? AND locale=?',
+            [$cut($h1, 255), $cut($metaTitle, 255), $cut($metaDescription, 500), $categoryId, $storeId, $locale],
+        );
+    }
+
     private function clean(string $html): ?string
     {
         $html = trim($html);

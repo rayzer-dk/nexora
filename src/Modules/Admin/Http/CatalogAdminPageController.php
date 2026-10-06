@@ -194,6 +194,7 @@ final class CatalogAdminPageController extends AbstractController
                         (int) $request->request->get('sort_order', 0),
                     ));
                     $this->categoryTexts->save((int) $created['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), '');
+                    $this->categoryTexts->saveSeo((int) $created['id'], $context->storeId, $context->locale, (string) $request->request->get('h1', ''), (string) $request->request->get('meta_title', ''), (string) $request->request->get('meta_description', ''));
                     $this->saveCategoryIcon((int) $created['id'], $request);
                     if (($imageId = $this->categoryImages->imageFromRequest($request)) !== false) {
                         $this->categoryImages->set((int) $created['id'], $context->storeId, $imageId, (string) $request->request->get('name', ''));
@@ -277,6 +278,10 @@ final class CatalogAdminPageController extends AbstractController
                         status: (string) $request->request->get('status', 'active'),
                     ));
                     $this->categoryTexts->save((int) $category['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), '');
+                    $this->categoryTexts->saveSeo((int) $category['id'], $context->storeId, $context->locale, (string) $request->request->get('h1', ''), (string) $request->request->get('meta_title', ''), (string) $request->request->get('meta_description', ''));
+                    if ($request->request->has('seo_present')) {
+                        $this->seoUrls->setIndexable($context->storeId, $context->locale, \Commerce\Modules\Seo\Domain\SeoEntityType::Category, (string) $request->attributes->get('publicId', ''), $request->request->getBoolean('indexable'));
+                    }
                     $this->saveCategoryIcon((int) $category['id'], $request);
                     if (($imageId = $this->categoryImages->imageFromRequest($request)) !== false) {
                         $this->categoryImages->set((int) $category['id'], $context->storeId, $imageId, (string) $request->request->get('name', ''));
@@ -295,6 +300,7 @@ final class CatalogAdminPageController extends AbstractController
                 'status' => (string) $request->request->get('status', $category['status']),
                 'description' => (string) $request->request->get('description', ''),
                 'description_bottom' => (string) $request->request->get('description_bottom', ''),
+                'h1' => (string) $request->request->get('h1', ''), 'meta_title' => (string) $request->request->get('meta_title', ''), 'meta_description' => (string) $request->request->get('meta_description', ''),
             ]);
         }
         $category['image'] = $this->categoryImages->forCategory((int) $category['id']);
