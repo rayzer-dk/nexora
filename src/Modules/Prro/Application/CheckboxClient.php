@@ -25,7 +25,7 @@ final class CheckboxClient
         $data = $this->request('POST', $cfg, '/cashier/signin', null, ['login' => $cfg['login'], 'password' => $cfg['password']]);
         $token = (string) ($data['access_token'] ?? '');
         if ($token === '') {
-            throw new \RuntimeException('Checkbox did not return an access token.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('admin.prro.error.no_token'));
         }
 
         return $token;

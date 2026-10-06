@@ -31,7 +31,7 @@ final class SupplierFeedParser
     {
         $reader = new \XMLReader();
         if (!$reader->open($path, null, LIBXML_NONET | LIBXML_NOCDATA | LIBXML_COMPACT)) {
-            throw new \DomainException('The feed is not readable XML.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.suppliers.error.feed_not_xml'));
         }
         $count = 0;
         try {
@@ -76,7 +76,7 @@ final class SupplierFeedParser
         $tags = ['sku' => $mapping['sku'] ?? 'sku', 'name' => $mapping['name'] ?? 'name', 'price' => $mapping['price'] ?? 'price', 'stock' => $mapping['stock'] ?? 'stock', 'gtin' => $mapping['gtin'] ?? 'gtin'];
         $reader = new \XMLReader();
         if (!$reader->open($path, null, LIBXML_NONET | LIBXML_NOCDATA | LIBXML_COMPACT)) {
-            throw new \DomainException('The feed is not readable XML.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.suppliers.error.feed_not_xml'));
         }
         $count = 0;
         try {
@@ -113,7 +113,7 @@ final class SupplierFeedParser
     {
         $fh = fopen($path, 'rb');
         if ($fh === false) {
-            throw new \DomainException('The feed is not readable.');
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.suppliers.error.feed_unreadable'));
         }
         try {
             $first = (string) fgets($fh);
@@ -149,7 +149,7 @@ final class SupplierFeedParser
             $iStock = $col('stock', ['stock', 'quantity', 'qty', "\u{043e}\u{0441}\u{0442}\u{0430}\u{0442}\u{043e}\u{043a}", "\u{0437}\u{0430}\u{043b}\u{0438}\u{0448}\u{043e}\u{043a}", "\u{043d}\u{0430}\u{043b}\u{0438}\u{0447}\u{0438}\u{0435}", "\u{043d}\u{0430}\u{044f}\u{0432}\u{043d}\u{0456}\u{0441}\u{0442}\u{044c}"]);
             $iGtin = $col('gtin', ['gtin', 'barcode', 'ean', "\u{0448}\u{0442}\u{0440}\u{0438}\u{0445}\u{043a}\u{043e}\u{0434}"]);
             if ($iSku === null || $iPrice === null) {
-                throw new \DomainException('The CSV needs a sku and a price column.');
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.suppliers.error.csv_columns'));
             }
             $count = 0;
             while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {

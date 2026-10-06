@@ -5461,4 +5461,8 @@ return [
     'admin.prro.error.refund_not_ready' => 'Повернення ще не завершене.',
     'admin.prro.error.sale_receipt_missing' => 'Спочатку потрібен фіскальний чек продажу цього замовлення.',
     'admin.prro.return_confirm' => 'Видати фіскальний чек повернення? Це офіційний фіскальний документ, його не можна скасувати.',
+    'admin.prro.error.no_token' => 'Checkbox не повернув ключ доступу: перевірте логін, пароль і ліцензійний ключ.',
+    'admin.suppliers.error.csv_columns' => 'У CSV потрібні колонки з артикулом (sku) і ціною (price).',
+    'admin.suppliers.error.feed_not_xml' => 'Прайс не читається як XML.',
+    'admin.suppliers.error.feed_unreadable' => 'Прайс не вдалося прочитати.',
 ];

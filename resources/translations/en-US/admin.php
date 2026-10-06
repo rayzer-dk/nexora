@@ -5466,4 +5466,8 @@ return [
     'admin.prro.error.refund_not_ready' => 'The refund is not completed yet.',
     'admin.prro.error.sale_receipt_missing' => 'The sale receipt of this order is needed first.',
     'admin.prro.return_confirm' => 'Issue a fiscal return receipt? It is an official fiscal document and cannot be undone.',
+    'admin.prro.error.no_token' => 'Checkbox did not return an access token: check the login, password and license key.',
+    'admin.suppliers.error.csv_columns' => 'The CSV needs a sku and a price column.',
+    'admin.suppliers.error.feed_not_xml' => 'The feed is not readable XML.',
+    'admin.suppliers.error.feed_unreadable' => 'The feed is not readable.',
 ];
