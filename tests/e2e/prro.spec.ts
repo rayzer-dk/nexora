@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 
 const MOCK = 'http://127.0.0.1:8099';
@@ -24,10 +25,15 @@ test('the cash register issues one fiscal receipt for a paid order through Check
   await Promise.all([page.waitForLoadState('domcontentloaded'), form.locator('button[name="action"][value="test"]').click()]);
   await expect(page.locator('.admin-notice.is-success')).toBeVisible();
 
-  // A paid order that goes through the register by hand.
-  await page.goto('/admin/orders?payment_status=paid', { waitUntil: 'domcontentloaded' });
-  const href = await page.locator('table.admin-table tbody tr a[href^="/admin/orders/"]').first().getAttribute('href');
-  expect(href).toBeTruthy();
+  // A paid order with a refund goes through the register by hand: first the sale, then the return.
+  let seeded: { order: string; refund: number } | null = null;
+  try {
+    seeded = JSON.parse(execFileSync('php', ['tests/e2e/seed-refund.php', 'create'], { encoding: 'utf8', env: process.env, stdio: ['ignore', 'pipe', 'ignore'] }).trim()) as { order: string; refund: number };
+  } catch {
+    // No paid order to refund: the test is skipped below.
+  }
+  test.skip(seeded === null, 'No paid order is available to refund.');
+  const href = `/admin/orders/${seeded!.order}`;
   await page.goto(href!, { waitUntil: 'domcontentloaded' });
   const issue = page.locator('form[action$="/fiscalize"] button[type="submit"]');
   await expect(issue).toBeVisible();
@@ -44,9 +50,22 @@ test('the cash register issues one fiscal receipt for a paid order through Check
   const goodsSum = goods.reduce((s, g) => s + Math.round((g.good.price * g.quantity) / 1000) - (g.discounts?.[0]?.value ?? 0), 0);
   expect(goodsSum, 'goods after discounts must equal the payment').toBe(payments[0].value);
 
+  // The return receipt points at the sale receipt and marks the goods as returned.
+  const returnButton = page.locator('form[action*="/fiscalize-refund/"] button[type="submit"]');
+  await expect(returnButton).toBeVisible();
+  await Promise.all([page.waitForLoadState('domcontentloaded'), returnButton.click()]);
+  await expect(page.locator('.admin-notice.is-success')).toBeVisible();
+  const after = (await (await request.get(`${MOCK}/__log`)).json()) as Array<{ method: string; payload: Record<string, unknown> }>;
+  const sales = after.filter((c) => c.method === 'checkbox/receipts/sell');
+  expect(sales).toHaveLength(2);
+  expect(sales[1].payload.related_receipt_id).toBe(sales[0].payload.id);
+  expect((sales[1].payload.goods as Array<{ is_return?: boolean }>)[0].is_return).toBe(true);
+
   // Once only: a second press does not send another receipt.
   await page.goto(href!, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('form[action$="/fiscalize"]')).toHaveCount(0);
+
+  execFileSync('php', ['tests/e2e/seed-refund.php', 'delete', String(seeded!.refund)], { encoding: 'utf8', env: process.env });
 
   // Leave the register off for other tests.
   await page.goto('/admin/system/prro', { waitUntil: 'domcontentloaded' });

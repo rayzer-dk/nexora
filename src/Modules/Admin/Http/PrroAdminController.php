@@ -89,6 +89,27 @@ final class PrroAdminController extends AbstractController
         return $this->redirectToRoute('admin_order_view', ['publicId' => $publicId]);
     }
 
+    #[Route('/admin/orders/{publicId}/fiscalize-refund/{refundId}', name: 'admin_order_fiscalize_refund', requirements: ['refundId' => '\\d+'], methods: ['POST'])]
+    public function fiscalizeRefund(string $publicId, int $refundId, Request $request): Response
+    {
+        $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('prro_refund_' . $refundId, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->fiscal->fiscalizeRefund($refundId);
+            $this->addFlash('success', CanonicalUiText::get('admin.prro.return_done'));
+        } catch (CheckboxException $e) {
+            $this->addFlash('error', CanonicalUiText::get('admin.prro.provider_error', ['message' => $e->getMessage()]));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $this->errorText($e->getMessage()));
+        } catch (\Throwable $e) {
+            $this->addFlash('error', CanonicalUiText::get('admin.prro.provider_error', ['message' => mb_substr($e->getMessage(), 0, 200)]));
+        }
+
+        return $this->redirectToRoute('admin_order_view', ['publicId' => $publicId]);
+    }
+
     private function errorText(string $code): string
     {
         return match ($code) {
@@ -97,6 +118,8 @@ final class PrroAdminController extends AbstractController
             'payment_method_skipped' => CanonicalUiText::get('admin.prro.error.payment_method_skipped'),
             'order_not_paid' => CanonicalUiText::get('admin.prro.error.order_not_paid'),
             'totals_mismatch' => CanonicalUiText::get('admin.prro.error.totals_mismatch'),
+            'refund_not_ready' => CanonicalUiText::get('admin.prro.error.refund_not_ready'),
+            'sale_receipt_missing' => CanonicalUiText::get('admin.prro.error.sale_receipt_missing'),
             default => CanonicalUiText::get('admin.prro.error.unknown'),
         };
     }

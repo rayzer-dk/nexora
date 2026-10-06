@@ -1,11 +1,11 @@
 # Changelog
 
-## 3.95.0 — 2026-10-06
+## 3.96.0 — 2026-10-06
 
-Cash register (PRRO) through Checkbox: fiscal receipts for paid orders.
+Return receipts for the cash register (PRRO).
 
-- New "Cash register (PRRO)" page: Checkbox account (cashier login, password and license key stored encrypted), test or live environment, a connection check, automatic receipts for paid orders or manual only, receipt e-mail to the customer, payment methods that are skipped (bank transfer and B2B invoice by default).
-- The order card shows the fiscal number and a link to the receipt, or a button to issue one by hand; one receipt per order, safe to retry.
-- A scheduler task issues automatic receipts every 5 minutes; order discounts, gift card and bonus points are spread over the receipt lines so the receipt equals the payment.
-- Tested against a stand-in of the Checkbox API; it has not been run against the live service, so check it on the test environment with your own keys first.
-- Schema 87.
+- A succeeded refund gets a return receipt in Checkbox, linked to the sale receipt: a full refund returns every line of the order, a partial one returns the refunded amount.
+- The order card shows the return receipt number per refund, or a button to issue it by hand; the scheduler issues them automatically when automatic receipts are on. A sale receipt is required first.
+- New end-to-end checks for the return receipt and for a minimum quantity with a multiple (from 3 pieces, in threes).
+- Tested against a stand-in of the Checkbox API; check it on the Checkbox test environment with your own keys before going live.
+- Schema 88.

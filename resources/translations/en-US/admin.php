@@ -5460,4 +5460,10 @@ return [
     'admin.tip.prro.1' => 'A receipt is issued only for paid orders, once per order.',
     'admin.tip.prro.2' => 'Bank transfers and B2B invoices are skipped automatically; a receipt can still be issued by hand for any paid order.',
     'admin.tip.prro.3' => 'Check the settings on the test environment first with the Check connection button.',
+    'admin.prro.return_col' => 'Return receipt',
+    'admin.prro.return_issue' => 'Issue a return receipt',
+    'admin.prro.return_done' => 'Return receipt issued.',
+    'admin.prro.error.refund_not_ready' => 'The refund is not completed yet.',
+    'admin.prro.error.sale_receipt_missing' => 'The sale receipt of this order is needed first.',
+    'admin.prro.return_confirm' => 'Issue a fiscal return receipt? It is an official fiscal document and cannot be undone.',
 ];

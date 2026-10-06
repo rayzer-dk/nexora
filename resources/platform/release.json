@@ -1,6 +1,6 @@
 {
   "platform": "Nexora Commerce",
-  "version": "3.95.0",
+  "version": "3.96.0",
   "channel": "production",
   "region_profile": "EU-UA",
   "extension_api": "2.0",
@@ -25,7 +25,7 @@
     "playwright": "1.63.0",
     "axe_core_playwright": "4.13.0"
   },
-  "database_schema": "87",
+  "database_schema": "88",
   "built_at": "2026-09-28",
   "capabilities": [
     "multistore",
@@ -357,7 +357,7 @@
     "store-scoped-media-library"
   ],
   "database": {
-    "schema": "87",
+    "schema": "88",
     "preferred": [
       "mysql-8.4-lts",
       "mariadb-11.4-lts"
@@ -369,7 +369,7 @@
       "mariadb-10.11-lts"
     ]
   },
-  "schema_version": 87,
+  "schema_version": 88,
   "license": "MIT",
   "features": [
     "review-photo-uploads",

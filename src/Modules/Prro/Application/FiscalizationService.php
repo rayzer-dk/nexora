@@ -19,7 +19,15 @@ final class FiscalizationService
     /** @return array<string,mixed>|null */
     public function receiptOf(int $orderId): ?array
     {
-        $row = $this->db->fetchAssociative('SELECT * FROM mc_fiscal_receipt WHERE order_id=?', [$orderId]);
+        $row = $this->db->fetchAssociative("SELECT * FROM mc_fiscal_receipt WHERE order_id=? AND kind='sale'", [$orderId]);
+
+        return is_array($row) ? $row : null;
+    }
+
+    /** @return array<string,mixed>|null */
+    public function returnReceiptOf(int $refundId): ?array
+    {
+        $row = $this->db->fetchAssociative("SELECT * FROM mc_fiscal_receipt WHERE kind='return' AND refund_id=?", [$refundId]);
 
         return is_array($row) ? $row : null;
     }
@@ -34,13 +42,26 @@ final class FiscalizationService
         $rows = $this->db->fetchFirstColumn(
             "SELECT o.id FROM mc_sales_order o
              JOIN mc_payment p ON p.order_id=o.id AND p.status IN ('paid','partially_refunded')
-             LEFT JOIN mc_fiscal_receipt f ON f.order_id=o.id
+             LEFT JOIN mc_fiscal_receipt f ON f.order_id=o.id AND f.kind='sale'
              WHERE o.status NOT IN ('cancelled','expired') AND (f.id IS NULL OR (f.status='error' AND f.attempts<?))
                AND o.created_at>=DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)
              ORDER BY o.id LIMIT " . max(1, min(100, $limit)),
             [self::MAX_ATTEMPTS],
         );
         $done = 0;
+        foreach ($this->db->fetchFirstColumn(
+            "SELECT r.id FROM mc_payment_refund r JOIN mc_payment p ON p.id=r.payment_id JOIN mc_fiscal_receipt s ON s.order_id=p.order_id AND s.kind='sale' AND s.status='done'
+             LEFT JOIN mc_fiscal_receipt f ON f.kind='return' AND f.refund_id=r.id
+             WHERE r.status='succeeded' AND (f.id IS NULL OR (f.status='error' AND f.attempts<?)) ORDER BY r.id LIMIT " . max(1, min(100, $limit)),
+            [self::MAX_ATTEMPTS],
+        ) as $refundId) {
+            try {
+                $this->fiscalizeRefund((int) $refundId);
+                ++$done;
+            } catch (\Throwable) {
+                // Stored on the receipt row; the next run retries.
+            }
+        }
         foreach ($rows as $orderId) {
             try {
                 $this->fiscalize((int) $orderId, false);
@@ -82,36 +103,96 @@ final class FiscalizationService
         if ($existing === null) {
             $this->db->insert('mc_fiscal_receipt', ['order_id' => $orderId, 'provider' => 'checkbox', 'receipt_uuid' => $uuid, 'status' => 'sending', 'total_minor' => (int) $order['total_minor'], 'attempts' => 0, 'created_at' => $now, 'updated_at' => $now]);
         }
-        $this->db->executeStatement("UPDATE mc_fiscal_receipt SET status='sending',attempts=attempts+1,updated_at=? WHERE order_id=?", [$now, $orderId]);
+        $this->db->executeStatement("UPDATE mc_fiscal_receipt SET status='sending',attempts=attempts+1,updated_at=? WHERE order_id=? AND kind='sale'", [$now, $orderId]);
 
         try {
             $body = $this->buildReceipt($order, $uuid, $provider === 'cash_on_delivery' ? 'CASH' : 'CASHLESS', $cfg['send_email']);
-            $token = $this->client->token($cfg);
-            $this->client->ensureShift($cfg, $token);
-            try {
-                $created = $this->client->sell($cfg, $token, $body);
-            } catch (CheckboxException $e) {
-                if ($e->status !== 409 && !str_contains(mb_strtolower($e->getMessage()), 'already')) {
-                    throw $e;
-                }
-                $created = $this->client->receipt($cfg, $token, $uuid); // the same receipt id was accepted before
-            }
-            $id = (string) ($created['id'] ?? $uuid);
-            $fiscal = (string) ($created['fiscal_code'] ?? '');
-            for ($i = 0; $fiscal === '' && $i < 3; ++$i) {
-                usleep(400000);
-                $fiscal = (string) ($this->client->receipt($cfg, $token, $id)['fiscal_code'] ?? '');
-            }
-            $this->db->update('mc_fiscal_receipt', [
-                'status' => 'done', 'fiscal_code' => $fiscal !== '' ? mb_substr($fiscal, 0, 64) : null,
-                'receipt_url' => $this->client->receiptUrl($cfg['environment'], $id), 'error_text' => null, 'updated_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'),
-            ], ['order_id' => $orderId]);
+            $this->submit($cfg, $uuid, $body, "kind='sale' AND order_id=" . $orderId);
         } catch (\Throwable $e) {
-            $this->db->update('mc_fiscal_receipt', ['status' => 'error', 'error_text' => mb_substr($e->getMessage(), 0, 480), 'updated_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u')], ['order_id' => $orderId]);
+            $this->db->update('mc_fiscal_receipt', ['status' => 'error', 'error_text' => mb_substr($e->getMessage(), 0, 480), 'updated_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u')], ['order_id' => $orderId, 'kind' => 'sale']);
             throw $e;
         }
 
         return $this->receiptOf($orderId) ?? [];
+    }
+
+    /** @return array<string,mixed> the return receipt row */
+    public function fiscalizeRefund(int $refundId): array
+    {
+        $cfg = $this->settings->get();
+        if (!$cfg['enabled'] || !$cfg['configured']) {
+            throw new \DomainException('prro_not_configured');
+        }
+        $existing = $this->returnReceiptOf($refundId);
+        if ($existing !== null && $existing['status'] === 'done') {
+            return $existing;
+        }
+        $refund = $this->db->fetchAssociative("SELECT r.id,r.amount_minor,r.status,p.order_id,p.amount_minor AS paid_minor,p.provider_code FROM mc_payment_refund r JOIN mc_payment p ON p.id=r.payment_id WHERE r.id=?", [$refundId]);
+        if (!is_array($refund) || $refund['status'] !== 'succeeded') {
+            throw new \DomainException('refund_not_ready');
+        }
+        $orderId = (int) $refund['order_id'];
+        $sale = $this->receiptOf($orderId);
+        if ($sale === null || $sale['status'] !== 'done') {
+            throw new \DomainException('sale_receipt_missing');
+        }
+        $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
+        $uuid = $existing['receipt_uuid'] ?? Uuid::v4()->toRfc4122();
+        if ($existing === null) {
+            $this->db->insert('mc_fiscal_receipt', ['order_id' => $orderId, 'kind' => 'return', 'refund_id' => $refundId, 'provider' => 'checkbox', 'receipt_uuid' => $uuid, 'status' => 'sending', 'total_minor' => (int) $refund['amount_minor'], 'attempts' => 0, 'created_at' => $now, 'updated_at' => $now]);
+        }
+        $this->db->executeStatement("UPDATE mc_fiscal_receipt SET status='sending',attempts=attempts+1,updated_at=? WHERE kind='return' AND refund_id=?", [$now, $refundId]);
+        try {
+            $order = $this->db->fetchAssociative('SELECT * FROM mc_sales_order WHERE id=?', [$orderId]) ?: [];
+            $type = (string) $refund['provider_code'] === 'cash_on_delivery' ? 'CASH' : 'CASHLESS';
+            $amount = (int) $refund['amount_minor'];
+            if ($amount >= (int) $refund['paid_minor']) {
+                $body = $this->buildReceipt($order, $uuid, $type, false); // the whole order comes back: same lines, marked as returned
+                foreach ($body['goods'] as &$good) {
+                    $good['is_return'] = true;
+                }
+                unset($good);
+            } else {
+                $body = ['id' => $uuid, 'goods' => [['good' => ['code' => 'REFUND', 'name' => 'Partial refund', 'price' => $amount], 'quantity' => 1000, 'is_return' => true]], 'payments' => [['type' => $type, 'value' => $amount]]];
+            }
+            $body['related_receipt_id'] = (string) $sale['receipt_uuid'];
+            $this->submit($cfg, $uuid, $body, "kind='return' AND refund_id=" . $refundId);
+        } catch (\Throwable $e) {
+            $this->db->executeStatement("UPDATE mc_fiscal_receipt SET status='error',error_text=?,updated_at=? WHERE kind='return' AND refund_id=?", [mb_substr($e->getMessage(), 0, 480), (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'), $refundId]);
+            throw $e;
+        }
+
+        return $this->returnReceiptOf($refundId) ?? [];
+    }
+
+    /**
+     * Sends a receipt, waits briefly for its fiscal number and stores the result on the row picked by $where (built from integers only).
+     *
+     * @param array<string,mixed> $cfg
+     * @param array<string,mixed> $body
+     */
+    private function submit(array $cfg, string $uuid, array $body, string $where): void
+    {
+        $token = $this->client->token($cfg);
+        $this->client->ensureShift($cfg, $token);
+        try {
+            $created = $this->client->sell($cfg, $token, $body);
+        } catch (CheckboxException $e) {
+            if ($e->status !== 409 && !str_contains(mb_strtolower($e->getMessage()), 'already')) {
+                throw $e;
+            }
+            $created = $this->client->receipt($cfg, $token, $uuid);
+        }
+        $id = (string) ($created['id'] ?? $uuid);
+        $fiscal = (string) ($created['fiscal_code'] ?? '');
+        for ($i = 0; $fiscal === '' && $i < 3; ++$i) {
+            usleep(400000);
+            $fiscal = (string) ($this->client->receipt($cfg, $token, $id)['fiscal_code'] ?? '');
+        }
+        $this->db->executeStatement(
+            "UPDATE mc_fiscal_receipt SET status='done',fiscal_code=?,receipt_url=?,error_text=NULL,updated_at=? WHERE " . $where,
+            [$fiscal !== '' ? mb_substr($fiscal, 0, 64) : null, $this->client->receiptUrl($cfg['environment'], $id), (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u')],
+        );
     }
 
     /** Signs in and reads the shift: used by the "check connection" button. */

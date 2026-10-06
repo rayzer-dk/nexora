@@ -291,10 +291,15 @@ final class OrderAdminController extends AbstractController
         $order['refundable_display'] = $this->money($order['refundable_minor'], (string) $order['currency']);
 
         $prroRaw = json_decode((string) $this->db->fetchOne("SELECT setting_value FROM mc_system_setting WHERE setting_key='prro.settings'"), true);
+        $returnReceipts = [];
+        foreach ($this->db->fetchAllAssociative("SELECT refund_id,status,fiscal_code,receipt_url FROM mc_fiscal_receipt WHERE order_id=? AND kind='return'", [(int) $order['id']]) as $rr) {
+            $returnReceipts[(int) $rr['refund_id']] = $rr;
+        }
         $fiscalReceipt = $this->db->fetchAssociative('SELECT status,fiscal_code,receipt_url,error_text FROM mc_fiscal_receipt WHERE order_id=?', [(int) $order['id']]) ?: null;
         return $this->render('@storefront/admin/orders/view.html.twig', [
             'prro_enabled' => is_array($prroRaw) && !empty($prroRaw['enabled']),
             'fiscal_receipt' => $fiscalReceipt,
+            'return_receipts' => $returnReceipts,
             'order' => $order,
             'items' => $items,
             'payment' => $payment,
