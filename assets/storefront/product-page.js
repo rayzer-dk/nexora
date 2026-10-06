@@ -14,7 +14,7 @@ class CommerceQuantity extends HTMLElement {
         };
 
         minus.addEventListener('click', () => { normalize(); input.stepDown(); normalize(); input.dispatchEvent(new Event('change', { bubbles: true })); });
-        plus.addEventListener('click', () => { normalize(); input.stepUp(); normalize(); input.dispatchEvent(new Event('change', { bubbles: true })); });
+        plus.addEventListener('click', () => { normalize(); const before = input.value; input.stepUp(); normalize(); if (input.value === before && input.max !== '') { window.storefrontToast?.(t('js_qty_max', { max: input.max }), 'error'); return; } input.dispatchEvent(new Event('change', { bubbles: true })); });
         input.addEventListener('change', normalize);
     }
 }

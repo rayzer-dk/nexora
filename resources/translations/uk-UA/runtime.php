@@ -2101,4 +2101,8 @@ return [
     'supplier.runtime.empty' => 'Прайс порожній.',
     'scheduler.label.supplier_sync' => 'Синхронізація постачальників',
     'scheduler.description.supplier_sync' => 'Читає прайси постачальників за їхнім інтервалом і готує зміни цін і залишків (або застосовує їх у автоматичному режимі).',
+    'forum.runtime.report_self' => 'На себе скаржитися не можна.',
+    'forum.runtime.report_sent' => 'Скаргу надіслано модераторам.',
+    'forum.runtime.not_moderator' => 'Дія недоступна: ви не модератор цієї теми.',
+    'forum.runtime.moderated' => 'Готово.',
 ];

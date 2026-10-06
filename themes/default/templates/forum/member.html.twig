@@ -29,6 +29,17 @@
         </details>
     {% endif %}
 
+    {% if app.user and app.user.id != member.customer_id %}
+        <details class="fx-pop fx-member-report"><summary class="fx-act">{{ ui_icon('flag', 14) }}{{ ui_text('forum_report_member') }}</summary>
+            <form method="post" action="{{ path('storefront_forum_member_report',{id:member.customer_id}) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_member_report_' ~ member.customer_id) }}">
+                <select name="reason"><option value="spam">{{ ui_text('forum_report_reason_spam') }}</option><option value="abuse">{{ ui_text('forum_report_reason_abuse') }}</option><option value="offtopic">{{ ui_text('forum_report_reason_offtopic') }}</option><option value="misinformation">{{ ui_text('forum_report_reason_misinformation') }}</option><option value="other">{{ ui_text('forum_report_reason_other') }}</option></select>
+                <input type="text" name="details" maxlength="1000" placeholder="{{ ui_text('forum_report_details') }}">
+                <button type="submit" class="button button--secondary">{{ ui_text('forum_send_report') }}</button>
+            </form>
+        </details>
+    {% endif %}
+
     <div class="forum-topic-list">
         {% for item in activity %}
             <a class="forum-topic-row" href="{{ path('storefront_forum_topic',{id:item.topic_id,slug:item.slug}) }}#post-{{ item.post_id }}">

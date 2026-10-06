@@ -170,7 +170,7 @@ final class ProductBadgeService
             foreach ($items as &$item) {
                 $id = (int) ($item['internal_id'] ?? 0);
                 $match = match ($rule['kind']) {
-                    'sale' => !empty($item['compare_at_price']),
+                    'sale' => (int) ($item['discount_percent'] ?? 0) > 0,
                     default => isset($set[$id]),
                 };
                 if ($match && count($item['badges']) < 3) {

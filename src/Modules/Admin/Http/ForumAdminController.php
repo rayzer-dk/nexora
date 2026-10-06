@@ -249,7 +249,7 @@ final class ForumAdminController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        return $this->render('@storefront/admin/forum/topic.html.twig', ['platform_version' => PlatformVersion::VERSION] + $data);
+        return $this->render('@storefront/admin/forum/topic.html.twig', ['platform_version' => PlatformVersion::VERSION, 'moderators' => $this->staff->moderators($id)] + $data);
     }
 
     #[Route('/admin/forum/topic/{id}/reply', name: 'admin_forum_topic_reply', methods: ['POST'], requirements: ['id' => '\\d+'])]
@@ -284,6 +284,36 @@ final class ForumAdminController extends AbstractController
         }
 
         return $action === 'delete' ? $this->redirectToRoute('admin_forum') : $this->redirectToRoute('admin_forum_topic_view', ['id' => $id]);
+    }
+
+    #[Route('/admin/forum/topic/{id}/moderators/add', name: 'admin_forum_topic_moderator_add', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function addModerator(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_moderators_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->staff->addModerator($context->storeId, $id, (string) $request->request->get('who', ''));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.flash.moderator_added'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_forum_topic_view', ['id' => $id]);
+    }
+
+    #[Route('/admin/forum/topic/{id}/moderators/{customerId}/remove', name: 'admin_forum_topic_moderator_remove', methods: ['POST'], requirements: ['id' => '\\d+', 'customerId' => '\\d+'])]
+    public function removeModerator(Request $request, int $id, int $customerId): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_moderators_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->staff->removeModerator($context->storeId, $id, $customerId);
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.flash.moderator_removed'));
+
+        return $this->redirectToRoute('admin_forum_topic_view', ['id' => $id]);
     }
 
     #[Route('/admin/forum/message/{id}/{action}', name: 'admin_forum_post_staff', methods: ['POST'], requirements: ['id' => '\\d+', 'action' => 'hide|restore|delete'])]

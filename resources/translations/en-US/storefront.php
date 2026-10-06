@@ -1426,4 +1426,9 @@ return [
     'landing.ui.rights' => 'All rights reserved.',
     'landing.ui.privacy' => 'Privacy policy',
     'landing.ui.privacy_note' => 'By sending you agree to the processing of your data.',
+    'js_qty_max' => 'No more than %max% available.',
+    'forum_report_member' => 'Report this member',
+    'forum_mod_hide' => 'Hide',
+    'forum_mod_delete' => 'Delete',
+    'forum_mod_delete_confirm' => 'Delete this message?',
 ];

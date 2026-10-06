@@ -149,3 +149,4 @@
 .fx-avatar-edit { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-3); }
 img.fx-avatar { border-radius: var(--mc-radius-full); object-fit: cover; }
 .fx-extras { display: grid; gap: var(--mc-space-2); }
+.fx-member-report { margin: var(--mc-space-3) 0; }

@@ -53,7 +53,7 @@ function build() {
     const minus = event.target.closest('[data-drawer-minus]');
     if (plus || minus) {
       const input = (plus || minus).closest('form')?.querySelector('[data-drawer-qty]');
-      if (input) { if (plus) input.stepUp(); else input.stepDown(); queueUpdate(input.form); }
+      if (input) { const before = input.value; if (plus) input.stepUp(); else input.stepDown(); if (plus && input.value === before && input.max !== '') { window.storefrontToast?.((window.MC_I18N?.js_qty_max || '%max%').replace('%max%', input.max), 'error'); return; } queueUpdate(input.form); }
     }
   });
   root.addEventListener('change', (event) => { if (event.target.matches('[data-drawer-qty]')) queueUpdate(event.target.form); });

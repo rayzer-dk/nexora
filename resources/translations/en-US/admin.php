@@ -5279,4 +5279,13 @@ return [
     'admin.suppliers.deleted' => 'Supplier deleted.',
     'admin.suppliers.run_done' => 'Done: %rows% rows, %changed% changes, %new% new, %applied% applied.',
     'admin.suppliers.applied' => 'Changes applied: %count%.',
+    'admin.forum.attention' => 'Forum: reports and posts waiting for moderation',
+    'admin.forum.report_member' => 'Report about a member',
+    'admin.forum.topic_moderators' => 'Topic moderators',
+    'admin.forum.topic_moderators_hint' => 'A topic moderator is a trusted member: in this topic they can hide and delete other people’s messages (not the first one). The rest of the forum is out of their reach.',
+    'admin.forum.moderator_who' => 'Nickname or member ID',
+    'admin.forum.moderator_add' => 'Appoint',
+    'admin.forum.flash.moderator_added' => 'Topic moderator appointed.',
+    'admin.forum.flash.moderator_removed' => 'Topic moderator removed.',
+    'admin.forum.moderator_remove_confirm' => 'Remove this moderator from the topic?',
 ];

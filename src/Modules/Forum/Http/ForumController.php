@@ -32,6 +32,7 @@ final class ForumController extends AbstractController
         private readonly ForumMediaService $media,
         private readonly ForumPollService $polls,
         private readonly ForumNotificationService $notifications,
+        private readonly \Commerce\Modules\Forum\Application\ForumStaffService $staff,
         private readonly ForumAccessPolicy $accessPolicy,
         private readonly ForumProfileService $profiles,
         private readonly ForumDirectMessageService $directMessages,
@@ -198,6 +199,7 @@ final class ForumController extends AbstractController
             'cards' => $cards,
             'attachments' => $this->media->forPosts(array_map(static fn (array $p): int => (int) $p['id'], $posts)),
             'poll' => $this->polls->forTopic($id, $customerId),
+            'is_moderator' => $customerId !== null && $this->staff->isModerator($id, $customerId),
             'mentions' => $this->mentionMap($context->storeId, $posts),
             'page' => $page,
             'pages' => $pages,
@@ -518,6 +520,42 @@ final class ForumController extends AbstractController
         }
 
         return $this->redirect($this->generateUrl('storefront_forum_topic', ['id' => $id, 'slug' => $slug]) . '#post-' . $postId, 303);
+    }
+
+    #[Route('/forum/member/{id}/report', name: 'storefront_forum_member_report', methods: ['POST'], requirements: ['id' => '\\d+'], priority: 290)]
+    public function reportMember(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant($context->storeId);
+        if (!$this->isCsrfTokenValid('forum_member_report_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->community->reportMember($context->storeId, $id, $user->id(), (string) $request->request->get('reason', 'other'), (string) $request->request->get('details', ''));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.report_sent'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('storefront_forum_member', ['id' => $id]);
+    }
+
+    #[Route('/forum/t/{id}/{slug}/posts/{postId}/moderate/{action}', name: 'storefront_forum_post_moderate', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+', 'action' => 'hide|delete'], priority: 290)]
+    public function moderatePost(Request $request, int $id, string $slug, int $postId, string $action): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant($context->storeId);
+        if (!$this->isCsrfTokenValid('forum_mod_' . $postId, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->staff->moderatorPostAction($context->storeId, $id, $postId, $user->id(), $action);
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.moderated'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug]);
     }
 
     #[Route('/forum/t/{id}/{slug}/posts/{postId}/report', name: 'storefront_forum_post_report', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]

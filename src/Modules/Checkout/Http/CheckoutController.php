@@ -110,10 +110,26 @@ final class CheckoutController extends AbstractController
     /** Keeps what the buyer typed (never the card or gift codes) so a rejected order does not wipe the form. */
     private function rememberInput(Request $request): void
     {
+        // Everything the buyer typed or chose, except secrets (card and gift codes, tokens) and bot traps.
+        $skip = '/^(_token|checkout_key|_website|_rendered_at|gift|card|bonus|password|cvv|pan)/i';
         $keep = [];
-        foreach (['name','phone','email','customer_comment','company_name','company_tax_id','carrier','city_id','city_name','point_id','point_name','delivery_manual','custom_address','delivery_region','payment_method','coupon_code','purchase_order_number'] as $field) {
-            $value = $request->request->get($field, '');
-            $keep[$field] = mb_substr(is_scalar($value) ? (string) $value : '', 0, 500);
+        $collect = static function (string $name, mixed $value) use (&$keep, &$collect, $skip): void {
+            if (preg_match($skip, $name) === 1 || count($keep) >= 120) {
+                return;
+            }
+            if (is_array($value)) {
+                foreach ($value as $key => $nested) {
+                    $collect($name . '[' . (is_scalar($key) ? (string) $key : '') . ']', $nested);
+                }
+
+                return;
+            }
+            if (is_scalar($value)) {
+                $keep[$name] = mb_substr((string) $value, 0, 500);
+            }
+        };
+        foreach ($request->request->all() as $field => $value) {
+            $collect((string) $field, $value);
         }
         $this->flashBag($request)?->set('checkout_old', [$keep]);
     }

@@ -496,4 +496,8 @@ return [
     'supplier.runtime.empty' => 'Прайс пустой.',
     'scheduler.label.supplier_sync' => 'Синхронизация поставщиков',
     'scheduler.description.supplier_sync' => 'Читает прайсы поставщиков по их интервалу и готовит изменения цен и остатков (или применяет их в автоматическом режиме).',
+    'forum.runtime.report_self' => 'На себя жаловаться нельзя.',
+    'forum.runtime.report_sent' => 'Жалоба отправлена модераторам.',
+    'forum.runtime.not_moderator' => 'Действие недоступно: вы не модератор этой темы.',
+    'forum.runtime.moderated' => 'Готово.',
 ];

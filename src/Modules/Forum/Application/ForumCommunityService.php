@@ -148,6 +148,26 @@ final readonly class ForumCommunityService
         );
     }
 
+    public function reportMember(int $storeId, int $targetId, int $reporterId, string $reason, string $details): void
+    {
+        if ($targetId === $reporterId) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.report_self'));
+        }
+        if (!$this->connection->fetchOne("SELECT 1 FROM mc_forum_profile WHERE store_id=? AND customer_id=? LIMIT 1", [$storeId, $targetId])) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.customer_missing'));
+        }
+        if (!in_array($reason, ['spam', 'abuse', 'offtopic', 'misinformation', 'copyright', 'other'], true)) {
+            $reason = 'other';
+        }
+        $details = mb_substr(trim(strip_tags($details)), 0, 1000, 'UTF-8');
+        $this->connection->executeStatement(
+            "INSERT INTO mc_forum_report(store_id,post_id,target_customer_id,customer_id,reason,details,status,created_at)
+             VALUES (?,NULL,?,?,?,?,'open',?)
+             ON DUPLICATE KEY UPDATE reason=VALUES(reason),details=VALUES(details),status='open',created_at=VALUES(created_at),resolved_at=NULL",
+            [$storeId, $targetId, $reporterId, $reason, $details !== '' ? $details : null, $this->now()],
+        );
+    }
+
     public function editOwnPost(int $storeId, int $postId, int $customerId, string $body): void
     {
         $body = trim(str_replace(["\r\n", "\r"], "\n", strip_tags($body)));
@@ -263,12 +283,14 @@ final readonly class ForumCommunityService
     {
         $limit = max(1, min(200, $limit));
         return $this->connection->fetchAllAssociative(
-            "SELECT r.id,r.post_id,r.reason,r.details,r.created_at,
+            "SELECT r.id,r.post_id,r.target_customer_id,r.reason,r.details,r.created_at,
                     COALESCE(NULLIF(rp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(HEX(rc.public_id),1,8)))) AS reporter_name,
-                    p.body_text,t.id AS topic_id,t.title AS topic_title
+                    COALESCE(p.body_text,'') AS body_text,t.id AS topic_id,COALESCE(t.title,'') AS topic_title,
+                    tp.nickname AS target_name
              FROM mc_forum_report r
-             JOIN mc_forum_post p ON p.id=r.post_id
-             JOIN mc_forum_topic t ON t.id=p.topic_id
+             LEFT JOIN mc_forum_post p ON p.id=r.post_id
+             LEFT JOIN mc_forum_topic t ON t.id=p.topic_id
+             LEFT JOIN mc_forum_profile tp ON tp.customer_id=r.target_customer_id AND tp.store_id=r.store_id
              JOIN mc_customer rc ON rc.id=r.customer_id
              LEFT JOIN mc_forum_profile rp ON rp.customer_id=r.customer_id AND rp.store_id=r.store_id
              WHERE r.store_id=? AND r.status='open'

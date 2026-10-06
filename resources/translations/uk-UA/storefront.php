@@ -1426,4 +1426,9 @@ return [
     'landing.ui.rights' => 'Усі права захищено.',
     'landing.ui.privacy' => 'Політика конфіденційності',
     'landing.ui.privacy_note' => 'Надсилаючи, ви погоджуєтесь на обробку даних.',
+    'js_qty_max' => 'Більше %max% у наявності немає.',
+    'forum_report_member' => 'Поскаржитися на учасника',
+    'forum_mod_hide' => 'Приховати',
+    'forum_mod_delete' => 'Видалити',
+    'forum_mod_delete_confirm' => 'Видалити це повідомлення?',
 ];

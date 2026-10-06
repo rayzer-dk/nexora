@@ -5274,4 +5274,13 @@ return [
     'admin.suppliers.deleted' => 'Постачальника видалено.',
     'admin.suppliers.run_done' => 'Готово: рядків %rows%, змін %changed%, нових %new%, застосовано %applied%.',
     'admin.suppliers.applied' => 'Застосовано змін: %count%.',
+    'admin.forum.attention' => 'Форум: скарги й повідомлення на модерації',
+    'admin.forum.report_member' => 'Скарга на учасника',
+    'admin.forum.topic_moderators' => 'Модератори теми',
+    'admin.forum.topic_moderators_hint' => 'Модератор теми — довірений учасник: у цій темі він може приховувати та видаляти повідомлення інших (крім першого). Решта форуму йому недоступна.',
+    'admin.forum.moderator_who' => 'Нік або ID учасника',
+    'admin.forum.moderator_add' => 'Призначити',
+    'admin.forum.flash.moderator_added' => 'Модератора теми призначено.',
+    'admin.forum.flash.moderator_removed' => 'Модератора теми знято.',
+    'admin.forum.moderator_remove_confirm' => 'Зняти модератора з цієї теми?',
 ];

@@ -2,6 +2,19 @@ const checkout = document.querySelector('[data-checkout]');
 
 if (checkout) {
   const form = checkout.querySelector('[data-checkout-form]');
+  // A rejected order comes back with everything the buyer typed or chose: put it back into fields the page did not fill itself.
+  try {
+    const saved = JSON.parse(form?.dataset.old || '{}');
+    Object.entries(saved).forEach(([name, value]) => {
+      const fields = [...form.elements].filter((el) => el.name === name);
+      if (fields.length === 0) return;
+      fields.forEach((el) => {
+        if (el.type === 'radio') el.checked = el.value === value;
+        else if (el.type === 'checkbox') el.checked = el.value === value || value === '1';
+        else if (el.type !== 'hidden' && !el.value) el.value = value;
+      });
+    });
+  } catch { /* the form simply stays as rendered */ }
   const d = checkout.dataset;
   const i18n = {
     branchPlaceholder: d.i18nBranchPlaceholder || '',

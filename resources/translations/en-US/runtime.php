@@ -2099,4 +2099,8 @@ return [
     'supplier.runtime.empty' => 'The price list is empty.',
     'scheduler.label.supplier_sync' => 'Supplier sync',
     'scheduler.description.supplier_sync' => 'Reads supplier price lists at their own interval and prepares price and stock changes (or applies them in automatic mode).',
+    'forum.runtime.report_self' => 'You cannot report yourself.',
+    'forum.runtime.report_sent' => 'The report was sent to the moderators.',
+    'forum.runtime.not_moderator' => 'Not allowed: you are not a moderator of this topic.',
+    'forum.runtime.moderated' => 'Done.',
 ];

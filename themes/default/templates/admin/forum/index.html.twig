@@ -73,7 +73,7 @@
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.forum.col.topic_message') }}</th><th>{{ ui_text('admin.forum.col.reason') }}</th><th>{{ ui_text('admin.forum.col.reporter') }}</th><th>{{ ui_text('admin.forum.col.date') }}</th><th class="is-actions">{{ ui_text('admin.forum.col.actions') }}</th></tr></thead><tbody>
     {% for report in queue.reports %}
         <tr>
-            <td><strong>{{ report.topic_title }}</strong><small class="admin-cell-sub">{{ report.body_text|slice(0,220) }}{% if report.body_text|length > 220 %}…{% endif %}</small></td>
+            <td>{% if report.post_id %}<strong>{{ report.topic_title }}</strong><small class="admin-cell-sub">{{ report.body_text|slice(0,220) }}{% if report.body_text|length > 220 %}…{% endif %}</small>{% else %}<strong>{{ ui_icon('user', 14) }} {{ report.target_name|default('#' ~ report.target_customer_id) }}</strong><small class="admin-cell-sub">{{ ui_text('admin.forum.report_member') }} · ID {{ report.target_customer_id }}</small>{% endif %}</td>
             <td><strong>{{ report.reason }}</strong>{% if report.details %}<small class="admin-cell-sub">{{ report.details }}</small>{% endif %}</td>
             <td>{{ report.reporter_name }}</td><td>{{ report.created_at|local_datetime }}</td>
             <td class="is-actions"><form method="post" action="{{ path('admin_forum_report_resolve',{id:report.id}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_report_' ~ report.id) }}"><button class="admin-icon-button is-success" type="submit" title="{{ ui_text('admin.forum.mark_resolved') }}" aria-label="{{ ui_text('admin.forum.mark_resolved') }}">{{ ui_icon('check', 18) }}</button></form></td>

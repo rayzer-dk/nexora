@@ -771,7 +771,7 @@ final readonly class DbalStorefrontCatalogQuery
 
     private function productCardRow(array $row, StorefrontContext $context): array
     {
-        $priceMinor = (int)($row['amount_minor'] ?? 0); $compareMinor = $row['compare_at_minor'] !== null ? (int)$row['compare_at_minor'] : null; $rate = (int)($row['rate_bps'] ?? 0);
+        $priceMinor = (int)($row['amount_minor'] ?? 0); $compareMinor = $row['compare_at_minor'] !== null ? (int)$row['compare_at_minor'] : null; if ($compareMinor !== null && $compareMinor <= $priceMinor) { $compareMinor = null; } /* an "old price" that is not higher than the price is no discount */ $rate = (int)($row['rate_bps'] ?? 0);
         $taxMinor = $rate > 0 ? $priceMinor - intdiv(($priceMinor * 10000) + intdiv(10000 + $rate,2),10000+$rate) : 0;
         $mode = $this->taxDisplayMode((int) $context->marketId);
         $showNet = in_array($mode, ['net', 'net_with_gross'], true);

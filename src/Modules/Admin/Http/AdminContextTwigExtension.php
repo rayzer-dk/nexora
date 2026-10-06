@@ -47,7 +47,7 @@ final class AdminContextTwigExtension extends AbstractExtension
         if ($cache !== null) {
             return $cache;
         }
-        $zero = ['returns' => 0, 'reviews' => 0, 'questions' => 0, 'withdrawals' => 0, 'stock' => 0, 'total' => 0];
+        $zero = ['returns' => 0, 'reviews' => 0, 'questions' => 0, 'withdrawals' => 0, 'stock' => 0, 'total' => 0, 'forum' => 0];
         $request = $this->requests->getCurrentRequest();
         if ($request === null || !$this->security->getUser() instanceof AdminUser) {
             return $zero;
@@ -72,6 +72,12 @@ final class AdminContextTwigExtension extends AbstractExtension
             'stock' => $count("SELECT COUNT(*) FROM mc_stock_notification_request WHERE store_id=? AND status='active' AND admin_seen_at IS NULL"),
         ];
         $out['total'] = array_sum($out);
+        // The forum has its own bell: open reports and everything waiting for approval.
+        try {
+            $out['forum'] = (int) $this->db->fetchOne("SELECT (SELECT COUNT(*) FROM mc_forum_report WHERE store_id=? AND status='open') + (SELECT COUNT(*) FROM mc_forum_topic t JOIN mc_forum_board b ON b.id=t.board_id WHERE b.store_id=? AND t.status='pending') + (SELECT COUNT(*) FROM mc_forum_post p JOIN mc_forum_topic t ON t.id=p.topic_id JOIN mc_forum_board b ON b.id=t.board_id WHERE b.store_id=? AND p.status='pending' AND t.status='published')", [$storeId, $storeId, $storeId]);
+        } catch (\Throwable) {
+            $out['forum'] = 0;
+        }
 
         return $cache = $out;
     }

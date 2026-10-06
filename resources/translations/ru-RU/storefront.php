@@ -1162,4 +1162,9 @@ return [
     'landing.ui.rights' => 'Все права защищены.',
     'landing.ui.privacy' => 'Политика конфиденциальности',
     'landing.ui.privacy_note' => 'Отправляя, вы соглашаетесь на обработку данных.',
+    'js_qty_max' => 'Больше %max% в наличии нет.',
+    'forum_report_member' => 'Пожаловаться на участника',
+    'forum_mod_hide' => 'Скрыть',
+    'forum_mod_delete' => 'Удалить',
+    'forum_mod_delete_confirm' => 'Удалить это сообщение?',
 ];

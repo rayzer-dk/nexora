@@ -124,6 +124,58 @@ final readonly class ForumStaffService
         return $topicId;
     }
 
+    /** A member the shop trusts with one topic: they can hide and delete messages in it. */
+    public function addModerator(int $storeId, int $topicId, string $who): void
+    {
+        if ($this->topicRow($storeId, $topicId) === null) {
+            throw new \DomainException(CanonicalUiText::get('php.modules.forum.application.forumservice.temu_ne_znaideno'));
+        }
+        $who = trim($who);
+        $customerId = ctype_digit($who)
+            ? (int) $this->connection->fetchOne("SELECT id FROM mc_customer WHERE id=? AND status='active'", [(int) $who])
+            : (int) $this->connection->fetchOne("SELECT customer_id FROM mc_forum_profile WHERE store_id=? AND LOWER(nickname)=LOWER(?)", [$storeId, $who]);
+        if ($customerId < 1) {
+            throw new \DomainException(CanonicalUiText::get('forum.runtime.customer_missing'));
+        }
+        $this->connection->executeStatement('INSERT IGNORE INTO mc_forum_topic_moderator(topic_id,customer_id,created_at) VALUES (?,?,?)', [$topicId, $customerId, $this->now()]);
+    }
+
+    public function removeModerator(int $storeId, int $topicId, int $customerId): void
+    {
+        if ($this->topicRow($storeId, $topicId) !== null) {
+            $this->connection->executeStatement('DELETE FROM mc_forum_topic_moderator WHERE topic_id=? AND customer_id=?', [$topicId, $customerId]);
+        }
+    }
+
+    /** @return list<array{customer_id:int,nickname:string}> */
+    public function moderators(int $topicId): array
+    {
+        $rows = $this->connection->fetchAllAssociative(
+            "SELECT m.customer_id,COALESCE((SELECT p.nickname FROM mc_forum_profile p WHERE p.customer_id=m.customer_id LIMIT 1),CONCAT('#',m.customer_id)) AS nickname FROM mc_forum_topic_moderator m WHERE m.topic_id=? ORDER BY m.created_at",
+            [$topicId],
+        );
+
+        return array_map(static fn (array $r): array => ['customer_id' => (int) $r['customer_id'], 'nickname' => (string) $r['nickname']], $rows);
+    }
+
+    public function isModerator(int $topicId, int $customerId): bool
+    {
+        return (bool) $this->connection->fetchOne('SELECT 1 FROM mc_forum_topic_moderator WHERE topic_id=? AND customer_id=?', [$topicId, $customerId]);
+    }
+
+    /** Hide or delete one message by a topic moderator; the opening message and other topics stay out of reach. */
+    public function moderatorPostAction(int $storeId, int $topicId, int $postId, int $moderatorId, string $action): void
+    {
+        if (!in_array($action, ['hide', 'delete'], true) || !$this->isModerator($topicId, $moderatorId)) {
+            throw new \DomainException(CanonicalUiText::get('forum.runtime.not_moderator'));
+        }
+        $row = $this->connection->fetchAssociative('SELECT p.topic_id,(SELECT MIN(id) FROM mc_forum_post f WHERE f.topic_id=p.topic_id) AS first_id FROM mc_forum_post p WHERE p.id=?', [$postId]);
+        if (!is_array($row) || (int) $row['topic_id'] !== $topicId || (int) $row['first_id'] === $postId) {
+            throw new \DomainException(CanonicalUiText::get('forum.runtime.not_moderator'));
+        }
+        $this->postAction($storeId, $postId, $action);
+    }
+
     /** @return array{topic:array<string,mixed>,posts:list<array<string,mixed>>}|null */
     public function topicWithAllPosts(int $storeId, int $topicId): ?array
     {

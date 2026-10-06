@@ -33,6 +33,11 @@
     </tbody></table></div>
 </section>
 
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.forum.index.moderatsiia') }}</small><h2>{{ ui_text('admin.forum.topic_moderators') }}</h2></div><span class="admin-badge">{{ moderators|length }}</span></div>
+<p class="admin-hint">{{ ui_text('admin.forum.topic_moderators_hint') }}</p>
+{% if moderators %}<ul class="admin-chip-list">{% for m in moderators %}<li><form method="post" action="{{ path('admin_forum_topic_moderator_remove',{id:topic.id,customerId:m.customer_id}) }}" data-confirm="{{ ui_text('admin.forum.moderator_remove_confirm') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_moderators_' ~ topic.id) }}"><span>{{ m.nickname }} (ID {{ m.customer_id }})</span> <button class="admin-icon-button" type="submit" title="{{ ui_text('admin.forum.board.delete') }}" aria-label="{{ ui_text('admin.forum.board.delete') }}">{{ ui_icon('x', 14) }}</button></form></li>{% endfor %}</ul>{% endif %}
+<form method="post" action="{{ path('admin_forum_topic_moderator_add',{id:topic.id}) }}" class="admin-inline-form"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_moderators_' ~ topic.id) }}"><label class="is-wide"><span>{{ ui_text('admin.forum.moderator_who') }}</span><input name="who" required maxlength="64"></label><button type="submit">{{ ui_text('admin.forum.moderator_add') }}</button></form></section>
+
 <section class="admin-panel">
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.forum.index.moderatsiia') }}</small><h2>{{ ui_text('admin.forum.reply_as_team') }}</h2></div></div>
     <form method="post" action="{{ path('admin_forum_topic_reply',{id:topic.id}) }}" class="admin-form-grid">
