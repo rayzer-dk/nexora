@@ -93,4 +93,6 @@ Email: %email%%product%
     'runtime.exception.store_membership_invalid' => 'Некорректные идентификаторы магазина или клиента.',
     'http.error.not_found' => 'Страница не найдена.',
     'checkout.error.method_limit.max_weight' => 'Вес заказа слишком велик для выбранного способа.',
+    'scheduler.label.prro' => 'ПРРО: фискальные чеки',
+    'scheduler.description.prro' => 'Каждые 5 минут выдаёт фискальные чеки через Checkbox для оплаченных заказов, если в настройках ПРРО включены автоматические чеки.',
 ];

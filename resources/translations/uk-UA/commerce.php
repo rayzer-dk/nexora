@@ -93,4 +93,6 @@ Email: %email%%product%
     'checkout.error.method_limit.min' => 'Сума замовлення замала для обраного способу доставки або оплати.',
     'checkout.error.method_limit.max' => 'Сума замовлення завелика для обраного способу доставки або оплати.',
     'checkout.error.method_limit.max_weight' => 'Вага замовлення завелика для обраного способу.',
+    'scheduler.label.prro' => 'ПРРО: фіскальні чеки',
+    'scheduler.description.prro' => 'Кожні 5 хвилин видає фіскальні чеки через Checkbox для оплачених замовлень, якщо в налаштуваннях ПРРО увімкнено автоматичні чеки.',
 ];

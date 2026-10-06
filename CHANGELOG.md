@@ -1,8 +1,11 @@
 # Changelog
 
-## 3.94.0 — 2026-10-06
+## 3.95.0 — 2026-10-06
 
-Stock tracking switch per product and "?" hints on twelve admin pages.
+Cash register (PRRO) through Checkbox: fiscal receipts for paid orders.
 
-- Product editor: "Track stock" switch. On: a customer cannot order more than is in stock. Off: the product is always available and stock is not reserved or reduced (services, made to order, unlimited goods).
-- "?" hints with short rules on Promotions, Customer groups, Rewards, SEO templates, Site mode, Units, B2B, Stock requests, Search words, Suppliers and Badges (Ukrainian and English).
+- New "Cash register (PRRO)" page: Checkbox account (cashier login, password and license key stored encrypted), test or live environment, a connection check, automatic receipts for paid orders or manual only, receipt e-mail to the customer, payment methods that are skipped (bank transfer and B2B invoice by default).
+- The order card shows the fiscal number and a link to the receipt, or a button to issue one by hand; one receipt per order, safe to retry.
+- A scheduler task issues automatic receipts every 5 minutes; order discounts, gift card and bonus points are spread over the receipt lines so the receipt equals the payment.
+- Tested against a stand-in of the Checkbox API; it has not been run against the live service, so check it on the test environment with your own keys first.
+- Schema 87.

@@ -93,4 +93,6 @@ Product: %product%',
     'checkout.error.method_limit.min' => 'The order amount is too small for the chosen delivery or payment method.',
     'checkout.error.method_limit.max' => 'The order amount is too large for the chosen delivery or payment method.',
     'checkout.error.method_limit.max_weight' => 'The order is too heavy for the chosen method.',
+    'scheduler.label.prro' => 'Cash register receipts (PRRO)',
+    'scheduler.description.prro' => 'Every 5 minutes issues fiscal receipts through Checkbox for paid orders when automatic receipts are on in the PRRO settings.',
 ];

@@ -79,4 +79,5 @@
 {% include '@storefront/admin/extension/slot.html.twig' with {slot:'admin.order.sidebar'} only %}
 </aside>
 </div>
+{% if prro_enabled|default(false) and order.payment_status in ['paid','partially_refunded'] %}<section class="admin-panel"><h2>{{ ui_text('admin.prro.order_title') }}</h2>{% if fiscal_receipt and fiscal_receipt.status == 'done' %}<p>{{ fiscal_receipt.fiscal_code|default('—') }} · <a href="{{ fiscal_receipt.receipt_url }}" target="_blank" rel="noopener noreferrer">{{ ui_text('admin.prro.order_open') }}</a></p>{% else %}<p class="admin-help">{{ fiscal_receipt and fiscal_receipt.error_text ? fiscal_receipt.error_text : ui_text('admin.prro.order_none') }}</p>{% if admin_can('orders.manage') %}<form method="post" action="{{ path('admin_order_fiscalize', {publicId: order.public_id_text}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('prro_order_' ~ order.public_id_text) }}"><button class="admin-button is-primary" type="submit">{{ ui_icon('receipt', 16) }} {{ ui_text('admin.prro.order_issue') }}</button></form>{% endif %}{% endif %}</section>{% endif %}
 {{ shell.end() }}

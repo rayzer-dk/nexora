@@ -24,6 +24,33 @@ if ($path === '/supplier-feed.xml') {
         . '</offers></shop></yml_catalog>';
     return;
 }
+// Checkbox cash register API stand-in for the PRRO end-to-end test: PRRO_CHECKBOX_BASE_URL=http://127.0.0.1:8099/checkbox/api/v1
+if (str_starts_with($path, '/checkbox/api/v1')) {
+    $sub = substr($path, strlen('/checkbox/api/v1'));
+    $payload = json_decode((string) file_get_contents('php://input'), true) ?: [];
+    file_put_contents($logFile, json_encode(['method' => 'checkbox' . $sub, 'payload' => $payload, 'license' => $_SERVER['HTTP_X_LICENSE_KEY'] ?? '']) . "\n", FILE_APPEND | LOCK_EX);
+    if ($sub === '/cashier/signin') {
+        echo json_encode(['access_token' => 'mock-token', 'token_type' => 'bearer']);
+    } elseif ($sub === '/cashier/shift') {
+        echo json_encode(['status' => !empty($state['shift']) ? 'OPENED' : 'CLOSED']);
+    } elseif ($sub === '/shifts') {
+        $state['shift'] = true;
+        $save();
+        http_response_code(202);
+        echo json_encode(['id' => 'mock-shift', 'status' => 'CREATED']);
+    } elseif ($sub === '/receipts/sell') {
+        $state['receipt'] = (string) ($payload['id'] ?? 'mock-receipt');
+        $save();
+        http_response_code(201);
+        echo json_encode(['id' => $state['receipt'], 'status' => 'CREATED', 'fiscal_code' => null]);
+    } elseif (str_starts_with($sub, '/receipts/')) {
+        echo json_encode(['id' => substr($sub, strlen('/receipts/')), 'status' => 'DONE', 'fiscal_code' => 'MOCK-FISCAL-001']);
+    } else {
+        http_response_code(404);
+        echo '{"message":"Not Found"}';
+    }
+    return;
+}
 if ($path === '/__log') {
     $lines = is_file($logFile) ? array_filter(explode("\n", (string) file_get_contents($logFile))) : [];
     echo json_encode(array_map(static fn (string $l): mixed => json_decode($l, true), array_values($lines)));
