@@ -129,10 +129,23 @@ final class ShipmentOperationService
     }
 
     /** @return list<array<string,mixed>> */
-    public function listForStore(int $storeId,string $status='',int $limit=100): array
+    /**
+     * @param array{from?:string,to?:string,q?:string,sort?:string,dir?:string,carrier?:string} $filters
+     * @return list<array<string,mixed>>
+     */
+    public function listForStore(int $storeId,string $status='',int $limit=100,array $filters=[]): array
     {
-        $params=[$storeId];$where='s.store_id=?';if(in_array($status,self::STATUSES,true)){$where.=' AND s.status=?';$params[]=$status;}
-        $rows=$this->db->fetchAllAssociative('SELECT s.*,o.order_number,o.public_id AS order_public_id_bin FROM mc_shipment s JOIN mc_sales_order o ON o.id=s.order_id WHERE '.$where.' ORDER BY s.id DESC LIMIT '.max(1,min(250,$limit)),$params);foreach($rows as &$r){$r['public_id_text']=Uuid::fromBinary((string)$r['public_id'])->toRfc4122();$r['order_public_id']=Uuid::fromBinary((string)$r['order_public_id_bin'])->toRfc4122();unset($r['order_public_id_bin']);}unset($r);return $rows;
+        $params=[$storeId];$where='s.store_id=?';
+        if(in_array($status,self::STATUSES,true)){$where.=' AND s.status=?';$params[]=$status;}
+        foreach(['from'=>'>=','to'=>'<='] as $key=>$op){$d=trim((string)($filters[$key]??''));if(preg_match('/^\d{4}-\d{2}-\d{2}$/D',$d)===1){$where.=' AND s.created_at'.$op.'?';$params[]=$key==='from'?$d.' 00:00:00':$d.' 23:59:59.999999';}}
+        $carrier=trim((string)($filters['carrier']??''));if($carrier!==''&&preg_match('/^[a-z0-9_-]{1,64}$/D',$carrier)===1){$where.=' AND s.provider_code=?';$params[]=$carrier;}
+        $q=trim((string)($filters['q']??''));if($q!==''){$like='%'.addcslashes(mb_substr($q,0,80),'%_\\').'%';$where.=' AND (s.tracking_number LIKE ? OR o.order_number LIKE ? OR o.customer_name LIKE ?)';array_push($params,$like,$like,$like);}
+        $sort=match((string)($filters['sort']??'created')){'updated'=>'s.updated_at','status'=>'s.status','order'=>'o.order_number','carrier'=>'s.provider_code',default=>'s.created_at'};
+        $dir=strtolower((string)($filters['dir']??'desc'))==='asc'?'ASC':'DESC';
+        $rows=$this->db->fetchAllAssociative('SELECT s.*,o.order_number,o.customer_name,o.public_id AS order_public_id_bin FROM mc_shipment s JOIN mc_sales_order o ON o.id=s.order_id WHERE '.$where.' ORDER BY '.$sort.' '.$dir.',s.id DESC LIMIT '.max(1,min(2000,$limit)),$params);
+        foreach($rows as &$r){$r['public_id_text']=Uuid::fromBinary((string)$r['public_id'])->toRfc4122();$r['order_public_id']=Uuid::fromBinary((string)$r['order_public_id_bin'])->toRfc4122();unset($r['order_public_id_bin']);}unset($r);
+
+        return $rows;
     }
 
     private function event(Connection $db,int $shipmentId,string $type,string $actor,array $payload):void{$db->insert('mc_shipment_event',['shipment_id'=>$shipmentId,'event_type'=>$type,'actor'=>$actor,'payload_json'=>json_encode($payload,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'created_at'=>$this->now()]);}

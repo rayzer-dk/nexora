@@ -20,7 +20,28 @@ final class AdminShipmentController extends AbstractController
     public function __construct(private readonly ShipmentOperationService $shipments,private readonly NovaPostShipmentOperationService $novaPost,private readonly AdminContextResolver $contexts){}
 
     #[Route('/admin/shipments',name:'admin_shipments',methods:['GET'])]
-    public function index(Request $request):Response{$ctx=$this->contexts->resolve($request);$status=trim((string)$request->query->get('status',''));return $this->render('@storefront/admin/shipping/index.html.twig',['shipments'=>$this->shipments->listForStore($ctx->storeId,$status),'status'=>$status]);}
+    public function index(Request $request):Response
+    {
+        $ctx=$this->contexts->resolve($request);$status=trim((string)$request->query->get('status',''));$filters=$this->filters($request);
+        return $this->render('@storefront/admin/shipping/index.html.twig',['shipments'=>$this->shipments->listForStore($ctx->storeId,$status,250,$filters),'status'=>$status,'filters'=>$filters]);
+    }
+
+    #[Route('/admin/shipments/export.csv',name:'admin_shipments_export',methods:['GET'],priority:10)]
+    public function export(Request $request):Response
+    {
+        $ctx=$this->contexts->resolve($request);$status=trim((string)$request->query->get('status',''));
+        $fp=fopen('php://temp','w+');fwrite($fp,"\xEF\xBB\xBF");fputcsv($fp,['order','customer','direction','carrier','tracking','status','created','updated'],',','"','');
+        foreach($this->shipments->listForStore($ctx->storeId,$status,2000,$this->filters($request)) as $s){fputcsv($fp,[$s['order_number'],$s['customer_name']??'',$s['direction'],$s['provider_code'],$s['tracking_number'],$s['status'],substr((string)$s['created_at'],0,16),substr((string)$s['updated_at'],0,16)],',','"','');}
+        rewind($fp);$csv=(string)stream_get_contents($fp);fclose($fp);
+        return new Response($csv,200,['Content-Type'=>'text/csv; charset=UTF-8','Content-Disposition'=>'attachment; filename="shipments-'.gmdate('Ymd-His').'.csv"','X-Content-Type-Options'=>'nosniff']);
+    }
+
+    /** @return array{from:string,to:string,q:string,sort:string,dir:string,carrier:string} */
+    private function filters(Request $request):array
+    {
+        $q=$request->query;
+        return ['from'=>trim((string)$q->get('from','')),'to'=>trim((string)$q->get('to','')),'q'=>trim((string)$q->get('q','')),'sort'=>(string)$q->get('sort','created'),'dir'=>(string)$q->get('dir','desc'),'carrier'=>trim((string)$q->get('carrier',''))];
+    }
 
     #[Route('/admin/shipments/bulk-status',name:'admin_shipment_bulk_status',methods:['POST'])]
     public function bulkStatus(Request $request):Response

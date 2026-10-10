@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.97.15 — 2026-10-10
+
+Shipments list: dates, search, sorting, export.
+
+- Shipments: filter by date range and by tracking number, order number or customer; sort by creation or update date, status, order or carrier (either direction); download the filtered list as CSV. The filters sit in one compact row.
+
 ## 3.97.14 — 2026-10-10
 
 Import from OpenCart without a command line, compact variant editor.
