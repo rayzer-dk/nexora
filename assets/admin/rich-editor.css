@@ -116,3 +116,7 @@
 .rich-editor__toolbar .rich-editor__color input[type="color"]::-webkit-color-swatch { border: 0; border-radius: var(--mc-radius-sm); }
 .rich-editor__toolbar .rich-editor__color input[type="color"]::-moz-color-swatch { border: 0; border-radius: var(--mc-radius-sm); }
 .rich-editor__toolbar .rich-editor__tiny { min-width: 14px; width: 14px; }
+
+.rich-editor__emoji { position: absolute; z-index: var(--mc-z-dropdown); top: calc(100% + var(--mc-space-1)); left: 0; display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; width: 18.5rem; max-height: 14rem; overflow: auto; padding: var(--mc-space-2); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised); box-shadow: var(--mc-shadow-md, var(--mc-shadow-xs)); }
+.rich-editor__toolbar .rich-editor__emoji-item { min-width: 0; width: auto; height: 2rem; padding: 0; border: 0; background: transparent; font-size: 1.2rem; line-height: 1; cursor: pointer; }
+.rich-editor__toolbar .rich-editor__emoji-item:hover { background: var(--mc-color-primary-soft); border-radius: var(--mc-radius-sm); }

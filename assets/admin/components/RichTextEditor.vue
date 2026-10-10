@@ -229,14 +229,6 @@ const removeAnchor = () => {
 // ---- video dialog ----
 const videoDialog = reactive({ open: false, url: '' });
 const videoInput = ref<HTMLInputElement | null>(null);
-// The icon picker modal lives in the admin runtime; it hands back the chosen name.
-const openIconPicker = async () => {
-  const pick = (window as unknown as { mcPickIcon?: () => Promise<string | null> }).mcPickIcon;
-  if (!pick) return;
-  const name = await pick();
-  if (name) editor.chain().focus().insertInlineIcon(name).run();
-  else editor.commands.focus();
-};
 const openVideo = async () => {
   videoDialog.url = '';
   videoDialog.open = true;
@@ -253,7 +245,9 @@ const insertVideo = () => {
 
 // ---- compact toolbar: rarely used tools live in the "more" menu ----
 const moreOpen = ref(false);
-const colorMenu = ref<'' | 'text' | 'bg'>('');
+const colorMenu = ref<'' | 'text' | 'bg' | 'emoji'>('');
+const EMOJI = ['😀','😃','😄','😁','😊','🙂','😉','😍','🥰','😘','😎','🤩','🤔','😮','😢','😭','😡','👍','👎','👏','🙌','🙏','💪','👌','✌️','👋','❤️','🧡','💛','💚','💙','💜','🔥','⭐','🌟','✨','🎉','🎁','🏆','✅','❌','⚠️','❗','❓','💡','📌','📣','🔔','🛒','🛍️','💳','💰','🏷️','📦','🚚','✈️','🏠','📞','📧','🕒','📅','🔒','🔑','🌿','🌸','☀️','🌈','🍎','🍕','☕','🎵','📷','💻','📱','🎮','⚽','🚗'];
+const insertEmoji = (char: string) => { editor.chain().focus().insertContent(char).run(); colorMenu.value = ''; };
 const closeMenus = (event: Event) => {
   if (!(event.target instanceof Element) || !event.target.closest('.rich-editor__menu-host')) { moreOpen.value = false; colorMenu.value = ''; }
 };
@@ -346,7 +340,12 @@ const words = (): number => {
       <button type="button" :title="tr('unlink')" :aria-label="tr('unlink')" :disabled="sourceMode || !editor.isActive('link')" @click="removeLink"><Unlink :size="16" /></button>
       <button type="button" :title="tr('image')" :aria-label="tr('image')" :disabled="sourceMode" @click="openImage"><ImagePlus :size="16" /></button>
       <button type="button" :title="tr('video')" :aria-label="tr('video')" :disabled="sourceMode" @click="openVideo"><VideoIcon :size="16" /></button>
-      <button type="button" :title="tr('icon')" :aria-label="tr('icon')" :disabled="sourceMode" @click="openIconPicker"><Smile :size="16" /></button>
+      <span class="rich-editor__menu-host">
+        <button type="button" :title="tr('emoji')" :aria-label="tr('emoji')" :aria-expanded="colorMenu === 'emoji'" :disabled="sourceMode" @click="colorMenu = colorMenu === 'emoji' ? '' : 'emoji'"><Smile :size="16" /></button>
+        <div v-if="colorMenu === 'emoji'" class="rich-editor__emoji" role="group" :aria-label="tr('emoji')">
+          <button v-for="char in EMOJI" :key="char" type="button" class="rich-editor__emoji-item" @click="insertEmoji(char)">{{ char }}</button>
+        </div>
+      </span>
       <button type="button" :title="tr('table')" :aria-label="tr('table')" :disabled="sourceMode" @click="insertTable"><Table2 :size="16" /></button>
       <span class="rich-editor__menu-host rich-editor__more">
         <button type="button" :title="tr('more_tools')" :aria-label="tr('more_tools')" :aria-expanded="moreOpen" :disabled="sourceMode" @click="moreOpen = !moreOpen"><Ellipsis :size="16" /></button>

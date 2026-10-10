@@ -5574,4 +5574,5 @@ return [
     'admin.inquiry.error.text' => 'Напишіть відповідь (до 4000 символів).',
     'admin.inquiry.error.sms' => 'SMS не надіслано. Перевірте налаштування SMS і номер телефону.',
     'admin.inquiry.error.email' => 'У зверненні немає коректного e-mail.',
+    'vue.components.richtexteditor.emoji' => 'Емодзі',
 ];

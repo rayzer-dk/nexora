@@ -2318,6 +2318,22 @@ function initFileLibraries() {
   });
 }
 
+/**
+ * Spell checking for the places where people write real text (letters, descriptions, notes): the browser's own checker is
+ * switched on and told which language the content is in. It marks mistakes while typing and works offline.
+ */
+function initSpellcheck() {
+  const lang = document.documentElement.lang || 'uk-UA';
+  qa('textarea').forEach((area) => {
+    if (area.hasAttribute('spellcheck') || area.matches('[data-no-spellcheck], [data-code-editor], [name*="css"], [name*="html"], [name*="json"], [name*="script"]')) return;
+    area.setAttribute('spellcheck', 'true');
+    if (!area.hasAttribute('lang')) {
+      const panel = area.closest('[data-locale]');
+      area.setAttribute('lang', (panel && panel.getAttribute('data-locale')) || lang);
+    }
+  });
+}
+
 function initCopyControls() {
   qa('[data-copy-value], [data-copy-target]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -2542,6 +2558,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initThumbZoom();
   initProductTabs();
   initCopyControls();
+  initSpellcheck();
   initFileLibraries();
   initPairRepeaters();
   initSkuPickers();

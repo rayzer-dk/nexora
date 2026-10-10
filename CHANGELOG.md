@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.9 — 2026-10-10
+
+Text editor and spelling.
+
+- The rich text editor offers an emoji palette (a 😊 button with about 80 common emoji that are inserted as plain text) instead of the inline-icon picker; icons already placed in old texts still display.
+- Spell checking: every large text field of the admin (letters, descriptions, notes) gets the browser's spell checker, in the language of the content (the language tab or the page language). Code fields are left alone.
+
 ## 3.97.8 — 2026-10-10
 
 Quick order is visible, customer requests are answered from the request.

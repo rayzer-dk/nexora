@@ -5579,4 +5579,5 @@ return [
     'admin.inquiry.error.text' => 'Write the answer (up to 4000 characters).',
     'admin.inquiry.error.sms' => 'The SMS was not sent. Check the SMS settings and the phone number.',
     'admin.inquiry.error.email' => 'The request has no valid e-mail.',
+    'vue.components.richtexteditor.emoji' => 'Emoji',
 ];
