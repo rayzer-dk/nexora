@@ -1959,6 +1959,196 @@ function initHeaderSaveButton() {
   actions.prepend(button);
 }
 
+
+/**
+ * "key=value, key=value" text fields (quantity price breaks, prices per customer group) become rows: a number or a
+ * group from a list, a price, a remove button. The original input stays in the form and always holds the text.
+ */
+function initPairRepeaters() {
+  qa('input[data-pair-repeater]').forEach((source) => {
+    if (source.dataset.pairReady) return;
+    source.dataset.pairReady = '1';
+    let options = [];
+    try { options = JSON.parse(source.dataset.pairOptions || '[]'); } catch (_error) { options = []; }
+    const isGroup = options.length > 0 || source.dataset.pairRepeater === 'group';
+    source.hidden = true;
+    const box = document.createElement('div');
+    box.className = 'admin-pair-rows';
+    source.insertAdjacentElement('afterend', box);
+    const sync = () => {
+      const parts = [];
+      qa('.admin-pair-row', box).forEach((row) => {
+        const key = q('[data-pair-key]', row).value.trim();
+        const value = q('[data-pair-value]', row).value.trim().replace(',', '.');
+        if (key !== '' && value !== '') parts.push(`${key}=${value}`);
+      });
+      source.value = parts.join(', ');
+      source.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    const addRow = (key = '', value = '') => {
+      const row = document.createElement('div');
+      row.className = 'admin-pair-row';
+      let keyField;
+      if (isGroup) {
+        keyField = document.createElement('select');
+        const empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = source.dataset.pairKeyLabel || '';
+        keyField.append(empty);
+        options.forEach((option) => {
+          const item = document.createElement('option');
+          item.value = option.code;
+          item.textContent = option.name;
+          keyField.append(item);
+        });
+        if (key && !options.some((option) => option.code === key)) {
+          const unknown = document.createElement('option');
+          unknown.value = key;
+          unknown.textContent = key;
+          keyField.append(unknown);
+        }
+        keyField.value = key;
+      } else {
+        keyField = document.createElement('input');
+        keyField.type = 'number';
+        keyField.min = '2';
+        keyField.step = '1';
+        keyField.inputMode = 'numeric';
+        keyField.placeholder = source.dataset.pairKeyLabel || '';
+        keyField.value = key;
+      }
+      keyField.setAttribute('data-pair-key', '');
+      keyField.setAttribute('aria-label', source.dataset.pairKeyLabel || '');
+      const valueField = document.createElement('input');
+      valueField.type = 'text';
+      valueField.inputMode = 'decimal';
+      valueField.placeholder = source.dataset.pairValueLabel || '';
+      valueField.setAttribute('aria-label', source.dataset.pairValueLabel || '');
+      valueField.setAttribute('data-pair-value', '');
+      valueField.value = value;
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'admin-icon-button is-sm is-danger';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', source.dataset.pairRemove || 'Remove');
+      remove.addEventListener('click', () => { row.remove(); sync(); });
+      [keyField, valueField].forEach((field) => field.addEventListener('input', sync));
+      keyField.addEventListener('change', sync);
+      row.append(keyField, valueField, remove);
+      box.append(row);
+    };
+    source.value.split(',').map((part) => part.trim()).filter(Boolean).forEach((part) => {
+      const [key, value] = part.split('=');
+      if (key !== undefined && value !== undefined) addRow(key.trim(), value.trim());
+    });
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'admin-button';
+    add.textContent = source.dataset.pairAdd || '+';
+    add.addEventListener('click', () => { addRow(); q('.admin-pair-row:last-child [data-pair-key]', box)?.focus(); });
+    box.insertAdjacentElement('afterend', add);
+  });
+}
+
+/**
+ * Lists of product articles ("Related", "Bought together") with a search box: type a name or an article, pick from the
+ * results, or take suggestions from the product's category. The original input keeps the comma-separated articles.
+ */
+function initSkuPickers() {
+  qa('input[data-sku-picker]').forEach((source) => {
+    if (source.dataset.pickerReady) return;
+    source.dataset.pickerReady = '1';
+    const url = source.dataset.lookupUrl || '';
+    const productId = source.dataset.productId || '';
+    source.hidden = true;
+    const wrap = document.createElement('div');
+    wrap.className = 'admin-sku-picker';
+    const chips = document.createElement('div');
+    chips.className = 'admin-chip-list';
+    const search = document.createElement('input');
+    search.type = 'search';
+    search.autocomplete = 'off';
+    search.placeholder = source.dataset.searchPlaceholder || '';
+    search.setAttribute('aria-label', source.dataset.searchPlaceholder || '');
+    const results = document.createElement('ul');
+    results.className = 'admin-sku-picker__results';
+    results.hidden = true;
+    const suggest = document.createElement('button');
+    suggest.type = 'button';
+    suggest.className = 'admin-button';
+    suggest.textContent = source.dataset.suggestLabel || '';
+    suggest.hidden = productId === '';
+    const bar = document.createElement('div');
+    bar.className = 'admin-sku-picker__bar';
+    bar.append(search, suggest);
+    wrap.append(chips, bar, results);
+    source.insertAdjacentElement('afterend', wrap);
+
+    let skus = source.value.split(',').map((item) => item.trim()).filter(Boolean);
+    const names = new Map();
+    const sync = () => { source.value = skus.join(', '); source.dispatchEvent(new Event('input', { bubbles: true })); };
+    const paintChips = () => {
+      chips.textContent = '';
+      skus.forEach((sku) => {
+        const chip = document.createElement('span');
+        chip.className = 'admin-chip';
+        const label = document.createElement('span');
+        label.textContent = names.has(sku) ? `${names.get(sku)} · ${sku}` : sku;
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.textContent = '×';
+        remove.setAttribute('aria-label', source.dataset.pairRemove || 'Remove');
+        remove.addEventListener('click', () => { skus = skus.filter((item) => item !== sku); sync(); paintChips(); });
+        chip.append(label, remove);
+        chips.append(chip);
+      });
+    };
+    const fetchItems = async (params) => {
+      try {
+        const response = await fetch(`${url}?${new URLSearchParams(params)}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+        if (!response.ok) return [];
+        return (await response.json()).items || [];
+      } catch (_error) {
+        return [];
+      }
+    };
+    const showResults = (items) => {
+      results.textContent = '';
+      items.filter((item) => !skus.includes(item.sku)).forEach((item) => {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = `${item.name} · ${item.sku}`;
+        button.addEventListener('click', () => {
+          skus.push(item.sku);
+          names.set(item.sku, item.name);
+          sync();
+          paintChips();
+          li.remove();
+          if (!results.children.length) results.hidden = true;
+        });
+        li.append(button);
+        results.append(li);
+      });
+      results.hidden = results.children.length === 0;
+    };
+    let timer = 0;
+    search.addEventListener('input', () => {
+      window.clearTimeout(timer);
+      const term = search.value.trim();
+      if (term.length < 2) { results.hidden = true; return; }
+      timer = window.setTimeout(async () => showResults(await fetchItems({ q: term })), 250);
+    });
+    search.addEventListener('keydown', (event) => { if (event.key === 'Enter') event.preventDefault(); });
+    suggest.addEventListener('click', async () => showResults(await fetchItems({ for: productId })));
+    paintChips();
+    skus.slice(0, 20).forEach(async (sku) => {
+      const found = (await fetchItems({ q: sku })).find((item) => item.sku === sku);
+      if (found) { names.set(sku, found.name); paintChips(); }
+    });
+  });
+}
+
 function initCopyControls() {
   qa('[data-copy-value], [data-copy-target]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -2183,6 +2373,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initThumbZoom();
   initProductTabs();
   initCopyControls();
+  initPairRepeaters();
+  initSkuPickers();
   initHeaderSaveButton();
   initHealthCheck();
   initSiteProfilePreset();

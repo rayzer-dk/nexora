@@ -2095,3 +2095,19 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 .admin-input-affix { display: flex; align-items: center; gap: var(--mc-space-2); }
 .admin-input-affix > small { flex: none; color: var(--mc-color-muted); font-family: var(--mc-font-mono, monospace); }
 .admin-input-affix > input { flex: 1 1 auto; min-width: 0; }
+
+/* 3.97.1 repeater rows (prices per group / quantity) and the product picker */
+.admin-pair-rows { display: grid; gap: var(--mc-space-2); margin-bottom: var(--mc-space-2); }
+.admin-pair-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: var(--mc-space-2); align-items: center; }
+.admin-sku-picker { display: grid; gap: var(--mc-space-2); position: relative; }
+.admin-sku-picker__bar { display: flex; gap: var(--mc-space-2); }
+.admin-sku-picker__bar > input { flex: 1 1 auto; min-width: 0; }
+.admin-sku-picker__results { position: absolute; top: 100%; left: 0; right: 0; z-index: var(--mc-z-dropdown, 30); max-height: 260px; overflow: auto; margin: 0; padding: var(--mc-space-1); list-style: none; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised); box-shadow: var(--mc-shadow-md, var(--mc-shadow-xs)); }
+.admin-sku-picker__results button { display: block; width: 100%; padding: var(--mc-space-2) var(--mc-space-3); border: 0; border-radius: var(--mc-radius-sm); background: transparent; color: var(--mc-color-text); font: inherit; text-align: left; cursor: pointer; }
+.admin-sku-picker__results button:hover, .admin-sku-picker__results button:focus-visible { background: var(--mc-color-primary-soft); }
+
+/* 3.97.1 rarely needed fields fold into "More options" */
+.admin-more { margin-top: var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); }
+.admin-more > summary { padding: var(--mc-space-3) var(--mc-space-4); font-weight: var(--mc-font-weight-semibold); cursor: pointer; }
+.admin-more[open] > summary { border-bottom: 1px solid var(--mc-color-border); }
+.admin-more > .admin-form-grid { padding: var(--mc-space-4); }

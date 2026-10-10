@@ -245,7 +245,7 @@ final readonly class DemoSeeder
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name'], array_filter($promoTitles)), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '3.97.0',
+                'version' => '3.97.1',
                 'catalog_source' => 'DummyJSON',
             ]);
 

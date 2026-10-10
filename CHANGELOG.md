@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.97.1 — 2026-10-10
+
+Product card, first pass: fewer fields, real controls instead of text codes.
+
+- Prices by customer group are rows: pick a group from the list, enter the price, add as many rows as there are groups. Quantity price breaks are rows too ("from quantity" and price) instead of a "5=450, 10=420" text.
+- "Related products" and "Bought together" are filled through a search box (by name or article) with chips, and a "Suggest from the category" button; the stored value is still the list of articles.
+- The "Old price" field is gone from the form (the stored value is kept); the sale price with its start and end date is the way to run a discount.
+- Rarely used fields (page address, unit, GTIN, MPN, purchase mode, button text, delivery note) are folded into "More options".
+- Characteristics no longer show technical codes.
+- New admin endpoint /admin/catalog/products/lookup (product search for the pickers).
+
 ## 3.97.0 — 2026-10-10
 
 Languages in the URL.
