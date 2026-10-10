@@ -28,7 +28,7 @@
 <label><span>{{ ui_text('admin.catalog.product_form.tsina') }} {{ currency|default(product.currency|default('UAH')) }}</span><input type="text" inputmode="decimal" name="price" value="{{ product.price_input|default('0.00') }}" required></label>
 <input type="hidden" name="compare_at_price" value="{{ product.compare_at_input|default('')|e('html_attr') }}">
 {% if tax_classes|default([]) %}<label><span>{{ ui_text('admin.tax.product_class') }}</span><select name="tax_class_id" data-tax-class>{% for c in tax_classes %}<option value="{{ c.id }}"{% if c.id == product.tax_class_id|default(0) or (not product.tax_class_id|default(0) and c.code == 'standard') %} selected{% endif %}>{{ c.name }}</option>{% endfor %}</select><small>{{ ui_text('admin.tax.product_class_hint') }}</small></label>{% endif %}
-<label><span>{{ ui_text('admin.catalog.product_form.zalyshok') }}</span><input type="text" inputmode="decimal" name="stock_quantity" value="{{ product.stock_quantity|default('0') }}" {{ editing and product.product_type == 'digital' ? 'disabled' : '' }} required></label>
+<label><span>{{ ui_text('admin.catalog.product_form.zalyshok') }}</span><input type="text" inputmode="decimal" name="stock_quantity" value="{{ product.stock_quantity|qty|default('0') }}" {{ editing and product.product_type == 'digital' ? 'disabled' : '' }} required></label>
 
 
 
@@ -108,7 +108,7 @@
 <div class="admin-form-grid admin-form-grid--dense">
 <label><span>SKU</span><input type="text" name="variant[{{ variant.id }}][sku]" value="{{ variant.sku }}" maxlength="190" required></label>
 <label><span>{{ ui_text('admin.catalog.product_form.tsina_2') }}</span><input type="text" inputmode="decimal" name="variant[{{ variant.id }}][price]" value="{{ variant.price_input }}" required></label>
-<label><span>{{ ui_text('admin.catalog.product_form.zalyshok') }}</span><input type="text" inputmode="decimal" name="variant[{{ variant.id }}][stock_quantity]" value="{{ variant.stock_quantity }}" required></label>
+<label><span>{{ ui_text('admin.catalog.product_form.zalyshok') }}</span><input type="text" inputmode="decimal" name="variant[{{ variant.id }}][stock_quantity]" value="{{ variant.stock_quantity|qty }}" required></label>
 <label><span>{{ ui_text('admin.catalog.product_form.odynytsia') }}</span><select name="variant[{{ variant.id }}][unit_code]">{% set dim_labels = {'count':ui_text('admin.units.dim_count'),'mass':ui_text('admin.units.dim_mass'),'volume':ui_text('admin.units.dim_volume'),'length':ui_text('admin.units.dim_length'),'area':ui_text('admin.units.dim_area'),'time':ui_text('admin.units.dim_time')} %}{% set _u = variant.sale_unit_code|default('item') %}{% for group in ["count","mass","volume","length","area","time"] %}{% set _items = measurement_units()|filter(u => u.dimension == group) %}{% if _items|length %}<optgroup label="{{ dim_labels[group] }}">{% for u in _items %}<option value="{{ u.code }}"{{ u.code == _u ? ' selected' : '' }}>{{ u.name }} ({{ u.short }})</option>{% endfor %}</optgroup>{% endif %}{% endfor %}</select></label>
 <label><span>GTIN</span><input type="text" name="variant[{{ variant.id }}][gtin]" value="{{ variant.gtin|default('') }}"></label>
 <label><span>MPN</span><input type="text" name="variant[{{ variant.id }}][mpn]" value="{{ variant.mpn|default('') }}"></label>

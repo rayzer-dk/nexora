@@ -1,6 +1,6 @@
 <p align="center"><img src="public/assets/branding/nexora-logo.png" width="360" alt="Nexora Commerce"></p>
 
-# Nexora Commerce 3.97.3
+# Nexora Commerce 3.97.4
 
 Сучасна модульна e-commerce платформа для України та Європи. Один канонічний вихідний код у гілці `main`.
 

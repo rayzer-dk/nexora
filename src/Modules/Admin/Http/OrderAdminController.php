@@ -39,6 +39,7 @@ final class OrderAdminController extends AbstractController
         private readonly NovaPostShipmentOperationService $novaPostShipments,
         private readonly \Commerce\Modules\Order\Application\OrderMethodPresenter $methodLabels,
         private readonly \Commerce\Modules\Notification\Application\SmsService $sms,
+        private readonly \Commerce\Modules\Shipping\Application\DeliveryProviderRegistry $carrierRegistry,
     ) {}
 
     #[Route('/admin/orders', name: 'admin_orders', methods: ['GET'])]
@@ -249,10 +250,48 @@ final class OrderAdminController extends AbstractController
     }
 
     #[Route('/admin/orders/{publicId}', name: 'admin_order_view', methods: ['GET'])]
+    /**
+     * The first photo of each ordered product, so the order shows what was bought.
+     *
+     * @param list<array<string,mixed>> $items
+     * @return list<array<string,mixed>>
+     */
+    private function withImages(array $items): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map(static fn (array $i): int => (int) ($i['product_id'] ?? 0), $items))));
+        if ($ids === []) {
+            return $items;
+        }
+        try {
+            $rows = $this->db->fetchAllAssociative(
+                "SELECT pm.product_id,ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id
+                 WHERE pm.product_id IN (" . implode(',', array_fill(0, count($ids), '?')) . ") AND pm.role IN ('primary','gallery')
+                 ORDER BY pm.product_id,(pm.role='primary') DESC,pm.sort_order",
+                $ids,
+            );
+        } catch (\Throwable) {
+            return $items;
+        }
+        $images = [];
+        foreach ($rows as $row) {
+            $key = str_replace('\\', '/', trim((string) $row['storage_key']));
+            if ($key !== '' && !str_contains($key, '..')) {
+                $images[(int) $row['product_id']] ??= '/media/' . ltrim($key, '/');
+            }
+        }
+        foreach ($items as &$item) {
+            $item['image'] = $images[(int) ($item['product_id'] ?? 0)] ?? '';
+        }
+        unset($item);
+
+        return $items;
+    }
+
     public function view(string $publicId, Request $request): Response
     {
         $order = $this->order($publicId, $request);
         $items = $this->db->fetchAllAssociative('SELECT * FROM mc_sales_order_item WHERE order_id=? ORDER BY id', [(int) $order['id']]);
+        $items = $this->withImages($items);
         $payment = $this->db->fetchAssociative('SELECT * FROM mc_payment WHERE order_id=? ORDER BY id DESC LIMIT 1', [(int) $order['id']]) ?: [];
         $fulfillment = $this->db->fetchAssociative('SELECT * FROM mc_fulfillment WHERE order_id=? ORDER BY id DESC LIMIT 1', [(int) $order['id']]) ?: [];
         if ($fulfillment !== []) {
@@ -312,6 +351,7 @@ final class OrderAdminController extends AbstractController
             'documents' => $this->documents->listForOrder($this->contexts->resolve($request)->storeId, $publicId),
             'shipments' => $this->shipments->listForOrder($this->contexts->resolve($request)->storeId, $publicId),
             'nova_post_api_configured' => $this->novaPostShipments->configured(),
+            'carriers' => array_map(static fn ($p): array => ['code' => $p->code(), 'label' => $p->label()], $this->carrierRegistry->all()),
             'sms' => $this->smsPanel($order, $request),
             'fulfillment_statuses' => ['pending', 'preparing', 'ready_for_pickup', 'shipped', 'delivered', 'cancelled'],
         ]);

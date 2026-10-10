@@ -2131,3 +2131,21 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 .admin-filelib-modal > header h2 { margin: 0; font-size: var(--mc-font-size-lg); }
 .admin-filepick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-3); }
 .admin-filepick__label { color: var(--mc-color-muted); font-weight: var(--mc-font-weight-medium, 500); }
+
+/* 3.97.4 coloured stat cards (one standard for every page that uses .admin-stats) */
+.admin-stats > article[class*="is-tone-"] { border-left: 4px solid var(--tone, var(--mc-color-border)); background: color-mix(in srgb, var(--tone, transparent) 8%, var(--mc-color-surface-raised)); }
+.admin-stats > article[class*="is-tone-"] > span { display: flex; align-items: center; gap: var(--mc-space-1); color: var(--tone, var(--mc-color-muted)); }
+.admin-stats > article.is-tone-success { --tone: var(--mc-color-success); }
+.admin-stats > article.is-tone-warning { --tone: var(--mc-color-warning); }
+.admin-stats > article.is-tone-danger { --tone: var(--mc-color-danger); }
+.admin-stats > article.is-tone-info { --tone: var(--mc-color-primary); }
+.admin-stats > article.is-tone-primary { --tone: var(--mc-color-primary-fill); }
+.admin-stats > article.is-tone-neutral { --tone: var(--mc-color-border-strong, var(--mc-color-muted)); }
+.admin-order-product { display: flex; align-items: center; gap: var(--mc-space-3); }
+.admin-order-product img, .admin-order-product__noimg { flex: none; width: 44px; height: 44px; border-radius: var(--mc-radius-sm); object-fit: cover; background: var(--mc-color-surface-subtle); }
+.admin-order-product__noimg { display: inline-grid; place-items: center; color: var(--mc-color-muted); }
+.admin-edited { display: inline-flex; align-items: center; gap: var(--mc-space-1); color: var(--mc-color-warning); }
+.admin-inline-edit { display: inline-block; margin-left: var(--mc-space-1); vertical-align: middle; }
+.admin-inline-edit > summary { list-style: none; cursor: pointer; }
+.admin-inline-edit[open] > form { display: flex; gap: var(--mc-space-2); margin-top: var(--mc-space-2); }
+.admin-inline-form-flat { display: inline-block; margin: 0 0 0 var(--mc-space-2); }

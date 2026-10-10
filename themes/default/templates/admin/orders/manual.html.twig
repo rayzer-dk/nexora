@@ -13,7 +13,7 @@
   <section class="admin-panel"><h2>{{ ui_text('admin.manual_order.items') }}</h2>
     <p class="admin-help">{{ ui_text('admin.manual_order.items_hint') }} ({{ currency }})</p>
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>SKU</th><th>{{ ui_text('admin.manual_order.qty') }}</th><th>{{ ui_text('admin.manual_order.price') }}</th></tr></thead><tbody>
-    {% for line in form.lines %}<tr><td><input type="text" name="sku[]" value="{{ line.sku }}" maxlength="64"></td><td><input type="text" inputmode="decimal" name="qty[]" value="{{ line.quantity }}" maxlength="10"></td><td><input type="text" inputmode="decimal" name="price[]" value="{{ line.price }}" maxlength="14" placeholder="{{ ui_text('admin.manual_order.price_auto')|e('html_attr') }}"></td></tr>{% endfor %}
+    {% for line in form.lines %}<tr><td><input type="text" name="sku[]" value="{{ line.sku }}" maxlength="64"></td><td><input type="text" inputmode="decimal" name="qty[]" value="{{ line.quantity|qty }}" maxlength="10"></td><td><input type="text" inputmode="decimal" name="price[]" value="{{ line.price }}" maxlength="14" placeholder="{{ ui_text('admin.manual_order.price_auto')|e('html_attr') }}"></td></tr>{% endfor %}
     {% for i in range(1, 4) %}<tr><td><input type="text" name="sku[]" maxlength="64"></td><td><input type="text" inputmode="decimal" name="qty[]" value="1" maxlength="10"></td><td><input type="text" inputmode="decimal" name="price[]" maxlength="14" placeholder="{{ ui_text('admin.manual_order.price_auto')|e('html_attr') }}"></td></tr>{% endfor %}
     </tbody></table></div>
   </section>

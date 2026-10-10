@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.97.4 — 2026-10-10
+
+Orders, invoices and shipments.
+
+- Order page: the four top cards are coloured by state (order status, payment, amount, customer) with icons; ordered items show the product photo; quantities no longer carry six zeros ("2" instead of "2.000000") in orders, invoices, e-mails, the cart, checkout and the product list.
+- Invoices and packing slips: the shop logo and a small photo of each product are embedded (works in the PDF too); the delivery data reads as the carrier plus city and address instead of raw JSON; document type and date are readable in the order's document list.
+- One click "Send to customer" next to every document: the PDF goes to the customer's e-mail as an attachment with a ready subject and text.
+- Shipments: the registration form asks only for the carrier (a list) and the tracking number; the rest is under "More options". A hand-typed tracking number can be corrected with the pencil icon; the change is dated and signed ("edited ..."), written to the shipment history and copied to the delivery record. Numbers created by the carrier cannot be edited by hand.
+- Migration Version20261231110000 adds mc_shipment.tracking_edited_at and tracking_edited_by.
+
 ## 3.97.3 — 2026-10-10
 
 New Nexora logo.

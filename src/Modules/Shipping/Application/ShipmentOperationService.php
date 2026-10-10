@@ -78,6 +78,26 @@ final class ShipmentOperationService
 
 
     /** @param array<string,mixed> $payload */
+    /** Corrects a tracking number typed by hand (not one the carrier created); the change is dated, signed and kept in the shipment history. */
+    public function updateTracking(int $storeId,string $shipmentPublicId,string $tracking,string $actor): void
+    {
+        $tracking=$this->clean($tracking,190);
+        if($tracking==='')throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.shipments.error.tracking_required'));
+        try{$bin=Uuid::fromString($shipmentPublicId)->toBinary();}catch(\Throwable){throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.shipping.application.shipmentoperationservice.nekorektne_vidpravlennia'));}
+        $this->db->transactional(function(Connection $db)use($storeId,$bin,$tracking,$actor):void{
+            $row=$db->fetchAssociative('SELECT * FROM mc_shipment WHERE public_id=? AND store_id=? FOR UPDATE',[$bin,$storeId]);
+            if(!is_array($row))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.shipping.application.shipmentoperationservice.nekorektne_vidpravlennia'));
+            if(trim((string)($row['external_id']??''))!=='')throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.shipments.error.tracking_carrier'));
+            if((string)$row['tracking_number']===$tracking)return;
+            $taken=$db->fetchOne('SELECT 1 FROM mc_shipment WHERE store_id=? AND provider_code=? AND tracking_number=? AND direction=? AND id<>?',[$storeId,$row['provider_code'],$tracking,$row['direction'],(int)$row['id']]);
+            if($taken!==false)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.shipments.error.tracking_taken'));
+            $now=$this->now();
+            $db->update('mc_shipment',['tracking_number'=>$tracking,'tracking_edited_at'=>$now,'tracking_edited_by'=>$this->clean($actor,190),'updated_at'=>$now],['id'=>(int)$row['id']]);
+            if($row['fulfillment_id'])$db->update('mc_fulfillment',['tracking_number'=>$tracking,'updated_at'=>$now],['id'=>(int)$row['fulfillment_id']]);
+            $this->event($db,(int)$row['id'],'shipment.tracking_edited',$actor,['from'=>(string)$row['tracking_number'],'to'=>$tracking]);
+        });
+    }
+
     public function recordProviderEvent(int $storeId,string $shipmentPublicId,string $type,array $payload,string $actor='system'): void
     {
         try{$bin=Uuid::fromString($shipmentPublicId)->toBinary();}catch(\Throwable){throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.shipping.application.shipmentoperationservice.nekorektne_vidpravlennia'));}

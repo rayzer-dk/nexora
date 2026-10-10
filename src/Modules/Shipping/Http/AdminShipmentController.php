@@ -67,6 +67,14 @@ final class AdminShipmentController extends AbstractController
         return new Response($pdf,200,['Content-Type'=>'application/pdf','Content-Disposition'=>'inline; filename="nova-poshta-label.pdf"','Cache-Control'=>'private, no-store']);
     }
 
+    #[Route('/admin/shipments/{shipment}/tracking',name:'admin_shipment_tracking_edit',methods:['POST'],requirements:['shipment'=>'[0-9a-fA-F-]{36}'])]
+    public function editTracking(string $shipment,Request $request):Response
+    {
+        if(!$this->isCsrfTokenValid('admin_shipment_tracking_'.$shipment,(string)$request->request->get('_token')))throw $this->createAccessDeniedException();$ctx=$this->contexts->resolve($request);
+        try{$this->shipments->updateTracking($ctx->storeId,$shipment,(string)$request->request->get('tracking_number',''),$this->actor());$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.shipments.tracking_saved'));}catch(\DomainException $e){$this->addFlash('error',$e->getMessage());}
+        $order=trim((string)$request->request->get('order',''));return $order!==''?$this->redirectToRoute('admin_order_view',['publicId'=>$order]):$this->redirectToRoute('admin_shipments');
+    }
+
     #[Route('/admin/shipments/{shipment}/status',name:'admin_shipment_status',methods:['POST'],requirements:['shipment'=>'[0-9a-fA-F-]{36}'])]
     public function status(string $shipment,Request $request):Response
     {
