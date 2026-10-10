@@ -1818,7 +1818,7 @@ function initCategoryTree() {
   const STORE = 'mc.catalog.collapsed';
   let collapsed = new Set();
   // First visit: every branch is folded. After that the open and folded branches are remembered in this browser.
-  let remembered = null;
+  let remembered;
   try { remembered = localStorage.getItem(STORE); } catch (_error) { remembered = null; }
   if (remembered === null) {
     collapsed = new Set(qa('[data-cat-row]', table).filter((row) => q('[data-tree-toggle]', row)).map((row) => row.dataset.catNode));
@@ -2197,7 +2197,7 @@ function initSkuPickers() {
  * the computer. In the product form it opens in a window and hands the chosen file back; on the Files page it is
  * shown in place, for keeping the libraries in order.
  */
-function mountFileLibrary(root, { library, base, token, strings, onPick }) {
+function mountFileLibrary(root, { base, token, strings, onPick }) {
   let folder = 0;
   let query = '';
   root.classList.add('admin-filelib');
@@ -2315,13 +2315,13 @@ function mountFileLibrary(root, { library, base, token, strings, onPick }) {
 
 function initFileLibraries() {
   qa('[data-file-library-page]').forEach((root) => {
-    let strings = {};
+    let strings;
     try { strings = JSON.parse(root.dataset.strings || '{}'); } catch (_error) { strings = {}; }
     mountFileLibrary(root, { library: root.dataset.fileLibraryPage, base: root.dataset.base, token: root.dataset.token, strings });
   });
   qa('[data-file-library]').forEach((button) => {
     button.addEventListener('click', () => {
-      let strings = {};
+      let strings;
       try { strings = JSON.parse(button.dataset.strings || '{}'); } catch (_error) { strings = {}; }
       const dialog = document.createElement('dialog');
       dialog.className = 'admin-modal admin-filelib-modal';

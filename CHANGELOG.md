@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.97.20 — 2026-10-10
+
+Full verification run.
+
+- Lint errors in the admin script fixed (unused values and argument).
+- Checked: typecheck, eslint (0 errors), stylelint, asset build, all tools/check-*.mjs, all bin/*-check.php that need no database, Twig lint, PHP syntax of every file.
+- Checked on a clean MariaDB 10.11: all 124 migrations apply in order (including the new 2026-12-29..31 ones); forum schema and OpenCart import runtime checks pass.
+- Not runnable in the build sandbox (PHP 8.3 only, the project needs 8.4): PHPUnit (258 of 279 pass, the other 21 stop on PHP 8.4 syntax), kernel boot, Playwright E2E.
+
 ## 3.97.19 — 2026-10-10
 
 OpenCart import no longer stops on bad records.
