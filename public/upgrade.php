@@ -69,7 +69,7 @@ $canRun = $installed && $secret !== '' && !($done !== null && $done['ok']);
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title><?= $e($it('upgrade.page_title')) ?></title>
-<link rel="icon" type="image/svg+xml" href="assets/branding/nexora-mark.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/branding/favicon-32.png"><link rel="apple-touch-icon" href="assets/branding/favicon-180.png">
 <style>
 :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#eef2f9}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(1200px 500px at 50% -10%,#dbe6ff 0,transparent 70%),#eef2f9}
 .wrap{max-width:720px;margin:0 auto;padding:56px 20px}
@@ -88,7 +88,7 @@ details{margin:6px 0 0;border:1px solid #e4e7ec;border-radius:14px;background:#f
 @media(max-width:560px){.card{padding:24px}.stats{grid-template-columns:1fr}.button{width:100%}}@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
-<body><main class="wrap"><div class="brand"><img src="assets/branding/nexora-mark.svg" alt=""><div><strong>Nexora Commerce</strong><span><?= $e($it('upgrade.page_title')) ?></span></div></div><section class="card">
+<body><main class="wrap"><div class="brand"><img src="assets/branding/nexora-mark.png" alt=""><div><strong>Nexora Commerce</strong><span><?= $e($it('upgrade.page_title')) ?></span></div></div><section class="card">
 <h1><?= $e($it('upgrade.title')) ?></h1>
 <p><?= $e($it('upgrade.intro')) ?></p>
 <?php if ($message !== ''): ?><div class="msg <?= $e($messageType) ?>" role="alert"><?= $e($message) ?></div><?php endif; ?>

@@ -31,7 +31,7 @@ test('storefront header uses the installed store identity rather than the platfo
   const brand = page.locator('.reference-brand');
   await expect(brand).toBeVisible();
   await expect(brand.locator('strong')).toHaveText('Nexora E2E');
-  await expect(brand.locator('img[src*="nexora-mark.svg"]')).toHaveCount(0);
+  await expect(brand.locator('img[src*="nexora-mark.png"]')).toHaveCount(0);
 });
 
 

@@ -33,9 +33,16 @@ final class PwaController extends AbstractController
         }
         $name = trim((string) ($settings['brand']['title'] ?? '')) !== '' ? (string) $settings['brand']['title'] : $context->storeName;
         $icon = (string) ($settings['brand']['icon'] ?? '');
-        $iconSrc = $icon !== '' ? $icon : '/assets/branding/nexora-mark.svg';
-        $extension = strtolower(pathinfo(parse_url($iconSrc, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION));
+        $extension = strtolower(pathinfo(parse_url($icon, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION));
         $type = match ($extension) { 'png' => 'image/png', 'webp' => 'image/webp', 'jpg', 'jpeg' => 'image/jpeg', default => 'image/svg+xml' };
+        // The store's own icon when it has one, otherwise the platform's PNG set (the installable app needs real 192/512 sizes).
+        $icons = $icon !== ''
+            ? [['src' => $icon, 'sizes' => 'any', 'type' => $type, 'purpose' => 'any'], ['src' => $icon, 'sizes' => 'any', 'type' => $type, 'purpose' => 'maskable']]
+            : [
+                ['src' => '/assets/branding/nexora-mark-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => '/assets/branding/nexora-mark-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => '/assets/branding/nexora-mark-maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+            ];
 
         $manifest = [
             'name' => $name,
@@ -47,10 +54,7 @@ final class PwaController extends AbstractController
             'display' => 'standalone',
             'background_color' => '#ffffff',
             'theme_color' => (string) ($settings['theme']['primary'] ?? '#0B63F6'),
-            'icons' => [
-                ['src' => $iconSrc, 'sizes' => 'any', 'type' => $type, 'purpose' => 'any'],
-                ['src' => $iconSrc, 'sizes' => 'any', 'type' => $type, 'purpose' => 'maskable'],
-            ],
+            'icons' => $icons,
         ];
         $response = new JsonResponse($manifest, 200, ['Content-Type' => 'application/manifest+json; charset=UTF-8']);
         $response->setPublic();

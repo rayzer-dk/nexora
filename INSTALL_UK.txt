@@ -1,4 +1,4 @@
-NEXORA COMMERCE 3.97.2 — КОРОТКА ІНСТРУКЦІЯ ВСТАНОВЛЕННЯ
+NEXORA COMMERCE 3.97.3 — КОРОТКА ІНСТРУКЦІЯ ВСТАНОВЛЕННЯ
 
 1. Сервер: PHP 8.4 або 8.5, MySQL 8.4+ або MariaDB 10.11+ LTS (рекомендовано MariaDB 11.4 LTS), InnoDB, utf8mb4, HTTPS.
 2. PHP extensions: ctype, curl, dom, fileinfo, gd, iconv, intl, json, mbstring, openssl, pcre, PDO, pdo_mysql, session, simplexml, sodium, tokenizer, zip.

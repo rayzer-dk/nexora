@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.97.3 — 2026-10-10
+
+New Nexora logo.
+
+- New brand files in public/assets/branding: the mark (nexora-mark.png, 192/512 and a maskable 512), the horizontal and stacked logos with transparent background, each in a dark-text and a light-text (nexora-logo-light) version, favicon.ico (16-64 px), favicon-32.png and the 180 px touch icon.
+- Used in the admin (sidebar, sign-in and two-step pages, tab icon), the installer and upgrade pages, the storefront's default tab icon, the web app manifest (real 192 and 512 icons plus a maskable one when the store has no icon of its own), and the README.
+- The old SVG mark and logo are removed.
+
 ## 3.97.2 — 2026-10-10
 
 File libraries for product documents and digital downloads.
