@@ -2177,3 +2177,11 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 .admin-table details > form.admin-form-grid { width: min(680px, 78vw); margin-top: var(--mc-space-3); white-space: normal; }
 .admin-table details > form.admin-form-grid label { min-width: 0; }
 .admin-table details > form.admin-form-grid input, .admin-table details > form.admin-form-grid select { width: 100%; max-width: 100%; }
+
+/* 3.97.13 badge colours: background and text side by side, with a live preview */
+.admin-tone__custom { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--mc-space-4); }
+.admin-tone__color { display: grid; gap: var(--mc-space-1); }
+.admin-tone__color > small { color: var(--mc-color-muted); }
+.admin-tone__color input[type=color] { width: 44px; height: 36px; padding: 2px; }
+.admin-tone__color input[type=text] { width: 110px; font-family: var(--mc-font-mono, monospace); }
+.admin-tone__custom .product-badge { align-self: end; }

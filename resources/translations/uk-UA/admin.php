@@ -5578,4 +5578,7 @@ return [
     'admin.import.universal.progress_working' => 'Оброблено %done% з %total% рядків · створено %created% · оновлено %updated% · помилок %failed%',
     'admin.import.universal.progress_done' => 'Готово. Створено %created%, оновлено %updated%, помилок %failed%.',
     'admin.import.universal.progress_error' => 'Імпорт зупинено. Перевірте файл і спробуйте ще раз.',
+    'admin.badges.color_bg' => 'Фон',
+    'admin.badges.color_text' => 'Текст',
+    'admin.badges.color_text_auto' => 'авто',
 ];

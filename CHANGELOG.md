@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.13 — 2026-10-10
+
+Badge colours: background and text.
+
+- Product badges (new, sale, bestseller, your own): a free colour now has a background picker and a text picker, each with its HEX box shown once (the page used to add a second, confusing HEX box next to the picker). A live preview shows the badge. An empty text colour is chosen automatically by contrast.
+- Migration Version20261231120000 widens the badge tone column so the text colour fits ("#background:#text").
+
 ## 3.97.12 — 2026-10-10
 
 Subcategory tiles and coloured service cards.

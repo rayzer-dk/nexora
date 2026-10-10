@@ -5583,4 +5583,7 @@ return [
     'admin.import.universal.progress_working' => 'Processed %done% of %total% rows · created %created% · updated %updated% · errors %failed%',
     'admin.import.universal.progress_done' => 'Done. Created %created%, updated %updated%, errors %failed%.',
     'admin.import.universal.progress_error' => 'The import stopped. Check the file and try again.',
+    'admin.badges.color_bg' => 'Background',
+    'admin.badges.color_text' => 'Text',
+    'admin.badges.color_text_auto' => 'auto',
 ];

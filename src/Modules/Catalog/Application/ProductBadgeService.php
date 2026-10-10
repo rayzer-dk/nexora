@@ -105,7 +105,7 @@ final class ProductBadgeService
         }
         $now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
         $row = [
-            'kind' => $kind, 'tone' => in_array($tone, self::TONES, true) ? $tone : (preg_match('/^#[0-9a-fA-F]{6}$/', $tone) === 1 ? strtolower($tone) : 'primary'),
+            'kind' => $kind, 'tone' => in_array($tone, self::TONES, true) ? $tone : (preg_match('/^#[0-9a-fA-F]{6}(?::#[0-9a-fA-F]{6})?$/', $tone) === 1 ? strtolower($tone) : 'primary'),
             'labels_json' => json_encode($labels, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
             'icon' => preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', (string) ($d['icon'] ?? '')) === 1 ? (string) $d['icon'] : null,
             'window_days' => max(0, min(3650, (int) ($d['window_days'] ?? 30))), 'min_sold' => max(0, min(1000000, (int) ($d['min_sold'] ?? 5))),
@@ -174,7 +174,7 @@ final class ProductBadgeService
                     default => isset($set[$id]),
                 };
                 if ($match && count($item['badges']) < 3) {
-                    $item['badges'][] = ['code' => $rule['code'], 'tone' => str_starts_with((string) $rule['tone'], '#') ? 'custom' : $rule['tone'], 'color' => str_starts_with((string) $rule['tone'], '#') ? (string) $rule['tone'] : '', 'fg' => str_starts_with((string) $rule['tone'], '#') ? self::contrastOn((string) $rule['tone']) : '', 'label' => $this->label($rule, $locale), 'icon' => (string) ($rule['icon'] ?? '')];
+                    $item['badges'][] = ['code' => $rule['code'], 'tone' => str_starts_with((string) $rule['tone'], '#') ? 'custom' : $rule['tone'], 'color' => str_starts_with((string) $rule['tone'], '#') ? substr((string) $rule['tone'], 0, 7) : '', 'fg' => str_starts_with((string) $rule['tone'], '#') ? (strlen((string) $rule['tone']) === 15 ? substr((string) $rule['tone'], 8) : self::contrastOn(substr((string) $rule['tone'], 0, 7))) : '', 'label' => $this->label($rule, $locale), 'icon' => (string) ($rule['icon'] ?? '')];
                 }
             }
             unset($item);

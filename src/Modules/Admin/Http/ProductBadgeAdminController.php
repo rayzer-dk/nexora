@@ -53,7 +53,7 @@ final class ProductBadgeAdminController extends AbstractController
             $id = $this->badges->save($ctx->storeId, $id, [
                 'code' => is_array($existing) ? $existing['code'] : (string) $request->request->get('code', ''),
                 'kind' => is_array($existing) ? $existing['kind'] : (string) $request->request->get('kind', 'manual'),
-                'tone' => (string) $request->request->get('tone', 'primary') === 'custom' ? (string) $request->request->get('tone_custom', '') : (string) $request->request->get('tone', 'primary'),
+                'tone' => $this->toneFromRequest($request),
                 'labels' => $this->labelsFromRequest($request),
                 'icon' => (string) $request->request->get('icon', ''),
                 'window_days' => $request->request->getInt('window_days', 30), 'min_sold' => $request->request->getInt('min_sold', 5),
@@ -107,5 +107,18 @@ final class ProductBadgeAdminController extends AbstractController
         $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.badges.deleted'));
 
         return $this->redirectToRoute('admin_catalog_badges');
+    }
+
+    /** A preset name, or a free colour: "#background" or "#background:#text" (the text colour is chosen by contrast when left empty). */
+    private function toneFromRequest(Request $request): string
+    {
+        $tone = (string) $request->request->get('tone', 'primary');
+        if ($tone !== 'custom') {
+            return $tone;
+        }
+        $bg = strtolower(trim((string) $request->request->get('tone_custom', '')));
+        $fg = strtolower(trim((string) $request->request->get('tone_fg', '')));
+
+        return preg_match('/^#[0-9a-f]{6}$/', $bg) === 1 && preg_match('/^#[0-9a-f]{6}$/', $fg) === 1 ? $bg . ':' . $fg : $bg;
     }
 }

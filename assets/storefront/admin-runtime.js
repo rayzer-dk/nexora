@@ -1208,6 +1208,39 @@ function initToneFields() {
       else hex.setCustomValidity(v === '' ? '' : t('js_color_invalid'));
     });
     if (value.value === 'custom') mark(null);
+
+    // Text colour: its own picker and HEX box (empty = chosen automatically by contrast), plus a live preview.
+    const fgPicker = q('[data-tone-fg-picker]', field);
+    const fgHex = q('[data-tone-fg-hex]', field);
+    const preview = q('[data-tone-preview]', field);
+    if (!fgPicker || !fgHex) return;
+    const lum = (hexColor) => {
+      const c = [1, 3, 5].map((i) => parseInt(hexColor.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    };
+    const auto = (bg) => ((1.05 / (lum(bg) + 0.05)) > ((lum(bg) + 0.05) / 0.05) ? '#ffffff' : '#111111');
+    const currentBg = () => {
+      if (value.value === 'custom') return valid(hex.value) ? hex.value.toLowerCase() : picker.value;
+      const active = swatches.find((sw) => sw.classList.contains('is-active'));
+      return (active && toHex(window.getComputedStyle(active).backgroundColor)) || picker.value;
+    };
+    const refresh = () => {
+      const bg = currentBg();
+      const fg = valid(fgHex.value) ? fgHex.value.toLowerCase() : auto(bg);
+      if (!valid(fgHex.value)) fgPicker.value = fg;
+      if (preview) { preview.style.background = bg; preview.style.color = fg; }
+    };
+    fgPicker.addEventListener('input', () => { fgHex.value = fgPicker.value.toLowerCase(); fgHex.setCustomValidity(''); if (value.value !== 'custom') custom(currentBg()); refresh(); });
+    fgHex.addEventListener('input', () => {
+      let v = fgHex.value.trim();
+      if (v && !v.startsWith('#')) v = `#${v}`;
+      fgHex.value = v;
+      if (valid(v)) { fgHex.setCustomValidity(''); if (value.value !== 'custom') custom(currentBg()); } else { fgHex.setCustomValidity(v === '' ? '' : t('js_color_invalid')); }
+      refresh();
+    });
+    [picker, hex].forEach((el) => el.addEventListener('input', refresh));
+    swatches.forEach((sw) => sw.addEventListener('click', () => window.setTimeout(refresh, 0)));
+    refresh();
   });
 }
 
