@@ -248,9 +248,16 @@ final class CommerceOperationsAdminController extends AbstractController
                     $inspection=$this->universalImport->stage($file->getPathname(),$file->getClientOriginalName());$profileId=(int)$request->request->get('profile_id',0);if($profileId>0){$saved=$this->universalImport->profileMapping($context->storeId,$profileId);if($saved!==[])$inspection['suggestions']=array_replace($inspection['suggestions'],$saved);}
                 }else{
                     $mapping=$request->request->all('mapping');
+                    if($request->request->has('chunk')){
+                        // One step of the import with a progress bar: the page asks for the next slice until "done".
+                        $part=$this->universalImport->process((string)$request->request->get('token'),is_array($mapping)?$mapping:[],$context->storeId,$context->marketId,$context->locale,true,$request->request->getInt('offset'),max(1,min(500,$request->request->getInt('chunk'))));
+                        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>true]+$part);
+                    }
                     $report=$this->universalImport->process((string)$request->request->get('token'),is_array($mapping)?$mapping:[],$context->storeId,$context->marketId,$context->locale,$request->request->get('mode')==='apply');$profileName=trim((string)$request->request->get('profile_name'));if($profileName!==''&&is_array($mapping))$this->universalImport->saveProfile($context->storeId,$profileName,(string)$request->request->get('source_format','csv'),$mapping);
                 }
-            }catch(\Throwable $e){$this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('import.universal.error.process'));}
+            }catch(\Throwable $e){
+                if($request->request->has('chunk'))return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false,'message'=>$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('import.universal.error.process')],422);
+                $this->addFlash('error',$e instanceof \DomainException?$e->getMessage():\Commerce\Core\I18n\CanonicalUiText::get('import.universal.error.process'));}
         }
         return $this->render('@storefront/admin/commerce/import_wizard.html.twig',['inspection'=>$inspection,'report'=>$report,'profiles'=>$this->universalImport->profiles($context->storeId),'target_fields'=>['sku'=>'import.universal.field.sku','name'=>'import.universal.field.name','price'=>'import.universal.field.price','currency'=>'import.universal.field.currency','stock_quantity'=>'import.universal.field.stock','unit_code'=>'import.universal.field.unit','gtin'=>'import.universal.field.gtin','mpn'=>'import.universal.field.mpn','brand'=>'import.universal.field.brand','category_ids'=>'import.universal.field.categories','slug'=>'import.universal.field.slug','short_description'=>'import.universal.field.short_description','description'=>'import.universal.field.description','status'=>'import.universal.field.status','product_type'=>'import.universal.field.product_type']]);
     }

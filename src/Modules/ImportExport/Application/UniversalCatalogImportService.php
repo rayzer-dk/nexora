@@ -75,7 +75,7 @@ final readonly class UniversalCatalogImportService
     }
 
     /** @param array<string,string> $mapping @return array<string,mixed> */
-    public function process(string $token, array $mapping, int $storeId, int $marketId, string $locale, bool $apply): array
+    public function process(string $token, array $mapping, int $storeId, int $marketId, string $locale, bool $apply, int $offset = 0, ?int $limit = null): array
     {
         if (preg_match('/^[a-f0-9]{40}$/D', $token)!==1) throw new \DomainException(CanonicalUiText::get('import.universal.error.token'));
         $dir=rtrim($this->projectDir,'/\\').'/var/import-staging';
@@ -88,6 +88,9 @@ final readonly class UniversalCatalogImportService
         foreach(['sku','price'] as $required){if(!isset($clean[$required]))throw new \DomainException(CanonicalUiText::get('import.universal.error.required_mapping', ['field' => $required]));}
         $rows=$format==='xlsx'?$this->readXlsx($path,self::MAX_ROWS+1):$this->readCsv($path,self::MAX_ROWS+1);
         $headers=array_values(array_map(static fn($v)=>trim((string)$v),array_shift($rows)??[]));
+        // Large files are applied in steps (the page shows a progress bar): this call takes one slice of the data rows.
+        $totalRows=count($rows);$lastStep=$limit===null||$offset+$limit>=$totalRows;
+        if($limit!==null)$rows=array_slice($rows,max(0,$offset),max(1,$limit));
         $index=[];foreach($headers as $i=>$h){if($h!=='')$index[$h]=$i;}
         foreach($clean as $target=>$source){if(!isset($index[$source]))throw new \DomainException(CanonicalUiText::get('import.universal.error.column_missing', ['column' => $source]));}
         $ml=$this->multilingualHeaders($headers);
@@ -113,8 +116,9 @@ final readonly class UniversalCatalogImportService
                     }
                 }
             }
+            $result['total']=$totalRows;$result['offset']=max(0,$offset);$result['step']=count($rows);$result['done']=$lastStep;
             return $result;
-        } finally {@unlink($tmp);if($apply){@unlink($path);@unlink($metaPath);}}
+        } finally {@unlink($tmp);if($apply&&$lastStep){@unlink($path);@unlink($metaPath);}}
     }
 
     /** @return list<list<string>> */

@@ -2334,6 +2334,58 @@ function initSpellcheck() {
   });
 }
 
+/**
+ * Import with a progress bar: when "apply" is chosen the file is processed in steps of 100 rows; the bar shows how many rows are
+ * done, how many were created or updated and how many failed. "Preview" stays a normal submit.
+ */
+function initImportSteps() {
+  const form = q('form[data-import-steps]');
+  if (!form) return;
+  form.addEventListener('submit', async (event) => {
+    const mode = form.elements.namedItem('mode');
+    if (!(mode instanceof HTMLSelectElement) || mode.value !== 'apply') return;
+    event.preventDefault();
+    const box = q('[data-import-progress]', form);
+    const bar = q('progress', box);
+    const text = q('[data-import-progress-text]', box);
+    const submit = q('button[type="submit"]', form);
+    box.hidden = false;
+    submit.disabled = true;
+    const fill = (template, values) => Object.entries(values).reduce((out, [key, value]) => out.replace(`%${key}%`, String(value)), template);
+    const totals = { created: 0, updated: 0, failed: 0 };
+    const errors = [];
+    let offset = 0;
+    try {
+      for (;;) {
+        const body = new FormData(form);
+        body.set('chunk', '100');
+        body.set('offset', String(offset));
+        const response = await fetch(window.location.href, { method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' } });
+        const part = await response.json().catch(() => ({}));
+        if (!response.ok || !part.ok) throw new Error(part.message || form.dataset.textError);
+        totals.created += Number(part.created || 0);
+        totals.updated += Number(part.updated || 0);
+        totals.failed += Number(part.failed || 0);
+        (part.errors || []).forEach((message) => { if (errors.length < 50) errors.push(message); });
+        offset += Number(part.step || 0);
+        const total = Math.max(1, Number(part.total || 1));
+        bar.value = Math.min(100, Math.round((offset / total) * 100));
+        text.textContent = fill(form.dataset.textWorking || '', { done: Math.min(offset, total), total, ...totals });
+        if (part.done || Number(part.step || 0) === 0) break;
+      }
+      text.textContent = fill(form.dataset.textDone || '', totals);
+      if (errors.length) {
+        const list = document.createElement('ul');
+        errors.forEach((message) => { const li = document.createElement('li'); li.textContent = message; list.append(li); });
+        box.append(list);
+      }
+    } catch (error) {
+      text.textContent = error instanceof Error ? error.message : (form.dataset.textError || '');
+      submit.disabled = false;
+    }
+  });
+}
+
 function initCopyControls() {
   qa('[data-copy-value], [data-copy-target]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -2558,6 +2610,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initThumbZoom();
   initProductTabs();
   initCopyControls();
+  initImportSteps();
   initSpellcheck();
   initFileLibraries();
   initPairRepeaters();

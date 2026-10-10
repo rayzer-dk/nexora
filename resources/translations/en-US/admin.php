@@ -5580,4 +5580,7 @@ return [
     'admin.inquiry.error.sms' => 'The SMS was not sent. Check the SMS settings and the phone number.',
     'admin.inquiry.error.email' => 'The request has no valid e-mail.',
     'vue.components.richtexteditor.emoji' => 'Emoji',
+    'admin.import.universal.progress_working' => 'Processed %done% of %total% rows · created %created% · updated %updated% · errors %failed%',
+    'admin.import.universal.progress_done' => 'Done. Created %created%, updated %updated%, errors %failed%.',
+    'admin.import.universal.progress_error' => 'The import stopped. Check the file and try again.',
 ];

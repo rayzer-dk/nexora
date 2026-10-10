@@ -2168,3 +2168,6 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 .admin-inquiry__channels { display: flex; gap: var(--mc-space-3); }
 .admin-inquiry .inquiry-update-form { display: flex; gap: var(--mc-space-2); }
 @media (max-width: 760px) { .admin-inquiry { grid-template-columns: 56px minmax(0, 1fr); } .admin-inquiry__side { grid-column: 1 / -1; } }
+
+.admin-progress { display: grid; gap: var(--mc-space-2); margin-top: var(--mc-space-3); }
+.admin-progress progress { width: 100%; height: 12px; accent-color: var(--mc-color-primary-fill); }

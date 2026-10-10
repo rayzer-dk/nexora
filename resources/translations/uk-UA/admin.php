@@ -5575,4 +5575,7 @@ return [
     'admin.inquiry.error.sms' => 'SMS не надіслано. Перевірте налаштування SMS і номер телефону.',
     'admin.inquiry.error.email' => 'У зверненні немає коректного e-mail.',
     'vue.components.richtexteditor.emoji' => 'Емодзі',
+    'admin.import.universal.progress_working' => 'Оброблено %done% з %total% рядків · створено %created% · оновлено %updated% · помилок %failed%',
+    'admin.import.universal.progress_done' => 'Готово. Створено %created%, оновлено %updated%, помилок %failed%.',
+    'admin.import.universal.progress_error' => 'Імпорт зупинено. Перевірте файл і спробуйте ще раз.',
 ];

@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.10 — 2026-10-10
+
+Import progress and a fuller export.
+
+- Import wizard: "apply" runs in steps of 100 rows with a progress bar that shows how many rows are done, created, updated and failed, and lists the first errors. "Preview" works as before. (Matching the file's columns to the shop's fields, with suggestions and saved profiles, was already in the wizard.)
+- Product export: new columns - category names, page address (url), h1, meta title, meta description, the main photo and all photos (relative addresses). The importer ignores the columns it does not know, so an export can be edited and imported back.
+
 ## 3.97.9 — 2026-10-10
 
 Text editor and spelling.
