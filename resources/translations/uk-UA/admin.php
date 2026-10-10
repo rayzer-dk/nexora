@@ -5503,4 +5503,6 @@ return [
     'admin.forum.log.topic_slow_mode' => 'Повільний режим змінено',
     'admin.mfa.copy' => 'Копіювати',
     'admin.mfa.recovery.copy_all' => 'Копіювати всі коди',
+    'admin.translations.field.slug' => 'Адреса сторінки (URL)',
+    'admin.translations.field.slug_hint' => 'У кожної мови власна адреса. Залиште порожнім, щоб створити з назви. Стара адреса перенаправляє на нову.',
 ];

@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.97.0 — 2026-10-10
+
+Languages in the URL.
+
+- The default language stays at the root ("/catalog"); every other language has its own prefix ("/ru/catalog", "/en/catalog"; "/en-us/" and "/en-gb/" when two languages share a code). The prefix is cut off before routing, so every page works in every language, and generated links, forms, redirects and plain "/path" links of the page carry it again.
+- "?lang=ru-RU" is now a one-time switch: it sets the language cookie and redirects to the language address. A returning visitor who chose another language is sent from the root to the prefixed address (pages only; forms, AJAX, files and feeds are not redirected).
+- Every product, category, article and the home page carries hreflang links for all its languages (with x-default), and the canonical address of a prefixed page is the prefixed one. The sitemap lists prefixed addresses for non-default languages, and robots.txt blocks the private pages in every language.
+- The language switcher links directly to the same page's address in the other language (the product's own address when it has one).
+- Admin: the translation page of a product or category has an editable page address (URL) for each language; changing it keeps the old address as a redirect.
+- Last-known-good page cache is kept per language; the canonical-host redirect keeps the language prefix.
+
 ## 3.96.9 — 2026-10-10
 
 Interface fixes from the first review round.

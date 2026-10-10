@@ -93,7 +93,8 @@ final readonly class CatalogTranslationService
             } else {
                 $db->insert('mc_product_translation', $data + ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale, 'slug' => null, 'created_at' => $now, 'updated_at' => $now]);
             }
-            $this->seo->ensureForCreatedEntity($storeId, $locale, SeoEntityType::Product, $publicId, (string) $data['name']);
+            $route = $this->seo->ensureForCreatedEntity($storeId, $locale, SeoEntityType::Product, $publicId, (string) $data['name']);
+            $this->applySlug($route, $input);
         });
         $this->events->publish($this->eventFactory->create(EventNames::PRODUCT_UPDATED, 'product', $publicId, ['store_id' => $storeId, 'locale' => $locale], ['source' => 'translation']));
     }
@@ -114,8 +115,39 @@ final readonly class CatalogTranslationService
             } else {
                 $db->insert('mc_category_translation', $data + ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale, 'slug' => null]);
             }
-            $this->seo->ensureForCreatedEntity($storeId, $locale, SeoEntityType::Category, $publicId, (string) $data['name']);
+            $route = $this->seo->ensureForCreatedEntity($storeId, $locale, SeoEntityType::Category, $publicId, (string) $data['name']);
+            $this->applySlug($route, $input);
         });
+    }
+
+    /** The address of this language is edited next to its texts; an empty field keeps the current (or generated) one. */
+    private function applySlug(\Commerce\Modules\Seo\Domain\SeoRoute $route, array $input): void
+    {
+        $slug = trim((string) ($input['slug'] ?? ''));
+        if ($slug !== '' && $slug !== $route->slug) {
+            $this->seo->changeSlug($route, $slug);
+        }
+    }
+
+    /**
+     * @return array<string,string> locale => address (without the language prefix) of the product or category
+     */
+    public function addresses(int $storeId, string $entityType, string $publicId): array
+    {
+        try {
+            $rows = $this->db->fetchAllAssociative(
+                'SELECT locale,path FROM mc_seo_route WHERE store_id=? AND entity_type=? AND entity_public_id=?',
+                [$storeId, $entityType, Uuid::fromString($publicId)->toBinary()],
+            );
+        } catch (\Throwable) {
+            return [];
+        }
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(string) $row['locale']] = (string) $row['path'];
+        }
+
+        return $out;
     }
 
     /** @return array{id:int,public_id:string,name:string}|null */

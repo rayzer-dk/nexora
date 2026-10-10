@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /** One page per product or category with the texts in every store language, optionally translated by the AI assistant. */
 final class CatalogTranslationAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly CatalogTranslationService $translations)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly CatalogTranslationService $translations, private readonly \Commerce\Modules\Storefront\Infrastructure\LocalePrefixes $prefixes)
     {
     }
 
@@ -107,7 +107,7 @@ final class CatalogTranslationAdminController extends AbstractController
         $locales = $this->translations->locales($storeId);
         usort($locales, static fn (array $a, array $b): int => (int) $b['is_default'] <=> (int) $a['is_default']);
 
-        return ['kind' => $kind, 'entity' => $entity, 'texts' => $texts, 'fields' => $fields, 'locales' => $locales, 'csrf_id' => 'admin_translation_' . $entity['public_id']];
+        return ['kind' => $kind, 'entity' => $entity, 'texts' => $texts, 'fields' => $fields, 'locales' => $locales, 'addresses' => $this->translations->addresses($storeId, $kind, $entity['public_id']), 'prefixes' => $this->prefixes->forStore($storeId)['prefixes'], 'csrf_id' => 'admin_translation_' . $entity['public_id']];
     }
 
     private function guard(Request $request, string $publicId): void

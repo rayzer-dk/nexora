@@ -68,6 +68,6 @@ final class CanonicalHostSubscriber
         }
         $port = isset($public['port']) ? ':' . $public['port'] : '';
 
-        return $scheme . '://' . $host . $port . $request->getRequestUri();
+        return $scheme . '://' . $host . $port . (string) ($request->attributes->get('_original_request_uri') ?? $request->getRequestUri());
     }
 }

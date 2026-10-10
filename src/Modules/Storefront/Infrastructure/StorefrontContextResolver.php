@@ -33,7 +33,8 @@ final readonly class StorefrontContextResolver
 
         $storeId = (int) $store['id'];
         $locale = (string) $store['default_locale'];
-        $requestedLocale = trim((string) ($request->query->get('lang') ?: $request->cookies->get('store_locale', '')));
+        // The language prefix of the URL ("/ru/...") decides first; then an explicit ?lang=, then the visitor's cookie.
+        $requestedLocale = trim((string) ($request->attributes->get('_locale_prefix_locale') ?: $request->query->get('lang') ?: $request->cookies->get('store_locale', '')));
         if ($requestedLocale !== '' && $this->isEnabledLocale($storeId, $requestedLocale)) {
             $locale = $requestedLocale;
         }
@@ -74,6 +75,22 @@ final readonly class StorefrontContextResolver
             countryCode: (string) ($market['country_code'] ?: 'UA'),
             storeName: (string) $store['name'],
         );
+    }
+
+    /** The store the request's host belongs to (the only active store when no domain is mapped), or null before the shop is installed. */
+    public function storeIdForRequest(Request $request): ?int
+    {
+        try {
+            $store = $this->storeForHost($this->normalizeHost($request->getHost()));
+            if (!is_array($store)) {
+                $rows = $this->connection->fetchFirstColumn("SELECT id FROM mc_store WHERE status='active' LIMIT 2");
+                return count($rows) === 1 ? (int) $rows[0] : null;
+            }
+
+            return (int) $store['id'];
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function defaultLocale(int $storeId): ?string

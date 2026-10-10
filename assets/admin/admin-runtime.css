@@ -2090,3 +2090,8 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 [data-cat-row].is-drop-before > td { box-shadow: inset 0 3px 0 var(--mc-color-primary); }
 [data-cat-row].is-drop-after > td { box-shadow: inset 0 -3px 0 var(--mc-color-primary); }
 [data-cat-row].is-drop-into > td { background: var(--mc-color-primary-soft); }
+
+/* 3.97 language address field: the fixed language prefix in front of the editable part */
+.admin-input-affix { display: flex; align-items: center; gap: var(--mc-space-2); }
+.admin-input-affix > small { flex: none; color: var(--mc-color-muted); font-family: var(--mc-font-mono, monospace); }
+.admin-input-affix > input { flex: 1 1 auto; min-width: 0; }

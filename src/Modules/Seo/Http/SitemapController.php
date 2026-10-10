@@ -17,12 +17,14 @@ final class SitemapController extends AbstractController
     public const VISIBLE_ARTICLE="(sr.entity_type<>'blog_article' OR EXISTS (SELECT 1 FROM mc_content_entry pe JOIN mc_content_translation pt ON pt.content_id=pe.id AND pt.locale=sr.locale WHERE pe.public_id=sr.entity_public_id AND pe.store_id=sr.store_id AND pe.status='published' AND (pe.published_at IS NULL OR pe.published_at<=UTC_TIMESTAMP(6))))";
 
     private const PAGE_SIZE=20000;
-    public function __construct(private readonly Connection $db,private readonly string $publicBaseUrl,private readonly SystemPageRouteCatalog $systemPages,private readonly \Commerce\Modules\Security\Bots\BotProtection $bots){}
+    public function __construct(private readonly Connection $db,private readonly string $publicBaseUrl,private readonly SystemPageRouteCatalog $systemPages,private readonly \Commerce\Modules\Security\Bots\BotProtection $bots,private readonly \Commerce\Modules\Storefront\Infrastructure\LocalePrefixes $prefixes){}
 
     #[Route('/robots.txt',name:'public_robots_txt',methods:['GET'])]
     public function robots(): Response
     {
         $rules=['/admin','/checkout','/cart','/account','/api','/graphql','/compare','/wishlist','/*?*sort=','/*?*per_page=','/*?*limit=','/*?*min_price=','/*?*max_price=','/*?*rating=','/*?*after=','/*?*variant=','/*?*utm_','/*?*gclid=','/*?*fbclid='];
+        $prefixed=[];foreach(['/admin','/checkout','/cart','/account','/compare','/wishlist'] as $r){foreach($this->prefixes->allPrefixes() as $p)$prefixed[]='/'.$p.$r;}
+        $rules=array_merge($rules,$prefixed);
         $body="User-agent: *\n".implode("\n",array_map(static fn(string $r):string=>'Disallow: '.$r,$rules))."\nSitemap: ".$this->absolute('/sitemap.xml')."\n";
         if($this->bots->config()['robots_ai']){$ai='';foreach(\Commerce\Modules\Security\Bots\BotProtection::ROBOTS_AI as $agent)$ai.='User-agent: '.$agent."\nDisallow: /\n";$body=$ai."\n".$body;}
         return new Response($body,200,['Content-Type'=>'text/plain; charset=UTF-8','Cache-Control'=>'public, max-age=3600']);
@@ -50,7 +52,7 @@ final class SitemapController extends AbstractController
             WHERE sr.store_id=? AND sr.locale=? AND sr.indexable=1 AND ".self::VISIBLE_ARTICLE." AND (sr.entity_type<>'product' OR p.id IS NULL OR NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)) ORDER BY sr.id LIMIT ".self::PAGE_SIZE.' OFFSET '.$offset,[$storeId,$locale]);
         if($page===1)$rows=[...$this->systemPageRows($storeId,$locale),...$rows];
         if($rows===[]&&$page>1)throw $this->createNotFoundException();
-        $xml=new DOMDocument('1.0','UTF-8');$xml->formatOutput=true;$root=$xml->createElement('urlset');$root->setAttribute('xmlns','http://www.sitemaps.org/schemas/sitemap/0.9');$xml->appendChild($root);foreach($rows as $row){$u=$xml->createElement('url');$root->appendChild($u);$this->el($xml,$u,'loc',$this->absolute('/'.ltrim((string)$row['path'],'/')));if(!empty($row['lastmod']))$this->el($xml,$u,'lastmod',substr((string)$row['lastmod'],0,10));}
+        $localePrefix=$this->prefixes->prefixOf($storeId,$locale);$xml=new DOMDocument('1.0','UTF-8');$xml->formatOutput=true;$root=$xml->createElement('urlset');$root->setAttribute('xmlns','http://www.sitemaps.org/schemas/sitemap/0.9');$xml->appendChild($root);foreach($rows as $row){$u=$xml->createElement('url');$root->appendChild($u);$this->el($xml,$u,'loc',$this->absolute($localePrefix.'/'.ltrim((string)$row['path'],'/')));if(!empty($row['lastmod']))$this->el($xml,$u,'lastmod',substr((string)$row['lastmod'],0,10));}
         return $this->xml($xml,600);
     }
     /**

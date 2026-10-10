@@ -5508,4 +5508,6 @@ return [
     'admin.forum.log.topic_slow_mode' => 'Slow mode changed',
     'admin.mfa.copy' => 'Copy',
     'admin.mfa.recovery.copy_all' => 'Copy all codes',
+    'admin.translations.field.slug' => 'Page address (URL)',
+    'admin.translations.field.slug_hint' => 'Each language has its own address. Leave it empty to build it from the name. The old address keeps redirecting.',
 ];

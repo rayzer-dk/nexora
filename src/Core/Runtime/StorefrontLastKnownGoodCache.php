@@ -99,7 +99,7 @@ final readonly class StorefrontLastKnownGoodCache
 
     private function path(Request $request): string
     {
-        return $this->directory() . '/' . hash('sha256', $request->getPathInfo()) . '.json';
+        return $this->directory() . '/' . hash('sha256', (string) $request->attributes->get('_locale_prefix', '') . ':' . $request->getPathInfo()) . '.json';
     }
 
     private function directory(): string

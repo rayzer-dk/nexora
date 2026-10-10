@@ -40,6 +40,7 @@ final class StorefrontChromeExtension extends AbstractExtension
         private readonly StorefrontContextResolver $contexts,
         private readonly RequestStack $requests,
         private readonly StorefrontLayoutExtension $layout,
+        private readonly \Commerce\Modules\Storefront\Infrastructure\LocalePrefixes $prefixes,
     ) {
     }
 
@@ -182,7 +183,7 @@ final class StorefrontChromeExtension extends AbstractExtension
                 // the language in its own words ("English", native name); the full catalogue name only when two locales share a language
                 'name' => in_array($names[$code], $duplicates, true) ? (string) $row['name'] : $names[$code],
                 'flag' => $this->flagRegion($code),
-                'url' => $this->url($request, $path, ['lang' => $code]),
+                'url' => $this->languageUrl($request, $path, $code, $code === $defaultLocale, $ctx->storeId),
                 'current' => $code === $ctx->locale,
             ];
             $options[] = $option;
@@ -274,6 +275,25 @@ final class StorefrontChromeExtension extends AbstractExtension
     private function currentPath(Request $request): string
     {
         return trim(rawurldecode($request->getPathInfo()), '/');
+    }
+
+    /**
+     * The link of one language option: a secondary language opens at its own address ("/ru/..."), the default
+     * language goes through ?lang= once, which also resets the visitor's remembered language.
+     */
+    private function languageUrl(Request $request, string $path, string $code, bool $isDefault, int $storeId): string
+    {
+        if ($isDefault) {
+            return $this->url($request, $path, ['lang' => $code]);
+        }
+        $prefix = $this->prefixes->prefixOf($storeId, $code);
+        if ($prefix === '') {
+            return $this->url($request, $path, ['lang' => $code]);
+        }
+        $url = $this->url($request, $path, []);
+        $url = rtrim($url, '?');
+
+        return $prefix . ($url === '/' ? '' : $url);
     }
 
     /** @param array<string,string> $override */
