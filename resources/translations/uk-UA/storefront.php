@@ -1510,4 +1510,10 @@ return [
     'status.payload_key.document_number' => 'Номер документа',
     'status.payload_key.type' => 'Тип',
     'status.payload_key.attachments' => 'Вкладення',
+    'quick_order_email' => 'E-mail (необов’язково)',
+    'quick_order_comment' => 'Коментар (необов’язково)',
+    'status.inquiry_status.new' => 'Нове',
+    'status.inquiry_status.in_progress' => 'У роботі',
+    'status.inquiry_status.resolved' => 'Вирішено',
+    'status.inquiry_status.closed' => 'Закрито',
 ];

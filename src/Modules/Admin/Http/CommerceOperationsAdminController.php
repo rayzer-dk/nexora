@@ -38,6 +38,7 @@ final class CommerceOperationsAdminController extends AbstractController
         private readonly NewsletterCampaignService $campaigns,
         private readonly MarketingSegmentService $segments,
         private readonly \Commerce\Modules\Marketing\Application\CampaignTemplateService $campaignTemplates,
+        private readonly \Commerce\Modules\Notification\Application\SmsService $sms,
     ) {}
 
     #[Route('/admin/commerce/promotions', name:'admin_commerce_promotions', methods:['GET','POST'])]
@@ -185,10 +186,39 @@ final class CommerceOperationsAdminController extends AbstractController
         if(in_array($status,['new','in_progress','resolved','closed'],true)){$where[]='i.status=?';$params[]=$status;}
         if($type!==''&&preg_match('/^[a-z_]{1,32}$/D',$type)===1){$where[]='i.inquiry_type=?';$params[]=$type;}
         if($q!==''){$like='%'.addcslashes($q,'%_\\').'%';$where[]='(i.customer_name LIKE ? OR i.email LIKE ? OR i.phone LIKE ? OR i.message LIKE ?)';array_push($params,$like,$like,$like,$like);}
-        $rows=$this->db->fetchAllAssociative("SELECT i.*,i.customer_name AS name,pt.name product_name FROM mc_customer_inquiry i LEFT JOIN mc_product_translation pt ON pt.product_id=i.product_id AND pt.store_id=i.store_id AND pt.locale=? WHERE ".implode(' AND ',$where)." ORDER BY FIELD(i.status,'new','in_progress','resolved','closed'),i.id DESC LIMIT 500",$params);
+        $rows=$this->db->fetchAllAssociative("SELECT i.*,i.customer_name AS name,pt.name product_name,
+            (SELECT sr.path FROM mc_seo_route sr JOIN mc_product pr ON pr.public_id=sr.entity_public_id WHERE pr.id=i.product_id AND sr.entity_type='product' AND sr.store_id=i.store_id AND sr.locale=pt.locale LIMIT 1) product_path,
+            (SELECT ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.product_id=i.product_id AND pm.role IN ('primary','gallery') ORDER BY (pm.role='primary') DESC,pm.sort_order LIMIT 1) product_image
+            FROM mc_customer_inquiry i LEFT JOIN mc_product_translation pt ON pt.product_id=i.product_id AND pt.store_id=i.store_id AND pt.locale=? WHERE ".implode(' AND ',$where)." ORDER BY FIELD(i.status,'new','in_progress','resolved','closed'),i.id DESC LIMIT 500",$params);
         $counts=$this->db->fetchAllKeyValue('SELECT status,COUNT(*) FROM mc_customer_inquiry WHERE store_id=? GROUP BY status',[$context->storeId]);
         $types=array_map('strval',$this->db->fetchFirstColumn('SELECT DISTINCT inquiry_type FROM mc_customer_inquiry WHERE store_id=? ORDER BY 1',[$context->storeId]));
-        return $this->render('@storefront/admin/commerce/inquiries.html.twig',['rows'=>$rows,'counts'=>$counts,'types'=>$types,'filters'=>['q'=>$q,'status'=>$status,'type'=>$type]]);
+        return $this->render('@storefront/admin/commerce/inquiries.html.twig',['rows'=>$rows,'counts'=>$counts,'types'=>$types,'sms_enabled'=>$this->sms->enabled($context->storeId),'filters'=>['q'=>$q,'status'=>$status,'type'=>$type]]);
+    }
+
+    /** An answer to a customer's request, sent from the request itself: by e-mail (the shop's usual letter style) or by SMS. */
+    #[Route('/admin/commerce/inquiries/{id}/reply', name:'admin_commerce_inquiries_reply', methods:['POST'], requirements:['id'=>'\\d+'])]
+    public function inquiryReply(int $id,Request $request): Response
+    {
+        $context=$this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('inquiry_reply_'.$id,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+        $row=$this->db->fetchAssociative('SELECT * FROM mc_customer_inquiry WHERE id=? AND store_id=?',[$id,$context->storeId]);
+        $text=trim((string)$request->request->get('reply',''));$channel=(string)$request->request->get('channel','email');
+        try{
+            if(!is_array($row))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.missing'));
+            if($text===''||mb_strlen($text)>4000)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.text'));
+            if($channel==='sms'){
+                $r=$this->sms->sendManual($context->storeId,null,(string)($row['phone']??''),$text,null);
+                if(!($r['ok']??false))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.sms'));
+            }else{
+                $email=trim((string)($row['email']??''));if($email===''||filter_var($email,FILTER_VALIDATE_EMAIL)===false)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.email'));
+                $locale=$context->locale;
+                $this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('inquiry.reply',str_replace('%name%',(string)$row['customer_name'],\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.mail_subject')),$text,['locale'=>$locale],'generic'),$email);
+            }
+            $note=trim((string)($row['admin_note']??''));$stamp=gmdate('Y-m-d H:i').' · '.\Commerce\Core\I18n\CanonicalUiText::get($channel==='sms'?'admin.inquiry.replied_sms':'admin.inquiry.replied_email');
+            $this->db->update('mc_customer_inquiry',['status'=>$row['status']==='new'?'in_progress':$row['status'],'admin_note'=>mb_substr(($note!==''?$note."\n":'').$stamp,0,4000),'updated_at'=>$this->now()],['id'=>$id]);
+            $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.reply_sent'));
+        }catch(\DomainException $e){$this->addFlash('error',$e->getMessage());}
+        return $this->redirectToRoute('admin_commerce_inquiries');
     }
 
     #[Route('/admin/commerce/import-export', name:'admin_commerce_import_export', methods:['GET','POST'])]

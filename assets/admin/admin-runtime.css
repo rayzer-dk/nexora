@@ -2149,3 +2149,22 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 .admin-inline-edit > summary { list-style: none; cursor: pointer; }
 .admin-inline-edit[open] > form { display: flex; gap: var(--mc-space-2); margin-top: var(--mc-space-2); }
 .admin-inline-form-flat { display: inline-block; margin: 0 0 0 var(--mc-space-2); }
+
+/* 3.97.8 customer requests as compact cards */
+.admin-inquiries { display: grid; gap: var(--mc-space-3); }
+.admin-inquiry { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: var(--mc-space-4); align-items: start; padding: var(--mc-space-3) var(--mc-space-4); border: 1px solid var(--mc-color-border); border-left: 4px solid var(--mc-color-border-strong, var(--mc-color-border)); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised); }
+.admin-inquiry.is-new { border-left-color: var(--mc-color-warning); }
+.admin-inquiry.is-in_progress { border-left-color: var(--mc-color-primary); }
+.admin-inquiry.is-resolved { border-left-color: var(--mc-color-success); }
+.admin-inquiry__product img, .admin-inquiry__noimg { width: 56px; height: 56px; border-radius: var(--mc-radius-sm); object-fit: cover; background: var(--mc-color-surface-subtle); }
+.admin-inquiry__noimg { display: grid; place-items: center; color: var(--mc-color-muted); }
+.admin-inquiry__main p { margin: var(--mc-space-1) 0 0; }
+.admin-inquiry__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-2); }
+.admin-inquiry__text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-inquiry__note { color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
+.admin-inquiry__side { display: grid; gap: var(--mc-space-2); min-width: 220px; }
+.admin-inquiry__reply > summary { list-style: none; cursor: pointer; justify-content: center; }
+.admin-inquiry__reply form { display: grid; gap: var(--mc-space-2); margin-top: var(--mc-space-2); }
+.admin-inquiry__channels { display: flex; gap: var(--mc-space-3); }
+.admin-inquiry .inquiry-update-form { display: flex; gap: var(--mc-space-2); }
+@media (max-width: 760px) { .admin-inquiry { grid-template-columns: 56px minmax(0, 1fr); } .admin-inquiry__side { grid-column: 1 / -1; } }

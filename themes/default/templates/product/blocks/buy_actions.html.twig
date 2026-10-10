@@ -31,6 +31,8 @@
         <input type="hidden" name="_token" value="{{ csrf_token('product_inquiry_' ~ product.id) }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="quick_order"><input type="hidden" name="source_url" value="{{ app.request.uri }}"><input type="hidden" name="sku" value="{{ product.sku|default('') }}"><input type="hidden" name="quantity" value="{{ quantity.min }}" data-quick-order-qty>
         <label><span>{{ ui_text('name_required') }}</span><input name="name" required maxlength="190" autocomplete="name"></label>
         <label><span>{{ ui_text('phone') }} *</span><input name="phone" type="tel" required maxlength="32" autocomplete="tel"></label>
+        <label><span>{{ ui_text('quick_order_email') }}</span><input name="email" type="email" maxlength="320" autocomplete="email"></label>
+        <label><span>{{ ui_text('quick_order_comment') }}</span><textarea name="message" rows="2" maxlength="1000"></textarea></label>
         {% include '@storefront/components/captcha.html.twig' with {form:'quick_order'} only %}
         <button class="button button--primary" type="submit">{{ ui_icon('zap', 16) }} {{ ui_text('quick_order_send') }}</button>
     </form>

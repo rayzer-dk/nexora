@@ -51,7 +51,7 @@ final readonly class SmsService
     }
 
     /** @return array{ok:bool,error:string} */
-    public function sendManual(int $storeId, int $orderId, string $phone, string $text, ?int $adminId): array
+    public function sendManual(int $storeId, ?int $orderId, string $phone, string $text, ?int $adminId): array
     {
         return $this->deliver($storeId, $orderId, $phone, $text, 'manual', '', $adminId);
     }

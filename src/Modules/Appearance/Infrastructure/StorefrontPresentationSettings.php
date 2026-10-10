@@ -166,7 +166,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'sticky_header' => false,
                 'back_to_top' => true,
                 'sale_timer' => true,
-                'quick_order' => false,
+                'quick_order' => true,
                 'buy_now' => false,
                 'key_features_limit' => '5',
                 'benefits' => '',

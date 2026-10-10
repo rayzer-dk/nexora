@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.97.8 — 2026-10-10
+
+Quick order is visible, customer requests are answered from the request.
+
+- Quick order: switched on by default; the window asks for name and phone, plus an optional e-mail and comment. The comment arrives with the request.
+- Customer requests (admin): compact cards instead of a wide table, coloured status cards with an "All" tab, the product photo and link, tap-to-call and mail links, the order of the request kept (new first).
+- Answer from the request: "Reply" sends the text to the customer by e-mail in the shop's letter style or by SMS (when the SMS gateway is on); the request moves to "In progress" and a dated note records how it was answered.
+- Request statuses are translated.
+
 ## 3.97.7 — 2026-10-10
 
 Customer groups you can actually use.
