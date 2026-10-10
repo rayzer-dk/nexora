@@ -123,7 +123,7 @@ final readonly class DbalStorefrontCatalogQuery
                 "SELECT COUNT(DISTINCT p.id) FROM mc_product p
                  JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active'
                  JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active'
-                 WHERE p.status='published' AND EXISTS (SELECT 1 FROM mc_product_category pc WHERE pc.product_id=p.id AND pc.category_id IN ({$ids}))",
+                 WHERE p.status='published' AND EXISTS (SELECT 1 FROM mc_product_category pc WHERE pc.product_id=p.id AND pc.category_id IN ({$ids})) AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)",
                 [$context->storeId, $context->marketId],
             );
             $tiles[] = $tile;
@@ -460,7 +460,7 @@ final readonly class DbalStorefrontCatalogQuery
              JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active'
              JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active'
              JOIN mc_brand b ON b.id=p.brand_id
-             WHERE p.status='published'{$categorySql}
+             WHERE p.status='published'{$categorySql} AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)
              GROUP BY b.id,b.name ORDER BY b.name ASC LIMIT 100",
             $params,
         );
@@ -474,7 +474,7 @@ final readonly class DbalStorefrontCatalogQuery
              JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active'
              JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active' AND v.sort_order=0
              LEFT JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
-             WHERE p.status='published'{$categorySql}",
+             WHERE p.status='published'{$categorySql} AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)",
             $priceParams,
         );
 
@@ -949,7 +949,7 @@ final readonly class DbalStorefrontCatalogQuery
              JOIN mc_product_variant rv ON rv.product_id=rp.id AND rv.status='active' AND rv.sort_order=0
              JOIN mc_seo_route rsr ON rsr.store_id=? AND rsr.locale=? AND rsr.entity_type='product' AND rsr.entity_public_id=rp.public_id
              LEFT JOIN mc_price rr ON rr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=rv.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
-             WHERE rel.product_id=? AND rel.relation_type=? ORDER BY rel.sort_order,rel.related_product_id LIMIT {$limit}",
+             WHERE rel.product_id=? AND rel.relation_type=? AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=rp.id AND pxh.hidden=1) ORDER BY rel.sort_order,rel.related_product_id LIMIT {$limit}",
             [$context->marketId,$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,$context->storeId,$context->marketId,$context->currency,$productId,$relationType],
         );
 
@@ -1008,7 +1008,7 @@ final readonly class DbalStorefrontCatalogQuery
                     JOIN mc_product p2 ON p2.id=oi2.product_id AND p2.status='published'
                     JOIN mc_store_product sp2 ON sp2.product_id=p2.id AND sp2.store_id=? AND sp2.status='active'
                     JOIN mc_market_product mp2 ON mp2.product_id=p2.id AND mp2.market_id=? AND mp2.status='active'
-                    WHERE oi1.product_id=? AND oi2.product_id NOT IN ({$notIn})
+                    WHERE oi1.product_id=? AND oi2.product_id NOT IN ({$notIn}) AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p2.id AND pxh.hidden=1)
                     GROUP BY oi2.product_id ORDER BY score DESC,oi2.product_id DESC LIMIT {$limit}";
             $params = [$context->storeId,$context->storeId,$context->marketId,$productId,...$excluded];
             $ids = array_map('intval', $this->connection->fetchFirstColumn($sql, $params));
@@ -1022,7 +1022,7 @@ final readonly class DbalStorefrontCatalogQuery
                     JOIN mc_product p2 ON p2.id NOT IN ({$notIn}) AND p2.status='published'
                     JOIN mc_store_product sp2 ON sp2.product_id=p2.id AND sp2.store_id=? AND sp2.status='active'
                     JOIN mc_market_product mp2 ON mp2.product_id=p2.id AND mp2.market_id=? AND mp2.status='active'
-                    WHERE p1.id=?
+                    WHERE p1.id=? AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p2.id AND pxh.hidden=1)
                     HAVING score>0
                     ORDER BY score DESC,p2.id DESC LIMIT {$limit}";
             $params = [...$excluded,$context->storeId,$context->marketId,$productId];
@@ -1059,7 +1059,7 @@ final readonly class DbalStorefrontCatalogQuery
              JOIN mc_product_variant rv ON rv.product_id=rp.id AND rv.status='active' AND rv.sort_order=0
              JOIN mc_seo_route rsr ON rsr.store_id=? AND rsr.locale=? AND rsr.entity_type='product' AND rsr.entity_public_id=rp.public_id
              LEFT JOIN mc_price rr ON rr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=rv.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
-             WHERE rp.id IN ({$placeholders})",
+             WHERE rp.id IN ({$placeholders}) AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=rp.id AND pxh.hidden=1)",
             [$context->marketId,$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,$context->storeId,$context->marketId,$context->currency,...$ids],
         );
         $byId = [];

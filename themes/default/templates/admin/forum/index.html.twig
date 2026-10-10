@@ -130,6 +130,66 @@
     </div>
 </section>
 
+<section class="admin-panel" data-tab="t9">
+    <div class="admin-panel__header">
+        <div><small>{{ ui_text('admin.forum.index.community_safety') }}</small><h2>{{ ui_text('admin.forum.index.warnings') }}</h2></div>
+        <span class="admin-badge">{{ queue.warnings|length }}</span>
+    </div>
+    <p class="admin-muted">{{ ui_text('admin.forum.index.warnings_hint') }}</p>
+    <form method="post" action="{{ path('admin_forum_warning_create') }}" class="admin-inline-form" data-confirm="{{ ui_text('admin.forum.index.warn_confirm') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_warning_create') }}">
+        <label><span>{{ ui_text('admin.forum.index.customer_id') }}</span><input type="number" min="1" name="customer_id" required></label>
+        <label><span>{{ ui_text('admin.forum.index.warn_points') }}</span><select name="points"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+        <label><span>{{ ui_text('admin.forum.index.warn_days') }}</span><input type="number" min="1" max="3650" name="valid_days" value="90"></label>
+        <label class="is-wide"><span>{{ ui_text('admin.forum.index.ban_reason') }}</span><input type="text" name="reason" maxlength="1000" required></label>
+        <button type="submit">{{ ui_text('admin.forum.index.warn') }}</button>
+    </form>
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr><th>{{ ui_text('admin.forum.index.user') }}</th><th>{{ ui_text('admin.forum.index.ban_reason') }}</th><th>{{ ui_text('admin.forum.index.warn_points') }}</th><th>{{ ui_text('admin.forum.index.expires') }}</th><th>{{ ui_text('admin.forum.index.data') }}</th><th class="is-actions">{{ ui_text('admin.forum.index.dii') }}</th></tr></thead>
+            <tbody>
+            {% for w in queue.warnings %}
+                <tr>
+                    <td><strong>{{ w.nickname }}</strong><small class="admin-cell-sub">ID {{ w.customer_id }}</small></td>
+                    <td><span title="{{ w.reason|e('html_attr') }}">{{ w.reason|slice(0,220) }}{% if w.reason|length > 220 %}…{% endif %}</span></td>
+                    <td>{{ w.points }}</td>
+                    <td>{{ w.expires_at ? w.expires_at|local_datetime : '—' }}</td>
+                    <td>{{ w.created_at|local_datetime }}</td>
+                    <td class="is-actions"><form method="post" action="{{ path('admin_forum_warning_revoke',{id:w.id}) }}" data-confirm="{{ ui_text('admin.confirm.revoke') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_warning_' ~ w.id) }}"><button class="admin-icon-button is-success" type="submit" title="{{ ui_text('admin.forum.index.revoke_warning') }}" aria-label="{{ ui_text('admin.forum.index.revoke_warning') }}">{{ ui_icon('check', 18) }}</button></form></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6">{{ ui_text('admin.forum.index.no_warnings') }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="admin-panel" data-tab="t10">
+    <div class="admin-panel__header">
+        <div><small>{{ ui_text('admin.forum.index.community_safety') }}</small><h2>{{ ui_text('admin.forum.index.mod_log') }}</h2></div>
+        <span class="admin-badge">{{ queue.mod_log|length }}</span>
+    </div>
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr><th>{{ ui_text('admin.forum.index.data') }}</th><th>{{ ui_text('admin.forum.index.log_actor') }}</th><th>{{ ui_text('admin.forum.index.log_action') }}</th><th>{{ ui_text('admin.forum.index.user') }}</th><th>{{ ui_text('admin.forum.index.log_note') }}</th></tr></thead>
+            <tbody>
+            {% for l in queue.mod_log %}
+                <tr>
+                    <td>{{ l.created_at|local_datetime }}</td>
+                    <td>{{ l.actor }}</td>
+                    <td>{{ ui_text('admin.forum.log.' ~ l.action) }}</td>
+                    <td>{% if l.customer_id %}{{ l.nickname }} <small class="admin-cell-sub">ID {{ l.customer_id }}</small>{% endif %}{% if l.topic_id %}<a href="{{ path('admin_forum_topic_view',{id:l.topic_id}) }}">#{{ l.topic_id }}</a>{% endif %}</td>
+                    <td>{{ (l.note ?? '')|slice(0,200) }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5">{{ ui_text('admin.forum.index.no_log') }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
 <section class="admin-panel" data-tab="t8">
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.forum.index.moderatsiia') }}</small><h2>{{ ui_text('admin.forum.settings') }}</h2></div></div>
     <form method="post" action="{{ path('admin_forum_settings') }}" class="admin-form-grid">

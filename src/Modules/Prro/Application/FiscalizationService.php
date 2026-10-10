@@ -153,7 +153,7 @@ final class FiscalizationService
                 }
                 unset($good);
             } else {
-                $body = ['id' => $uuid, 'goods' => [['good' => ['code' => 'REFUND', 'name' => 'Partial refund', 'price' => $amount], 'quantity' => 1000, 'is_return' => true]], 'payments' => [['type' => $type, 'value' => $amount]]];
+                $body = ['id' => $uuid, 'goods' => $this->partialRefundGoods($orderId, $amount), 'payments' => [['type' => $type, 'value' => $amount]]];
             }
             $body['related_receipt_id'] = (string) $sale['receipt_uuid'];
             $this->submit($cfg, $uuid, $body, "kind='return' AND refund_id=" . $refundId);
@@ -163,6 +163,51 @@ final class FiscalizationService
         }
 
         return $this->returnReceiptOf($refundId) ?? [];
+    }
+
+    /**
+     * Goods of a partial return receipt. Real products are used when the refund can be matched to them
+     * (a return request whose item refunds add up to the amount, or whole units of one order line);
+     * otherwise the receipt keeps one "Partial refund" line for the amount.
+     *
+     * @return list<array<string,mixed>>
+     */
+    private function partialRefundGoods(int $orderId, int $amount): array
+    {
+        $fallback = [['good' => ['code' => 'REFUND', 'name' => 'Partial refund', 'price' => $amount], 'quantity' => 1000, 'is_return' => true]];
+        $line = static function (string $code, string $name, int $sum, float $qty): array {
+            $whole = $qty > 0 && abs($qty - round($qty)) < 0.0001 && $sum % (int) round($qty) === 0;
+            $units = $whole ? (int) round($qty) : 1;
+            $label = $whole ? $name : ($qty > 0 ? $name . ' x ' . rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.') : $name);
+
+            return ['good' => ['code' => mb_substr($code, 0, 64), 'name' => mb_substr($label, 0, 250), 'price' => intdiv($sum, $units)], 'quantity' => $units * 1000, 'is_return' => true];
+        };
+
+        try {
+            $returned = $this->db->fetchAllAssociative(
+                "SELECT oi.sku,oi.name,SUM(ri.quantity) quantity,SUM(ri.refund_amount_minor) refund_minor
+                 FROM mc_return_item ri
+                 JOIN mc_return_request rr ON rr.id=ri.return_id AND rr.order_id=?
+                 JOIN mc_sales_order_item oi ON oi.id=ri.order_item_id
+                 WHERE ri.refund_amount_minor>0 AND rr.status NOT IN ('rejected','cancelled')
+                 GROUP BY oi.id,oi.sku,oi.name ORDER BY oi.id",
+                [$orderId],
+            );
+            if ($returned !== [] && array_sum(array_map(static fn (array $r): int => (int) $r['refund_minor'], $returned)) === $amount) {
+                return array_map(static fn (array $r): array => $line((string) $r['sku'], (string) $r['name'], (int) $r['refund_minor'], (float) $r['quantity']), $returned);
+            }
+        } catch (\Throwable) {
+            // Return tables are optional: fall through to the order lines.
+        }
+
+        foreach ($this->db->fetchAllAssociative('SELECT sku,name,quantity,unit_price_minor FROM mc_sales_order_item WHERE order_id=? ORDER BY id', [$orderId]) as $item) {
+            $price = (int) $item['unit_price_minor'];
+            if ($price > 0 && $amount % $price === 0 && $amount / $price <= (float) $item['quantity']) {
+                return [$line((string) $item['sku'], (string) $item['name'], $amount, (float) ($amount / $price))];
+            }
+        }
+
+        return $fallback;
     }
 
     /**

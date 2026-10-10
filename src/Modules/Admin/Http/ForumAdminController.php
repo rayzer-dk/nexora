@@ -36,12 +36,18 @@ final class ForumAdminController extends AbstractController
     public function index(Request $request): Response
     {
         $context = $this->contexts->resolve($request);
-        $queue = ['boards' => [], 'topics' => [], 'posts' => [], 'published_topics' => [], 'reports' => [], 'dm_reports' => [], 'bans' => []];
+        $queue = ['boards' => [], 'topics' => [], 'posts' => [], 'published_topics' => [], 'reports' => [], 'dm_reports' => [], 'bans' => [], 'warnings' => [], 'mod_log' => []];
         try {
             $queue = $this->forum->moderationQueue($context->storeId);
             $queue['reports'] = $this->community->openReports($context->storeId);
             $queue['dm_reports'] = $this->directMessages->openReports($context->storeId);
             $queue['bans'] = $this->moderation->activeBans($context->storeId);
+            $queue['mod_log'] = $this->moderation->recentLog($context->storeId);
+            try {
+                $queue['warnings'] = $this->moderation->activeWarnings($context->storeId);
+            } catch (Throwable) {
+                // The warnings table appears with the pending migration.
+            }
         } catch (Throwable $e) {
             $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.forumadmincontroller.forum_tymchasovo_nedostupnyi') . $this->safeMessage($e));
         }
@@ -205,6 +211,40 @@ final class ForumAdminController extends AbstractController
         }
         $this->moderation->revoke($context->storeId, $id);
         $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.flash.ban_revoked'));
+        return $this->redirectToRoute('admin_forum');
+    }
+
+    #[Route('/admin/forum/warnings', name: 'admin_forum_warning_create', methods: ['POST'])]
+    public function createWarning(Request $request): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_warning_create', (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $banned = $this->moderation->warn(
+                $context->storeId,
+                $request->request->getInt('customer_id'),
+                (string) $request->request->get('reason', ''),
+                $request->request->getInt('points', 1),
+                $request->request->getInt('valid_days', 90),
+            );
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get($banned ? 'admin.forum.flash.warning_auto_ban' : 'admin.forum.flash.warning_added'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+        return $this->redirectToRoute('admin_forum');
+    }
+
+    #[Route('/admin/forum/warnings/{id}/revoke', name: 'admin_forum_warning_revoke', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function revokeWarning(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_warning_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $this->moderation->revokeWarning($context->storeId, $id);
+        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.forum.flash.warning_revoked'));
         return $this->redirectToRoute('admin_forum');
     }
 

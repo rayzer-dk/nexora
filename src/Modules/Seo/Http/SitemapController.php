@@ -47,7 +47,7 @@ final class SitemapController extends AbstractController
             LEFT JOIN mc_category c ON sr.entity_type='category' AND c.public_id=sr.entity_public_id
             LEFT JOIN mc_brand b ON sr.entity_type='brand' AND b.public_id=sr.entity_public_id
             LEFT JOIN mc_content_entry ce ON sr.entity_type IN ('cms_page','blog_article','landing_page') AND ce.public_id=sr.entity_public_id
-            WHERE sr.store_id=? AND sr.locale=? AND sr.indexable=1 AND ".self::VISIBLE_ARTICLE." ORDER BY sr.id LIMIT ".self::PAGE_SIZE.' OFFSET '.$offset,[$storeId,$locale]);
+            WHERE sr.store_id=? AND sr.locale=? AND sr.indexable=1 AND ".self::VISIBLE_ARTICLE." AND (sr.entity_type<>'product' OR p.id IS NULL OR NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)) ORDER BY sr.id LIMIT ".self::PAGE_SIZE.' OFFSET '.$offset,[$storeId,$locale]);
         if($page===1)$rows=[...$this->systemPageRows($storeId,$locale),...$rows];
         if($rows===[]&&$page>1)throw $this->createNotFoundException();
         $xml=new DOMDocument('1.0','UTF-8');$xml->formatOutput=true;$root=$xml->createElement('urlset');$root->setAttribute('xmlns','http://www.sitemaps.org/schemas/sitemap/0.9');$xml->appendChild($root);foreach($rows as $row){$u=$xml->createElement('url');$root->appendChild($u);$this->el($xml,$u,'loc',$this->absolute('/'.ltrim((string)$row['path'],'/')));if(!empty($row['lastmod']))$this->el($xml,$u,'lastmod',substr((string)$row['lastmod'],0,10));}

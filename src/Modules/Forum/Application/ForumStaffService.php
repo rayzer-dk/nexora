@@ -16,6 +16,7 @@ final readonly class ForumStaffService
         private Connection $connection,
         private PublicIdFactory $publicIds,
         private ForumMediaService $media,
+        private ForumModerationService $moderation,
     ) {
     }
 
@@ -60,7 +61,7 @@ final readonly class ForumStaffService
     }
 
     /** @param 'hide'|'restore'|'delete' $action */
-    public function topicAction(int $storeId, int $topicId, string $action): void
+    public function topicAction(int $storeId, int $topicId, string $action, string $actor = 'admin'): void
     {
         if ($this->topicRow($storeId, $topicId) === null) {
             throw new \DomainException(CanonicalUiText::get('php.modules.forum.application.forumservice.temu_ne_znaideno'));
@@ -86,14 +87,16 @@ final readonly class ForumStaffService
                 $db->executeStatement('DELETE FROM mc_forum_post WHERE topic_id=?', [$topicId]);
                 $db->executeStatement('DELETE FROM mc_forum_topic WHERE id=?', [$topicId]);
             });
+            $this->moderation->log($storeId, $actor, 'topic_delete', null, $topicId);
 
             return;
         }
         $this->connection->update('mc_forum_topic', ['status' => $action === 'hide' ? 'hidden' : 'published', 'updated_at' => $now], ['id' => $topicId]);
+        $this->moderation->log($storeId, $actor, 'topic_' . $action, null, $topicId);
     }
 
     /** @param 'hide'|'restore'|'delete' $action */
-    public function postAction(int $storeId, int $postId, string $action): int
+    public function postAction(int $storeId, int $postId, string $action, string $actor = 'admin'): int
     {
         $row = $this->connection->fetchAssociative(
             'SELECT p.id,p.topic_id,(SELECT MIN(id) FROM mc_forum_post f WHERE f.topic_id=p.topic_id) AS first_id
@@ -106,7 +109,7 @@ final readonly class ForumStaffService
         $topicId = (int) $row['topic_id'];
         if ((int) $row['first_id'] === $postId && $action !== 'restore') {
             // The opening message is the topic itself.
-            $this->topicAction($storeId, $topicId, $action);
+            $this->topicAction($storeId, $topicId, $action, $actor);
 
             return $topicId;
         }
@@ -116,10 +119,12 @@ final readonly class ForumStaffService
             $this->connection->executeStatement('DELETE FROM mc_forum_report WHERE post_id=?', [$postId]);
             $this->connection->executeStatement('UPDATE mc_forum_topic SET solved_post_id=NULL WHERE id=? AND solved_post_id=?', [$topicId, $postId]);
             $this->connection->executeStatement('DELETE FROM mc_forum_post WHERE id=?', [$postId]);
+            $this->moderation->log($storeId, $actor, 'post_delete', null, $topicId, $postId);
 
             return $topicId;
         }
         $this->connection->update('mc_forum_post', ['status' => $action === 'hide' ? 'hidden' : 'published', 'updated_at' => $this->now()], ['id' => $postId]);
+        $this->moderation->log($storeId, $actor, 'post_' . $action, null, $topicId, $postId);
 
         return $topicId;
     }
@@ -173,7 +178,7 @@ final readonly class ForumStaffService
         if (!is_array($row) || (int) $row['topic_id'] !== $topicId || (int) $row['first_id'] === $postId) {
             throw new \DomainException(CanonicalUiText::get('forum.runtime.not_moderator'));
         }
-        $this->postAction($storeId, $postId, $action);
+        $this->postAction($storeId, $postId, $action, 'moderator #' . $moderatorId);
     }
 
     /** @return array{topic:array<string,mixed>,posts:list<array<string,mixed>>}|null */
