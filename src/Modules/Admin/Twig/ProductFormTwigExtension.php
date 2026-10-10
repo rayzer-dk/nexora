@@ -17,7 +17,18 @@ final class ProductFormTwigExtension extends AbstractExtension
 
     public function getFunctions(): array
     {
-        return [new TwigFunction('admin_customer_groups', $this->customerGroups(...))];
+        return [new TwigFunction('admin_customer_groups', $this->customerGroups(...)), new TwigFunction('admin_customer_group_choices', $this->choices(...))];
+    }
+
+    /** @return list<array{code:string,name:string}> every group including the default one, for pickers that assign a customer to a group */
+    public function choices(): array
+    {
+        $out = [];
+        foreach ($this->groups->all() as $code => $group) {
+            $out[] = ['code' => $code, 'name' => $code === 'default' ? ($group['name'] === 'Default' ? \Commerce\Core\I18n\CanonicalUiText::get('admin.customer_groups.default_name') : $group['name']) : $group['name']];
+        }
+
+        return $out;
     }
 
     /** @return list<array{code:string,name:string}> every group a price can be set for (the shared "default" price is the main price) */

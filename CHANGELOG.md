@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.97.7 — 2026-10-10
+
+Customer groups you can actually use.
+
+- A customer's group is chosen from the list of real groups (with their names) in the customer card and in the customer list; the list filter offers every group, also the ones with no customers yet. Before, it was a free text field and only groups that already had customers could be filtered.
+- A new group needs only a name (the technical code is made from it); the group list no longer shows codes, the customer count links to the filtered customer list.
+- The page now explains where a group works: after sign-in, in the customer card, and as per-product group prices.
+
 ## 3.97.6 — 2026-10-10
 
 Fewer technical fields, price lists from a file.

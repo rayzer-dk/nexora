@@ -29,7 +29,11 @@ final class CustomerGroupAdminController extends AbstractController
                 if ($request->request->get('action') === 'delete') {
                     $this->groups->delete((string) $request->request->get('code'));
                 } else {
-                    $this->groups->save((string) $request->request->get('code'), $request->request->all());
+                    $code = trim((string) $request->request->get('code', ''));
+                    if ($code === '') {
+                        $code = $this->codeFromName((string) $request->request->get('name', ''));
+                    }
+                    $this->groups->save($code, $request->request->all());
                 }
                 $this->addFlash('success', CanonicalUiText::get('admin.customer_groups.saved'));
             } catch (\DomainException $e) {
@@ -44,5 +48,19 @@ final class CustomerGroupAdminController extends AbstractController
         }
 
         return $this->render('@storefront/admin/commerce/customer_groups.html.twig', ['groups' => array_values($this->groups->all()), 'counts' => $counts]);
+    }
+
+    /** The technical code of a new group is made from its name, so nobody has to invent one. */
+    private function codeFromName(string $name): string
+    {
+        $base = str_replace('-', '_', (new \Commerce\Modules\Seo\Application\SlugGenerator())->generate($name, 'uk-UA'));
+        $base = trim((string) preg_replace('/[^a-z0-9_]+/', '_', strtolower($base)), '_');
+        $base = $base === '' ? 'group' : substr($base, 0, 56);
+        $code = $base;
+        for ($i = 2; isset($this->groups->all()[$code]) && $i < 100; ++$i) {
+            $code = $base . '_' . $i;
+        }
+
+        return $code;
     }
 }

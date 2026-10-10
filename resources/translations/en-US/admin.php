@@ -5313,7 +5313,7 @@ return [
     'admin.translations.field.h1' => 'H1 heading',
     'admin.customer_groups.nav' => 'Customer groups',
     'admin.customer_groups.title' => 'Customer groups',
-    'admin.customer_groups.hint' => 'A group discount shows in prices once the customer signs in and is taken off in the cart. Assign a group in the customer card.',
+    'admin.customer_groups.hint' => 'A group is a set of customers with special prices. Assign the group in the customer card. The percentage discount applies to all prices after sign-in; a single product can also get its own group price (the "Sales" tab of the product). "Skip sale items" turns the group discount off for products that are already discounted.',
     'admin.customer_groups.code' => 'Code',
     'admin.customer_groups.name' => 'Name',
     'admin.customer_groups.discount' => 'Discount',
@@ -5567,4 +5567,5 @@ return [
     'admin.suppliers.file' => 'Price list file',
     'admin.suppliers.file_hint' => 'XML, YML or CSV from your computer, up to 100 MB. Upload a new file to refresh the data.',
     'admin.suppliers.file_current' => 'A file is attached. Choose another to replace it.',
+    'admin.customer_groups.default_name' => 'Regular customers',
 ];
