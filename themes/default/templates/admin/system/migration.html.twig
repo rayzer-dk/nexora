@@ -12,6 +12,29 @@
   <p>{{ ui_text('admin.system.migration.pershyi_zapusk_zavzhdy_dry_run_pislia_perevirky_') }} <code>--apply</code>{{ ui_text('admin.system.migration.dlia_perenesennia_zobrazhen_dodaite') }} <code>--image-root=/path/to/image/catalog</code>.</p>
 </section>
 <section class="admin-panel">
+  <div class="admin-panel__header"><div><small>{{ ui_text('admin.migration.oc.kicker') }}</small><h2>{{ ui_text('admin.migration.oc.title') }}</h2><p>{{ ui_text('admin.migration.oc.intro') }}</p></div></div>
+  <form method="post" action="{{ path('admin_system_migration_opencart') }}" class="admin-form-grid" autocomplete="off">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('migration_opencart') }}">
+    <label>{{ ui_text('admin.migration.oc.host') }}<input name="host" value="{{ oc_form.host }}" required maxlength="190"></label>
+    <label>{{ ui_text('admin.migration.oc.port') }}<input name="port" value="{{ oc_form.port }}" inputmode="numeric" maxlength="5"></label>
+    <label>{{ ui_text('admin.migration.oc.database') }}<input name="database" value="{{ oc_form.database }}" required maxlength="64"></label>
+    <label>{{ ui_text('admin.migration.oc.user') }}<input name="db_user" value="{{ oc_form.user }}" required maxlength="190" autocomplete="off"></label>
+    <label>{{ ui_text('admin.migration.oc.password') }}<input type="password" name="db_pass" autocomplete="new-password"><small>{{ ui_text('admin.migration.oc.password_hint') }}</small></label>
+    <label>{{ ui_text('admin.migration.oc.prefix') }}<input name="prefix" value="{{ oc_form.prefix }}" maxlength="32"></label>
+    <label class="admin-form-wide">{{ ui_text('admin.migration.oc.image_root') }}<input name="image_root" value="{{ oc_form.image_root }}" maxlength="500" placeholder="/home/user/old-shop/image/catalog"><small>{{ ui_text('admin.migration.oc.image_root_hint') }}</small></label>
+    <label class="admin-check admin-form-wide"><input type="checkbox" name="publish" value="1"{{ oc_form.publish ? ' checked' : '' }}><span>{{ ui_text('admin.migration.oc.publish') }}</span></label>
+    <div class="admin-form-actions admin-form-wide">
+      <button class="admin-button" type="submit" name="mode" value="check">{{ ui_icon('search', 16) }}<span>{{ ui_text('admin.migration.oc.check') }}</span></button>
+      <button class="admin-button is-primary" type="submit" name="mode" value="apply" data-confirm="{{ ui_text('admin.migration.oc.confirm')|e('html_attr') }}">{{ ui_icon('download', 16) }}<span>{{ ui_text('admin.migration.oc.import') }}</span></button>
+    </div>
+  </form>
+  {% if oc_report %}
+    <div class="admin-stats">{% for type, count in oc_report.counts %}<article class="is-tone-info"><span>{{ type|status_label('migration_entity') }}</span><strong>{{ count }}</strong></article>{% endfor %}</div>
+    {% if oc_report.applied %}<div class="admin-notice is-success">{{ ui_text('admin.migration.oc.done', {created: oc_report.applied.created, reused: oc_report.applied.reused, skipped: oc_report.applied.skipped, failed: oc_report.applied.failed}) }}</div>{% elseif oc_report.errors == 0 %}<div class="admin-notice is-success">{{ ui_text('admin.migration.oc.ready') }}</div>{% else %}<div class="admin-notice is-error">{{ ui_text('admin.migration.oc.blocked') }}</div>{% endif %}
+    {% if oc_report.issues %}<ul class="admin-issue-list">{% for i in oc_report.issues %}<li class="is-{{ i.severity }}"><strong>{{ i.severity == 'error' ? '✖' : '⚠' }}</strong> {{ i.key ? i.key ~ ': ' : '' }}{{ i.message }}</li>{% endfor %}</ul>{% endif %}
+  {% endif %}
+</section>
+<section class="admin-panel">
   <div><small>{{ ui_text('admin.system.migration.istoriia') }}</small><h2>{{ ui_text('admin.system.migration.ostanni_migration_runs') }}</h2></div>
   <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('ui.admin.system.migration.run') }}</th><th>{{ ui_text('admin.system.migration.dzherelo') }}</th><th>{{ ui_text('admin.system.migration.status') }}</th><th>{{ ui_text('admin.system.migration.etap') }}</th><th>{{ ui_text('admin.system.migration.obrobleno') }}</th><th>{{ ui_text('admin.system.migration.problemy') }}</th><th>{{ ui_text('admin.system.migration.onovleno') }}</th><th></th></tr></thead><tbody>
   {% for run in runs %}<tr>

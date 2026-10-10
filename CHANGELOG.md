@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.14 — 2026-10-10
+
+Import from OpenCart without a command line, compact variant editor.
+
+- Migration centre: a form to import from an OpenCart / ocStore 3 shop right in the admin (shared hosting has no console): database server, name, user, password (used for the request only, never saved), table prefix, optional folder with the old photos. "Check" only reads and shows counts and problems; "Import" runs only when the check has no errors. The command-line tool stays.
+- Product variants: each variant shows SKU, price, stock and status; unit, GTIN, MPN, weight and size are folded into "More options" (same for adding a variant).
+
 ## 3.97.13 — 2026-10-10
 
 Badge colours: background and text.
