@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.11 — 2026-10-10
+
+One language bar per page, B2B overview.
+
+- Pages with many per-language fields (delivery and payment methods, benefits): a single language bar at the top of the page, instead of one bar for every method.
+- B2B: coloured overview cards (companies, waiting for approval, price lists, turnover, unpaid); the table header no longer breaks the column alignment; the company edit form opened inside the table keeps within the page width.
+
 ## 3.97.10 — 2026-10-10
 
 Import progress and a fuller export.

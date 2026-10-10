@@ -2171,3 +2171,9 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 
 .admin-progress { display: grid; gap: var(--mc-space-2); margin-top: var(--mc-space-3); }
 .admin-progress progress { width: 100%; height: 12px; accent-color: var(--mc-color-primary-fill); }
+.lang-tabs--page { position: sticky; top: calc(var(--admin-topbar-height, 60px) + var(--mc-space-2)); z-index: var(--mc-z-raised); margin-bottom: var(--mc-space-4); padding: var(--mc-space-2) var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised); }
+
+/* 3.97.11 forms nested in table cells (B2B company edit) must not push the table wider than the page */
+.admin-table details > form.admin-form-grid { width: min(680px, 78vw); margin-top: var(--mc-space-3); white-space: normal; }
+.admin-table details > form.admin-form-grid label { min-width: 0; }
+.admin-table details > form.admin-form-grid input, .admin-table details > form.admin-form-grid select { width: 100%; max-width: 100%; }

@@ -361,7 +361,10 @@ function initFieldLangTabs() {
     try { window.localStorage.setItem('mc_admin_lang', code); } catch (_) { /* ignore */ }
   };
   const mark = (items, code) => items.filter((item) => item.dataset.lang === code).some((item) => Array.from(item.querySelectorAll('input, textarea')).some((field) => field.value.trim() !== ''));
-  scopes.forEach((items, scope) => {
+  // Pages with many such groups (delivery and payment methods, benefits) get ONE language bar at the top for the whole page.
+  const single = scopes.size > 2;
+  const groups = single ? new Map([[q('main') || document.body, labels]]) : scopes;
+  groups.forEach((items, scope) => {
     const codes = Array.from(new Set(items.map((item) => item.dataset.lang)));
     if (codes.length < 2) return;
     const nav = document.createElement('nav');
@@ -390,7 +393,13 @@ function initFieldLangTabs() {
       tabs.push(button);
     });
     nav.append(list);
-    items[0].parentElement.insertBefore(nav, items[0]);
+    if (single) {
+      nav.classList.add('lang-tabs--page');
+      const firstPanel = items[0].closest('.admin-panel') || items[0];
+      firstPanel.parentElement.insertBefore(nav, firstPanel);
+    } else {
+      items[0].parentElement.insertBefore(nav, items[0]);
+    }
     scope.addEventListener('input', () => codes.forEach((code, i) => { const done = mark(items, code); const li = tabs[i].closest('.lang-tabs__item'); li.classList.toggle('is-done', done); li.classList.toggle('is-missing', !done); tabs[i].querySelector('.lang-tabs__mark').textContent = done ? '✓' : '•'; }));
     bars.push({ scope, items, tabs });
   });

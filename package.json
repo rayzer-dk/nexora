@@ -1,7 +1,7 @@
 {
   "name": "nexora-commerce-ui",
   "private": true,
-  "version": "3.97.10",
+  "version": "3.97.11",
   "type": "module",
   "scripts": {
     "dev": "vite",
