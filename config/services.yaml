@@ -678,6 +678,10 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
+    Commerce\Modules\Media\Application\FileLibraryService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     Commerce\Modules\Downloads\Application\DownloadCenterService:
         arguments:
             $projectDir: '%kernel.project_dir%'

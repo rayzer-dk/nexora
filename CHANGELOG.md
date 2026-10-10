@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.97.2 — 2026-10-10
+
+File libraries for product documents and digital downloads.
+
+- New "Files" page in the admin (next to the photo library) with two libraries: documents (PDF/TXT, public) and digital downloads (private). Folders, search, new folder, upload from the computer.
+- The product form no longer asks for a file from the computer: "Choose a document" and "Choose a file for download" open a window with the same library (folders, search, new folder, upload). A file uploaded in that window is chosen at once. One file can be attached to any number of products.
+- A new digital product opens on its "Digital files" section right after it is created, with a prompt to add the file.
+- Migration Version20261231100000 adds mc_file_folder and mc_file_item. The old direct upload still works for existing forms and integrations.
+
 ## 3.97.1 — 2026-10-10
 
 Product card, first pass: fewer fields, real controls instead of text codes.

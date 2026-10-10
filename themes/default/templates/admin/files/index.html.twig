@@ -1,0 +1,12 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.files.page_title'),'files') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.files.page_title') }}</span></nav><h1>{{ ui_text('admin.files.page_title') }}</h1></div></header>
+<div class="admin-segmented" role="tablist">
+    <a href="{{ path('admin_files', {library: 'document'}) }}" class="{{ library == 'document' ? 'is-active' }}" role="tab" aria-selected="{{ library == 'document' ? 'true' : 'false' }}">{{ ui_text('admin.files.tab_document') }}</a>
+    <a href="{{ path('admin_files', {library: 'digital'}) }}" class="{{ library == 'digital' ? 'is-active' }}" role="tab" aria-selected="{{ library == 'digital' ? 'true' : 'false' }}">{{ ui_text('admin.files.tab_digital') }}</a>
+</div>
+<section class="admin-panel">
+    <p class="admin-help">{{ ui_text(library == 'digital' ? 'admin.files.hint_digital' : 'admin.files.hint_document') }}</p>
+    <div data-file-library-page="{{ library }}" data-base="{{ path('admin_files_browse', {library: library})|replace({'.json': ''}) }}" data-token="{{ token }}" data-strings="{% include '@storefront/admin/files/_strings.html.twig' with {library: library} %}"></div>
+</section>
+{{ shell.end() }}

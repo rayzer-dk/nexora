@@ -2149,6 +2149,175 @@ function initSkuPickers() {
   });
 }
 
+
+/**
+ * File libraries (product documents, digital downloads): a browser with folders, search, "new folder" and upload from
+ * the computer. In the product form it opens in a window and hands the chosen file back; on the Files page it is
+ * shown in place, for keeping the libraries in order.
+ */
+function mountFileLibrary(root, { library, base, token, strings, onPick }) {
+  let folder = 0;
+  let query = '';
+  root.classList.add('admin-filelib');
+  root.textContent = '';
+  const el = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+  const toolbar = el('div', 'admin-filelib__bar');
+  const trail = el('nav', 'admin-filelib__trail');
+  trail.setAttribute('aria-label', strings.root);
+  const search = el('input');
+  search.type = 'search';
+  search.placeholder = strings.search;
+  search.setAttribute('aria-label', strings.search);
+  const newFolder = el('button', 'admin-button', strings.newFolder);
+  newFolder.type = 'button';
+  const upload = el('label', 'admin-button is-primary', strings.upload);
+  const input = el('input');
+  input.type = 'file';
+  input.multiple = true;
+  input.hidden = true;
+  upload.append(input);
+  toolbar.append(search, newFolder, upload);
+  const status = el('p', 'admin-filelib__status');
+  status.setAttribute('role', 'status');
+  const list = el('ul', 'admin-filelib__list');
+  root.append(toolbar, trail, status, list);
+
+  const size = (bytes) => (bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
+  const load = async () => {
+    status.textContent = '';
+    try {
+      const params = new URLSearchParams({ folder: String(folder), q: query });
+      const response = await fetch(`${base}.json?${params}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+      if (!response.ok) throw new Error('load');
+      paint(await response.json());
+    } catch (_error) {
+      status.textContent = strings.error;
+    }
+  };
+  const paint = (data) => {
+    trail.textContent = '';
+    const crumb = (label, id) => {
+      const button = el('button', 'admin-filelib__crumb', label);
+      button.type = 'button';
+      button.addEventListener('click', () => { folder = id; query = ''; search.value = ''; load(); });
+      trail.append(button);
+    };
+    crumb(strings.root, 0);
+    data.trail.forEach((step) => { trail.append(el('span', 'admin-filelib__sep', '/')); crumb(step.name, step.id); });
+    list.textContent = '';
+    data.folders.forEach((item) => {
+      const li = el('li', 'admin-filelib__row is-folder');
+      const open = el('button', 'admin-filelib__name', `📁 ${item.name}`);
+      open.type = 'button';
+      open.addEventListener('click', () => { folder = item.id; query = ''; search.value = ''; load(); });
+      li.append(open, el('small', '', String(item.items)));
+      list.append(li);
+    });
+    data.items.forEach((item) => {
+      const li = el('li', 'admin-filelib__row');
+      const name = el(onPick ? 'button' : 'span', 'admin-filelib__name', `📄 ${item.title}`);
+      if (onPick) {
+        name.type = 'button';
+        name.addEventListener('click', () => onPick(item));
+      }
+      li.append(name, el('small', '', `${item.filename} · ${size(item.bytes)}`));
+      list.append(li);
+    });
+    if (!data.folders.length && !data.items.length) list.append(el('li', 'admin-filelib__empty', strings.empty));
+  };
+
+  let timer = 0;
+  search.addEventListener('input', () => { window.clearTimeout(timer); timer = window.setTimeout(() => { query = search.value.trim(); load(); }, 250); });
+  newFolder.addEventListener('click', async () => {
+    const name = window.prompt(strings.folderPrompt, '');
+    if (!name || !name.trim()) return;
+    const body = new FormData();
+    body.append('_token', token);
+    body.append('name', name.trim());
+    body.append('parent', String(folder));
+    const response = await fetch(`${base}/folder.json`, { method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) status.textContent = result.message || strings.error;
+    else load();
+  });
+  input.addEventListener('change', async () => {
+    if (!input.files || !input.files.length) return;
+    const body = new FormData();
+    body.append('_token', token);
+    body.append('folder', String(folder));
+    Array.from(input.files).forEach((file) => body.append('files[]', file));
+    status.textContent = strings.uploading;
+    try {
+      const response = await fetch(`${base}/upload.json`, { method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' } });
+      const result = await response.json().catch(() => ({}));
+      input.value = '';
+      if (!response.ok || (result.errors && result.errors.length)) {
+        status.textContent = (result.errors || [result.message || strings.error]).join(' ');
+        load();
+        return;
+      }
+      if (onPick && result.stored && result.stored.length === 1) { onPick(result.stored[0]); return; }
+      status.textContent = '';
+      load();
+    } catch (_error) {
+      status.textContent = strings.error;
+    }
+  });
+  load();
+}
+
+function initFileLibraries() {
+  qa('[data-file-library-page]').forEach((root) => {
+    let strings = {};
+    try { strings = JSON.parse(root.dataset.strings || '{}'); } catch (_error) { strings = {}; }
+    mountFileLibrary(root, { library: root.dataset.fileLibraryPage, base: root.dataset.base, token: root.dataset.token, strings });
+  });
+  qa('[data-file-library]').forEach((button) => {
+    button.addEventListener('click', () => {
+      let strings = {};
+      try { strings = JSON.parse(button.dataset.strings || '{}'); } catch (_error) { strings = {}; }
+      const dialog = document.createElement('dialog');
+      dialog.className = 'admin-modal admin-filelib-modal';
+      const head = document.createElement('header');
+      const title = document.createElement('h2');
+      title.textContent = strings.title || '';
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'admin-icon-button';
+      close.textContent = '×';
+      close.setAttribute('aria-label', strings.close || 'Close');
+      close.addEventListener('click', () => dialog.close());
+      head.append(title, close);
+      const body = document.createElement('div');
+      dialog.append(head, body);
+      document.body.append(dialog);
+      dialog.addEventListener('close', () => dialog.remove());
+      mountFileLibrary(body, {
+        library: button.dataset.fileLibrary,
+        base: button.dataset.base,
+        token: button.dataset.token,
+        strings,
+        onPick: (item) => {
+          const target = q(button.dataset.target || '');
+          if (target) target.value = item.id;
+          const label = q(button.dataset.label || '');
+          if (label) label.textContent = item.title;
+          const titleInput = q(button.dataset.titleInput || '');
+          if (titleInput && !titleInput.value) titleInput.value = item.title;
+          button.dispatchEvent(new CustomEvent('file-library:picked', { bubbles: true, detail: item }));
+          dialog.close();
+        },
+      });
+      dialog.showModal();
+    });
+  });
+}
+
 function initCopyControls() {
   qa('[data-copy-value], [data-copy-target]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -2373,6 +2542,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initThumbZoom();
   initProductTabs();
   initCopyControls();
+  initFileLibraries();
   initPairRepeaters();
   initSkuPickers();
   initHeaderSaveButton();

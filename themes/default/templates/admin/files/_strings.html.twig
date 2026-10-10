@@ -1,0 +1,12 @@
+{{- {
+    title: ui_text(library == 'digital' ? 'admin.files.title_digital' : 'admin.files.title_document'),
+    root: ui_text('admin.files.root'),
+    search: ui_text('admin.files.search'),
+    newFolder: ui_text('admin.files.new_folder'),
+    upload: ui_text('admin.files.upload'),
+    folderPrompt: ui_text('admin.files.folder_prompt'),
+    empty: ui_text('admin.files.empty'),
+    uploading: ui_text('admin.files.uploading'),
+    error: ui_text('admin.files.error.generic'),
+    close: ui_text('admin.files.close')
+}|json_encode|e('html_attr') -}}

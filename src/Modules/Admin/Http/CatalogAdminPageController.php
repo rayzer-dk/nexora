@@ -55,6 +55,7 @@ final class CatalogAdminPageController extends AbstractController
         private readonly \Commerce\Modules\Media\Application\ProductMediaOrder $mediaOrder,
         private readonly \Commerce\Modules\Media\Application\MediaLibraryService $mediaLibrary,
         private readonly \Commerce\Modules\Seo\Application\SeoSettings $seoSettings,
+        private readonly \Commerce\Modules\Media\Application\FileLibraryService $fileLibrary,
     ) {
     }
 
@@ -241,6 +242,11 @@ final class CatalogAdminPageController extends AbstractController
                     $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.chernetku_tovaru_stvoreno'));
                     foreach ($mediaErrors as $mediaError) {
                         $this->addFlash('error', $mediaError);
+                    }
+                    if ((string) $request->request->get('product_type', 'physical') === 'digital') {
+                        $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('admin.files.after_create_digital'));
+
+                        return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $created['public_id'], '_fragment' => 'digital-files']);
                     }
                     return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $created['public_id']]);
                 } catch (\Throwable $e) {
@@ -646,9 +652,16 @@ final class CatalogAdminPageController extends AbstractController
         try {
             $context = $this->context->resolve($request);
             $product = $this->query->productForEdit($context->storeId, $context->marketId, $context->locale, $publicId);
+            $daysRaw = trim((string) $request->request->get('digital_access_days', '365'));
+            $libraryItem = trim((string) $request->request->get('digital_library_item', ''));
+            if ($libraryItem !== '') {
+                $this->fileLibrary->attachDigital($context->storeId, (int) $product['id'], $libraryItem, (string) $request->request->get('digital_title', ''), (int) $request->request->get('digital_max_downloads', 5), $daysRaw === '' ? null : (int) $daysRaw);
+                $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.tsyfrovyi_fail_zberezheno_u_pryvatnomu_skhovyshchi'));
+
+                return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId]);
+            }
             $file = $request->files->get('digital_file');
             if (!$file instanceof UploadedFile) throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.oberit_fail_tsyfrovoho_tovaru'));
-            $daysRaw = trim((string) $request->request->get('digital_access_days', '365'));
             $this->digitalAssets->upload(
                 (int) $product['id'], $file, (string) $request->request->get('digital_title', ''),
                 (int) $request->request->get('digital_max_downloads', 5), $daysRaw === '' ? null : (int) $daysRaw,
@@ -687,11 +700,18 @@ final class CatalogAdminPageController extends AbstractController
         try {
             $context = $this->context->resolve($request);
             $product = $this->query->productForEdit($context->storeId, $context->marketId, $context->locale, $publicId);
+            $locale = (string) $request->request->get('document_locale', '');
+            $libraryItem = trim((string) $request->request->get('document_library_item', ''));
+            if ($libraryItem !== '') {
+                $this->fileLibrary->attachDocument($context->storeId, (int) $product['id'], $libraryItem, (string) $request->request->get('document_title', ''), $locale === '' ? null : $locale, $this->documentTypeFromRequest($request));
+                $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.dokument_perevireno_ta_dodano_do_tovaru'));
+
+                return $this->redirectToRoute('admin_catalog_product_edit', ['publicId' => $publicId]);
+            }
             $file = $request->files->get('document_file');
             if (!$file instanceof UploadedFile) {
                 throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.oberit_pdf_abo_txt_fail'));
             }
-            $locale = (string) $request->request->get('document_locale', '');
             $this->documents->uploadAndAttach(
                 (int) $product['id'], $file, (string) $request->request->get('document_title', ''),
                 $locale === '' ? null : $locale, $this->documentTypeFromRequest($request),
