@@ -96,7 +96,7 @@ final readonly class ForumStaffService
     }
 
     /** @param 'hide'|'restore'|'delete' $action */
-    public function postAction(int $storeId, int $postId, string $action, string $actor = 'admin'): int
+    public function postAction(int $storeId, int $postId, string $action, string $actor = 'admin', ?string $reason = null): int
     {
         $row = $this->connection->fetchAssociative(
             'SELECT p.id,p.topic_id,(SELECT MIN(id) FROM mc_forum_post f WHERE f.topic_id=p.topic_id) AS first_id
@@ -123,8 +123,9 @@ final readonly class ForumStaffService
 
             return $topicId;
         }
-        $this->connection->update('mc_forum_post', ['status' => $action === 'hide' ? 'hidden' : 'published', 'updated_at' => $this->now()], ['id' => $postId]);
-        $this->moderation->log($storeId, $actor, 'post_' . $action, null, $topicId, $postId);
+        $reason = $action === 'hide' ? $this->reason($reason) : null;
+        $this->connection->update('mc_forum_post', ['status' => $action === 'hide' ? 'hidden' : 'published', 'hidden_reason' => $reason, 'updated_at' => $this->now()], ['id' => $postId]);
+        $this->moderation->log($storeId, $actor, 'post_' . $action, null, $topicId, $postId, $reason);
 
         return $topicId;
     }
@@ -169,7 +170,7 @@ final readonly class ForumStaffService
     }
 
     /** Hide or delete one message by a topic moderator; the opening message and other topics stay out of reach. */
-    public function moderatorPostAction(int $storeId, int $topicId, int $postId, int $moderatorId, string $action): void
+    public function moderatorPostAction(int $storeId, int $topicId, int $postId, int $moderatorId, string $action, ?string $reason = null): void
     {
         if (!in_array($action, ['hide', 'delete'], true) || !$this->isModerator($topicId, $moderatorId)) {
             throw new \DomainException(CanonicalUiText::get('forum.runtime.not_moderator'));
@@ -178,7 +179,55 @@ final readonly class ForumStaffService
         if (!is_array($row) || (int) $row['topic_id'] !== $topicId || (int) $row['first_id'] === $postId) {
             throw new \DomainException(CanonicalUiText::get('forum.runtime.not_moderator'));
         }
-        $this->postAction($storeId, $postId, $action, 'moderator #' . $moderatorId);
+        $this->postAction($storeId, $postId, $action, 'moderator #' . $moderatorId, $reason);
+    }
+
+    /** The opening note of a topic ("header"): rules, summary, useful links. Empty text removes it. */
+    public function setHeader(int $storeId, int $topicId, string $text, string $actor = 'admin'): void
+    {
+        if ($this->topicRow($storeId, $topicId) === null) {
+            throw new \DomainException(CanonicalUiText::get('php.modules.forum.application.forumservice.temu_ne_znaideno'));
+        }
+        $text = trim(mb_substr(str_replace("\0", '', $text), 0, 10000, 'UTF-8'));
+        $this->connection->update('mc_forum_topic', ['header_text' => $text !== '' ? $text : null, 'updated_at' => $this->now()], ['id' => $topicId]);
+        $this->moderation->log($storeId, $actor, 'topic_header', null, $topicId);
+    }
+
+    /** Slow mode: at most one message per member every $seconds (0 turns it off). */
+    public function setSlowMode(int $storeId, int $topicId, int $seconds, string $actor = 'admin'): void
+    {
+        if ($this->topicRow($storeId, $topicId) === null) {
+            throw new \DomainException(CanonicalUiText::get('php.modules.forum.application.forumservice.temu_ne_znaideno'));
+        }
+        $seconds = max(0, min(86400, $seconds));
+        $this->connection->update('mc_forum_topic', ['slow_mode_seconds' => $seconds, 'updated_at' => $this->now()], ['id' => $topicId]);
+        $this->moderation->log($storeId, $actor, 'topic_slow_mode', null, $topicId, null, (string) $seconds);
+    }
+
+    public function moderatorSetHeader(int $storeId, int $topicId, int $moderatorId, string $text): void
+    {
+        $this->assertModerator($topicId, $moderatorId);
+        $this->setHeader($storeId, $topicId, $text, 'moderator #' . $moderatorId);
+    }
+
+    public function moderatorSetSlowMode(int $storeId, int $topicId, int $moderatorId, int $seconds): void
+    {
+        $this->assertModerator($topicId, $moderatorId);
+        $this->setSlowMode($storeId, $topicId, $seconds, 'moderator #' . $moderatorId);
+    }
+
+    private function assertModerator(int $topicId, int $moderatorId): void
+    {
+        if (!$this->isModerator($topicId, $moderatorId)) {
+            throw new \DomainException(CanonicalUiText::get('forum.runtime.not_moderator'));
+        }
+    }
+
+    private function reason(?string $reason): ?string
+    {
+        $reason = trim(mb_substr(strip_tags((string) $reason), 0, 500, 'UTF-8'));
+
+        return $reason !== '' ? $reason : null;
     }
 
     /** @return array{topic:array<string,mixed>,posts:list<array<string,mixed>>}|null */
@@ -202,7 +251,7 @@ final readonly class ForumStaffService
     private function topicRow(int $storeId, int $topicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            'SELECT t.id,t.title,t.slug,t.status,t.is_pinned,t.is_locked,t.author_name,b.name AS board_name,b.slug AS board_slug
+            'SELECT t.id,t.title,t.slug,t.status,t.is_pinned,t.is_locked,t.header_text,t.slow_mode_seconds,t.author_name,b.name AS board_name,b.slug AS board_slug
              FROM mc_forum_topic t JOIN mc_forum_board b ON b.id=t.board_id WHERE t.id=? AND b.store_id=?',
             [$topicId, $storeId],
         );

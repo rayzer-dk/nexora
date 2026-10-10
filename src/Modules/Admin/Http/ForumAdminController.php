@@ -326,6 +326,40 @@ final class ForumAdminController extends AbstractController
         return $action === 'delete' ? $this->redirectToRoute('admin_forum') : $this->redirectToRoute('admin_forum_topic_view', ['id' => $id]);
     }
 
+    #[Route('/admin/forum/topic/{id}/header', name: 'admin_forum_topic_header', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function topicHeader(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_topic_tools_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->staff->setHeader($context->storeId, $id, (string) $request->request->get('header', ''));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.header_saved'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_forum_topic_view', ['id' => $id]);
+    }
+
+    #[Route('/admin/forum/topic/{id}/slow-mode', name: 'admin_forum_topic_slow_mode', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function topicSlowMode(Request $request, int $id): Response
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('forum_topic_tools_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->staff->setSlowMode($context->storeId, $id, $request->request->getInt('seconds'));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.slow_mode_saved'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_forum_topic_view', ['id' => $id]);
+    }
+
     #[Route('/admin/forum/topic/{id}/moderators/add', name: 'admin_forum_topic_moderator_add', methods: ['POST'], requirements: ['id' => '\\d+'])]
     public function addModerator(Request $request, int $id): Response
     {
@@ -365,7 +399,15 @@ final class ForumAdminController extends AbstractController
         }
         $topicId = 0;
         try {
-            $topicId = $this->staff->postAction($context->storeId, $id, $action);
+            $reason = (string) $request->request->get('reason', '');
+            $topicId = $this->staff->postAction($context->storeId, $id, $action, 'admin', $reason);
+            if ($action === 'hide') {
+                try {
+                    $this->notifications->notifyPostHidden($context->storeId, $id, $reason);
+                } catch (Throwable) {
+                    // The notice is a courtesy and never blocks moderation.
+                }
+            }
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.forumadmincontroller.povidomlennia_obrobleno'));
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());

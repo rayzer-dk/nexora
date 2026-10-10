@@ -45,8 +45,38 @@
     </section>
     {% endif %}
 
+    {% if topic.header_text %}
+    <section class="fx-topic-header" aria-label="{{ ui_text('forum_topic_header_label')|e('html_attr') }}">
+        <div class="fx-post__body">{{ topic.header_text|forum_format(mentions) }}</div>
+    </section>
+    {% endif %}
+    {% if topic.slow_mode_seconds > 0 %}<p class="fx-muted fx-slow-notice">{{ ui_icon('clock', 14) }} {{ ui_text('forum_slow_mode_notice')|replace({'%seconds%': topic.slow_mode_seconds}) }}</p>{% endif %}
+    {% if is_moderator|default(false) %}
+    <details class="fx-pop fx-topic-tools"><summary class="fx-act">{{ ui_icon('settings', 14) }}{{ ui_text('forum_topic_tools') }}</summary>
+        <form method="post" action="{{ path('storefront_forum_topic_header',{id:topic.id,slug:topic.slug}) }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_topic_tools_' ~ topic.id) }}">
+            <label class="fx-editor"><span>{{ ui_text('forum_topic_header_label') }}</span><textarea name="header" rows="5" maxlength="10000">{{ topic.header_text }}</textarea></label>
+            <button type="submit" class="button button--secondary">{{ ui_text('forum_topic_header_save') }}</button>
+        </form>
+        <form method="post" action="{{ path('storefront_forum_topic_slow_mode',{id:topic.id,slug:topic.slug}) }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_topic_tools_' ~ topic.id) }}">
+            <label><span>{{ ui_text('forum_slow_mode_label') }}</span><input type="number" name="seconds" min="0" max="86400" value="{{ topic.slow_mode_seconds }}"></label>
+            <button type="submit" class="button button--secondary">{{ ui_text('forum_slow_mode_save') }}</button>
+        </form>
+    </details>
+    {% endif %}
+
     <div class="fx-posts">
         {% for post in posts %}
+            {% if post.status == 'hidden' %}
+            <article class="fx-post is-hidden is-own" id="post-{{ post.id }}">
+                <div class="fx-post__content">
+                    <header class="fx-post__head"><span class="fx-tag">{{ ui_icon('eye-off', 12) }}{{ ui_text('forum_hidden_notice') }}</span></header>
+                    <p class="fx-hidden-reason"><b>{{ ui_text('forum_hidden_reason_label') }}</b> {{ post.hidden_reason|default(ui_text('forum_hidden_no_reason')) }}</p>
+                    <blockquote class="fx-hidden-quote">{{ post.body_text|slice(0,600) }}</blockquote>
+                </div>
+            </article>
+            {% else %}
             {% set card = cards[post.customer_id]|default(null) %}
             {% set is_solution = topic.solved_post_id and topic.solved_post_id == post.id %}
             <article class="fx-post{{ is_solution ? ' is-solution' : '' }}{{ current_customer_id and current_customer_id == post.customer_id ? ' is-own' : '' }}" id="post-{{ post.id }}">
@@ -94,12 +124,15 @@
                             {% endif %}
                         {% endif %}
                         {% if is_moderator|default(false) and not loop.first %}
-                            <form method="post" action="{{ path('storefront_forum_post_moderate',{id:topic.id,slug:topic.slug,postId:post.id,action:'hide'}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_mod_' ~ post.id) }}"><button type="submit" class="fx-act">{{ ui_icon('eye-off', 14) }}{{ ui_text('forum_mod_hide') }}</button></form>
+                            <details class="fx-pop"><summary class="fx-act">{{ ui_icon('eye-off', 14) }}{{ ui_text('forum_mod_hide') }}</summary>
+                                <form method="post" action="{{ path('storefront_forum_post_moderate',{id:topic.id,slug:topic.slug,postId:post.id,action:'hide'}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_mod_' ~ post.id) }}"><input type="text" name="reason" maxlength="500" required placeholder="{{ ui_text('forum_mod_reason_placeholder')|e('html_attr') }}"><button type="submit" class="button button--secondary">{{ ui_text('forum_mod_hide') }}</button></form>
+                            </details>
                             <form method="post" action="{{ path('storefront_forum_post_moderate',{id:topic.id,slug:topic.slug,postId:post.id,action:'delete'}) }}" data-confirm="{{ ui_text('forum_mod_delete_confirm')|e('html_attr') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_mod_' ~ post.id) }}"><button type="submit" class="fx-act">{{ ui_icon('trash-2', 14) }}{{ ui_text('forum_mod_delete') }}</button></form>
                         {% endif %}
                     </footer>
                 </div>
             </article>
+            {% endif %}
         {% endfor %}
     </div>
     {% if pages > 1 %}

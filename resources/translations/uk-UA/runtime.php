@@ -2105,4 +2105,7 @@ return [
     'forum.runtime.report_sent' => 'Скаргу надіслано модераторам.',
     'forum.runtime.not_moderator' => 'Дія недоступна: ви не модератор цієї теми.',
     'forum.runtime.moderated' => 'Готово.',
+    'forum.runtime.slow_mode' => 'У цій темі ввімкнено повільний режим. Наступне повідомлення можна надіслати через %seconds% с.',
+    'forum.runtime.header_saved' => 'Шапку теми збережено.',
+    'forum.runtime.slow_mode_saved' => 'Повільний режим оновлено.',
 ];

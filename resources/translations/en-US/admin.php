@@ -5497,4 +5497,13 @@ return [
     'admin.forum.log.post_hide' => 'Message hidden',
     'admin.forum.log.post_restore' => 'Message restored',
     'admin.forum.log.post_delete' => 'Message deleted',
+    'admin.forum.topic_header' => 'Topic header',
+    'admin.forum.topic_header_hint' => 'Shown above the messages on every page of the topic. Same formatting as messages. Leave empty to remove.',
+    'admin.forum.slow_mode' => 'Slow mode',
+    'admin.forum.slow_mode_hint' => 'Seconds a member must wait between messages in this topic. 0 turns it off; moderators of the topic are exempt.',
+    'admin.forum.slow_mode_seconds' => 'Seconds',
+    'admin.forum.save' => 'Save',
+    'admin.forum.hide_reason' => 'Reason (the author will see it)',
+    'admin.forum.log.topic_header' => 'Topic header changed',
+    'admin.forum.log.topic_slow_mode' => 'Slow mode changed',
 ];

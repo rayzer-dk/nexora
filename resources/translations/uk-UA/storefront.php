@@ -1450,4 +1450,25 @@ return [
     'landing.ui.yes' => 'Так',
     'product_tiers' => 'Ціна від кількості',
     'product_tiers_from' => 'Від %qty% шт',
+    'forum_hidden_no_reason' => 'Причину не вказано.',
+    'forum_post_hidden_subject' => 'Ваше повідомлення в темі «%topic%» приховано',
+    'forum_post_hidden_text' => 'Модератор приховав ваше повідомлення в темі «%topic%».
+
+Причина: %reason%
+
+Ваше повідомлення:
+> %quote%
+
+Ви й надалі бачите його після входу: %url%',
+    'forum_post_reported_subject' => 'Скарга на повідомлення в темі «%topic%»',
+    'forum_post_reported_text' => 'Учасник поскаржився на повідомлення в темі «%topic%» (причина: %reason%): %url%',
+    'forum_hidden_notice' => 'Модератор приховав це повідомлення. Його бачите лише ви.',
+    'forum_hidden_reason_label' => 'Причина:',
+    'forum_mod_reason_placeholder' => 'Причина (її побачить автор)',
+    'forum_topic_tools' => 'Керування темою',
+    'forum_topic_header_label' => 'Шапка теми (правила, підсумок, посилання)',
+    'forum_topic_header_save' => 'Зберегти шапку',
+    'forum_slow_mode_label' => 'Повільний режим, секунд між повідомленнями (0 = вимкнено)',
+    'forum_slow_mode_save' => 'Зберегти',
+    'forum_slow_mode_notice' => 'Повільний режим: одне повідомлення раз на %seconds% с.',
 ];

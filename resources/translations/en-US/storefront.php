@@ -1450,4 +1450,25 @@ return [
     'landing.ui.yes' => 'Yes',
     'product_tiers' => 'Volume pricing',
     'product_tiers_from' => 'From %qty% pcs',
+    'forum_hidden_no_reason' => 'No reason given.',
+    'forum_post_hidden_subject' => 'Your message in “%topic%” was hidden',
+    'forum_post_hidden_text' => 'A moderator hid your message in “%topic%”.
+
+Reason: %reason%
+
+Your message:
+> %quote%
+
+You can still see it while signed in: %url%',
+    'forum_post_reported_subject' => 'A message was reported in “%topic%”',
+    'forum_post_reported_text' => 'A member reported a message in “%topic%” (reason: %reason%): %url%',
+    'forum_hidden_notice' => 'A moderator hid this message. Only you can see it.',
+    'forum_hidden_reason_label' => 'Reason:',
+    'forum_mod_reason_placeholder' => 'Reason (the author will see it)',
+    'forum_topic_tools' => 'Topic tools',
+    'forum_topic_header_label' => 'Topic header (rules, summary, links)',
+    'forum_topic_header_save' => 'Save header',
+    'forum_slow_mode_label' => 'Slow mode, seconds between messages (0 = off)',
+    'forum_slow_mode_save' => 'Save',
+    'forum_slow_mode_notice' => 'Slow mode: one message per %seconds% s.',
 ];

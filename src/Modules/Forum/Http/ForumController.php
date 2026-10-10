@@ -549,13 +549,57 @@ final class ForumController extends AbstractController
             throw $this->createAccessDeniedException();
         }
         try {
-            $this->staff->moderatorPostAction($context->storeId, $id, $postId, $user->id(), $action);
+            $reason = (string) $request->request->get('reason', '');
+            $this->staff->moderatorPostAction($context->storeId, $id, $postId, $user->id(), $action, $reason);
+            if ($action === 'hide') {
+                try {
+                    $this->notifications->notifyPostHidden($context->storeId, $postId, $reason);
+                } catch (Throwable) {
+                    // The notice is a courtesy and never blocks moderation.
+                }
+            }
             $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.moderated'));
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }
 
         return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug]);
+    }
+
+    #[Route('/forum/t/{id}/{slug}/header', name: 'storefront_forum_topic_header', methods: ['POST'], requirements: ['id' => '\\d+'], priority: 290)]
+    public function topicHeader(Request $request, int $id, string $slug): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant($context->storeId);
+        if (!$this->isCsrfTokenValid('forum_topic_tools_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->staff->moderatorSetHeader($context->storeId, $id, $user->id(), (string) $request->request->get('header', ''));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.header_saved'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
+    }
+
+    #[Route('/forum/t/{id}/{slug}/slow-mode', name: 'storefront_forum_topic_slow_mode', methods: ['POST'], requirements: ['id' => '\\d+'], priority: 290)]
+    public function topicSlowMode(Request $request, int $id, string $slug): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $user = $this->requireForumParticipant($context->storeId);
+        if (!$this->isCsrfTokenValid('forum_topic_tools_' . $id, (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        try {
+            $this->staff->moderatorSetSlowMode($context->storeId, $id, $user->id(), $request->request->getInt('seconds'));
+            $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.slow_mode_saved'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
     }
 
     #[Route('/forum/t/{id}/{slug}/posts/{postId}/report', name: 'storefront_forum_post_report', methods: ['POST'], requirements: ['id' => '\\d+', 'postId' => '\\d+'], priority: 290)]
@@ -573,6 +617,11 @@ final class ForumController extends AbstractController
             (string) $request->request->get('reason', 'other'),
             (string) $request->request->get('details', ''),
         );
+        try {
+            $this->notifications->notifyPostReported($context->storeId, $postId, (string) $request->request->get('reason', 'other'));
+        } catch (Throwable) {
+            // Moderators also see the report in the admin queue.
+        }
         $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('flash.forum_report_sent'));
         return $this->redirectToRoute('storefront_forum_topic', ['id' => $id, 'slug' => $slug], 303);
     }

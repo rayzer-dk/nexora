@@ -2103,4 +2103,7 @@ return [
     'forum.runtime.report_sent' => 'The report was sent to the moderators.',
     'forum.runtime.not_moderator' => 'Not allowed: you are not a moderator of this topic.',
     'forum.runtime.moderated' => 'Done.',
+    'forum.runtime.slow_mode' => 'Slow mode is on in this topic. You can post again in %seconds% s.',
+    'forum.runtime.header_saved' => 'Topic header saved.',
+    'forum.runtime.slow_mode_saved' => 'Slow mode updated.',
 ];

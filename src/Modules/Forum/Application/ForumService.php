@@ -120,7 +120,7 @@ final readonly class ForumService
     public function topic(int $storeId, int $topicId): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT t.id,t.customer_id,t.title,t.slug,CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE t.author_name END AS author_name,t.is_pinned,t.is_locked,t.views_count,t.solved_post_id,t.created_at,t.published_at,b.id AS board_id,b.slug AS board_slug,b.name AS board_name,
+            "SELECT t.id,t.customer_id,t.title,t.slug,CASE WHEN t.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE t.author_name END AS author_name,t.header_text,t.slow_mode_seconds,t.is_pinned,t.is_locked,t.views_count,t.solved_post_id,t.created_at,t.published_at,b.id AS board_id,b.slug AS board_slug,b.name AS board_name,
                 (SELECT COUNT(*) FROM mc_forum_post p2 WHERE p2.topic_id=t.id AND p2.status='published') AS post_count
              FROM mc_forum_topic t
              JOIN mc_forum_board b ON b.id=t.board_id
@@ -138,8 +138,8 @@ final readonly class ForumService
         $limit = max(1, min(100, $limit));
         $offset = (max(1, $page) - 1) * $limit;
         return $this->connection->fetchAllAssociative(
-            "SELECT p.id,p.customer_id,CASE WHEN p.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE p.author_name END AS author_name,p.body_text,p.created_at,p.published_at,p.edited_at,p.edit_count,\n                (SELECT COALESCE(SUM(CASE WHEN r.reaction IN ('like','up') THEN 1 WHEN r.reaction='down' THEN -1 ELSE 0 END),0) FROM mc_forum_reaction r WHERE r.post_id=p.id) AS score,\n                (SELECT CASE WHEN r2.reaction='down' THEN -1 ELSE 1 END FROM mc_forum_reaction r2 WHERE r2.post_id=p.id AND r2.customer_id=? AND r2.reaction IN ('like','up','down') LIMIT 1) AS my_vote\n             FROM mc_forum_post p\n             JOIN mc_forum_topic t ON t.id=p.topic_id\n             JOIN mc_forum_board b ON b.id=t.board_id\n             LEFT JOIN mc_customer c ON c.id=p.customer_id\n             LEFT JOIN mc_forum_profile fp ON fp.customer_id=p.customer_id AND fp.store_id=b.store_id\n             WHERE p.topic_id=? AND b.store_id=? AND p.status='published' ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}",
-            [$customerId ?? 0, $topicId, $storeId],
+            "SELECT p.id,p.customer_id,CASE WHEN p.customer_id IS NOT NULL THEN COALESCE(NULLIF(fp.nickname,''),CONCAT('member-',LOWER(SUBSTRING(SHA2(c.public_id,256),1,12)),'-',LOWER(CONV(c.id,10,36)))) ELSE p.author_name END AS author_name,p.status,p.hidden_reason,p.body_text,p.created_at,p.published_at,p.edited_at,p.edit_count,\n                (SELECT COALESCE(SUM(CASE WHEN r.reaction IN ('like','up') THEN 1 WHEN r.reaction='down' THEN -1 ELSE 0 END),0) FROM mc_forum_reaction r WHERE r.post_id=p.id) AS score,\n                (SELECT CASE WHEN r2.reaction='down' THEN -1 ELSE 1 END FROM mc_forum_reaction r2 WHERE r2.post_id=p.id AND r2.customer_id=? AND r2.reaction IN ('like','up','down') LIMIT 1) AS my_vote\n             FROM mc_forum_post p\n             JOIN mc_forum_topic t ON t.id=p.topic_id\n             JOIN mc_forum_board b ON b.id=t.board_id\n             LEFT JOIN mc_customer c ON c.id=p.customer_id\n             LEFT JOIN mc_forum_profile fp ON fp.customer_id=p.customer_id AND fp.store_id=b.store_id\n             WHERE p.topic_id=? AND b.store_id=? AND (p.status='published' OR (p.status='hidden' AND p.customer_id=?)) ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}",
+            [$customerId ?? 0, $topicId, $storeId, $customerId ?? 0],
         );
     }
 
@@ -242,6 +242,7 @@ final readonly class ForumService
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.forum.application.forumservice.tsia_tema_zakryta_dlia_novykh_vidpovidei'));
         }
         $this->guardPosting($storeId, $customerId, $body, false);
+        $this->guardSlowMode($topicId, $customerId, (int) ($topic['slow_mode_seconds'] ?? 0));
         $now = $this->now();
         $live = $this->autoPublish($storeId, $customerId, $body, false);
         $this->connection->insert('mc_forum_post', [
@@ -411,6 +412,25 @@ final readonly class ForumService
         }
 
         return $parentId;
+    }
+
+    /** Slow mode: a topic may allow one message per member every N seconds; the topic's moderators are exempt. */
+    private function guardSlowMode(int $topicId, int $customerId, int $seconds): void
+    {
+        if ($seconds < 1) {
+            return;
+        }
+        if ($this->connection->fetchOne('SELECT 1 FROM mc_forum_topic_moderator WHERE topic_id=? AND customer_id=?', [$topicId, $customerId])) {
+            return;
+        }
+        $last = $this->connection->fetchOne('SELECT MAX(created_at) FROM mc_forum_post WHERE topic_id=? AND customer_id=?', [$topicId, $customerId]);
+        if (!is_string($last) || $last === '') {
+            return;
+        }
+        $wait = $seconds - (time() - (new DateTimeImmutable($last, new DateTimeZone('UTC')))->getTimestamp());
+        if ($wait > 0) {
+            throw new \DomainException(str_replace('%seconds%', (string) $wait, \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.slow_mode')));
+        }
     }
 
     private function guardPosting(int $storeId, int $customerId, string $body, bool $topic): void

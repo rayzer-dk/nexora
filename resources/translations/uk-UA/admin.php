@@ -5492,4 +5492,13 @@ return [
     'admin.forum.log.post_hide' => 'Повідомлення приховано',
     'admin.forum.log.post_restore' => 'Повідомлення відновлено',
     'admin.forum.log.post_delete' => 'Повідомлення видалено',
+    'admin.forum.topic_header' => 'Шапка теми',
+    'admin.forum.topic_header_hint' => 'Показується над повідомленнями на кожній сторінці теми. Форматування як у повідомленнях. Порожнє поле прибирає шапку.',
+    'admin.forum.slow_mode' => 'Повільний режим',
+    'admin.forum.slow_mode_hint' => 'Скільки секунд учасник чекає між повідомленнями в цій темі. 0 вимикає; модератори теми не обмежуються.',
+    'admin.forum.slow_mode_seconds' => 'Секунд',
+    'admin.forum.save' => 'Зберегти',
+    'admin.forum.hide_reason' => 'Причина (її побачить автор)',
+    'admin.forum.log.topic_header' => 'Шапку теми змінено',
+    'admin.forum.log.topic_slow_mode' => 'Повільний режим змінено',
 ];

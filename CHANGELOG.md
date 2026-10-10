@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.96.8 — 2026-10-10
+
+Forum: reasons for hidden messages, reports reach moderators, topic header, slow mode.
+
+- Hiding a message now takes a reason (storefront moderators and admin). The author gets an e-mail with the reason and a quote of the message, and still sees the hidden message with the reason in the topic (nobody else does).
+- A report on a message from the topic now also e-mails the moderators of that topic (the admin queue is unchanged).
+- Topic header: moderators of the topic and the admin can pin a formatted note (rules, summary, links) above the messages on every page of the topic.
+- Slow mode: a topic can allow one message per member every N seconds; moderators of the topic are exempt. Set by a moderator in the topic or by the admin.
+- Migration Version20261230100000 adds mc_forum_post.hidden_reason, mc_forum_topic.header_text and mc_forum_topic.slow_mode_seconds. Run migrations before opening forum topics.
+- Header and slow-mode changes are written to the moderator log.
+- Not run in this release: the full E2E/CI suite (accumulated for one pass).
+
 ## 3.96.7 — 2026-10-10
 
 Hidden products stay hidden, itemised partial return receipts, forum warnings and moderator log.

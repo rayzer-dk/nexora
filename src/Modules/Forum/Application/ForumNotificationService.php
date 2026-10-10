@@ -78,6 +78,82 @@ final readonly class ForumNotificationService
         }
     }
 
+    /** Tells the author that a message was hidden, why, and quotes it so nothing is lost. */
+    public function notifyPostHidden(int $storeId, int $postId, ?string $reason): void
+    {
+        $post = $this->connection->fetchAssociative(
+            "SELECT p.id,p.body_text,t.id AS topic_id,t.title,t.slug,c.email,c.locale
+             FROM mc_forum_post p
+             JOIN mc_forum_topic t ON t.id=p.topic_id
+             JOIN mc_forum_board b ON b.id=t.board_id
+             JOIN mc_customer c ON c.id=p.customer_id AND c.status='active'
+             WHERE p.id=? AND b.store_id=? LIMIT 1",
+            [$postId, $storeId],
+        );
+        $email = is_array($post) ? trim((string) ($post['email'] ?? '')) : '';
+        if ($email === '') {
+            return;
+        }
+        $locale = trim((string) ($post['locale'] ?? '')) ?: 'uk-UA';
+        $url = rtrim($this->publicBaseUrl, '/') . '/forum/t/' . (int) $post['topic_id'] . '/' . rawurlencode((string) $post['slug']) . '#post-' . $postId;
+        $reason = trim((string) $reason) !== '' ? (string) $reason : $this->translator->translate('forum_hidden_no_reason', $locale);
+        $quote = mb_substr((string) $post['body_text'], 0, 600, 'UTF-8');
+        $this->notifications->enqueue(
+            NotificationChannel::Email,
+            new NotificationMessage(
+                'forum.post.hidden',
+                $this->translator->translate('forum_post_hidden_subject', $locale, ['topic' => (string) $post['title']]),
+                $this->translator->translate('forum_post_hidden_text', $locale, ['topic' => (string) $post['title'], 'reason' => $reason, 'quote' => $quote, 'url' => $url]),
+                ['locale' => $locale, 'topic_id' => (int) $post['topic_id'], 'post_id' => $postId, 'url' => $url],
+                'generic',
+            ),
+            $email,
+            null,
+            'forum-hidden:' . $postId . ':' . substr(sha1($reason), 0, 12),
+        );
+    }
+
+    /** Lets the moderators of the topic know that a member reported one of its messages. */
+    public function notifyPostReported(int $storeId, int $postId, string $reason): void
+    {
+        $post = $this->connection->fetchAssociative(
+            "SELECT p.id,t.id AS topic_id,t.title,t.slug
+             FROM mc_forum_post p
+             JOIN mc_forum_topic t ON t.id=p.topic_id
+             JOIN mc_forum_board b ON b.id=t.board_id
+             WHERE p.id=? AND b.store_id=? LIMIT 1",
+            [$postId, $storeId],
+        );
+        if (!is_array($post)) {
+            return;
+        }
+        $moderators = $this->connection->fetchAllAssociative(
+            "SELECT m.customer_id,c.email,c.locale FROM mc_forum_topic_moderator m JOIN mc_customer c ON c.id=m.customer_id AND c.status='active' WHERE m.topic_id=? LIMIT 20",
+            [(int) $post['topic_id']],
+        );
+        $url = rtrim($this->publicBaseUrl, '/') . '/forum/t/' . (int) $post['topic_id'] . '/' . rawurlencode((string) $post['slug']) . '#post-' . $postId;
+        foreach ($moderators as $moderator) {
+            $email = trim((string) ($moderator['email'] ?? ''));
+            if ($email === '') {
+                continue;
+            }
+            $locale = trim((string) ($moderator['locale'] ?? '')) ?: 'uk-UA';
+            $this->notifications->enqueue(
+                NotificationChannel::Email,
+                new NotificationMessage(
+                    'forum.post.reported',
+                    $this->translator->translate('forum_post_reported_subject', $locale, ['topic' => (string) $post['title']]),
+                    $this->translator->translate('forum_post_reported_text', $locale, ['topic' => (string) $post['title'], 'reason' => $reason, 'url' => $url]),
+                    ['locale' => $locale, 'topic_id' => (int) $post['topic_id'], 'post_id' => $postId, 'url' => $url],
+                    'generic',
+                ),
+                $email,
+                null,
+                'forum-reported:' . $postId . ':' . date('YmdH') . ':customer:' . (int) $moderator['customer_id'],
+            );
+        }
+    }
+
     /**
      * @param array<string,mixed> $post
      * @param list<array<string,mixed>> $subscribers
