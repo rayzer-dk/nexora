@@ -30,7 +30,8 @@
   </form>
   {% if oc_report %}
     <div class="admin-stats">{% for type, count in oc_report.counts %}<article class="is-tone-info"><span>{{ type|status_label('migration_entity') }}</span><strong>{{ count }}</strong></article>{% endfor %}</div>
-    {% if oc_report.applied %}<div class="admin-notice is-success">{{ ui_text('admin.migration.oc.done', {created: oc_report.applied.created, reused: oc_report.applied.reused, skipped: oc_report.applied.skipped, failed: oc_report.applied.failed}) }}</div>{% elseif oc_report.errors == 0 %}<div class="admin-notice is-success">{{ ui_text('admin.migration.oc.ready') }}</div>{% else %}<div class="admin-notice is-error">{{ ui_text('admin.migration.oc.blocked') }}</div>{% endif %}
+    {% if oc_report.applied %}<div class="admin-notice is-success">{{ ui_text('admin.migration.oc.done', {created: oc_report.applied.created, reused: oc_report.applied.reused, skipped: oc_report.applied.skipped, failed: oc_report.applied.failed}) }}</div>{% elseif oc_report.errors == 0 %}<div class="admin-notice is-success">{{ ui_text('admin.migration.oc.ready') }}</div>{% else %}<div class="admin-notice is-warning">{{ ui_text('admin.migration.oc.blocked') }}</div>{% endif %}
+    {% if oc_report.applied and oc_report.applied.problems %}<h3>{{ ui_text('admin.migration.oc.problems') }} ({{ oc_report.applied.problems|length }})</h3><ul class="admin-issue-list">{% for p in oc_report.applied.problems %}<li class="is-error"><strong>✖</strong> {{ p.type|status_label('migration_entity') }} {{ p.key }}: {{ p.message }}</li>{% endfor %}</ul>{% endif %}
     {% if oc_report.issues %}<ul class="admin-issue-list">{% for i in oc_report.issues %}<li class="is-{{ i.severity }}"><strong>{{ i.severity == 'error' ? '✖' : '⚠' }}</strong> {{ i.key ? i.key ~ ': ' : '' }}{{ i.message }}</li>{% endfor %}</ul>{% endif %}
   {% endif %}
 </section>

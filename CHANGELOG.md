@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.19 — 2026-10-10
+
+OpenCart import no longer stops on bad records.
+
+- A record with errors (one product out of a thousand) no longer blocks the whole import: it is skipped, everything else is loaded.
+- After the import the page lists every skipped record - type, source id and the reason - so it can be fixed in the old shop or added by hand.
+
 ## 3.97.18 — 2026-10-10
 
 Carriers in one place, waybill weight counted automatically.

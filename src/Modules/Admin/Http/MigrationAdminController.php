@@ -63,16 +63,24 @@ final class MigrationAdminController extends AbstractController
             $errors=0;$issues=[];foreach($analysis->issues as $issue){if($issue->severity==='error')++$errors;if(count($issues)<60)$issues[]=['severity'=>$issue->severity,'code'=>$issue->code,'key'=>$issue->sourceKey,'message'=>$issue->message];}
             $report=['counts'=>$analysis->counts,'errors'=>$errors,'issues'=>$issues,'applied'=>null];
             if($r->get('mode')==='apply'){
-                if($errors>0)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.migration.oc.blocked'));
                 $plan=new \Commerce\Modules\Migration\Application\MigrationImportPlan($ctx->storeId,$ctx->marketId,$ctx->locale,strtoupper($ctx->currency),'oc-'.substr(sha1($form['host'].'|'.$form['database'].'|'.$form['prefix']),0,16),[],$form['publish'],true,250,$imageRoot);
                 $result=$this->importer->import($source,$plan,null);
-                $report['applied']=['run'=>$result->runId,'created'=>$result->counts['created']??0,'reused'=>$result->counts['reused']??0,'skipped'=>$result->counts['skipped']??0,'failed'=>$result->counts['failed']??0,'issues'=>$result->issues];
+                $report['applied']=['run'=>$result->runId,'created'=>$result->counts['created']??0,'reused'=>$result->counts['reused']??0,'skipped'=>$result->counts['skipped']??0,'failed'=>$result->counts['failed']??0,'issues'=>$result->issues,'problems'=>$this->runProblems($result->runId)];
             }
         }catch(\DomainException|\InvalidArgumentException $e){$this->addFlash('error',$e->getMessage());}
         catch(\PDOException){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('admin.migration.oc.connect'));}
         catch(\Throwable){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         $runs=$this->db->fetchAllAssociative("SELECT r.public_id,r.source_code,r.status,r.entity_type,r.cursor_value,r.processed_count,r.issue_count,r.last_error,r.created_at,r.updated_at,r.completed_at,0 AS job_id,NULL AS statistics,0 AS item_count,0 AS error_count,0 AS warning_count FROM mc_migration_run r ORDER BY r.id DESC LIMIT 100");
         return $this->render('@storefront/admin/system/migration.html.twig',['runs'=>$runs,'oc_report'=>$report,'oc_form'=>$form]);
+    }
+
+    /** Every record the import could not take over, with the reason - the import itself carries on past them. @return list<array{type:string,key:string,code:string,message:string}> */
+    private function runProblems(string $runId): array
+    {
+        try{
+            $rows=$this->db->fetchAllAssociative("SELECT i.entity_type,i.source_key,i.code,i.message FROM mc_import_issue i JOIN mc_import_job j ON j.id=i.job_id WHERE JSON_UNQUOTE(JSON_EXTRACT(j.options,'$.run_id'))=? ORDER BY i.id LIMIT 1000",[$runId]);
+        }catch(\Throwable){return [];}
+        return array_map(static fn(array $r):array=>['type'=>(string)$r['entity_type'],'key'=>(string)$r['source_key'],'code'=>(string)$r['code'],'message'=>(string)$r['message']],$rows);
     }
 
     #[Route('/admin/system/migration/{runId}/rollback', name:'admin_system_migration_rollback', methods:['POST'], requirements:['runId'=>'[0-9a-fA-F-]{36}'])]
