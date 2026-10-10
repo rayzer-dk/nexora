@@ -292,6 +292,17 @@ final class OrderAdminController extends AbstractController
         $order = $this->order($publicId, $request);
         $items = $this->db->fetchAllAssociative('SELECT * FROM mc_sales_order_item WHERE order_id=? ORDER BY id', [(int) $order['id']]);
         $items = $this->withImages($items);
+        // Parcel weight for the carrier: the sum of the products' weights; products without a weight are counted separately.
+        $parcelWeight = 0.0;
+        $weightMissing = 0;
+        foreach ($items as $item) {
+            $w = $this->db->fetchOne('SELECT weight_kg FROM mc_product_variant WHERE sku=? LIMIT 1', [(string) ($item['sku'] ?? '')]);
+            if ($w === false || $w === null || (float) $w <= 0) {
+                ++$weightMissing;
+            } else {
+                $parcelWeight += (float) $w * (float) ($item['quantity'] ?? 1);
+            }
+        }
         $payment = $this->db->fetchAssociative('SELECT * FROM mc_payment WHERE order_id=? ORDER BY id DESC LIMIT 1', [(int) $order['id']]) ?: [];
         $fulfillment = $this->db->fetchAssociative('SELECT * FROM mc_fulfillment WHERE order_id=? ORDER BY id DESC LIMIT 1', [(int) $order['id']]) ?: [];
         if ($fulfillment !== []) {
@@ -351,6 +362,8 @@ final class OrderAdminController extends AbstractController
             'documents' => $this->documents->listForOrder($this->contexts->resolve($request)->storeId, $publicId),
             'shipments' => $this->shipments->listForOrder($this->contexts->resolve($request)->storeId, $publicId),
             'nova_post_api_configured' => $this->novaPostShipments->configured(),
+            'shipment_weight' => max(0.1, round($parcelWeight, 1)),
+            'weight_missing' => $weightMissing,
             'carriers' => array_map(static fn ($p): array => ['code' => $p->code(), 'label' => $p->label()], $this->carrierRegistry->all()),
             'sms' => $this->smsPanel($order, $request),
             'fulfillment_statuses' => ['pending', 'preparing', 'ready_for_pickup', 'shipped', 'delivered', 'cancelled'],

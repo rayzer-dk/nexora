@@ -2197,3 +2197,6 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 
 .admin-inquiry__who { font-weight: var(--mc-font-weight-medium, 500); }
 .admin-inquiry__item { color: var(--mc-color-muted); }
+.admin-key-list { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--mc-space-1); }
+.admin-key-list li.is-set { color: var(--mc-color-success); }
+.admin-key-list li.is-missing { color: var(--mc-color-muted); }

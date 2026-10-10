@@ -17,13 +17,33 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AdminShipmentController extends AbstractController
 {
-    public function __construct(private readonly ShipmentOperationService $shipments,private readonly NovaPostShipmentOperationService $novaPost,private readonly AdminContextResolver $contexts){}
+    public function __construct(private readonly ShipmentOperationService $shipments,private readonly NovaPostShipmentOperationService $novaPost,private readonly AdminContextResolver $contexts,private readonly \Commerce\Modules\Shipping\Application\DeliveryProviderRegistry $carriers){}
 
     #[Route('/admin/shipments',name:'admin_shipments',methods:['GET'])]
     public function index(Request $request):Response
     {
         $ctx=$this->contexts->resolve($request);$status=trim((string)$request->query->get('status',''));$filters=$this->filters($request);
         return $this->render('@storefront/admin/shipping/index.html.twig',['shipments'=>$this->shipments->listForStore($ctx->storeId,$status,250,$filters),'status'=>$status,'filters'=>$filters]);
+    }
+
+    /** Which carriers are connected: what each can do and which settings of the server it still needs (they are set once, in the installer or the .env file). */
+    #[Route('/admin/shipments/carriers',name:'admin_shipment_carriers',methods:['GET'],priority:20)]
+    public function carriers(Request $request):Response
+    {
+        $this->contexts->resolve($request);
+        $required=['nova_post'=>['NOVA_POST_API_KEY'],'ukrposhta'=>['UKRPOSHTA_BEARER'],'delivery_auto'=>['DELIVERY_AUTO_API_BASE'],'dhl'=>['DHL_API_KEY'],'gls'=>['GLS_API_BASE','GLS_API_TOKEN','GLS_POINTS_PATH'],'meest'=>['MEEST_API_BASE','MEEST_API_TOKEN','MEEST_CITIES_PATH','MEEST_POINTS_PATH']];
+        $ttn=['nova_post'=>['NOVA_POST_SENDER_REF','NOVA_POST_CONTACT_SENDER_REF','NOVA_POST_CITY_SENDER_REF','NOVA_POST_SENDER_ADDRESS_REF','NOVA_POST_SENDER_PHONE']];
+        $has=static fn(string $k):bool=>trim((string)($_ENV[$k]??$_SERVER[$k]??getenv($k)?:''))!=='';
+        $rows=[];
+        foreach($this->carriers->all() as $p){
+            $code=$p->code();$cap=$p->capabilities();
+            $keys=[];foreach(($required[$code]??[]) as $k)$keys[]=['name'=>$k,'set'=>$has($k),'scope'=>'connect'];
+            foreach(($ttn[$code]??[]) as $k)$keys[]=['name'=>$k,'set'=>$has($k),'scope'=>'ttn'];
+            $connected=true;foreach($keys as $k)if($k['scope']==='connect'&&!$k['set'])$connected=false;
+            $ttnReady=$cap->supportsShipmentCreation;foreach($keys as $k)if($k['scope']==='ttn'&&!$k['set'])$ttnReady=false;
+            $rows[]=['code'=>$code,'label'=>$p->label(),'connected'=>$connected,'rates'=>$cap->supportsLiveRates,'create'=>$cap->supportsShipmentCreation,'create_ready'=>$ttnReady,'tracking'=>$cap->supportsTracking,'returns'=>$cap->supportsReturns,'keys'=>$keys];
+        }
+        return $this->render('@storefront/admin/shipping/carriers.html.twig',['carriers'=>$rows]);
     }
 
     #[Route('/admin/shipments/export.csv',name:'admin_shipments_export',methods:['GET'],priority:10)]

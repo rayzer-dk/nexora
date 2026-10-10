@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.18 — 2026-10-10
+
+Carriers in one place, waybill weight counted automatically.
+
+- New "Carriers" page (under Shipments): every delivery service with what it can do (rates, waybills, tracking, returns), whether it is connected, and which server settings it still lacks - names only, values are never shown. A note says where the keys live (the .env file written by the installer).
+- Order page: the weight for the Nova Poshta waybill is the sum of the products' weights; a warning appears when some products have no weight.
+
 ## 3.97.17 — 2026-10-10
 
 Fixes found by the project's own static checks (run once over the work of 3.96.7-3.97.16).
