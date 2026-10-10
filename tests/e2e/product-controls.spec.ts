@@ -70,7 +70,7 @@ test('product controls: hidden from catalog, reviews off, quantity rules and a c
     await Promise.all([member.waitForURL(/\/account\/login(?:\?|$)/), form.locator('button[type="submit"]').click()]);
     await admin.goto(`/admin/commerce/customers?q=${encodeURIComponent(email)}`, { waitUntil: 'domcontentloaded' });
     const groupForm = admin.locator('form.admin-group-form').first();
-    await groupForm.locator('input[name="customer_group_code"]').fill('vip');
+    await groupForm.locator('select[name="customer_group_code"]').selectOption('vip');
     await Promise.all([admin.waitForLoadState('domcontentloaded'), groupForm.locator('button[type="submit"]').click()]);
 
     await save({ group_prices: 'vip=0.50' });

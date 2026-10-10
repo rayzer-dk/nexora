@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.97.23 — 2026-10-10
+
+- Browser test for product controls follows the customer-group select. Last full Chromium run: 387 passed, 15 failed; after the fixes above and re-runs only the known older failures remain (contrast, AVIF picture, own redirects, option price action, dashboard order, mobile payment radio, old price field).
+
 ## 3.97.22 — 2026-10-10
 
 Browser-test run (Chromium): the tests that still expected the old forms were brought in line with the new ones.
