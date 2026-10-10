@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.97.16 — 2026-10-10
+
+- Product questions: the answer is e-mailed also to guests who left only an e-mail address (before, only registered customers got it).
+
 ## 3.97.15 — 2026-10-10
 
 Shipments list: dates, search, sorting, export.
