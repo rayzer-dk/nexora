@@ -952,6 +952,7 @@ commerce-slider, .slider-shell { display: block; min-width: 0; }
 
 /* Product badges (new / sale / bestseller / custom). Tones use contrast-checked tokens in both colour schemes. */
 .catalog-card__badges { position: absolute; top: var(--mc-space-3); left: var(--mc-space-3); z-index: var(--mc-z-raised); display: flex; flex-wrap: wrap; gap: var(--mc-space-1); max-width: calc(100% - var(--mc-space-3) - var(--mc-control-height-sm) - var(--mc-space-4)); }
+.product-gallery__badges { position: absolute; top: var(--mc-space-3); left: var(--mc-space-3); z-index: var(--mc-z-raised); display: flex; flex-wrap: wrap; gap: var(--mc-space-1); max-width: calc(100% - var(--mc-space-6)); pointer-events: none; }
 .product-badges { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); margin-bottom: var(--mc-space-2); }
 .product-badge { display: inline-flex; align-items: center; height: var(--mc-space-6); padding: 0 var(--mc-space-2); border-radius: var(--mc-radius-full); font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-bold); line-height: 1; }
 .product-badge--primary { background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); }

@@ -10,6 +10,7 @@
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.mfa.recovery.eyebrow') }}</small><h2 id="recovery-title">{{ ui_text('admin.mfa.recovery.title') }}</h2></div></div>
     <p class="admin-card-note">{{ ui_text('admin.mfa.recovery.once') }}</p>
     <ul class="admin-code-list">{% for code in recovery_codes %}<li><code>{{ code }}</code></li>{% endfor %}</ul>
+    <p><button class="admin-button" type="button" data-copy-value="{{ recovery_codes|join("\n")|e('html_attr') }}">{{ ui_icon('copy', 16) }}<span>{{ ui_text('admin.mfa.recovery.copy_all') }}</span></button></p>
 </section>
 {% endif %}
 
@@ -35,7 +36,7 @@
         <ol class="admin-steps">
             <li>{{ ui_text('admin.mfa.setup.step1') }}</li>
             <li>{{ ui_text('admin.mfa.setup.step2') }}
-                <p class="admin-secret" data-mfa-secret aria-label="{{ ui_text('admin.mfa.secret') }}"><code>{% for group in secret_groups %}{{ group }} {% endfor %}</code></p>
+                <p class="admin-secret" data-mfa-secret aria-label="{{ ui_text('admin.mfa.secret') }}"><code>{% for group in secret_groups %}{{ group }} {% endfor %}</code> <button class="admin-button" type="button" data-copy-value="{{ secret|e('html_attr') }}" title="{{ ui_text('admin.mfa.copy')|e('html_attr') }}">{{ ui_icon('copy', 16) }}<span>{{ ui_text('admin.mfa.copy') }}</span></button></p>
                 <p><a class="admin-button" href="{{ provisioning_uri }}">{{ ui_icon('smartphone', 16) }}<span>{{ ui_text('admin.mfa.setup.open_app') }}</span></a></p>
             </li>
             <li>{{ ui_text('admin.mfa.setup.step3') }}</li>

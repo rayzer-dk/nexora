@@ -5501,4 +5501,6 @@ return [
     'admin.forum.hide_reason' => 'Причина (її побачить автор)',
     'admin.forum.log.topic_header' => 'Шапку теми змінено',
     'admin.forum.log.topic_slow_mode' => 'Повільний режим змінено',
+    'admin.mfa.copy' => 'Копіювати',
+    'admin.mfa.recovery.copy_all' => 'Копіювати всі коди',
 ];

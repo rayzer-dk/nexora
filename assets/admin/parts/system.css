@@ -141,7 +141,7 @@
 .admin-app .admin-switch:has(> input:disabled) { cursor: not-allowed; color: var(--mc-color-muted); }
 
 /* Extensions row: one aligned action cluster, the uninstall control is a bordered group. */
-.admin-table .is-actions .admin-row-actions { flex-wrap: nowrap; gap: var(--mc-space-2); }
+.admin-table .is-actions .admin-row-actions { justify-content: center; flex-wrap: nowrap; gap: var(--mc-space-2); }
 .admin-app .admin-row-actions form.admin-extension-uninstall {
   display: inline-flex;
   align-items: center;

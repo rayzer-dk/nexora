@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.96.9 — 2026-10-10
+
+Interface fixes from the first review round.
+
+- Product page: badges (sale, new, discount) sit on the photo, like in the catalog card, not next to the title.
+- Admin security: copy buttons for the TOTP secret and for all recovery codes.
+- Admin tables: the "Actions" column and its header are centred.
+- Admin tabs are now clearly visible: bordered buttons, the active one filled with the accent colour.
+- Admin forms: the Save button is repeated in the page header, so the long forms do not need scrolling to save.
+- Category tree: folded on the first visit, then each branch stays open or folded as the admin left it; a drag handle marks rows that can be moved.
+- The separate "Image ALT" admin page is gone: photos without their own ALT text get it from the name automatically on the storefront.
+
 ## 3.96.8 — 2026-10-10
 
 Forum: reasons for hidden messages, reports reach moderators, topic header, slow mode.

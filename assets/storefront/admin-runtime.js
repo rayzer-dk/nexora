@@ -1775,7 +1775,14 @@ function initCategoryTree() {
   const rows = () => qa('[data-cat-row]', table);
   const STORE = 'mc.catalog.collapsed';
   let collapsed = new Set();
-  try { collapsed = new Set(JSON.parse(localStorage.getItem(STORE) || '[]')); } catch (_error) { collapsed = new Set(); }
+  // First visit: every branch is folded. After that the open and folded branches are remembered in this browser.
+  let remembered = null;
+  try { remembered = localStorage.getItem(STORE); } catch (_error) { remembered = null; }
+  if (remembered === null) {
+    collapsed = new Set(qa('[data-cat-row]', table).filter((row) => q('[data-tree-toggle]', row)).map((row) => row.dataset.catNode));
+  } else {
+    try { collapsed = new Set(JSON.parse(remembered || '[]')); } catch (_error) { collapsed = new Set(); }
+  }
   const save = () => { try { localStorage.setItem(STORE, JSON.stringify([...collapsed])); } catch (_error) { /* storage can be blocked */ } };
   const paint = () => {
     const hidden = new Set();
@@ -1804,6 +1811,7 @@ function initCategoryTree() {
   const withChildren = () => rows().filter((row) => q('[data-tree-toggle]', row)).map((row) => row.dataset.catNode);
   q('[data-tree-expand]')?.addEventListener('click', () => { collapsed.clear(); save(); paint(); });
   q('[data-tree-collapse]')?.addEventListener('click', () => { collapsed = new Set(withChildren()); save(); paint(); });
+  if (remembered === null) save();
   paint();
 
   const moveUrl = table.dataset.moveUrl;
@@ -1926,6 +1934,29 @@ function initAutoSubmit() {
       form.requestSubmit();
     });
   });
+}
+
+/**
+ * Long forms keep their Save button at the bottom; the same button is mirrored into the page header so nobody has to scroll for it.
+ * Pages that already carry a primary submit in the header (the product form) are left alone.
+ */
+function initHeaderSaveButton() {
+  const actions = q('.admin-page-header .admin-page-actions');
+  if (!actions || q('button[type="submit"].is-primary', actions)) return;
+  const forms = qa('main form.admin-form, form.admin-form').filter((form) => q('.admin-form-actions button[type="submit"]', form));
+  if (forms.length !== 1) return;
+  const form = forms[0];
+  const source = q('.admin-form-actions button[type="submit"]:not([formaction])', form);
+  if (!source) return;
+  if (!form.id) form.id = 'admin-main-form';
+  const label = (source.textContent || '').trim();
+  if (!label) return;
+  const button = document.createElement('button');
+  button.type = 'submit';
+  button.className = 'admin-button is-primary';
+  button.setAttribute('form', form.id);
+  button.textContent = label;
+  actions.prepend(button);
 }
 
 function initCopyControls() {
@@ -2152,6 +2183,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initThumbZoom();
   initProductTabs();
   initCopyControls();
+  initHeaderSaveButton();
   initHealthCheck();
   initSiteProfilePreset();
   initSecretToggles();

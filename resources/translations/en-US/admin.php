@@ -5506,4 +5506,6 @@ return [
     'admin.forum.hide_reason' => 'Reason (the author will see it)',
     'admin.forum.log.topic_header' => 'Topic header changed',
     'admin.forum.log.topic_slow_mode' => 'Slow mode changed',
+    'admin.mfa.copy' => 'Copy',
+    'admin.mfa.recovery.copy_all' => 'Copy all codes',
 ];
