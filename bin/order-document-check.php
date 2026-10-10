@@ -6,7 +6,8 @@ require_once $root . '/src/Core/Platform/PlatformVersion.php';
 $need=[
  'migrations/Version20260925090000.php'=>['mc_order_document','mc_order_document_sequence','tax_number','iban'],
  'src/Modules/OrderDocument/Application/OrderDocumentService.php'=>['issueInvoice','issuePackingSlip','issueCreditNote','INSERT IGNORE INTO mc_order_document_sequence','snapshot_json'],
- 'src/Modules/OrderDocument/Http/AdminOrderDocumentController.php'=>['admin_order_document_issue','admin_order_document_pdf','Dompdf'],
+ 'src/Modules/OrderDocument/Http/AdminOrderDocumentController.php'=>['admin_order_document_issue','admin_order_document_pdf','OrderDocumentPdf'],
+ 'src/Modules/OrderDocument/Application/OrderDocumentPdf.php'=>['Dompdf'],
  'src/Modules/OrderDocument/Http/CustomerOrderDocumentController.php'=>['documentForCustomer','customer_order_document_pdf'],
  'themes/default/templates/order_document/document.html.twig'=>["ui_text('document_invoice')","ui_text('document_packing_slip')","ui_text('document_credit_note')","ui_text('document_snapshot_notice')"],
 ];

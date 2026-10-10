@@ -246,7 +246,7 @@ final readonly class FileLibraryService
     private function absolute(string $library, string $key): string
     {
         if (str_contains($key, '..') || str_starts_with($key, '/')) {
-            throw new \RuntimeException('Invalid storage key');
+            throw new \RuntimeException(CanonicalUiText::get('admin.files.error.upload'));
         }
 
         return rtrim($this->projectDir, '/\\') . ($library === self::DOCUMENT ? '/public/media/' : '/var/storage/') . $key;

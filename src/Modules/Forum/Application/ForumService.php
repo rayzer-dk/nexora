@@ -429,7 +429,7 @@ final readonly class ForumService
         }
         $wait = $seconds - (time() - (new DateTimeImmutable($last, new DateTimeZone('UTC')))->getTimestamp());
         if ($wait > 0) {
-            throw new \DomainException(str_replace('%seconds%', (string) $wait, \Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.slow_mode')));
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('forum.runtime.slow_mode', ['seconds' => (string) $wait]));
         }
     }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.17 — 2026-10-10
+
+Fixes found by the project's own static checks (run once over the work of 3.96.7-3.97.16).
+
+- Checks run and clean: Twig syntax of all 261 templates, icons, CSS coverage, design tokens, i18n/template keys, runtime string audit, order documents, forum, security, XSS, SEO baseline, UX, system completeness, release contract.
+- Fixed: an icon that was not in the built icon set, a dynamic translation key (now an explicit list), a non-standard breakpoint, a raw font size, classes without styles, README headings (the logo now comes after the version heading), three untranslated error texts, the order-document check now looks for the PDF code in its new place.
+
 ## 3.97.16 — 2026-10-10
 
 - Product questions: the answer is e-mailed also to guests who left only an e-mail address (before, only registered customers got it).

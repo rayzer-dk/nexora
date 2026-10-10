@@ -64,7 +64,7 @@ final class AdminOrderDocumentController extends AbstractController
             $number=$this->db->fetchOne('SELECT order_number FROM mc_sales_order WHERE public_id=? AND store_id=?',[\Symfony\Component\Uid\Uuid::fromString($orderPublicId)->toBinary(),$ctx->storeId]);
             if($number===false||(string)$number!==$doc['order_number'])throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.application.orderdocumentservice.dokument_ne_znaideno'));
             $dir=(string)$this->getParameter('kernel.project_dir').'/var/order-mail/'.bin2hex(random_bytes(8));
-            if(!is_dir($dir)&&!@mkdir($dir,0775,true)&&!is_dir($dir))throw new \RuntimeException('mail dir');
+            if(!is_dir($dir)&&!@mkdir($dir,0775,true)&&!is_dir($dir))throw new \RuntimeException(CanonicalUiText::get('admin.order_document.mail_failed'));
             $name=$this->pdfs->filename($doc);file_put_contents($dir.'/'.$name,$this->pdfs->render($doc));
             $label=match($doc['document_type']){'invoice'=>CanonicalUiText::get('admin.order_document.invoice'),'packing_slip'=>CanonicalUiText::get('admin.order_document.packing_slip'),default=>CanonicalUiText::get('admin.order_document.credit_note')};
             $subject=str_replace(['%type%','%number%'],[$label,(string)$doc['order_number']],CanonicalUiText::get('admin.order_document.mail_subject'));
