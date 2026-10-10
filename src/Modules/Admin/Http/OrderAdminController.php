@@ -249,7 +249,6 @@ final class OrderAdminController extends AbstractController
         $order=$this->order($publicId,$request);$items=$this->db->fetchAllAssociative('SELECT sku,name,quantity,line_total_minor FROM mc_sales_order_item WHERE order_id=? ORDER BY id LIMIT 8',[(int)$order['id']]);foreach($items as &$item){$item['line_total_display']=$this->money((int)$item['line_total_minor'],(string)$order['currency']);}unset($item);return $this->render('@storefront/admin/orders/_preview.html.twig',['order'=>$order,'items'=>$items]);
     }
 
-    #[Route('/admin/orders/{publicId}', name: 'admin_order_view', methods: ['GET'])]
     /**
      * The first photo of each ordered product, so the order shows what was bought.
      *
@@ -287,6 +286,7 @@ final class OrderAdminController extends AbstractController
         return $items;
     }
 
+    #[Route('/admin/orders/{publicId}', name: 'admin_order_view', methods: ['GET'])]
     public function view(string $publicId, Request $request): Response
     {
         $order = $this->order($publicId, $request);
