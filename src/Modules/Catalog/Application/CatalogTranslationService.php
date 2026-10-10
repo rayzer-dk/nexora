@@ -86,7 +86,7 @@ final readonly class CatalogTranslationService
             throw new \InvalidArgumentException('name_required');
         }
         $now = gmdate('Y-m-d H:i:s.u');
-        $this->db->transactional(function (Connection $db) use ($storeId, $productId, $locale, $data, $now, $publicId): void {
+        $this->db->transactional(function (Connection $db) use ($storeId, $productId, $locale, $data, $now, $publicId, $input): void {
             $exists = (int) $db->fetchOne('SELECT COUNT(*) FROM mc_product_translation WHERE product_id=? AND store_id=? AND locale=?', [$productId, $storeId, $locale]) > 0;
             if ($exists) {
                 $db->update('mc_product_translation', $data + ['updated_at' => $now, 'is_fallback' => 0], ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale]);
@@ -108,7 +108,7 @@ final readonly class CatalogTranslationService
         if ($data['name'] === null) {
             throw new \InvalidArgumentException('name_required');
         }
-        $this->db->transactional(function (Connection $db) use ($storeId, $categoryId, $locale, $data, $publicId): void {
+        $this->db->transactional(function (Connection $db) use ($storeId, $categoryId, $locale, $data, $publicId, $input): void {
             $exists = (int) $db->fetchOne('SELECT COUNT(*) FROM mc_category_translation WHERE category_id=? AND store_id=? AND locale=?', [$categoryId, $storeId, $locale]) > 0;
             if ($exists) {
                 $db->update('mc_category_translation', $data + ['is_fallback' => 0], ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale]);

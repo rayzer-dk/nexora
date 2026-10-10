@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.21 — 2026-10-10
+
+Bugs found by the first run on PHP 8.4 with a real database.
+
+- Saving a product or category translation failed (the address field of the language was not passed into the transaction) - fixed; this also broke the demo installation.
+- The file library routes had no permission mapping - now they follow the media permissions (view / manage).
+
 ## 3.97.20 — 2026-10-10
 
 Full verification run.
