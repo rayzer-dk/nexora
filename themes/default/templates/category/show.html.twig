@@ -14,7 +14,7 @@
     {% if section == 'toolbar' %}<div class="{{ cl.classes.toolbar|default('') }}">{% include '@storefront/components/catalog_toolbar.html.twig' %}</div>
     {% elseif section == 'subcategories' %}
     {% if subcategories|default([]) %}<div class="{{ cl.classes.subcategories|default('') }}"><section class="category-subcategories" aria-label="{{ ui_text('subcategories') }}">
-        {% include '@storefront/components/category_tiles.html.twig' with {items: subcategories, options: {layout: cl.subcategories.layout|default('chips') == 'scroll' ? 'scroll' : 'chips', columns: cl.subcategories.columns|default(4), show_image: cl.subcategories.show_image|default(true), show_count: cl.subcategories.show_count|default(true), label: ui_text('subcategories')}} only %}
+        {% include '@storefront/components/category_tiles.html.twig' with {items: subcategories, options: {layout: cl.subcategories.layout|default('grid') == 'scroll' ? 'scroll' : 'grid', columns: cl.subcategories.columns|default(4), show_image: cl.subcategories.show_image|default(true), show_count: cl.subcategories.show_count|default(true), label: ui_text('subcategories')}} only %}
     </section></div>{% endif %}
     {% elseif section == 'recommended' %}<div class="{{ cl.classes.recommended|default('') }}">
     {% if recommended_products|default([]) %}

@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.12 — 2026-10-10
+
+Subcategory tiles and coloured service cards.
+
+- Storefront: subcategories on a category page are photo tiles (grid) again; the page always rendered them as small round chips because of a wrong default.
+- Customer service page: the five overview cards are coloured by state with icons (the same card standard as the order page).
+
 ## 3.97.11 — 2026-10-10
 
 One language bar per page, B2B overview.
