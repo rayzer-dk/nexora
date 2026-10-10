@@ -28,6 +28,7 @@ final class SupplierService
         private readonly HttpClientInterface $http,
         private readonly SecretVault $vault,
         private readonly bool $allowPrivateHosts = false,
+        #[\Symfony\Component\DependencyInjection\Attribute\Autowire('%kernel.project_dir%')] private readonly string $projectDir = '',
     ) {
     }
 
@@ -50,7 +51,11 @@ final class SupplierService
     {
         $name = trim(mb_substr(strip_tags((string) ($in['name'] ?? '')), 0, 190, 'UTF-8'));
         $url = trim((string) ($in['feed_url'] ?? ''));
-        if ($name === '' || !$this->safeUrl($url)) {
+        $file = $in['_file'] ?? null;
+        if ($file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile && $file->isValid()) {
+            $url = $this->storeUpload($file);
+        }
+        if ($name === '' || !(str_starts_with($url, 'upload:') ? $this->uploadedPath($url) !== null : $this->safeUrl($url))) {
             throw new \DomainException(CanonicalUiText::get('supplier.runtime.invalid'));
         }
         $format = in_array($in['format'] ?? '', SupplierFeedParser::FORMATS, true) ? (string) $in['format'] : 'yml';
@@ -350,6 +355,14 @@ final class SupplierService
     /** @param array<string,mixed> $supplier */
     private function download(array $supplier, string $target): void
     {
+        if (str_starts_with((string) $supplier['feed_url'], 'upload:')) {
+            $path = $this->uploadedPath((string) $supplier['feed_url']);
+            if ($path === null || !@copy($path, $target) || (int) filesize($target) === 0) {
+                throw new \DomainException(CanonicalUiText::get('supplier.runtime.empty'));
+            }
+
+            return;
+        }
         $options = ['timeout' => 30, 'max_duration' => 300, 'headers' => ['Accept' => 'application/xml,text/xml,text/csv,*/*', 'User-Agent' => 'NexoraSupplierSync/1.0']];
         if (!empty($supplier['http_user']) && !empty($supplier['http_pass_enc'])) {
             $options['auth_basic'] = [(string) $supplier['http_user'], $this->vault->decrypt((string) $supplier['http_pass_enc'], self::CTX)];
@@ -381,6 +394,39 @@ final class SupplierService
         if ($bytes === 0) {
             throw new \DomainException(CanonicalUiText::get('supplier.runtime.empty'));
         }
+    }
+
+    /** A price list uploaded from the computer lives in the private storage; the feed address then reads "upload:<file>". */
+    private function storeUpload(\Symfony\Component\HttpFoundation\File\UploadedFile $file): string
+    {
+        $size = (int) $file->getSize();
+        $extension = strtolower((string) pathinfo((string) $file->getClientOriginalName(), PATHINFO_EXTENSION));
+        $extension = $extension === 'yml' || $extension === 'xml' || $extension === 'csv' ? $extension : '';
+        if ($size < 1 || $size > self::MAX_FEED_BYTES || $extension === '') {
+            throw new \DomainException(CanonicalUiText::get('supplier.runtime.upload_invalid'));
+        }
+        $hash = (string) hash_file('sha256', $file->getPathname());
+        $dir = rtrim($this->projectDir, '/\\') . '/var/storage/supplier';
+        if (!is_dir($dir) && !@mkdir($dir, 0750, true) && !is_dir($dir)) {
+            throw new \DomainException(CanonicalUiText::get('supplier.runtime.failed'));
+        }
+        $target = $dir . '/' . $hash . '.' . $extension;
+        if (!is_file($target) && !@copy($file->getPathname(), $target)) {
+            throw new \DomainException(CanonicalUiText::get('supplier.runtime.failed'));
+        }
+        @chmod($target, 0640);
+
+        return 'upload:' . $hash . '.' . $extension;
+    }
+
+    private function uploadedPath(string $url): ?string
+    {
+        if (preg_match('/^upload:([a-f0-9]{64}\.(?:xml|yml|csv))$/', $url, $m) !== 1) {
+            return null;
+        }
+        $path = rtrim($this->projectDir, '/\\') . '/var/storage/supplier/' . $m[1];
+
+        return is_file($path) ? $path : null;
     }
 
     private function safeUrl(string $url): bool

@@ -2106,4 +2106,5 @@ return [
     'forum.runtime.slow_mode' => 'Slow mode is on in this topic. You can post again in %seconds% s.',
     'forum.runtime.header_saved' => 'Topic header saved.',
     'forum.runtime.slow_mode_saved' => 'Slow mode updated.',
+    'supplier.runtime.upload_invalid' => 'Upload an XML, YML or CSV file up to 100 MB.',
 ];

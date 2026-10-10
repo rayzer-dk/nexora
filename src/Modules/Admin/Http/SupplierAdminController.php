@@ -50,7 +50,7 @@ final class SupplierAdminController extends AbstractController
         $this->guard($request);
         $id = $request->request->getInt('id') ?: null;
         try {
-            $saved = $this->suppliers->save($context->storeId, $id, $request->request->all());
+            $saved = $this->suppliers->save($context->storeId, $id, $request->request->all() + ['_file' => $request->files->get('feed_file')]);
             $this->addFlash('success', CanonicalUiText::get('admin.suppliers.saved'));
 
             return $this->redirectToRoute('admin_catalog_suppliers', ['id' => $saved]);

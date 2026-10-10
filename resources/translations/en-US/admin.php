@@ -5563,4 +5563,8 @@ return [
     'admin.order_document.mail_text' => 'Hello! The %type% for order %number% is attached as a PDF.',
     'admin.order_document.mail_failed' => 'Could not prepare the e-mail. Try again.',
     'admin.order_document.send' => 'Send to customer',
+    'admin.suppliers.url_or_file' => 'Link to the price list, or upload a file below.',
+    'admin.suppliers.file' => 'Price list file',
+    'admin.suppliers.file_hint' => 'XML, YML or CSV from your computer, up to 100 MB. Upload a new file to refresh the data.',
+    'admin.suppliers.file_current' => 'A file is attached. Choose another to replace it.',
 ];

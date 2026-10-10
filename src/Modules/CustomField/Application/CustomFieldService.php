@@ -26,10 +26,34 @@ final class CustomFieldService
         return $this->db->fetchAllAssociative("SELECT id,code,label,field_type,show_on_storefront,sort_order FROM mc_custom_field_definition WHERE store_id=? AND owner_type='product' ORDER BY sort_order,id", [$storeId]);
     }
 
+    private function codeFromLabel(int $storeId, string $label): string
+    {
+        $base = str_replace('-', '_', (new \Commerce\Modules\Seo\Application\SlugGenerator())->generate($label, 'uk-UA'));
+        $base = trim((string) preg_replace('/[^a-z0-9_]+/', '_', strtolower($base)), '_');
+        if ($base === '' || !ctype_alpha($base[0])) {
+            $base = 'f_' . $base;
+        }
+        $base = rtrim(substr($base, 0, 44), '_');
+        $code = $base;
+        for ($i = 2; $i < 50; ++$i) {
+            $existing = $this->db->fetchOne("SELECT label FROM mc_custom_field_definition WHERE store_id=? AND owner_type='product' AND code=?", [$storeId, $code]);
+            if ($existing === false || (string) $existing === $label) {
+                break;
+            }
+            $code = $base . '_' . $i;
+        }
+
+        return $code;
+    }
+
     public function saveDefinition(int $storeId, string $code, string $label, string $type, bool $show, int $sort): void
     {
         $code = strtolower(trim($code));
         $label = trim($label);
+        if ($code === '') {
+            // The technical code is built from the name; nobody has to invent it.
+            $code = $this->codeFromLabel($storeId, $label);
+        }
         if (!preg_match('/^[a-z][a-z0-9_]{1,47}$/', $code)) {
             throw new \InvalidArgumentException('code');
         }

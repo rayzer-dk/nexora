@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.6 — 2026-10-10
+
+Fewer technical fields, price lists from a file.
+
+- Extra product fields: only the name and the type are asked; the technical code is built from the name (no need to invent "warranty_months"), and the code and sort columns are gone from the list.
+- Suppliers: a price list can be uploaded from the computer (XML, YML or CSV up to 100 MB) instead of a link; it is stored privately and used by every run until a new file replaces it. A link is still possible.
+
 ## 3.97.5 — 2026-10-10
 
 Confirmation page and readable codes.

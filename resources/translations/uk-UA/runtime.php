@@ -2108,4 +2108,5 @@ return [
     'forum.runtime.slow_mode' => 'У цій темі ввімкнено повільний режим. Наступне повідомлення можна надіслати через %seconds% с.',
     'forum.runtime.header_saved' => 'Шапку теми збережено.',
     'forum.runtime.slow_mode_saved' => 'Повільний режим оновлено.',
+    'supplier.runtime.upload_invalid' => 'Завантажте файл XML, YML або CSV до 100 МБ.',
 ];

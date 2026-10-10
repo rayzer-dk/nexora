@@ -11,10 +11,11 @@
 {% endif %}
 
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.suppliers.kicker') }}</small><h2>{{ s ? ui_text('admin.suppliers.settings') : ui_text('admin.suppliers.add') }}</h2></div></div>
-<form method="post" action="{{ path('admin_catalog_supplier_save') }}" class="admin-form-grid" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_suppliers') }}">{% if s %}<input type="hidden" name="id" value="{{ s.id }}">{% endif %}
+<form method="post" enctype="multipart/form-data" action="{{ path('admin_catalog_supplier_save') }}" class="admin-form-grid" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_suppliers') }}">{% if s %}<input type="hidden" name="id" value="{{ s.id }}">{% endif %}
 <label>{{ ui_text('admin.suppliers.name') }} *<input name="name" required maxlength="190" value="{{ s.name|default('') }}"></label>
 <label>{{ ui_text('admin.suppliers.format') }}<select name="format">{% for f in formats %}<option value="{{ f }}"{{ (s.format|default('yml')) == f ? ' selected' : '' }}>{{ f|upper }}</option>{% endfor %}</select></label>
-<label class="admin-form-wide">{{ ui_text('admin.suppliers.url') }} *<input type="url" name="feed_url" required maxlength="1000" value="{{ s.feed_url|default('') }}" placeholder="https://supplier.example/price.xml"></label>
+<label class="admin-form-wide">{{ ui_text('admin.suppliers.url') }}<input type="{{ s and s.feed_url starts with 'upload:' ? 'text' : 'url' }}" name="feed_url" maxlength="1000" value="{{ s.feed_url|default('') }}" placeholder="https://supplier.example/price.xml"><small>{{ ui_text('admin.suppliers.url_or_file') }}</small></label>
+<label class="admin-form-wide">{{ ui_text('admin.suppliers.file') }}<input type="file" name="feed_file" accept=".xml,.yml,.csv,text/xml,text/csv"><small>{{ s and s.feed_url starts with 'upload:' ? ui_text('admin.suppliers.file_current') : ui_text('admin.suppliers.file_hint') }}</small></label>
 <label>{{ ui_text('admin.suppliers.http_user') }}<input name="http_user" maxlength="190" autocomplete="off" value="{{ s.http_user|default('') }}"></label>
 <label>{{ ui_text('admin.suppliers.http_pass') }}<input type="password" name="http_pass" maxlength="190" autocomplete="new-password" placeholder="{{ s and s.http_pass_enc ? '••••••••' : '' }}"></label>
 <label>{{ ui_text('admin.suppliers.match_by') }}<select name="match_by">{% for m in ['sku','gtin','mpn'] %}<option value="{{ m }}"{{ (s.match_by|default('sku')) == m ? ' selected' : '' }}>{{ m|upper }}</option>{% endfor %}</select></label>

@@ -5558,4 +5558,8 @@ return [
     'admin.order_document.mail_text' => 'Добрий день! У вкладенні PDF: %type% до замовлення %number%.',
     'admin.order_document.mail_failed' => 'Не вдалося підготувати лист. Спробуйте ще раз.',
     'admin.order_document.send' => 'Надіслати клієнту',
+    'admin.suppliers.url_or_file' => 'Посилання на прайс або завантажте файл нижче.',
+    'admin.suppliers.file' => 'Файл прайсу',
+    'admin.suppliers.file_hint' => 'XML, YML або CSV з вашого комп’ютера, до 100 МБ. Завантажте новий файл, щоб оновити дані.',
+    'admin.suppliers.file_current' => 'Файл прикріплено. Оберіть інший, щоб замінити.',
 ];
