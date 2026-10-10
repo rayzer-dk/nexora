@@ -2200,3 +2200,5 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 .admin-key-list { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--mc-space-1); }
 .admin-key-list li.is-set { color: var(--mc-color-success); }
 .admin-key-list li.is-missing { color: var(--mc-color-muted); }
+
+.admin-row-actions input[type='text'] { width: 11rem; max-width: 100%; }

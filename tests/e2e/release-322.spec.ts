@@ -84,7 +84,7 @@ test('badge colour accepts a HEX code and the storefront renders it', async ({ p
   const hex = field.locator('[data-tone-hex]');
   await expect(hex).toBeVisible();
   await hex.fill('#12ab34');
-  await expect(field.locator('input[type="color"]')).toHaveValue('#12ab34');
+  await expect(field.locator('[data-tone-picker]')).toHaveValue('#12ab34');
   await field.locator('xpath=ancestor::form').locator('button[type="submit"]').first().click();
   await expect(page.locator('[data-tone-field] [data-tone-hex]').first()).toHaveValue('#12ab34');
   // Plain colour pickers get a HEX box too.

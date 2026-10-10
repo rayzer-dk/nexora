@@ -19,7 +19,7 @@ test('the shop team writes, hides and deletes forum content, bans members and se
 
   const setMode = async (mode: string) => {
     await page.goto('/admin/forum', { waitUntil: 'domcontentloaded' });
-    await page.locator('.admin-tabs .admin-tab').nth(7).click();
+    await page.locator('.admin-tabs .admin-tab').nth(9).click(); // the settings tab is the last one
     const form = page.locator('form[action="/admin/forum/settings"]');
     await form.locator('select[name="replies_mode"]').selectOption(mode);
     await Promise.all([page.waitForLoadState('domcontentloaded'), form.locator('button[type="submit"]').click()]);
@@ -80,7 +80,8 @@ test('the shop team writes, hides and deletes forum content, bans members and se
     const row = page.locator('table.admin-table tbody tr').filter({ hasText: reply });
     await Promise.all([page.waitForLoadState('domcontentloaded'), row.locator('form[action$="/hide"] button').click()]);
     await page.goto(topicUrl, { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('.fx-post', { hasText: reply })).toHaveCount(0);
+    // A hidden message stays on the page only as a notice for its author, never as a normal post.
+    await expect(page.locator('.fx-post:not(.is-hidden)', { hasText: reply })).toHaveCount(0);
 
     await page.goto(adminTopicUrl, { waitUntil: 'domcontentloaded' });
     const hidden = page.locator('table.admin-table tbody tr').filter({ hasText: reply });

@@ -38,3 +38,8 @@ export async function expectNoServerError(page: Page): Promise<void> {
 export async function openProductTab(page: Page, id: 'general' | 'sales' | 'media' | 'details' | 'files' | 'seo'): Promise<void> {
   await page.locator(`.admin-tabs [data-tab-target="${id}"]`).click();
 }
+
+/** The rarely used product fields (SEO URL and so on) sit in a folded "More" block; open every one of them. */
+export async function openMoreFields(page: Page): Promise<void> {
+  await page.locator('details.admin-more').evaluateAll((nodes) => nodes.forEach((node) => ((node as HTMLDetailsElement).open = true)));
+}

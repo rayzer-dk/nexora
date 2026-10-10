@@ -18,7 +18,7 @@
             <td><span>{{ post.body_text|slice(0,400) }}</span><small class="admin-cell-sub">{{ post.created_at|local_datetime }}{% if post.pictures > 0 %} · {{ ui_icon('image', 12) }} {{ post.pictures }}{% endif %}</small></td>
             <td>{{ post.author_name }}{% if post.customer_id %}<small class="admin-cell-sub">ID {{ post.customer_id }}</small>{% endif %}</td>
             <td>{{ status_badge(post.status) }}</td>
-            <td class="is-actions">
+            <td class="is-actions"><div class="admin-row-actions">
                 {% if post.status == 'pending' %}<form method="post" action="{{ path('admin_forum_post_moderate',{id:post.id,action:'approve'}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_post_' ~ post.id) }}"><button class="admin-icon-button" type="submit" title="{{ ui_text('admin.forum.publish') }}" aria-label="{{ ui_text('admin.forum.publish') }}">{{ ui_icon('check', 18) }}</button></form>{% endif %}
                 <form method="post" action="{{ path('admin_forum_post_staff',{id:post.id,action:post.status == 'hidden' ? 'restore' : 'hide'}) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_post_' ~ post.id) }}">{% if post.status != 'hidden' %}<input type="text" name="reason" maxlength="500" placeholder="{{ ui_text('admin.forum.hide_reason')|e('html_attr') }}" aria-label="{{ ui_text('admin.forum.hide_reason')|e('html_attr') }}">{% endif %}<button class="admin-icon-button" type="submit" title="{{ ui_text(post.status == 'hidden' ? 'admin.forum.restore' : 'admin.forum.hide') }}" aria-label="{{ ui_text(post.status == 'hidden' ? 'admin.forum.restore' : 'admin.forum.hide') }}">{{ ui_icon(post.status == 'hidden' ? 'eye' : 'eye-off', 18) }}</button></form>
                 <form method="post" action="{{ path('admin_forum_post_staff',{id:post.id,action:'delete'}) }}" data-confirm="{{ ui_text('admin.forum.delete_post_confirm') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_post_' ~ post.id) }}"><button class="admin-icon-button is-danger" type="submit" title="{{ ui_text('admin.forum.board.delete') }}" aria-label="{{ ui_text('admin.forum.board.delete') }}">{{ ui_icon('trash-2', 18) }}</button></form>
@@ -26,8 +26,7 @@
                     <form method="post" action="{{ path('admin_forum_ban_create') }}" class="admin-inline-form" data-confirm="{{ ui_text('admin.confirm.ban') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('forum_ban_create') }}"><input type="hidden" name="customer_id" value="{{ post.customer_id }}">
                         <label><span>{{ ui_text('admin.forum.index.ban_days') }}</span><input type="number" min="1" max="3650" name="duration_days" placeholder="{{ ui_text('admin.forum.index.permanent') }}"></label>
                         <label class="is-wide"><span>{{ ui_text('admin.forum.index.ban_reason') }}</span><input type="text" name="reason" maxlength="1000" required></label>
-                        <button type="submit">{{ ui_text('admin.forum.index.apply_ban') }}</button></form></details>{% endif %}
-            </td>
+                        <button type="submit">{{ ui_text('admin.forum.index.apply_ban') }}</button></form></details>{% endif %}</div></td>
         </tr>
     {% endfor %}
     </tbody></table></div>

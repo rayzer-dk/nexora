@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError, openProductTab } from './helpers';
+import { expectNoServerError, openMoreFields, openProductTab } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
@@ -87,6 +87,7 @@ test('custom units appear in product forms and the HTML editor offers links, lib
 
   // SEO URL generate icon.
   await page.locator('input[name="name"]').fill('Тестовий товар');
+  await openMoreFields(page);
   await page.locator('.admin-slug-generate').first().click();
   await expect(page.locator('input[name="slug"]')).toHaveValue('testovyi-tovar');
 

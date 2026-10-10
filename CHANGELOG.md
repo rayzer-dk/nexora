@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.97.22 — 2026-10-10
+
+Browser-test run (Chromium): the tests that still expected the old forms were brought in line with the new ones.
+
+- Admin forum topic page: the actions of a message (hide with reason, delete, ban) sit in one row and no longer overlap.
+- Tests follow the intended changes: no code field in customer groups and custom fields (made from the name), SEO URL inside the folded "More" block of the product form, badge background and text colour pickers, mandatory reason when a moderator hides a message, checkout form scoped to avoid the call-back form fields.
+
 ## 3.97.21 — 2026-10-10
 
 Bugs found by the first run on PHP 8.4 with a real database.

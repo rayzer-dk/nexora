@@ -5,7 +5,7 @@ test('a group discount shows in prices for the signed-in member and is taken off
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
 
   const suffix = `${Date.now()}-${testInfo.retry}`;
-  const code = `g${Date.now().toString(36)}`;
+  const code = `group_${suffix.replace(/-/g, '_')}`; // made from the name "Group <suffix>"
   const email = `e2e-group-${suffix}@example.test`;
   const password = 'Nexora-Customer-2026!';
 
@@ -17,12 +17,12 @@ test('a group discount shows in prices for the signed-in member and is taken off
   await Promise.all([admin.waitForURL(/\/admin(?:\/(?!login)|$)/), admin.locator('button[type="submit"]').click()]);
 
   await admin.goto('/admin/commerce/customer-groups', { waitUntil: 'domcontentloaded' });
-  const add = admin.locator('section.admin-panel form:has(input[name="code"]:not([type="hidden"]))').last();
-  await add.locator('input[name="code"]').fill(code);
+  // The technical code is made from the name, so the form has no code field.
+  const add = admin.locator('section.admin-panel form:has(input[name="discount_percent"]:not([type="hidden"]))').last();
   await add.locator('input[name="name"]').fill(`Group ${suffix}`);
   await add.locator('input[name="discount_percent"]').fill('10');
   await Promise.all([admin.waitForLoadState('domcontentloaded'), add.locator('button[type="submit"]').click()]);
-  await expect(admin.locator(`code:text-is("${code}")`)).toBeVisible();
+  await expect(admin.locator(`input[name="name"][value="Group ${suffix}"]`).first()).toBeVisible();
 
   const memberCtx = await browser.newContext();
   const member = await memberCtx.newPage();
@@ -35,7 +35,7 @@ test('a group discount shows in prices for the signed-in member and is taken off
 
   await admin.goto(`/admin/commerce/customers?q=${encodeURIComponent(email)}`, { waitUntil: 'domcontentloaded' });
   const groupForm = admin.locator('form.admin-group-form').first();
-  await groupForm.locator('input[name="customer_group_code"]').fill(code);
+  await groupForm.locator('select[name="customer_group_code"]').selectOption(code);
   await Promise.all([admin.waitForLoadState('domcontentloaded'), groupForm.locator('button[type="submit"]').click()]);
 
   // The same product, before and after signing in.

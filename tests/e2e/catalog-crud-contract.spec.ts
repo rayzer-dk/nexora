@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError, openProductTab } from './helpers';
+import { expectNoServerError, openMoreFields, openProductTab } from './helpers';
 
 async function loginAdmin(page: Page): Promise<void> {
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
@@ -39,6 +39,7 @@ test('admin catalog create, publish, stock-price update and delete are reflected
   const productForm = page.locator('form.admin-form');
   await productForm.locator('input[name="name"]').fill(productName);
   await productForm.locator('input[name="sku"]').fill(sku);
+  await openMoreFields(page);
   await productForm.locator('input[name="slug"]').fill(productSlug);
   await productForm.locator('textarea[name="short_description"]').fill('E2E storefront catalog contract.');
   const descriptionEditor = productForm.locator('textarea[name="description"] + .rich-editor-mount .ProseMirror');

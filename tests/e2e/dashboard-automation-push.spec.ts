@@ -230,11 +230,10 @@ test('custom fields: define, fill on the product, show on the storefront', async
   await expectNoServerError(page);
   const form = page.locator('form[action$="/admin/catalog/fields/save"]');
   await form.locator('input[name="label"]').fill('Гарантія, міс.');
-  await form.locator('input[name="code"]').fill('warranty_months');
   await form.locator('select[name="field_type"]').selectOption('number');
   await Promise.all([page.waitForResponse((r) => r.url().includes('/fields/save') && r.request().method() === 'POST'), form.locator('button[type="submit"]').click()]);
   await page.goto('/admin/catalog/fields', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('tr', { hasText: 'warranty_months' })).toHaveCount(1);
+  await expect(page.locator('tr', { hasText: 'Гарантія, міс.' })).toHaveCount(1);
 
   await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
   await page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().click();

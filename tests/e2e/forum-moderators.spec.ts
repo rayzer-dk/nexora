@@ -68,8 +68,11 @@ test('a topic moderator appointed in the admin can hide a message in that topic 
 
   await member.goto(publicPath!, { waitUntil: 'domcontentloaded' });
   const post = member.locator('.fx-post', { hasText: reply });
+  // Hiding asks for an optional reason in a small pop-over.
+  await post.locator('details.fx-pop:has(form[action*="/moderate/hide"]) > summary').click();
+  await post.locator('form[action*="/moderate/hide"] input[name="reason"]').fill('Off topic');
   await Promise.all([member.waitForLoadState('domcontentloaded'), post.locator('form[action*="/moderate/hide"] button').click()]);
-  await expect(member.locator('.fx-post', { hasText: reply })).toHaveCount(0);
+  await expect(member.locator('.fx-post:not(.is-hidden)', { hasText: reply })).toHaveCount(0);
 
   await adminCtx.close();
   await memberCtx.close();

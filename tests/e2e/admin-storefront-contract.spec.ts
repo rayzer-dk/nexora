@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, openMoreFields } from './helpers';
 
 test.describe.configure({ retries: 0 });
 
@@ -942,6 +942,7 @@ test('product slug change updates canonical links and creates a direct old-URL r
   await page.goto(editUrl!, { waitUntil: 'domcontentloaded' });
 
   const name = await page.locator('input[name="name"]').inputValue();
+  await openMoreFields(page);
   const slugInput = page.locator('input[name="slug"]');
   const originalSlug = (await slugInput.inputValue()).replace(/^\/+|\/+$/g, '');
   expect(originalSlug).not.toBe('');
@@ -969,6 +970,7 @@ test('product slug change updates canonical links and creates a direct old-URL r
     }).toPass({ timeout: 20_000 });
   } finally {
     await page.goto(editUrl!, { waitUntil: 'domcontentloaded' });
+    await openMoreFields(page);
     await page.locator('input[name="slug"]').fill(originalSlug);
     await submitAndWait(page, 'form.admin-form', editUrl!);
   }

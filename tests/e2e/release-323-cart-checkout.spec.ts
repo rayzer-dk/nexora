@@ -54,10 +54,10 @@ test('checkout: validation is visible and pickup needs no city; order is placed 
 
   await submit.click();
   await expect(page.locator('[data-checkout-errors]')).toBeVisible();
-  await expect(page.locator('input[name="name"]')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('[data-checkout-form] input[name="name"]')).toHaveAttribute('aria-invalid', 'true');
 
-  await page.locator('input[name="name"]').fill('Тест Самовивіз');
-  await page.locator('input[name="phone"]').fill('+380501112233');
+  await page.locator('[data-checkout-form] input[name="name"]').fill('Тест Самовивіз');
+  await page.locator('[data-checkout-form] input[name="phone"]').fill('+380501112233');
   await page.locator('.ck-choice[data-carrier="self_pickup"]').click();
   await expect(page.locator('[data-delivery-pickup]')).toBeVisible();
   await expect(page.locator('[data-delivery-remote]')).toBeHidden();
@@ -72,8 +72,8 @@ test('checkout: manual address works when the carrier directory is unavailable',
   await addFirstProduct(page);
   await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
   await acceptCookies(page);
-  await page.locator('input[name="name"]').fill('Тест Вручну');
-  await page.locator('input[name="phone"]').fill('+380501112244');
+  await page.locator('[data-checkout-form] input[name="name"]').fill('Тест Вручну');
+  await page.locator('[data-checkout-form] input[name="phone"]').fill('+380501112244');
   await page.locator('[data-delivery-city]').fill('Львів');
   await page.locator('[data-delivery-manual-toggle]').click();
   await page.locator('[name="delivery_manual"]').fill('Львів, відділення 5');
