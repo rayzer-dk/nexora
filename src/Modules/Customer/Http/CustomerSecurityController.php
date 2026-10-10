@@ -117,12 +117,17 @@ final class CustomerSecurityController extends AbstractController
         }
         try {
             $verified = $this->security->verifyEmail($token);
-            $this->addFlash($verified ? 'success' : 'error', $verified ? \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.http.customersecuritycontroller.email_pidtverdzheno') : \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.http.customersecuritycontroller.posylannia_pidtverdzhennia_nediisne_abo_vzhe_vykorys'));
         } catch (Throwable) {
-            $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.customer.http.customersecuritycontroller.email_ne_pidtverdzheno_oblikovyi_zapys_ne_poshkodzhe'));
+            $verified = false;
         }
 
-        return $this->redirectToRoute($this->getUser() instanceof CustomerUser ? 'customer_account' : 'customer_login');
+        return $this->render('@storefront/account/email_verified.html.twig', [
+            'page_title' => \Commerce\Core\I18n\CanonicalUiText::get($verified ? 'email_verified.title' : 'email_verified.failed_title'),
+            'store_name' => $context->storeName,
+            'verified' => $verified,
+            'signed_in' => $this->getUser() instanceof CustomerUser,
+            'seo_head' => ['robots' => 'noindex,nofollow'],
+        ]);
     }
 
     #[Route('/account/verification', name: 'customer_verification', methods: ['GET'], priority: 135)]

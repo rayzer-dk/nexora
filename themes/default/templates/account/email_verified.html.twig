@@ -1,0 +1,20 @@
+{% extends '@storefront/base.html.twig' %}
+{% block body %}
+<section class="shell account-auth">
+    <div class="account-card account-card--result">
+        <div class="account-card__head">
+            <span class="account-result__icon {{ verified ? 'is-ok' : 'is-fail' }}" aria-hidden="true">{{ ui_icon(verified ? 'circle-check' : 'circle-x', 40) }}</span>
+            <h1>{{ ui_text(verified ? 'email_verified.title' : 'email_verified.failed_title') }}</h1>
+            <p>{{ ui_text(verified ? 'email_verified.text' : 'email_verified.failed_text') }}</p>
+        </div>
+        <div class="account-result__actions">
+            {% if signed_in %}
+                <a class="button button--primary" href="{{ path('customer_account') }}">{{ ui_text('email_verified.to_account') }}</a>
+            {% else %}
+                <a class="button button--primary" href="{{ path('customer_login') }}">{{ ui_text('email_verified.to_login') }}</a>
+            {% endif %}
+            <a class="button button--secondary" href="/">{{ ui_text('email_verified.to_shop') }}</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

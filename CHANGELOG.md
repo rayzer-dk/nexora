@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.97.5 — 2026-10-10
+
+Confirmation page and readable codes.
+
+- E-mail confirmation: the link opens its own result page (confirmed / link invalid) with buttons to the account, the sign-in and the shop, instead of dropping the visitor on the home or login page.
+- Order events: the details cell shows labelled values (status changes, amounts in money, yes/no) instead of raw JSON; dates are shortened to minutes.
+- Returns: status, reason and resolution are translated in the list and in the return card; attribute types ("text", "decimal", ...) are translated in the catalog attributes form.
+
 ## 3.97.4 — 2026-10-10
 
 Orders, invoices and shipments.

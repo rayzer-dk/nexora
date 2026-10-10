@@ -273,3 +273,9 @@ body.has-lightbox { overflow: hidden; }
 .error-page__actions { display: flex; flex-wrap: wrap; gap: var(--mc-space-3); }
 .error-page__art { width: 100%; max-width: 30rem; height: auto; justify-self: center; }
 @media (min-width: 1024px) { .error-page { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); } }
+
+.account-card--result { text-align: center; }
+.account-result__icon { display: inline-grid; place-items: center; margin-bottom: var(--mc-space-3); }
+.account-result__icon.is-ok { color: var(--mc-color-success); }
+.account-result__icon.is-fail { color: var(--mc-color-danger); }
+.account-result__actions { display: flex; flex-wrap: wrap; gap: var(--mc-space-3); justify-content: center; margin-top: var(--mc-space-4); }
