@@ -43,3 +43,14 @@ export async function openProductTab(page: Page, id: 'general' | 'sales' | 'medi
 export async function openMoreFields(page: Page): Promise<void> {
   await page.locator('details.admin-more').evaluateAll((nodes) => nodes.forEach((node) => ((node as HTMLDetailsElement).open = true)));
 }
+
+let demoProductEdit = '';
+
+/** The edit address of a published demo product (other specs create drafts that sort first, so those are skipped). */
+export async function demoProductEditUrl(page: Page): Promise<string> {
+  if (demoProductEdit) return demoProductEdit;
+  await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
+  const href = await page.locator('tr').filter({ hasNotText: /Picked|E2E|Warm/i }).locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().getAttribute('href');
+  demoProductEdit = href ?? '';
+  return demoProductEdit;
+}

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Modules\Admin\Domain\AdminUser;
+use Commerce\Modules\Analytics\Dashboard\DashboardLayout;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -14,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 /** Monthly goals and chart annotations shown on the dashboard. */
 final class DashboardManageController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly Connection $db)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly Connection $db, private readonly DashboardLayout $layouts)
     {
     }
 
@@ -69,6 +71,25 @@ final class DashboardManageController extends AbstractController
         $this->guard($request, 'admin_dashboard_annotation');
         $context = $this->contexts->resolve($request);
         $this->db->delete('mc_dashboard_annotation', ['id' => $id, 'store_id' => $context->storeId]);
+
+        return $this->redirectToRoute('admin_dashboard');
+    }
+
+    /** Personal dashboard layout: order and visibility of the blocks (saved for the signed-in administrator). */
+    #[Route('/admin/dashboard/layout', name: 'admin_dashboard_layout_save', methods: ['POST'])]
+    public function layout(Request $request): RedirectResponse
+    {
+        $this->guard($request, 'admin_dashboard_layout');
+        $context = $this->contexts->resolve($request);
+        $user = $this->getUser();
+        if ($user instanceof AdminUser) {
+            if ($request->request->getBoolean('reset')) {
+                $this->layouts->reset($user->id, $context->storeId);
+            } else {
+                $this->layouts->save($user->id, $context->storeId, $request->request->all('order'), $request->request->all('hidden'));
+            }
+            $this->addFlash('success', CanonicalUiText::get('admin.dashboard.layout_saved'));
+        }
 
         return $this->redirectToRoute('admin_dashboard');
     }

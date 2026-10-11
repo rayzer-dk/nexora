@@ -189,6 +189,44 @@ final class CheckoutMethodSettings
         return $threshold;
     }
 
+    /**
+     * The codes in the order the owner dragged them to (Delivery and payment methods page). Methods that were never ordered (sort 0)
+     * keep their built-in order and follow the ordered ones.
+     *
+     * @param list<string> $codes
+     * @return list<string>
+     */
+    public function ordered(int $storeId, array $codes): array
+    {
+        $config = $this->config($storeId);
+        $position = array_flip(array_values($codes));
+        usort($codes, static function (string $a, string $b) use ($config, $position): int {
+            $sa = (int) ($config[$a]['sort'] ?? 0);
+            $sb = (int) ($config[$b]['sort'] ?? 0);
+
+            return [$sa > 0 ? $sa : PHP_INT_MAX, $position[$a]] <=> [$sb > 0 ? $sb : PHP_INT_MAX, $position[$b]];
+        });
+
+        return array_values($codes);
+    }
+
+    /**
+     * True when the owner has put at least one of these methods in an order of their own.
+     *
+     * @param list<string> $codes
+     */
+    public function hasOrder(int $storeId, array $codes): bool
+    {
+        $config = $this->config($storeId);
+        foreach ($codes as $code) {
+            if ((int) ($config[$code]['sort'] ?? 0) > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** @return list<string> built-in switchable methods followed by the shop's own ones */
     private function codes(): array
     {

@@ -41,10 +41,11 @@
 </div>
 <section class="admin-panel media-processing-settings" id="media-processing">
   <div class="admin-panel__header"><div><small>{{ ui_text('admin.media.library.processing') }}</small><h2>{{ ui_text('admin.media.library.image_processing') }}</h2><p>{{ ui_text('admin.media.library.simple_intro') }}</p></div></div>
-  <form method="post" action="{{ path('admin_media_settings') }}" class="media-processing-form" data-media-preset-form><input type="hidden" name="_csrf_token" value="{{ csrf_token('media_settings') }}">
+  <form method="post" action="{{ path('admin_media_settings') }}" class="media-processing-form" data-media-preset-form data-avif-supported="{{ avif_supported ? '1' : '0' }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('media_settings') }}">
     <fieldset class="media-presets"><legend class="visually-hidden">{{ ui_text('admin.media.library.preset') }}</legend>
       {% for key in ['recommended','compatible','modern','custom'] %}<label class="media-preset{{ processing.preset == key ? ' is-active' : '' }}"><input type="radio" name="preset" value="{{ key }}"{{ processing.preset == key ? ' checked' : '' }}><span><strong>{{ ui_text('admin.media.preset.' ~ key) }}{% if key == 'recommended' %} <em class="admin-badge is-active">{{ ui_text('admin.media.preset.default') }}</em>{% endif %}</strong><small>{{ ui_text('admin.media.preset.' ~ key ~ '_hint') }}</small></span></label>{% endfor %}
     </fieldset>
+    {% if not avif_supported %}<p class="admin-notice is-warning" data-avif-missing>{{ ui_text('admin.media.library.avif_missing') }}</p>{% endif %}
     <div class="media-processing-summary"><strong>{{ ui_text('admin.media.library.creates') }}</strong>
       <ul>
         <li>{{ ui_text('admin.media.library.creates_original', {'width': 2560}) }}</li>

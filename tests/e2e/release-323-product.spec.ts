@@ -179,7 +179,7 @@ test('catalog backend: rating and per_page parameters are honoured', async ({ re
   expect((await request.get('/catalog?rating=abc&per_page=9999')).status()).toBe(200);
 });
 
-test('admin product form edits the SEO title/description and the old price shown on the storefront', async ({ page }, testInfo) => {
+test('admin product form edits the SEO title/description and the sale price shown on the storefront', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutates shared demo data once.');
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
@@ -196,7 +196,7 @@ test('admin product form edits the SEO title/description and the old price shown
   await page.waitForURL(/\/edit/);
   const form = page.locator('#product-form');
   const oldMeta = await form.locator('input[name="meta_title"]').inputValue();
-  const oldCompare = await form.locator('input[name="compare_at_price"]').inputValue();
+  const oldSale = await form.locator('input[name="sale_price"]').inputValue();
   const price = Number((await form.locator('input[name="price"]').inputValue()).replace(/[^\d,.]/g, '').replace(',', '.'));
   const productUrl = await page.evaluate(() => document.querySelector<HTMLAnchorElement>('a[href^="/"][target="_blank"], a[data-view-on-store]')?.getAttribute('href') || '');
 
@@ -205,11 +205,11 @@ test('admin product form edits the SEO title/description and the old price shown
   await form.locator('input[name="meta_title"]').fill(title);
   await form.locator('textarea[name="meta_description"]').fill('E2E SEO description');
   await openProductTab(page, 'sales');
-  await form.locator('input[name="compare_at_price"]').fill(String((price * 2).toFixed(2)));
+  await form.locator('input[name="sale_price"]').fill(String((price / 2).toFixed(2)));
   await page.locator('[data-primary-submit]').first().click();
   await page.waitForLoadState('networkidle');
   await expect(page.locator('#product-form input[name="meta_title"]')).toHaveValue(title); // hidden fields keep their value
-  await expect(page.locator('#product-form input[name="compare_at_price"]')).not.toHaveValue('');
+  await expect(page.locator('#product-form input[name="sale_price"]')).not.toHaveValue('');
 
   if (productUrl) {
     const html = await (await page.request.get(productUrl)).text();
@@ -222,7 +222,7 @@ test('admin product form edits the SEO title/description and the old price shown
   await page.locator('#product-form input[name="meta_title"]').fill(oldMeta);
   await page.locator('#product-form textarea[name="meta_description"]').fill('');
   await openProductTab(page, 'sales');
-  await page.locator('#product-form input[name="compare_at_price"]').fill(oldCompare);
+  await page.locator('#product-form input[name="sale_price"]').fill(oldSale);
   await page.locator('[data-primary-submit]').first().click();
   await page.waitForLoadState('networkidle');
 });

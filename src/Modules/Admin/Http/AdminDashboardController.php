@@ -7,6 +7,7 @@ namespace Commerce\Modules\Admin\Http;
 use Commerce\Core\Platform\PlatformVersion;
 use Commerce\Modules\Admin\Domain\AdminUser;
 use Commerce\Modules\Analytics\Dashboard\DashboardChart;
+use Commerce\Modules\Analytics\Dashboard\DashboardLayout;
 use Commerce\Modules\Analytics\Dashboard\DashboardService;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AdminDashboardController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly DashboardService $dashboard, private readonly OnboardingAdminController $onboarding, private readonly \Commerce\Modules\Catalog\Application\CatalogQualityService $catalogQuality, private readonly \Commerce\Modules\Quality\Application\EarlyWarningService $warnings)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly DashboardService $dashboard, private readonly OnboardingAdminController $onboarding, private readonly \Commerce\Modules\Catalog\Application\CatalogQualityService $catalogQuality, private readonly \Commerce\Modules\Quality\Application\EarlyWarningService $warnings, private readonly DashboardLayout $layouts)
     {
     }
 
@@ -89,7 +90,8 @@ final class AdminDashboardController extends AbstractController
         $steps=$this->onboarding->steps($context->storeId,$user instanceof AdminUser?$user->id:0);
         $onboarding=['done'=>count(array_filter($steps,static fn(array $s):bool=>$s['done'])),'total'=>count($steps)];
         try{$cq=$this->catalogQuality->summary($context->storeId);}catch(\Throwable){$cq=null;}
-        return $this->render('@storefront/admin/dashboard.html.twig',['catalog_quality'=>$cq,'onboarding'=>$onboarding,'platform_version'=>PlatformVersion::VERSION,'store'=>$store,'counts'=>$counts,'groups'=>$groups,'today'=>$today,'health'=>$health,'report'=>$report,'chart'=>DashboardChart::layout($report['series'],$report['annotations']),'backup_age_days'=>$backupAge,'admin_name'=>$user instanceof AdminUser?$user->displayName:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')]);
+        $layout=$user instanceof AdminUser?$this->layouts->load($user->id,$context->storeId):DashboardLayout::normalize([],[]);
+        return $this->render('@storefront/admin/dashboard.html.twig',['dash_layout'=>$layout,'catalog_quality'=>$cq,'onboarding'=>$onboarding,'platform_version'=>PlatformVersion::VERSION,'store'=>$store,'counts'=>$counts,'groups'=>$groups,'today'=>$today,'health'=>$health,'report'=>$report,'chart'=>DashboardChart::layout($report['series'],$report['annotations']),'backup_age_days'=>$backupAge,'admin_name'=>$user instanceof AdminUser?$user->displayName:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')]);
     }
 
     /** 1 when the scheduler has not completed any task for over 15 minutes (or never), else 0. */

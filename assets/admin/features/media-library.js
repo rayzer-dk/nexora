@@ -27,6 +27,7 @@ const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? k
  ['dragleave','drop'].forEach(n=>zone?.addEventListener(n,e=>{e.preventDefault();zone.classList.remove('is-drag')}));
  zone?.addEventListener('drop',e=>{if(input&&e.dataTransfer?.files)input.files=e.dataTransfer.files});
  if(!form)return;
+ form.dataset.mediaReady="1";
  form.addEventListener('submit',e=>{
    if(!window.XMLHttpRequest||!input?.files?.length)return;
    e.preventDefault();

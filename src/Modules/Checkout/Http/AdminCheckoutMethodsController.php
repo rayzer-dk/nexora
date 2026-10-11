@@ -41,10 +41,12 @@ final class AdminCheckoutMethodsController extends AbstractController
             'enabled' => $this->settings->all($ctx->storeId),
             'delivery_codes' => CheckoutMethodSettings::DELIVERY,
             'payment_codes' => CheckoutMethodSettings::PAYMENT,
+            'delivery_codes' => $this->settings->ordered($ctx->storeId, CheckoutMethodSettings::DELIVERY),
+            'payment_codes' => $this->settings->ordered($ctx->storeId, CheckoutMethodSettings::PAYMENT),
             'other_payments' => $online,
             'pickup_points' => count($this->pickup->all($ctx->storeId, true)),
             'config' => $this->settings->config($ctx->storeId),
-            'custom_methods' => $this->settings->custom(),
+            'custom_methods' => $this->customOrdered($ctx->storeId),
             'currency' => $ctx->currency,
             'store_locales' => $this->db->fetchAllAssociative('SELECT sl.locale_code code,COALESCE(l.native_name,sl.locale_code) native_name FROM mc_store_locale sl LEFT JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.store_id=? AND sl.enabled=1 ORDER BY sl.is_default DESC,sl.locale_code', [$ctx->storeId]),
         ]);
@@ -72,5 +74,12 @@ final class AdminCheckoutMethodsController extends AbstractController
         $this->addFlash('success', CanonicalUiText::get('admin.checkout_methods.saved'));
 
         return $this->redirectToRoute('admin_shipment_methods');
+    }
+    /** @return list<array{code:string,kind:string,icon:string,name:array<string,string>}> */
+    private function customOrdered(int $storeId): array
+    {
+        $custom = $this->settings->custom();
+        $byCode = array_column($custom, null, 'code');
+        return array_map(static fn (string $code): array => $byCode[$code], $this->settings->ordered($storeId, array_keys($byCode)));
     }
 }

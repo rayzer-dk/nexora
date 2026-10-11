@@ -18,7 +18,7 @@ test('category H1, title and description set in the editor reach the storefront 
     await page.locator('input[name="h1"]').evaluate((el: HTMLInputElement, v: string) => { el.value = v; }, h1);
     await page.locator('input[name="meta_title"]').evaluate((el: HTMLInputElement, v: string) => { el.value = v; }, title);
     await page.locator('textarea[name="meta_description"]').evaluate((el: HTMLTextAreaElement, v: string) => { el.value = v; }, description);
-    await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('form.admin-form').first().evaluate((f: HTMLFormElement) => f.requestSubmit())]);
+    await Promise.all([page.waitForURL(/\/admin\/catalog\/categories/), page.locator('form.admin-form').first().evaluate((f: HTMLFormElement) => f.requestSubmit())]);
     await page.goto(editHref!, { waitUntil: 'domcontentloaded' });
     return page.locator('input[name="slug"]').inputValue();
   };

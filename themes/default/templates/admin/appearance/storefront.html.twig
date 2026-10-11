@@ -57,9 +57,9 @@
 <div class="admin-check-grid"><label><input type="checkbox" name="benefits_desktop" value="1"{{ raw_benefits.devices.desktop|default(true) ? ' checked' : '' }}> {{ ui_text('admin.benefits.desktop') }}</label><label><input type="checkbox" name="benefits_tablet" value="1"{{ raw_benefits.devices.tablet|default(true) ? ' checked' : '' }}> {{ ui_text('admin.benefits.tablet') }}</label><label><input type="checkbox" name="benefits_mobile" value="1"{{ raw_benefits.devices.mobile|default(true) ? ' checked' : '' }}> {{ ui_text('admin.benefits.mobile') }}</label>
 <label class="admin-inline-field">{{ ui_text('admin.benefits.mobile_limit') }}<select name="benefits_mobile_limit"><option value="0">{{ ui_text('admin.benefits.all') }}</option>{% for n in 1..6 %}<option value="{{ n }}"{{ raw_benefits.mobile_limit|default('0') == n ? ' selected' : '' }}>{{ n }}</option>{% endfor %}</select></label></div>
 <p class="admin-help">{{ ui_text('admin.benefits.empty_hint') }}</p>
-<div class="admin-benefit-list">
+<div class="admin-benefit-list" data-sortable=".admin-benefit" data-sortable-renumber>
 {% for index in 0..7 %}{% set item = raw_benefits.items[index]|default({}) %}
-<fieldset class="admin-benefit"><legend>{{ ui_text('admin.benefits.card') }} {{ index + 1 }}</legend>
+<fieldset class="admin-benefit"><legend>{% include '@storefront/admin/_sort_handle.html.twig' %}{{ ui_text('admin.benefits.card') }} <span data-sort-number>{{ index + 1 }}</span></legend>
 {% include '@storefront/admin/_icon_field.html.twig' with {name: 'benefit_icon[' ~ index ~ ']', value: item.icon|default('shield-check')} only %}
 <div class="admin-benefit__langs">{% for l in store_locales %}<label data-lang="{{ l.code }}" data-lang-name="{{ l.native_name }}">{{ ui_text('admin.benefits.card_title') }}<span class="lang-suffix"> · {{ l.native_name }}</span><input type="text" name="benefit_title[{{ index }}][{{ l.code }}]" maxlength="60" value="{{ item.title[l.code]|default('') }}"></label><label data-lang="{{ l.code }}" data-lang-name="{{ l.native_name }}">{{ ui_text('admin.benefits.card_text') }}<span class="lang-suffix"> · {{ l.native_name }}</span><input type="text" name="benefit_text[{{ index }}][{{ l.code }}]" maxlength="90" value="{{ item.text[l.code]|default('') }}"></label>{% endfor %}</div>
 </fieldset>

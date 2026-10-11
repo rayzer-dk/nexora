@@ -45,6 +45,27 @@ final class CustomerExperienceAdminController extends AbstractController
         ]);
     }
 
+    /** A message to the customer about the return, without changing its status: sent by e-mail and written to the return history. */
+    #[Route('/admin/customer-experience/returns/{publicId}/reply',name:'admin_return_reply',methods:['POST'],priority:25)]
+    public function returnReply(string $publicId,Request $request):Response
+    {
+        if(!$this->isCsrfTokenValid('return_reply_'.$publicId,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+        $ctx=$this->contexts->resolve($request);$u=$this->getUser();$adminId=$u instanceof AdminUser?$u->id:null;
+        $text=mb_substr(trim(strip_tags((string)$request->request->get('reply',''))),0,4000);
+        try{
+            if($text==='')throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.text'));
+            $row=$this->db->fetchAssociative('SELECT rr.id,o.order_number,o.customer_email,o.locale FROM mc_return_request rr JOIN mc_sales_order o ON o.id=rr.order_id WHERE rr.public_id=? AND rr.store_id=? LIMIT 1',[Uuid::fromString($publicId)->toBinary(),$ctx->storeId]);
+            $email=is_array($row)?trim((string)$row['customer_email']):'';
+            if($email===''||filter_var($email,FILTER_VALIDATE_EMAIL)===false)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.email'));
+            $locale=trim((string)$row['locale'])?:'en-US';
+            $subject=$this->translator->translate('return_reply_subject',$locale,['number'=>(string)$row['order_number']]);
+            $this->notifications->enqueue(NotificationChannel::Email,new NotificationMessage('return.reply',$subject,$text,['locale'=>$locale,'order_number'=>(string)$row['order_number']],'generic'),$email);
+            $this->db->insert('mc_return_event',['return_id'=>(int)$row['id'],'event_type'=>'replied','actor_type'=>'admin','actor_id'=>$adminId,'payload'=>json_encode(['note'=>$text],JSON_THROW_ON_ERROR),'created_at'=>gmdate('Y-m-d H:i:s.u')]);
+            $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.reply_sent'));
+        }catch(\DomainException $e){$this->addFlash('error',$e->getMessage());}
+        return $this->redirectToRoute('admin_return_view',['publicId'=>$publicId]);
+    }
+
     #[Route('/admin/customer-experience/returns/{publicId}',name:'admin_return_status',methods:['POST'])]
     public function returnStatus(string $publicId,Request $request):Response
     {

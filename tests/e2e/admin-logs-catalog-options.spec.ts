@@ -136,7 +136,7 @@ test('admin pages use tabs instead of long ribbons and show the new header count
   await page.goto('/admin/appearance/support-chat', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('input[name="load_delay_seconds"]')).toBeVisible();
   await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-  const quick = await page.locator('.admin-quick-grid').first().evaluate((node) => node.getBoundingClientRect().top);
+  const quick = await page.locator('.dash-quick').first().evaluate((node) => node.getBoundingClientRect().top);
   const kpis = await page.locator('.dash-kpis').first().evaluate((node) => node.getBoundingClientRect().top);
   expect(quick).toBeLessThan(kpis);
 });

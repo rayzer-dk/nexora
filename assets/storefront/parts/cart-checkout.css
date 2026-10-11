@@ -171,6 +171,7 @@ html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-g
 
 /* mobile: sticky submit bar with the total, always visible */
 @media not all and (min-width: 1024px) {
+  html:has(.checkout-page) { scroll-padding-bottom: calc(var(--mc-space-20) + var(--mc-space-6)); }
   .checkout-page { padding-bottom: calc(var(--mc-space-20) + var(--mc-space-6)); }
   .checkout-page .checkout-builder-slot.is-right { order: 80; }
   .checkout-bar {

@@ -40,9 +40,9 @@ test('an own redirect sends an old address to a new one and counts the hit', asy
   await page.goto('/admin/system/seo-custom-redirects', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
   const source = `/old-e2e-${Date.now() % 100000}.html`;
-  await page.locator('form[action$="/save"] input[name="source"]').fill(source);
-  await page.locator('form[action$="/save"] input[name="target"]').fill('/catalog');
-  await Promise.all([page.waitForNavigation(), page.locator('form[action$="/save"] button[type="submit"]').click()]);
+  await page.locator('form[action$="/save"]').first().locator('input[name="source"]').fill(source);
+  await page.locator('form[action$="/save"]').first().locator('input[name="target"]').fill('/catalog');
+  await Promise.all([page.waitForNavigation(), page.locator('form[action$="/save"]').first().locator('button[type="submit"]').click()]);
   await expect(page.locator('.admin-notice.is-success')).toBeAttached();
   const response = await request.get(source, { maxRedirects: 0 });
   expect(response.status()).toBe(301);

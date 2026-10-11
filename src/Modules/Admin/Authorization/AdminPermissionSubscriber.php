@@ -40,7 +40,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
     private function permissionForRoute(string $route, Request $request): ?string
     {
         $get=$request->isMethod('GET');
-        if ($route==='admin_dashboard'||$route==='admin_onboarding'||$route==='admin_api_session'||$route==='admin_api_quick_search'||$route==='admin_api_slug'||$route==='admin_interface_language'||$route==='admin_undo'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account')||str_starts_with($route,'admin_help')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
+        if ($route==='admin_dashboard'||$route==='admin_dashboard_layout_save'||$route==='admin_onboarding'||$route==='admin_api_session'||$route==='admin_api_quick_search'||$route==='admin_api_slug'||$route==='admin_interface_language'||$route==='admin_undo'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account')||str_starts_with($route,'admin_help')) return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
         if (str_starts_with($route,'admin_system_tax')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_storefront_')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if ($route==='admin_analytics'||$route==='admin_analytics_export') return AdminPermissionCatalog::ANALYTICS_VIEW;
@@ -56,6 +56,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (in_array($route,['admin_order_saved_view_save','admin_order_saved_view_delete'],true)) return AdminPermissionCatalog::ORDERS_VIEW;
         if (str_contains($route,'refund')) return AdminPermissionCatalog::ORDERS_REFUND;
         if ($route==='admin_orders_export') return AdminPermissionCatalog::ORDERS_EXPORT;
+        if ($route==='admin_shipment_carriers_save') return AdminPermissionCatalog::SYSTEM_SETTINGS; // carrier keys are secrets
         if (str_starts_with($route,'admin_order')||$route==='admin_orders'||str_starts_with($route,'admin_shipment')) return $get?AdminPermissionCatalog::ORDERS_VIEW:AdminPermissionCatalog::ORDERS_MANAGE;
         if ($route==='admin_customer_experience') return AdminPermissionCatalog::CUSTOMERS_VIEW;
         if (str_starts_with($route,'admin_return_')) return AdminPermissionCatalog::ORDERS_MANAGE;

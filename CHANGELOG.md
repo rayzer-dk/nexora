@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased (next after 3.97.23)
+
+Customisable dashboard, carrier keys in the admin, replies to returns, options and variants, test fixes. Checked on PHP 8.4 + MySQL 8.4 + Chromium (changed specs pass); the full CI pass is still to do.
+
+- Dashboard: "Customise" lets each administrator drag the blocks (or move them with the arrows) and hide or show them; the layout is saved per administrator and can be reset to the default. Migration Version20261231130000 adds mc_admin_dashboard_layout.
+- Carriers: the keys of every delivery service (Nova Post, Ukrposhta, Delivery, DHL, GLS, Meest) can be typed on the Carriers page. They are stored in var/config/carrier-secrets.json (outside the web root), are never shown again and win over the same names in .env. Saving needs the system-settings permission.
+- Returns: "Reply to the customer" sends a message by e-mail without changing the status and writes it to the return history; history events and statuses are translated.
+- Options and variants: three-step strip (options, create variants, set price and stock), quick-start presets (colour, size, memory, material, gift wrapping), a counter of the variants that will be created, compact variant cards.
+- Language bar: SEO templates, the landing page and notification templates use the shared language bar.
+- Media settings: a warning appears when the server's PHP cannot write AVIF; the preset then still serves WebP.
+- Tests brought in line with the code: dashboard order (quick actions above the figures), own redirects (first form of the page), option fields (the test adds an option if the product has none), sale price instead of the hidden old-price field, mobile payment radio (no forced click under the sticky bar), category SEO (waits for the save redirect), appearance colours (sets the light scheme first), AVIF (skipped on a server without an AVIF encoder).
+- Drag and drop (a grip handle on each item, also movable with the arrow keys on the focused handle): option values, options and extra choices of a product; delivery and payment methods (the checkout now follows the chosen order); menu items (saved at once, within the same parent); characteristics; benefit cards and the landing page lists (features, steps, reviews, FAQ). The page builders already had it.
+- Test run on a real database (MySQL 8.4, PHP 8.4, Chromium): the changed specs pass; the upload spec waits for its lazy script (marker data-media-ready); the option and SEO-template specs no longer depend on one product id or on the first language tab.
+- Still open: the contrast test (needs its findings file from a run), Russian admin catalogue, other browsers in CI, vector search (skipped on request), extra columns for supplier price lists.
+
 ## 3.97.23 — 2026-10-10
 
 - Browser test for product controls follows the customer-group select. Last full Chromium run: 387 passed, 15 failed; after the fixes above and re-runs only the known older failures remain (contrast, AVIF picture, own redirects, option price action, dashboard order, mobile payment radio, old price field).

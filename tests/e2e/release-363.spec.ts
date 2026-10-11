@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError, openProductTab } from './helpers';
+import { demoProductEditUrl, expectNoServerError, openProductTab } from './helpers';
 
 // Release 3.63.0: option price modes, weight in checkout methods, own search words, optional review e-mail.
 
@@ -15,8 +15,15 @@ async function loginAdmin(page: Page): Promise<void> {
 test('the product form offers the price action, weight and start stock of an option value', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
   await loginAdmin(page);
-  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await page.goto(await demoProductEditUrl(page), { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
+  if ((await page.locator('select[name^="option_value"][name$="[mode]"]').count()) === 0) {
+    // The product may carry no option yet: add one through the quick-start preset, then check its value rows.
+    await openProductTab(page, 'sales');
+    await page.locator('#options [data-option-preset="colour"]').click();
+    await Promise.all([page.waitForURL(/#options|\/edit/), page.locator('button[name="_option_action"][value="save"]').click()]);
+    await expectNoServerError(page);
+  }
   await expect(page.locator('select[name^="option_value"][name$="[mode]"]').first()).toBeAttached();
   await expect(page.locator('input[name^="option_value"][name$="[weight_g]"]').first()).toBeAttached();
   await expect(page.locator('select[name^="option["][name$="[display]"]').first()).toBeAttached();
@@ -55,7 +62,7 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   test.setTimeout(120_000);
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
   await loginAdmin(page);
-  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await page.goto(await demoProductEditUrl(page), { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
   const name = await page.locator('input[name="name"]').first().inputValue().catch(() => '');
   await openProductTab(page, 'sales');
@@ -78,7 +85,7 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   await page.goto('/catalog?q=' + encodeURIComponent(name.split(' ')[0] || 'Fashion'), { waitUntil: 'domcontentloaded' });
   await page.locator('[data-product-card] h2 a').first().click();
   await expect(page.locator('[data-addon-picker] input[type="checkbox"]').last()).toBeDisabled();
-  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await page.goto(await demoProductEditUrl(page), { waitUntil: 'domcontentloaded' });
   await openProductTab(page, 'sales');
   await page.locator('input[name^="addon_value"][name$="[stock]"]').last().fill('');
   await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_option_action"][value="save"]').click()]);
@@ -93,7 +100,7 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   await expectNoServerError(page);
   await expect(page.locator('body')).toContainText('Gift wrap E2E');
   // cleanup: remove the option again
-  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await page.goto(await demoProductEditUrl(page), { waitUntil: 'domcontentloaded' });
   await openProductTab(page, 'sales');
   for (let guard = 0; guard < 5 && (await page.locator('button[name="_option_action"][value^="delete_addon:"]').count()) > 0; guard++) {
     await Promise.all([page.waitForURL(/\/edit/), page.locator('button[name="_option_action"][value^="delete_addon:"]').first().evaluate((el: HTMLElement) => { const b = el as HTMLButtonElement; b.removeAttribute('data-confirm'); b.click(); })]);
@@ -105,6 +112,7 @@ test('SEO templates and a standard VAT rate can be saved', async ({ page }, test
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
   await loginAdmin(page);
   await page.goto('/admin/system/seo-templates', { waitUntil: 'domcontentloaded' });
+  await page.locator('.lang-tabs [data-code="uk-UA"]').first().click(); // the languages share one bar, the first one is open by default
   await expectNoServerError(page);
   const title = page.locator('input[name="tpl[product][uk-UA][title]"]');
   await title.fill('{name} | {store}');
@@ -119,6 +127,7 @@ test('SEO templates and a standard VAT rate can be saved', async ({ page }, test
   }
   expect(patterned).toBe(true);
   await page.goto('/admin/system/seo-templates', { waitUntil: 'domcontentloaded' });
+  await page.locator('.lang-tabs [data-code="uk-UA"]').first().click(); // the languages share one bar, the first one is open by default
   await page.locator('input[name="tpl[product][uk-UA][title]"]').fill('');
   await Promise.all([page.waitForURL(/seo-templates/), page.locator('form button[type="submit"]').last().click()]);
   await page.goto('/admin/system/tax', { waitUntil: 'domcontentloaded' });
@@ -153,7 +162,7 @@ test('bot blocking answers 403 to a listed crawler and lets browsers and search 
 test('SEO fields show a counter, an example and variable chips; a variable typed in the title is filled on the page', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');
   await loginAdmin(page);
-  await page.goto('/admin/catalog/products/01a10a54-0b29-7cb4-920a-2919bb90d597/edit', { waitUntil: 'domcontentloaded' });
+  await page.goto(await demoProductEditUrl(page), { waitUntil: 'domcontentloaded' });
   await openProductTab(page, 'seo');
   const field = page.locator('input[name="meta_title"]');
   await expect(page.locator('.seo-hint').first()).toBeVisible();

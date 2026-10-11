@@ -26,7 +26,7 @@ test('a rejected checkout keeps everything the buyer typed or chose', async ({ p
   }
   const payments = form.locator('input[name="payment_method"]');
   const lastPayment = (await payments.count()) > 1 ? await payments.last().getAttribute('value') : null;
-  if (lastPayment) await form.locator(`input[name="payment_method"][value="${lastPayment}"]`).check({ force: true });
+  if (lastPayment) await form.locator(`input[name="payment_method"][value="${lastPayment}"]`).scrollIntoViewIfNeeded().then(() => form.locator(`input[name="payment_method"][value="${lastPayment}"]`).check());
 
   await page.locator('[data-place-order]').first().click();
   await page.waitForURL(/\/checkout(?:\?|$)/);

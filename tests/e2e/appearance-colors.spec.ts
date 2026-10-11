@@ -41,8 +41,15 @@ const rgb = (hex: string) => {
 };
 
 test('extra colours set in Appearance reach the storefront and can be reset to the style', async ({ page, browser }, testInfo) => {
+  // A colour scheme left over by another spec (dark) would change every computed colour below.
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating settings run once.');
   await loginAdmin(page);
+  await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
+  const scheme = page.locator('select[name="theme_color_scheme"]');
+  if ((await scheme.inputValue()) !== 'light') {
+    await scheme.selectOption('light');
+    await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('form:has(select[name="theme_color_scheme"]) button[type="submit"]').first().click()]);
+  }
   try {
     await saveColors(page, { background: '#FFF7ED', heading: '#9A3412', header_bg: '#7C2D12', footer_bg: '#431407', buy_button: '#16A34A', buy_hover: '#15803D' });
     const ctx = await browser.newContext({ baseURL: testInfo.project.use.baseURL, locale: 'uk-UA' });

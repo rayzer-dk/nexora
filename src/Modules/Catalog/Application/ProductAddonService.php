@@ -71,6 +71,9 @@ final class ProductAddonService
                 $max = (int) ($data['max_length'] ?? 0);
                 $update['max_length'] = $max > 0 ? min(2000, $max) : null;
                 $db->update('mc_product_addon', $update, ['id' => (int) $id]);
+                if (isset($data['sort']) && is_numeric($data['sort'])) {
+                    $db->update('mc_product_addon', ['sort_order' => max(0, min(100000, (int) $data['sort']))], ['id' => (int) $id]);
+                }
                 foreach ($this->split((string) ($data['new_value'] ?? '')) as $label) {
                     $this->insertValue($db, (int) $id, $locale, $label);
                 }
@@ -83,6 +86,9 @@ final class ProductAddonService
                 $name = $this->text((string) ($data['name'] ?? ''), 190);
                 if ($name !== '') {
                     $this->translate($db, 'mc_product_addon_value_translation', 'value_id', (int) $id, $locale, $name);
+                }
+                if (isset($data['sort']) && is_numeric($data['sort'])) {
+                    $db->update('mc_product_addon_value', ['sort_order' => max(0, min(100000, (int) $data['sort']))], ['id' => (int) $id]);
                 }
                 $media = (int) ($data['media'] ?? 0);
                 $db->update('mc_product_addon_value', ['price_mode' => $this->mode($data['mode'] ?? 'add'), 'price_delta_minor' => abs($this->minor((string) ($data['delta'] ?? '0'))), 'weight_delta_g' => $this->grams($data['weight_g'] ?? 0), 'is_default' => !empty($data['default']) ? 1 : 0, 'stock_quantity' => trim((string) ($data['stock'] ?? '')) === '' ? null : max(0, min(1000000, (int) $data['stock'])), 'media_asset_id' => $media > 0 && (int) $db->fetchOne('SELECT COUNT(*) FROM mc_product_media WHERE product_id=? AND media_asset_id=?', [$productId, $media]) > 0 ? $media : null], ['id' => (int) $id]);

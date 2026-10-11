@@ -50,6 +50,7 @@ test('a picture is stored as an original in the real folder chosen at upload; si
 
   // upload into the open folder (the page's own load event must not be mistaken for the reload after the upload)
   await page.waitForLoadState('load');
+  await page.locator('[data-media-drop][data-media-ready]').waitFor({ state: 'attached' }); // the upload script is loaded lazily
   await Promise.all([
     page.waitForEvent('load'),
     page.waitForResponse((r) => r.request().method() === 'POST' && new URL(r.url()).pathname === '/admin/media/upload'),
@@ -95,6 +96,9 @@ test('the format is a choice: WebP only or AVIF with a WebP fallback', async ({ 
     await expectNoServerError(page);
   };
   await choose('modern');
+  // A PHP build without AVIF in GD keeps serving WebP (the settings page says so); there is nothing to compare then.
+  await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
+  test.skip((await page.locator('[data-media-preset-form]').getAttribute('data-avif-supported')) !== '1', 'This server has no AVIF encoder in GD.');
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   const picture = page.locator('[data-product-card] picture').first();
   await expect(picture).toHaveCount(1);

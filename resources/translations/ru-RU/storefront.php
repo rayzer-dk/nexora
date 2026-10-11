@@ -1015,6 +1015,7 @@ return [
     'status.carrier.dhl' => 'DHL',
     'status.carrier.gls' => 'GLS',
     'return_status_subject' => 'Возврат по заказу %number%: %status%',
+    'return_reply_subject' => 'Ответ по возврату к заказу %number%',
     'return_status_text' => 'Статус вашего возврата по заказу %number% изменён: %status%.',
     'digest_title' => 'Отчёт за вчера',
     'digest_orders' => 'Заказов (позавчера)',

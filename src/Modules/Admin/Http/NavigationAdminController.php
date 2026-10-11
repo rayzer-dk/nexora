@@ -103,6 +103,23 @@ final class NavigationAdminController extends AbstractController
         return $this->redirectToRoute('admin_appearance_navigation', ['menu' => $menu]);
     }
 
+    /** The order of the menu items after a drag in the list (one request with the ids in the new order). */
+    #[Route('/admin/appearance/navigation/reorder', name: 'admin_appearance_navigation_reorder', methods: ['POST'])]
+    public function reorder(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('navigation_reorder', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $ctx = $this->contexts->resolve($request);
+        $menu = (string) $request->query->get('menu', 'header');
+        if (!in_array($menu, NavigationManager::MENUS, true)) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => false], 422);
+        }
+        $this->navigation->reorder($ctx->storeId, $menu, array_map('intval', $request->request->all('order')));
+
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok' => true]);
+    }
+
     #[Route('/admin/appearance/navigation/seed', name: 'admin_appearance_navigation_seed', methods: ['POST'])]
     public function seed(Request $request): Response
     {

@@ -2665,6 +2665,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initQuickPreview();
   initSeoAuthoring();
   initAdminPush();
+  initDashboardLayout();
+  initOptionPresets();
+  initSortableLists();
 });
 
 async function initPageFeatures() {
@@ -2685,6 +2688,227 @@ async function initPageFeatures() {
 
 document.addEventListener('DOMContentLoaded', initPageFeatures, { once: true });
 
+
+/**
+ * Dashboard layout: "Customise" turns every block into a card with a drag handle, up/down buttons and an eye
+ * (show/hide). Saving posts the order and the hidden blocks; the server keeps them per administrator.
+ */
+function initDashboardLayout() {
+  const root = q('[data-dash-widgets]');
+  const form = q('[data-dash-layout]');
+  const open = q('[data-dash-edit]');
+  if (!root || !form || !open) return;
+  const widgets = () => qa(':scope > [data-dash-widget]', root);
+  const snapshot = () => widgets().map((node) => ({ node, off: node.dataset.dashOff === '1' }));
+  let before = [];
+  let dragged = null;
+
+  const paint = (node) => {
+    const off = node.dataset.dashOff === '1';
+    node.classList.toggle('is-off', off);
+    const toggle = q('[data-dash-toggle]', node);
+    toggle?.setAttribute('aria-pressed', off ? 'false' : 'true');
+    const on = q('[data-dash-eye-on]', node);
+    const no = q('[data-dash-eye-off]', node);
+    if (on) on.hidden = off;
+    if (no) no.hidden = !off;
+  };
+  const setEditing = (editing) => {
+    root.classList.toggle('is-editing', editing);
+    form.hidden = !editing;
+    open.setAttribute('aria-expanded', editing ? 'true' : 'false');
+    qa('[data-dash-bar]', root).forEach((bar) => { bar.hidden = !editing; });
+    if (editing) {
+      before = snapshot();
+      form.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  };
+  const cancel = () => {
+    before.forEach(({ node, off }) => { node.dataset.dashOff = off ? '1' : '0'; paint(node); root.append(node); });
+    setEditing(false);
+  };
+
+  open.addEventListener('click', () => setEditing(!root.classList.contains('is-editing')));
+  q('[data-dash-layout-cancel]', form)?.addEventListener('click', cancel);
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && root.classList.contains('is-editing') && !q('.admin-modal:not([hidden])')) cancel(); });
+
+  root.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const node = target?.closest('[data-dash-widget]');
+    if (!target || !node) return;
+    const move = target.closest('[data-dash-move]');
+    if (move) {
+      const list = widgets();
+      const index = list.indexOf(node);
+      const step = Number(move.dataset.dashMove);
+      const other = list[index + step];
+      if (!other) return;
+      if (step < 0) root.insertBefore(node, other); else other.after(node);
+      node.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      return;
+    }
+    if (target.closest('[data-dash-toggle]')) {
+      node.dataset.dashOff = node.dataset.dashOff === '1' ? '0' : '1';
+      paint(node);
+    }
+  });
+
+  root.addEventListener('dragstart', (event) => {
+    const handle = event.target instanceof Element ? event.target.closest('[data-dash-handle]') : null;
+    const node = handle?.closest('[data-dash-widget]');
+    if (!handle || !node) return;
+    dragged = node;
+    node.classList.add('is-dragging');
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', node.dataset.dashWidget || '');
+      const bar = q('[data-dash-bar]', node);
+      if (bar) event.dataTransfer.setDragImage(bar, 16, 16);
+    }
+  });
+  root.addEventListener('dragover', (event) => {
+    if (!dragged) return;
+    event.preventDefault();
+    const over = event.target instanceof Element ? event.target.closest('[data-dash-widget]') : null;
+    if (!over || over === dragged || over.parentElement !== root) return;
+    const box = over.getBoundingClientRect();
+    // Compare against the bar height for tall blocks, so the block does not jump back and forth under the pointer.
+    const reference = Math.min(box.height / 2, 80);
+    if (event.clientY - box.top > reference) over.after(dragged); else root.insertBefore(dragged, over);
+  });
+  root.addEventListener('drop', (event) => { if (dragged) event.preventDefault(); });
+  root.addEventListener('dragend', () => { dragged?.classList.remove('is-dragging'); dragged = null; });
+
+  form.addEventListener('submit', () => {
+    const holder = q('[data-dash-inputs]', form);
+    if (!holder) return;
+    holder.replaceChildren();
+    widgets().forEach((node) => {
+      const key = node.dataset.dashWidget || '';
+      const order = document.createElement('input');
+      order.type = 'hidden';
+      order.name = 'order[]';
+      order.value = key;
+      holder.append(order);
+      if (node.dataset.dashOff === '1') {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'hidden[]';
+        hidden.value = key;
+        holder.append(hidden);
+      }
+    });
+  });
+}
+
+/** Option presets (colour, size, ...) fill the "add option" form so the first option takes one click. */
+function initOptionPresets() {
+  qa('[data-option-presets]').forEach((bar) => {
+    const panel = bar.closest('section') || document;
+    const details = q('details.admin-inline-create', panel);
+    const name = q('input[name="new_entry[name]"]', panel);
+    const type = q('select[name="new_entry[type]"]', panel);
+    const values = q('input[name="new_entry[values]"]', panel);
+    if (!details || !name || !type || !values) return;
+    bar.addEventListener('click', (event) => {
+      const button = event.target instanceof Element ? event.target.closest('[data-option-preset]') : null;
+      if (!button) return;
+      name.value = button.dataset.name || '';
+      if (Array.from(type.options).some((option) => option.value === button.dataset.type)) type.value = button.dataset.type;
+      values.value = button.dataset.values || '';
+      details.open = true;
+      (values.value ? q('button[value="save"]', panel) : values)?.scrollIntoView({ block: 'nearest' });
+      values.focus();
+    });
+  });
+}
+
+/**
+ * Reorder by dragging. A container with [data-sortable] holds items ([data-sortable-item], or the selector in the attribute) that each carry
+ * a handle button (.admin-sort-handle). The handle also works with the arrow keys. When an item is dropped:
+ *  - data-sortable-url: the new order of the item ids (data-sort-id) is posted at once (with data-sortable-token) and a toast confirms it;
+ *  - [data-sort-input] in an item: its value becomes the position (1, 2, ...), saved together with the form;
+ *  - data-sortable-renumber: names like benefit_title[3][uk] are renumbered to the new position, so the form saves in the new order.
+ * data-sortable-group="attr": an item moves only among items with the same value of that attribute (for example menu items of one parent).
+ */
+function initSortableLists() {
+  qa('[data-sortable]').forEach((container) => {
+    const itemSelector = container.dataset.sortable || '[data-sortable-item]';
+    const groupAttr = container.dataset.sortableGroup || '';
+    const items = () => qa(itemSelector, container).filter((node) => node.closest('[data-sortable]') === container);
+    const groupOf = (node) => (groupAttr ? node.getAttribute(groupAttr) || '' : '');
+    let dragged = null;
+
+    const finish = async () => {
+      const list = items();
+      list.forEach((node, index) => {
+        const input = q('[data-sort-input]', node);
+        if (input) input.value = String(index + 1);
+        if (container.hasAttribute('data-sortable-renumber')) {
+          qa('[name]', node).forEach((field) => { field.name = field.name.replace(/\[\d+\]/, `[${index}]`); });
+          const number = q('[data-sort-number]', node);
+          if (number) number.textContent = String(index + 1);
+        }
+      });
+      const url = container.dataset.sortableUrl;
+      if (!url) return;
+      const body = new FormData();
+      body.set('_token', container.dataset.sortableToken || '');
+      list.forEach((node) => body.append('order[]', node.dataset.sortId || ''));
+      try {
+        const response = await fetch(url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }, credentials: 'same-origin' });
+        if (!response.ok) throw new Error('order');
+        toast(t('js_media_order_saved'), 'success', 2200);
+      } catch (_) {
+        toast(t('js_media_order_failed'), 'error', 6000);
+      }
+    };
+
+    const moveBefore = (node, reference, after) => {
+      const parent = reference.parentElement;
+      if (!parent) return;
+      parent.insertBefore(node, after ? reference.nextSibling : reference);
+    };
+
+    container.addEventListener('dragstart', (event) => {
+      const handle = event.target instanceof Element ? event.target.closest('.admin-sort-handle') : null;
+      const node = handle ? handle.closest(itemSelector) : null;
+      if (!handle || !node || node.closest('[data-sortable]') !== container) return;
+      dragged = node;
+      node.classList.add('is-dragging');
+      if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', node.dataset.sortId || ''); event.dataTransfer.setDragImage(node, 16, 16); }
+    });
+    container.addEventListener('dragover', (event) => {
+      if (!dragged) return;
+      const over = event.target instanceof Element ? event.target.closest(itemSelector) : null;
+      if (!over || over === dragged || over.closest('[data-sortable]') !== container || groupOf(over) !== groupOf(dragged)) return;
+      event.preventDefault();
+      const box = over.getBoundingClientRect();
+      moveBefore(dragged, over, event.clientY - box.top > box.height / 2);
+    });
+    container.addEventListener('drop', (event) => { if (dragged) event.preventDefault(); });
+    container.addEventListener('dragend', () => {
+      if (!dragged) return;
+      dragged.classList.remove('is-dragging');
+      dragged = null;
+      finish();
+    });
+    container.addEventListener('keydown', (event) => {
+      const handle = event.target instanceof Element ? event.target.closest('.admin-sort-handle') : null;
+      if (!handle || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+      const node = handle.closest(itemSelector);
+      if (!node) return;
+      event.preventDefault();
+      const peers = items().filter((peer) => groupOf(peer) === groupOf(node));
+      const index = peers.indexOf(node);
+      const other = peers[index + (event.key === 'ArrowUp' ? -1 : 1)];
+      if (!other) return;
+      moveBefore(node, other, event.key === 'ArrowDown');
+      handle.focus();
+      finish();
+    });
+  });
+}
 function initUserMenu() {
   const menu = document.querySelector('[data-user-menu]');
   if (!menu) return;

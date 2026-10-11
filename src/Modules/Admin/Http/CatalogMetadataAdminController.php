@@ -100,6 +100,19 @@ final class CatalogMetadataAdminController extends AbstractController
         return $this->redirectToRoute('admin_catalog_metadata');
     }
 
+    /** The order of the characteristics after a drag in the list. */
+    #[Route('/admin/catalog/metadata/attributes/reorder', name:'admin_catalog_attribute_reorder', methods:['POST'], priority:10)]
+    public function attributeReorder(Request $request):Response
+    {
+        $this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('catalog_metadata_attribute_reorder',(string)$request->request->get('_token')))throw $this->createAccessDeniedException();
+        $place=1;
+        foreach(array_unique(array_map('intval',$request->request->all('order'))) as $id){
+            if($id>0)$this->db->update('mc_attribute_definition',['sort_order'=>$place++],['id'=>$id]);
+        }
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>true]);
+    }
+
     #[Route('/admin/catalog/metadata/attributes/{id}/update', name:'admin_catalog_attribute_update', methods:['POST'], requirements:['id'=>'\\d+'])]
     public function attributeUpdate(int $id,Request $request):Response
     {

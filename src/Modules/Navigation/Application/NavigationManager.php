@@ -145,6 +145,26 @@ final class NavigationManager
     }
 
     /**
+     * Saves the order of the items after a drag: the ids come in the order of the list, every item gets its place (10, 20, ...).
+     * Only items of this store and menu are touched; the parent of an item is not changed here.
+     *
+     * @param list<int> $ids
+     */
+    public function reorder(int $storeId, string $menuCode, array $ids): void
+    {
+        $own = array_map('intval', $this->db->fetchFirstColumn('SELECT id FROM mc_navigation_item WHERE store_id=? AND menu_code=?', [$storeId, $menuCode]));
+        $this->db->transactional(function (Connection $db) use ($ids, $own): void {
+            $place = 10;
+            foreach (array_unique($ids) as $id) {
+                if (in_array($id, $own, true)) {
+                    $db->update('mc_navigation_item', ['sort_order' => $place], ['id' => $id]);
+                    $place += 10;
+                }
+            }
+        });
+    }
+
+    /**
      * Adds every top-level storefront category that is not in the menu yet as a "category" item (no typing: the label is
      * the category name). Existing items and their order are untouched. Returns the number of created items.
      */

@@ -79,6 +79,9 @@ final readonly class ProductOptionService
                 }
                 $display = (string) ($data['display'] ?? 'buttons');
                 $db->update('mc_product_option', ['display' => in_array($display, ['buttons', 'dropdown', 'radio'], true) ? $display : 'buttons'], ['id' => (int) $optionId]);
+                if (isset($data['sort']) && is_numeric($data['sort'])) {
+                    $db->update('mc_product_option', ['sort_order' => max(0, min(100000, (int) $data['sort']))], ['id' => (int) $optionId]);
+                }
                 foreach ($this->splitValues((string) ($data['new_value'] ?? '')) as $label) {
                     $this->insertValue($db, (int) $optionId, $locale, $label);
                 }
@@ -92,6 +95,9 @@ final readonly class ProductOptionService
                 $label = $this->text((string) ($data['label'] ?? ''), 190);
                 if ($label !== '') {
                     $this->translate($db, 'mc_product_option_value_translation', 'option_value_id', (int) $valueId, $locale, $label);
+                }
+                if (isset($data['sort']) && is_numeric($data['sort'])) {
+                    $db->update('mc_product_option_value', ['sort_order' => max(0, min(100000, (int) $data['sort']))], ['id' => (int) $valueId]);
                 }
                 $swatch = strtolower(trim((string) ($data['swatch'] ?? '')));
                 $media = (int) ($data['media'] ?? 0);

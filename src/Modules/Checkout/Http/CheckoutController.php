@@ -155,7 +155,12 @@ final class CheckoutController extends AbstractController
         $methods=array_values(array_filter($this->payments->enabledMethods(),fn($m):bool=>($m->code!=='b2b_invoice'||$b2b!==null)&&$this->methodSettings->isEnabled($context->storeId,$m->code)));
         // Pay-on-receipt first: it is the most requested method for parcel and pickup orders.
         usort($methods,static fn($a,$b):int=>[$a->code==='cash_on_delivery'?0:1]<=>[$b->code==='cash_on_delivery'?0:1]);
+        if($this->methodSettings->hasOrder($context->storeId,array_map(static fn($m):string=>$m->code,$methods))){
+            $rank=array_flip($this->methodSettings->ordered($context->storeId,array_map(static fn($m):string=>$m->code,$methods)));
+            usort($methods,static fn($a,$b):int=>$rank[$a->code]<=>$rank[$b->code]);
+        }
         $deliveryOptions=array_values(array_filter([...CheckoutMethodSettings::DELIVERY,...$this->methodSettings->customCodes('delivery')],fn(string $code):bool=>$this->methodSettings->isEnabled($context->storeId,$code)));
+        $deliveryOptions=$this->methodSettings->ordered($context->storeId,$deliveryOptions);
         $pickupPoints=in_array('self_pickup',$deliveryOptions,true)?$this->pickupPoints->forCheckout($context->storeId,$context->storeName):[];
         $old=$this->flashBag($request)?->get('checkout_old')??[]; $old=is_array($old[0]??null)?$old[0]:[];
         $response = $this->render('@storefront/checkout/show.html.twig', [

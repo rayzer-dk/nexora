@@ -8,20 +8,26 @@
 <header class="admin-page-header dash-head">
   <div><small>{{ store.name|default(ui_text('admin_store')) }} · Nexora Commerce v{{ platform_version }}</small><h1>{{ ui_text('admin_dashboard_title') }}</h1><p>{{ ui_text('admin_dashboard_intro') }}</p><p class="dash-today">{{ ui_icon('sun', 14) }}{{ ui_text('admin.dashboard.today_line', {orders: today.orders, customers: today.customers}) }}</p></div>
   <div class="dash-head__actions">
+    <button type="button" class="admin-button" data-dash-edit aria-expanded="false">{{ ui_icon('sliders-horizontal', 16) }}{{ ui_text('admin.dashboard.layout_edit') }}</button>
     <nav class="dash-period" aria-label="{{ ui_text('admin.analytics.index.period') }}">{% for d in [7,30,90] %}<a href="{{ path('admin_dashboard',{days:d}) }}"{% if report.days == d %} class="is-active" aria-current="page"{% endif %}>{{ d }} {{ ui_text('admin.analytics.index.dniv') }}</a>{% endfor %}</nav>
     <a class="admin-button is-primary" href="{{ path('admin_orders_manual') }}">{{ ui_icon('plus', 16) }}{{ ui_text('admin.dashboard.manual_order') }}</a>
   </div>
 </header>
 
 {% set health_names = {cron: ui_text('admin.dashboard.health_cron'), backup: ui_text('admin.dashboard.health_backup'), mail: ui_text('admin.dashboard.health_mail'), warnings: ui_text('admin.dashboard.health_warnings'), network: ui_text('admin.dashboard.health_network')} %}
+{% set w_health %}
 <nav class="dash-health" aria-label="{{ ui_text('admin.dashboard.health_title') }}">
 {% for h in health %}<a class="dash-health__item is-{{ h.status }}" href="{{ h.url }}"><span class="dash-health__dot" aria-hidden="true"></span>{{ ui_icon(h.icon, 16) }}<span class="dash-health__text"><strong>{{ health_names[h.key] }}</strong><small>{% if h.key == 'cron' %}{{ h.status == 'ok' ? ui_text('admin.dashboard.health_ok') : ui_text('admin.dashboard.health_cron_bad') }}{% elseif h.key == 'backup' %}{% if h.days is null %}{{ ui_text('admin_backup_missing') }}{% else %}{{ ui_text('admin_backup_days_ago', {days: h.days}) }}{% endif %}{% elseif h.key == 'network' %}{{ h.status == 'ok' ? 'HTTPS' : ui_text('admin.dashboard.health_no_https') }}{% else %}{{ h.count > 0 ? h.count : ui_text('admin.dashboard.health_ok') }}{% endif %}</small></span></a>{% endfor %}
 </nav>
+{% endset %}
 {% set show_setup = onboarding.done < onboarding.total %}{% set show_quality = catalog_quality and catalog_quality.total > 0 and catalog_quality.clean < catalog_quality.total %}
+{% set w_setup %}
 {% if show_setup or show_quality %}<div class="dash-setup">
 {% if show_setup %}<a class="dash-setup__card" href="{{ path('admin_onboarding') }}"><span class="dash-setup__icon">{{ ui_icon('list-checks', 18) }}</span><span class="dash-setup__text"><strong>{{ ui_text('admin.onboarding.card') }}</strong><small>{{ onboarding.done }} / {{ onboarding.total }}</small></span><progress class="onboarding-bar" max="{{ onboarding.total }}" value="{{ onboarding.done }}"></progress>{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
 {% if show_quality %}<a class="dash-setup__card" href="{{ path('admin_catalog_quality') }}"><span class="dash-setup__icon">{{ ui_icon('package', 18) }}</span><span class="dash-setup__text"><strong>{{ ui_text('admin.catalog_quality.card') }} · {{ catalog_quality.score }}%</strong><small>{{ ui_text('admin.catalog_quality.card_hint', {count: catalog_quality.total - catalog_quality.clean}) }}</small></span><progress class="onboarding-bar" max="100" value="{{ catalog_quality.score }}"></progress>{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
 </div>{% endif %}
+{% endset %}
+{% set w_quick %}
 <section class="dash-quick" aria-label="{{ ui_text('admin.dashboard.quick_title') }}">
 <a class="dash-quick__item" href="{{ path('admin_orders_manual') }}">{{ ui_icon('plus', 18) }}<span>{{ ui_text('admin.dashboard.manual_order') }}</span></a>
 <a class="dash-quick__item" href="/admin/catalog/products/new">{{ ui_icon('package', 18) }}<span>{{ ui_text('admin_new_product') }}</span></a>
@@ -32,7 +38,9 @@
 <a class="dash-quick__item" href="{{ path('admin_automation') }}">{{ ui_icon('zap', 18) }}<span>{{ ui_text('admin.automation.title') }}</span></a>
 <a class="dash-quick__item" href="/" target="_blank" rel="noopener">{{ ui_icon('store', 18) }}<span>{{ ui_text('admin.dashboard.quick_store') }}</span></a>
 </section>
+{% endset %}
 {% set kpi_links = {revenue: '/admin/analytics', orders: path('admin_orders'), aov: '/admin/analytics', conversion: '/admin/analytics', new_customers: '/admin/commerce/customers', refunds: '/admin/customer-experience'} %}
+{% set w_kpis %}
 <section class="dash-kpis" aria-label="{{ ui_text('admin.dashboard.kpi_title') }}">
 {% for k in report.kpis %}
   <a class="dash-kpi" href="{{ kpi_links[k.key] }}">
@@ -46,7 +54,9 @@
   <a class="dash-kpi" href="/admin/analytics/traffic"><span class="dash-kpi__label">{{ ui_icon('eye', 16) }}{{ ui_text('admin.dashboard.kpi_sessions') }}</span><strong class="dash-kpi__value">{{ report.traffic.sessions|number_format(0,'.',' ') }}</strong><span class="dash-delta is-flat">{{ report.days }} {{ ui_text('admin.analytics.index.dniv') }}</span></a>
   <a class="dash-kpi" href="{{ path('admin_orders') }}"><span class="dash-kpi__label">{{ ui_icon('sun', 16) }}{{ ui_text('admin.dashboard.kpi_today') }}</span><strong class="dash-kpi__value">{{ today.orders }}</strong><span class="dash-delta is-flat">{{ ui_text('admin.dashboard.kpi_today_hint', {customers: today.customers}) }}</span></a>
 </section>
+{% endset %}
 
+{% set w_main %}
 <div class="dash-grid dash-grid--main">
   <section class="admin-panel dash-chart-panel">
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.dashboard.chart_hint') }}</small><h2>{{ ui_text('admin.dashboard.chart_title') }}</h2></div><span class="admin-badge">{{ report.timezone }}</span></div>
@@ -81,7 +91,9 @@
     </details>
   </section>
 </div>
+{% endset %}
 
+{% set w_flow %}
 <div class="dash-grid dash-grid--two">
   <section class="admin-panel">
     <div class="admin-panel__header"><div><small>{{ ui_text('admin.dashboard.pipeline_hint') }}</small><h2>{{ ui_text('admin.dashboard.pipeline_title') }}</h2></div></div>
@@ -105,7 +117,9 @@
     <p class="dash-sub"><a href="/admin/analytics/traffic">{{ ui_text('admin.dashboard.funnel_sessions') }}: {{ report.traffic.sessions }} · {{ ui_text('admin.dashboard.funnel_traffic_link') }}</a></p>
   </section>
 </div>
+{% endset %}
 
+{% set w_attention %}
 <section class="admin-panel">
   <div class="admin-panel__header"><div><small>{{ ui_text('admin_attention') }}</small><h2>{{ ui_text('admin_do_now') }}</h2></div>{% if backup_age_days is null %}<span class="admin-badge is-danger">{{ ui_icon('triangle-alert', 14) }}{{ ui_text('admin_backup_missing') }}</span>{% elseif backup_age_days > 7 %}<span class="admin-badge is-warning">{{ ui_icon('triangle-alert', 14) }}{{ ui_text('admin_backup_days_ago', {'days': backup_age_days}) }}</span>{% else %}<span class="admin-badge is-ok">{{ ui_icon('circle-check', 14) }}{{ ui_text('admin_backup_current') }}</span>{% endif %}</div>
   <div class="dash-groups">
@@ -117,7 +131,9 @@
   </div>
 </section>
 {% include '@storefront/admin/extension/slot.html.twig' with {slot:'admin.dashboard'} only %}
+{% endset %}
 
+{% set w_tops %}
 <div class="dash-grid dash-grid--three">
   <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ report.days }} {{ ui_text('admin.analytics.index.dniv') }}</small><h2>{{ ui_text('admin.dashboard.top_products_title') }}</h2></div></div>
     {% if report.top_products %}<ol class="dash-rank">{% for row in report.top_products %}<li><span>{{ row.name }}<small>{{ row.sku }} · {{ row.quantity|number_format(0,'.',' ') }}</small></span><strong>{{ (row.revenue_minor / 100)|number_format(0,'.',' ') }} {{ cur }}</strong></li>{% endfor %}</ol>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.no_sales') }}</p>{% endif %}</section>
@@ -127,12 +143,41 @@
     {% if report.sources %}<ol class="dash-rank">{% for row in report.sources %}<li><span>{{ row.source }}<small>{{ row.orders }} {{ ui_text('admin.dashboard.orders_short') }}</small></span><strong>{{ (row.revenue_minor / 100)|number_format(0,'.',' ') }} {{ cur }}</strong></li>{% endfor %}</ol>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.sources_empty') }}</p>{% endif %}
     {% if report.zero_searches %}<h3 class="dash-sub">{{ ui_icon('search', 14) }}{{ ui_text('admin.dashboard.zero_searches_title') }}</h3><p class="dash-chips">{% for q in report.zero_searches %}<span class="admin-badge">{{ q.query_text }} · {{ q.searches }}</span>{% endfor %}</p>{% endif %}</section>
 </div>
+{% endset %}
 
+{% set w_orders %}
 <div class="dash-grid dash-grid--orders">
   <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.dashboard.recent_hint') }}</small><h2>{{ ui_text('admin.dashboard.recent_orders_title') }}</h2></div><a class="admin-button" href="{{ path('admin_orders') }}">{{ ui_text('admin.dashboard.all_orders') }}</a></div>
     {% if report.recent_orders %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>№</th><th>{{ ui_text('admin.dashboard.customer') }}</th><th>{{ ui_text('admin.dashboard.total') }}</th><th>{{ ui_text('admin.dashboard.status') }}</th></tr></thead><tbody>{% for o in report.recent_orders %}<tr><td>{{ o.order_number }}<small class="dash-time">{{ o.created_at|slice(0,16) }}</small></td><td>{{ o.customer_name|default('—') }}</td><td>{{ (o.total_minor / 100)|number_format(2,'.',' ') }} {{ o.currency }}</td><td><span class="admin-badge">{{ o.status|status_label }}</span> <span class="admin-badge {{ o.payment_status in ['paid','partially_refunded','refunded'] ? 'is-ok' : '' }}">{{ o.payment_status|status_label }}</span></td></tr>{% endfor %}</tbody></table></div>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.no_orders_yet') }}</p>{% endif %}</section>
   <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.dashboard.inquiries_hint') }}</small><h2>{{ ui_text('admin.dashboard.inquiries_title') }}</h2></div><a class="admin-button" href="/admin/commerce/inquiries">{{ ui_text('admin.dashboard.all_inquiries') }}</a></div>
     {% if report.inquiries %}<ul class="dash-rank">{% for q in report.inquiries %}<li><span>{{ q.customer_name }}<small>{{ inquiry_types[q.inquiry_type]|default(q.inquiry_type) }}{% if q.phone %} · {{ q.phone }}{% endif %} · {{ q.created_at|slice(0,16) }}</small></span>{% if q.inquiry_type == 'quick_order' %}<a class="admin-button" href="{{ path('admin_orders_manual',{inquiry:q.id}) }}">{{ ui_text('admin.dashboard.to_order') }}</a>{% endif %}</li>{% endfor %}</ul>{% else %}<p class="admin-empty">{{ ui_text('admin.dashboard.no_inquiries') }}</p>{% endif %}</section>
+</div>
+{% endset %}
+{% set widgets = {health: w_health, setup: w_setup, quick: w_quick, kpis: w_kpis, main: w_main, flow: w_flow, attention: w_attention, tops: w_tops, orders: w_orders} %}
+{% set widget_names = {health: ui_text('admin.dashboard.health_title'), setup: ui_text('admin.dashboard.widget_setup'), quick: ui_text('admin.dashboard.quick_title'), kpis: ui_text('admin.dashboard.kpi_title'), main: ui_text('admin.dashboard.widget_main'), flow: ui_text('admin.dashboard.widget_flow'), attention: ui_text('admin.dashboard.widget_attention'), tops: ui_text('admin.dashboard.widget_tops'), orders: ui_text('admin.dashboard.widget_orders')} %}
+<form method="post" action="{{ path('admin_dashboard_layout_save') }}" class="dash-layout admin-panel" data-dash-layout hidden>
+  <input type="hidden" name="_token" value="{{ csrf_token('admin_dashboard_layout') }}">
+  <div class="dash-layout__text"><strong>{{ ui_icon('sliders-horizontal', 16) }}{{ ui_text('admin.dashboard.layout_title') }}</strong><small>{{ ui_text('admin.dashboard.layout_hint') }}</small></div>
+  <div class="dash-layout__actions">
+    <button type="submit" class="admin-button is-primary">{{ ui_icon('check', 16) }}{{ ui_text('admin.dashboard.layout_save') }}</button>
+    <button type="submit" name="reset" value="1" class="admin-button" data-confirm="{{ ui_text('admin.dashboard.layout_reset_confirm') }}">{{ ui_icon('rotate-ccw', 16) }}{{ ui_text('admin.dashboard.layout_reset') }}</button>
+    <button type="button" class="admin-button" data-dash-layout-cancel>{{ ui_icon('x', 16) }}{{ ui_text('admin.dashboard.layout_cancel') }}</button>
+  </div>
+  <span data-dash-inputs></span>
+</form>
+<div class="dash-widgets" data-dash-widgets>
+{% for key in dash_layout.order %}{% set off = key in dash_layout.hidden %}<div class="dash-widget{{ off ? ' is-off' : '' }}" data-dash-widget="{{ key }}" data-dash-off="{{ off ? '1' : '0' }}">
+  <div class="dash-widget__bar" data-dash-bar hidden>
+    <span class="dash-widget__handle" data-dash-handle draggable="true" title="{{ ui_text('admin.dashboard.layout_drag') }}">{{ ui_icon('grip-vertical', 16) }}</span>
+    <strong>{{ widget_names[key] }}</strong>
+    <span class="dash-widget__tools">
+      <button type="button" class="admin-icon-button" data-dash-move="-1" aria-label="{{ ui_text('admin.dashboard.layout_up') }}" title="{{ ui_text('admin.dashboard.layout_up') }}">{{ ui_icon('chevron-up', 16) }}</button>
+      <button type="button" class="admin-icon-button" data-dash-move="1" aria-label="{{ ui_text('admin.dashboard.layout_down') }}" title="{{ ui_text('admin.dashboard.layout_down') }}">{{ ui_icon('chevron-down', 16) }}</button>
+      <button type="button" class="admin-icon-button" data-dash-toggle aria-pressed="{{ off ? 'false' : 'true' }}" aria-label="{{ ui_text('admin.dashboard.layout_toggle') }}" title="{{ ui_text('admin.dashboard.layout_toggle') }}"><span data-dash-eye-on{{ off ? ' hidden' : '' }}>{{ ui_icon('eye', 16) }}</span><span data-dash-eye-off{{ off ? '' : ' hidden' }}>{{ ui_icon('eye-off', 16) }}</span></button>
+    </span>
+  </div>
+  <div class="dash-widget__body">{{ attribute(widgets, key) }}</div>
+</div>{% endfor %}
 </div>
 
 {% if counts.products < 1 or counts.orders < 1 %}
