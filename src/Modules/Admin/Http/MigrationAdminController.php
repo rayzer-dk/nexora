@@ -19,12 +19,14 @@ final class MigrationAdminController extends AbstractController
         private readonly MigrationCatalogImporter $importer,
         private readonly \Commerce\Modules\Migration\Application\MigrationDryRunAnalyzer $dryRun,
         private readonly \Commerce\Modules\Migration\Application\MigrationTargetConflictAnalyzer $targetConflicts,
+        private readonly \Commerce\Modules\Migration\Application\ImportImageQueue $images,
+        private readonly \Psr\Log\LoggerInterface $logger,
     ) {}
 
     #[Route('/admin/system/migration', name:'admin_system_migration', methods:['GET'])]
     public function index(Request $request): Response
     {
-        $this->contexts->resolve($request);
+        $ctx=$this->contexts->resolve($request);
         $runs=$this->db->fetchAllAssociative(
             "SELECT r.public_id,r.source_code,r.status,r.entity_type,r.cursor_value,r.processed_count,r.issue_count,r.last_error,r.created_at,r.updated_at,r.completed_at,
                     j.id AS job_id,j.statistics,
@@ -35,7 +37,7 @@ final class MigrationAdminController extends AbstractController
              LEFT JOIN mc_import_job j ON JSON_UNQUOTE(JSON_EXTRACT(j.options,'$.run_id'))=r.public_id
              ORDER BY r.id DESC LIMIT 100"
         );
-        return $this->render('@storefront/admin/system/migration.html.twig',['runs'=>$runs,'oc_report'=>null,'oc_form'=>['host'=>'localhost','port'=>'3306','database'=>'','user'=>'','prefix'=>'oc_','image_root'=>'','publish'=>false]]);
+        return $this->render('@storefront/admin/system/migration.html.twig',$this->pageExtras($ctx->storeId,$ctx->locale)+['runs'=>$runs,'oc_report'=>null,'oc_form'=>['host'=>'localhost','port'=>'3306','database'=>'','user'=>'','prefix'=>'oc_','image_root'=>'','publish'=>false]]);
     }
 
     /**
@@ -71,9 +73,83 @@ final class MigrationAdminController extends AbstractController
         catch(\PDOException){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('admin.migration.oc.connect'));}
         catch(\Throwable){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
         $runs=$this->db->fetchAllAssociative("SELECT r.public_id,r.source_code,r.status,r.entity_type,r.cursor_value,r.processed_count,r.issue_count,r.last_error,r.created_at,r.updated_at,r.completed_at,0 AS job_id,NULL AS statistics,0 AS item_count,0 AS error_count,0 AS warning_count FROM mc_migration_run r ORDER BY r.id DESC LIMIT 100");
-        return $this->render('@storefront/admin/system/migration.html.twig',['runs'=>$runs,'oc_report'=>$report,'oc_form'=>$form]);
+        return $this->render('@storefront/admin/system/migration.html.twig',$this->pageExtras($ctx->storeId,$ctx->locale)+['runs'=>$runs,'oc_report'=>$report,'oc_form'=>$form]);
     }
 
+    /** @return array<string,mixed> what the file import form and the photo line need */
+    private function pageExtras(int $storeId, string $locale, ?array $fileReport = null, ?array $fileForm = null): array
+    {
+        $locales = $this->db->fetchAllAssociative("SELECT sl.locale_code code,COALESCE(NULLIF(l.native_name,''),l.name,sl.locale_code) name FROM mc_store_locale sl LEFT JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.store_id=? AND sl.enabled=1 ORDER BY sl.is_default DESC,sl.sort_order", [$storeId]);
+
+        return [
+            'file_report' => $fileReport, 'file_form' => $fileForm ?? ['platform' => 'auto', 'locale' => $locale, 'publish' => true],
+            'store_locales' => $locales, 'platforms' => \Commerce\Modules\Migration\Source\File\PlatformCatalogProfiles::PLATFORMS, 'image_queue' => $this->images->counts(),
+        ];
+    }
+
+    /**
+     * Move a catalogue from another platform with its product file: Shopify, WooCommerce, PrestaShop, Prom.ua, Horoshop or any table.
+     * "Check" reads the file and reports; "Import" writes the products, categories, brands and characteristics, keeps the old product addresses
+     * as redirects and lines the photos up for download.
+     */
+    #[Route('/admin/system/migration/file', name:'admin_system_migration_file', methods:['POST'])]
+    public function fileImport(Request $request): Response
+    {
+        $ctx=$this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('migration_file',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
+        $r=$request->request;
+        $platform=(string)$r->get('platform','auto');
+        $locale=(string)$r->get('locale',$ctx->locale);
+        $form=['platform'=>$platform,'locale'=>$locale,'publish'=>$r->getBoolean('publish')];
+        $report=null;
+        try{
+            $upload=$request->files->get('file');
+            if(!$upload instanceof \Symfony\Component\HttpFoundation\File\UploadedFile||!$upload->isValid())throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.migration.file.no_file'));
+            if($upload->getSize()>30*1024*1024)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.migration.file.too_big'));
+            $ext=strtolower(pathinfo((string)$upload->getClientOriginalName(),PATHINFO_EXTENSION));
+            if(!in_array($ext,['csv','xlsx'],true))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.migration.file.format'));
+            if(!in_array($platform,array_merge(['auto'],\Commerce\Modules\Migration\Source\File\PlatformCatalogProfiles::PLATFORMS),true))$platform='auto';
+            if((int)$this->db->fetchOne('SELECT COUNT(*) FROM mc_store_locale WHERE store_id=? AND locale_code=? AND enabled=1',[$ctx->storeId,$locale])!==1)$locale=$ctx->locale;
+            @set_time_limit(0);ignore_user_abort(true);
+            $rows=$ext==='xlsx'?\Commerce\Modules\ImportExport\Application\SpreadsheetReader::readXlsx($upload->getPathname(),20002):\Commerce\Modules\ImportExport\Application\SpreadsheetReader::readCsv($upload->getPathname(),20002);
+            $headers=array_values(array_map(static fn($v):string=>trim((string)$v),array_shift($rows)??[]));
+            if(count(array_filter($headers,static fn(string $h):bool=>$h!==''))<2)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.migration.file.no_headers'));
+            $detected=$platform==='auto'?\Commerce\Modules\Migration\Source\File\PlatformCatalogProfiles::detect($headers):$platform;
+            $normalized=\Commerce\Modules\Migration\Source\File\PlatformCatalogProfiles::normalize($detected,$headers,$rows);
+            $products=array_values(array_filter($normalized['products'],static fn(array $p):bool=>trim((string)$p['name'])!==''));
+            if($products===[])throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.migration.file.no_products'));
+            $skipped=count($normalized['products'])-count($products);
+            $fileKey=substr(hash_file('sha256',$upload->getPathname()),0,16);
+            $source=new \Commerce\Modules\Migration\Source\File\FileCatalogSource($detected,$products,$locale,$fileKey);
+            $analysis=$this->dryRun->analyze($source,250);
+            $errors=0;$issues=[];foreach($analysis->issues as $issue){if($issue->severity==='error')++$errors;if(count($issues)<60)$issues[]=['severity'=>$issue->severity,'code'=>$issue->code,'key'=>$issue->sourceKey,'message'=>$issue->message];}
+            $withoutPhotos=count(array_filter($products,static fn(array $p):bool=>$p['images']===[]));
+            $warnings=array_slice(array_map(static fn(string $w):string=>$w,$normalized['warnings']),0,40);
+            $report=['platform'=>$detected,'counts'=>$analysis->counts,'errors'=>$errors,'issues'=>$issues,'rows'=>count($rows),'skipped'=>$skipped,'photos'=>array_sum(array_map(static fn(array $p):int=>count($p['images']),$products)),'without_photos'=>$withoutPhotos,'warnings'=>$warnings,'applied'=>null];
+            if($r->get('mode')==='apply'){
+                $plan=new \Commerce\Modules\Migration\Application\MigrationImportPlan($ctx->storeId,$ctx->marketId,$locale,strtoupper($ctx->currency),'file-'.$detected.'-'.$fileKey,[],$form['publish'],true,250,null);
+                $result=$this->importer->import($source,$plan,null);
+                $report['applied']=['run'=>$result->runId,'created'=>$result->counts['created']??0,'reused'=>$result->counts['reused']??0,'skipped'=>$result->counts['skipped']??0,'failed'=>$result->counts['failed']??0,'issues'=>$result->issues,'problems'=>$this->runProblems($result->runId)];
+            }
+        }catch(\DomainException|\InvalidArgumentException $e){$this->addFlash('error',$e->getMessage());}
+        catch(\Throwable $e){$this->logger->error('File import failed: '.$e->getMessage(),['exception'=>$e]);$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
+        $runs=$this->db->fetchAllAssociative("SELECT r.public_id,r.source_code,r.status,r.entity_type,r.cursor_value,r.processed_count,r.issue_count,r.last_error,r.created_at,r.updated_at,r.completed_at,0 AS job_id,NULL AS statistics,0 AS item_count,0 AS error_count,0 AS warning_count FROM mc_migration_run r ORDER BY r.id DESC LIMIT 100");
+
+        return $this->render('@storefront/admin/system/migration.html.twig',$this->pageExtras($ctx->storeId,$ctx->locale,$report,$form)+['runs'=>$runs,'oc_report'=>null,'oc_form'=>['host'=>'localhost','port'=>'3306','database'=>'','user'=>'','prefix'=>'oc_','image_root'=>'','publish'=>false]]);
+    }
+
+    /** Downloads the next photos of imported products (the page calls this again and again until the line is empty). */
+    #[Route('/admin/system/migration/images/run', name:'admin_system_migration_images_run', methods:['POST'])]
+    public function runImages(Request $request): Response
+    {
+        $this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('migration_images',(string)$request->request->get('_csrf_token')))return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false],403);
+        @set_time_limit(0);
+        if($request->request->getBoolean('retry'))$this->images->retryFailed();
+        $round=$this->images->process(15,25.0);
+
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>true]+$round+$this->images->counts());
+    }
     /** Every record the import could not take over, with the reason - the import itself carries on past them. @return list<array{type:string,key:string,code:string,message:string}> */
     private function runProblems(string $runId): array
     {

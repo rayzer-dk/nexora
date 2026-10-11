@@ -456,6 +456,10 @@ services:
         arguments:
             $senders: !tagged_iterator commerce.notification_sender
 
+    Commerce\Modules\Migration\Application\ImportImageQueue:
+        arguments:
+            $allowPrivateHosts: '%env(bool:COMMERCE_SUPPLIER_ALLOW_PRIVATE_HOSTS)%'
+
     Commerce\Modules\Supplier\Application\SupplierService:
         arguments:
             $allowPrivateHosts: '%env(bool:COMMERCE_SUPPLIER_ALLOW_PRIVATE_HOSTS)%'

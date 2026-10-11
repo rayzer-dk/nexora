@@ -24,6 +24,12 @@ if ($path === '/supplier-feed.xml') {
         . '</offers></shop></yml_catalog>';
     return;
 }
+// A product photo for the platform-import end-to-end test: the "old shop" serves /old-shop/photo.png (a small valid picture).
+if ($path === '/old-shop/photo.png') {
+    header('Content-Type: image/png');
+    echo base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGPkqrjDAANMDEgANwcARI4BZoWJLsMAAAAASUVORK5CYII=');
+    return;
+}
 // Checkbox cash register API stand-in for the PRRO end-to-end test: PRRO_CHECKBOX_BASE_URL=http://127.0.0.1:8099/checkbox/api/v1
 if (str_starts_with($path, '/checkbox/api/v1')) {
     $sub = substr($path, strlen('/checkbox/api/v1'));

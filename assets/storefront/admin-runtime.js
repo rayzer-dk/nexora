@@ -2669,6 +2669,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initOptionPresets();
   initSortableLists();
   initScopePresets();
+  initImageQueue();
 });
 
 async function initPageFeatures() {
@@ -2918,6 +2919,42 @@ function initScopePresets() {
       const form = button.closest('form');
       qa('input[name="scopes[]"]', form || document).forEach((box) => { box.checked = wanted.has(box.value); });
     });
+  });
+}
+
+/** Moved catalogue: downloads the photos of imported products in rounds and shows the progress. */
+function initImageQueue() {
+  qa('[data-image-queue]').forEach((box) => {
+    const text = q('[data-image-queue-text]', box);
+    const bar = q('[data-image-queue-bar]', box);
+    const buttons = qa('[data-image-queue-run]', box);
+    const paint = (data) => {
+      if (text?.dataset.template) text.textContent = text.dataset.template.replace('%done%', data.done).replace('%pending%', data.pending).replace('%failed%', data.failed);
+      if (bar) { bar.max = data.pending + data.done + data.failed; bar.value = data.done + data.failed; }
+    };
+    buttons.forEach((button) => button.addEventListener('click', async () => {
+      buttons.forEach((b) => { b.disabled = true; });
+      let idle = 0;
+      let retry = button.dataset.retry === '1';
+      try {
+        for (let round = 0; round < 2000; round += 1) {
+          const body = new FormData();
+          body.set('_csrf_token', box.dataset.token || '');
+          if (retry) body.set('retry', '1');
+          retry = false;
+          const response = await fetch(box.dataset.url, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' }, credentials: 'same-origin' });
+          if (!response.ok) throw new Error('queue');
+          const data = await response.json();
+          paint(data);
+          idle = data.done + data.failed === 0 ? idle + 1 : 0;
+          if (data.pending === 0 || idle >= 3) break;
+        }
+      } catch (_) {
+        toast(t('js_media_order_failed'), 'error', 6000);
+      } finally {
+        buttons.forEach((b) => { b.disabled = false; });
+      }
+    }));
   });
 }
 
