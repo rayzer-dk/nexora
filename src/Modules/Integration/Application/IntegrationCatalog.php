@@ -43,6 +43,15 @@ final class IntegrationCatalog
                     'PAYPAL_ENABLED' => ['type' => 'bool'], 'PAYPAL_CLIENT_ID' => ['type' => 'text'], 'PAYPAL_SECRET' => ['type' => 'secret'], 'PAYPAL_WEBHOOK_ID' => ['type' => 'text', 'optional' => true], 'PAYPAL_SANDBOX' => ['type' => 'bool'],
                 ]],
             ],
+            'messengers' => [
+                'telegram_customers' => ['label' => 'Telegram: bot for customers', 'docs' => 'https://core.telegram.org/bots#how-do-i-create-a-bot', 'fields' => [
+                    'CUSTOMER_TELEGRAM_ENABLED' => ['type' => 'bool'], 'CUSTOMER_TELEGRAM_BOT_TOKEN' => ['type' => 'secret'], 'CUSTOMER_TELEGRAM_BOT_USERNAME' => ['type' => 'text'],
+                ]],
+                'viber_customers' => ['label' => 'Viber: account for customers', 'docs' => 'https://developers.viber.com/docs/api/rest-bot-api/', 'fields' => [
+                    'CUSTOMER_VIBER_ENABLED' => ['type' => 'bool'], 'CUSTOMER_VIBER_AUTH_TOKEN' => ['type' => 'secret'], 'CUSTOMER_VIBER_NAME' => ['type' => 'text'], 'CUSTOMER_VIBER_URI' => ['type' => 'text'],
+                    'CUSTOMER_VIBER_API_BASE' => ['type' => 'text', 'default' => 'https://chatapi.viber.com'],
+                ]],
+            ],
             'carriers' => [
                 'nova_post' => ['label' => 'Нова пошта', 'docs' => 'https://developers.novaposhta.ua/', 'fields' => [
                     'NOVA_POST_API_KEY' => ['type' => 'secret'], 'NOVA_POST_SENDER_REF' => ['type' => 'text'], 'NOVA_POST_CONTACT_SENDER_REF' => ['type' => 'text'],

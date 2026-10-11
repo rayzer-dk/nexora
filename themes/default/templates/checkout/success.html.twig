@@ -28,6 +28,7 @@
     </div>
     <ul class="ck-success__items">{% for item in order_info.items %}<li><span>{{ item.name }} <small>× {{ item.quantity|qty }} {{ item.unit }}</small></span><b>{{ item.total }}</b></li>{% endfor %}<li class="is-total"><span>{{ ui_text('total') }}</span><b>{{ order_info.total }}</b></li></ul>
     {% endif %}
+    {% if messengers %}<div class="ck-success__messengers" data-messengers><h2>{{ ui_icon('bell', 18) }} {{ ui_text('messenger_title') }}</h2><p class="ck-success__muted">{{ ui_text('messenger_text') }}</p><p>{% for m in messengers %}<a class="button" rel="nofollow" href="{{ path('storefront_checkout_messenger', {order: order_public_id, channel: m}) }}" data-messenger="{{ m }}">{{ ui_icon('send', 16) }} {{ ui_text('messenger_' ~ m) }}</a> {% endfor %}</p></div>{% endif %}
     <a class="button button--primary" href="/catalog">{{ ui_text('continue_shopping') }}{{ ui_icon('arrow-right', 16) }}</a>
   </div>
 </section>

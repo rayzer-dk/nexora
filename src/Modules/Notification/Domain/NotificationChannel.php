@@ -11,4 +11,6 @@ enum NotificationChannel: string
     case Sms = 'sms';
     case InApp = 'in_app';
     case WebPush = 'web_push';
+    case TelegramCustomer = 'telegram_customer';
+    case Viber = 'viber';
 }

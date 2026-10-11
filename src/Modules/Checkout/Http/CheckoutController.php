@@ -249,10 +249,22 @@ final class CheckoutController extends AbstractController
     }
 
     #[Route('/checkout/success/{order}', name: 'storefront_checkout_success', methods: ['GET'], priority: 100)]
-    public function success(string $order, Request $request): Response
+    public function success(string $order, Request $request, \Commerce\Modules\Notification\Messenger\MessengerLinkService $messengers): Response
     {
         $context=$this->contexts->resolve($request);
-        return $this->render('@storefront/checkout/success.html.twig',['page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.zamovlennia_pryiniato'),'order_public_id'=>$order,'order_info'=>$this->confirmation->find($order,$context->storeId,$context->locale),'seo_head'=>['robots'=>'noindex,nofollow']]);
+        return $this->render('@storefront/checkout/success.html.twig',['messengers'=>$messengers->available(),'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.zamovlennia_pryiniato'),'order_public_id'=>$order,'order_info'=>$this->confirmation->find($order,$context->storeId,$context->locale),'seo_head'=>['robots'=>'noindex,nofollow']]);
+    }
+
+    /** Opens the shop's bot in Telegram or Viber with a one-time token, so the customer gets the updates of this order there. */
+    #[Route('/checkout/success/{order}/messenger/{channel}', name: 'storefront_checkout_messenger', methods: ['GET'], requirements: ['channel' => 'telegram|viber'], priority: 110)]
+    public function messenger(string $order, string $channel, \Commerce\Modules\Notification\Messenger\MessengerLinkService $messengers): Response
+    {
+        $link = $messengers->linkFor($order, $channel);
+        if ($link === null) {
+            throw $this->createNotFoundException();
+        }
+
+        return new \Symfony\Component\HttpFoundation\RedirectResponse($link);
     }
 
     private function flashBag(Request $request): ?FlashBagInterface

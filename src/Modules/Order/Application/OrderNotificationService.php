@@ -22,6 +22,7 @@ final readonly class OrderNotificationService
         private NotificationOutbox $outbox,
         private StorefrontUiTranslator $translator,
         private \Commerce\Modules\Notification\Application\SmsService $sms,
+        private \Commerce\Modules\Notification\Messenger\MessengerLinkService $messengers,
     ) {}
 
     public function enqueueCurrentStatus(string $orderPublicId): bool
@@ -33,7 +34,7 @@ final readonly class OrderNotificationService
         }
 
         $order = $this->db->fetchAssociative(
-            'SELECT o.order_number,o.status,o.payment_status,o.fulfillment_status,o.total_minor,o.currency,o.customer_name,o.customer_email,o.locale,f.tracking_number,f.provider_code
+            'SELECT o.id,o.order_number,o.status,o.payment_status,o.fulfillment_status,o.total_minor,o.currency,o.customer_name,o.customer_email,o.locale,f.tracking_number,f.provider_code
              FROM mc_sales_order o
              LEFT JOIN mc_fulfillment f ON f.order_id=o.id
              WHERE o.public_id=?
@@ -51,13 +52,18 @@ final readonly class OrderNotificationService
             $this->sms->sendAutoByPublicId($orderPublicId, $smsEvent);
         }
 
+        $locale = trim((string) ($order['locale'] ?? '')) ?: 'en-US';
+        $subject = $this->translator->translate('order_update_subject', $locale, ['number' => (string) $order['order_number']]);
+        // The messengers the customer linked get the same update, also when there is no e-mail address.
+        try {
+            $this->messengers->notifyOrder((int) $order['id'], new NotificationMessage(type: 'order.status_updated', subject: $subject, text: $this->plainText($order, $locale), context: ['locale' => $locale]));
+        } catch (\Throwable) {
+            // A messenger problem must not stop the e-mail.
+        }
         $recipient = trim((string) ($order['customer_email'] ?? ''));
         if ($recipient === '' || filter_var($recipient, FILTER_VALIDATE_EMAIL) === false) {
             return false;
         }
-
-        $locale = trim((string) ($order['locale'] ?? '')) ?: 'en-US';
-        $subject = $this->translator->translate('order_update_subject', $locale, ['number' => (string) $order['order_number']]);
         $message = new NotificationMessage(
             type: 'order.status_updated',
             subject: $subject,
@@ -93,19 +99,24 @@ final readonly class OrderNotificationService
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.nekorektnyi_identyfikator_zamovlennia'));
         }
         $order = $this->db->fetchAssociative(
-            'SELECT o.order_number,o.status,o.payment_status,o.fulfillment_status,o.total_minor,o.currency,o.customer_name,o.customer_email,o.locale,f.tracking_number
+            'SELECT o.id,o.order_number,o.status,o.payment_status,o.fulfillment_status,o.total_minor,o.currency,o.customer_name,o.customer_email,o.locale,f.tracking_number
              FROM mc_sales_order o LEFT JOIN mc_fulfillment f ON f.order_id=o.id WHERE o.public_id=? ORDER BY f.id DESC LIMIT 1',
             [$binary],
         );
         if (!is_array($order)) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.zamovlennia_ne_znaideno'));
         }
+        $locale = trim((string) ($order['locale'] ?? '')) ?: 'en-US';
+        $subject = trim($subject) !== '' ? trim($subject) : $this->translator->translate('order_update_subject', $locale, ['number' => (string) $order['order_number']]);
+        try {
+            $this->messengers->notifyOrder((int) $order['id'], new NotificationMessage(type: 'order.message', subject: $subject, text: $text, context: ['locale' => $locale]));
+        } catch (\Throwable) {
+            // A messenger problem must not stop the e-mail.
+        }
         $recipient = trim((string) ($order['customer_email'] ?? ''));
         if ($recipient === '' || filter_var($recipient, FILTER_VALIDATE_EMAIL) === false) {
             return false;
         }
-        $locale = trim((string) ($order['locale'] ?? '')) ?: 'en-US';
-        $subject = trim($subject) !== '' ? trim($subject) : $this->translator->translate('order_update_subject', $locale, ['number' => (string) $order['order_number']]);
         $this->outbox->enqueue(NotificationChannel::Email, new NotificationMessage(
             type: 'order.message',
             subject: $subject,

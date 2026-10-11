@@ -13,4 +13,5 @@
 {% else %}<input type="text" name="key[{{ f.name }}]" value="" maxlength="2000" placeholder="{{ f.value|e('html_attr') }}">{% endif %}
 {% if f.stored %}<small><label class="admin-inline-label"><input type="checkbox" name="clear[{{ f.name }}]" value="1"> {{ ui_text('admin.carriers.clear') }}</label></small>{% endif %}</label>{% endfor %}
 <div class="admin-form-actions admin-form-wide"><button type="submit" class="admin-button is-primary">{{ ui_icon('check', 16) }} {{ ui_text('admin.carriers.save') }}</button></div></form></details></section>{% endfor %}
+{% if group == 'messengers' %}<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.conn.webhook_title') }}</h2><small>{{ ui_text('admin.conn.webhook_hint') }}</small></div></div><form method="post" action="{{ path('admin_system_integrations_messenger_webhooks') }}"><input type="hidden" name="_token" value="{{ csrf_token('connections_messengers') }}"><button class="admin-button is-primary" type="submit">{{ ui_icon('plug', 16) }} {{ ui_text('admin.conn.webhook_button') }}</button></form></section>{% endif %}
 {{ shell.end() }}

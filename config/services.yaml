@@ -67,6 +67,14 @@ parameters:
     env(PRIVAT_PARTS_MERCHANT_TYPE): 'PP'
     env(PRIVAT_PARTS_PARTS): '2'
     env(PRIVAT_PARTS_API_BASE): 'https://payparts2.privatbank.ua'
+    env(CUSTOMER_TELEGRAM_ENABLED): '0'
+    env(CUSTOMER_TELEGRAM_BOT_TOKEN): ''
+    env(CUSTOMER_TELEGRAM_BOT_USERNAME): ''
+    env(CUSTOMER_VIBER_ENABLED): '0'
+    env(CUSTOMER_VIBER_AUTH_TOKEN): ''
+    env(CUSTOMER_VIBER_NAME): ''
+    env(CUSTOMER_VIBER_URI): ''
+    env(CUSTOMER_VIBER_API_BASE): 'https://chatapi.viber.com'
     env(LIQPAY_ENABLED): '0'
     env(LIQPAY_PUBLIC_KEY): ''
     env(LIQPAY_PRIVATE_KEY): ''
@@ -455,6 +463,18 @@ services:
     Commerce\Modules\Notification\Application\NotificationDispatcher:
         arguments:
             $senders: !tagged_iterator commerce.notification_sender
+
+    Commerce\Modules\Notification\Messenger\MessengerSettings:
+        arguments:
+            $tgEnabled: '%env(bool:CUSTOMER_TELEGRAM_ENABLED)%'
+            $tgToken: '%env(CUSTOMER_TELEGRAM_BOT_TOKEN)%'
+            $tgUsername: '%env(CUSTOMER_TELEGRAM_BOT_USERNAME)%'
+            $tgApiBase: '%env(TELEGRAM_API_BASE)%'
+            $viberEnabled: '%env(bool:CUSTOMER_VIBER_ENABLED)%'
+            $viberToken: '%env(CUSTOMER_VIBER_AUTH_TOKEN)%'
+            $viberName: '%env(CUSTOMER_VIBER_NAME)%'
+            $viberUri: '%env(CUSTOMER_VIBER_URI)%'
+            $viberApiBase: '%env(CUSTOMER_VIBER_API_BASE)%'
 
     Commerce\Modules\Integration\Crm\OrderSnapshotBuilder:
         arguments:

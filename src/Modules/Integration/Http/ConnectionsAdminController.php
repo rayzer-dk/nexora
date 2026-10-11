@@ -17,8 +17,13 @@ use Symfony\Component\Routing\Attribute\Route;
 /** Admin → System → Connections: keys and switches of payment services (and later CRM, marketplaces, messengers) without editing the .env file. */
 final class ConnectionsAdminController extends AbstractController
 {
-    public function __construct(private readonly IntegrationSecretStore $store, private readonly AdminContextResolver $contexts)
-    {
+    public function __construct(
+        private readonly IntegrationSecretStore $store,
+        private readonly AdminContextResolver $contexts,
+        private readonly \Commerce\Modules\Notification\Messenger\MessengerSettings $messengers,
+        private readonly \Commerce\Modules\Notification\Messenger\TelegramCustomerSender $telegram,
+        private readonly \Commerce\Modules\Notification\Messenger\ViberCustomerSender $viber,
+    ) {
     }
 
     #[Route('/admin/system/integrations/connections/{group}', name: 'admin_system_integrations_connections', methods: ['GET'], requirements: ['group' => '[a-z_]+'], defaults: ['group' => 'payments'])]
@@ -56,6 +61,33 @@ final class ConnectionsAdminController extends AbstractController
         }
 
         return $this->render('@storefront/admin/system/connections.html.twig', ['group' => $group, 'groups' => array_keys($groups), 'providers' => $providers]);
+    }
+
+    /** Tells Telegram and Viber where to send what customers write to the shop's bot. */
+    #[Route('/admin/system/integrations/connections/messengers/webhooks', name: 'admin_system_integrations_messenger_webhooks', methods: ['POST'], priority: 10)]
+    public function registerWebhooks(Request $request): RedirectResponse
+    {
+        $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('connections_messengers', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException(CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+        $base = rtrim($request->getSchemeAndHttpHost() . $request->getBasePath(), '/');
+        $done = [];
+        try {
+            if ($this->messengers->telegramReady()) {
+                $this->telegram->call('setWebhook', ['url' => $base . '/webhooks/messengers/telegram/' . $this->messengers->webhookSecret(), 'allowed_updates' => ['message']]);
+                $done[] = 'Telegram';
+            }
+            if ($this->messengers->viberReady()) {
+                $this->viber->call('set_webhook', ['url' => $base . '/webhooks/messengers/viber', 'event_types' => ['conversation_started', 'unsubscribed', 'subscribed']]);
+                $done[] = 'Viber';
+            }
+            $this->addFlash($done === [] ? 'error' : 'success', $done === [] ? CanonicalUiText::get('admin.conn.webhook_none') : CanonicalUiText::get('admin.conn.webhook_done', ['channels' => implode(', ', $done)]));
+        } catch (\Throwable $e) {
+            $this->addFlash('error', CanonicalUiText::get('admin.conn.webhook_failed', ['detail' => mb_substr($e->getMessage(), 0, 200)]));
+        }
+
+        return $this->redirectToRoute('admin_system_integrations_connections', ['group' => 'messengers']);
     }
 
     #[Route('/admin/system/integrations/connections/{group}/save', name: 'admin_system_integrations_connections_save', methods: ['POST'], requirements: ['group' => '[a-z_]+'])]
