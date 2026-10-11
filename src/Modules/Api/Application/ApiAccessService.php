@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class ApiAccessService
 {
-    public const SCOPES = ['catalog:read','customers:read','orders:read','carts:read','carts:write','checkout:write','webhooks:manage'];
+    public const SCOPES = ['catalog:read','catalog:write','inventory:write','customers:read','orders:read','orders:write','carts:read','carts:write','checkout:write','webhooks:manage'];
 
     public function __construct(private readonly Connection $db) {}
 

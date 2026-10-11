@@ -2257,3 +2257,9 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 /* 3.97.24 contrast: card captions of the primary and neutral tones, and the "all sections" tab, stay readable in both schemes */
 .admin-stats > article.is-tone-primary > span, .admin-stats > article.is-tone-neutral > span { color: var(--mc-color-text); }
 .admin-tab--all, .admin-tab--all > span, .admin-tab--all[aria-pressed="true"] { color: var(--mc-color-text); }
+
+/* 3.97.24 API keys page */
+.admin-copy-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-3); }
+.admin-copy-row code { flex: 1 1 18rem; min-width: 0; padding: var(--mc-space-3); border: 1px dashed var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); font-family: var(--mc-font-mono); word-break: break-all; user-select: all; }
+.admin-code { margin: 0; padding: var(--mc-space-3) var(--mc-space-4); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-subtle); overflow: auto; font-family: var(--mc-font-mono); font-size: var(--mc-font-size-sm); }
+.admin-panel--accent { border-color: var(--mc-color-success); background: var(--mc-color-success-soft); }

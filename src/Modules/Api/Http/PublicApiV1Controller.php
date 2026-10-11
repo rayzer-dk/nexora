@@ -189,7 +189,7 @@ final class PublicApiV1Controller extends AbstractController
         $security=[['bearerAuth'=>[]]];
         return $this->json(['openapi'=>'3.1.0','info'=>['title'=>CanonicalUiText::get('api.openapi.title'),'version'=>ApiContractVersion::V1],
             'components'=>['securitySchemes'=>['bearerAuth'=>['type'=>'http','scheme'=>'bearer','bearerFormat'=>'opaque']]],
-            'paths'=>[
+            'paths'=>array_replace_recursive([
                 '/api/v1/catalog/products'=>['get'=>['security'=>$security,'x-scope'=>'catalog:read','summary'=>CanonicalUiText::get('api.openapi.products_list'),'responses'=>['200'=>['description'=>CanonicalUiText::get('api.openapi.product_collection')],'401'=>['description'=>CanonicalUiText::get('api.openapi.auth_required')],'429'=>['description'=>CanonicalUiText::get('api.openapi.rate_limited')]]]],
                 '/api/v1/catalog/products/{publicId}'=>['get'=>['security'=>$security,'x-scope'=>'catalog:read','summary'=>CanonicalUiText::get('api.openapi.product_get'),'responses'=>['200'=>['description'=>CanonicalUiText::get('api.openapi.product')],'404'=>['description'=>CanonicalUiText::get('api.openapi.not_found')]]]],
                 '/api/v1/customers'=>['get'=>['security'=>$security,'x-scope'=>'customers:read','summary'=>CanonicalUiText::get('api.openapi.customers_list'),'responses'=>['200'=>['description'=>CanonicalUiText::get('api.openapi.customer_collection')]]]],
@@ -208,7 +208,7 @@ final class PublicApiV1Controller extends AbstractController
                     'post'=>['security'=>$security,'x-scope'=>'webhooks:manage','summary'=>CanonicalUiText::get('api.openapi.webhook_create'),'parameters'=>[['name'=>'Idempotency-Key','in'=>'header','required'=>true]],'responses'=>['201'=>['description'=>CanonicalUiText::get('api.openapi.webhook_created')]]],
                 ],
                 '/api/v1/webhooks/{publicId}'=>['delete'=>['security'=>$security,'x-scope'=>'webhooks:manage','summary'=>CanonicalUiText::get('api.openapi.webhook_disable'),'responses'=>['200'=>['description'=>CanonicalUiText::get('api.openapi.webhook_disabled')]]]],
-            ]]);
+            ],ApiWriteOpenApi::paths())]);
     }
 
 

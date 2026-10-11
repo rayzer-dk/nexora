@@ -1,0 +1,27 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.api.title'),'integrations') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_system_integrations') }}">{{ ui_text('admin_integrations') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.api.title') }}</span></nav><h1>{{ ui_text('admin.api.title') }}</h1><p>{{ ui_text('admin.api.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+{% if secret %}<section class="admin-panel admin-panel--accent" data-api-secret><div class="admin-panel__header"><div><h2>{{ ui_icon('key-round', 18) }} {{ ui_text('admin.api.secret_title') }}</h2><small>{{ ui_text('admin.api.secret_hint') }}</small></div></div>
+<div class="admin-copy-row"><code id="api-secret">{{ secret }}</code><button type="button" class="admin-button" data-copy-target="#api-secret">{{ ui_icon('copy', 16) }} {{ ui_text('admin.api.copy') }}</button></div></section>{% endif %}
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.api.how_title') }}</h2></div></div>
+<p class="admin-help">{{ ui_text('admin.api.how_text') }}</p>
+<pre class="admin-code"><code>curl -X PATCH {{ base_url }}/catalog/variants/by-sku/SKU-123 \
+  -H "Authorization: Bearer &lt;{{ ui_text('admin.api.key') }}&gt;" -H "Content-Type: application/json" \
+  -d '{"price_minor": 129900, "stock_quantity": 15}'</code></pre>
+<p class="admin-help"><a href="{{ base_url }}/openapi.json" target="_blank" rel="noopener">{{ ui_icon('external-link', 14) }} OpenAPI (JSON)</a></p></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.api.new_title') }}</h2></div></div>
+<form method="post" action="{{ path('admin_system_integrations_api_create') }}" class="admin-form-grid"><input type="hidden" name="_csrf_token" value="{{ csrf_token('api_tokens') }}">
+<label><span>{{ ui_text('admin.api.name') }}</span><input type="text" name="name" maxlength="190" required placeholder="{{ ui_text('admin.api.name_hint')|e('html_attr') }}"></label>
+<label><span>{{ ui_text('admin.api.expires') }}</span><input type="date" name="expires"><small>{{ ui_text('admin.api.expires_hint') }}</small></label>
+<label><span>{{ ui_text('admin.api.rate') }}</span><input type="number" name="rate_limit" min="10" max="5000" value="120"></label>
+<fieldset class="admin-fieldset admin-form-wide"><legend>{{ ui_text('admin.api.scopes') }}</legend>
+<p class="admin-help">{% for key, list in presets %}<button type="button" class="admin-chip" data-scope-preset="{{ list|join(',') }}">{{ ui_text('admin.api.preset_' ~ key) }}</button> {% endfor %}</p>
+<div class="admin-check-grid">{% for scope in scopes %}<label class="admin-check"><input type="checkbox" name="scopes[]" value="{{ scope }}"{{ scope == 'catalog:read' ? ' checked' : '' }}><span><code>{{ scope }}</code><small>{{ ui_text('admin.api.scope.' ~ (scope|replace({':': '_'}))) }}</small></span></label>{% endfor %}</div></fieldset>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('plus', 16) }} {{ ui_text('admin.api.create') }}</button></div></form></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.api.list_title') }}</h2></div><span>{{ tokens|length }}</span></div>
+{% if tokens %}<div class="admin-table-wrap"><table class="admin-table" data-no-table-tools><thead><tr><th>{{ ui_text('admin.api.name') }}</th><th>{{ ui_text('admin.api.key') }}</th><th>{{ ui_text('admin.api.scopes') }}</th><th>{{ ui_text('admin.api.last_used') }}</th><th>{{ ui_text('admin.api.status') }}</th><th class="is-actions"></th></tr></thead><tbody>
+{% for t in tokens %}<tr><td><strong>{{ t.name }}</strong><small class="admin-cell-sub">{{ t.created_at|slice(0,10) }}{% if t.expires_at %} · {{ ui_text('admin.api.until') }} {{ t.expires_at|slice(0,10) }}{% endif %}</small></td><td><code>{{ t.token_prefix }}…</code></td><td>{% for s in t.scope_list %}<span class="admin-badge">{{ s }}</span> {% endfor %}</td><td>{{ t.last_used_at ? t.last_used_at|slice(0,16) : '—' }}</td>
+<td>{% if t.status == 'active' and not t.expired %}<span class="admin-badge is-active">{{ ui_text('admin.api.active') }}</span>{% elseif t.expired %}<span class="admin-badge is-warning">{{ ui_text('admin.api.expired') }}</span>{% else %}<span class="admin-badge is-danger">{{ ui_text('admin.api.revoked_state') }}</span>{% endif %}</td>
+<td class="is-actions">{% if t.status == 'active' %}<form method="post" action="{{ path('admin_system_integrations_api_revoke', {id: t.id}) }}" data-confirm="{{ ui_text('admin.api.revoke_confirm')|e('html_attr') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('api_tokens') }}"><button class="admin-icon-button is-danger" type="submit" title="{{ ui_text('admin.api.revoke')|e('html_attr') }}" aria-label="{{ ui_text('admin.api.revoke')|e('html_attr') }}">{{ ui_icon('ban', 16) }}</button></form>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p class="admin-help">{{ ui_text('admin.api.empty') }}</p>{% endif %}</section>
+{{ shell.end() }}

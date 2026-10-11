@@ -2668,6 +2668,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDashboardLayout();
   initOptionPresets();
   initSortableLists();
+  initScopePresets();
 });
 
 async function initPageFeatures() {
@@ -2909,6 +2910,17 @@ function initSortableLists() {
     });
   });
 }
+/** API key form: a preset ticks the scopes a typical integration needs. */
+function initScopePresets() {
+  qa('[data-scope-preset]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const wanted = new Set((button.dataset.scopePreset || '').split(',').filter(Boolean));
+      const form = button.closest('form');
+      qa('input[name="scopes[]"]', form || document).forEach((box) => { box.checked = wanted.has(box.value); });
+    });
+  });
+}
+
 function initUserMenu() {
   const menu = document.querySelector('[data-user-menu]');
   if (!menu) return;
