@@ -16,11 +16,21 @@ use Symfony\Component\Uid\Uuid;
 final class PaymentReturnController extends AbstractController
 {
     #[Route('/payment/return/{order}', name:'storefront_payment_return', methods:['GET'])]
-    public function __invoke(string $order,Connection $db,PaymentProviderRegistry $providers,PaymentLifecycleService $lifecycle): Response
+    public function __invoke(string $order,Connection $db,PaymentProviderRegistry $providers,PaymentLifecycleService $lifecycle,\Commerce\Modules\Payment\Application\InstalmentStateService $instalments): Response
     {
         try{$binary=Uuid::fromString($order)->toBinary();}catch(\Throwable){throw $this->createNotFoundException();}
         $row=$db->fetchAssociative('SELECT o.order_number,o.payment_status,o.status,p.provider_code,p.status provider_status FROM mc_sales_order o JOIN mc_payment p ON p.order_id=o.id WHERE o.public_id=? ORDER BY p.id DESC LIMIT 1',[$binary]);
         if(!is_array($row)) throw $this->createNotFoundException();
+        // Instalments are confirmed in a banking app: the shopper may be back before the callback, so ask the bank for the state.
+        if(in_array((string)$row['provider_code'],['mono_parts','privat_parts'],true) && !in_array((string)$row['provider_status'],['paid','refunded','partially_refunded','failed'],true)){
+            try{
+                $reference=(string)$db->fetchOne('SELECT p.provider_reference FROM mc_payment p JOIN mc_sales_order o ON o.id=p.order_id WHERE o.public_id=? ORDER BY p.id DESC LIMIT 1',[$binary]);
+                if($reference!==''){
+                    $instalments->sync((string)$row['provider_code'],$reference);
+                    $row=$db->fetchAssociative('SELECT o.order_number,o.payment_status,o.status,p.provider_code,p.status provider_status FROM mc_sales_order o JOIN mc_payment p ON p.order_id=o.id WHERE o.public_id=? ORDER BY p.id DESC LIMIT 1',[$binary])?:$row;
+                }
+            }catch(\Throwable){ /* the page shows the current status; a reload asks again */ }
+        }
         // PayPal takes the money only after the buyer is back: capture it here (the webhook is a backup).
         if($row['provider_code']==='paypal' && !in_array((string)$row['provider_status'],['paid','refunded','partially_refunded'],true)){
             try{

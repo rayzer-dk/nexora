@@ -17,7 +17,7 @@ if (!is_file($installedLock) && PHP_SAPI !== 'cli' && !$installHandover) {
 
 require_once $projectDir . '/bootstrap/tmpdir.php';
 require_once $projectDir . '/bootstrap/emergency.php';
-require_once $projectDir . '/bootstrap/carrier_secrets.php';
+require_once $projectDir . '/bootstrap/integration_secrets.php';
 
 if (!is_file($projectDir . '/.env')) {
     $runtimeOptions = is_array($_SERVER['APP_RUNTIME_OPTIONS'] ?? null)

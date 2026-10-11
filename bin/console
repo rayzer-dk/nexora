@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 
 $root = dirname(__DIR__);
 require_once $root . '/bootstrap/tmpdir.php';
-require_once $root . '/bootstrap/carrier_secrets.php';
+require_once $root . '/bootstrap/integration_secrets.php';
 $vendorRuntime = $root . '/vendor/autoload_runtime.php';
 $vendorAutoload = $root . '/vendor/autoload.php';
 

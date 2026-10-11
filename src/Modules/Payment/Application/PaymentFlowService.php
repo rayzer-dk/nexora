@@ -25,7 +25,7 @@ final readonly class PaymentFlowService
     {
         $binary = Uuid::fromString($orderPublicId)->toBinary();
         $row = $this->db->fetchAssociative(
-            'SELECT o.id,o.public_id,o.order_number,o.total_minor,o.currency,p.id payment_id,p.provider_code,p.provider_reference,p.status payment_status'
+            'SELECT o.id,o.public_id,o.order_number,o.total_minor,o.currency,o.customer_phone,o.customer_name,p.id payment_id,p.provider_code,p.provider_reference,p.status payment_status'
             . ' FROM mc_sales_order o JOIN mc_payment p ON p.order_id=o.id WHERE o.public_id=? ORDER BY p.id DESC LIMIT 1',
             [$binary],
         );
@@ -64,6 +64,9 @@ final readonly class PaymentFlowService
             currency: (string)$row['currency'],
             returnUrl: $base.'/payment/return/'.$orderPublicId,
             webhookUrl: $base.'/webhooks/payments/'.$code,
+            customerPhone: (string)($row['customer_phone'] ?? ''),
+            customerName: (string)($row['customer_name'] ?? ''),
+            items: $this->orderItems((int)$row['id']),
         ));
 
         $now = $this->now();
@@ -80,6 +83,17 @@ final readonly class PaymentFlowService
         });
 
         return ['redirect_url'=>$session->redirectUrl,'status'=>'awaiting_payment'];
+    }
+
+    /** @return list<array{name:string,quantity:string,unit_price_minor:int}> */
+    private function orderItems(int $orderId): array
+    {
+        $items = [];
+        foreach ($this->db->fetchAllAssociative('SELECT name,quantity,unit_price_minor FROM mc_sales_order_item WHERE order_id=? ORDER BY id', [$orderId]) as $r) {
+            $items[] = ['name' => (string)$r['name'], 'quantity' => (string)$r['quantity'], 'unit_price_minor' => (int)$r['unit_price_minor']];
+        }
+
+        return $items;
     }
 
     private function appendEvent(Connection $db, int $orderId, string $type, array $payload, string $actorType, string $actor): void

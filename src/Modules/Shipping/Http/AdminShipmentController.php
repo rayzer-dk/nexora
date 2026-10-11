@@ -6,7 +6,8 @@ namespace Commerce\Modules\Shipping\Http;
 
 use Commerce\Modules\Admin\Domain\AdminUser;
 use Commerce\Modules\Admin\Http\AdminContextResolver;
-use Commerce\Modules\Shipping\Application\CarrierSecretStore;
+use Commerce\Modules\Integration\Application\IntegrationCatalog;
+use Commerce\Modules\Integration\Application\IntegrationSecretStore;
 use Commerce\Modules\Shipping\Application\NovaPostShipmentOperationService;
 use Commerce\Modules\Shipping\Application\ShipmentOperationService;
 use Dompdf\Dompdf;
@@ -18,7 +19,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AdminShipmentController extends AbstractController
 {
-    public function __construct(private readonly ShipmentOperationService $shipments,private readonly NovaPostShipmentOperationService $novaPost,private readonly AdminContextResolver $contexts,private readonly \Commerce\Modules\Shipping\Application\DeliveryProviderRegistry $carriers,private readonly CarrierSecretStore $secrets){}
+    public function __construct(private readonly ShipmentOperationService $shipments,private readonly NovaPostShipmentOperationService $novaPost,private readonly AdminContextResolver $contexts,private readonly \Commerce\Modules\Shipping\Application\DeliveryProviderRegistry $carriers,private readonly IntegrationSecretStore $secrets){}
 
     #[Route('/admin/shipments',name:'admin_shipments',methods:['GET'])]
     public function index(Request $request):Response
@@ -42,7 +43,7 @@ final class AdminShipmentController extends AbstractController
             foreach(($ttn[$code]??[]) as $k)$keys[]=['name'=>$k,'set'=>$has($k),'scope'=>'ttn'];
             $connected=true;foreach($keys as $k)if($k['scope']==='connect'&&!$k['set'])$connected=false;
             $ttnReady=$cap->supportsShipmentCreation;foreach($keys as $k)if($k['scope']==='ttn'&&!$k['set'])$ttnReady=false;
-            $fields=[];foreach(CarrierSecretStore::FIELDS[$code]??[] as $fn=>$isSecret)$fields[]=['name'=>$fn,'secret'=>$isSecret,'set'=>$has($fn),'stored'=>$this->secrets->isStored($fn)];
+            $fields=[];foreach(IntegrationCatalog::fieldsOf('carriers',$code) as $fn=>$def)$fields[]=['name'=>$fn,'secret'=>$def['type']==='secret','set'=>$has($fn),'stored'=>$this->secrets->isStored($fn)];
             $rows[]=['code'=>$code,'fields'=>$fields,'label'=>$p->label(),'connected'=>$connected,'rates'=>$cap->supportsLiveRates,'create'=>$cap->supportsShipmentCreation,'create_ready'=>$ttnReady,'tracking'=>$cap->supportsTracking,'returns'=>$cap->supportsReturns,'keys'=>$keys];
         }
         return $this->render('@storefront/admin/shipping/carriers.html.twig',['carriers'=>$rows]);
@@ -54,7 +55,7 @@ final class AdminShipmentController extends AbstractController
     {
         $this->contexts->resolve($request);
         if(!$this->isCsrfTokenValid('shipment_carriers',(string)$request->request->get('_token')))throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));
-        $values=$request->request->all('key');$clear=array_values(array_filter(array_map('strval',array_keys($request->request->all('clear'))),static fn(string $n):bool=>CarrierSecretStore::allowed($n)));
+        $values=$request->request->all('key');$clear=array_values(array_filter(array_map('strval',array_keys($request->request->all('clear'))),static fn(string $n):bool=>IntegrationSecretStore::allowed($n)));
         try{$this->secrets->save($values,$clear);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('admin.carriers.saved'));}
         catch(\Throwable){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('admin.carriers.save_failed'));}
         return $this->redirectToRoute('admin_shipment_carriers');

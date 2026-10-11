@@ -4,6 +4,7 @@
 <span class="eyebrow">{{ ui_text('order_number', {number: order.order_number}) }}</span>
 {% if order.payment_status == 'paid' %}<h1>{{ ui_text('payment_confirmed') }}</h1><p>{{ ui_text('payment_confirmed_text') }}</p>
 {% elseif order.payment_status in ['failed','expired'] %}<h1>{{ ui_text('payment_not_completed') }}</h1><p>{{ ui_text('payment_not_completed_text') }}</p>
+{% elseif order.provider_code|default('') in ['mono_parts','privat_parts'] %}<h1>{{ ui_text('instalment_waiting_title') }}</h1><p>{{ ui_text('instalment_waiting_text') }}</p><p><a class="button" href="">{{ ui_icon('rotate-ccw', 16) }} {{ ui_text('instalment_check_again') }}</a></p>
 {% else %}<h1>{{ ui_text('payment_checking') }}</h1><p>{{ ui_text('payment_checking_text') }}</p>{% endif %}
 <a class="button button--primary" href="/catalog">{{ ui_text('go_catalog') }}{{ ui_icon('arrow-right', 16) }}</a>
 </div></section>

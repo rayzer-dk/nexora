@@ -55,6 +55,18 @@ parameters:
     env(GOOGLE_LOGIN_ENABLED): '0'
     env(GOOGLE_LOGIN_CLIENT_ID): ''
     env(GOOGLE_LOGIN_CLIENT_SECRET): ''
+    env(MONO_PARTS_ENABLED): '0'
+    env(MONO_PARTS_STORE_ID): ''
+    env(MONO_PARTS_SECRET): ''
+    env(MONO_PARTS_PARTS): '3,4,6,10'
+    env(MONO_PARTS_AUTO_CONFIRM): '1'
+    env(MONO_PARTS_API_BASE): 'https://u2.monobank.com.ua'
+    env(PRIVAT_PARTS_ENABLED): '0'
+    env(PRIVAT_PARTS_STORE_ID): ''
+    env(PRIVAT_PARTS_PASSWORD): ''
+    env(PRIVAT_PARTS_MERCHANT_TYPE): 'PP'
+    env(PRIVAT_PARTS_PARTS): '2'
+    env(PRIVAT_PARTS_API_BASE): 'https://payparts2.privatbank.ua'
     env(LIQPAY_ENABLED): '0'
     env(LIQPAY_PUBLIC_KEY): ''
     env(LIQPAY_PRIVATE_KEY): ''
@@ -208,7 +220,7 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
-    Commerce\Modules\Shipping\Application\CarrierSecretStore:
+    Commerce\Modules\Integration\Application\IntegrationSecretStore:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
@@ -478,6 +490,34 @@ services:
         arguments:
             $isEnabled: '%commerce.monobank.enabled%'
             $token: '%commerce.monobank.token%'
+
+    Commerce\Modules\Payment\Provider\MonoParts\MonoPartsClient:
+        arguments:
+            $apiBase: '%env(MONO_PARTS_API_BASE)%'
+            $storeId: '%env(MONO_PARTS_STORE_ID)%'
+            $secret: '%env(MONO_PARTS_SECRET)%'
+
+    Commerce\Modules\Payment\Provider\MonoParts\MonoPartsPaymentProvider:
+        arguments:
+            $isEnabled: '%env(bool:MONO_PARTS_ENABLED)%'
+            $storeId: '%env(MONO_PARTS_STORE_ID)%'
+            $secret: '%env(MONO_PARTS_SECRET)%'
+            $parts: '%env(MONO_PARTS_PARTS)%'
+            $autoConfirm: '%env(bool:MONO_PARTS_AUTO_CONFIRM)%'
+
+    Commerce\Modules\Payment\Provider\PrivatParts\PrivatPartsClient:
+        arguments:
+            $apiBase: '%env(PRIVAT_PARTS_API_BASE)%'
+            $storeId: '%env(PRIVAT_PARTS_STORE_ID)%'
+            $password: '%env(PRIVAT_PARTS_PASSWORD)%'
+
+    Commerce\Modules\Payment\Provider\PrivatParts\PrivatPartsPaymentProvider:
+        arguments:
+            $isEnabled: '%env(bool:PRIVAT_PARTS_ENABLED)%'
+            $storeId: '%env(PRIVAT_PARTS_STORE_ID)%'
+            $password: '%env(PRIVAT_PARTS_PASSWORD)%'
+            $merchantType: '%env(PRIVAT_PARTS_MERCHANT_TYPE)%'
+            $parts: '%env(PRIVAT_PARTS_PARTS)%'
 
     Commerce\Modules\Payment\Provider\LiqPay\LiqPayClient:
         arguments:
