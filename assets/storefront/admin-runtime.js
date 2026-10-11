@@ -2670,6 +2670,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSortableLists();
   initScopePresets();
   initImageQueue();
+  initCrmPresets();
 });
 
 async function initPageFeatures() {
@@ -2955,6 +2956,29 @@ function initImageQueue() {
         buttons.forEach((b) => { b.disabled = false; });
       }
     }));
+  });
+}
+
+/** Order connections: choosing a preset fills the address hint, the headers hint, the events and the body template of a NEW connection. */
+function initCrmPresets() {
+  qa('[data-crm-form]').forEach((form) => {
+    const select = q('[data-crm-preset]', form);
+    if (!select) return;
+    let presets = {};
+    try { presets = JSON.parse(form.dataset.presets || '{}'); } catch (_) { presets = {}; }
+    const editing = Number(q('input[name="id"]', form)?.value || 0) > 0;
+    select.addEventListener('change', () => {
+      const preset = presets[select.value];
+      if (!preset) return;
+      if (editing && !window.confirm(t('js_confirm_question'))) return;
+      const url = q('[data-crm-url]', form);
+      if (url && (url.value === '' || !editing)) url.placeholder = preset.url;
+      const headers = q('[data-crm-headers]', form);
+      if (headers) headers.placeholder = preset.headers || 'Authorization: Bearer ...';
+      const template = q('[data-crm-template]', form);
+      if (template) template.value = preset.template;
+      qa('[data-crm-event]', form).forEach((box) => { box.checked = (preset.events || []).includes(box.value); });
+    });
   });
 }
 

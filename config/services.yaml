@@ -456,6 +456,14 @@ services:
         arguments:
             $senders: !tagged_iterator commerce.notification_sender
 
+    Commerce\Modules\Integration\Crm\OrderSnapshotBuilder:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Integration\Crm\CrmDispatcher:
+        arguments:
+            $allowPrivateHosts: '%env(bool:COMMERCE_SUPPLIER_ALLOW_PRIVATE_HOSTS)%'
+
     Commerce\Modules\Migration\Application\ImportImageQueue:
         arguments:
             $allowPrivateHosts: '%env(bool:COMMERCE_SUPPLIER_ALLOW_PRIVATE_HOSTS)%'

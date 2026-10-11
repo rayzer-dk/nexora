@@ -20,6 +20,7 @@ final readonly class IntegrationSyncWorker
         private Connection $db,
         private GoogleMerchantSyncHandler $google,
         private MarketingEventDispatcher $marketing,
+        private \Commerce\Modules\Integration\Crm\CrmDispatcher $crm,
         private IntegrationRetryPolicy $retryPolicy,
     ) {}
 
@@ -35,6 +36,7 @@ final readonly class IntegrationSyncWorker
                 match((string)$job['integration_code']){
                     'google_merchant'=>$this->google->handle($job),
                     'marketing'=>$this->marketing->handle($job),
+                    'crm'=>$this->crm->handle($job),
                     default=>throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.fccf9f9e629d').$job['integration_code'])
                 };
                 $this->db->update('mc_integration_sync_queue',[

@@ -188,6 +188,9 @@ final readonly class OrderManagementService
                 'to' => $status,
                 'tracking_number' => $trackingNumber !== '' ? $trackingNumber : null,
             ], 'admin', $actor);
+            if ($status === 'shipped' && $current !== $status) {
+                $this->events->publish($this->eventFactory->create(EventNames::ORDER_SHIPPED, 'order', $orderPublicId, ['store_id' => (int) $order['store_id'], 'tracking_number' => $trackingNumber], ['actor' => 'admin']));
+            }
         });
     }
 

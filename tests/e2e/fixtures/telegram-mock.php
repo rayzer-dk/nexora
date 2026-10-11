@@ -30,6 +30,24 @@ if ($path === '/old-shop/photo.png') {
     echo base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGPkqrjDAANMDEgANwcARI4BZoWJLsMAAAAASUVORK5CYII=');
     return;
 }
+// A receiver of order connections for the CRM end-to-end test: POST /crm-hook records the body and the signature header, GET /__crm-log lists them.
+if ($path === '/crm-hook') {
+    $raw = (string) file_get_contents('php://input');
+    file_put_contents($dir . '/crm.jsonl', json_encode(['body' => $raw, 'signature' => $_SERVER['HTTP_X_NEXORA_SIGNATURE'] ?? '', 'event' => $_SERVER['HTTP_X_NEXORA_EVENT'] ?? '', 'auth' => $_SERVER['HTTP_AUTHORIZATION'] ?? '']) . "
+", FILE_APPEND);
+    echo json_encode(['id' => 777, 'ok' => true]);
+    return;
+}
+if ($path === '/__crm-log') {
+    echo json_encode(is_file($dir . '/crm.jsonl') ? array_map(static fn (string $l): mixed => json_decode($l, true), array_filter(explode("
+", (string) file_get_contents($dir . '/crm.jsonl')))) : []);
+    return;
+}
+if ($path === '/__crm-reset') {
+    @unlink($dir . '/crm.jsonl');
+    echo '{}';
+    return;
+}
 // Checkbox cash register API stand-in for the PRRO end-to-end test: PRRO_CHECKBOX_BASE_URL=http://127.0.0.1:8099/checkbox/api/v1
 if (str_starts_with($path, '/checkbox/api/v1')) {
     $sub = substr($path, strlen('/checkbox/api/v1'));
