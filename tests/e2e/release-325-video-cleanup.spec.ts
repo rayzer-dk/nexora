@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { expectNoServerError, openProductTab } from './helpers';
+import { expectNoServerError, openProductTab, waitMediaReady } from './helpers';
 
 // Release 3.25.0: product videos (a link, preview first, player after a click), manual review of unused pictures with a
 // restorable trash, files of a picture in the library, and the remembered library folder.
@@ -136,7 +136,7 @@ test('unused pictures are reviewed by hand: deselect, move to the trash, restore
   await login(page);
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
   // let this page finish loading first: its own late load event must not be mistaken for the reload after the upload
-  await page.waitForLoadState('load');
+  await waitMediaReady(page);
   // choosing a file submits the upload form by itself
   await Promise.all([
     page.waitForEvent('load', { timeout: 60000 }), // the page reloads itself after the upload
@@ -192,6 +192,7 @@ test('the media library shows the files of a picture and remembers the last fold
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.media-folder.is-active')).toHaveAttribute('href', /folder=all/);
 
+  await waitMediaReady(page);
   const card = page.locator('.media-card').filter({ has: page.locator('details[data-media-files]') }).first();
   await card.locator('button[data-media-edit]').first().click();
   await card.locator('details[data-media-files] summary').click();

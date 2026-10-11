@@ -8,6 +8,9 @@ test('a rejected checkout keeps everything the buyer typed or chose', async ({ p
   await added;
 
   await page.goto('/checkout', { waitUntil: 'domcontentloaded' });
+  // On a phone the cookie bar covers the fixed order bar until the visitor answers it.
+  const reject = page.locator('[data-consent-reject-optional]').first();
+  if (await reject.isVisible().catch(() => false)) await reject.click();
   const form = page.locator('[data-checkout-form]');
   await form.locator('[name="name"]').fill('Іван Тест');
   await form.locator('[name="phone"]').fill('12'); // invalid on purpose

@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError, openMoreFields, openProductTab } from './helpers';
+import { expectNoServerError, openMoreFields, openProductTab, waitMediaReady } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
@@ -126,6 +126,7 @@ test('custom units appear in product forms and the HTML editor offers links, lib
 test('a product picks an already uploaded image and a category gets a cover image and clear text positions', async ({ page }) => {
   await loginAdmin(page);
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
+  await waitMediaReady(page);
   const upload = page.locator('form[action="/admin/media/upload"]');
   const picked = page.waitForResponse((r) => r.url().endsWith('/admin/media/upload') && r.request().method() === 'POST');
   // The upload form submits itself and redirects back to the library; wait for that page, not the old one that already matches.

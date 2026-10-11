@@ -1,5 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 test.describe.configure({ retries: 0 });
@@ -89,6 +91,7 @@ async function setContactWidget(page: Page, enabled: boolean): Promise<void> {
     await form.locator('input[name="viber"]').fill('380501234567');
     await form.locator('input[name="messenger"]').fill('nexora.page');
     await form.locator('input[name="telegram"]').fill('nexora_shop');
+    await form.locator('input[name="callback_enabled"]').check();
     await form.locator('input[name="enabled"]').check();
   } else {
     await form.locator('input[name="enabled"]').uncheck();
@@ -123,8 +126,8 @@ for (const scheme of ['light', 'dark'] as const) {
       await setScheme(page, 'light');
       await setContactWidget(page, false);
     }
-    writeFileSync(`/tmp/contrast-${scheme}.txt`, findings.join('\n'));
-    writeFileSync(`/tmp/contrast-${scheme}-routes.txt`, scanned.join('\n'));
+    writeFileSync(join(tmpdir(), `contrast-${scheme}.txt`), findings.join('\n'));
+    writeFileSync(join(tmpdir(), `contrast-${scheme}-routes.txt`), scanned.join('\n'));
     expect(scanned.filter((r) => r.startsWith('/admin')).length, 'admin pages scanned').toBeGreaterThan(30);
     expect(scanned.filter((r) => !r.startsWith('/admin')).length, 'storefront pages scanned').toBeGreaterThan(12);
     expect(findings, findings.slice(0, 40).join('\n')).toEqual([]);

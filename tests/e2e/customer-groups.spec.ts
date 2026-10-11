@@ -53,7 +53,9 @@ test('a group discount shows in prices for the signed-in member and is taken off
   await member.goto(path, { waitUntil: 'domcontentloaded' });
   const memberPrice = await member.locator('.product-price__current').first().innerText();
   expect(memberPrice).not.toBe(guestPrice);
-  await expect(member.locator('.product-price__old').first()).toContainText(guestPrice.replace(/\s/g, ' ').trim().slice(0, 3));
+  // The member pays less than the guest (the product may already carry an old price of its own).
+  const amount = (text: string) => Number(text.replace(/[^\d,]/g, '').replace(',', '.'));
+  expect(amount(memberPrice)).toBeLessThan(amount(guestPrice));
 
   // The cart takes the group discount off the order.
   await member.goto('/catalog', { waitUntil: 'domcontentloaded' });

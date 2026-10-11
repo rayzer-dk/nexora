@@ -54,3 +54,9 @@ export async function demoProductEditUrl(page: Page): Promise<string> {
   demoProductEdit = href ?? '';
   return demoProductEdit;
 }
+
+/** The media library loads its upload script lazily; a file chosen before it is ready would not be sent. */
+export async function waitMediaReady(page: Page): Promise<void> {
+  await page.waitForLoadState('load');
+  await page.locator('[data-media-drop][data-media-ready]').waitFor({ state: 'attached' });
+}

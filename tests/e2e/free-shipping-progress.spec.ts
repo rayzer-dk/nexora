@@ -28,7 +28,7 @@ test('the free-delivery progress bar shows in the cart, the slide-in cart and th
     await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('form:has(input[name^="cfg["]) .admin-form-actions button[type="submit"]').click()]);
     await expectNoServerError(page);
   };
-  const withThreshold = original.map(([name, value]): [string, string] => [name, name.endsWith('[fee]') ? '50' : name.endsWith('[free_over]') ? '1000000' : value]);
+  const withThreshold = original.map(([name, value]): [string, string] => [name, name.endsWith('[fee]') ? '50' : name.endsWith('[free_over]') ? '100000000' : value]);
 
   try {
     await setValues(withThreshold);

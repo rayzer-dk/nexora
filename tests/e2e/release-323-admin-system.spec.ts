@@ -21,7 +21,7 @@ test('cron page shows absolute commands, status, web trigger and runs now', asyn
   await page.goto('/admin/system/cron', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
   const line = (await page.locator('#cron-line').innerText()).trim();
-  expect(line).toMatch(/^\*\/5 \* \* \* \* \/\S*php\S* \/\S+\/bin\/console commerce:cron:run >\/dev\/null 2>&1$/);
+  expect(line).toMatch(/^\*\/5 \* \* \* \* \/\S*php\S* '?(?:[A-Za-z]:)?\/\S+\/bin\/console'? commerce:cron:run >\/dev\/null 2>&1$/);
   await expect(page.locator('#cron-command')).toContainText('commerce:cron:run');
   await expect(page.locator('[data-cron-status]')).toBeVisible();
   const url = (await page.locator('#cron-web-url').innerText()).trim();

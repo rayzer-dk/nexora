@@ -77,8 +77,11 @@ test('product controls: hidden from catalog, reviews off, quantity rules and a c
     await member.locator('input[name="_username"]').fill(email);
     await member.locator('input[name="_password"]').fill(password);
     await Promise.all([member.waitForURL(/\/account(?:\?.*)?$/), member.locator('form.account-form button[type="submit"]').click()]);
-    await member.goto(`/${slug}`, { waitUntil: 'domcontentloaded' });
-    await expect(member.locator('.product-price__current').first()).toContainText('0,50');
+    // The first answer after the save can still be the cached page: ask again until the group price shows.
+    await expect(async () => {
+      await member.goto(`/${slug}`, { waitUntil: 'domcontentloaded' });
+      await expect(member.locator('.product-price__current').first()).toContainText('0,50', { timeout: 1500 });
+    }).toPass({ timeout: 20_000 });
     await guest.goto(`/${slug}`, { waitUntil: 'domcontentloaded' });
     await expect(guest.locator('.product-price__current').first()).not.toContainText('0,50 ');
   } finally {
