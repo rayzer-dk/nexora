@@ -46,6 +46,7 @@ final readonly class CheckoutOrderService
         private \Commerce\Modules\Catalog\Application\ProductAddonService $addons,
         private \Commerce\Modules\Storefront\Infrastructure\PickupPointRepository $pickupPoints,
         private \Commerce\Modules\Tax\Application\BuyerVatCheck $buyerVat,
+        private \Commerce\Modules\Affiliate\Application\AffiliateService $affiliates,
     ) {}
 
     /**
@@ -215,6 +216,7 @@ final readonly class CheckoutOrderService
             if ($requiresShipping) { $db->insert('mc_fulfillment',['public_id'=>$this->ids->binary(),'order_id'=>$orderId,'provider_code'=>$providerCode,'service_type'=>$selfPickup?'store_pickup':(string)($input['service_type']??'pickup_point'),'status'=>'pending','tracking_number'=>null,'destination_snapshot'=>json_encode($destination,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'provider_snapshot'=>null,'created_at'=>$now,'updated_at'=>$now]); } else { $db->update('mc_sales_order',['fulfillment_status'=>'not_required'],['id'=>$orderId]); }
             $db->insert('mc_payment',['public_id'=>$this->ids->binary(),'order_id'=>$orderId,'provider_code'=>$payment->code,'provider_reference'=>null,'status'=>'pending','amount_minor'=>$total,'currency'=>$context->currency,'idempotency_key'=>'payment:'.$idempotencyKey,'metadata'=>json_encode(['online'=>$payment->online],JSON_THROW_ON_ERROR),'created_at'=>$now,'updated_at'=>$now]);
             $this->promotionRedemptions->record($orderId,$promotionResult,$customerId,$email);
+            try { $this->affiliates->attach($orderId,$context->storeId,max(0,$subtotal-$discount),$email); } catch (\Throwable) { /* the partner credit never blocks an order */ }
             $db->insert('mc_order_event',['order_id'=>$orderId,'sequence_no'=>1,'event_type'=>'order.placed','payload'=>json_encode(['payment_method'=>$payment->code,'carrier'=>$providerCode],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),'actor_type'=>'customer','actor_subject'=>$email!==''?$email:$phone,'created_at'=>$now]);
             $this->events->publish($this->eventFactory->create(
                 EventNames::ORDER_PLACED,
