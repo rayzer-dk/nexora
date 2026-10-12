@@ -45,6 +45,7 @@ final readonly class CheckoutOrderService
         private \Commerce\Modules\Checkout\Application\CartWeightCalculator $weights,
         private \Commerce\Modules\Catalog\Application\ProductAddonService $addons,
         private \Commerce\Modules\Storefront\Infrastructure\PickupPointRepository $pickupPoints,
+        private \Commerce\Modules\Tax\Application\BuyerVatCheck $buyerVat,
     ) {}
 
     /**
@@ -73,6 +74,8 @@ final readonly class CheckoutOrderService
         if ($phone === '' && $email === '') throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.vkazhit_telefon_abo_email_dlia_zviazku'));
         if (mb_strlen($companyName) > 190 || mb_strlen($companyTaxId) > 64) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.nekorektni_rekvizyty_kompanii'));
         if (mb_strlen($customerComment) > 2000) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.komentar_zanadto_dovhyi'));
+        // The VAT number of a business buyer is checked in VIES before the order is written (never inside the transaction); the answer only informs the manager.
+        $buyerVat = $companyTaxId !== '' ? $this->buyerVat->check($companyTaxId, (string) $this->db->fetchOne('SELECT default_country FROM mc_store WHERE id=?', [$context->storeId])) : null;
         $payment = $this->payments->require($paymentCode)->method();
         if ($paymentCode==='b2b_invoice' && $this->b2b->membership($context->storeId,$customerId)===null) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.b2b_oplata_dostupna_lyshe_pidtverdzhenomu_spivrobitn'));
         if (strlen($idempotencyKey) < 16 || strlen($idempotencyKey) > 190) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.checkoutorderservice.nekorektnyi_kliuch_oformlennia'));
@@ -88,7 +91,7 @@ final readonly class CheckoutOrderService
         if ($request !== null && !str_starts_with($request->getPathInfo(), '/admin')) {
             $this->fraud->preflight($context->storeId, $email, $phone, $clientIp);
         }
-        $result = $this->db->transactional(function(Connection $db) use($context,$cartId,$input,$idempotencyKey,$name,$phone,$email,$providerCode,$payment,$customerId,$companyName,$companyTaxId,$customerComment,$purchaseOrderNumber,$unitPriceOverrides): array {
+        $result = $this->db->transactional(function(Connection $db) use($context,$cartId,$input,$idempotencyKey,$name,$phone,$email,$providerCode,$payment,$customerId,$companyName,$companyTaxId,$buyerVat,$customerComment,$purchaseOrderNumber,$unitPriceOverrides): array {
             $existing = $db->fetchAssociative("SELECT public_id,order_number,total_minor,currency FROM mc_sales_order WHERE checkout_idempotency_key=? AND store_id=? LIMIT 1", [$idempotencyKey, $context->storeId]);
             if (is_array($existing)) return ['public_id'=>Uuid::fromBinary((string)$existing['public_id'])->toRfc4122(),'order_number'=>(string)$existing['order_number'],'total_minor'=>(int)$existing['total_minor'],'currency'=>(string)$existing['currency']];
 
@@ -159,7 +162,7 @@ final readonly class CheckoutOrderService
             $paymentTerms=$b2bTerms===null?null:(int)$b2bTerms['payment_terms_days'];
             $dueAt=$paymentTerms!==null&&$paymentTerms>0?(new DateTimeImmutable('+'.$paymentTerms.' days',new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'):null;
             $now=$this->now(); $public=$this->ids->generate(); $storeCode=(string)($db->fetchOne('SELECT code FROM mc_store WHERE id=?',[$context->storeId]) ?: 'MC'); $orderNumber=$this->orderNumber($db,$context->storeId,$storeCode);
-            $db->insert('mc_sales_order',['public_id'=>$public->toBinary(),'store_id'=>$context->storeId,'customer_id'=>$customerId,'b2b_company_id'=>$b2bTerms===null?null:(int)$b2bTerms['company_id'],'b2b_approval_status'=>$b2bApproval,'purchase_order_number'=>$purchaseOrderNumber!==''?$purchaseOrderNumber:null,'payment_terms_days'=>$paymentTerms,'due_at'=>$dueAt,'order_number'=>$orderNumber,'checkout_idempotency_key'=>$idempotencyKey,'status'=>$b2bApproval==='pending'?'pending_approval':'placed','payment_status'=>'pending','fulfillment_status'=>'unfulfilled','currency'=>$context->currency,'prices_include_tax'=>1,'subtotal_minor'=>$subtotal,'discount_minor'=>$discount,'shipping_minor'=>$shipping,'tax_minor'=>$taxIncluded,'tax_country_code'=>$context->countryCode,'tax_calculation_mode'=>'included','total_minor'=>$total,'customer_email'=>$email!==''?$email:null,'customer_email_normalized'=>$email!==''?$email:null,'customer_phone'=>$phone,'customer_name'=>$name,'customer_comment'=>$customerComment!==''?$customerComment:null,'company_name'=>$companyName!==''?$companyName:($b2bTerms!==null?(string)$b2bTerms['name']:null),'company_tax_id'=>$companyTaxId!==''?$companyTaxId:($b2bTerms!==null?(string)($b2bTerms['tax_id']??''):null),'locale'=>$context->locale,'created_at'=>$now,'updated_at'=>$now]);
+            $db->insert('mc_sales_order',['public_id'=>$public->toBinary(),'store_id'=>$context->storeId,'customer_id'=>$customerId,'b2b_company_id'=>$b2bTerms===null?null:(int)$b2bTerms['company_id'],'b2b_approval_status'=>$b2bApproval,'purchase_order_number'=>$purchaseOrderNumber!==''?$purchaseOrderNumber:null,'payment_terms_days'=>$paymentTerms,'due_at'=>$dueAt,'order_number'=>$orderNumber,'checkout_idempotency_key'=>$idempotencyKey,'status'=>$b2bApproval==='pending'?'pending_approval':'placed','payment_status'=>'pending','fulfillment_status'=>'unfulfilled','currency'=>$context->currency,'prices_include_tax'=>1,'subtotal_minor'=>$subtotal,'discount_minor'=>$discount,'shipping_minor'=>$shipping,'tax_minor'=>$taxIncluded,'tax_country_code'=>$context->countryCode,'tax_calculation_mode'=>'included','company_vat_status'=>$buyerVat['status']??null,'company_vat_name'=>isset($buyerVat['name'])&&$buyerVat['name']!==''?mb_substr($buyerVat['name'],0,190):null,'total_minor'=>$total,'customer_email'=>$email!==''?$email:null,'customer_email_normalized'=>$email!==''?$email:null,'customer_phone'=>$phone,'customer_name'=>$name,'customer_comment'=>$customerComment!==''?$customerComment:null,'company_name'=>$companyName!==''?$companyName:($b2bTerms!==null?(string)$b2bTerms['name']:null),'company_tax_id'=>$companyTaxId!==''?$companyTaxId:($b2bTerms!==null?(string)($b2bTerms['tax_id']??''):null),'locale'=>$context->locale,'created_at'=>$now,'updated_at'=>$now]);
             $orderId=(int)$db->lastInsertId();
             $gift=$giftCode!==''?$this->giftCards->redeem($db,$context->storeId,$giftCode,$context->currency,$total,$orderId):null;
             $giftMinor=(int)($gift['amount_minor']??0);
