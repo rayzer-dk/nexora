@@ -1,0 +1,13 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.director.page_title'),'director') }}
+<header class="admin-page-header"><div><h1>{{ ui_text('admin.director.page_title') }}</h1><p>{{ ui_text('admin.director.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+{% if settings.enabled %}
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.director.today') }}</h2><small>{{ ui_text('admin.director.today_hint') }}</small></div>{{ ui_icon('sparkles', 20) }}</div>
+{% include '@storefront/admin/director/_cards.html.twig' with {director: director, back: 'director'} only %}</section>
+{% endif %}
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.director.settings') }}</h2></div></div>
+<form method="post" action="{{ path('admin_director_settings') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_director_settings') }}">
+<label class="admin-switch-label"><span>{{ ui_text('admin.director.enabled') }}</span><input type="checkbox" name="enabled" value="1"{{ settings.enabled ? ' checked' : '' }}></label>
+<label><span>{{ ui_text('admin.director.percent') }}</span><input type="number" name="discount_percent" min="1" max="50" value="{{ settings.discount_percent }}"><small>{{ ui_text('admin.director.percent_hint') }}</small></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 16) }} {{ ui_text('admin.director.save') }}</button></div></form></section>
+{{ shell.end() }}

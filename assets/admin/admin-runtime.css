@@ -2263,3 +2263,13 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 .admin-copy-row code { flex: 1 1 18rem; min-width: 0; padding: var(--mc-space-3); border: 1px dashed var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); font-family: var(--mc-font-mono); word-break: break-all; user-select: all; }
 .admin-code { margin: 0; padding: var(--mc-space-3) var(--mc-space-4); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-subtle); overflow: auto; font-family: var(--mc-font-mono); font-size: var(--mc-font-size-sm); }
 .admin-panel--accent { border-color: var(--mc-color-success); background: var(--mc-color-success-soft); }
+/* Store director: the proposed actions of the day */
+.director-cards { display: grid; gap: var(--mc-space-2); }
+.director-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--mc-space-3); padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-lg); background: var(--mc-color-surface); }
+.director-card.is-applied { border-color: var(--mc-color-success, var(--mc-color-border)); }
+.director-card.is-dismissed, .director-card.is-undone { opacity: 0.65; }
+.director-card__text { display: grid; gap: var(--mc-space-1); min-width: 0; flex: 1 1 260px; overflow-wrap: anywhere; }
+.director-card__text small { color: var(--mc-color-text-muted); }
+.director-card__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-2); }
+.director-card__actions form { margin: 0; }
+.dash-fop-alert { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-3); border-color: var(--mc-color-warning, var(--mc-color-border)); }

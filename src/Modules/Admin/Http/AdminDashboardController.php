@@ -22,7 +22,7 @@ final class AdminDashboardController extends AbstractController
     }
 
     #[Route('/admin', name:'admin_dashboard', methods:['GET'])]
-    public function __invoke(Request $request, Connection $connection, \Commerce\Modules\Fop\Application\FopService $fop): Response
+    public function __invoke(Request $request, Connection $connection, \Commerce\Modules\Fop\Application\FopService $fop, \Commerce\Modules\Director\Application\DirectorService $director): Response
     {
         $context = $this->contexts->resolve($request);
         $days = $request->query->getInt('days', 30);
@@ -91,7 +91,7 @@ final class AdminDashboardController extends AbstractController
         $onboarding=['done'=>count(array_filter($steps,static fn(array $s):bool=>$s['done'])),'total'=>count($steps)];
         try{$cq=$this->catalogQuality->summary($context->storeId);}catch(\Throwable){$cq=null;}
         $layout=$user instanceof AdminUser?$this->layouts->load($user->id,$context->storeId):DashboardLayout::normalize([],[]);
-        return $this->render('@storefront/admin/dashboard.html.twig',['fop_alert'=>$fop->alert($context->storeId),'dash_layout'=>$layout,'catalog_quality'=>$cq,'onboarding'=>$onboarding,'platform_version'=>PlatformVersion::VERSION,'store'=>$store,'counts'=>$counts,'groups'=>$groups,'today'=>$today,'health'=>$health,'report'=>$report,'chart'=>DashboardChart::layout($report['series'],$report['annotations']),'backup_age_days'=>$backupAge,'admin_name'=>$user instanceof AdminUser?$user->displayName:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')]);
+        return $this->render('@storefront/admin/dashboard.html.twig',['director'=>$director->today($context->storeId),'fop_alert'=>$fop->alert($context->storeId),'dash_layout'=>$layout,'catalog_quality'=>$cq,'onboarding'=>$onboarding,'platform_version'=>PlatformVersion::VERSION,'store'=>$store,'counts'=>$counts,'groups'=>$groups,'today'=>$today,'health'=>$health,'report'=>$report,'chart'=>DashboardChart::layout($report['series'],$report['annotations']),'backup_age_days'=>$backupAge,'admin_name'=>$user instanceof AdminUser?$user->displayName:\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.administrator')]);
     }
 
     /** 1 when the scheduler has not completed any task for over 15 minutes (or never), else 0. */

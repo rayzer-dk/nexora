@@ -1,0 +1,22 @@
+{# The proposed actions of today. Needs: director (list), back ('dashboard' | 'director'). #}
+{% set links = {stale_inquiries: path('admin_commerce_inquiries'), unpaid_orders: path('admin_orders', {payment_status: 'pending'}), low_stock: path('admin_catalog_products')} %}
+<div class="director-cards" data-director-cards>
+{% for a in director %}
+  {% set p = a.params %}
+  <article class="director-card is-{{ a.status }}" data-director-kind="{{ a.kind }}" data-director-status="{{ a.status }}">
+    <div class="director-card__text">
+      <strong>{{ ui_text('admin.director.title_' ~ a.kind)|replace({'%count%': p.count ?? 0, '%percent%': p.percent ?? 0}) }}</strong>
+      <small>{{ ui_text('admin.director.body_' ~ a.kind)|replace({'%names%': (p.names ?? [])|join(', '), '%percent%': p.percent ?? 0}) }}</small>
+    </div>
+    <div class="director-card__actions">
+      {% set token = csrf_token('admin_director_' ~ a.id) %}
+      {% if a.can_apply %}<form method="post" action="{{ path('admin_director_action', {id: a.id, operation: 'apply'}) }}"><input type="hidden" name="_token" value="{{ token }}"><input type="hidden" name="back" value="{{ back }}"><button class="admin-button is-primary" type="submit" data-director-apply>{{ ui_icon('check', 16) }} {{ ui_text('admin.director.apply') }}</button></form>{% endif %}
+      {% if a.can_undo %}<form method="post" action="{{ path('admin_director_action', {id: a.id, operation: 'undo'}) }}"><input type="hidden" name="_token" value="{{ token }}"><input type="hidden" name="back" value="{{ back }}"><button class="admin-button" type="submit" data-director-undo>{{ ui_icon('rotate-ccw', 16) }} {{ ui_text('admin.director.undo') }}</button></form>{% endif %}
+      {% if links[a.kind] is defined and a.status == 'proposed' %}<a class="admin-button is-primary" href="{{ links[a.kind] }}">{{ ui_icon('arrow-right', 16) }} {{ ui_text('admin.director.open') }}</a>{% endif %}
+      {% if a.status == 'proposed' %}<form method="post" action="{{ path('admin_director_action', {id: a.id, operation: 'dismiss'}) }}"><input type="hidden" name="_token" value="{{ token }}"><input type="hidden" name="back" value="{{ back }}"><button class="admin-button" type="submit">{{ ui_icon('x', 16) }} {{ ui_text('admin.director.dismiss') }}</button></form>{% else %}<span class="admin-badge">{{ ui_text('admin.director.status_' ~ a.status) }}</span>{% endif %}
+    </div>
+  </article>
+{% else %}
+  <p class="admin-empty">{{ ui_text('admin.director.nothing') }}</p>
+{% endfor %}
+</div>
