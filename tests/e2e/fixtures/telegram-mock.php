@@ -48,6 +48,19 @@ if ($path === '/__crm-reset') {
     echo '{}';
     return;
 }
+// VIES stand-in: GET /vies/ms/<CC>/vat/<number>; numbers ending in 0 are valid, 9 is invalid, anything else is "service unavailable".
+if (preg_match('~^/vies/ms/([A-Z]{2})/vat/([A-Z0-9]+)$~', $path, $vm)) {
+    $last = substr($vm[2], -1);
+    if ($last === '0') {
+        echo json_encode(['isValid' => true, 'userError' => 'VALID', 'name' => 'ACME APS', 'address' => "VESTERGADE 1\n1456 KOBENHAVN K", 'vatNumber' => $vm[2]]);
+    } elseif ($last === '9') {
+        echo json_encode(['isValid' => false, 'userError' => 'INVALID', 'name' => '---', 'address' => '---']);
+    } else {
+        http_response_code(503);
+        echo '{"actionSucceed":false,"errorWrappers":[{"error":"MS_UNAVAILABLE"}]}';
+    }
+    return;
+}
 // Prom.ua public API stand-in for the marketplace end-to-end test: PROM_API_BASE=http://127.0.0.1:8099/prom/api/v1.
 // POST /__prom-seed sets the orders GET /orders/list returns, GET /__prom-log lists what the shop sent, POST /__prom-reset clears both.
 if (str_starts_with($path, '/prom/api/v1') || str_starts_with($path, '/__prom')) {

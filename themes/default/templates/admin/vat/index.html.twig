@@ -1,0 +1,19 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.vat.title'),'vat') }}
+<header class="admin-page-header"><div><h1>{{ ui_text('admin.vat.title') }}</h1><p>{{ ui_text('admin.vat.intro') }}</p></div></header>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.vat.report_title') }}</h2><small>{{ ui_text('admin.vat.report_hint') }}</small></div></div>
+<form method="get" action="{{ path('admin_vat') }}" class="admin-form-grid">
+<label><span>{{ ui_text('admin.vat.year') }}</span><select name="year">{% for y in years %}<option value="{{ y }}"{{ y == year ? ' selected' : '' }}>{{ y }}</option>{% endfor %}</select></label>
+<label><span>{{ ui_text('admin.vat.quarter') }}</span><select name="quarter">{% for q in 1..4 %}<option value="{{ q }}"{{ q == quarter ? ' selected' : '' }}>Q{{ q }}</option>{% endfor %}</select></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('refresh-cw', 16) }} {{ ui_text('admin.vat.show') }}</button>{% if rows %}<a class="admin-button" href="{{ path('admin_vat_report', {year: year, quarter: quarter}) }}">{{ ui_icon('download', 16) }} CSV</a>{% endif %}</div></form>
+{% if rows %}<div class="admin-table-wrap"><table class="admin-table" data-vat-report><thead><tr><th>{{ ui_text('admin.vat.country') }}</th><th class="num">{{ ui_text('admin.vat.orders') }}</th><th class="num">{{ ui_text('admin.vat.net') }}</th><th class="num">{{ ui_text('admin.vat.vat') }}</th><th class="num">{{ ui_text('admin.vat.gross') }}</th><th class="num">{{ ui_text('admin.vat.refunded') }}</th></tr></thead><tbody>
+{% for r in rows %}<tr data-country="{{ r.country }}"><td>{{ r.country }} <small>{{ r.currency }}</small></td><td class="num">{{ r.orders }}</td><td class="num">{{ (r.net_minor/100)|number_format(2, '.', ' ') }}</td><td class="num">{{ (r.vat_minor/100)|number_format(2, '.', ' ') }}</td><td class="num">{{ (r.gross_minor/100)|number_format(2, '.', ' ') }}</td><td class="num">{{ (r.refunded_minor/100)|number_format(2, '.', ' ') }}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<p class="admin-empty">{{ ui_text('admin.vat.empty') }}</p>{% endif %}
+<p class="admin-help">{{ ui_text('admin.vat.note') }}</p></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.vat.vies_title') }}</h2><small>{{ ui_text('admin.vat.vies_hint') }}</small></div></div>
+<form method="post" action="{{ path('admin_vat') }}" class="admin-form-grid" data-vies-form><input type="hidden" name="_token" value="{{ csrf_token('admin_vat_check') }}">
+<label><span>{{ ui_text('admin.vat.country') }}</span><select name="country">{% for c in countries %}<option value="{{ c }}"{{ check and check.country == c ? ' selected' : '' }}>{{ c }}</option>{% endfor %}</select></label>
+<label><span>{{ ui_text('admin.vat.number') }}</span><input type="text" name="number" maxlength="20" value="{{ check ? check.number : '' }}" required></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('badge-check', 16) }} {{ ui_text('admin.vat.check') }}</button></div></form>
+{% if check %}<p class="vies-result" data-vies-result="{{ check.state }}"><span class="admin-badge {{ check.valid ? 'is-active' : 'is-warning' }}">{{ check.valid ? ui_text('admin.vat.valid') : ui_text('admin.vat.invalid') }}</span>{% if check.name %} <strong>{{ check.name }}</strong>{% endif %}{% if check.address %} <small>{{ check.address }}</small>{% endif %}{% if not check.valid %} <small>({{ check.state }})</small>{% endif %}</p>{% endif %}
+</section>
+{{ shell.end() }}
