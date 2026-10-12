@@ -5324,7 +5324,7 @@ return [
     'admin.conn.hint_privat_parts' => 'Instalments "Оплата частинами" from PrivatBank (PayParts v2). Store id and password come from the PrivatBank merchant cabinet. PP is "payment in parts", II is "instant instalment". Parts: the number of payments offered to the shopper (2 to 24 by the contract).',
     'admin.conn.hint_liqpay' => 'LiqPay (cards, Privat24, Apple Pay, Google Pay). Public and private key: LiqPay cabinet → Company → API.',
     'admin.conn.hint_wayforpay' => 'WayForPay. Merchant account, secret key and domain: WayForPay cabinet → Settings.',
-    'admin.conn.hint_stripe' => 'Stripe (cards and local methods of your account). Secret key and webhook secret: Stripe dashboard → Developers.',
+    'admin.conn.hint_stripe' => 'Stripe (cards and local methods of your account). Secret key and webhook secret: Stripe dashboard → Developers. STRIPE_PAYMENT_METHODS (optional) lists the methods to offer, for example card,ideal,blik,klarna,sepa_debit; leave it empty to let Stripe choose from your dashboard settings. Every method must also be switched on in the Stripe dashboard and suit the currency of the order (iDEAL, SEPA and Klarna: EUR; BLIK: PLN).',
     'admin.conn.hint_paypal' => 'PayPal. Client id and secret: PayPal developer dashboard → Apps.',
     'admin.conn.hint_nova_post' => 'Nova Poshta API key: business cabinet → Settings → Security. The sender references are used to create waybills.',
     'admin.conn.hint_ukrposhta' => 'Ukrposhta bearer token from the Ukrposhta API cabinet.',

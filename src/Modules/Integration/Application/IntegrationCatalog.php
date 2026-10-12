@@ -38,6 +38,7 @@ final class IntegrationCatalog
                 ]],
                 'stripe' => ['label' => 'Stripe', 'docs' => 'https://docs.stripe.com/keys', 'fields' => [
                     'STRIPE_ENABLED' => ['type' => 'bool'], 'STRIPE_SECRET_KEY' => ['type' => 'secret'], 'STRIPE_WEBHOOK_SECRET' => ['type' => 'secret'],
+                    'STRIPE_PAYMENT_METHODS' => ['type' => 'text', 'optional' => true],
                 ]],
                 'paypal' => ['label' => 'PayPal', 'docs' => 'https://developer.paypal.com/api/rest/', 'fields' => [
                     'PAYPAL_ENABLED' => ['type' => 'bool'], 'PAYPAL_CLIENT_ID' => ['type' => 'text'], 'PAYPAL_SECRET' => ['type' => 'secret'], 'PAYPAL_WEBHOOK_ID' => ['type' => 'text', 'optional' => true], 'PAYPAL_SANDBOX' => ['type' => 'bool'],

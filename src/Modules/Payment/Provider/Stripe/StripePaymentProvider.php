@@ -10,7 +10,10 @@ use Commerce\Modules\Payment\Domain\OnlinePaymentSession;
 use Commerce\Modules\Payment\Domain\PaymentMethod;
 use Commerce\Modules\Payment\Domain\RefundResult;
 
-/** Card, Apple Pay and Google Pay on the Stripe-hosted Checkout page. Amounts are in minor units of two decimals. */
+/**
+ * Card, Apple Pay and Google Pay on the Stripe-hosted Checkout page; with STRIPE_PAYMENT_METHODS also iDEAL, BLIK, Klarna, SEPA debit and the other
+ * local methods Stripe offers in Europe (they must be switched on in the Stripe dashboard too). Amounts are in minor units of two decimals.
+ */
 final readonly class StripePaymentProvider implements OnlinePaymentProviderInterface
 {
     public function __construct(private StripeClient $client, private bool $isEnabled) {}
@@ -22,9 +25,25 @@ final readonly class StripePaymentProvider implements OnlinePaymentProviderInter
 
     public function enabled(): bool { return $this->isEnabled && $this->client->configured(); }
 
+    /** The payment methods the owner listed (comma separated), only those Stripe Checkout knows; empty means "let Stripe choose from the dashboard". @return list<string> */
+    public static function methodTypes(string $csv): array
+    {
+        $allowed = ['card', 'ideal', 'blik', 'klarna', 'sepa_debit', 'bancontact', 'p24', 'eps', 'link', 'paypal', 'twint', 'mb_way', 'multibanco', 'revolut_pay', 'swish', 'mobilepay'];
+        $out = [];
+        foreach (explode(',', strtolower($csv)) as $type) {
+            $type = trim($type);
+            if (in_array($type, $allowed, true) && !in_array($type, $out, true)) {
+                $out[] = $type;
+            }
+        }
+
+        return $out;
+    }
+
     public function createPayment(OnlinePaymentRequest $request): OnlinePaymentSession
     {
-        $session = $this->client->post('/checkout/sessions', [
+        $types = self::methodTypes(\Commerce\Modules\Integration\Application\IntegrationSecretStore::effective('STRIPE_PAYMENT_METHODS'));
+        $session = $this->client->post('/checkout/sessions', ($types !== [] ? ['payment_method_types' => $types] : []) + [
             'mode' => 'payment',
             'success_url' => $request->returnUrl,
             'cancel_url' => $request->returnUrl,

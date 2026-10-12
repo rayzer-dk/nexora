@@ -5319,7 +5319,7 @@ return [
     'admin.conn.hint_privat_parts' => '«Оплата частинами» від ПриватБанку (PayParts v2). Ідентифікатор магазину й пароль — у кабінеті мерчанта ПриватБанку. PP — «оплата частинами», II — «миттєва розстрочка». Частини — кількість платежів, яку бачить покупець (від 2 до 24 за договором).',
     'admin.conn.hint_liqpay' => 'LiqPay (картки, Приват24, Apple Pay, Google Pay). Публічний і приватний ключі: кабінет LiqPay → Компанія → API.',
     'admin.conn.hint_wayforpay' => 'WayForPay. Merchant account, секретний ключ і домен: кабінет WayForPay → Налаштування.',
-    'admin.conn.hint_stripe' => 'Stripe (картки та локальні методи вашого акаунта). Секретний ключ і webhook secret: Stripe dashboard → Developers.',
+    'admin.conn.hint_stripe' => 'Stripe (картки та локальні методи вашого акаунта). Секретний ключ і webhook secret: Stripe dashboard → Developers. STRIPE_PAYMENT_METHODS (необов’язково) — які методи пропонувати, наприклад card,ideal,blik,klarna,sepa_debit; порожньо — Stripe обере за налаштуваннями вашого кабінету. Кожен метод має бути ввімкнений і в кабінеті Stripe та підходити до валюти замовлення (iDEAL, SEPA, Klarna: EUR; BLIK: PLN).',
     'admin.conn.hint_paypal' => 'PayPal. Client id і secret: PayPal developer dashboard → Apps.',
     'admin.conn.hint_nova_post' => 'Ключ API Нової пошти: бізнес-кабінет → Налаштування → Безпека. Референси відправника потрібні для створення накладних.',
     'admin.conn.hint_ukrposhta' => 'Bearer-токен Укрпошти з кабінету Ukrposhta API.',
