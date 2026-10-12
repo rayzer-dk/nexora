@@ -40,7 +40,7 @@
 .drawer-line { position: relative; display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; align-items: start; gap: var(--mc-space-3); padding: var(--mc-space-4) 0; border-bottom: 1px solid var(--mc-color-border); }
 .drawer-line:last-child { border-bottom: 0; }
 .drawer-line.is-loading { opacity: 0.55; pointer-events: none; }
-.drawer-line__img { display: block; width: 72px; height: 72px; overflow: hidden; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: #fff; }
+.drawer-line__img { display: block; width: 72px; height: 72px; overflow: hidden; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-media-bg); }
 .drawer-line__img img { width: 100%; height: 100%; padding: var(--mc-space-1); object-fit: contain; }
 .drawer-line__info { display: grid; gap: var(--mc-space-1); min-width: 0; }
 .drawer-line__name { color: var(--mc-color-text); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); line-height: var(--mc-line-height-snug); overflow-wrap: anywhere; }

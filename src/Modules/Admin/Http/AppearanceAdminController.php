@@ -68,6 +68,7 @@ final class AppearanceAdminController extends AbstractController
                         'card_style' => $request->request->get('display_card_style','classic'),
                         'card_columns' => $request->request->get('display_card_columns','5'),
                         'card_ratio' => $request->request->get('display_card_ratio','square'),
+                        'image_background' => $request->request->get('display_image_background','none'),
                         'card_actions' => $request->request->get('display_card_actions','visible'),
                         'category_style' => $request->request->get('display_category_style','classic'),
                         'product_layout' => $request->request->get('display_product_layout','classic'),

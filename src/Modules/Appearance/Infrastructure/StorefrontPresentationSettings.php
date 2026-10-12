@@ -159,6 +159,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'card_style' => 'classic',
                 'card_columns' => '5',
                 'card_ratio' => 'square',
+                'image_background' => 'none',
                 'card_actions' => 'visible',
                 'category_style' => 'classic',
                 'product_layout' => 'classic',
@@ -288,6 +289,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $in = is_array($input['display'] ?? null) ? $input['display'] : [];
         $out['display']['card_style'] = $choice($in['card_style'] ?? $d['card_style'], ['classic', 'minimal', 'outlined', 'overlay', 'list'], $d['card_style']);
         $out['display']['card_columns'] = $choice($in['card_columns'] ?? $d['card_columns'], ['3', '4', '5'], $d['card_columns']);
+        $out['display']['image_background'] = $choice($in['image_background'] ?? $d['image_background'], ['none', 'white'], $d['image_background']);
         $out['display']['card_ratio'] = $choice($in['card_ratio'] ?? $d['card_ratio'], ['square', 'portrait', 'landscape'], $d['card_ratio']);
         $out['display']['card_actions'] = $choice($in['card_actions'] ?? $d['card_actions'], ['visible', 'hover'], $d['card_actions']);
         $out['display']['category_style'] = $choice($in['category_style'] ?? $d['category_style'], ['classic', 'overlay', 'chips'], $d['category_style']);

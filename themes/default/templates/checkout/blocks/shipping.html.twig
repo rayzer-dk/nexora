@@ -20,14 +20,15 @@
     <label class="ck-field ck-field--wide"><span>{{ ui_text('ck_custom_address') }} *</span><input name="custom_address" type="text" maxlength="500" value="{{ old.custom_address|default('') }}" placeholder="{{ ui_text('ck_custom_address_ph') }}"{% if current in custom_delivery|default([]) %} required{% endif %}></label>
   </div>
   <div class="ck-panel" data-delivery-remote{% if current == 'self_pickup' or current in custom_delivery|default([]) %} hidden{% endif %}>
-    {% if delivery_regions|default([]) is not empty %}<div class="ck-grid"><label class="ck-field ck-field--wide"><span>{{ ui_text('region') }} *</span><select name="delivery_region" required data-delivery-region><option value="">{{ ui_text('select_region') }}</option>{% for r in delivery_regions %}<option value="{{ r.code }}"{% if old.delivery_region|default('') == r.code %} selected{% endif %}>{{ r.name }}</option>{% endfor %}</select></label></div>{% endif %}
-    <div class="ck-grid delivery-search">
+    {% set city_search = (block.props.show_city_search ?? true) %}
+    {% if delivery_regions|default([]) is not empty and (block.props.show_region ?? true) %}<div class="ck-grid"><label class="ck-field ck-field--wide"><span>{{ ui_text('region') }} *</span><select name="delivery_region" required data-delivery-region><option value="">{{ ui_text('select_region') }}</option>{% for r in delivery_regions %}<option value="{{ r.code }}"{% if old.delivery_region|default('') == r.code %} selected{% endif %}>{{ r.name }}</option>{% endfor %}</select></label></div>{% endif %}
+    <div class="ck-grid delivery-search"{{ city_search ? '' : ' hidden' }}>
       <label class="ck-field"><span>{{ ui_text('city') }} *</span><input data-delivery-city type="search" value="{{ old.city_name|default('') }}" placeholder="{{ ui_text('city_placeholder') }}" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="delivery-results" data-city-results hidden role="listbox"></div></label>
       <label class="ck-field"><span>{{ ui_text('branch_locker') }} *</span><input data-delivery-point type="search" value="{{ old.point_name|default('') }}" placeholder="{{ ui_text('branch_first_city') }}" autocomplete="off"{% if not old.city_id|default('') %} disabled{% endif %} role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="delivery-results" data-point-results hidden role="listbox"></div></label>
     </div>
-    <p class="ck-hint" data-delivery-status aria-live="polite"></p>
-    <button class="ck-link" type="button" data-delivery-manual-toggle aria-expanded="{{ old.delivery_manual|default('') ? 'true' : 'false' }}">{{ ui_text('ck_manual_toggle') }}</button>
-    <div class="delivery-fallback" data-delivery-fallback{% if not old.delivery_manual|default('') %} hidden{% endif %}><label class="ck-field"><span>{{ ui_text('ck_manual_label') }}</span><input name="delivery_manual" data-delivery-manual type="text" maxlength="500" value="{{ old.delivery_manual|default('') }}" placeholder="{{ ui_text('manual_delivery_placeholder') }}"></label></div>
+    <p class="ck-hint" data-delivery-status aria-live="polite"{{ city_search ? '' : ' hidden' }}></p>
+    <button class="ck-link" type="button" data-delivery-manual-toggle{{ city_search ? '' : ' hidden' }} aria-expanded="{{ old.delivery_manual|default('') or not city_search ? 'true' : 'false' }}">{{ ui_text('ck_manual_toggle') }}</button>
+    <div class="delivery-fallback" data-delivery-fallback{% if city_search and not old.delivery_manual|default('') %} hidden{% endif %}><label class="ck-field"><span>{{ ui_text('ck_manual_label') }}</span><input name="delivery_manual" data-delivery-manual type="text" maxlength="500" value="{{ old.delivery_manual|default('') }}" placeholder="{{ ui_text('manual_delivery_placeholder') }}"></label></div>
   </div>
   {% if 'self_pickup' in options %}
   <div class="ck-panel" data-delivery-pickup{% if current != 'self_pickup' %} hidden{% endif %}>

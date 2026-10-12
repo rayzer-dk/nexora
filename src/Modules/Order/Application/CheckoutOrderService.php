@@ -213,7 +213,7 @@ final readonly class CheckoutOrderService
             $regionName='';
             if ($requiresShipping && !$selfPickup) {
                 $regions=$db->fetchAllKeyValue('SELECT code,name FROM mc_shipping_region WHERE store_id=? AND country_code=? AND enabled=1',[$context->storeId,strtoupper($context->countryCode)]);
-                if ($regions!==[]) {
+                if ($regions!==[] && empty($input['skip_region'])) {
                     $regionCode=trim((string)($input['delivery_region']??''));
                     if ($regionCode==='' || !isset($regions[$regionCode])) throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('checkout_region_required'));
                     $regionName=(string)$regions[$regionCode];

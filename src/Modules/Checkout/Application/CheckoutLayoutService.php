@@ -97,7 +97,7 @@ final readonly class CheckoutLayoutService
         foreach (['title','subtitle','placeholder','button_label'] as $key) {
             if (isset($props[$key]) && is_scalar($props[$key])) $out[$key] = mb_substr(trim((string)$props[$key]), 0, 500, 'UTF-8');
         }
-        foreach (['show_name','require_name','show_phone','require_phone','show_email','require_email','show_tax_id','require_tax_id','required'] as $key) {
+        foreach (['show_name','require_name','show_phone','require_phone','show_email','require_email','show_tax_id','require_tax_id','required','show_region','show_city_search'] as $key) {
             if (array_key_exists($key, $props)) $out[$key] = filter_var($props[$key], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? (bool)$props[$key];
         }
         if (!isset($out['placement'])) $out['placement'] = $component === 'checkout_summary' ? 'right' : 'left';
