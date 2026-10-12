@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="{{ app.request.locale|default('uk') }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{{ ui_text('admin.orders.bulk.stickers') }}</title>
+<style>
+  @page { size: 100mm 100mm; margin: 0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #000; background: #fff; }
+  .toolbar { padding: 12px 16px; background: #f3f4f6; border-bottom: 1px solid #d1d5db; display: flex; gap: 12px; align-items: center; }
+  .toolbar button { font: inherit; padding: 8px 16px; cursor: pointer; }
+  .sticker { width: 100mm; height: 100mm; padding: 4mm; display: flex; flex-direction: column; gap: 2mm; border: 1px dashed #bbb; margin: 8px auto; page-break-after: always; break-after: page; overflow: hidden; }
+  .sticker h2 { margin: 0; font-size: 5mm; }
+  .sticker .row { font-size: 3.6mm; line-height: 1.25; overflow-wrap: anywhere; }
+  .sticker .label { font-size: 2.8mm; text-transform: uppercase; color: #444; }
+  .sticker .to { font-size: 4.6mm; font-weight: bold; }
+  .sticker .cod { border: 0.6mm solid #000; padding: 1.5mm 2mm; font-weight: bold; font-size: 4.4mm; }
+  .sticker .barcode { margin-top: auto; }
+  .sticker .barcode svg { width: 100%; height: 16mm; display: block; }
+  .sticker .code { text-align: center; font-size: 4mm; letter-spacing: 0.6mm; font-family: "Courier New", monospace; }
+  @media print { .toolbar { display: none; } .sticker { border: 0; margin: 0; } }
+</style>
+</head>
+<body>
+<div class="toolbar"><button type="button" onclick="window.print()" data-print>{{ ui_text('admin.orders.bulk.sticker_print') }} ({{ stickers|length }})</button></div>
+{% for s in stickers %}
+<section class="sticker" data-sticker>
+  <h2>{{ s.order }}</h2>
+  <div class="row"><span class="label">{{ ui_text('admin.orders.bulk.sticker_from') }}</span><br>{{ store }}</div>
+  <div class="row to"><span class="label">{{ ui_text('admin.orders.bulk.sticker_to') }}</span><br>{{ s.name }}{% if s.phone %}, {{ s.phone }}{% endif %}<br>{{ s.to }}</div>
+  {% if s.cod > 0 %}<div class="cod">{{ ui_text('admin.orders.bulk.sticker_cod') }}: {{ (s.cod/100)|number_format(2, '.', ' ') }} {{ s.currency }}</div>{% endif %}
+  {% if s.comment %}<div class="row">{{ s.comment }}</div>{% endif %}
+  <div class="barcode">{{ s.barcode|raw }}<div class="code">{{ s.tracking ?: ui_text('admin.orders.bulk.sticker_no_ttn') ~ ' · ' ~ s.order }}</div></div>
+</section>
+{% endfor %}
+</body>
+</html>

@@ -436,6 +436,7 @@ function initConfirmations() {
   });
 
   document.addEventListener('click', (event) => {
+    if (event.target.closest('[data-no-confirm]')) return;
     const trigger = event.target.closest('[data-confirm]');
     if (!trigger) return;
     // A confirmation on a whole <form> guards its submit buttons only; typing in fields must not open the dialog.
@@ -2668,6 +2669,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDashboardLayout();
   initOptionPresets();
   initSortableLists();
+  initOrderBoard();
   initScopePresets();
   initImageQueue();
   initCrmPresets();
@@ -2834,6 +2836,75 @@ function initOptionPresets() {
  *  - data-sortable-renumber: names like benefit_title[3][uk] are renumbered to the new position, so the form saves in the new order.
  * data-sortable-group="attr": an item moves only among items with the same value of that attribute (for example menu items of one parent).
  */
+// Order board: a card is dragged to another stage (or moved with its select); the server makes the same change as on the order page.
+function initOrderBoard() {
+  const board = q('[data-order-board]');
+  if (!board || board.dataset.boardBound === '1') return;
+  board.dataset.boardBound = '1';
+  const token = board.dataset.boardToken || '';
+  const url = board.dataset.boardUrl || '';
+  const refresh = () => qa('[data-board-column]', board).forEach((col) => {
+    const count = q('[data-board-count]', col);
+    if (count) count.textContent = String(qa('[data-board-card]', col).length);
+  });
+  const move = async (card, column) => {
+    const from = card.parentElement;
+    const target = q('[data-board-cards]', column);
+    if (!target || from === target) return;
+    target.prepend(card);
+    refresh();
+    try {
+      const response = await window.fetch(url, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token }, body: JSON.stringify({ order: card.dataset.order, stage: column.dataset.stage }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) throw new Error(data.message || 'move');
+      const select = q('[data-board-move]', card);
+      if (select) select.value = column.dataset.stage;
+      toast(board.dataset.boardDone || 'OK', 'success', 2200);
+    } catch (error) {
+      from.prepend(card);
+      refresh();
+      const select = q('[data-board-move]', card);
+      if (select) select.value = from.closest('[data-board-column]')?.dataset.stage || '';
+      toast(error.message && error.message !== 'move' ? error.message : (board.dataset.boardFail || 'Error'), 'error', 6000);
+    }
+  };
+  let dragged = null;
+  board.addEventListener('dragstart', (event) => {
+    const card = event.target.closest('[data-board-card]');
+    if (!card) return;
+    dragged = card;
+    card.classList.add('is-dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', card.dataset.order || '');
+  });
+  board.addEventListener('dragend', () => {
+    dragged?.classList.remove('is-dragging');
+    dragged = null;
+    qa('[data-board-column].is-over', board).forEach((c) => c.classList.remove('is-over'));
+  });
+  board.addEventListener('dragover', (event) => {
+    const column = event.target.closest('[data-board-column]');
+    if (!column || !dragged || column.dataset.stage === 'new') return;
+    event.preventDefault();
+    qa('[data-board-column].is-over', board).forEach((c) => c !== column && c.classList.remove('is-over'));
+    column.classList.add('is-over');
+  });
+  board.addEventListener('drop', (event) => {
+    const column = event.target.closest('[data-board-column]');
+    if (!column || !dragged || column.dataset.stage === 'new') return;
+    event.preventDefault();
+    column.classList.remove('is-over');
+    void move(dragged, column);
+  });
+  board.addEventListener('change', (event) => {
+    const select = event.target.closest('[data-board-move]');
+    if (!select) return;
+    const card = select.closest('[data-board-card]');
+    const column = q(`[data-board-column][data-stage="${select.value}"]`, board);
+    if (card && column) void move(card, column);
+  });
+}
+
 function initSortableLists() {
   qa('[data-sortable]').forEach((container) => {
     const itemSelector = container.dataset.sortable || '[data-sortable-item]';

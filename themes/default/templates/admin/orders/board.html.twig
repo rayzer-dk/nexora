@@ -1,0 +1,22 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.board.title'),'board') }}
+<header class="admin-page-header"><div><h1>{{ ui_text('admin.board.title') }}</h1><p>{{ ui_text('admin.board.intro') }}</p></div><a class="admin-button" href="{{ path('admin_orders') }}">{{ ui_icon('list', 16) }} {{ ui_text('admin.board.list') }}</a></header>
+{% set stages = ['new', 'preparing', 'ready_for_pickup', 'shipped', 'delivered'] %}
+<div class="order-board" data-order-board data-board-url="{{ path('admin_order_board_move') }}" data-board-token="{{ csrf_token('admin_order_board') }}" data-board-done="{{ ui_text('admin.board.done')|e('html_attr') }}" data-board-fail="{{ ui_text('admin.board.fail')|e('html_attr') }}">
+{% for stage in stages %}
+  <section class="order-board__column" data-board-column data-stage="{{ stage }}" aria-label="{{ ui_text('admin.board.stage_' ~ stage) }}">
+    <div class="order-board__head"><span>{{ ui_text('admin.board.stage_' ~ stage) }}</span><span class="admin-badge" data-board-count>{{ columns[stage]|length }}</span></div>
+    <div class="order-board__cards" data-board-cards>
+    {% for o in columns[stage] %}
+      <article class="order-card" data-board-card data-order="{{ o.public_id }}" draggable="{{ admin_can('orders.manage') ? 'true' : 'false' }}">
+        <a href="{{ path('admin_order_view', {publicId: o.public_id}) }}">{{ o.order_number }}</a>
+        <span>{% if admin_can('personal_data.view') %}{{ o.customer_name }}{% else %}{{ ui_text('admin.orders.view.prykhovano') }}{% endif %}</span>
+        <small>{{ (o.total_minor/100)|number_format(2, '.', ' ') }} {{ o.currency }} · {{ o.items }} {{ ui_text('admin.board.items') }}{% if o.payment_status != 'paid' %} · {{ ui_text('admin.board.unpaid') }}{% endif %}</small>
+        {% if o.tracking %}<small>{{ ui_icon('truck', 14) }} {{ o.tracking }}</small>{% endif %}
+        {% if admin_can('orders.manage') %}<select data-board-move aria-label="{{ ui_text('admin.board.move_to') }}"><option value="" disabled>{{ ui_text('admin.board.move_to') }}</option>{% for s in stages|slice(1) %}<option value="{{ s }}"{{ s == stage ? ' selected' : '' }}>{{ ui_text('admin.board.stage_' ~ s) }}</option>{% endfor %}</select>{% endif %}
+      </article>
+    {% endfor %}
+    </div>
+  </section>
+{% endfor %}
+</div>
+{{ shell.end() }}
