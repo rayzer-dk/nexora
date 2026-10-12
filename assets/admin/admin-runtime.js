@@ -76,7 +76,7 @@ document.querySelectorAll('[data-ai-photo]').forEach((box) => {
   const run = box.querySelector('[data-ai-photo-run]');
   const status = box.querySelector('[data-ai-photo-status]');
   run?.addEventListener('click', async () => {
-    const file = box.querySelector('[data-ai-photo-file]')?.files?.[0];
+    const file = box.querySelector('[data-ai-photo-file]')?.files?.[0] || document.querySelector('[data-ai-photo-source]')?.files?.[0];
     if (!file) { status.textContent = t('admin.ai.photo_choose'); return; }
     const body = new FormData();
     body.append('_token', box.dataset.aiPhotoToken || '');

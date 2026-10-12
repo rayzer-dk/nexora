@@ -212,6 +212,15 @@ final class CatalogAdminPageController extends AbstractController
         return $this->render('@storefront/admin/catalog/category_form.html.twig', ['categories' => $choices, 'category' => null, 'csrf_id' => 'admin_category_create']);
     }
 
+    /** One screen to add a product: photo (optionally drafted by the assistant), name, price, stock and category; the rest is filled in later. */
+    #[Route('/admin/catalog/products/quick', name: 'admin_catalog_product_quick', methods: ['GET'], priority: 10)]
+    public function productQuick(Request $request): Response
+    {
+        $context = $this->context->resolve($request);
+
+        return $this->render('@storefront/admin/catalog/product_quick.html.twig', ['categories' => $this->query->categories($context->storeId, $context->locale, 1, 100, '')['items'], 'currency' => $context->currency]);
+    }
+
     #[Route('/admin/catalog/products/new', name: 'admin_catalog_product_new', methods: ['GET', 'POST'])]
     public function productNew(Request $request): Response
     {

@@ -1,0 +1,16 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.quick_add.title'),'products') }}
+<header class="admin-page-header"><div><h1>{{ ui_text('admin.quick_add.title') }}</h1><p>{{ ui_text('admin.quick_add.intro') }}</p></div><a class="admin-button" href="{{ path('admin_catalog_product_new') }}">{{ ui_icon('list', 16) }} {{ ui_text('admin.quick_add.more') }}</a></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+<form class="admin-panel admin-form-grid" method="post" enctype="multipart/form-data" action="{{ path('admin_catalog_product_new') }}" data-quick-add-form>
+<input type="hidden" name="_token" value="{{ csrf_token('admin_product_create') }}">
+<label class="admin-form-wide"><span>{{ ui_text('admin.quick_add.photo') }}</span><input type="file" name="images[]" accept="image/jpeg,image/png,image/webp,image/avif" data-ai-photo-source></label>
+{% include '@storefront/admin/catalog/_ai_photo.html.twig' with {quick: true} %}
+<label class="admin-form-wide"><span>{{ ui_text('admin.catalog.product_form.nazva') }}</span><input type="text" name="name" maxlength="190" required autofocus></label>
+<label><span>{{ ui_text('admin.catalog.product_form.tsina') }} {{ currency }}</span><input type="text" inputmode="decimal" name="price" value="" placeholder="0.00" required></label>
+<label><span>{{ ui_text('admin.catalog.product_form.zalyshok') }}</span><input type="text" inputmode="decimal" name="stock_quantity" value="1" required></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.catalog.product_form.katehorii') }}</span><select name="category_ids[]"><option value="">-</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.catalog.product_form.korotkyi_opys') }}</span><textarea name="short_description" rows="2" maxlength="500"></textarea></label>
+<label class="admin-form-wide"><span>{{ ui_text('admin.catalog.product_form.opys') }}</span><textarea name="description" rows="6"></textarea></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 16) }} {{ ui_text('admin.quick_add.save') }}</button></div>
+</form>
+{{ shell.end() }}
