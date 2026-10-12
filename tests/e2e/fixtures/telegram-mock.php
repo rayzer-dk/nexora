@@ -48,6 +48,35 @@ if ($path === '/__crm-reset') {
     echo '{}';
     return;
 }
+// Prom.ua public API stand-in for the marketplace end-to-end test: PROM_API_BASE=http://127.0.0.1:8099/prom/api/v1.
+// POST /__prom-seed sets the orders GET /orders/list returns, GET /__prom-log lists what the shop sent, POST /__prom-reset clears both.
+if (str_starts_with($path, '/prom/api/v1') || str_starts_with($path, '/__prom')) {
+    $ordersFile = $dir . '/prom-orders.json';
+    $promLog = $dir . '/prom.jsonl';
+    $raw = (string) file_get_contents('php://input');
+    if ($path === '/__prom-seed') {
+        file_put_contents($ordersFile, $raw);
+        echo '{}';
+    } elseif ($path === '/__prom-reset') {
+        @unlink($ordersFile);
+        @unlink($promLog);
+        echo '{}';
+    } elseif ($path === '/__prom-log') {
+        echo json_encode(is_file($promLog) ? array_map(static fn (string $l): mixed => json_decode($l, true), array_filter(explode("\n", (string) file_get_contents($promLog)))) : []);
+    } else {
+        $sub = substr($path, strlen('/prom/api/v1'));
+        file_put_contents($promLog, json_encode(['path' => $sub, 'query' => $_GET, 'body' => json_decode($raw, true), 'auth' => $_SERVER['HTTP_AUTHORIZATION'] ?? '']) . "\n", FILE_APPEND | LOCK_EX);
+        if (($_SERVER['HTTP_AUTHORIZATION'] ?? '') !== 'Bearer e2e-prom-token') {
+            http_response_code(401);
+            echo '{"error":"unauthorized"}';
+        } elseif ($sub === '/orders/list') {
+            echo json_encode(['orders' => is_file($ordersFile) ? (json_decode((string) file_get_contents($ordersFile), true) ?: []) : []]);
+        } else {
+            echo '{"processed_ids":[1],"errors":{}}';
+        }
+    }
+    return;
+}
 // Checkbox cash register API stand-in for the PRRO end-to-end test: PRRO_CHECKBOX_BASE_URL=http://127.0.0.1:8099/checkbox/api/v1
 if (str_starts_with($path, '/checkbox/api/v1')) {
     $sub = substr($path, strlen('/checkbox/api/v1'));

@@ -2100,6 +2100,8 @@ return [
     'supplier.runtime.too_big' => 'Файл прайсу завеликий (понад 100 МБ).',
     'supplier.runtime.empty' => 'Прайс порожній.',
     'scheduler.label.supplier_sync' => 'Синхронізація постачальників',
+    'scheduler.label.marketplace_sync' => 'Синхронізація маркетплейсів',
+    'scheduler.description.marketplace_sync' => 'Забирає нові замовлення з Prom.ua, передає змінені залишки й ціни, повертає статуси замовлень.',
     'scheduler.description.supplier_sync' => 'Читає прайси постачальників за їхнім інтервалом і готує зміни цін і залишків (або застосовує їх у автоматичному режимі).',
     'forum.runtime.report_self' => 'На себе скаржитися не можна.',
     'forum.runtime.report_sent' => 'Скаргу надіслано модераторам.',

@@ -43,6 +43,13 @@ final class IntegrationCatalog
                     'PAYPAL_ENABLED' => ['type' => 'bool'], 'PAYPAL_CLIENT_ID' => ['type' => 'text'], 'PAYPAL_SECRET' => ['type' => 'secret'], 'PAYPAL_WEBHOOK_ID' => ['type' => 'text', 'optional' => true], 'PAYPAL_SANDBOX' => ['type' => 'bool'],
                 ]],
             ],
+            'marketplaces' => [
+                'prom' => ['label' => 'Prom.ua', 'docs' => 'https://public-api.docs.prom.ua/', 'fields' => [
+                    'PROM_ENABLED' => ['type' => 'bool'], 'PROM_API_TOKEN' => ['type' => 'secret'],
+                    'PROM_IMPORT_ORDERS' => ['type' => 'bool', 'default' => '1'], 'PROM_PUSH_STOCK' => ['type' => 'bool', 'default' => '1'], 'PROM_PUSH_STATUS' => ['type' => 'bool', 'default' => '1'],
+                    'PROM_API_BASE' => ['type' => 'text', 'default' => 'https://my.prom.ua/api/v1'],
+                ]],
+            ],
             'messengers' => [
                 'telegram_customers' => ['label' => 'Telegram: bot for customers', 'docs' => 'https://core.telegram.org/bots#how-do-i-create-a-bot', 'fields' => [
                     'CUSTOMER_TELEGRAM_ENABLED' => ['type' => 'bool'], 'CUSTOMER_TELEGRAM_BOT_TOKEN' => ['type' => 'secret'], 'CUSTOMER_TELEGRAM_BOT_USERNAME' => ['type' => 'text'],

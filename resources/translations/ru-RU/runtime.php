@@ -495,6 +495,8 @@ return [
     'supplier.runtime.too_big' => 'Файл прайса слишком большой (более 100 МБ).',
     'supplier.runtime.empty' => 'Прайс пустой.',
     'scheduler.label.supplier_sync' => 'Синхронизация поставщиков',
+    'scheduler.label.marketplace_sync' => 'Синхронизация маркетплейсов',
+    'scheduler.description.marketplace_sync' => 'Забирает новые заказы из Prom.ua, передаёт изменённые остатки и цены, возвращает статусы заказов.',
     'scheduler.description.supplier_sync' => 'Читает прайсы поставщиков по их интервалу и готовит изменения цен и остатков (или применяет их в автоматическом режиме).',
     'forum.runtime.report_self' => 'На себя жаловаться нельзя.',
     'forum.runtime.report_sent' => 'Жалоба отправлена модераторам.',

@@ -23,6 +23,8 @@ final class ConnectionsAdminController extends AbstractController
         private readonly \Commerce\Modules\Notification\Messenger\MessengerSettings $messengers,
         private readonly \Commerce\Modules\Notification\Messenger\TelegramCustomerSender $telegram,
         private readonly \Commerce\Modules\Notification\Messenger\ViberCustomerSender $viber,
+        private readonly \Commerce\Modules\Marketplace\Application\MarketplaceSyncService $marketplaces,
+        private readonly \Doctrine\DBAL\Connection $db,
     ) {
     }
 
@@ -60,7 +62,36 @@ final class ConnectionsAdminController extends AbstractController
                 'state' => !$enabled ? 'off' : ($missing > 0 ? 'incomplete' : 'on')];
         }
 
-        return $this->render('@storefront/admin/system/connections.html.twig', ['group' => $group, 'groups' => array_keys($groups), 'providers' => $providers]);
+        $sync = null;
+        if ($group === 'marketplaces') {
+            $sync = [
+                'state' => $this->db->fetchAllAssociative('SELECT channel,last_run_at,imported_total,last_error FROM mc_marketplace_state ORDER BY channel'),
+                'log' => $this->db->fetchAllAssociative('SELECT channel,level,message,created_at FROM mc_marketplace_log ORDER BY id DESC LIMIT 20'),
+            ];
+        }
+
+        return $this->render('@storefront/admin/system/connections.html.twig', ['group' => $group, 'groups' => array_keys($groups), 'providers' => $providers, 'sync' => $sync]);
+    }
+
+    /** Runs one marketplace pass at once (the scheduler does it every 5 minutes). */
+    #[Route('/admin/system/integrations/connections/marketplaces/run', name: 'admin_system_integrations_marketplace_run', methods: ['POST'], priority: 10)]
+    public function runMarketplaces(Request $request): RedirectResponse
+    {
+        $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('connections_marketplaces_run', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException(CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+        try {
+            $result = $this->marketplaces->run();
+            $orders = array_sum(array_column($result, 'orders'));
+            $stock = array_sum(array_column($result, 'stock'));
+            $errors = array_sum(array_column($result, 'errors'));
+            $this->addFlash($result === [] ? 'error' : ($errors > 0 ? 'error' : 'success'), $result === [] ? CanonicalUiText::get('admin.conn.mp_none') : CanonicalUiText::get($errors > 0 ? 'admin.conn.mp_errors' : 'admin.conn.mp_done', ['orders' => (string) $orders, 'stock' => (string) $stock, 'errors' => (string) $errors]));
+        } catch (\Throwable $e) {
+            $this->addFlash('error', CanonicalUiText::get('admin.conn.mp_errors', ['orders' => '0', 'stock' => '0', 'errors' => '1']));
+        }
+
+        return $this->redirectToRoute('admin_system_integrations_connections', ['group' => 'marketplaces']);
     }
 
     /** Tells Telegram and Viber where to send what customers write to the shop's bot. */

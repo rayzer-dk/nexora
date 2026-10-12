@@ -2098,6 +2098,8 @@ return [
     'supplier.runtime.too_big' => 'The price list file is too large (over 100 MB).',
     'supplier.runtime.empty' => 'The price list is empty.',
     'scheduler.label.supplier_sync' => 'Supplier sync',
+    'scheduler.label.marketplace_sync' => 'Marketplace sync',
+    'scheduler.description.marketplace_sync' => 'Takes new orders from Prom.ua, pushes changed stock and prices, sends order statuses back.',
     'scheduler.description.supplier_sync' => 'Reads supplier price lists at their own interval and prepares price and stock changes (or applies them in automatic mode).',
     'forum.runtime.report_self' => 'You cannot report yourself.',
     'forum.runtime.report_sent' => 'The report was sent to the moderators.',
