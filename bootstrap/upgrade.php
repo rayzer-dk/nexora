@@ -33,6 +33,11 @@ function nexora_upgrade_run(string $projectDir, callable $log): array
     }
 
     try {
+        $log('permissions');
+        $repaired = nexora_upgrade_repair_permissions($projectDir);
+        if ($repaired > 0) {
+            nexora_upgrade_log($projectDir, 'repaired permissions of ' . $repaired . ' entries');
+        }
         $log('manifest');
         $manifest = nexora_upgrade_manifest($projectDir);
         if ($manifest === null) {
@@ -192,6 +197,49 @@ function nexora_upgrade_remove_stale(string $projectDir, array $manifest, callab
     }
 
     return $removed;
+}
+
+/**
+ * An archive unpacked by some FTP clients or by Windows tools can leave directories that the web server may not open.
+ * Before anything reads the tree, give such directories 0755 and unreadable files 0644 (only where this user may change them).
+ */
+function nexora_upgrade_repair_permissions(string $projectDir): int
+{
+    $fixed = 0;
+    $walk = static function (string $dir) use (&$walk, &$fixed): void {
+        if (!is_readable($dir) || !is_executable($dir)) {
+            if (@chmod($dir, 0755)) {
+                ++$fixed;
+            }
+            clearstatcache(true, $dir);
+        }
+        $names = @scandir($dir);
+        if ($names === false) {
+            return;
+        }
+        foreach ($names as $name) {
+            if ($name === '.' || $name === '..') {
+                continue;
+            }
+            $path = $dir . '/' . $name;
+            if (is_link($path)) {
+                continue;
+            }
+            if (is_dir($path)) {
+                $walk($path);
+            } elseif (!is_readable($path) && @chmod($path, 0644)) {
+                ++$fixed;
+            }
+        }
+    };
+    foreach (array_merge(NEXORA_UPGRADE_MANAGED, ['vendor', 'extensions', 'deploy', 'docs', 'qa', 'bonus', 'public']) as $relative) {
+        $base = $projectDir . '/' . $relative;
+        if (is_dir($base) && !is_link($base)) {
+            $walk($base);
+        }
+    }
+
+    return $fixed;
 }
 
 function nexora_upgrade_clear_dir(string $dir): void
