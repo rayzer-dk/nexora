@@ -367,6 +367,93 @@ document.addEventListener('commerce:content-updated', () => {
 });
 
 document.addEventListener('mc:toast', (event) => toast(event.detail?.message, event.detail?.type === 'error' ? 'error' : 'success', 6000));
+// Quick view: a product card opens in a dialog (photo, price, availability, add to cart) without leaving the list.
+let quickView = null;
+function closeQuickView() {
+  if (!quickView) return;
+  quickView.root.remove();
+  document.body.classList.remove('has-quick-view');
+  quickView.opener?.focus?.();
+  quickView = null;
+}
+async function openQuickView(card, opener) {
+  closeQuickView();
+  const link = q('.catalog-card__body h2 a', card);
+  if (!link) return;
+  const root = document.createElement('div');
+  root.className = 'quick-view';
+  root.dataset.quickViewDialog = '';
+  const backdrop = document.createElement('div');
+  backdrop.className = 'quick-view__backdrop';
+  const dialog = document.createElement('section');
+  dialog.className = 'quick-view__dialog';
+  dialog.setAttribute('role', 'dialog');
+  dialog.setAttribute('aria-modal', 'true');
+  dialog.setAttribute('aria-label', link.textContent.trim());
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'quick-view__close';
+  close.setAttribute('aria-label', t('js_close'));
+  close.append(iconNode('x', 18));
+  const media = document.createElement('div');
+  media.className = 'quick-view__media';
+  const picture = q('.catalog-card__media picture, .catalog-card__media img', card);
+  if (picture) media.append(picture.cloneNode(true));
+  const info = document.createElement('div');
+  info.className = 'quick-view__info';
+  const title = document.createElement('h2');
+  title.textContent = link.textContent.trim();
+  info.append(title);
+  for (const selector of ['.catalog-card__brand', '.catalog-card__meta', '.catalog-card__price']) {
+    const source = q(selector, card);
+    if (source) info.append(source.cloneNode(true));
+  }
+  const text = document.createElement('p');
+  text.className = 'quick-view__text';
+  info.append(text);
+  const buy = q('.catalog-card__actions', card);
+  if (buy) {
+    const actions = buy.cloneNode(true);
+    actions.className = 'quick-view__actions';
+    qa('form[data-card-add-to-cart]', actions).forEach((form) => { delete form.dataset.cardBound; });
+    info.append(actions);
+  }
+  const full = document.createElement('a');
+  full.className = 'quick-view__full';
+  full.href = link.href;
+  full.textContent = t('js_quick_full');
+  info.append(full);
+  dialog.append(close, media, info);
+  root.append(backdrop, dialog);
+  document.body.append(root);
+  document.body.classList.add('has-quick-view');
+  quickView = { root, opener };
+  initProductCardCartActions();
+  const closeNow = () => closeQuickView();
+  close.addEventListener('click', closeNow);
+  backdrop.addEventListener('click', closeNow);
+  close.focus();
+  try {
+    const response = await window.fetch(link.href, { credentials: 'same-origin', headers: { Accept: 'text/html' } });
+    if (response.ok) {
+      const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+      text.textContent = (doc.querySelector('meta[name="description"]')?.getAttribute('content') || '').trim();
+    }
+  } catch (_) { /* the description is a bonus */ }
+}
+document.addEventListener('click', (event) => {
+  const trigger = event.target.closest?.('[data-quick-view]');
+  if (!trigger) return;
+  const card = trigger.closest('[data-product-card]');
+  if (!card) return;
+  event.preventDefault();
+  void openQuickView(card, trigger);
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && quickView) closeQuickView();
+});
+document.addEventListener('mc:cart-updated', () => { if (quickView) closeQuickView(); });
+
 function initProductCardCartActions() {
   qa('[data-card-add-to-cart]').forEach((form) => {
     if (form.dataset.cardBound === '1') return;

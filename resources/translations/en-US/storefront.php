@@ -525,6 +525,8 @@ return [
     'js_close' => 'Close',
     'js_add_ellipsis' => 'Adding…',
     'js_add_failed' => 'Could not add the product.',
+    'js_quick_view' => 'Quick view',
+    'js_quick_full' => 'Full product page',
     'js_add_failed_retry' => 'Could not add the product. Please try again.',
     'js_added_cart' => 'Product added to cart.',
     'js_send_failed' => 'Could not send.',

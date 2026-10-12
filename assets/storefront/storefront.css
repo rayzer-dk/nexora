@@ -1259,3 +1259,19 @@ body:not([data-sale-timer]) .sale-timer { display: none; }
 .product-tiers h2 { font-size: var(--mc-font-size-lg); margin: 0 0 var(--mc-space-3); }
 .product-tiers__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--mc-space-2); }
 .product-tiers__list li { display: flex; justify-content: space-between; gap: var(--mc-space-3); padding: var(--mc-space-2) 0; border-bottom: 1px solid var(--mc-color-border); }
+
+/* Quick view */
+.quick-view { position: fixed; inset: 0; z-index: var(--mc-z-modal, 1000); display: grid; place-items: center; padding: var(--mc-space-4); }
+.quick-view[hidden] { display: none; }
+.quick-view__backdrop { position: absolute; inset: 0; background: rgb(15 23 42 / 0.55); backdrop-filter: blur(2px); }
+.quick-view__dialog { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--mc-space-5); width: min(860px, 100%); max-height: calc(100dvh - 2 * var(--mc-space-4)); overflow: auto; padding: var(--mc-space-5); border-radius: var(--mc-radius-xl, 16px); background: var(--mc-color-surface, #fff); color: var(--mc-color-text); box-shadow: var(--mc-shadow-lg, 0 20px 50px rgb(0 0 0 / 0.3)); }
+.quick-view__close { position: absolute; top: var(--mc-space-3); right: var(--mc-space-3); display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--mc-color-surface-muted, #f3f4f6); color: inherit; cursor: pointer; }
+.quick-view__media img { width: 100%; height: auto; border-radius: var(--mc-radius-lg, 12px); display: block; }
+.quick-view__info { display: grid; gap: var(--mc-space-3); align-content: start; min-width: 0; }
+.quick-view__info h2 { margin: 0; font-size: var(--mc-font-size-xl, 1.35rem); padding-right: 40px; }
+.quick-view__text { margin: 0; color: var(--mc-color-text-muted); }
+.quick-view__text:empty { display: none; }
+.quick-view__full { font-weight: var(--mc-font-weight-semibold, 600); }
+.quick-view .catalog-card__meta, .quick-view .catalog-card__price { display: flex; gap: var(--mc-space-2); align-items: baseline; }
+body.has-quick-view { overflow: hidden; }
+@media (max-width: 640px) { .quick-view__dialog { grid-template-columns: 1fr; padding: var(--mc-space-4); } }
