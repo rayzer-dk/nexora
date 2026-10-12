@@ -1,5 +1,7 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.vat.title'),'vat') }}
 <header class="admin-page-header"><div><h1>{{ ui_text('admin.vat.title') }}</h1><p>{{ ui_text('admin.vat.intro') }}</p></div></header>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.vat.rc_title') }}</h2><small>{{ ui_text('admin.vat.rc_hint') }}</small></div></div>
+<form method="post" action="{{ path('admin_vat_settings') }}" class="admin-form-grid" data-reverse-charge-form><input type="hidden" name="_token" value="{{ csrf_token('admin_vat_settings') }}"><label class="admin-switch-label"><span>{{ ui_text('admin.vat.rc_enable') }}</span><input type="checkbox" name="reverse_charge" value="1"{{ reverse_charge ? ' checked' : '' }}></label><div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 16) }} {{ ui_text('admin.fop.save') }}</button></div></form></section>
 <section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.vat.report_title') }}</h2><small>{{ ui_text('admin.vat.report_hint') }}</small></div></div>
 <form method="get" action="{{ path('admin_vat') }}" class="admin-form-grid">
 <label><span>{{ ui_text('admin.vat.year') }}</span><select name="year">{% for y in years %}<option value="{{ y }}"{{ y == year ? ' selected' : '' }}>{{ y }}</option>{% endfor %}</select></label>

@@ -13,8 +13,14 @@ namespace Commerce\Modules\Tax\Application;
  */
 final readonly class BuyerVatCheck
 {
-    public function __construct(private ViesClient $vies)
+    public function __construct(private ViesClient $vies, private ?\Doctrine\DBAL\Connection $db = null)
     {
+    }
+
+    /** The owner's switch for taking the VAT off the order of a valid EU business. */
+    public function reverseChargeEnabled(int $storeId): bool
+    {
+        return $this->db !== null && (bool) $this->db->fetchOne('SELECT reverse_charge FROM mc_vat_settings WHERE store_id=?', [$storeId]);
     }
 
     /** @return array{status:string,name:string} */

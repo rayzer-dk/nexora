@@ -35,6 +35,7 @@ final class CheckoutController extends AbstractController
     public function __construct(
         private readonly \Commerce\Modules\Shipping\Application\ShippingCountryService $shippingCountries,
         private readonly StorefrontContextResolver $contexts,
+        private readonly \Commerce\Modules\Tax\Application\BuyerVatCheck $buyerVat,
         private readonly CartMutationService $carts,
         private readonly DbalCartQuery $cartQuery,
         private readonly CheckoutOrderService $orders,
@@ -165,7 +166,7 @@ final class CheckoutController extends AbstractController
         $old=$this->flashBag($request)?->get('checkout_old')??[]; $old=is_array($old[0]??null)?$old[0]:[];
         $response = $this->render('@storefront/checkout/show.html.twig', [
             'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.oformlennia_zamovlennia'),'store_name'=>$context->storeName,'cart'=>$summary,'country_code'=>$context->countryCode,'delivery_regions'=>$this->shippingCountries->enabledRegions($context->storeId,$context->countryCode),'checkout_layout'=>$layout,
-            'method_config'=>$this->methodLabels($context->storeId,$context->locale,$context->currency),'payment_methods'=>$methods,'checkout_key'=>$key,'delivery_options'=>$deliveryOptions,'pickup_points'=>$pickupPoints,'old'=>$old,'custom_delivery'=>$this->methodSettings->customCodes('delivery'),'custom_icons'=>array_column($this->methodSettings->custom(),'icon','code'),'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
+            'reverse_charge_on'=>$this->buyerVat->reverseChargeEnabled($context->storeId),'method_config'=>$this->methodLabels($context->storeId,$context->locale,$context->currency),'payment_methods'=>$methods,'checkout_key'=>$key,'delivery_options'=>$deliveryOptions,'pickup_points'=>$pickupPoints,'old'=>$old,'custom_delivery'=>$this->methodSettings->customCodes('delivery'),'custom_icons'=>array_column($this->methodSettings->custom(),'icon','code'),'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
             'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/checkout','robots'=>'noindex,nofollow'],
         ]);
         if ($cart['created']) $response->headers->setCookie(Cookie::create('mc_cart',$cart['token'])->withExpires(new \DateTimeImmutable('+7 days'))->withPath('/')->withSecure($request->isSecure())->withHttpOnly(true)->withSameSite(Cookie::SAMESITE_LAX));

@@ -17,8 +17,21 @@ use Symfony\Component\Routing\Attribute\Route;
 /** Admin → VAT / OSS: VAT by the country of the buyer per quarter, and a check of an EU VAT number in VIES. */
 final class VatAdminController extends AbstractController
 {
-    public function __construct(private readonly VatReportService $report, private readonly ViesClient $vies, private readonly AdminContextResolver $contexts)
+    public function __construct(private readonly VatReportService $report, private readonly ViesClient $vies, private readonly AdminContextResolver $contexts, private readonly \Doctrine\DBAL\Connection $db)
     {
+    }
+
+    #[Route('/admin/finance/vat/settings', name: 'admin_vat_settings', methods: ['POST'])]
+    public function settings(Request $request): \Symfony\Component\HttpFoundation\RedirectResponse
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('admin_vat_settings', (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException(CanonicalUiText::get('common.security.invalid_csrf'));
+        }
+        $this->db->executeStatement('INSERT INTO mc_vat_settings (store_id,reverse_charge,updated_at) VALUES (?,?,?) ON DUPLICATE KEY UPDATE reverse_charge=VALUES(reverse_charge),updated_at=VALUES(updated_at)', [$context->storeId, $request->request->getBoolean('reverse_charge') ? 1 : 0, gmdate('Y-m-d H:i:s.u')]);
+        $this->addFlash('success', CanonicalUiText::get('admin.fop.saved'));
+
+        return $this->redirectToRoute('admin_vat');
     }
 
     #[Route('/admin/finance/vat', name: 'admin_vat', methods: ['GET', 'POST'])]
@@ -43,6 +56,7 @@ final class VatAdminController extends AbstractController
 
         return $this->render('@storefront/admin/vat/index.html.twig', [
             'rows' => $this->report->byCountry($context->storeId, $year, $quarter), 'year' => $year, 'quarter' => $quarter,
+            'reverse_charge' => (bool) $this->db->fetchOne('SELECT reverse_charge FROM mc_vat_settings WHERE store_id=?', [$context->storeId]),
             'countries' => ViesClient::COUNTRIES, 'check' => $check, 'years' => range((int) $now->format('Y'), (int) $now->format('Y') - 4),
         ]);
     }
