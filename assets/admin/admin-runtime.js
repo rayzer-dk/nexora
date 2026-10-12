@@ -71,6 +71,44 @@ document.querySelectorAll('[data-ai-task]').forEach((button) => {
   });
 });
 
+// Product card from a photo: the picture goes to the model, the draft fills name, texts and notes; the person reviews and saves.
+document.querySelectorAll('[data-ai-photo]').forEach((box) => {
+  const run = box.querySelector('[data-ai-photo-run]');
+  const status = box.querySelector('[data-ai-photo-status]');
+  run?.addEventListener('click', async () => {
+    const file = box.querySelector('[data-ai-photo-file]')?.files?.[0];
+    if (!file) { status.textContent = t('admin.ai.photo_choose'); return; }
+    const body = new FormData();
+    body.append('_token', box.dataset.aiPhotoToken || '');
+    body.append('provider', box.querySelector('[data-ai-photo-provider]')?.value || '');
+    body.append('hint', box.querySelector('[data-ai-photo-hint]')?.value || '');
+    body.append('photo', file);
+    run.disabled = true;
+    status.textContent = t('admin.ai.generating');
+    try {
+      const response = await fetch(box.dataset.aiPhotoUrl || '', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
+      const set = (selector, value) => {
+        const field = document.querySelector(selector);
+        if (field && typeof value === 'string' && value !== '') { field.value = value; field.dispatchEvent(new Event('input', { bubbles: true })); }
+      };
+      set('[name=name]', data.fields?.name);
+      set('[name=short_description]', data.fields?.short_description);
+      set('[name=description]', data.fields?.description);
+      const brand = data.fields?.brand ? t('admin.ai.photo_brand') + ': ' + data.fields.brand : '';
+      const extra = [brand, data.fields?.attributes || ''].filter(Boolean).join('\n');
+      const notes = box.querySelector('[data-ai-photo-notes]');
+      if (notes && extra) { notes.textContent = extra; notes.hidden = false; }
+      status.textContent = t('admin.ai.draft_inserted');
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+    } finally {
+      run.disabled = false;
+    }
+  });
+});
+
 // Free-form assistant on the AI settings page (reply drafts, translation, SEO text).
 const aiPlayground = document.querySelector('[data-ai-playground]');
 if (aiPlayground) {

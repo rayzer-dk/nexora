@@ -21,6 +21,7 @@ final class AiTaskService
     /** task => [required input names, output field => max length, instruction] */
     private const TASKS = [
         'product_draft' => [['name'], ['short_description' => 300, 'description' => 12000], 'Write a short product teaser (plain text, at most 2 sentences) and a full product description as clean HTML using only p, ul, li, strong, h2, h3. Use the product name, SKU, brand, categories, attributes and any existing text from the data as the source. Use only facts present in the data; never invent specifications, prices, certifications or guarantees. No H1.'],
+        'product_from_photo' => [[], ['name' => 190, 'brand' => 80, 'short_description' => 300, 'description' => 12000, 'attributes' => 1500], 'Look at the product photo and write a draft card: a plain product name (type, brand and model only if they are readable on the photo or in the hint), the brand if it is visible (else an empty string), a short teaser (plain text, at most 2 sentences), a full description as clean HTML using only p, ul, li, strong, h2, h3, and up to 8 characteristics as lines "Name: value" separated by newlines. Describe only what can be seen or is given in the hint; never invent a model number, size, material, price or certificate.'],
         'category_text' => [['name'], ['top' => 1500, 'bottom' => 6000], 'Write an introduction for a product category page (top: 1-2 short paragraphs, HTML with p only) and an SEO text (bottom: HTML using p, h2, ul, li). Natural language, no keyword stuffing, no invented facts, no prices.'],
         'seo_meta' => [['title'], ['meta_title' => 70, 'meta_description' => 170], 'Write an SEO title (at most 60 characters) and a meta description (at most 155 characters) for the page. Plain text, no quotes, no invented facts.'],
         'translate' => [['text', 'target'], ['text' => 20000], 'Translate the text into the target language. Keep every HTML tag and attribute exactly as it is, keep numbers, SKUs and brand names unchanged. Return only the translation.'],
@@ -48,7 +49,7 @@ final class AiTaskService
      * @param array<string,mixed> $input
      * @return array{fields:array<string,string>,provider:string,remaining:int}
      */
-    public function run(int $storeId, string $admin, string $task, string $providerCode, array $input, string $locale): array
+    public function run(int $storeId, string $admin, string $task, string $providerCode, array $input, string $locale, ?array $image = null): array
     {
         if (!isset(self::TASKS[$task])) {
             throw new \DomainException(CanonicalUiText::get('admin.ai.error_task'));
@@ -97,7 +98,14 @@ final class AiTaskService
 
         $in = mb_strlen($prompt);
         try {
-            $raw = $provider?->generate($prompt, self::SYSTEM) ?? '';
+            if ($image !== null) {
+                if (!$provider instanceof \Commerce\Modules\Ai\Contract\ImageTextGenerationProviderInterface) {
+                    throw new \DomainException(CanonicalUiText::get('admin.ai.error_no_vision'));
+                }
+                $raw = $provider->generateFromImage($prompt, $image['mime'], $image['base64'], self::SYSTEM);
+            } else {
+                $raw = $provider?->generate($prompt, self::SYSTEM) ?? '';
+            }
             $fields = $this->parse($raw, $outputs);
         } catch (\Throwable $e) {
             $this->settings->log($storeId, $admin, $task, $providerCode, $model, $in, 0, 'error');

@@ -30,6 +30,32 @@ final class AiAdminController extends AbstractController
         return $this->execute($request, (string) $request->request->get('task', ''), $fields);
     }
 
+    /** A product photo in, a draft card out (name, brand, texts, characteristics); nothing is saved. */
+    #[Route('/admin/api/ai/product-from-photo', name: 'admin_ai_product_from_photo', methods: ['POST'])]
+    public function productFromPhoto(Request $request): JsonResponse
+    {
+        if (!$this->isCsrfTokenValid('admin_ai', (string) $request->request->get('_token'))) {
+            return $this->json(['ok' => false, 'message' => CanonicalUiText::get('common.security.invalid_csrf')], 403);
+        }
+        $file = $request->files->get('photo');
+        if (!$file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile || !$file->isValid() || $file->getSize() > 4 * 1024 * 1024 || $file->getSize() < 100) {
+            return $this->json(['ok' => false, 'message' => CanonicalUiText::get('admin.ai.error_photo')], 422);
+        }
+        $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->file($file->getPathname());
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+            return $this->json(['ok' => false, 'message' => CanonicalUiText::get('admin.ai.error_photo')], 422);
+        }
+        $context = $this->contexts->resolve($request);
+        $user = $this->getUser();
+        try {
+            $result = $this->tasks->run($context->storeId, $user?->getUserIdentifier() ?? 'admin', 'product_from_photo', (string) $request->request->get('provider', ''), ['hint' => (string) $request->request->get('hint', '')], $context->locale, ['mime' => $mime, 'base64' => base64_encode((string) file_get_contents($file->getPathname()))]);
+
+            return $this->json(['ok' => true] + $result);
+        } catch (\DomainException $e) {
+            return $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
     /** Kept for the product form of earlier versions. */
     #[Route('/admin/api/ai/product-draft', name: 'admin_ai_product_draft', methods: ['POST'])]
     public function productDraft(Request $request): JsonResponse
