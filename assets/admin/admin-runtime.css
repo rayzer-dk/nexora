@@ -1678,8 +1678,13 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-thumb-pop > img { width: 100%; height: 100%; object-fit: contain; }
 .admin-cell-main { max-width: 340px; }
 .admin-cell-main > strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
-.admin-row-actions { display: grid; grid-template-columns: repeat(3, auto); gap: var(--mc-space-1); justify-content: start; }
+.admin-row-actions { display: flex; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: var(--mc-space-1); }
 .admin-row-actions > form { display: contents; }
+/* Four or more icons: a compact block of at most two rows (2 columns for 4, 3 for 5-6, 4 from 7) instead of one long column. */
+.admin-row-actions:has(> :nth-child(4)) { display: grid; grid-template-columns: repeat(2, max-content); justify-content: end; justify-items: center; }
+.admin-row-actions:has(> :nth-child(5)) { grid-template-columns: repeat(3, max-content); }
+.admin-row-actions:has(> :nth-child(7)) { grid-template-columns: repeat(4, max-content); }
+.admin-table .is-actions .admin-row-actions:has(> :nth-child(4)) { justify-content: center; }
 /* SMS: live counter under a text field and the limits note. */
 .admin-sms-counter { display: block; font-weight: var(--mc-font-weight-medium); }
 .admin-sms-counter.is-long { color: var(--mc-color-warning-text, var(--mc-color-text)); }

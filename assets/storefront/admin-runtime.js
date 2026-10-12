@@ -1,4 +1,5 @@
 import '../admin/admin-runtime.js';
+import '../shared/details-popovers.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
 import { initDismissibleNotices } from '../shared/dismissible-notices.js';
 import { lucideIconNode } from '../shared/lucide-icons.js';
@@ -2670,6 +2671,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initOptionPresets();
   initSortableLists();
   initOrderBoard();
+  initRowActionGroups();
   initScopePresets();
   initImageQueue();
   initCrmPresets();
@@ -2836,6 +2838,26 @@ function initOptionPresets() {
  *  - data-sortable-renumber: names like benefit_title[3][uk] are renumbered to the new position, so the form saves in the new order.
  * data-sortable-group="attr": an item moves only among items with the same value of that attribute (for example menu items of one parent).
  */
+// Icon buttons that sit loose in a table cell are put into one tidy group (a row, or a compact block for many), so every table looks the same.
+function initRowActionGroups(root = document) {
+  qa('.admin-table tbody td', root).forEach((cell) => {
+    if (cell.dataset.actionsBound === '1' || cell.querySelector(':scope > .admin-row-actions, :scope > .admin-table__actions')) return;
+    const items = Array.from(cell.children).filter((child) => !(child instanceof HTMLInputElement && child.type === 'hidden'));
+    const iconOnly = items.length >= 2 && items.every((child) => {
+      if (child.matches('a.admin-icon-button, button.admin-icon-button')) return true;
+      return child.matches('form') && child.querySelectorAll('.admin-icon-button').length === 1
+        && child.querySelectorAll('input:not([type="hidden"]), select, textarea').length === 0;
+    });
+    if (!iconOnly || (cell.textContent || '').trim() !== '') return;
+    cell.dataset.actionsBound = '1';
+    const group = document.createElement('div');
+    group.className = 'admin-row-actions';
+    group.append(...Array.from(cell.childNodes));
+    cell.append(group);
+  });
+}
+document.addEventListener('commerce:content-updated', () => initRowActionGroups());
+
 // Order board: a card is dragged to another stage (or moved with its select); the server makes the same change as on the order page.
 function initOrderBoard() {
   const board = q('[data-order-board]');
