@@ -45,6 +45,8 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_system_storefront_')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if ($route==='admin_analytics'||$route==='admin_analytics_export') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic') return AdminPermissionCatalog::ANALYTICS_VIEW;
+        if ($route==='admin_fop'||$route==='admin_fop_income_book') return AdminPermissionCatalog::ANALYTICS_VIEW;
+        if ($route==='admin_fop_save') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if ($route==='admin_analytics_traffic_settings') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_ai')||str_starts_with($route,'admin_system_data')||str_starts_with($route,'admin_system_fraud')||str_starts_with($route,'admin_system_quality')||str_starts_with($route,'admin_system_link_check')||str_starts_with($route,'admin_system_early_warnings')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_b2b')) return $get?AdminPermissionCatalog::B2B_VIEW:AdminPermissionCatalog::B2B_MANAGE;

@@ -1,0 +1,36 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.fop.title'),'fop') }}
+<header class="admin-page-header"><div><h1>{{ ui_text('admin.fop.title') }}</h1><p>{{ ui_text('admin.fop.intro') }}</p></div></header>
+{% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
+{% set money = summary.currency %}
+{% if settings.enabled %}
+<section class="admin-panel" data-fop-summary data-status="{{ summary.status }}">
+<div class="admin-panel__header"><div><h2>{{ ui_text('admin.fop.year_title')|replace({'%year%': summary.year}) }}</h2><small>{{ ui_text('admin.fop.status_' ~ summary.status) }}</small></div></div>
+<div class="admin-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ summary.percent|round }}" style="height:14px;border-radius:7px;background:var(--admin-surface-2,#e5e7eb);overflow:hidden"><span style="display:block;height:100%;width:{{ min(100, summary.percent) }}%;background:{{ summary.status == 'over' ? 'var(--admin-danger,#b91c1c)' : (summary.status == 'ok' ? 'var(--admin-success,#15803d)' : 'var(--admin-warning,#b45309)') }}"></span></div>
+<section class="admin-stats">
+<article><span>{{ ui_text('admin.fop.income') }}</span><strong data-fop-income>{{ (summary.income/100)|number_format(2, '.', ' ') }} {{ money }}</strong></article>
+<article><span>{{ ui_text('admin.fop.limit') }}</span><strong>{{ (summary.limit/100)|number_format(2, '.', ' ') }} {{ money }}</strong></article>
+<article class="is-tone-{{ summary.status == 'ok' ? 'success' : 'warning' }}"><span>{{ ui_text('admin.fop.percent') }}</span><strong data-fop-percent>{{ summary.percent }}%</strong></article>
+<article><span>{{ ui_text('admin.fop.remaining') }}</span><strong>{{ (summary.remaining/100)|number_format(2, '.', ' ') }} {{ money }}</strong></article>
+{% if summary.forecast is not null %}<article class="is-tone-{{ summary.forecast > summary.limit ? 'warning' : 'neutral' }}"><span>{{ ui_text('admin.fop.forecast') }}</span><strong>{{ (summary.forecast/100)|number_format(2, '.', ' ') }} {{ money }}</strong></article>{% endif %}
+</section>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.fop.month') }}</th><th class="num">{{ ui_text('admin.fop.income') }}</th></tr></thead><tbody>
+{% for m, v in summary.months %}<tr><td>{{ ui_text('admin.fop.month_' ~ m) }}</td><td class="num">{{ (v/100)|number_format(2, '.', ' ') }}</td></tr>{% endfor %}
+</tbody></table></div>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.fop.quarter') }}</th><th class="num">{{ ui_text('admin.fop.income') }}</th></tr></thead><tbody>
+{% for q, v in summary.quarters %}<tr><td>{{ q }}</td><td class="num">{{ (v/100)|number_format(2, '.', ' ') }}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="admin-help">{{ ui_text('admin.fop.note') }}</p>
+</section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.fop.book_title') }}</h2><small>{{ ui_text('admin.fop.book_hint') }}</small></div></div>
+<form method="get" action="{{ path('admin_fop_income_book') }}" class="admin-form-grid"><label><span>{{ ui_text('admin.fop.from') }}</span><input type="date" name="from" value="{{ year_start }}"></label><label><span>{{ ui_text('admin.fop.to') }}</span><input type="date" name="to" value="{{ today }}"></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('download', 16) }} {{ ui_text('admin.fop.download') }}</button></div></form></section>
+{% endif %}
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.fop.settings') }}</h2></div></div>
+<form method="post" action="{{ path('admin_fop_save') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_fop') }}">
+<label class="admin-switch-label"><span>{{ ui_text('admin.fop.enabled') }}</span><input type="checkbox" name="enabled" value="1"{{ settings.enabled ? ' checked' : '' }}></label>
+<label><span>{{ ui_text('admin.fop.group') }}</span><select name="tax_group">{% for g in [1,2,3] %}<option value="{{ g }}"{{ settings.tax_group == g ? ' selected' : '' }}>{{ ui_text('admin.fop.group_n')|replace({'%n%': g}) }}</option>{% endfor %}</select></label>
+<label><span>{{ ui_text('admin.fop.min_wage') }}</span><input type="text" name="min_wage" inputmode="decimal" value="{{ (settings.min_wage_minor/100)|number_format(2, '.', '') }}"><small>{{ ui_text('admin.fop.min_wage_hint') }}</small></label>
+<label><span>{{ ui_text('admin.fop.limit_override') }}</span><input type="text" name="limit_override" inputmode="decimal" value="{{ settings.limit_override_minor is not null ? (settings.limit_override_minor/100)|number_format(2, '.', '') : '' }}" placeholder="{{ (limit_default/100)|number_format(2, '.', '') }}"><small>{{ ui_text('admin.fop.limit_hint') }}</small></label>
+<label><span>{{ ui_text('admin.fop.warn') }}</span><input type="number" name="warn_percent" min="10" max="100" value="{{ settings.warn_percent }}"></label>
+<div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 16) }} {{ ui_text('admin.fop.save') }}</button></div></form></section>
+{{ shell.end() }}

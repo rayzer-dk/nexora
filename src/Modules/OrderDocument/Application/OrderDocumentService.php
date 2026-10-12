@@ -23,6 +23,7 @@ final readonly class OrderDocumentService
     }
 
     public function issueInvoice(int $storeId,string $orderPublicId,string $actor):array{return $this->issue($storeId,$orderPublicId,'invoice',null,$actor);}
+    public function issueDeliveryNote(int $storeId,string $orderPublicId,string $actor):array{return $this->issue($storeId,$orderPublicId,'delivery_note',null,$actor);}
     public function issuePackingSlip(int $storeId,string $orderPublicId,string $actor):array{return $this->issue($storeId,$orderPublicId,'packing_slip',null,$actor);}
     public function issueCreditNote(int $storeId,string $orderPublicId,int $refundId,string $actor):array{return $this->issue($storeId,$orderPublicId,'credit_note',$refundId,$actor);}
 
@@ -40,7 +41,7 @@ final readonly class OrderDocumentService
 
     private function issue(int $storeId,string $orderPublicId,string $type,?int $refundId,string $actor):array
     {
-        if(!in_array($type,['invoice','packing_slip','credit_note'],true))throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.3c6c8bcfc666'));
+        if(!in_array($type,['invoice','packing_slip','credit_note','delivery_note'],true))throw new \InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.3c6c8bcfc666'));
         return $this->db->transactional(function(Connection $db)use($storeId,$orderPublicId,$type,$refundId,$actor):array{
             $order=$db->fetchAssociative('SELECT * FROM mc_sales_order WHERE public_id=? AND store_id=? LIMIT 1 FOR UPDATE',[$this->uuid($orderPublicId),$storeId]);
             if(!is_array($order))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.zamovlennia_ne_znaideno')); if((string)$order['status']==='cancelled')throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.application.orderdocumentservice.dlia_skasovanoho_zamovlennia_dokument_ne_vypuskaiets'));
@@ -53,7 +54,7 @@ final readonly class OrderDocumentService
             $issueKey=$type==='credit_note'?'credit:refund:'.(int)$refund['id']:$type.':order:'.(int)$order['id'];
             $existing=$db->fetchAssociative('SELECT d.*,o.order_number FROM mc_order_document d JOIN mc_sales_order o ON o.id=d.order_id WHERE d.store_id=? AND d.issue_key=? LIMIT 1',[$storeId,$issueKey]);
             if(is_array($existing))return $this->hydrate($existing);
-            $now=new DateTimeImmutable('now',new DateTimeZone('UTC')); $year=(int)$now->format('Y'); $seq=$this->nextSequence($db,$storeId,$type,$year,$now); $prefix=['invoice'=>'INV','packing_slip'=>'PK','credit_note'=>'CN'][$type]; $number=sprintf('%s-%04d-%06d',$prefix,$year,$seq);
+            $now=new DateTimeImmutable('now',new DateTimeZone('UTC')); $year=(int)$now->format('Y'); $seq=$this->nextSequence($db,$storeId,$type,$year,$now); $prefix=['invoice'=>'INV','packing_slip'=>'PK','credit_note'=>'CN','delivery_note'=>'VN'][$type]; $number=sprintf('%s-%04d-%06d',$prefix,$year,$seq);
             $snapshot=$this->snapshot($db,$order,$type,$refund); $id=$this->ids->generate(); $stamp=$now->format('Y-m-d H:i:s.u');
             $db->insert('mc_order_document',['public_id'=>$id->toBinary(),'store_id'=>$storeId,'order_id'=>(int)$order['id'],'payment_refund_id'=>$refund? (int)$refund['id']:null,'issue_key'=>$issueKey,'document_type'=>$type,'document_number'=>$number,'sequence_year'=>$year,'sequence_number'=>$seq,'locale'=>(string)($order['locale']?:'uk-UA'),'currency'=>(string)$order['currency'],'snapshot_json'=>json_encode($snapshot,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),'issued_at'=>$stamp,'created_by'=>mb_substr(strip_tags(trim($actor)),0,190)]);
             return ['public_id'=>$id->toRfc4122(),'order_number'=>(string)$order['order_number'],'document_type'=>$type,'document_number'=>$number,'issued_at'=>$stamp,'created_by'=>$actor,'snapshot'=>$snapshot];

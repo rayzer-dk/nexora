@@ -426,6 +426,7 @@ return [
     'do_not_recover' => 'Do not recover',
     'document_credit_note' => 'Credit note / Adjustment',
     'document_invoice' => 'Invoice',
+    'document_delivery_note' => 'Delivery note',
     'document_packing_slip' => 'Packing slip',
     'document_snapshot_notice' => 'This document is generated from an immutable order snapshot. Later changes to the store or order do not alter this document.',
     'empty_home_admin_note' => 'Add content or change the site profile in the control panel. Disabled features do not delete data and can be enabled later.',

@@ -25,6 +25,7 @@ final class AdminOrderDocumentController extends AbstractController
         try{
             $doc=match($type){
                 'invoice'=>$this->documents->issueInvoice($ctx->storeId,$order,$this->actor()),
+                'delivery_note'=>$this->documents->issueDeliveryNote($ctx->storeId,$order,$this->actor()),
                 'packing_slip'=>$this->documents->issuePackingSlip($ctx->storeId,$order,$this->actor()),
                 'credit_note'=>$this->documents->issueCreditNote($ctx->storeId,$order,(int)$request->request->get('refund_id',0),$this->actor()),
                 default=>throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.orderdocument.http.adminorderdocumentcontroller.nevidomyi_typ_dokumenta')),
@@ -66,7 +67,7 @@ final class AdminOrderDocumentController extends AbstractController
             $dir=(string)$this->getParameter('kernel.project_dir').'/var/order-mail/'.bin2hex(random_bytes(8));
             if(!is_dir($dir)&&!@mkdir($dir,0775,true)&&!is_dir($dir))throw new \RuntimeException(CanonicalUiText::get('admin.order_document.mail_failed'));
             $name=$this->pdfs->filename($doc);file_put_contents($dir.'/'.$name,$this->pdfs->render($doc));
-            $label=match($doc['document_type']){'invoice'=>CanonicalUiText::get('admin.order_document.invoice'),'packing_slip'=>CanonicalUiText::get('admin.order_document.packing_slip'),default=>CanonicalUiText::get('admin.order_document.credit_note')};
+            $label=match($doc['document_type']){'invoice'=>CanonicalUiText::get('admin.order_document.invoice'),'packing_slip'=>CanonicalUiText::get('admin.order_document.packing_slip'),'delivery_note'=>CanonicalUiText::get('admin.order_document.delivery_note'),default=>CanonicalUiText::get('admin.order_document.credit_note')};
             $subject=str_replace(['%type%','%number%'],[$label,(string)$doc['order_number']],CanonicalUiText::get('admin.order_document.mail_subject'));
             $text=str_replace(['%type%','%number%'],[$label,(string)$doc['order_number']],CanonicalUiText::get('admin.order_document.mail_text'));
             if(!$this->notifications->enqueueMessage($orderPublicId,$text,$subject,[['path'=>$dir.'/'.$name,'name'=>$name]]))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.orderadmincontroller.u_zamovlennia_nemaie_korektnoho_email_pokuptsia'));
