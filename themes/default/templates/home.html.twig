@@ -1,14 +1,16 @@
 {% extends '@storefront/base.html.twig' %}{% set page_kind = 'home' %}
 {% set presentation = storefront_presentation() %}
-{% block head %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and b.component in ['scroll_story', 'video_hero'])|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/home-blocks.js', '/assets/home-blocks.js') }}"></script>{% endif %}{% endblock %}
+{% block head %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and (b.component in ['scroll_story', 'video_hero'] or (b.component == 'banner' and b.props.slide|default(false) is same as(true))))|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/home-blocks.js', '/assets/home-blocks.js') }}"></script>{% endif %}{% endblock %}
 {% block body %}
 {% for layout_block in home_blocks_grouped(home_layout.blocks|default([])) %}
   {% if layout_block.enabled|default(true) and not layout_block.missing_extension|default(false) %}
     {#- Device visibility and the style fields of the builder apply to every block; banners carry their own, per banner. -#}
-    {% set block_attrs = layout_block.component == 'banner_row' ? {class: '', style: ''} : home_block_attrs(layout_block) %}
+    {% set block_attrs = layout_block.component in ['banner_row', 'banner_slider'] ? {class: '', style: ''} : home_block_attrs(layout_block) %}
     <div class="home-block{{ block_attrs.class ? ' ' ~ block_attrs.class : '' }}"{% if block_attrs.style %} style="{{ block_attrs.style }}"{% endif %}>
     {% if layout_block.component == 'banner_row' %}
       {% include '@storefront/home/blocks/banners.html.twig' %}
+    {% elseif layout_block.component == 'banner_slider' %}
+      {% include '@storefront/home/blocks/banner_slider.html.twig' %}
     {% elseif layout_block.component == 'scroll_story' %}
       {% include '@storefront/home/blocks/scroll_story.html.twig' %}
     {% elseif layout_block.component == 'video_hero' %}

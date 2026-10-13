@@ -99,7 +99,8 @@ final class HomeBlockExtension extends AbstractExtension
     }
 
     /**
-     * Neighbouring enabled banners become one row, so two half-width banners sit side by side.
+     * Neighbouring enabled banners become one row, so two half-width banners sit side by side; neighbouring banners
+     * marked as slides become one carousel.
      *
      * @param array<int,mixed> $blocks
      * @return list<array<string,mixed>>
@@ -113,11 +114,14 @@ final class HomeBlockExtension extends AbstractExtension
             }
             $active = ($block['enabled'] ?? true) !== false && !($block['missing_extension'] ?? false);
             if (($block['component'] ?? '') === 'banner' && $active) {
+                // A banner with the slide switch on joins a carousel; the others make a row. The two never mix.
+                $props = is_array($block['props'] ?? null) ? $block['props'] : [];
+                $kind = ($props['slide'] ?? false) === true ? 'banner_slider' : 'banner_row';
                 $last = count($out) - 1;
-                if ($last >= 0 && ($out[$last]['component'] ?? '') === 'banner_row') {
+                if ($last >= 0 && ($out[$last]['component'] ?? '') === $kind) {
                     $out[$last]['items'][] = $block;
                 } else {
-                    $out[] = ['id' => (string) ($block['id'] ?? 'banner'), 'component' => 'banner_row', 'enabled' => true, 'items' => [$block]];
+                    $out[] = ['id' => (string) ($block['id'] ?? 'banner'), 'component' => $kind, 'enabled' => true, 'items' => [$block]];
                 }
                 continue;
             }

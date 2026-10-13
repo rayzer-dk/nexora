@@ -1,0 +1,16 @@
+{#- A banner carousel (neighbouring "banner" blocks with the slide switch on), like the banner module of OpenCart: the slides scroll sideways (swipe, arrows, dots) and change by themselves unless the visitor has asked for reduced motion. Autoplay delay (seconds, 0 = off) is taken from the first slide. -#}
+{% set first_props = layout_block.items[0].props|default({}) %}
+{% set interval = first_props.slide_interval is defined and first_props.slide_interval is not same as('') ? max(0, min(30, first_props.slide_interval|round)) : 5 %}
+{% set total = layout_block.items|length %}
+<section class="shell banner-slider" aria-roledescription="{{ ui_text('banner_slider') }}" aria-label="{{ ui_text('banners') }}" data-banner-slider data-interval="{{ interval }}" data-home-builder-block="{{ layout_block.id }}" data-label-slide="{{ ui_text('banner_go_to_slide')|e('html_attr') }}">
+    <div class="banner-slider__track" data-banner-track>
+    {% for banner in layout_block.items %}
+        {% include '@storefront/home/blocks/_banner.html.twig' with {banner: banner, lazy: loop.index > 1, slide: {number: loop.index, total: total}, priority: loop.first} only %}
+    {% endfor %}
+    </div>
+    {% if total > 1 %}
+    <button class="banner-slider__arrow banner-slider__arrow--prev" type="button" data-banner-prev aria-label="{{ ui_text('previous') }}" hidden>{{ ui_icon('chevron-left', 20) }}</button>
+    <button class="banner-slider__arrow banner-slider__arrow--next" type="button" data-banner-next aria-label="{{ ui_text('next') }}" hidden>{{ ui_icon('chevron-right', 20) }}</button>
+    <div class="banner-slider__dots" data-banner-dots hidden></div>
+    {% endif %}
+</section>

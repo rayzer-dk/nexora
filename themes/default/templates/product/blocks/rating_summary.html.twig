@@ -1,5 +1,5 @@
 {% if product.rating and product.rating.count > 0 %}
-<a class="rating-summary" href="#reviews" data-tab-link="reviews" aria-label="{{ product.rating.value }} {{ ui_text('out_of_five') }}, {{ product.rating.count }} {{ ui_text('reviews_count') }}">
+<a class="rating-summary" href="#reviews" data-tab-link="reviews" aria-label="{{ product.rating.value }} {{ product.rating.count }} {{ ui_text('reviews_count') }} ({{ product.rating.value }} {{ ui_text('out_of_five') }})">
     <span class="rating-stars" aria-hidden="true">{% for i in 1..5 %}{{ ui_icon(i <= product.rating.value|round ? 'star-filled' : 'star-empty', 16) }}{% endfor %}</span>
     <span class="rating-summary__score">{{ product.rating.value }}</span>
     <span class="rating-summary__count">{{ product.rating.count }} {{ ui_text('reviews_count') }}</span>

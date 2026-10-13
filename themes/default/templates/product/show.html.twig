@@ -1,6 +1,12 @@
 {% extends '@storefront/base.html.twig' %}{% set page_kind = 'product' %}
 
 {% block head %}
+    {#- The main photo is the largest element of the page: ask for it before the stylesheets are done, so it does not wait for them. -#}
+    {% set lcp_photo = (product.gallery|default(product.images|default([])))[0]|default(null) %}
+    {% if lcp_photo and lcp_photo.type|default('image') != 'video' and lcp_photo.url|default('') %}
+    {% if lcp_photo.avif_srcset|default('') %}<link rel="preload" as="image" type="image/avif" imagesrcset="{{ lcp_photo.avif_srcset }}" imagesizes="{{ lcp_photo.sizes|default('100vw') }}" fetchpriority="high">
+    {% else %}<link rel="preload" as="image" href="{{ lcp_photo.url }}"{% if lcp_photo.srcset|default('') %} imagesrcset="{{ lcp_photo.srcset }}" imagesizes="{{ lcp_photo.sizes|default('100vw') }}"{% endif %} fetchpriority="high">{% endif %}
+    {% endif %}
     <script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>
     <script type="module" src="{{ vite_asset('assets/storefront/product-page.js', '/assets/product-page.js') }}"></script>
 {% endblock %}

@@ -114,3 +114,44 @@ test('the builder offers the new blocks with their own settings', async ({ page 
   expect(block.props.position).toBe('br');
   // nothing is saved: leaving without publishing keeps the live layout
 });
+
+test('banners with the slide switch become one carousel with arrows and dots', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating the layout runs once.');
+  await loginAdmin(page);
+  await page.goto('/admin/appearance/builder/home', { waitUntil: 'domcontentloaded' });
+  const originalRaw = await page.locator('textarea[data-layout-json]').inputValue();
+  const layout = JSON.parse(originalRaw);
+  layout.blocks.push(
+    { id: 'slide_a', component: 'banner', enabled: true, props: { image: demoImage, title: 'Slide A', slide: true, slide_interval: 0, height: 'm', url: '/catalog' }, style: { color: '#ffffff' }, visibility: everywhere },
+    { id: 'slide_b', component: 'banner', enabled: true, props: { title: 'Slide B', slide: true, height: 'm' }, style: { color: '#ffffff', background: '#123456' }, visibility: everywhere },
+    { id: 'slide_c', component: 'banner', enabled: true, props: { title: 'Slide C', slide: true, height: 'm' }, style: { color: '#ffffff', background: '#345612' }, visibility: everywhere },
+  );
+  await publish(page, JSON.stringify(layout));
+
+  try {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
+    expect(response?.status()).toBe(200);
+    await expectNoServerError(page);
+
+    const slider = page.locator('[data-banner-slider]').last();
+    await slider.scrollIntoViewIfNeeded();
+    await expect(slider.locator('[data-banner]')).toHaveCount(3);
+    await expect(slider.locator('[data-banner-dots] button')).toHaveCount(3);
+    await expect(slider.locator('[data-banner-dots] button').first()).toHaveAttribute('aria-current', 'true');
+    // the first slide fills the strip; the others wait beside it and are out of the tab order
+    const track = await slider.locator('[data-banner-track]').boundingBox();
+    const first = await slider.locator('[data-banner="slide_a"]').boundingBox();
+    expect(Math.abs(first!.width - track!.width)).toBeLessThan(2);
+    await expect(slider.locator('[data-banner="slide_b"]')).toHaveAttribute('inert', '');
+
+    await slider.locator('[data-banner-next]').click();
+    await expect(slider.locator('[data-banner-dots] button').nth(1)).toHaveAttribute('aria-current', 'true');
+    await expect(slider.locator('[data-banner="slide_a"]')).toHaveAttribute('inert', '');
+    await slider.locator('[data-banner-prev]').click();
+    await slider.locator('[data-banner-prev]').click();
+    await expect(slider.locator('[data-banner-dots] button').nth(2)).toHaveAttribute('aria-current', 'true'); // goes round to the last slide
+  } finally {
+    await publish(page, originalRaw);
+  }
+});

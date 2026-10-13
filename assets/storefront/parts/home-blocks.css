@@ -1,5 +1,5 @@
 /*
- * Home page blocks of the builder: device visibility, banners, scroll story and video hero.
+ * Home page blocks of the builder: device visibility, banners, banner slider, scroll story and video hero.
  * Devices: phone < 768, tablet 768-1023, desktop >= 1024 (the same ranges the builder preview uses).
  */
 .home-block { display: block; }
@@ -47,6 +47,39 @@ a.banner:hover .banner__media img { transform: scale(1.03); }
   .banner { min-height: var(--banner-h); }
   .banner__title { font-size: var(--mc-font-size-3xl); }
   .banner__copy { padding: var(--mc-space-8); }
+}
+
+/* ---- Banner slider (neighbouring banners with the slide switch on) ---- */
+.banner-slider { position: relative; margin-block: var(--mc-space-4); }
+.banner-slider__track {
+  display: flex; gap: var(--mc-space-3); overflow-x: auto; overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: var(--mc-radius-lg);
+}
+.banner-slider__track::-webkit-scrollbar { display: none; }
+.banner-slider__track > .banner { flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; }
+.banner-slider__arrow {
+  position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  translate: 0 -50%; border: 0; border-radius: 50%; background: rgb(0 0 0 / 0.45); color: #fff; cursor: pointer;
+  transition: background-color var(--mc-transition-fast, 150ms) ease;
+}
+.banner-slider__arrow[hidden], .banner-slider__dots[hidden] { display: none; }
+.banner-slider__arrow:hover { background: rgb(0 0 0 / 0.7); }
+.banner-slider__arrow--prev { left: var(--mc-space-3); }
+.banner-slider__arrow--next { right: var(--mc-space-3); }
+.banner-slider__dots { position: absolute; inset: auto 0 var(--mc-space-3); z-index: 2; display: flex; justify-content: center; gap: 2px; pointer-events: none; }
+.banner-slider__dot {
+  position: relative; width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto;
+}
+.banner-slider__dot::after {
+  content: ""; position: absolute; inset: 7px; border: 1px solid #fff; border-radius: 50%; background: rgb(0 0 0 / 0.35);
+  transition: background-color var(--mc-transition-fast, 150ms) ease, inset var(--mc-transition-fast, 150ms) ease;
+}
+.banner-slider__dot[aria-current="true"]::after { inset: 6px; background: #fff; }
+@media not all and (min-width: 768px) {
+  .banner-slider__arrow { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .banner-slider__track { scroll-behavior: auto; }
 }
 
 /* ---- Scroll story ---- */
