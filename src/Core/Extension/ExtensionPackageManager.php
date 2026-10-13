@@ -667,6 +667,13 @@ final readonly class ExtensionPackageManager
         }
     }
 
+    /** A rejected upload leaves a line in the audit trail with the real reason, like an install log: the person sees what to fix. */
+    public function recordFailure(string $archiveName, \Throwable $e): void
+    {
+        $name = pathinfo($archiveName, PATHINFO_FILENAME) ?: 'upload';
+        $this->recordLifecycle(null, $name, '', 'install', null, null, 'error', $e::class . ': ' . $e->getMessage());
+    }
+
     private function recordLifecycle(?int $installationId, string $code, string $version, string $action, ?string $fromStatus, ?string $toStatus, string $result, ?string $message): void
     {
         try {

@@ -120,7 +120,10 @@ final class SystemAdminController extends AbstractController
                     $this->addFlash('warning', $warning);
                 }
             } catch (Throwable $e) {
-                $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.systemadmincontroller.paket_vidkhyleno_do_vstanovlennia') . $this->safeMessage($e));
+                $this->extensions->recordFailure((string) $archive->getClientOriginalName(), $e);
+                // Messages of the package checks are written for the person installing; anything else stays in the audit trail below.
+                $reason = ($e instanceof \RuntimeException || $e instanceof \DomainException || $e instanceof \InvalidArgumentException) ? mb_substr($e->getMessage(), 0, 300, 'UTF-8') : $this->safeMessage($e);
+                $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.systemadmincontroller.paket_vidkhyleno_do_vstanovlennia') . $reason);
             }
             return $this->redirectToRoute('admin_system_extensions');
         }
