@@ -3251,9 +3251,35 @@ function initCacheMenu() {
   });
 }
 
+// SEO templates: click a variable to put it into the field you were typing in; "example" fills the empty fields of one block.
+function initSeoTemplates() {
+  const form = q('form[action*="seo-templates"]') || q('[data-seo-var]')?.closest('form');
+  if (!form) return;
+  let last = null;
+  qa('input[name^="tpl["]', form).forEach((input) => input.addEventListener('focus', () => { last = input; }));
+  qa('[data-seo-var]', form).forEach((chip) => chip.addEventListener('click', () => {
+    const input = last || q('input[name^="tpl["]', form);
+    if (!input) return;
+    const token = `{${chip.dataset.seoVar}}`;
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    input.value = input.value.slice(0, start) + token + input.value.slice(end);
+    input.focus();
+    input.setSelectionRange(start + token.length, start + token.length);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }));
+  qa('[data-seo-example]', form).forEach((button) => button.addEventListener('click', () => {
+    const block = button.closest('[data-seo-type]');
+    qa('input[name$="[title]"]', block).forEach((input) => { if (!input.value) input.value = button.dataset.title || ''; });
+    qa('input[name$="[description]"]', block).forEach((input) => { if (!input.value) input.value = button.dataset.description || ''; });
+    form.dispatchEvent(new Event('input', { bubbles: true }));
+  }));
+}
+
 initThemeToggle('mc_admin_theme');
 initUserMenu();
 initCacheMenu();
+initSeoTemplates();
 initLandingEditor();
 initProductPickers();
 initDatePickers();

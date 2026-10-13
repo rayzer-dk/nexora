@@ -4,13 +4,15 @@
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 {% set type_labels = {product: ui_text('admin.seotemplates.type_product'), category: ui_text('admin.seotemplates.type_category'), article: ui_text('admin.seotemplates.type_article'), page: ui_text('admin.seotemplates.type_page')} %}
 <form method="post" action="{{ path('admin_system_seo_templates') }}" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_seo_templates') }}">
-<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.seotemplates.variables') }}</h2><small>{% for v in variables %}<code>{{ '{' ~ v ~ '}' }}</code> {% endfor %}</small></div></div><p class="admin-help">{{ ui_text('admin.seotemplates.example') }}</p></section>
+<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.seotemplates.variables') }}</h2><small>{{ ui_text('admin.seotemplates.variables_hint') }}</small></div></div>
+<ul class="seo-vars">{% for v in variables %}<li><button type="button" class="seo-vars__chip" data-seo-var="{{ v }}" title="{{ ui_text('admin.seotemplates.insert')|e('html_attr') }}"><code>{{ '{' ~ v ~ '}' }}</code></button><span>{{ ui_text('admin.seotemplates.var_' ~ v) }}</span></li>{% endfor %}</ul>
+<p class="admin-help">{{ ui_text('admin.seotemplates.example') }}</p></section>
 {% for type in types %}
-<section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ type_labels[type] }}</h2></div></div>
+<section class="admin-panel" data-seo-type="{{ type }}"><div class="admin-panel__header"><div><h2>{{ type_labels[type] }}</h2><small>{{ ui_text('admin.seotemplates.vars_for_' ~ type) }}</small></div><button type="button" class="admin-button" data-seo-example data-title="{{ ui_text('admin.seotemplates.ex_title_' ~ type)|e('html_attr') }}" data-description="{{ ui_text('admin.seotemplates.ex_desc_' ~ type)|e('html_attr') }}">{{ ui_icon('wand-sparkles', 16) }} {{ ui_text('admin.seotemplates.fill_example') }}</button></div>
 <div class="admin-form-grid">
 {% for locale in locales %}{% set row = templates[type][locale]|default({title: '', description: ''}) %}
-<label class="admin-form-wide" data-lang="{{ locale }}" data-lang-name="{{ locale_name(locale) }}"><span>{{ ui_text('admin.seotemplates.title_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][title]" value="{{ row.title }}" maxlength="200" placeholder="{name} | {store}"></label>
-<label class="admin-form-wide" data-lang="{{ locale }}" data-lang-name="{{ locale_name(locale) }}"><span>{{ ui_text('admin.seotemplates.description_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][description]" value="{{ row.description }}" maxlength="400"></label>
+<label class="admin-form-wide" data-lang="{{ locale }}" data-lang-name="{{ locale_name(locale) }}"><span>{{ ui_text('admin.seotemplates.title_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][title]" value="{{ row.title }}" maxlength="200" placeholder="{{ ui_text('admin.seotemplates.ex_title_' ~ type)|e('html_attr') }}"></label>
+<label class="admin-form-wide" data-lang="{{ locale }}" data-lang-name="{{ locale_name(locale) }}"><span>{{ ui_text('admin.seotemplates.description_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][description]" value="{{ row.description }}" maxlength="400" placeholder="{{ ui_text('admin.seotemplates.ex_desc_' ~ type)|e('html_attr') }}"></label>
 {% endfor %}
 </div></section>
 {% endfor %}
