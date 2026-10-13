@@ -168,7 +168,7 @@
   <span data-dash-inputs></span>
 </form>
 <div class="dash-widgets" data-dash-widgets>
-{% for key in dash_layout.order %}{% set off = key in dash_layout.hidden %}<div class="dash-widget{{ off ? ' is-off' : '' }}" data-dash-widget="{{ key }}" data-dash-off="{{ off ? '1' : '0' }}">
+{% for key in dash_layout.order %}{% set widget_body = attribute(widgets, key) %}{% if widget_body|striptags|trim is not empty or '<svg' in widget_body or '<img' in widget_body %}{% set off = key in dash_layout.hidden %}<div class="dash-widget{{ off ? ' is-off' : '' }}" data-dash-widget="{{ key }}" data-dash-off="{{ off ? '1' : '0' }}">
   <div class="dash-widget__bar" data-dash-bar hidden>
     <span class="dash-widget__handle" data-dash-handle draggable="true" title="{{ ui_text('admin.dashboard.layout_drag') }}">{{ ui_icon('grip-vertical', 16) }}</span>
     <strong>{{ widget_names[key] }}</strong>
@@ -178,8 +178,8 @@
       <button type="button" class="admin-icon-button" data-dash-toggle aria-pressed="{{ off ? 'false' : 'true' }}" aria-label="{{ ui_text('admin.dashboard.layout_toggle') }}" title="{{ ui_text('admin.dashboard.layout_toggle') }}"><span data-dash-eye-on{{ off ? ' hidden' : '' }}>{{ ui_icon('eye', 16) }}</span><span data-dash-eye-off{{ off ? '' : ' hidden' }}>{{ ui_icon('eye-off', 16) }}</span></button>
     </span>
   </div>
-  <div class="dash-widget__body">{{ attribute(widgets, key) }}</div>
-</div>{% endfor %}
+  <div class="dash-widget__body">{{ widget_body }}</div>
+</div>{% endif %}{% endfor %}
 </div>
 
 {% if counts.products < 1 or counts.orders < 1 %}

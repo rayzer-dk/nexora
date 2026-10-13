@@ -33,6 +33,7 @@ final class AdminAccessController extends AbstractController
             foreach($users as &$u){$u['roles']=json_decode((string)$u['roles'],true)?:[];$u['stores']=$this->db->fetchFirstColumn('SELECT store_id FROM mc_admin_store_scope WHERE admin_user_id=? ORDER BY store_id',[(int)$u['id']]);} unset($u);
             $stores=$this->db->fetchAllAssociative('SELECT id,name,status FROM mc_store ORDER BY id');
             $permissions=$this->db->fetchAllAssociative('SELECT code,description,risk_level FROM mc_admin_permission ORDER BY code');
+            foreach($permissions as &$perm){$key='admin.perm.'.str_replace('.','_',(string)$perm['code']);$label=\Commerce\Core\I18n\CanonicalUiText::get($key);$perm['label']=$label!==$key&&$label!==''?$label:(string)$perm['description'];} unset($perm);
         } catch(Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.adminaccesscontroller.ne_vdalosia_prochytaty_matrytsiu_dostupu').$this->safe($e));}
         return $this->render('@storefront/admin/system/access.html.twig',['roles'=>$roles,'users'=>$users,'stores'=>$stores,'permissions'=>$permissions,'permission_groups'=>$this->groups()]);
     }

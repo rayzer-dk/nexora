@@ -2212,7 +2212,7 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 /* 3.97.24 customisable dashboard: blocks keep their own layout until "Customise" is switched on */
 .dash-widget { display: contents; }
 .dash-widget.is-off { display: none; }
-.dash-widget__bar { display: flex; align-items: center; gap: var(--mc-space-2); }
+.dash-widget__bar:not([hidden]) { display: flex; align-items: center; gap: var(--mc-space-2); }
 .dash-widgets.is-editing { display: grid; gap: var(--mc-space-4); margin-bottom: var(--mc-space-4); }
 .dash-widgets.is-editing > .dash-widget { display: block; min-width: 0; padding: var(--mc-space-2); border: 1px dashed var(--mc-color-border-strong); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-subtle); }
 .dash-widgets.is-editing > .dash-widget.is-off { opacity: 0.55; }
