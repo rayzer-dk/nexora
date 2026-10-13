@@ -6,6 +6,7 @@
  *           8 forms · 9 feedback & overlays · 10 screens · 11 login · 12 responsive.
  */
 @import url('../shared/tokens.css');
+@import url('../shared/datepicker.css');
 @import url('./parts/pages-settings.css');
 @import url('./parts/system.css');
 @import url('./rich-editor.css');

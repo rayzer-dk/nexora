@@ -5,6 +5,7 @@
  * checkout · account · forum · content · footer · banners · slider · feedback · modal · slots · builder visibility.
  */
 @import url('../shared/tokens.css');
+@import url('../shared/datepicker.css');
 @import url('./parts/cart-checkout.css');
 @import url('./parts/chrome.css');
 @import url('./parts/content.css');

@@ -4,6 +4,7 @@ import { initThemeToggle } from '../shared/theme-toggle.js';
 import { initDismissibleNotices } from '../shared/dismissible-notices.js';
 import './lightbox.js';
 import '../shared/details-popovers.js';
+import { initDatePickers } from '../shared/datepicker.js';
 import './chrome.js';
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
 const q = (selector, root = document) => root.querySelector(selector);
@@ -570,6 +571,7 @@ function initRecentlyViewed() {
 initRecentlyViewed();
 document.addEventListener('commerce:consent-changed', initRecentlyViewed);
 initThemeToggle('mc_theme');
+initDatePickers();
 initDismissibleNotices();
 function initContactWidget() {
   const root = q('[data-contact-widget]');

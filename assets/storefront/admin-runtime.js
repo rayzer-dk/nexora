@@ -4,6 +4,7 @@ import { initThemeToggle } from '../shared/theme-toggle.js';
 import { initDismissibleNotices } from '../shared/dismissible-notices.js';
 import { lucideIconNode } from '../shared/lucide-icons.js';
 import { decorateLangTabs } from '../shared/flags.js';
+import { initDatePickers } from '../shared/datepicker.js';
 
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
 const q = (selector, root = document) => root.querySelector(selector);
@@ -3106,5 +3107,6 @@ function initVariablePicker() {
 
 initThemeToggle('mc_admin_theme');
 initUserMenu();
+initDatePickers();
 initVariablePicker();
 initDismissibleNotices();
