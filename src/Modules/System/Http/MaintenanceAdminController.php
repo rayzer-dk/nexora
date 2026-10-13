@@ -29,13 +29,23 @@ final class MaintenanceAdminController extends AbstractController
         return $this->render('@storefront/admin/system/maintenance.html.twig', ['overview' => $this->maintenance->overview()]);
     }
 
+    /** The fragment of the quick cache menu in the admin header: what each cache holds and a button to clear it. */
+    #[Route('/admin/system/maintenance/menu', name: 'admin_system_maintenance_menu', methods: ['GET'])]
+    public function menu(): Response
+    {
+        return $this->render('@storefront/admin/system/_cache_menu.html.twig', ['overview' => $this->maintenance->overview()]);
+    }
+
     #[Route('/admin/system/maintenance/{action}', name: 'admin_system_maintenance_run', methods: ['POST'], requirements: ['action' => '[a-z]+'])]
     public function run(string $action, Request $request): RedirectResponse
     {
+        // The header menu returns the person to the page they were on (an admin path only).
+        $back = (string) $request->request->get('back', '');
+        $back = str_starts_with($back, '/admin') && !str_starts_with($back, '//') && !str_contains($back, "\n") ? $back : '';
         if (!in_array($action, CacheMaintenance::ACTIONS, true) || !$this->isCsrfTokenValid('admin_maintenance', (string) $request->request->get('_csrf_token'))) {
             $this->addFlash('error', CanonicalUiText::get('admin.system.maintenance.refused'));
 
-            return $this->redirectToRoute('admin_system_maintenance');
+            return $back !== '' ? $this->redirect($back) : $this->redirectToRoute('admin_system_maintenance');
         }
         try {
             $done = $this->maintenance->run($action);
@@ -44,7 +54,7 @@ final class MaintenanceAdminController extends AbstractController
             $this->addFlash('error', CanonicalUiText::get('admin.system.maintenance.failed'));
         }
 
-        return $this->redirectToRoute('admin_system_maintenance');
+        return $back !== '' ? $this->redirect($back) : $this->redirectToRoute('admin_system_maintenance');
     }
 
     #[Route('/admin/system/modules', name: 'admin_system_modules', methods: ['GET'])]

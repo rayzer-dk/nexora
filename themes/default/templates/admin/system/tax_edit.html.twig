@@ -1,4 +1,4 @@
-{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.tax.edit'),'system') }}
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.tax.edit'),'tax') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_system_tax') }}">{{ ui_text('admin.tax.title') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.tax.edit') }}</span></nav><h1>{{ ui_text('admin.tax.edit') }}</h1><p>{{ ui_text('admin.tax.edit_intro') }}</p></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
 {% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}

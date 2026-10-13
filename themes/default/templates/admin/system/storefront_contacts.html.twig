@@ -1,5 +1,5 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
-{{ shell.start(ui_text('admin.storefront_contacts.title'),'storefront_contacts') }}
+{{ shell.start(ui_text('admin.storefront_contacts.title'),'store') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.storefront_contacts.title') }}</span></nav><h1>{{ ui_text('admin.storefront_contacts.title') }}</h1><p>{{ ui_text('admin.storefront_contacts.intro') }}</p></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.storefront_contacts.contact_page') }}</small><h2>{{ ui_text('admin.storefront_contacts.details') }}</h2></div><a class="admin-button" href="{{ path('admin_system_store') }}">{{ ui_text('admin.storefront_contacts.store_data_link') }}</a></div>

@@ -3231,8 +3231,29 @@ function initLandingEditor() {
   }));
 }
 
+// Quick cache menu in the header: the list (with sizes) is fetched when the menu opens.
+function initCacheMenu() {
+  qa('[data-cache-menu]').forEach((menu) => {
+    const panel = q('[data-cache-panel]', menu);
+    let loaded = false;
+    menu.addEventListener('toggle', async () => {
+      if (!menu.open || loaded || !panel) return;
+      loaded = true;
+      try {
+        const response = await fetch(menu.dataset.src || '', { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+        if (!response.ok) throw new Error('cache');
+        panel.innerHTML = await response.text();
+      } catch (_) {
+        loaded = false;
+        panel.textContent = t('js_media_unavailable');
+      }
+    });
+  });
+}
+
 initThemeToggle('mc_admin_theme');
 initUserMenu();
+initCacheMenu();
 initLandingEditor();
 initProductPickers();
 initDatePickers();

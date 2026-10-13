@@ -2,6 +2,8 @@
 
 ## Unreleased (next after 3.97.23)
 
+- Admin: left menu now highlights the current page for Tax/VAT, Connections, CRM order connections, API keys, carriers, update and storefront contacts; quick cache menu in the header (what each cache holds, sizes, clear button that returns to the same page); stronger header contrast.
+
 Customisable dashboard, carrier keys in the admin, replies to returns, options and variants, test fixes. Checked on PHP 8.4 + MySQL 8.4 + Chromium (changed specs pass); the full CI pass is still to do.
 
 - Dashboard: "Customise" lets each administrator drag the blocks (or move them with the arrows) and hide or show them; the layout is saved per administrator and can be reset to the default. Migration Version20261231130000 adds mc_admin_dashboard_layout.

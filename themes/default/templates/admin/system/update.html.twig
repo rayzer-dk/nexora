@@ -1,5 +1,5 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
-{{ shell.start(ui_text('admin.update.title'),'update') }}
+{{ shell.start(ui_text('admin.update.title'),'maintenance') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.update.title') }}</span></nav><h1>{{ ui_text('admin.update.title') }}</h1><p>{{ ui_text('admin.update.intro') }}</p></div><a class="admin-button" href="{{ path('admin_help_doc', {slug: 'update-and-restore'}) }}">{{ ui_icon('file-text', 16) }} {{ ui_text('admin.update.read_guide') }}</a></header>
 {% if pending|length > 0 %}<div class="admin-status is-warning" role="status">{{ ui_text('admin.update.pending', {count: pending|length}) }}</div>{% else %}<div class="admin-status is-success" role="status">{{ ui_text('admin.update.up_to_date') }}</div>{% endif %}
 <section class="admin-stats">
