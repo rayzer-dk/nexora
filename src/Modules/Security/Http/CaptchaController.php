@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class CaptchaController extends AbstractController
 {
-    public function __construct(private readonly BuiltinCaptcha $builtin, private readonly \Twig\Environment $twig)
+    public function __construct(private readonly BuiltinCaptcha $builtin, private readonly \Twig\Environment $twig, private readonly \Commerce\Modules\Security\Captcha\CaptchaService $service)
     {
     }
 
@@ -30,9 +30,9 @@ final class CaptchaController extends AbstractController
     #[Route('/captcha/new', name: 'storefront_captcha_new', methods: ['GET'], priority: 950)]
     public function fresh(): JsonResponse
     {
-        $issue = $this->builtin->issue();
+        $issue = $this->builtin->issue($this->service->style());
 
-        $html = $this->twig->render('@storefront/components/captcha_choice.html.twig', ['target' => $issue['question'], 'options' => $issue['options']]);
+        $html = $this->twig->render('@storefront/components/captcha_challenge.html.twig', ['c' => $issue]);
 
         return new JsonResponse(['token' => $issue['token'], 'mode' => $issue['mode'], 'question' => $issue['question'], 'html' => $html], 200, ['Cache-Control' => 'no-store']);
     }

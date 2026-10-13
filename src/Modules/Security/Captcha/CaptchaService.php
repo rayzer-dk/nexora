@@ -42,6 +42,7 @@ final class CaptchaService implements CaptchaVerifier
         private readonly BuiltinCaptcha $builtin,
         private readonly HttpClientInterface $http,
         private readonly StorefrontContextResolver $contexts,
+        private readonly \Commerce\Core\Configuration\SystemSettingStore $store,
     ) {
     }
 
@@ -61,7 +62,7 @@ final class CaptchaService implements CaptchaVerifier
     }
 
     /** Template data for the form, or null when no captcha is needed. Registers the provider hosts in the page CSP. */
-    /** @return array{provider:string,site_key:string,form:string,token:string,mode:string,question:string,options:list<array{id:string,icon:string}>}|null */
+    /** @return array{provider:string,site_key:string,form:string,token:string,mode:string,question:string,options:list<array{id:string,icon:string}>,key:string}|null */
     public function widget(Request $request, string $form): ?array
     {
         if (!$this->required($request, $form)) {
@@ -71,9 +72,9 @@ final class CaptchaService implements CaptchaVerifier
         if (isset(self::CSP[$c['provider']])) {
             CspExtra::merge($request, self::CSP[$c['provider']]);
         }
-        $issue = $c['provider'] === 'builtin' ? $this->builtin->issue() : ['token' => '', 'mode' => '', 'question' => '', 'options' => []];
+        $issue = $c['provider'] === 'builtin' ? $this->builtin->issue($this->style()) : ['token' => '', 'mode' => '', 'question' => '', 'options' => [], 'key' => ''];
 
-        return ['provider' => $c['provider'], 'site_key' => $c['site_key'], 'form' => $form, 'token' => $issue['token'], 'mode' => $issue['mode'], 'question' => $issue['question'], 'options' => $issue['options']];
+        return ['provider' => $c['provider'], 'site_key' => $c['site_key'], 'form' => $form, 'token' => $issue['token'], 'mode' => $issue['mode'], 'question' => $issue['question'], 'options' => $issue['options'], 'key' => $issue['key']];
     }
 
     /** True when the form does not need a captcha or the submitted answer is valid. */
@@ -85,6 +86,11 @@ final class CaptchaService implements CaptchaVerifier
         $c = $this->config($request);
         $post = $request->request;
         if ($c['provider'] === 'builtin') {
+            // Traps: a person never sees these two fields, a script that fills every field it finds fills them too.
+            if (trim((string) $post->get('mc_captcha_website', '')) !== '' || !in_array((string) $post->get('mc_captcha_alt', '0'), ['', '0'], true)) {
+                return false;
+            }
+
             return $this->builtin->verify((string) $post->get('mc_captcha_token', ''), (string) $post->get('mc_captcha_answer', ''));
         }
         $response = (string) $post->get($c['provider'] === 'turnstile' ? 'cf-turnstile-response' : 'g-recaptcha-response', '');
@@ -117,6 +123,16 @@ final class CaptchaService implements CaptchaVerifier
             return $c['fail_mode'] !== 'closed';
         } catch (\Throwable) {
             return false;
+        }
+    }
+
+    /** The look of the built-in challenge: the slider (default) or "pick the picture". */
+    public function style(): string
+    {
+        try {
+            return $this->store->getString('captcha.builtin_style') === 'choice' ? 'choice' : 'slider';
+        } catch (\Throwable) {
+            return 'slider';
         }
     }
 

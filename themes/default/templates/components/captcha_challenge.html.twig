@@ -1,0 +1,2 @@
+{# The challenge part of the built-in captcha: the slider or the "pick the picture" choice. #}
+{% if c.mode == 'choice' %}{% include '@storefront/components/captcha_choice.html.twig' with {target: c.question, options: c.options} only %}{% else %}{% include '@storefront/components/captcha_slider.html.twig' with {key: c.key} only %}{% endif %}

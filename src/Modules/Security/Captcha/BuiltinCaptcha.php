@@ -48,15 +48,62 @@ final class BuiltinCaptcha
         return ['target' => $options[$target]['icon'], 'options' => $options];
     }
 
-    /** @return array{token:string,mode:string,question:string,options:list<array{id:string,icon:string}>} */
-    public function issue(): array
+    /** @return array{token:string,mode:string,question:string,options:list<array{id:string,icon:string}>,key:string} */
+    public function issue(string $style = 'slider'): array
     {
         $nonce = bin2hex(random_bytes(8));
         $exp = time() + self::TTL;
         $token = $nonce . '.' . $exp . '.' . $this->sign($nonce, $exp);
         $choice = $this->choice($nonce);
 
-        return ['token' => $token, 'mode' => 'choice', 'question' => $choice['target'], 'options' => $choice['options']];
+        return ['token' => $token, 'mode' => $style === 'choice' ? 'choice' : 'slider', 'question' => $choice['target'], 'options' => $choice['options'], 'key' => $this->slideKey($nonce)];
+    }
+
+    /** Per-token key shipped with the slider so the page can sign what the visitor did; it is a seal against hand-made answers, not a secret. */
+    public function slideKey(string $nonce): string
+    {
+        return substr(hash_hmac('sha256', 'slide|' . $nonce, $this->secret), 0, 12);
+    }
+
+    /** 32-bit FNV-1a, the same function runs in the browser (storefront-runtime.js). */
+    public static function slideHash(string $text): string
+    {
+        $h = 0x811c9dc5;
+        foreach (unpack('C*', $text) ?: [] as $byte) {
+            $h ^= $byte;
+            $h = ($h * 0x01000193) & 0xFFFFFFFF;
+        }
+
+        return sprintf('%08x', $h);
+    }
+
+    /**
+     * The slider answer is "v1.<ms>.<moves>.<jitter>.<mode>.<seal>": how long the drag took, how many real pointer events it made,
+     * how uneven the speed was, and a seal over those numbers. A script that sets the value in one jump, drags at a constant speed,
+     * answers faster than a person or slower than the token has existed is turned away.
+     */
+    private function slideOk(string $nonce, int $exp, string $answer): bool
+    {
+        $parts = explode('.', $answer);
+        if (count($parts) !== 6 || $parts[0] !== 'v1') {
+            return false;
+        }
+        [, $ms, $moves, $jitter, $mode, $seal] = $parts;
+        if (!ctype_digit($ms) || !ctype_digit($moves) || !ctype_digit($jitter) || !in_array($mode, ['p', 'k'], true)) {
+            return false;
+        }
+        if (!hash_equals(self::slideHash($this->slideKey($nonce) . '|' . $ms . '|' . $moves . '|' . $jitter . '|' . $mode), $seal)) {
+            return false;
+        }
+        $age = time() - ($exp - self::TTL);
+        $ms = (int) $ms;
+        if ($age < 1 || $ms > $age * 1000 + 1500) {
+            return false;
+        }
+
+        return $mode === 'p'
+            ? $ms >= 350 && $ms <= 120000 && (int) $moves >= 6 && (int) $jitter >= 2
+            : $ms >= 1200 && $ms <= 120000 && (int) $moves >= 3;
     }
 
     public function verify(string $token, string $answer): bool
@@ -69,9 +116,15 @@ final class BuiltinCaptcha
         if (!hash_equals($this->sign($nonce, (int) $exp), $sig) || (int) $exp < time()) {
             return false;
         }
-        $given = strtoupper(preg_replace('/\s+/', '', $answer) ?? '');
-        if ($given === '' || !(hash_equals($this->answer($nonce), $given) || hash_equals($this->legacyAnswer($nonce), $given))) {
-            return false;
+        if (str_starts_with($answer, 'v1.')) {
+            if (!$this->slideOk($nonce, (int) $exp, $answer)) {
+                return false;
+            }
+        } else {
+            $given = strtoupper(preg_replace('/\s+/', '', $answer) ?? '');
+            if ($given === '' || !(hash_equals($this->answer($nonce), $given) || hash_equals($this->legacyAnswer($nonce), $given))) {
+                return false;
+            }
         }
         try {
             $item = $this->cache->getItem('captcha_used_' . $nonce);

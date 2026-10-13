@@ -1,0 +1,12 @@
+{# Slider captcha: drag the handle to the end. Traps: two hidden fields only a script would touch. #}
+<div class="captcha__slide" data-captcha-slide data-key="{{ key }}" data-msg="{{ ui_text('captcha_slide_required')|e('html_attr') }}">
+    <div class="captcha__track" style="--p:0">
+        <span class="captcha__fill" aria-hidden="true"></span>
+        <span class="captcha__label" aria-hidden="true">{{ ui_text('captcha_slide_hint') }}</span>
+        <span class="captcha__done" aria-hidden="true">{{ ui_icon('check', 18) }} {{ ui_text('captcha_slide_done') }}</span>
+        <input class="captcha__range" type="range" min="0" max="100" step="1" value="0" data-captcha-range aria-label="{{ ui_text('captcha_slide_label')|e('html_attr') }}">
+        <span class="captcha__handle" aria-hidden="true">{{ ui_icon('chevrons-right', 20) }}</span>
+    </div>
+    <input type="hidden" name="mc_captcha_answer" value="" data-captcha-answer>
+    <div class="captcha__trap" aria-hidden="true"><input type="text" name="mc_captcha_website" value="" tabindex="-1" autocomplete="off"><input type="range" name="mc_captcha_alt" min="0" max="100" value="0" tabindex="-1"></div>
+</div>

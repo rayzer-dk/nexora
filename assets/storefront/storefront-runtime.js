@@ -87,7 +87,7 @@ function initAjaxForms() {
         if (!failed && form.hasAttribute('data-ajax-reset')) form.reset();
         // a captcha challenge is single-use: the page is not reloaded, so ask for a fresh one
         form.querySelector('[data-captcha-refresh]')?.click();
-        form.querySelectorAll('input[name="mc_captcha_answer"]').forEach((input) => { input.checked = false; });
+        form.querySelectorAll('input[type="radio"][name="mc_captcha_answer"]').forEach((input) => { input.checked = false; });
       } catch (_) {
         form.submit();
         return;
@@ -782,13 +782,70 @@ async function refreshBuiltinCaptcha(box) {
     const data = await response.json();
     const token = q('[data-captcha-token]', box);
     if (token) token.value = data.token;
-    const holder = q('[data-captcha-choice]', box);
-    if (holder && data.html) holder.outerHTML = data.html;
+    const holder = q('[data-captcha-choice], [data-captcha-slide]', box);
+    if (holder && data.html) {
+      holder.outerHTML = data.html;
+      initSlideCaptcha(box);
+    }
   } catch { /* offline: the visitor can retry */ }
+}
+// Slider captcha: drag to the end. What the drag looked like (time, real pointer events, uneven speed) is sealed into the answer.
+function slideHash(text) {
+  let h = 0x811c9dc5;
+  new TextEncoder().encode(text).forEach((byte) => { h = Math.imul(h ^ byte, 0x01000193) >>> 0; });
+  return h.toString(16).padStart(8, '0');
+}
+function initSlideCaptcha(scope) {
+  qa('[data-captcha-slide]', scope).forEach((root) => {
+    if (root.dataset.ready) return;
+    root.dataset.ready = '1';
+    const range = q('[data-captcha-range]', root);
+    const track = q('.captcha__track', root);
+    const answer = q('[data-captcha-answer]', root);
+    if (!range || !answer) return;
+    const message = root.dataset.msg || '';
+    range.setCustomValidity(message);
+    let start = 0; let moves = 0; let jitter = 0; let last = null; let lastDelta = 0; let mode = 'p'; let done = false;
+    const paint = () => { track.style.setProperty('--p', String(range.value)); };
+    const reset = () => { start = 0; moves = 0; jitter = 0; last = null; lastDelta = 0; range.value = '0'; paint(); };
+    range.addEventListener('keydown', () => { mode = 'k'; });
+    range.addEventListener('pointerdown', () => { mode = 'p'; });
+    range.addEventListener('input', (event) => {
+      if (done) return;
+      paint();
+      if (!event.isTrusted) return; // scripted events do not count as movement
+      const now = performance.now();
+      if (!start) start = now;
+      moves += 1;
+      const value = Number(range.value);
+      if (last !== null) {
+        const delta = value - last.value;
+        if (delta !== 0 && lastDelta !== 0 && Math.abs(delta / Math.max(1, now - last.time) - lastDelta) > 0.005) jitter += 1;
+        if (delta !== 0) lastDelta = delta / Math.max(1, now - last.time);
+      }
+      last = { value, time: now };
+    });
+    const finish = () => {
+      if (done) return;
+      if (Number(range.value) < 92) { reset(); return; }
+      const ms = Math.round(performance.now() - start);
+      const seal = slideHash(`${root.dataset.key}|${ms}|${moves}|${jitter}|${mode}`);
+      answer.value = `v1.${ms}.${moves}.${jitter}.${mode}.${seal}`;
+      done = true;
+      range.value = '100'; paint();
+      range.setCustomValidity('');
+      range.disabled = true;
+      root.classList.add('is-done');
+    };
+    range.addEventListener('change', finish);
+    range.addEventListener('pointerup', finish);
+    range.addEventListener('keyup', () => { if (Number(range.value) >= 92) finish(); });
+  });
 }
 function initCaptcha() {
   const boxes = qa('[data-captcha]');
   if (!boxes.length) return;
+  initSlideCaptcha(document);
   const byProvider = (name) => boxes.filter((box) => box.dataset.captcha === name);
   byProvider('builtin').forEach((box) => q('[data-captcha-refresh]', box)?.addEventListener('click', () => refreshBuiltinCaptcha(box)));
   const turnstile = byProvider('turnstile');

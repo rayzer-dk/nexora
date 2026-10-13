@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class CaptchaAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly CaptchaSettings $settings)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly CaptchaSettings $settings, private readonly \Commerce\Core\Configuration\SystemSettingStore $store)
     {
     }
 
@@ -27,6 +27,7 @@ final class CaptchaAdminController extends AbstractController
             }
             try {
                 $this->settings->save($context->storeId, $request->request->all());
+                $this->store->setString('captcha.builtin_style', $request->request->get('builtin_style') === 'choice' ? 'choice' : 'slider');
                 $this->addFlash('success', CanonicalUiText::get('admin.captcha.saved'));
             } catch (\InvalidArgumentException $e) {
                 $this->addFlash('error', $e->getMessage());
@@ -39,6 +40,7 @@ final class CaptchaAdminController extends AbstractController
 
         return $this->render('@storefront/admin/system/captcha.html.twig', [
             's' => $s,
+            'builtin_style' => $this->store->getString('captcha.builtin_style') === 'choice' ? 'choice' : 'slider',
             'providers' => CaptchaSettings::PROVIDERS,
             'form_labels' => [
                 'register' => CanonicalUiText::get('admin.captcha.form.register'),

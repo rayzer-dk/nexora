@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { expectNoHorizontalOverflow, expectNoServerError, openProductTab } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
@@ -15,25 +15,29 @@ function appSecret(): string {
   return process.env.APP_SECRET ?? '';
 }
 const SECRET = appSecret();
-const ICONS = ['heart', 'star', 'sun', 'moon', 'cloud', 'key', 'bell', 'camera', 'leaf', 'gift', 'umbrella', 'coffee'];
 const mac = (value: string): Buffer => createHmac('sha256', SECRET).update(value).digest();
-/** The four pictures of a token, in the order the page shows them, and the id of the right one (mirrors BuiltinCaptcha::choice()). */
-function builtinChoice(token: string): { ids: string[]; right: string } {
-  const nonce = token.split('.')[0];
-  const options = ICONS.map((icon) => ({ icon, weight: mac(`pick|${nonce}|${icon}`).toString('hex') }))
-    .sort((a, b) => (a.weight < b.weight ? -1 : a.weight > b.weight ? 1 : 0))
-    .slice(0, 4)
-    .map((option) => ({ icon: option.icon, id: mac(`id|${nonce}|${option.icon}`).toString('hex').slice(0, 6).toUpperCase() }));
-  return { ids: options.map((option) => option.id), right: options[mac(`target|${nonce}`)[0] % 4].id };
+/** Mirrors BuiltinCaptcha::slideHash(): 32-bit FNV-1a. */
+function slideHash(text: string): string {
+  let h = 0x811c9dc5;
+  for (const byte of Buffer.from(text, 'utf8')) h = Math.imul(h ^ byte, 0x01000193) >>> 0;
+  return h.toString(16).padStart(8, '0');
 }
-/** Mirrors the id of the picture a person would click. */
+/** The answer a person's slow, uneven drag would give for a token (mirrors BuiltinCaptcha::slideKey()). */
 function builtinAnswer(token: string): string {
-  return builtinChoice(token).right;
+  const key = mac(`slide|${token.split('.')[0]}`).toString('hex').slice(0, 12);
+  return `v1.900.12.4.p.${slideHash(`${key}|900|12|4|p`)}`;
 }
-/** Another picture than the right one: a wrong answer. */
-function builtinWrongAnswer(token: string): string {
-  const choice = builtinChoice(token);
-  return choice.ids.find((id) => id !== choice.right) ?? '';
+/** A made-up answer: right shape, wrong seal. */
+function builtinWrongAnswer(_token: string): string {
+  return 'v1.900.12.4.p.00000000';
+}
+/** Puts an answer into the slider the way the page does when the drag is finished. */
+async function giveAnswer(scope: Locator, answer: string): Promise<void> {
+  await scope.locator('[data-captcha-answer]').evaluate((el, value) => {
+    (el as HTMLInputElement).value = value;
+    const range = el.closest('[data-captcha-slide]')?.querySelector<HTMLInputElement>('[data-captcha-range]');
+    range?.setCustomValidity('');
+  }, answer);
 }
 
 async function loginAdmin(page: Page): Promise<void> {
@@ -300,7 +304,7 @@ test('login captcha: built-in challenge gates the customer login, outage mode pe
     await expect(shop.locator('[data-captcha="builtin"]')).toHaveCount(1);
     await shop.locator('input[name="_username"]').fill('nobody@example.test');
     await shop.locator('input[name="_password"]').fill('wrong-password');
-    await shop.locator(`input[name="mc_captcha_answer"][value="${builtinWrongAnswer(await shop.locator('input[name="mc_captcha_token"]').inputValue())}"]`).check({ force: true });
+    await giveAnswer(shop.locator('.account-form'), builtinWrongAnswer(await shop.locator('input[name="mc_captcha_token"]').inputValue()));
     await shop.waitForTimeout(1200);
     await shop.locator('.account-form button[type="submit"]').first().click();
     await shop.waitForURL(/\/account\/login/);
@@ -309,7 +313,7 @@ test('login captcha: built-in challenge gates the customer login, outage mode pe
     const token = await shop.locator('input[name="mc_captcha_token"]').inputValue();
     await shop.locator('input[name="_username"]').fill('nobody@example.test');
     await shop.locator('input[name="_password"]').fill('wrong-password');
-    await shop.locator(`input[name="mc_captcha_answer"][value="${builtinAnswer(token)}"]`).check({ force: true });
+    await giveAnswer(shop.locator('.account-form'), builtinAnswer(token));
     await shop.waitForTimeout(1200);
     await shop.locator('.account-form button[type="submit"]').first().click();
     await shop.waitForURL(/\/account\/login/);
