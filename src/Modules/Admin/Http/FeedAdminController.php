@@ -44,7 +44,7 @@ final class FeedAdminController extends AbstractController
         }
 
         $store=$this->db->fetchAssociative('SELECT code,name,default_currency FROM mc_store WHERE id=?',[$context->storeId]) ?: [];
-        $platforms=['google'=>'Google Merchant XML','meta'=>'Meta / Facebook CSV','pinterest'=>'Pinterest CSV','tiktok'=>'TikTok Catalog CSV','rozetka'=>'Rozetka XML','prom'=>'Prom.ua YML','csv'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.feedadmincontroller.universalnyi_csv'),'json'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.feedadmincontroller.universalnyi_json'),'agentic'=>'AI / Agentic Commerce JSONL'];
+        $platforms=['google'=>'Google Merchant XML','meta'=>'Meta / Facebook CSV','pinterest'=>'Pinterest CSV','tiktok'=>'TikTok Catalog CSV','rozetka'=>'Rozetka XML','prom'=>'Prom.ua YML','yml'=>'YML (Price.ua, e-Katalog, Hotline, Epicentr …)','csv'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.feedadmincontroller.universalnyi_csv'),'json'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.feedadmincontroller.universalnyi_json'),'agentic'=>'AI / Agentic Commerce JSONL'];
         foreach($this->generator->extensionFormats() as $formatCode=>$format)$platforms[$formatCode]=$format->label();
         $rows=[];
         foreach($platforms as $code=>$label){

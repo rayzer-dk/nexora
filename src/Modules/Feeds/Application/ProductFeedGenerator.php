@@ -17,7 +17,7 @@ final readonly class ProductFeedGenerator
         $out=[];foreach($this->extensions?->all('provider.feed')??[] as $format){if($format instanceof \Commerce\Modules\Feeds\Contract\FeedFormatProviderInterface&&preg_match('/^[a-z0-9_]{2,30}$/D',$format->code())===1&&!in_array($format->code(),self::BUILT_IN,true))$out[$format->code()]=$format;}return $out;
     }
 
-    public const BUILT_IN=['google','meta','facebook','pinterest','tiktok','rozetka','prom','csv','json','agentic'];
+    public const BUILT_IN=['google','meta','facebook','pinterest','tiktok','rozetka','prom','yml','csv','json','agentic'];
 
     /** @return array{content:string,content_type:string,extension:string,count:int,skipped:int,warnings:list<string>} */
     public function generate(string $platform,int $storeId,int $marketId,string $locale,string $currency,bool $inStockOnly=false): array
@@ -30,7 +30,7 @@ final readonly class ProductFeedGenerator
             'pinterest'=>$this->catalogCsv($products,'pinterest'),
             'tiktok'=>$this->tiktokCsv($products),
             'rozetka'=>$this->rozetkaXml($products,$storeId),
-            'prom'=>$this->promYml($products,$storeId),
+            'prom','yml'=>$this->promYml($products,$storeId),
             'agentic'=>$this->agenticJsonl($products),
             'json'=>['content'=>json_encode(['generated_at'=>gmdate('c'),'products'=>$products],JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),'content_type'=>'application/json; charset=UTF-8','extension'=>'json','count'=>count($products)],
             'csv'=>$this->catalogCsv($products,'generic'),

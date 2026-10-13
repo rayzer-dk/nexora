@@ -2,6 +2,10 @@
 {{ shell.start(ui_text('admin.push.title'),'push') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.push.title') }}</span></nav><h1>{{ ui_text('admin.push.title') }}</h1><p>{{ ui_text('admin.push.intro') }}</p></div></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}{% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<section class="admin-panel push-explain"><div class="admin-panel__header"><div><small>{{ ui_text('admin.push.how_kicker') }}</small><h2>{{ ui_text('admin.push.how_title') }}</h2></div></div>
+<p>{{ ui_text('admin.push.how_text') }}</p>
+<ul class="push-check">{% set checks = [[app.request.secure, 'admin.push.chk_https'], [s.enabled, 'admin.push.chk_enabled'], [s.subject is not empty, 'admin.push.chk_subject'], [s.public is not empty, 'admin.push.chk_keys'], [counts.admin > 0, 'admin.push.chk_device']] %}{% for check in checks %}<li class="{{ check[0] ? 'is-ok' : 'is-todo' }}">{{ ui_icon(check[0] ? 'circle-check' : 'circle-dashed', 18) }}<span>{{ ui_text(check[1]) }}</span></li>{% endfor %}</ul>
+</section>
 <section class="admin-panel"><form method="post" action="{{ path('admin_system_push') }}" class="admin-form-grid"><input type="hidden" name="_token" value="{{ csrf_token('admin_push') }}">
 <label class="admin-check"><input type="checkbox" name="enabled" value="1"{{ s.enabled ? ' checked' : '' }}> {{ ui_text('admin.push.enabled') }}</label>
 <label>{{ ui_text('admin.push.subject') }}<input type="text" name="subject" value="{{ s.subject }}" maxlength="190" placeholder="mailto:shop@example.com" required>{{ help.hint(ui_text('admin.push.subject_hint'), 'https://developer.mozilla.org/docs/Web/API/Push_API', ui_text('admin.help.push.docs'), 'mailto:shop@your-domain.com') }}</label>

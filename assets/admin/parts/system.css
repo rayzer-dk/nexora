@@ -243,3 +243,12 @@ label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100
 .seo-vars__chip { padding: 2px var(--mc-space-2); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); color: var(--mc-color-primary); cursor: pointer; }
 .seo-vars__chip:hover { border-color: var(--mc-color-primary); }
 .seo-vars span { color: var(--mc-color-muted); }
+
+/* Push notifications: the readiness checklist. */
+.push-check { display: grid; gap: var(--mc-space-2); margin: 0; padding: 0; list-style: none; }
+.push-check li { display: flex; align-items: center; gap: var(--mc-space-2); }
+.push-check .is-ok { color: var(--mc-color-success, #15803d); }
+.push-check .is-todo { color: var(--mc-color-muted); }
+
+/* Hints inside panels and connection cards use the whole width instead of a narrow column. */
+.admin-panel > .admin-help, .admin-more > .admin-help, .admin-panel .admin-panel__header > .admin-help { max-width: none; font-size: var(--mc-font-size-sm); }
