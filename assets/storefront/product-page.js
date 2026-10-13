@@ -109,7 +109,7 @@ class CommerceProductGallery extends HTMLElement {
 
 /** Horizontal swipe on touch/pen: calls onSwipe(-1|1). Vertical scrolling is left to the browser. */
 function attachSwipe(element, onSwipe) {
-    let startX = 0; let startY = 0; let active = false; let moved = false;
+    let startX = 0; let startY = 0; let active = false; let moved = false; let ignoreClickUntil = 0;
     element.addEventListener('pointerdown', (event) => {
         if (event.pointerType === 'mouse') return;
         active = true; moved = false; startX = event.clientX; startY = event.clientY;
@@ -124,10 +124,12 @@ function attachSwipe(element, onSwipe) {
         const dx = event.clientX - startX;
         if (moved && Math.abs(dx) > 40) {
             onSwipe(dx < 0 ? 1 : -1);
-            // Swallow the click that follows a swipe so the viewer does not open.
-            element.addEventListener('click', (e) => e.stopPropagation(), { capture: true, once: true });
+            // Swallow only a click that comes right after the swipe, so the viewer does not open. A swipe often has no click at all:
+            // a one-time listener would then wait for the next real tap and eat it.
+            ignoreClickUntil = Date.now() + 350;
         }
     };
+    element.addEventListener('click', (e) => { if (Date.now() < ignoreClickUntil) { e.stopPropagation(); e.preventDefault(); } }, { capture: true });
     element.addEventListener('pointerup', finish);
     element.addEventListener('pointercancel', () => { active = false; });
 }

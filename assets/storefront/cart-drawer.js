@@ -9,7 +9,7 @@ let opener = null;
 let isOpen = false;
 let loadRun = 0;
 let closeTimer = null;
-let qtyTimer = null;
+const qtyTimers = new WeakMap(); // one pending update per line, so a tap on another line does not cancel it
 
 const desktop = () => window.matchMedia('(min-width: 1024px)').matches;
 const onCartPage = () => Boolean(document.querySelector('[data-cart-page], [data-checkout]'));
@@ -151,12 +151,13 @@ function close() {
   root.classList.remove('is-open');
   document.removeEventListener('keydown', onKey);
   document.querySelectorAll(OPEN_SELECTOR).forEach((node) => node.setAttribute('aria-expanded', 'false'));
-  const finish = () => { root.hidden = true; unlockScroll(); };
+  const finish = () => { if (isOpen) return; root.hidden = true; unlockScroll(); };
   clearTimeout(closeTimer);
   closeTimer = setTimeout(finish, 320);
   root.addEventListener('transitionend', function done(event) {
     if (event.target !== panel) return;
     root.removeEventListener('transitionend', done);
+    if (isOpen) return; // opened again meanwhile: a stale handler must not hide the drawer that is now open
     clearTimeout(closeTimer);
     finish();
   });
@@ -167,8 +168,8 @@ function onKey(event) { if (event.key === 'Escape') { event.preventDefault(); cl
 
 function queueUpdate(form) {
   if (!form) return;
-  clearTimeout(qtyTimer);
-  qtyTimer = setTimeout(() => mutate(form), 280);
+  clearTimeout(qtyTimers.get(form));
+  qtyTimers.set(form, setTimeout(() => mutate(form), 280));
 }
 
 async function mutate(form) {

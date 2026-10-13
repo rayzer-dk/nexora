@@ -149,6 +149,7 @@ return [
     'contact' => 'Контакт',
     'contact_subtitle' => 'Только данные, необходимые для заказа',
     'name' => 'Имя',
+    'full_name' => 'Фамилия и имя',
     'phone' => 'Телефон',
     'email_confirmation_placeholder' => 'Для подтверждения заказа',
     'promo_code' => 'Промокод',

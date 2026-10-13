@@ -241,3 +241,6 @@ html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-g
 /* Fee of a delivery or payment method next to its name. */
 .ck-choice__fee { margin-inline-start: auto; display: grid; justify-items: end; font-weight: var(--mc-font-weight-bold); white-space: nowrap; }
 .ck-choice__fee > small { color: var(--mc-color-muted); font-weight: var(--mc-font-weight-regular); }
+
+/* Checkout: no footer columns while paying, only the shop name. */
+.checkout-footer { margin-top: var(--mc-space-8); padding-block: var(--mc-space-5); border-top: 1px solid var(--mc-color-border); color: var(--mc-color-muted); text-align: center; }

@@ -141,6 +141,7 @@ return [
     'contact' => 'Kontakt',
     'contact_subtitle' => 'Kun de oplysninger, der er nødvendige for ordren',
     'name' => 'Navn',
+    'full_name' => 'Efternavn og fornavn',
     'phone' => 'Telefon',
     'email_confirmation_placeholder' => 'Til ordrebekræftelse',
     'promo_code' => 'Rabatkode',

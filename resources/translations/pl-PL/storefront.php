@@ -143,6 +143,7 @@ return [
     'contact' => 'Kontakt',
     'contact_subtitle' => 'Tylko dane potrzebne do zamówienia',
     'name' => 'Imię',
+    'full_name' => 'Nazwisko i imię',
     'phone' => 'Telefon',
     'email_confirmation_placeholder' => 'Do potwierdzenia zamówienia',
     'promo_code' => 'Kod promocyjny',

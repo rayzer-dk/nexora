@@ -177,7 +177,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             // Footer: newsletter block and columns. Empty texts keep the translated defaults; own columns are added after the built-in ones.
             'footer' => [
                 'tagline' => '', 'copyright' => '', 'bg' => '', 'text_color' => '',
-                'newsletter' => ['enabled' => true, 'icon' => 'mail', 'eyebrow' => '', 'title' => '', 'text' => '', 'button' => '', 'placeholder' => '', 'bg' => '', 'text_color' => ''],
+                'newsletter' => ['enabled' => true, 'pages' => ['home' => true, 'catalog' => false, 'category' => false, 'product' => false, 'cart' => false, 'blog' => true, 'content' => true], 'icon' => 'mail', 'eyebrow' => '', 'title' => '', 'text' => '', 'button' => '', 'placeholder' => '', 'bg' => '', 'text_color' => ''],
                 'hidden_links' => [],
                 'columns' => [],
             ],
@@ -333,6 +333,9 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $out['footer']['text_color'] = $this->hex($ft['text_color'] ?? '', '');
         $fn = is_array($ft['newsletter'] ?? null) ? $ft['newsletter'] : [];
         $out['footer']['newsletter']['enabled'] = (bool) ($fn['enabled'] ?? $defaults['footer']['newsletter']['enabled']);
+        foreach (array_keys($defaults['footer']['newsletter']['pages']) as $page) {
+            $out['footer']['newsletter']['pages'][$page] = (bool) (is_array($fn['pages'] ?? null) ? ($fn['pages'][$page] ?? false) : $defaults['footer']['newsletter']['pages'][$page]);
+        }
         $out['footer']['newsletter']['icon'] = $this->icon((string) ($fn['icon'] ?? 'mail'), 'mail', true);
         foreach (['eyebrow' => 60, 'title' => 120, 'text' => 240, 'button' => 40, 'placeholder' => 60] as $key => $max) {
             $out['footer']['newsletter'][$key] = $this->text($fn[$key] ?? '', $max);

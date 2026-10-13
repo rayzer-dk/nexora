@@ -4434,6 +4434,7 @@ return [
     'admin.footer.nl_placeholder' => 'E-mail field hint',
     'admin.footer.nl_bg' => 'Block background',
     'admin.footer.nl_text_color' => 'Text colour',
+    'admin.footer.nl_pages' => 'Show the subscription block on',
     'admin.footer.nl_hint' => 'A colour applies when “use” is ticked; otherwise the theme colour is used.',
     'admin.footer.brand' => 'Footer: text and colours',
     'admin.footer.tagline' => 'Tagline under the logo',

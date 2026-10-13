@@ -147,6 +147,7 @@ return [
     'contact' => 'Контакт',
     'contact_subtitle' => 'Лише дані, потрібні для замовлення',
     'name' => 'Ім’я',
+    'full_name' => 'Прізвище та ім’я',
     'phone' => 'Телефон',
     'email_confirmation_placeholder' => 'Для підтвердження замовлення',
     'promo_code' => 'Промокод',

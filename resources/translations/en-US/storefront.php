@@ -147,6 +147,7 @@ return [
     'contact' => 'Contact',
     'contact_subtitle' => 'Only data required for the order',
     'name' => 'Name',
+    'full_name' => 'Full name (surname and first name)',
     'phone' => 'Phone',
     'email_confirmation_placeholder' => 'For order confirmation',
     'promo_code' => 'Promo code',

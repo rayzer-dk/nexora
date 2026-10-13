@@ -4429,6 +4429,7 @@ return [
     'admin.footer.nl_placeholder' => 'Підказка в полі email',
     'admin.footer.nl_bg' => 'Фон блоку',
     'admin.footer.nl_text_color' => 'Колір тексту',
+    'admin.footer.nl_pages' => 'Де показувати блок підписки',
     'admin.footer.nl_hint' => 'Колір вмикається галочкою «використовувати»; без неї діє колір теми.',
     'admin.footer.brand' => 'Підвал: текст і кольори',
     'admin.footer.tagline' => 'Слоган під логотипом',

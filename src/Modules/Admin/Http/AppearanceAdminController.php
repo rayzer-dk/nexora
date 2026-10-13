@@ -273,6 +273,7 @@ final class AppearanceAdminController extends AbstractController
             'text_color' => $colour('footer_text_color'),
             'newsletter' => [
                 'enabled' => $bool('footer_nl_enabled'),
+                'pages' => array_combine(['home', 'catalog', 'category', 'product', 'cart', 'blog', 'content'], array_map(static fn (string $page): bool => $r->getBoolean('footer_nl_page_' . $page), ['home', 'catalog', 'category', 'product', 'cart', 'blog', 'content'])),
                 'icon' => (string) $r->get('footer_nl_icon', 'mail'),
                 'eyebrow' => $map('footer_nl_eyebrow'),
                 'title' => $map('footer_nl_title'),

@@ -3,7 +3,8 @@
 {% set fcfg = presentation.footer|default({}) %}{% set fnl = fcfg.newsletter|default({}) %}{% set fhide = fcfg.hidden_links|default([]) %}
 {% set footer_style %}{% if fcfg.bg|default('') %}--footer-bg:{{ fcfg.bg }};{% endif %}{% if fcfg.text_color|default('') %}--footer-text:{{ fcfg.text_color }};{% endif %}{% endset %}
 {% set nl_style %}{% if fnl.bg|default('') %}--newsletter-bg:{{ fnl.bg }};{% endif %}{% if fnl.text_color|default('') %}--newsletter-text:{{ fnl.text_color }};{% endif %}{% endset %}
-{% if fnl.enabled is not same as(false) %}<section class="newsletter-signup" aria-labelledby="newsletter-title"{% if nl_style|trim %} style="{{ nl_style|trim }}"{% endif %}>
+{% set nl_page = page_kind|default('content') %}{% set nl_pages = fnl.pages|default({home: true, blog: true, content: true}) %}
+{% if fnl.enabled is not same as(false) and nl_pages[nl_page]|default(false) %}<section class="newsletter-signup" aria-labelledby="newsletter-title"{% if nl_style|trim %} style="{{ nl_style|trim }}"{% endif %}>
     <div class="shell newsletter-signup__inner">
         <div class="newsletter-signup__copy">
             {% set nl_icon = fnl.icon is defined ? fnl.icon : 'mail' %}{% if nl_icon %}<span class="newsletter-signup__icon" aria-hidden="true">{{ ui_icon(nl_icon, 24) }}</span>{% endif %}

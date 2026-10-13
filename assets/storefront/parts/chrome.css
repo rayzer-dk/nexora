@@ -53,12 +53,11 @@
 
 .reference-catalog-toggle {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--mc-space-2);
-  width: var(--mc-control-height-lg); height: var(--mc-control-height-lg); padding: 0;
+  width: auto; min-width: var(--mc-control-height-lg); height: var(--mc-control-height-lg); padding-inline: var(--mc-control-padding-x);
   border-radius: var(--mc-radius-md); background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast);
   font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); cursor: pointer; white-space: nowrap;
 }
 .reference-catalog-toggle:hover { background: var(--mc-color-primary-fill-hover); text-decoration: none; }
-.reference-catalog-toggle > span, .reference-catalog-toggle > .ui-icon:last-child { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .reference-catalog-toggle > .ui-icon:last-child { transition: transform var(--mc-transition); }
 .reference-catalog-toggle[aria-expanded="true"] > .ui-icon:last-child { transform: rotate(180deg); }
 .mega { flex: 1; min-width: 0; }
