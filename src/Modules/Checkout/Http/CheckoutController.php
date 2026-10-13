@@ -165,7 +165,7 @@ final class CheckoutController extends AbstractController
         $pickupPoints=in_array('self_pickup',$deliveryOptions,true)?$this->pickupPoints->forCheckout($context->storeId,$context->storeName):[];
         $old=$this->flashBag($request)?->get('checkout_old')??[]; $old=is_array($old[0]??null)?$old[0]:[];
         $response = $this->render('@storefront/checkout/show.html.twig', [
-            'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.oformlennia_zamovlennia'),'store_name'=>$context->storeName,'cart'=>$summary,'country_code'=>$context->countryCode,'delivery_regions'=>$this->shippingCountries->enabledRegions($context->storeId,$context->countryCode),'checkout_layout'=>$layout,
+            'page_title'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.oformlennia_zamovlennia'),'store_name'=>$context->storeName,'cart'=>$summary,'country_code'=>$context->countryCode,'delivery_regions'=>$this->shippingCountries->enabledRegions($context->storeId,$context->countryCode),'address_countries'=>$this->addressCountries($context),'checkout_layout'=>$layout,
             'reverse_charge_on'=>$this->buyerVat->reverseChargeEnabled($context->storeId),'method_config'=>$this->methodLabels($context->storeId,$context->locale,$context->currency),'payment_methods'=>$methods,'checkout_key'=>$key,'delivery_options'=>$deliveryOptions,'pickup_points'=>$pickupPoints,'old'=>$old,'custom_delivery'=>$this->methodSettings->customCodes('delivery'),'custom_icons'=>array_column($this->methodSettings->custom(),'icon','code'),'customer_user'=>$this->getUser() instanceof CustomerUser ? $this->getUser() : null,'b2b_company'=>$b2b,'loyalty_account'=>$loyaltyAccount,'loyalty_config'=>$loyaltyConfig,
             'seo_head'=>['canonical'=>$request->getSchemeAndHttpHost().'/checkout','robots'=>'noindex,nofollow'],
         ]);
@@ -233,7 +233,7 @@ final class CheckoutController extends AbstractController
         if (!$this->shippingCountries->allows($context->storeId, $context->countryCode)) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('checkout_country_blocked')); $this->rememberInput($request); return $this->redirectToRoute('storefront_checkout'); }
         $key=(string)$request->request->get('checkout_key');
         if ($key==='' || !hash_equals((string)$request->getSession()->get('checkout.idempotency_key',''),$key)) { $this->addFlash('checkout_error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_oformlennia_zastarila_onovit_storinku')); $this->rememberInput($request); return $this->redirectToRoute('storefront_checkout'); }
-        try { $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id()); $input=$request->request->all(); unset($input['skip_region']); foreach($this->checkoutLayout->active($context->storeId)['blocks']??[] as $layoutBlock){ if(($layoutBlock['component']??'')==='checkout_shipping' && ($layoutBlock['props']['show_region']??true)===false) $input['skip_region']=1; } if(str_starts_with((string)($input['carrier']??''),'custom_ship_')){ $input['delivery_manual']=trim((string)($input['custom_address']??'')); } $order=$this->orders->place($context,$cart['id'],$input,$key,$customer instanceof CustomerUser ? $customer->id() : null); $this->attribution->attachOrder($order['public_id'],$request->getSession()); }
+        try { $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id()); $input=$request->request->all(); unset($input['skip_region']); foreach($this->checkoutLayout->active($context->storeId)['blocks']??[] as $layoutBlock){ if(($layoutBlock['component']??'')==='checkout_shipping' && ($layoutBlock['props']['show_region']??true)===false) $input['skip_region']=1; } if(str_starts_with((string)($input['carrier']??''),'custom_ship_')){ $input['delivery_manual']=trim((string)($input['custom_address']??'')); } $input=$this->withTypedAddress($input,$context); $order=$this->orders->place($context,$cart['id'],$input,$key,$customer instanceof CustomerUser ? $customer->id() : null); $this->attribution->attachOrder($order['public_id'],$request->getSession()); }
         catch (\DomainException $e) {
             $this->addFlash('checkout_error',$e->getMessage());
             $this->rememberInput($request);
@@ -273,5 +273,71 @@ final class CheckoutController extends AbstractController
         $session = $request->getSession();
 
         return $session instanceof FlashBagAwareSessionInterface ? $session->getFlashBag() : null;
+    }
+
+    /**
+     * Countries the buyer may pick in the delivery address block: the ones the shop delivers to, or just the shop's own country.
+     *
+     * @return list<array{code:string,name:string}>
+     */
+    private function addressCountries(\Commerce\Modules\Storefront\Domain\StorefrontContext $context): array
+    {
+        $codes = [];
+        try {
+            foreach ($this->shippingCountries->configured($context->storeId) as $code => $enabled) {
+                if ($enabled) {
+                    $codes[] = (string) $code;
+                }
+            }
+        } catch (\Throwable) {
+            $codes = [];
+        }
+        if ($codes === []) {
+            $codes = [$context->countryCode];
+        }
+        $list = [];
+        foreach ($codes as $code) {
+            $list[] = ['code' => $code, 'name' => \Commerce\Modules\Shipping\Application\ShippingCountryService::countryName($code, $context->locale)];
+        }
+        usort($list, static fn (array $a, array $b): int => strcmp($a['name'], $b['name']));
+
+        return $list;
+    }
+
+    /**
+     * The "Delivery address" block (country, city, street, apartment, postcode) turns into the one manual address line the order keeps,
+     * and into the delivery "to the address" when the shop has no carrier to choose.
+     *
+     * @param array<string,mixed> $input
+     * @return array<string,mixed>
+     */
+    private function withTypedAddress(array $input, \Commerce\Modules\Storefront\Domain\StorefrontContext $context): array
+    {
+        $city = trim((string) ($input['addr_city'] ?? ''));
+        $street = trim((string) ($input['addr_street'] ?? ''));
+        if ($city === '' && $street === '') {
+            return $input;
+        }
+        $country = strtoupper(trim((string) ($input['addr_country'] ?? '')));
+        $allowed = array_column($this->addressCountries($context), 'code');
+        if (!in_array($country, $allowed, true)) {
+            $country = $context->countryCode;
+        }
+        $parts = array_filter([
+            \Commerce\Modules\Shipping\Application\ShippingCountryService::countryName($country, $context->locale),
+            trim((string) ($input['addr_postcode'] ?? '')),
+            $city,
+            $street,
+            trim((string) ($input['addr_apartment'] ?? '')) !== '' ? trim((string) $input['addr_apartment']) : '',
+        ], static fn (string $part): bool => $part !== '');
+        if (trim((string) ($input['delivery_manual'] ?? '')) === '' && trim((string) ($input['point_id'] ?? '')) === '') {
+            $input['delivery_manual'] = mb_substr(implode(', ', $parts), 0, 500);
+        }
+        $input['addr_country'] = $country;
+        if (trim((string) ($input['carrier'] ?? '')) === '') {
+            $input['carrier'] = 'address';
+        }
+
+        return $input;
     }
 }

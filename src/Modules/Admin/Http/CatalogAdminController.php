@@ -35,6 +35,9 @@ final class CatalogAdminController extends AbstractController
     {
         try {
             $context = $this->context->resolve($request);
+            if ($request->query->has('skus')) {
+                return $this->json(['items' => $this->query->namesBySkus($context->storeId, $context->locale, explode(',', (string) $request->query->get('skus', '')))]);
+            }
             if ($request->query->has('ids')) {
                 // Names of products chosen earlier (the promotion form shows them as chips).
                 return $this->json(['items' => $this->query->namesByIds($context->storeId, $context->locale, array_map('intval', explode(',', (string) $request->query->get('ids', ''))))]);

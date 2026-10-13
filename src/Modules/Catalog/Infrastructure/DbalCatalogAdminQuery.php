@@ -35,6 +35,27 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         return array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'name' => (string) $r['name'], 'sku' => (string) $r['sku']], $rows);
     }
 
+    /**
+     * Name and SKU of known products by SKU (the product pickers of articles show names, not codes).
+     *
+     * @param list<string> $skus
+     * @return list<array{id:int,name:string,sku:string}>
+     */
+    public function namesBySkus(int $storeId, string $locale, array $skus): array
+    {
+        $skus = array_slice(array_values(array_unique(array_filter(array_map(static fn (string $s): string => trim($s), $skus), static fn (string $s): bool => $s !== ''))), 0, 200);
+        if ($skus === []) {
+            return [];
+        }
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT p.id, COALESCE(pt.name, "") AS name, v.sku AS sku FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? JOIN mc_product_variant v ON v.product_id=p.id LEFT JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id AND pt.locale=? WHERE v.sku IN (?)',
+            [$storeId, $locale, $skus],
+            [\Doctrine\DBAL\ParameterType::INTEGER, \Doctrine\DBAL\ParameterType::STRING, \Doctrine\DBAL\ArrayParameterType::STRING],
+        );
+
+        return array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'name' => (string) $r['name'], 'sku' => (string) $r['sku']], $rows);
+    }
+
     /** @return array{items:list<array<string,mixed>>,total:int,page:int,limit:int} */
     public function products(int $storeId, int $marketId, string $locale, int $page = 1, int $limit = 25, string $search = '', string $sort = '', string $dir = 'desc', array $filters = []): array
     {

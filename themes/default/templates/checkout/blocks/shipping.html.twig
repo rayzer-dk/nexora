@@ -4,7 +4,9 @@
 {% set carrier_desc = {nova_post: 'delivery_branch_locker_courier', ukrposhta: 'delivery_branch_courier', meest: 'delivery_branch_locker', delivery_auto: 'delivery_warehouse_courier', self_pickup: 'ck_pickup_desc', dhl: 'delivery_branch_locker_courier', gls: 'delivery_branch_courier'} %}
 <section class="checkout-card is-active checkout-builder-block" data-checkout-block="shipping" data-delivery-block>
   <div class="checkout-card__head"><b>{{ number }}</b><div><strong>{{ block.props.title|default(ui_text('receive')) }}</strong></div></div>
-  {% if options is empty %}
+  {% if options is empty and checkout_layout.blocks|default([])|filter(b => b.component == 'checkout_address' and b.enabled|default(true))|length > 0 %}
+  <p class="ck-hint">{{ ui_text('ck_address_below') }}</p>
+  {% elseif options is empty %}
   <div class="store-notice is-warning" role="alert">{{ ui_icon('circle-alert', 18) }}<span>{{ ui_text('ck_no_delivery') }}</span></div>
   {% else %}
   <div class="ck-choices ck-choices--carriers" role="radiogroup" aria-label="{{ ui_text('delivery_service') }}" data-carrier-group>

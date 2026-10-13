@@ -4342,6 +4342,7 @@ return [
     'admin.builder.category_subcategories' => 'Підкатегорії (плитки з фото)',
     'admin.builder.banner' => 'Банер (картинка + текст + кнопка)',
     'admin.builder.scroll_story' => 'Історія при прокрутці (картинка змінюється)',
+    'admin.builder.checkout_address' => 'Адреса доставки (країна, місто, вулиця)',
     'admin.builder.recently_viewed' => 'Ви дивилися (нещодавно переглянуті)',
     'admin.builder.video_hero' => 'Відео-банер (відео-фон)',
     'admin.builder.category_grid' => 'Товари',

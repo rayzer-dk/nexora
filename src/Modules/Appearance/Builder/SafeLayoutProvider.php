@@ -40,7 +40,7 @@ final class SafeLayoutProvider
     /** @return array<string,mixed> */
     public function checkout(): array
     {
-        $components = ['checkout_contact','checkout_shipping','checkout_company','checkout_comment','checkout_payment','checkout_coupon','checkout_summary','checkout_consent'];
+        $components = ['checkout_contact','checkout_shipping','checkout_address','checkout_company','checkout_comment','checkout_payment','checkout_coupon','checkout_summary','checkout_consent'];
         $blocks = [];
         foreach ($components as $component) {
             $blocks[] = ['id'=>$component,'component'=>$component,'enabled'=>true,'props'=>[],'style'=>[],'visibility'=>[]];

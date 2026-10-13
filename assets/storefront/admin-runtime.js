@@ -3126,7 +3126,8 @@ function initProductPickers() {
     input.after(wrap);
     wrap.append(chips, search, results);
 
-    const ids = () => input.value.split(',').map((v) => v.trim()).filter((v) => /^\d+$/.test(v));
+    const key = input.dataset.productPicker === 'sku' ? 'sku' : 'id'; // what the field holds: product ids (promotions) or SKUs (articles)
+    const ids = () => input.value.split(/[,;\n]/).map((v) => v.trim()).filter((v) => (key === 'sku' ? v !== '' : /^\d+$/.test(v)));
     const save = (list) => { input.value = list.join(', '); input.dispatchEvent(new Event('input', { bubbles: true })); };
     const chip = (id, name, sku) => {
       const node = document.createElement('span');
@@ -3144,10 +3145,10 @@ function initProductPickers() {
     };
     const known = ids();
     if (known.length) {
-      fetch(`/admin/api/catalog/products?ids=${encodeURIComponent(known.join(','))}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+      fetch(`/admin/api/catalog/products?${key === 'sku' ? 'skus' : 'ids'}=${encodeURIComponent(known.join(','))}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
         .then((r) => (r.ok ? r.json() : { items: [] }))
         .then((data) => {
-          const byId = new Map((data.items || []).map((item) => [String(item.id), item]));
+          const byId = new Map((data.items || []).map((item) => [String(item[key]), item]));
           chips.replaceChildren(...known.map((id) => chip(id, byId.get(id)?.name || '', byId.get(id)?.sku || '')));
         })
         .catch(() => chips.replaceChildren(...known.map((id) => chip(id, '', ''))));
@@ -3165,15 +3166,15 @@ function initProductPickers() {
           const data = response.ok ? await response.json() : { items: [] };
           if (mine !== request) return;
           const taken = new Set(ids());
-          const rows = (data.items || []).filter((item) => !taken.has(String(item.id)));
+          const rows = (data.items || []).filter((item) => item[key] && !taken.has(String(item[key])));
           results.replaceChildren(...rows.map((item) => {
             const li = document.createElement('li');
             const button = document.createElement('button');
             button.type = 'button';
             button.textContent = item.sku ? `${item.name} · ${item.sku}` : String(item.name);
             button.addEventListener('click', () => {
-              save([...ids(), String(item.id)]);
-              chips.append(chip(item.id, item.name, item.sku));
+              save([...ids(), String(item[key])]);
+              chips.append(chip(item[key], item.name, item.sku));
               search.value = '';
               results.hidden = true;
               search.focus();

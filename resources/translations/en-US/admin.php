@@ -4347,6 +4347,7 @@ return [
     'admin.builder.category_subcategories' => 'Subcategories (photo tiles)',
     'admin.builder.banner' => 'Banner (image + text + button)',
     'admin.builder.scroll_story' => 'Scroll story (changing picture)',
+    'admin.builder.checkout_address' => 'Delivery address (country, city, street)',
     'admin.builder.recently_viewed' => 'Recently viewed',
     'admin.builder.video_hero' => 'Video banner (video background)',
     'admin.builder.category_grid' => 'Products',

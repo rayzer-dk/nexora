@@ -1,0 +1,19 @@
+{#- Delivery address typed by the buyer: country, city, street and house (or a branch), apartment, postcode. Shown when the shop has no carrier to choose, or always ("Show even with carriers"). -#}
+{% set options = delivery_options|default([]) %}
+{% if cart.requires_shipping and (options is empty or block.props.always|default(false) is same as(true)) %}
+{% set countries = address_countries|default([]) %}
+<section class="checkout-card is-active checkout-builder-block" data-checkout-block="address">
+  <div class="checkout-card__head"><b>{{ number > 0 ? number : '' }}</b><div><strong>{{ block.props.title|default('') ?: ui_text('ck_address_title') }}</strong></div></div>
+  <div class="ck-grid">
+    {% if block.props.show_country|default(true) is not same as(false) and countries|length > 1 %}
+    <label class="ck-field"><span>{{ ui_text('ck_address_country') }} *</span><select name="addr_country" required>{% for c in countries %}<option value="{{ c.code }}"{{ (old.addr_country|default(country_code)) == c.code ? ' selected' : '' }}>{{ c.name }}</option>{% endfor %}</select></label>
+    {% endif %}
+    <label class="ck-field"><span>{{ ui_text('city') }} *</span><input name="addr_city" type="text" maxlength="120" value="{{ old.addr_city|default('') }}" autocomplete="address-level2" required></label>
+    <label class="ck-field ck-field--wide"><span>{{ ui_text('ck_address_street') }} *</span><input name="addr_street" type="text" maxlength="200" value="{{ old.addr_street|default('') }}" placeholder="{{ ui_text('ck_address_street_ph') }}" autocomplete="street-address" required></label>
+    <label class="ck-field"><span>{{ ui_text('ck_address_apartment') }}</span><input name="addr_apartment" type="text" maxlength="60" value="{{ old.addr_apartment|default('') }}" autocomplete="off"></label>
+    {% if block.props.show_postcode|default(true) is not same as(false) %}
+    <label class="ck-field"><span>{{ ui_text('ck_address_postcode') }}</span><input name="addr_postcode" type="text" maxlength="20" value="{{ old.addr_postcode|default('') }}" autocomplete="postal-code" inputmode="text"></label>
+    {% endif %}
+  </div>
+</section>
+{% endif %}

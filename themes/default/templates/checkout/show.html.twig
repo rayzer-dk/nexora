@@ -26,6 +26,7 @@
           {% set number = 0 %}{% for nb in numbered %}{% if nb.component == block.component %}{% set number = loop.index %}{% endif %}{% endfor %}
           {% if block.component == 'checkout_contact' %}{% include '@storefront/checkout/blocks/contact.html.twig' with {block:block, number:number, old:old} %}
           {% elseif block.component == 'checkout_shipping' %}{% include '@storefront/checkout/blocks/shipping.html.twig' with {block:block, number:number, old:old} %}
+          {% elseif block.component == 'checkout_address' %}{% include '@storefront/checkout/blocks/address.html.twig' with {block:block, number:number, old:old} %}
           {% elseif block.component == 'checkout_company' %}{% include '@storefront/checkout/blocks/company.html.twig' with {block:block, number:number, old:old} %}
           {% elseif block.component == 'checkout_comment' %}{% include '@storefront/checkout/blocks/comment.html.twig' with {block:block, number:number, old:old} %}
           {% elseif block.component == 'checkout_payment' %}{% include '@storefront/checkout/blocks/payment.html.twig' with {block:block, number:number, old:old} %}
