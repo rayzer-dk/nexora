@@ -18,7 +18,7 @@ final readonly class OpenAiResponsesProvider implements ImageTextGenerationProvi
         if(!$this->enabled())throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.527364192fa5'));
         $body=['model'=>trim($this->model),'input'=>$prompt,'store'=>false];if($systemInstruction!==null&&trim($systemInstruction)!=='')$body['instructions']=$systemInstruction;
         $response=$this->http->request('POST','https://api.openai.com/v1/responses',['headers'=>['Authorization'=>'Bearer '.trim($this->apiKey),'Content-Type'=>'application/json'],'json'=>$body,'max_redirects'=>0,'timeout'=>30.0]);
-        if($response->getStatusCode()>=300)throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.0974916cd615'));$data=$response->toArray(false);
+        if($response->getStatusCode()>=300)throw AiHttpError::from($response);$data=$response->toArray(false);
         $texts=[];foreach((array)($data['output']??[]) as $item){foreach((array)($item['content']??[]) as $part){if(($part['type']??'')==='output_text'&&is_string($part['text']??null))$texts[]=$part['text'];}}
         $text=trim(implode("\n",$texts));if($text==='')throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.fe97d00bf5a8'));return $text;
     }
@@ -37,7 +37,7 @@ final readonly class OpenAiResponsesProvider implements ImageTextGenerationProvi
         }
         $response = $this->http->request('POST', 'https://api.openai.com/v1/responses', ['headers' => ['Authorization' => 'Bearer ' . trim($this->apiKey), 'Content-Type' => 'application/json'], 'json' => $body, 'max_redirects' => 0, 'timeout' => 60.0]);
         if ($response->getStatusCode() >= 300) {
-            throw new RuntimeException('ai_provider_http_' . $response->getStatusCode());
+            throw AiHttpError::from($response);
         }
         $texts = [];
         foreach ((array) ($response->toArray(false)['output'] ?? []) as $item) {

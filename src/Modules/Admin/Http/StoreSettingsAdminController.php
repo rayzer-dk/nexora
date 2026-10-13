@@ -82,6 +82,15 @@ final class StoreSettingsAdminController extends AbstractController
             'revisions' => $this->settings->history($context->storeId, 12),
             'locales' => $locales,
             'currencies' => $currencies,
+            'countries' => (static function (string $locale): array {
+                $list = [];
+                foreach (\Commerce\Modules\Shipping\Application\ShippingCountryService::allCountryCodes() as $code) {
+                    $list[$code] = \Commerce\Modules\Shipping\Application\ShippingCountryService::countryName($code, $locale);
+                }
+                asort($list, SORT_LOCALE_STRING);
+
+                return $list;
+            })($context->locale ?? 'uk-UA'),
             'timezones' => ['Europe/Kyiv', 'Europe/Copenhagen', 'Europe/Warsaw', 'Europe/Berlin', 'UTC'],
         ]);
     }

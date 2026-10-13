@@ -27,6 +27,7 @@ final class IndexNowAdminController extends AbstractController
             'key_location' => $this->indexNow->keyLocation(),
             'usable' => $this->indexNow->usable(),
             'host' => $this->indexNow->host(),
+            'key_check' => $this->indexNow->usable() ? $this->indexNow->keyCheck() : null,
         ]);
     }
 
@@ -40,6 +41,10 @@ final class IndexNowAdminController extends AbstractController
         if ($request->request->get('action') === 'submit_all') {
             $result = $this->indexNow->submit($context->storeId, true);
             $this->addFlash($result['ok'] ? 'success' : 'error', CanonicalUiText::get($result['ok'] ? 'admin.indexnow.sent' : 'admin.indexnow.failed') . ' ' . $result['count'] . ' · ' . $result['status']);
+            if (!$result['ok'] && in_array($result['status'], ['http_403', 'http_422', 'http_400'], true)) {
+                $check = $this->indexNow->keyCheck();
+                $this->addFlash('warning', CanonicalUiText::get('admin.indexnow.diagnosis.' . ($check === 'ok' ? 'key_ok' : (in_array($check, ['mismatch', 'unreachable'], true) ? $check : 'http')), ['url' => $this->indexNow->keyLocation(), 'status' => $check]));
+            }
         } else {
             $this->indexNow->setEnabled($context->storeId, $request->request->get('enabled') === '1');
             $this->addFlash('success', CanonicalUiText::get('admin.indexnow.saved'));

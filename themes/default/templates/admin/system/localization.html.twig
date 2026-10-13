@@ -112,10 +112,10 @@
         {% for currency in data.currencies|filter(c => c.enabled and c.auto_convert and not c.is_default) %}
             <tr>
                 <td><strong>{{ currency.code }}</strong></td>
-                <td>{% if currency.rate %}1 {{ currency.code }} = {{ currency.rate.per_quote }} {{ data.default_currency }}{% if currency.rate.expired %} <span class="admin-badge is-warning">{{ ui_text('admin.localization.rates.expired') }}</span>{% endif %}{% else %}<span class="admin-badge is-warning">{{ ui_text('admin.localization.rates.none') }}</span>{% endif %}</td>
+                <td class="admin-nowrap">{% if currency.rate %}1 {{ currency.code }} = {{ currency.rate.per_quote }} {{ data.default_currency }}{% if currency.rate.expired %} <span class="admin-badge is-warning">{{ ui_text('admin.localization.rates.expired') }}</span>{% endif %}{% else %}<span class="admin-badge is-warning">{{ ui_text('admin.localization.rates.none') }}</span>{% endif %}</td>
                 <td>{{ ui_text('admin.localization.rate_source.' ~ currency.rate_source) }}{% if currency.rate and currency.rate.provider != 'manual' and currency.rate_source == 'auto' %} <small>({{ currency.rate.provider|upper }})</small>{% endif %}</td>
-                <td>{{ currency.rate ? currency.rate.observed_at : '—' }}</td>
-                <td>{% if currency.rate_source == 'manual' %}
+                <td class="admin-nowrap">{{ currency.rate ? currency.rate.observed_at : '—' }}</td>
+                <td class="admin-nowrap">{% if currency.rate_source == 'manual' %}
                     <form method="post" action="{{ path('admin_system_localization_rate') }}" class="admin-rate-form" data-admin-ajax data-admin-ajax-replace="[data-rates-panel]">
                         <input type="hidden" name="_csrf_token" value="{{ csrf_token('localization_rate') }}"><input type="hidden" name="base" value="{{ data.default_currency }}"><input type="hidden" name="quote" value="{{ currency.code }}">
                         <label><span class="visually-hidden">{{ ui_text('admin.localization.rates.value_label', {quote: currency.code, base: data.default_currency}) }}</span><input type="text" inputmode="decimal" name="value" value="{{ currency.rate ? currency.rate.per_quote }}" required class="admin-input-narrow"> {{ data.default_currency }}</label>

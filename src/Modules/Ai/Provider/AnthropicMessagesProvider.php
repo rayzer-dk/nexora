@@ -38,7 +38,7 @@ final readonly class AnthropicMessagesProvider implements ImageTextGenerationPro
             'json' => $body, 'max_redirects' => 0, 'timeout' => 45.0,
         ]);
         if ($response->getStatusCode() >= 300) {
-            throw new RuntimeException('ai_provider_http_' . $response->getStatusCode());
+            throw AiHttpError::from($response);
         }
         $texts = [];
         foreach ((array) ($response->toArray(false)['content'] ?? []) as $part) {
@@ -71,7 +71,7 @@ final readonly class AnthropicMessagesProvider implements ImageTextGenerationPro
             'json' => $body, 'max_redirects' => 0, 'timeout' => 60.0,
         ]);
         if ($response->getStatusCode() >= 300) {
-            throw new RuntimeException('ai_provider_http_' . $response->getStatusCode());
+            throw AiHttpError::from($response);
         }
         $texts = [];
         foreach ((array) ($response->toArray(false)['content'] ?? []) as $part) {

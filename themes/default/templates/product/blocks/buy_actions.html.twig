@@ -39,7 +39,7 @@
 </dialog>
 {% endif %}
 {% elseif product.purchase_allowed %}
-<div class="purchase-unavailable"><button class="button button--secondary button--lg" type="button" disabled>{{ ui_icon('ban', 20) }}<span>{{ product.availability_label }}</span></button></div>
+{% if capabilities.features.cart|default(false) %}<div class="purchase-unavailable"><button class="button button--secondary button--lg" type="button" disabled>{{ ui_icon('ban', 20) }}<span>{{ product.availability_label }}</span></button></div>{% endif %}
 {% elseif product.notify_available %}
 <form class="stock-notify-form" data-stock-notify-form method="post" action="/product/{{ product.id }}/stock-notify">
     <input type="hidden" name="_token" value="{{ csrf_token('stock_notify_' ~ product.id) }}">{% include '@storefront/components/spam_fields.html.twig' %}
@@ -52,7 +52,7 @@
     <input type="hidden" name="_token" value="{{ csrf_token('product_inquiry_' ~ product.id) }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="price_request"><input type="hidden" name="source_url" value="{{ app.request.uri }}">
     <h3>{{ ui_text('ask_price') }}</h3><div class="delivery-fields"><label><span>{{ ui_text('name') }}</span><input name="name" required maxlength="190"></label><label><span>{{ ui_text('phone_or_email') }}</span><input name="phone" maxlength="32" placeholder="+380..."></label><label><span>Email</span><input name="email" type="email" maxlength="320"></label></div><label><span>{{ ui_text('message') }}</span><textarea name="message" maxlength="4000" rows="3">{{ ui_text('price_request_default') }}</textarea></label><button class="button button--primary button--lg" type="submit">{{ ui_text('send_request') }}</button>
 {% include '@storefront/components/captcha.html.twig' with {form:'price_request'} only %}</form>
-{% else %}
+{% elseif capabilities.features.cart|default(false) %}
 <div class="purchase-unavailable"><button class="button button--secondary button--lg" type="button" disabled>{{ ui_icon('ban', 20) }}<span>{{ product.availability_label }}</span></button>{% if product.purchase_eta_text %}<span>{{ product.purchase_eta_text }}</span>{% endif %}</div>
 {% endif %}
 {% if display.benefits %}

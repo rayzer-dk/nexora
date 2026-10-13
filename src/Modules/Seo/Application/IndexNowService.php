@@ -140,6 +140,27 @@ final readonly class IndexNowService
         return ['count' => $sent, 'status' => $status, 'ok' => $ok];
     }
 
+    /**
+     * Opens the key file the way a search engine would. IndexNow answers 403 when it cannot read the key at keyLocation
+     * (a redirect to another host, a CDN / bot filter in front of the site, a wrong public URL), so say which of these it is.
+     *
+     * @return string ok | http_NNN | mismatch | unreachable
+     */
+    public function keyCheck(): string
+    {
+        try {
+            $response = $this->http->request('GET', $this->keyLocation(), ['timeout' => 8, 'max_redirects' => 0, 'headers' => ['User-Agent' => 'IndexNow-Check']]);
+            $code = $response->getStatusCode();
+            if ($code !== 200) {
+                return 'http_' . $code;
+            }
+
+            return trim($response->getContent(false)) === $this->key() ? 'ok' : 'mismatch';
+        } catch (\Throwable) {
+            return 'unreachable';
+        }
+    }
+
     private function now(): string
     {
         return (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');

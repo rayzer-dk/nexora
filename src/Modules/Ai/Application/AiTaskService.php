@@ -149,18 +149,18 @@ final class AiTaskService
     /** Sends a tiny request to check a key. */
     public function ping(int $storeId, string $providerCode): void
     {
-        $this->provider($storeId, $providerCode)->generate('Reply with the single word: ok', null);
+        $this->provider($storeId, $providerCode, true)->generate('Reply with the single word: ok', null);
     }
 
-    private function provider(int $storeId, string $code): TextGenerationProviderInterface
+    private function provider(int $storeId, string $code, bool $forTest = false): TextGenerationProviderInterface
     {
         $configs = $this->settings->providers($storeId);
         if (isset($configs[$code])) {
             $c = $configs[$code];
             $provider = match ($code) {
-                'openai' => new OpenAiResponsesProvider($this->http, $c['enabled'], $c['key'], $c['model']),
-                'gemini' => new GeminiGenerateContentProvider($this->http, $c['enabled'], $c['key'], $c['model']),
-                default => new AnthropicMessagesProvider($this->http, $c['enabled'], $c['key'], $c['model']),
+                'openai' => new OpenAiResponsesProvider($this->http, $c['enabled'] || $forTest, $c['key'], $c['model']),
+                'gemini' => new GeminiGenerateContentProvider($this->http, $c['enabled'] || $forTest, $c['key'], $c['model']),
+                default => new AnthropicMessagesProvider($this->http, $c['enabled'] || $forTest, $c['key'], $c['model']),
             };
             if (!$provider->enabled()) {
                 throw new \DomainException(CanonicalUiText::get('admin.ai.error_provider'));

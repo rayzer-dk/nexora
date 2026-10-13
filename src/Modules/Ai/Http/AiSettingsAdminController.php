@@ -95,8 +95,9 @@ final class AiSettingsAdminController extends AbstractController
         try {
             $this->tasks->ping($this->contexts->resolve($request)->storeId, (string) $request->request->get('provider', ''));
             $this->addFlash('success', CanonicalUiText::get('admin.ai.test_ok'));
-        } catch (\Throwable) {
-            $this->addFlash('error', CanonicalUiText::get('admin.ai.test_failed'));
+        } catch (\Throwable $e) {
+            // Say what went wrong (the provider's own status and message, or the network error); the key is never part of it.
+            $this->addFlash('error', CanonicalUiText::get('admin.ai.test_failed') . ' ' . mb_substr($e->getMessage(), 0, 300));
         }
 
         return $this->redirectToRoute('admin_system_ai');

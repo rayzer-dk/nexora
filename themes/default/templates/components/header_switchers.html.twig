@@ -1,6 +1,7 @@
 {# Compact language (flag + code) and currency (symbol + code) switchers. Plain links: no "apply" button, no JavaScript required. Shown only with more than one real option. #}
 {% set lang_switch = storefront_language_switch() %}
-{% set currency_switch = storefront_currency_switch() %}
+{# Prices exist only where there is a catalogue: a landing page or a forum has no use for a currency. #}
+{% set currency_switch = site_capabilities().features.catalog|default(false) ? storefront_currency_switch() : null %}
 {% if lang_switch or currency_switch %}
 <div class="store-switchers" data-store-switchers>
     {% if lang_switch %}
