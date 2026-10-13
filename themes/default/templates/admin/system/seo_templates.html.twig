@@ -5,7 +5,7 @@
 {% set type_labels = {product: ui_text('admin.seotemplates.type_product'), category: ui_text('admin.seotemplates.type_category'), article: ui_text('admin.seotemplates.type_article'), page: ui_text('admin.seotemplates.type_page')} %}
 <form method="post" action="{{ path('admin_system_seo_templates') }}" data-dirty-guard><input type="hidden" name="_token" value="{{ csrf_token('admin_seo_templates') }}">
 <section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.seotemplates.variables') }}</h2><small>{{ ui_text('admin.seotemplates.variables_hint') }}</small></div></div>
-<ul class="seo-vars">{% for v in variables %}<li><button type="button" class="seo-vars__chip" data-seo-var="{{ v }}" title="{{ ui_text('admin.seotemplates.insert')|e('html_attr') }}"><code>{{ '{' ~ v ~ '}' }}</code></button><span>{{ ui_text('admin.seotemplates.var_' ~ v) }}</span></li>{% endfor %}</ul>
+<ul class="seo-vars">{% for v in variables %}<li><code class="seo-vars__chip">{{ '{' ~ v ~ '}' }}</code><span>{{ ui_text('admin.seotemplates.var_' ~ v) }}</span></li>{% endfor %}</ul>
 <p class="admin-help">{{ ui_text('admin.seotemplates.example') }}</p></section>
 {% for type in types %}
 <section class="admin-panel" data-seo-type="{{ type }}"><div class="admin-panel__header"><div><h2>{{ type_labels[type] }}</h2><small>{{ ui_text('admin.seotemplates.vars_for_' ~ type) }}</small></div><button type="button" class="admin-button" data-seo-example data-title="{{ ui_text('admin.seotemplates.ex_title_' ~ type)|e('html_attr') }}" data-description="{{ ui_text('admin.seotemplates.ex_desc_' ~ type)|e('html_attr') }}">{{ ui_icon('wand-sparkles', 16) }} {{ ui_text('admin.seotemplates.fill_example') }}</button></div>

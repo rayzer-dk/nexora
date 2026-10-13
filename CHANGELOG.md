@@ -2,6 +2,9 @@
 
 ## Unreleased (next after 3.97.23)
 
+- Captcha: slider (drag to the end) is the default built-in challenge; it seals time, real pointer events and speed unevenness into the answer, rejects jumps, too-fast/too-slow drags and has hidden trap fields; the "pick the picture" style stays selectable.
+- Admin: roles/permissions page rewritten (translated labels, risk badges); header context stays in one row; dashboard hides empty widgets; quality monitor says why a fix did not help.
+
 - Captcha: the built-in challenge is now “pick the named picture among four” (no distorted letters), refreshable without reload; 6 languages.
 - Store data: country is a dropdown, the domains field is gone (domains stay as they are); catalogue-only mode no longer shows availability labels/buttons; currency switcher is hidden where there is no catalogue (landing, forum).
 - AI provider test and IndexNow now say the real reason (provider status/message, key-file check) instead of a generic error; the AI test works before the provider is switched on.

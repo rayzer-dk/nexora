@@ -240,7 +240,7 @@ label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100
 /* SEO templates: variable chips with meaning. */
 .seo-vars { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--mc-space-2) var(--mc-space-4); margin: 0; padding: 0; list-style: none; }
 .seo-vars li { display: flex; align-items: baseline; gap: var(--mc-space-2); }
-.seo-vars__chip { padding: 2px var(--mc-space-2); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); color: var(--mc-color-primary); cursor: pointer; }
+.seo-vars__chip { padding: 2px var(--mc-space-2); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-subtle); color: var(--mc-color-primary); }
 .seo-vars__chip:hover { border-color: var(--mc-color-primary); }
 .seo-vars span { color: var(--mc-color-muted); }
 
@@ -277,3 +277,16 @@ label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100
 .admin-filters.admin-analytics-range > label { flex: 0 1 9rem; }
 .admin-filters.admin-analytics-range select, .admin-filters.admin-analytics-range input { width: 100%; }
 @media (min-width: 1100px) { .admin-filters.admin-analytics-range { flex-wrap: nowrap; } }
+
+/* Header context (market, currency, language) stays in one row; long names are cut instead of wrapping. */
+@media (min-width: 1024px) {
+  .admin-context, .admin-context form { flex-wrap: nowrap; gap: var(--mc-space-2); }
+  .admin-context select { min-width: 0; max-width: 11rem; text-overflow: ellipsis; }
+  .admin-context > * { flex: 0 1 auto; min-width: 0; }
+}
+@media (min-width: 1024px) and (max-width: 1500px) {
+  .admin-context label { flex: 0 1 auto; }
+  .admin-context select { max-width: 8.5rem; }
+  .admin-topbar .admin-search-trigger { flex: 0 0 auto; width: 2.75rem; }
+  .admin-topbar .admin-search-trigger > span, .admin-topbar .admin-search-trigger kbd { display: none; }
+}

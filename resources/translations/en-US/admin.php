@@ -3115,6 +3115,7 @@ return [
     'admin.quality.autofix' => 'Fix in one click',
     'admin.quality.fixed' => 'Fixed: %check% (changes: %count%).',
     'admin.quality.fix_failed' => 'The automatic fix failed. Open the section and check it by hand.',
+    'admin.quality.fix_rates_none' => "Rates were not updated: the server got no answer from the rate sources (NBU / ECB). Check outgoing internet access, then open “Languages and currencies” and set the rate by hand.",
     'admin.quality.alert.subject' => 'Store quality has degraded',
     'admin.quality.alert.score' => 'Quality score: was %from%, now %to%. New critical problems:',
     'admin.quality.check.heic_decoder' => 'HEIC decoder for phone photos',

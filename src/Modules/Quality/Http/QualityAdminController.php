@@ -44,9 +44,14 @@ final class QualityAdminController extends AbstractController
         }
         try {
             $changed = $this->fixer->fix($id, $this->contexts->resolve($request)->storeId);
-            $this->addFlash('success', CanonicalUiText::get('admin.quality.fixed', ['check' => CanonicalUiText::get('admin.quality.check.' . $id), 'count' => (string) $changed]));
-        } catch (\Throwable) {
-            $this->addFlash('error', CanonicalUiText::get('admin.quality.fix_failed'));
+            if ($changed === 0 && $id === 'rates_fresh') {
+                // The fix ran but no rate came back: the server cannot reach the rate sources, so the check stays red.
+                $this->addFlash('error', CanonicalUiText::get('admin.quality.fix_rates_none'));
+            } else {
+                $this->addFlash('success', CanonicalUiText::get('admin.quality.fixed', ['check' => CanonicalUiText::get('admin.quality.check.' . $id), 'count' => (string) $changed]));
+            }
+        } catch (\Throwable $e) {
+            $this->addFlash('error', CanonicalUiText::get('admin.quality.fix_failed') . ' ' . mb_substr($e->getMessage(), 0, 240));
         }
 
         return $this->redirectToRoute('admin_system_quality');
