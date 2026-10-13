@@ -107,3 +107,12 @@
 
 /* File library: the upload "button" is a label; centre its text like the other buttons. */
 .admin-filelib__bar > label.admin-button { display: inline-flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
+
+/* Landing editor: section order list and the add/remove controls of the item lists. */
+.admin-landing-order { display: grid; gap: var(--mc-space-2); margin: 0; padding: 0; list-style: none; }
+.admin-landing-order__item { display: flex; align-items: center; gap: var(--mc-space-3); padding: var(--mc-space-2) var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); }
+.admin-landing-order__item.is-dragging { opacity: 0.55; }
+[data-landing-list] > fieldset > legend { display: flex; align-items: center; gap: var(--mc-space-2); }
+[data-landing-list] > fieldset [data-landing-remove] { margin-left: auto; }
+.admin-input-row { display: flex; gap: var(--mc-space-2); align-items: center; }
+.admin-input-row > input { flex: 1 1 auto; min-width: 0; }

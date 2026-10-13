@@ -16,7 +16,14 @@ final class LandingContent
     public const LOCALES = ['uk-UA', 'en-US', 'ru-RU', 'de-DE', 'pl-PL', 'da-DK'];
     public const FEATURE_ICONS = ['zap', 'shield-check', 'smartphone', 'palette', 'trending-up', 'headset', 'sparkles', 'target', 'layers', 'globe', 'clock', 'heart', 'users', 'lock', 'credit-card', 'star'];
     private const KEY = 'landing.content';
-    private const COUNTS = ['features' => 6, 'stats' => 4, 'steps' => 3, 'reviews' => 3, 'faq' => 5];
+    /** Lists the owner can grow and shrink: the most items each may hold. */
+    private const LISTS = ['features' => 12, 'stats' => 8, 'steps' => 8, 'reviews' => 12, 'faq' => 20];
+    /** Sections of the page in their default order; the owner reorders and hides them. */
+    public const SECTION_KEYS = ['hero', 'stats', 'features', 'steps', 'reviews', 'faq', 'custom1', 'custom2', 'custom3', 'cta', 'form_callback', 'form_quote', 'form_consult'];
+    private const HIDDEN_BY_DEFAULT = ['custom1', 'custom2', 'custom3', 'form_callback', 'form_quote', 'form_consult'];
+    /** Sections that take the alternating tinted background. */
+    private const TINTABLE = ['features', 'steps', 'reviews', 'faq', 'custom1', 'custom2', 'custom3', 'form_callback', 'form_quote', 'form_consult'];
+    public const STYLE_KEYS = ['accent', 'bg', 'text', 'tint', 'hero_bg'];
     /** The request forms of the page: "main" sits in the contact section, the others open as a window from any link to #form-callback, #form-quote or #form-consult. */
     public const FORM_KEYS = ['main', 'callback', 'quote', 'consult'];
     public const FIELD_TYPES = ['name', 'phone', 'email', 'message', 'text', 'select', 'checkbox'];
@@ -33,11 +40,40 @@ final class LandingContent
         $saved = ($this->store->getArray(self::KEY) ?? [])[$locale] ?? [];
 
         if (!is_array($saved)) {
-            return $defaults;
+            return $this->finish($defaults);
         }
         $savedForms = is_array($saved['forms'] ?? null) ? $saved['forms'] : [];
         unset($saved['forms']);
+        // Lists, sections, own blocks and colours are taken as saved (a list may be shorter or longer than the default one).
+        $lists = [];
+        foreach (array_keys(self::LISTS) as $group) {
+            if (is_array($saved[$group] ?? null)) {
+                $lists[$group] = array_values(array_filter($saved[$group], 'is_array'));
+            }
+            unset($saved[$group]);
+        }
+        $savedSections = is_array($saved['sections'] ?? null) ? $saved['sections'] : null;
+        $savedCustom = is_array($saved['custom'] ?? null) ? array_values($saved['custom']) : null;
+        $savedStyle = is_array($saved['style'] ?? null) ? $saved['style'] : [];
+        unset($saved['sections'], $saved['custom'], $saved['style']);
         $content = $this->merge($defaults, $saved);
+        foreach ($lists as $group => $rows) {
+            $shape = array_fill_keys(array_keys((array) $defaults[$group][0]), '');
+            $content[$group] = array_map(static fn (array $row): array => array_replace($shape, array_intersect_key($row, $shape)), $rows);
+        }
+        if ($savedCustom !== null) {
+            foreach ($content['custom'] as $i => $slot) {
+                if (is_array($savedCustom[$i] ?? null)) {
+                    $content['custom'][$i] = array_replace($slot, array_intersect_key($savedCustom[$i], $slot));
+                }
+            }
+        }
+        foreach (self::STYLE_KEYS as $key) {
+            $content['style'][$key] = is_string($savedStyle[$key] ?? null) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $savedStyle[$key]) === 1 ? $savedStyle[$key] : '';
+        }
+        if ($savedSections !== null) {
+            $content['sections'] = $this->orderSections($savedSections);
+        }
         // A form keeps exactly the fields the owner left (an empty slot is a removed field); only empty texts follow the language default.
         foreach ($content['forms'] as $i => $form) {
             $row = $savedForms[$i] ?? null;
@@ -51,6 +87,70 @@ final class LandingContent
             }
             $content['forms'][$i]['enabled'] = (bool) ($row['enabled'] ?? true);
             $content['forms'][$i]['fields'] = array_pad(array_slice(array_values($row['fields']), 0, self::FIELD_SLOTS), self::FIELD_SLOTS, ['type' => '', 'label' => '', 'required' => false, 'options' => '']);
+        }
+
+        return $this->finish($content);
+    }
+
+    /**
+     * Section order as saved: known keys only, each once; sections added by a later release join at the end with their default visibility.
+     *
+     * @param array<int,mixed> $saved
+     * @return list<array{key:string,visible:bool}>
+     */
+    private function orderSections(array $saved): array
+    {
+        $out = [];
+        $seen = [];
+        foreach ($saved as $row) {
+            $key = is_array($row) ? (string) ($row['key'] ?? '') : '';
+            if (!in_array($key, self::SECTION_KEYS, true) || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $out[] = ['key' => $key, 'visible' => (bool) ($row['visible'] ?? true)];
+        }
+        foreach (self::SECTION_KEYS as $key) {
+            if (!isset($seen[$key])) {
+                $out[] = ['key' => $key, 'visible' => !in_array($key, self::HIDDEN_BY_DEFAULT, true)];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Adds what the page needs to draw itself: which sections are tinted (every second one of the tintable kind) and which are empty.
+     *
+     * @param array<string,mixed> $content
+     * @return array<string,mixed>
+     */
+    private function finish(array $content): array
+    {
+        $tint = false;
+        foreach ($content['sections'] as $i => $section) {
+            $key = (string) $section['key'];
+            $empty = match ($key) {
+                'stats' => $content['stats'] === [],
+                'features' => $content['features'] === [],
+                'steps' => $content['steps'] === [],
+                'reviews' => $content['reviews'] === [],
+                'faq' => $content['faq'] === [],
+                'custom1' => trim((string) $content['custom'][0]['title'] . (string) $content['custom'][0]['text'] . (string) $content['custom'][0]['image']) === '',
+                'custom2' => trim((string) $content['custom'][1]['title'] . (string) $content['custom'][1]['text'] . (string) $content['custom'][1]['image']) === '',
+                'custom3' => trim((string) $content['custom'][2]['title'] . (string) $content['custom'][2]['text'] . (string) $content['custom'][2]['image']) === '',
+                'form_callback' => !$content['forms'][1]['enabled'],
+                'form_quote' => !$content['forms'][2]['enabled'],
+                'form_consult' => !$content['forms'][3]['enabled'],
+                default => false,
+            };
+            $show = (bool) $section['visible'] && !$empty;
+            $content['sections'][$i]['show'] = $show;
+            $content['sections'][$i]['tint'] = false;
+            if ($show && in_array($key, self::TINTABLE, true)) {
+                $tint = !$tint;
+                $content['sections'][$i]['tint'] = $tint;
+            }
         }
 
         return $content;
@@ -68,13 +168,51 @@ final class LandingContent
             }
         }
         $clean['form']['enabled'] = !empty($input['form']['enabled']);
-        foreach (self::COUNTS as $group => $count) {
-            for ($i = 0; $i < $count; ++$i) {
-                foreach (array_keys((array) $defaults[$group][$i]) as $field) {
-                    $value = $this->text($input[$group][$i][$field] ?? '', in_array($field, ['text', 'quote', 'a'], true) ? 500 : 200);
-                    $clean[$group][$i][$field] = $field === 'icon' && !in_array($value, self::FEATURE_ICONS, true) ? $defaults[$group][$i]['icon'] : $value;
+        foreach (self::LISTS as $group => $max) {
+            $rows = [];
+            foreach (array_values(is_array($input[$group] ?? null) ? $input[$group] : []) as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $item = [];
+                $any = false;
+                foreach (array_keys((array) $defaults[$group][0]) as $field) {
+                    $value = $this->text($row[$field] ?? '', in_array($field, ['text', 'quote', 'a'], true) ? 500 : 200);
+                    if ($field === 'icon') {
+                        $value = in_array($value, self::FEATURE_ICONS, true) ? $value : 'zap';
+                    } else {
+                        $any = $any || $value !== '';
+                    }
+                    $item[$field] = $value;
+                }
+                if ($any) {
+                    $rows[] = $item;
+                }
+                if (count($rows) >= $max) {
+                    break;
                 }
             }
+            $clean[$group] = $rows;
+        }
+        $order = [];
+        foreach ((array) ($input['sections'] ?? []) as $key) {
+            $order[] = ['key' => (string) $key, 'visible' => !empty($input['section_visible'][(string) $key])];
+        }
+        $clean['sections'] = $this->orderSections($order);
+        for ($i = 0; $i < 3; ++$i) {
+            $row = is_array($input['custom'][$i] ?? null) ? $input['custom'][$i] : [];
+            $clean['custom'][$i] = [
+                'title' => $this->text($row['title'] ?? '', 200),
+                'text' => $this->text($row['text'] ?? '', 1500),
+                'image' => $this->safeUrl($row['image'] ?? '', false),
+                'button' => $this->text($row['button'] ?? '', 120),
+                'url' => $this->safeUrl($row['url'] ?? '', true),
+                'side' => ($row['side'] ?? '') === 'left' ? 'left' : 'right',
+            ];
+        }
+        foreach (self::STYLE_KEYS as $key) {
+            $value = trim((string) ($input['style'][$key] ?? ''));
+            $clean['style'][$key] = !empty($input['style_on'][$key]) && preg_match('/^#[0-9A-Fa-f]{6}$/D', $value) === 1 ? $value : '';
         }
         foreach (self::FORM_KEYS as $i => $key) {
             $row = $input['forms'][$i] ?? [];
@@ -130,6 +268,9 @@ final class LandingContent
             'steps' => $list(3, fn (int $i): array => ['title' => $line("step.$i.title"), 'text' => $line("step.$i.text")]),
             'reviews' => $list(3, fn (int $i): array => ['quote' => $line("review.$i.quote"), 'name' => $line("review.$i.name"), 'role' => $line("review.$i.role")]),
             'faq' => $list(5, fn (int $i): array => ['q' => $line("faq.$i.q"), 'a' => $line("faq.$i.a")]),
+            'custom' => array_fill(0, 3, ['title' => '', 'text' => '', 'image' => '', 'button' => '', 'url' => '', 'side' => 'right']),
+            'sections' => array_map(static fn (string $key): array => ['key' => $key, 'visible' => !in_array($key, self::HIDDEN_BY_DEFAULT, true)], self::SECTION_KEYS),
+            'style' => array_fill_keys(self::STYLE_KEYS, ''),
             'cta' => ['title' => $line('cta.title'), 'text' => $line('cta.text'), 'button' => $line('cta.button')],
             'form' => ['title' => $line('form.title'), 'text' => $line('form.text'), 'button' => $line('form.button'), 'enabled' => true],
             'forms' => $this->defaultForms($line),
@@ -178,6 +319,21 @@ final class LandingContent
         }
 
         return $defaults;
+    }
+
+    /** A link or picture address that cannot run code: a local path, an anchor, https, tel: or mailto: (pictures: a path or https only). */
+    private function safeUrl(mixed $value, bool $link): string
+    {
+        $url = $this->text($value, 500);
+        if ($url === '' || preg_match('/[\s<>"\'\\\\]/', $url) === 1) {
+            return '';
+        }
+        $ok = (str_starts_with($url, '/') && !str_starts_with($url, '//')) || str_starts_with($url, 'https://');
+        if ($link) {
+            $ok = $ok || str_starts_with($url, '#') || str_starts_with($url, 'tel:') || str_starts_with($url, 'mailto:');
+        }
+
+        return $ok ? $url : '';
     }
 
     private function text(mixed $value, int $max): string

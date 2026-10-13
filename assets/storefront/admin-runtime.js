@@ -3190,8 +3190,50 @@ function initProductPickers() {
   });
 }
 
+// Landing page editor: add and remove list items, pick a picture from the library into a field.
+function initLandingEditor() {
+  qa('[data-landing-list]').forEach((panel) => {
+    const max = Number(panel.dataset.max || 12);
+    const template = q('template[data-landing-template]', panel);
+    const addButton = q('[data-landing-add]', panel);
+    const rows = () => qa('fieldset', panel).filter((node) => node.closest('[data-landing-list]') === panel);
+    const renumber = () => {
+      rows().forEach((row, i) => { const n = q('[data-sort-number]', row); if (n) n.textContent = String(i + 1); });
+      if (addButton) addButton.disabled = rows().length >= max;
+    };
+    addButton?.addEventListener('click', () => {
+      if (!template || rows().length >= max) return;
+      const key = String(Date.now() % 100000000 + rows().length);
+      const holder = document.createElement('div');
+      holder.innerHTML = template.innerHTML.replaceAll('__i__', key);
+      const row = holder.firstElementChild;
+      if (!row) return;
+      (rows().at(-1) ?? template).after(row);
+      renumber();
+      row.querySelector('input, textarea, select')?.focus();
+    });
+    panel.addEventListener('click', (event) => {
+      const remove = event.target instanceof Element ? event.target.closest('[data-landing-remove]') : null;
+      if (!remove) return;
+      remove.closest('fieldset')?.remove();
+      renumber();
+    });
+    renumber();
+  });
+  qa('[data-landing-pick-image]').forEach((button) => button.addEventListener('click', async () => {
+    const field = q(button.dataset.landingPickImage || '');
+    if (!(field instanceof HTMLInputElement)) return;
+    try {
+      const { pickMedia } = await import('../admin/features/media-picker.ts');
+      const picked = await pickMedia({ multiple: false });
+      if (picked[0]) { field.value = picked[0].url; field.dispatchEvent(new Event('input', { bubbles: true })); }
+    } catch (error) { console.error('Media picker failed', error); }
+  }));
+}
+
 initThemeToggle('mc_admin_theme');
 initUserMenu();
+initLandingEditor();
 initProductPickers();
 initDatePickers();
 initVariablePicker();

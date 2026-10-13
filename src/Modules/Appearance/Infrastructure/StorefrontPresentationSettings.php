@@ -155,7 +155,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'pages' => ['home' => true, 'catalog' => true, 'category' => true, 'product' => true, 'cart' => true, 'blog' => true, 'content' => true],
             ],
             // Optional overrides of single colours; an empty value keeps the colour of the chosen preset and colour scheme.
-            'colors' => ['background' => '', 'text' => '', 'heading' => '', 'header_bg' => '', 'footer_bg' => '', 'primary_hover' => '', 'primary_active' => '', 'buy_button' => '', 'buy_hover' => '', 'buy_active' => ''],
+            'colors' => ['background' => '', 'text' => '', 'heading' => '', 'header_bg' => '', 'footer_bg' => '', 'primary_hover' => '', 'primary_active' => '', 'buy_button' => '', 'buy_hover' => '', 'buy_active' => '', 'link' => '', 'link_hover' => '', 'h1' => '', 'h2' => '', 'h3' => '', 'header_text' => '', 'muted' => '', 'border' => '', 'surface' => '', 'consent_bg' => '', 'consent_text' => '', 'consent_button' => ''],
             'display' => [
                 'card_style' => 'classic',
                 'card_columns' => '5',

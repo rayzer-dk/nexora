@@ -1,35 +1,14 @@
 {% extends '@storefront/base.html.twig' %}{% set page_css = 'landing' %}
 {% set page_kind = 'home' %}
 {% set presentation = storefront_presentation() %}
-{% macro form_fields(form) %}
-{% for f in form.fields %}{% if f.type %}
-    {% set req = f.required or f.type in ['name'] %}
-    {% if f.type == 'name' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="name" maxlength="190" autocomplete="name"{{ req ? ' required' : '' }}></label>
-    {% elseif f.type == 'phone' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="phone" type="tel" maxlength="32" autocomplete="tel"{{ req ? ' required' : '' }}></label>
-    {% elseif f.type == 'email' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="email" type="email" maxlength="190" autocomplete="email"{{ req ? ' required' : '' }}></label>
-    {% elseif f.type == 'message' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><textarea name="message" rows="3" maxlength="2000"{{ req ? ' required' : '' }}></textarea></label>
-    {% elseif f.type == 'text' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="extra[{{ f.label }}]" maxlength="300"{{ req ? ' required' : '' }}></label>
-    {% elseif f.type == 'select' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><select name="extra[{{ f.label }}]"{{ req ? ' required' : '' }}><option value="">—</option>{% for o in f.options|split('|') %}{% if o|trim %}<option>{{ o|trim }}</option>{% endif %}{% endfor %}</select></label>
-    {% elseif f.type == 'checkbox' %}<label class="lp-check"><input type="checkbox" name="extra[{{ f.label }}]" value="{{ ui_text('landing.ui.yes') }}"{{ req ? ' required' : '' }}><span>{{ f.label }}{{ req ? ' *' : '' }}</span></label>
-    {% endif %}
-{% endif %}{% endfor %}
-{% endmacro %}
-{% macro form_body(form, page_url, type) %}
-    {% import _self as lp %}
-    {% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="{{ type }}"><input type="hidden" name="source_url" value="{{ page_url }}"><input type="hidden" name="form_title" value="{{ form.title }}">
-    {{ lp.form_fields(form) }}
-    {% include '@storefront/components/captcha.html.twig' with {form: type == 'callback' ? 'callback' : 'contact'} only %}
-    <button class="lp-btn lp-btn--primary" type="submit">{{ ui_icon('send', 18) }}{{ form.button }}</button>
-    <small>{{ ui_text('landing.ui.privacy_note') }}</small>
-{% endmacro %}
-
-{% import _self as lp %}
+{% import '@storefront/landing/_macros.html.twig' as lp %}
 {% block site_header %}
 <header class="lp-header" data-lp-header>
     <div class="lp-wrap lp-header__inner">
         <a class="lp-brand" href="#top" aria-label="{{ storefront_brand_name }}">{% if presentation.brand.logo %}<img src="{{ presentation.brand.logo }}" alt="{{ storefront_brand_name }}" height="32">{% else %}{% if presentation.brand.icon %}<img class="lp-brand__icon" src="{{ presentation.brand.icon }}" alt="" width="32" height="32">{% endif %}<strong>{{ storefront_brand_name }}</strong>{% endif %}</a>
         <nav class="lp-nav" aria-label="{{ ui_text('navigation') }}">
-            <a href="#features">{{ ui_text('landing.nav.features') }}</a><a href="#how">{{ ui_text('landing.nav.how') }}</a><a href="#reviews">{{ ui_text('landing.nav.reviews') }}</a><a href="#faq">{{ ui_text('landing.nav.faq') }}</a><a href="#contact">{{ ui_text('landing.nav.contact') }}</a>
+            {% set shown = landing.sections|filter(x => x.show)|map(x => x.key) %}
+            {% if 'features' in shown %}<a href="#features">{{ ui_text('landing.nav.features') }}</a>{% endif %}{% if 'steps' in shown %}<a href="#how">{{ ui_text('landing.nav.how') }}</a>{% endif %}{% if 'reviews' in shown %}<a href="#reviews">{{ ui_text('landing.nav.reviews') }}</a>{% endif %}{% if 'faq' in shown %}<a href="#faq">{{ ui_text('landing.nav.faq') }}</a>{% endif %}{% if 'cta' in shown %}<a href="#contact">{{ ui_text('landing.nav.contact') }}</a>{% endif %}
         </nav>
         <div class="lp-header__tools">
             {% include '@storefront/components/header_switchers.html.twig' %}
@@ -39,87 +18,13 @@
     </div>
 </header>
 {% endblock %}
+{% block head %}
+{% set st = landing.style %}
+{% if st.accent or st.bg or st.text or st.tint or st.hero_bg %}<style nonce="{{ app.request.attributes.get('_csp_nonce') }}">:root{ {%- if st.accent %}--mc-color-primary-base:{{ st.accent }};--mc-color-primary:{{ st.accent }};--mc-color-primary-fill:{{ st.accent }};--mc-color-primary-fill-hover:color-mix(in srgb,{{ st.accent }} 82%,#000);--mc-color-primary-contrast:{{ contrast_color(st.accent) }};{% endif %}{% if st.bg %}--mc-color-background:{{ st.bg }};{% endif %}{% if st.text %}--mc-color-text:{{ st.text }};{% endif %}{% if st.tint %}--mc-color-surface-subtle:{{ st.tint }};{% endif %}{% if st.hero_bg %}--lp-hero-bg:{{ st.hero_bg }};{% endif %}{{ ' }' }}</style>{% endif %}
+{% endblock %}
 {% block body %}
 <div id="top"></div>
-<section class="lp-hero">
-    <div class="lp-wrap lp-hero__grid">
-        <div class="lp-hero__copy">
-            {% if landing.hero.eyebrow %}<span class="lp-pill">{{ ui_icon('sparkles', 14) }}{{ landing.hero.eyebrow }}</span>{% endif %}
-            <h1>{{ landing.hero.title }}</h1>
-            <p class="lp-lead">{{ landing.hero.subtitle }}</p>
-            <div class="lp-actions">
-                <a class="lp-btn lp-btn--primary" href="{{ landing.hero.primary_url }}">{{ landing.hero.primary_label }}{{ ui_icon('arrow-right', 18) }}</a>
-                {% if landing.hero.secondary_label %}<a class="lp-btn lp-btn--ghost" href="{{ landing.hero.secondary_url }}">{{ landing.hero.secondary_label }}</a>{% endif %}
-            </div>
-            {% if landing.hero.note %}<p class="lp-note">{{ ui_icon('check', 16) }}{{ landing.hero.note }}</p>{% endif %}
-        </div>
-        <div class="lp-hero__visual" aria-hidden="true">
-            {% if landing.hero.image %}
-                <img class="lp-hero__image" src="{{ landing.hero.image }}" alt="" width="640" height="520" loading="eager" decoding="async">
-            {% else %}
-                <div class="lp-mock">
-                    <div class="lp-mock__bar"><i></i><i></i><i></i><span></span></div>
-                    <div class="lp-mock__body">
-                        <div class="lp-mock__hero"><b></b><b></b><em></em></div>
-                        <div class="lp-mock__cards"><span></span><span></span><span></span></div>
-                    </div>
-                </div>
-                <div class="lp-float lp-float--a">{{ ui_icon('trending-up', 18) }}<div><strong>{{ landing.stats[0].value }}</strong><small>{{ landing.stats[0].label }}</small></div></div>
-                <div class="lp-float lp-float--b">{{ ui_icon('shield-check', 18) }}<div><strong>{{ landing.stats[1].value }}</strong><small>{{ landing.stats[1].label }}</small></div></div>
-            {% endif %}
-        </div>
-    </div>
-</section>
-
-<section class="lp-stats" aria-label="{{ landing.headings.features }}">
-    <div class="lp-wrap lp-stats__grid">{% for stat in landing.stats %}<div><strong>{{ stat.value }}</strong><span>{{ stat.label }}</span></div>{% endfor %}</div>
-</section>
-
-<section class="lp-section" id="features">
-    <div class="lp-wrap">
-        <header class="lp-section__head"><h2>{{ landing.headings.features }}</h2><p>{{ landing.headings.features_lead }}</p></header>
-        <div class="lp-features">{% for f in landing.features %}<article class="lp-card"><span class="lp-card__icon" aria-hidden="true">{{ ui_icon(f.icon, 22) }}</span><h3>{{ f.title }}</h3><p>{{ f.text }}</p></article>{% endfor %}</div>
-    </div>
-</section>
-
-<section class="lp-section lp-section--tint" id="how">
-    <div class="lp-wrap">
-        <header class="lp-section__head"><h2>{{ landing.headings.steps }}</h2></header>
-        <ol class="lp-steps">{% for step in landing.steps %}<li><span class="lp-steps__n">{{ loop.index }}</span><h3>{{ step.title }}</h3><p>{{ step.text }}</p></li>{% endfor %}</ol>
-    </div>
-</section>
-
-<section class="lp-section" id="reviews">
-    <div class="lp-wrap">
-        <header class="lp-section__head"><h2>{{ landing.headings.reviews }}</h2></header>
-        <div class="lp-reviews">{% for r in landing.reviews %}<figure class="lp-review"><span class="lp-review__stars" aria-hidden="true">{% for i in 1..5 %}{{ ui_icon('star-filled', 16) }}{% endfor %}</span><blockquote>{{ r.quote }}</blockquote><figcaption><span class="lp-avatar" aria-hidden="true">{{ r.name|first|upper }}</span><span><strong>{{ r.name }}</strong><small>{{ r.role }}</small></span></figcaption></figure>{% endfor %}</div>
-    </div>
-</section>
-
-<section class="lp-section lp-section--tint" id="faq">
-    <div class="lp-wrap lp-wrap--narrow">
-        <header class="lp-section__head"><h2>{{ landing.headings.faq }}</h2></header>
-        <div class="lp-faq">{% for item in landing.faq %}<details{{ loop.first ? ' open' : '' }}><summary>{{ item.q }}{{ ui_icon('chevron-down', 18) }}</summary><p>{{ item.a }}</p></details>{% endfor %}</div>
-    </div>
-</section>
-
-<section class="lp-section lp-contact" id="contact">
-    <div class="lp-wrap">
-        <div class="lp-cta">
-            <div class="lp-cta__copy"><h2>{{ landing.cta.title }}</h2><p>{{ landing.cta.text }}</p></div>
-            {% set main = landing.forms[0] %}
-            {% if main.enabled %}
-            <form class="lp-form" method="post" action="/contact/send" data-cw-form><input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}">
-                <h3>{{ main.title }}</h3>
-                <p>{{ main.text }}</p>
-                {{ lp.form_body(main, app.request.uri, 'contact') }}
-            </form>
-            {% else %}
-            <a class="lp-btn lp-btn--primary" href="{{ landing.hero.primary_url }}">{{ landing.cta.button }}</a>
-            {% endif %}
-        </div>
-    </div>
-</section>
+{% for s in landing.sections %}{% if s.show %}{% include '@storefront/landing/_section.html.twig' %}{% endif %}{% endfor %}
 {% for form in landing.forms|slice(1) %}{% if form.enabled %}
 <dialog class="lp-dialog" id="form-{{ form.key }}" aria-labelledby="form-{{ form.key }}-title" data-lp-dialog>
     <form class="lp-form" method="post" action="/contact/send" data-cw-form><input type="hidden" name="_token" value="{{ csrf_token('contact_form') }}">

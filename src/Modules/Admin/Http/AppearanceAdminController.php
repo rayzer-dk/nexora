@@ -120,10 +120,10 @@ final class AppearanceAdminController extends AbstractController
                         ),
                     ],
                     'colors' => array_combine(
-                        ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'primary_hover', 'primary_active', 'buy_button', 'buy_hover', 'buy_active'],
+                        ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'primary_hover', 'primary_active', 'buy_button', 'buy_hover', 'buy_active', 'link', 'link_hover', 'h1', 'h2', 'h3', 'header_text', 'muted', 'border', 'surface', 'consent_bg', 'consent_text', 'consent_button'],
                         array_map(
                             static fn (string $key): string => $request->request->getBoolean('colors_' . $key . '_on') ? (string) $request->request->get('colors_' . $key, '') : '',
-                            ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'primary_hover', 'primary_active', 'buy_button', 'buy_hover', 'buy_active'],
+                            ['background', 'text', 'heading', 'header_bg', 'footer_bg', 'primary_hover', 'primary_active', 'buy_button', 'buy_hover', 'buy_active', 'link', 'link_hover', 'h1', 'h2', 'h3', 'header_text', 'muted', 'border', 'surface', 'consent_bg', 'consent_text', 'consent_button'],
                         ),
                     ),
                     'consent' => [

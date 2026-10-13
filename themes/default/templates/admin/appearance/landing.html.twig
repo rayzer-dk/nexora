@@ -6,40 +6,57 @@
 <form method="post" action="{{ path('admin_appearance_landing_save') }}">
 <input type="hidden" name="_token" value="{{ csrf_token('admin_landing') }}"><input type="hidden" name="locale" value="{{ locale }}">
 
+{% macro sort_row(i, n, inner) %}<fieldset class="admin-form-grid"><legend>{% include '@storefront/admin/_sort_handle.html.twig' %}<span data-sort-number>{{ n }}</span><button type="button" class="admin-icon-button is-sm" data-landing-remove aria-label="{{ ui_text('admin.landing.remove')|e('html_attr') }}" title="{{ ui_text('admin.landing.remove')|e('html_attr') }}">{{ ui_icon('trash-2', 14) }}</button></legend>{{ inner|raw }}</fieldset>{% endmacro %}
+{% macro features_inner(i, f, icons) %}<label><span>{{ ui_text('admin.landing.f.icon') }}</span><select name="features[{{ i }}][icon]">{% for icon in icons %}<option value="{{ icon }}"{{ f.icon == icon ? ' selected' : '' }}>{{ icon }}</option>{% endfor %}</select></label><label><span>{{ ui_text('admin.landing.f.title') }}</span><input name="features[{{ i }}][title]" maxlength="200" value="{{ f.title }}"></label><label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="features[{{ i }}][text]" maxlength="500" value="{{ f.text }}"></label>{% endmacro %}
+{% macro stats_inner(i, f) %}<label><span>{{ ui_text('admin.landing.f.value') }}</span><input name="stats[{{ i }}][value]" maxlength="40" value="{{ f.value }}"></label><label><span>{{ ui_text('admin.landing.f.label') }}</span><input name="stats[{{ i }}][label]" maxlength="120" value="{{ f.label }}"></label>{% endmacro %}
+{% macro steps_inner(i, f) %}<label><span>{{ ui_text('admin.landing.f.title') }}</span><input name="steps[{{ i }}][title]" maxlength="200" value="{{ f.title }}"></label><label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="steps[{{ i }}][text]" maxlength="500" value="{{ f.text }}"></label>{% endmacro %}
+{% macro reviews_inner(i, f) %}<label class="is-wide"><span>{{ ui_text('admin.landing.f.quote') }}</span><textarea name="reviews[{{ i }}][quote]" rows="2" maxlength="500">{{ f.quote }}</textarea></label><label><span>{{ ui_text('admin.landing.f.name') }}</span><input name="reviews[{{ i }}][name]" maxlength="120" value="{{ f.name }}"></label><label><span>{{ ui_text('admin.landing.f.role') }}</span><input name="reviews[{{ i }}][role]" maxlength="120" value="{{ f.role }}"></label>{% endmacro %}
+{% macro faq_inner(i, f) %}<label><span>{{ ui_text('admin.landing.f.q') }}</span><input name="faq[{{ i }}][q]" maxlength="200" value="{{ f.q }}"></label><label><span>{{ ui_text('admin.landing.f.a') }}</span><input name="faq[{{ i }}][a]" maxlength="500" value="{{ f.a }}"></label>{% endmacro %}
+{% macro list_panel(group, heading, max, rows, template, as_grid) %}<section class="admin-panel" data-sortable="fieldset" data-landing-list="{{ group }}" data-max="{{ max }}"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ heading }}</h2></div></div>{{ rows|raw }}<template data-landing-template>{{ template|raw }}</template><div class="admin-form-actions"><button type="button" class="admin-button" data-landing-add>{{ ui_icon('plus', 16) }} {{ ui_text('admin.landing.add') }}</button><small class="admin-hint">{{ ui_text('admin.landing.add_hint', {max: max}) }}</small></div></section>{% endmacro %}
+
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.order') }}</h2></div></div>
+<p class="admin-hint">{{ ui_text('admin.landing.order_hint') }}</p>
+<ul class="admin-landing-order" data-sortable="[data-sortable-item]">
+{% for sec in content.sections %}<li class="admin-landing-order__item" data-sortable-item data-sort-id="{{ sec.key }}">{% include '@storefront/admin/_sort_handle.html.twig' %}<input type="hidden" name="sections[]" value="{{ sec.key }}"><label class="admin-check"><input type="checkbox" name="section_visible[{{ sec.key }}]" value="1"{{ sec.visible ? ' checked' : '' }}><span><strong>{{ ui_text('admin.landing.sec.' ~ sec.key) }}</strong></span></label></li>{% endfor %}
+</ul></section>
+
+<section class="admin-panel" data-color-settings><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.style') }}</h2></div></div>
+<p class="admin-hint">{{ ui_text('admin.landing.style_hint') }}</p>
+<div class="admin-color-grid">{% for key in ['accent','bg','text','tint','hero_bg'] %}<label class="admin-color-option"><span>{{ ui_text('admin.landing.style.' ~ key) }}</span><input type="color" name="style[{{ key }}]" value="{{ content.style[key]|default('') ?: '#0B63F6' }}" data-color-option><span class="admin-color-option__use"><input type="checkbox" name="style_on[{{ key }}]" value="1"{{ content.style[key]|default('') ? ' checked' : '' }}> {{ ui_text('admin.colors.use') }}</span></label>{% endfor %}</div></section>
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.hero') }}</h2></div></div>
 <div class="admin-form-grid">
 {% for f in ['eyebrow','title','subtitle','primary_label','primary_url','secondary_label','secondary_url','note','image'] %}<label class="{{ f in ['title','subtitle','image'] ? 'is-wide' : '' }}"><span>{{ ui_text('admin.landing.f.' ~ f) }}</span>{% if f == 'subtitle' %}<textarea name="hero[{{ f }}]" rows="3" maxlength="400">{{ content.hero[f] }}</textarea>{% else %}<input name="hero[{{ f }}]" maxlength="200" value="{{ content.hero[f] }}">{% endif %}</label>{% endfor %}
-</div></section>
-
-<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.headings') }}</h2></div></div>
+</div></section><section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.headings') }}</h2></div></div>
 <div class="admin-form-grid">{% for f in ['features','features_lead','steps','reviews','faq'] %}<label class="{{ f == 'features_lead' ? 'is-wide' : '' }}"><span>{{ ui_text('admin.landing.h.' ~ f) }}</span><input name="headings[{{ f }}]" maxlength="200" value="{{ content.headings[f] }}"></label>{% endfor %}</div></section>
+{% set rows_features %}{% for f in content.features %}{{ _self.sort_row(loop.index0, loop.index, _self.features_inner(loop.index0, f, icons)) }}{% endfor %}{% endset %}
+{% set rows_stats %}{% for f in content.stats %}{{ _self.sort_row(loop.index0, loop.index, _self.stats_inner(loop.index0, f)) }}{% endfor %}{% endset %}
+{% set rows_steps %}{% for f in content.steps %}{{ _self.sort_row(loop.index0, loop.index, _self.steps_inner(loop.index0, f)) }}{% endfor %}{% endset %}
+{% set rows_reviews %}{% for f in content.reviews %}{{ _self.sort_row(loop.index0, loop.index, _self.reviews_inner(loop.index0, f)) }}{% endfor %}{% endset %}
+{% set rows_faq %}{% for f in content.faq %}{{ _self.sort_row(loop.index0, loop.index, _self.faq_inner(loop.index0, f)) }}{% endfor %}{% endset %}
+{{ _self.list_panel('features', ui_text('admin.landing.features'), 12, rows_features, _self.sort_row('__i__', '', _self.features_inner('__i__', {icon: 'zap', title: '', text: ''}, icons))) }}
+{{ _self.list_panel('stats', ui_text('admin.landing.stats'), 8, rows_stats, _self.sort_row('__i__', '', _self.stats_inner('__i__', {value: '', label: ''}))) }}
+{{ _self.list_panel('steps', ui_text('admin.landing.steps'), 8, rows_steps, _self.sort_row('__i__', '', _self.steps_inner('__i__', {title: '', text: ''}))) }}
+{{ _self.list_panel('reviews', ui_text('admin.landing.reviews'), 12, rows_reviews, _self.sort_row('__i__', '', _self.reviews_inner('__i__', {quote: '', name: '', role: ''}))) }}
+{{ _self.list_panel('faq', ui_text('admin.landing.faq'), 20, rows_faq, _self.sort_row('__i__', '', _self.faq_inner('__i__', {q: '', a: ''}))) }}
 
-<section class="admin-panel" data-sortable="fieldset" data-sortable-renumber><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.features') }}</h2></div></div>
-{% for f in content.features %}{% set i = loop.index0 %}<fieldset class="admin-form-grid"><legend>{% include '@storefront/admin/_sort_handle.html.twig' %}<span data-sort-number>{{ loop.index }}</span></legend>
-<label><span>{{ ui_text('admin.landing.f.icon') }}</span><select name="features[{{ i }}][icon]">{% for icon in icons %}<option value="{{ icon }}"{{ f.icon == icon ? ' selected' : '' }}>{{ icon }}</option>{% endfor %}</select></label>
-<label><span>{{ ui_text('admin.landing.f.title') }}</span><input name="features[{{ i }}][title]" maxlength="200" value="{{ f.title }}"></label>
-<label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="features[{{ i }}][text]" maxlength="500" value="{{ f.text }}"></label></fieldset>{% endfor %}</section>
-
-<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.stats') }}</h2></div></div>
-<div class="admin-form-grid">{% for s in content.stats %}{% set i = loop.index0 %}<label><span>{{ ui_text('admin.landing.f.value') }} {{ loop.index }}</span><input name="stats[{{ i }}][value]" maxlength="40" value="{{ s.value }}"></label><label><span>{{ ui_text('admin.landing.f.label') }} {{ loop.index }}</span><input name="stats[{{ i }}][label]" maxlength="120" value="{{ s.label }}"></label>{% endfor %}</div></section>
-
-<section class="admin-panel" data-sortable="fieldset" data-sortable-renumber><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.steps') }}</h2></div></div>
-{% for s in content.steps %}{% set i = loop.index0 %}<fieldset class="admin-form-grid"><legend>{% include '@storefront/admin/_sort_handle.html.twig' %}<span data-sort-number>{{ loop.index }}</span></legend><label><span>{{ ui_text('admin.landing.f.title') }}</span><input name="steps[{{ i }}][title]" maxlength="200" value="{{ s.title }}"></label><label><span>{{ ui_text('admin.landing.f.text') }}</span><input name="steps[{{ i }}][text]" maxlength="500" value="{{ s.text }}"></label></fieldset>{% endfor %}</section>
-
-<section class="admin-panel" data-sortable="fieldset" data-sortable-renumber><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.reviews') }}</h2></div></div>
-{% for r in content.reviews %}{% set i = loop.index0 %}<fieldset class="admin-form-grid"><legend>{% include '@storefront/admin/_sort_handle.html.twig' %}<span data-sort-number>{{ loop.index }}</span></legend><label class="is-wide"><span>{{ ui_text('admin.landing.f.quote') }}</span><textarea name="reviews[{{ i }}][quote]" rows="2" maxlength="500">{{ r.quote }}</textarea></label><label><span>{{ ui_text('admin.landing.f.name') }}</span><input name="reviews[{{ i }}][name]" maxlength="120" value="{{ r.name }}"></label><label><span>{{ ui_text('admin.landing.f.role') }}</span><input name="reviews[{{ i }}][role]" maxlength="120" value="{{ r.role }}"></label></fieldset>{% endfor %}</section>
-
-<section class="admin-panel" data-sortable="fieldset" data-sortable-renumber><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.faq') }}</h2></div></div>
-{% for q in content.faq %}{% set i = loop.index0 %}<fieldset class="admin-form-grid"><legend>{% include '@storefront/admin/_sort_handle.html.twig' %}<span data-sort-number>{{ loop.index }}</span></legend><label><span>{{ ui_text('admin.landing.f.q') }}</span><input name="faq[{{ i }}][q]" maxlength="200" value="{{ q.q }}"></label><label><span>{{ ui_text('admin.landing.f.a') }}</span><input name="faq[{{ i }}][a]" maxlength="500" value="{{ q.a }}"></label></fieldset>{% endfor %}</section>
-
+<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.custom') }}</h2></div></div>
+<p class="admin-hint">{{ ui_text('admin.landing.custom_hint') }}</p>
+{% for block in content.custom %}{% set ci = loop.index0 %}
+<details class="admin-collapse"{{ block.title or block.text or block.image ? ' open' : '' }}><summary><strong>{{ ui_text('admin.landing.custom_n', {n: loop.index}) }}</strong>{% if block.title %} — {{ block.title }}{% endif %}</summary>
+<div class="admin-form-grid">
+<label><span>{{ ui_text('admin.landing.f.title') }}</span><input name="custom[{{ ci }}][title]" maxlength="200" value="{{ block.title }}"></label>
+<label><span>{{ ui_text('admin.landing.custom_side') }}</span><select name="custom[{{ ci }}][side]"><option value="right"{{ block.side == 'right' ? ' selected' : '' }}>{{ ui_text('admin.landing.side_right') }}</option><option value="left"{{ block.side == 'left' ? ' selected' : '' }}>{{ ui_text('admin.landing.side_left') }}</option></select></label>
+<label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><textarea name="custom[{{ ci }}][text]" rows="4" maxlength="1500">{{ block.text }}</textarea></label>
+<label class="is-wide"><span>{{ ui_text('admin.landing.f.image') }}</span><span class="admin-input-row"><input name="custom[{{ ci }}][image]" id="landing-custom-{{ ci }}-image" maxlength="500" value="{{ block.image }}" placeholder="/media/..."><button type="button" class="admin-button" data-landing-pick-image="#landing-custom-{{ ci }}-image">{{ ui_icon('folder-open', 16) }} {{ ui_text('admin.landing.pick_image') }}</button></span></label>
+<label><span>{{ ui_text('admin.landing.f.button') }}</span><input name="custom[{{ ci }}][button]" maxlength="120" value="{{ block.button }}"></label>
+<label><span>{{ ui_text('admin.landing.f.link') }}</span><input name="custom[{{ ci }}][url]" maxlength="500" value="{{ block.url }}" placeholder="#form-callback"></label>
+</div></details>{% endfor %}</section>
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.contact') }}</h2></div></div>
 <div class="admin-form-grid">
 <label><span>{{ ui_text('admin.landing.f.cta_title') }}</span><input name="cta[title]" maxlength="200" value="{{ content.cta.title }}"></label>
 <label><span>{{ ui_text('admin.landing.f.cta_button') }}</span><input name="cta[button]" maxlength="200" value="{{ content.cta.button }}"></label>
 <label class="is-wide"><span>{{ ui_text('admin.landing.f.text') }}</span><input name="cta[text]" maxlength="400" value="{{ content.cta.text }}"></label>
-</div></section>
-
-<section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.forms') }}</h2></div></div>
+</div></section><section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.landing.section') }}</small><h2>{{ ui_text('admin.landing.forms') }}</h2></div></div>
 <p class="admin-hint">{{ ui_text('admin.landing.forms_hint') }}</p>
 {% set form_names = {main: ui_text('admin.landing.form_main'), callback: ui_text('admin.landing.form_callback'), quote: ui_text('admin.landing.form_quote'), consult: ui_text('admin.landing.form_consult')} %}
 {% set type_names = {'': ui_text('admin.landing.ft_none'), name: ui_text('admin.landing.ft_name'), phone: ui_text('admin.landing.ft_phone'), email: ui_text('admin.landing.ft_email'), message: ui_text('admin.landing.ft_message'), text: ui_text('admin.landing.ft_text'), select: ui_text('admin.landing.ft_select'), checkbox: ui_text('admin.landing.ft_checkbox')} %}
@@ -59,7 +76,6 @@
 <td><input name="forms[{{ fi }}][fields][{{ ff }}][options]" maxlength="400" value="{{ f.options }}" placeholder="A|B|C"></td></tr>{% endfor %}
 </tbody></table></div></details>
 {% endfor %}</section>
-
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button><button class="admin-button" type="submit" name="reset" value="1" formnovalidate data-confirm="{{ ui_text('admin.landing.reset_confirm') }}">{{ ui_icon('refresh-cw', 16) }} {{ ui_text('admin.landing.reset') }}</button></div>
 </form>
 {{ shell.end() }}

@@ -1,0 +1,21 @@
+{% macro form_fields(form) %}
+{% for f in form.fields %}{% if f.type %}
+    {% set req = f.required or f.type in ['name'] %}
+    {% if f.type == 'name' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="name" maxlength="190" autocomplete="name"{{ req ? ' required' : '' }}></label>
+    {% elseif f.type == 'phone' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="phone" type="tel" maxlength="32" autocomplete="tel"{{ req ? ' required' : '' }}></label>
+    {% elseif f.type == 'email' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="email" type="email" maxlength="190" autocomplete="email"{{ req ? ' required' : '' }}></label>
+    {% elseif f.type == 'message' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><textarea name="message" rows="3" maxlength="2000"{{ req ? ' required' : '' }}></textarea></label>
+    {% elseif f.type == 'text' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><input name="extra[{{ f.label }}]" maxlength="300"{{ req ? ' required' : '' }}></label>
+    {% elseif f.type == 'select' %}<label><span>{{ f.label }}{{ req ? ' *' : '' }}</span><select name="extra[{{ f.label }}]"{{ req ? ' required' : '' }}><option value="">—</option>{% for o in f.options|split('|') %}{% if o|trim %}<option>{{ o|trim }}</option>{% endif %}{% endfor %}</select></label>
+    {% elseif f.type == 'checkbox' %}<label class="lp-check"><input type="checkbox" name="extra[{{ f.label }}]" value="{{ ui_text('landing.ui.yes') }}"{{ req ? ' required' : '' }}><span>{{ f.label }}{{ req ? ' *' : '' }}</span></label>
+    {% endif %}
+{% endif %}{% endfor %}
+{% endmacro %}
+{% macro form_body(form, page_url, type) %}
+    {% import _self as lp %}
+    {% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="{{ type }}"><input type="hidden" name="source_url" value="{{ page_url }}"><input type="hidden" name="form_title" value="{{ form.title }}">
+    {{ lp.form_fields(form) }}
+    {% include '@storefront/components/captcha.html.twig' with {form: type == 'callback' ? 'callback' : 'contact'} only %}
+    <button class="lp-btn lp-btn--primary" type="submit">{{ ui_icon('send', 18) }}{{ form.button }}</button>
+    <small>{{ ui_text('landing.ui.privacy_note') }}</small>
+{% endmacro %}

@@ -35,17 +35,20 @@ img { display: block; height: auto; }
 picture { display: contents; }
 h1, h2, h3, h4 { margin: 0; line-height: var(--mc-line-height-snug); letter-spacing: var(--mc-letter-spacing-tight); font-weight: var(--mc-font-weight-bold); text-wrap: balance; }
 h1, h2, h3, h4 { color: var(--mc-color-heading, inherit); }
+h1 { color: var(--mc-color-h1, var(--mc-color-heading, inherit)); }
+h2 { color: var(--mc-color-h2, var(--mc-color-heading, inherit)); }
+h3 { color: var(--mc-color-h3, var(--mc-color-heading, inherit)); }
 /* Dark surfaces keep their own text colour when the owner picks a heading colour. */
-.site-footer, .demo-contact-cta, .forum-hero, .reference-side-promo, .demo-promo-card, .demo-mini-banner, .announcement-bar, .mc-consent { --mc-color-heading: initial; }
-body[data-card-style="overlay"] .catalog-card__body, body[data-category-style="overlay"] .reference-category__copy { --mc-color-heading: initial; }
+.site-footer, .demo-contact-cta, .forum-hero, .reference-side-promo, .demo-promo-card, .demo-mini-banner, .announcement-bar, .mc-consent { --mc-color-heading: initial; --mc-color-h1: initial; --mc-color-h2: initial; --mc-color-h3: initial; }
+body[data-card-style="overlay"] .catalog-card__body, body[data-category-style="overlay"] .reference-category__copy { --mc-color-heading: initial; --mc-color-h1: initial; --mc-color-h2: initial; --mc-color-h3: initial; }
 h1 { font-size: var(--mc-font-size-3xl); line-height: var(--mc-line-height-tight); }
 h2 { font-size: var(--mc-font-size-2xl); }
 h3 { font-size: var(--mc-font-size-lg); }
 h4 { font-size: var(--mc-font-size-base); }
 p { margin: 0; }
 ul, ol, dl, dd, figure { margin: 0; }
-a { color: var(--mc-color-primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a { color: var(--mc-color-link, var(--mc-color-primary)); text-decoration: none; }
+a:hover { color: var(--mc-color-link-hover, var(--mc-color-link, var(--mc-color-primary))); text-decoration: underline; }
 small { font-size: var(--mc-font-size-xs); }
 hr { border: 0; border-top: 1px solid var(--mc-color-border); margin: var(--mc-space-6) 0; }
 time { font-variant-numeric: tabular-nums; }
