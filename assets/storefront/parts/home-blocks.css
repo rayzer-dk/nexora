@@ -148,3 +148,15 @@ a.banner:hover .banner__media img { transform: scale(1.03); }
 /* Category tile: the icon chosen in the admin sits in the corner of the photo. */
 .reference-category { position: relative; }
 .reference-category__icon { position: absolute; top: var(--mc-space-2); inset-inline-start: var(--mc-space-2); z-index: var(--mc-z-raised); display: grid; place-items: center; width: var(--mc-control-height-md); height: var(--mc-control-height-md); border-radius: var(--mc-radius-full); background: var(--mc-color-surface-raised); color: var(--mc-color-primary); box-shadow: var(--mc-shadow-sm); }
+
+/* Product block shown as a carousel: cards keep a card width and scroll sideways. */
+.commerce-carousel--cards > .catalog-card { width: clamp(180px, 22vw, 260px); }
+.slider-shell__heading--bare { margin-bottom: var(--mc-space-2); justify-content: flex-end; }
+.slider-shell__heading--bare > span:empty { display: none; }
+
+/* Banner or carousel across the whole window, edge to edge (the "full screen width" switch of the first banner). */
+.home-block:has(.banner-slider--bleed, .banner-row--bleed) { overflow-x: clip; }
+.banner-slider--bleed, .banner-row--bleed { width: 100vw; margin-inline: calc(50% - 50vw); }
+.banner-slider--bleed .banner-slider__track { border-radius: 0; gap: 0; }
+.banner-slider--bleed .banner, .banner-row--bleed .banner { border-radius: 0; }
+.banner-row--bleed { gap: 0; }

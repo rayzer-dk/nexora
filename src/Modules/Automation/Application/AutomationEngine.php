@@ -116,11 +116,20 @@ final readonly class AutomationEngine
         $fallback = trim((string) ($context['text'] ?? ''));
         $text = $template !== '' ? $template : ($fallback !== '' ? $fallback : $event);
 
-        return mb_substr(strtr($text, [
+        $base = rtrim((string) ($_ENV['APP_PUBLIC_URL'] ?? $_SERVER['APP_PUBLIC_URL'] ?? ''), '/');
+        $path = (string) ($context['url'] ?? '');
+        $replace = [
             '{number}' => (string) ($context['number'] ?? ''),
             '{total}' => $total,
             '{name}' => (string) ($context['name'] ?? ''),
             '{event}' => $event,
-        ]), 0, 1000);
+            '{shop}' => (string) $this->db->fetchOne('SELECT name FROM mc_store WHERE id=?', [(int) $rule['store_id']]),
+            '{link}' => $path !== '' && $path[0] === '/' && $base !== '' ? $base . $path : $path,
+        ];
+        foreach (['phone', 'email', 'comment', 'subtotal', 'shipping', 'discount', 'items', 'items_count', 'status', 'payment_status', 'payment', 'date'] as $key) {
+            $replace['{' . $key . '}'] = (string) ($context[$key] ?? '');
+        }
+
+        return mb_substr(strtr($text, $replace), 0, 1500);
     }
 }

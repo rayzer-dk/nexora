@@ -3082,6 +3082,29 @@ function initUserMenu() {
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && menu.open) { menu.open = false; menu.querySelector('summary')?.focus(); } });
 }
 
+// Message variables and examples (automation rules): a click puts the variable at the cursor, or the whole example into the text field.
+function initVariablePicker() {
+  const buttons = qa('[data-insert-var], [data-insert-example]');
+  if (!buttons.length) return;
+  buttons.forEach((button) => button.addEventListener('click', () => {
+    const field = q('[data-var-target]', button.closest('form') || document);
+    if (!(field instanceof HTMLTextAreaElement || field instanceof HTMLInputElement)) return;
+    const example = button.dataset.insertExample;
+    if (example !== undefined) {
+      field.value = example;
+    } else {
+      const start = field.selectionStart ?? field.value.length;
+      const end = field.selectionEnd ?? field.value.length;
+      field.value = field.value.slice(0, start) + (button.dataset.insertVar || '') + field.value.slice(end);
+      const caret = start + (button.dataset.insertVar || '').length;
+      field.setSelectionRange(caret, caret);
+    }
+    field.focus();
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+  }));
+}
+
 initThemeToggle('mc_admin_theme');
 initUserMenu();
+initVariablePicker();
 initDismissibleNotices();

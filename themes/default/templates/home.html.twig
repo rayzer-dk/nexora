@@ -1,6 +1,6 @@
 {% extends '@storefront/base.html.twig' %}{% set page_kind = 'home' %}
 {% set presentation = storefront_presentation() %}
-{% block head %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and (b.component in ['scroll_story', 'video_hero'] or (b.component == 'banner' and b.props.slide|default(false) is same as(true))))|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/home-blocks.js', '/assets/home-blocks.js') }}"></script>{% endif %}{% endblock %}
+{% block head %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and (b.component in ['scroll_story', 'video_hero'] or (b.component == 'banner' and b.props.slide|default(false) is same as(true))))|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/home-blocks.js', '/assets/home-blocks.js') }}"></script>{% endif %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and b.component == 'product_grid' and b.props.display|default('') == 'carousel')|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/slider.js', '/assets/slider.js') }}"></script>{% endif %}{% endblock %}
 {% block body %}
 {% for layout_block in home_blocks_grouped(home_layout.blocks|default([])) %}
   {% if layout_block.enabled|default(true) and not layout_block.missing_extension|default(false) %}
@@ -44,6 +44,8 @@
       {% if site_features.catalog|default(false) and demo_showcase and demo_showcase.brands %}
       <section class="shell demo-brands"><div class="reference-section-title"><div><small class="section-kicker">{{ ui_text('brand_showcase') }}</small><h2>{{ ui_text('trusted_brands') }}</h2></div></div><div class="demo-brand-list">{% for brand in demo_showcase.brands %}<span>{{ brand }}</span>{% endfor %}</div></section>
       {% endif %}
+    {% elseif layout_block.component == 'recently_viewed' %}
+      {% include '@storefront/components/recently_viewed.html.twig' %}
     {% elseif layout_block.component == 'article_grid' %}
       {% include '@storefront/home/blocks/articles.html.twig' %}
       {% if demo_showcase and site_features.content|default(false) %}
@@ -57,5 +59,6 @@
 {% if not categories and not products and not articles and site_mode in ['content','landing','forum'] %}
 <section class="home-section shell"><div class="admin-safety-note"><strong>{{ store_name }}</strong><span>{{ ui_text('empty_home_admin_note') }}</span></div></section>
 {% endif %}
-{% include '@storefront/components/recently_viewed.html.twig' %}
+{#- Shops that never placed the block in the builder keep the strip at the bottom, as before. -#}
+{% if home_layout.blocks|default([])|filter(b => b.component == 'recently_viewed')|length == 0 %}{% include '@storefront/components/recently_viewed.html.twig' %}{% endif %}
 {% endblock %}

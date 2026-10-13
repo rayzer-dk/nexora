@@ -68,6 +68,7 @@ final class HomeController extends AbstractController
         // removes only that block; it must not make the whole storefront unavailable.
         $categories = [];
         $products = [];
+        $productSets = [];
         $articles = [];
         if ((bool) ($features['catalog'] ?? true)) {
             try {
@@ -91,6 +92,24 @@ final class HomeController extends AbstractController
                 $products = $this->catalog->products($context, null, 1, 10)['items'];
             } catch (\Throwable) {
                 $products = [];
+            }
+            // Every product block of the home layout chooses its own list: "popular" (best sellers), "newest" or the catalog order, and how many.
+            foreach ((array) ($this->layouts->active($context->storeId, 'home')['blocks'] ?? []) as $block) {
+                if (!is_array($block) || ($block['component'] ?? '') !== 'product_grid' || ($block['enabled'] ?? true) === false) {
+                    continue;
+                }
+                $props = is_array($block['props'] ?? null) ? $block['props'] : [];
+                $source = (string) ($props['source'] ?? '');
+                $limit = max(1, min(24, (int) ($props['limit'] ?? 10) ?: 10));
+                if (!in_array($source, ['popular', 'newest'], true) && $limit === 10) {
+                    continue; // the default list above is the one this block wants
+                }
+                try {
+                    $filter = in_array($source, ['popular', 'newest'], true) ? new \Commerce\Modules\Storefront\Domain\ProductCatalogFilter(sort: $source) : null;
+                    $productSets[(string) ($block['id'] ?? '')] = $this->catalog->products($context, null, 1, $limit, null, $filter)['items'];
+                } catch (\Throwable) {
+                    // the block falls back to the default list
+                }
             }
         }
         if ((bool) ($features['blog'] ?? true)) {
@@ -120,6 +139,7 @@ final class HomeController extends AbstractController
             'site_features' => $features,
             'categories' => $categories,
             'products' => $products,
+            'product_sets' => $productSets,
             'articles' => $articles,
             'demo_showcase' => $demoShowcase,
             'home_layout' => $this->layouts->active($context->storeId, 'home'),

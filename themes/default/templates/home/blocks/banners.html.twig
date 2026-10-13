@@ -1,5 +1,6 @@
 {#- A row of banners (neighbouring "banner" blocks). Each banner: image (+ phone image), text, button, text colour, text position, height, width, devices. -#}
-<section class="shell banner-row" aria-label="{{ ui_text('banners') }}" data-home-builder-block="{{ layout_block.id }}">
+{% set bleed = layout_block.items[0].props.bleed|default(false) is same as(true) %}
+<section class="{{ bleed ? 'banner-row banner-row--bleed' : 'shell banner-row' }}" aria-label="{{ ui_text('banners') }}" data-home-builder-block="{{ layout_block.id }}">
 {% for banner in layout_block.items %}
     {% include '@storefront/home/blocks/_banner.html.twig' with {banner: banner, lazy: loop.index > 1, slide: null, priority: false} only %}
 {% endfor %}
