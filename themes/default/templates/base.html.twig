@@ -28,6 +28,7 @@
     {% if presentation.theme.font == 'inter' or presentation.theme.font == 'manrope' %}<link rel="stylesheet" href="/assets/fonts/fonts.css">{% endif %}
     {% if presentation.theme.toggle|default('1') == '1' %}<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">try{var t=localStorage.getItem('mc_theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}}catch(e){}</script>{% endif %}
     <link rel="stylesheet" href="{{ vite_asset('assets/storefront/storefront.css', '/assets/storefront.css') }}">
+    {% if page_css|default('') == 'forum' %}<link rel="stylesheet" href="{{ vite_asset('assets/storefront/forum.css', '/assets/forum.css') }}">{% elseif page_css|default('') == 'landing' %}<link rel="stylesheet" href="{{ vite_asset('assets/storefront/landing.css', '/assets/landing.css') }}">{% endif %}
     <style nonce="{{ app.request.attributes.get('_csp_nonce') }}">
       :root{
         --mc-color-primary-base:{{ presentation.theme.primary }};

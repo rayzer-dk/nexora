@@ -32,6 +32,8 @@ export default defineConfig({
         adminMedia: 'assets/admin/features/media-library.js',
         adminAppearanceMedia: 'assets/admin/features/appearance-media.js',
         storefrontCss: 'assets/storefront/storefront.css',
+        forumCss: 'assets/storefront/forum.css',
+        landingCss: 'assets/storefront/landing.css',
         consentCss: 'assets/storefront/consent.css',
         adminRuntimeCss: 'assets/admin/admin-runtime.css',
         adminFeatureCss: 'assets/admin/admin-builder-media.css',

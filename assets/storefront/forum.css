@@ -1,0 +1,3 @@
+/* Forum pages only (loaded by the forum templates through page_css = 'forum'). */
+@import url('../shared/tokens.css');
+@import url('./parts/forum.css');
