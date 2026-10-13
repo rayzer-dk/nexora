@@ -489,6 +489,7 @@ return [
     'notify.tg.inquiry_type.product_question' => 'Вопрос о товаре',
     'notify.tg.inquiry_type.price_request' => 'Запрос цены',
     'notify.tg.inquiry_type.quick_order' => 'Быстрый заказ',
+    'notify.tg.inquiry_type.cheaper' => 'Нашли дешевле',
     'supplier.runtime.invalid' => 'Укажите название и корректную ссылку на прайс (http/https).',
     'supplier.runtime.failed' => 'Не удалось прочитать прайс поставщика.',
     'supplier.runtime.http' => 'Поставщик ответил ошибкой %code%.',

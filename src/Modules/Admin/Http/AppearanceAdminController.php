@@ -78,6 +78,7 @@ final class AppearanceAdminController extends AbstractController
                         'back_to_top' => $bool('display_back_to_top'),
                         'sale_timer' => $bool('display_sale_timer'),
                         'quick_order' => $bool('display_quick_order'),
+                        'found_cheaper' => $bool('display_found_cheaper'),
                         'buy_now' => $bool('display_buy_now'),
                         'key_features_limit' => $request->request->get('display_key_features_limit','5'),
                         'benefits' => $request->request->get('display_benefits',''),

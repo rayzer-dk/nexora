@@ -451,3 +451,11 @@
 .addon__choices { display: grid; gap: var(--mc-space-2); }
 .addon__choice { display: flex; align-items: center; gap: var(--mc-space-2); cursor: pointer; }
 .addon__choice small { color: var(--mc-color-muted); }
+
+/* "Found it cheaper?" request on the product page. */
+.pp-cheaper { margin-top: var(--mc-space-3); }
+.pp-cheaper > summary { list-style: none; cursor: pointer; }
+.pp-cheaper > summary::-webkit-details-marker { display: none; }
+.pp-cheaper__form { display: grid; gap: var(--mc-space-3); margin-top: var(--mc-space-3); padding: var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-subtle, var(--mc-color-surface)); }
+.pp-cheaper__form p { margin: 0; color: var(--mc-color-muted); }
+.pp-cheaper__form label { display: grid; gap: var(--mc-space-1); }

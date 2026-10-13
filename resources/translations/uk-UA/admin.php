@@ -2529,6 +2529,7 @@ return [
     'admin.display.back_to_top' => 'Кнопка «Нагору»',
     'admin.display.sale_timer' => 'Таймер до кінця акції (для цін із датою завершення)',
     'admin.display.quick_order' => 'Швидке замовлення на картці товару',
+    'admin.display.found_cheaper' => 'Кнопка «Знайшли дешевше?» на картці товару',
     'admin.display.benefits' => 'Переваги під кнопкою купівлі (до 4 рядків)',
     'admin.display.benefits_placeholder' => 'Безкоштовна доставка від 2000 грн',
     'admin.display.benefits_hint' => 'Кожен рядок — одна перевага; іконки підбираються автоматично. Порожньо — блок прихований.',

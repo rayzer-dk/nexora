@@ -2092,6 +2092,7 @@ return [
     'notify.tg.inquiry_type.product_question' => 'Product question',
     'notify.tg.inquiry_type.price_request' => 'Price request',
     'notify.tg.inquiry_type.quick_order' => 'Quick order',
+    'notify.tg.inquiry_type.cheaper' => 'Found cheaper',
     'supplier.runtime.invalid' => 'Enter a name and a valid price list link (http/https).',
     'supplier.runtime.failed' => 'The supplier price list could not be read.',
     'supplier.runtime.http' => 'The supplier answered with error %code%.',

@@ -19,7 +19,7 @@ final class CustomerInquiryController extends AbstractController
     public function contact(Request $request): Response { return $this->handle($request,null,'contact_form'); }
     #[Route('/product/{product}/inquiry',name:'storefront_product_inquiry',methods:['POST'],priority:100)]
     public function product(Request $request,string $product): Response { return $this->handle($request,$product,'product_inquiry_'.$product); }
-    private function captchaForm(Request $request):string{return match((string)$request->request->get('inquiry_type','contact')){'callback'=>'callback','price_request'=>'price_request','quick_order'=>'quick_order',default=>'contact'};}
+    private function captchaForm(Request $request):string{return match((string)$request->request->get('inquiry_type','contact')){'callback'=>'callback','price_request'=>'price_request','cheaper'=>'price_request','quick_order'=>'quick_order',default=>'contact'};}
     private function handle(Request $request,?string $product,string $csrf): Response
     {
         if(!$this->isCsrfTokenValid($csrf,(string)$request->request->get('_token')))throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));$context=$this->contexts->resolve($request);

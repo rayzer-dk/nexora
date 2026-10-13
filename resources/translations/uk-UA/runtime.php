@@ -2094,6 +2094,7 @@ return [
     'notify.tg.inquiry_type.product_question' => 'Питання про товар',
     'notify.tg.inquiry_type.price_request' => 'Запит ціни',
     'notify.tg.inquiry_type.quick_order' => 'Швидке замовлення',
+    'notify.tg.inquiry_type.cheaper' => 'Знайшли дешевше',
     'supplier.runtime.invalid' => 'Вкажіть назву й коректне посилання на прайс (http/https).',
     'supplier.runtime.failed' => 'Не вдалося прочитати прайс постачальника.',
     'supplier.runtime.http' => 'Постачальник відповів помилкою %code%.',

@@ -55,6 +55,22 @@
 {% elseif capabilities.features.cart|default(false) %}
 <div class="purchase-unavailable"><button class="button button--secondary button--lg" type="button" disabled>{{ ui_icon('ban', 20) }}<span>{{ product.availability_label }}</span></button>{% if product.purchase_eta_text %}<span>{{ product.purchase_eta_text }}</span>{% endif %}</div>
 {% endif %}
+{% if display.found_cheaper|default(true) and capabilities.features.catalog|default(false) and product.price_minor|default(0) > 0 %}
+<details class="pp-cheaper">
+    <summary class="pp-quick-link">{{ ui_icon('badge-percent', 18) }}<span>{{ ui_text('cheaper_link') }}</span></summary>
+    <form method="post" action="/product/{{ product.id }}/inquiry" data-inquiry-form class="pp-cheaper__form">
+        <p>{{ ui_text('cheaper_text') }}</p>
+        <input type="hidden" name="_token" value="{{ csrf_token('product_inquiry_' ~ product.id) }}">{% include '@storefront/components/spam_fields.html.twig' %}<input type="hidden" name="inquiry_type" value="cheaper"><input type="hidden" name="source_url" value="{{ app.request.uri }}"><input type="hidden" name="form_title" value="{{ ui_text('cheaper_link')|e('html_attr') }}"><input type="hidden" name="message" value="{{ product.name|default('')|e('html_attr') }} · {{ product.price|default('') }}">
+        <label><span>{{ ui_text('cheaper_url') }} *</span><input name="extra[{{ ui_text('cheaper_url')|e('html_attr') }}]" type="url" required maxlength="500" placeholder="https://"></label>
+        <label><span>{{ ui_text('cheaper_price') }}</span><input name="extra[{{ ui_text('cheaper_price')|e('html_attr') }}]" maxlength="60" inputmode="decimal"></label>
+        <label><span>{{ ui_text('name_required') }}</span><input name="name" required maxlength="190" autocomplete="name"></label>
+        <label><span>{{ ui_text('phone_or_email') }} *</span><input name="phone" maxlength="32" autocomplete="tel" placeholder="+380..."></label>
+        <label><span>Email</span><input name="email" type="email" maxlength="320" autocomplete="email"></label>
+        {% include '@storefront/components/captcha.html.twig' with {form:'price_request'} only %}
+        <button class="button button--primary" type="submit">{{ ui_icon('send', 16) }} {{ ui_text('cheaper_send') }}</button>
+    </form>
+</details>
+{% endif %}
 {% if display.benefits %}
 <ul class="product-benefits pp-benefits">{% set icons = ['truck','shield-check','refresh-cw','headset'] %}{% for line in display.benefits|split("\n") %}<li>{{ ui_icon(icons[loop.index0], 18) }}<span>{{ line }}</span></li>{% endfor %}</ul>
 {% endif %}

@@ -2534,6 +2534,7 @@ return [
     'admin.display.back_to_top' => '“Back to top” button',
     'admin.display.sale_timer' => 'Sale countdown (for prices with an end date)',
     'admin.display.quick_order' => 'Quick order on the product page',
+    'admin.display.found_cheaper' => '“Found it cheaper?” request on the product page',
     'admin.display.benefits' => 'Benefits under the buy button (up to 4 lines)',
     'admin.display.benefits_placeholder' => 'Free delivery over 2000 UAH',
     'admin.display.benefits_hint' => 'One benefit per line; icons are assigned automatically. Empty hides the block.',
