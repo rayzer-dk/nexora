@@ -139,10 +139,46 @@ final class CustomRedirectService
         }
     }
 
-    /** @return list<array<string,mixed>> */
-    public function topNotFound(int $limit = 50): array
+    /** What scanners ask for: CMS logins, dot files, shell scripts. They are not lost customers, so the list can hide them. */
+    private const SCANNER_NOISE = '^/(wp-|wordpress|\\.|phpmyadmin|pma|xmlrpc|cgi-bin|vendor/|admin\\.php|administrator|boaform|actuator|solr|\\.git|\\.env|config\\.|backup)|\\.(php|asp|aspx|jsp|cgi|sql|zip|tar|gz|bak|env)$';
+
+    /**
+     * The missing addresses people (and crawlers) asked for, most asked first.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function topNotFound(int $limit = 50, int $minHits = 1, bool $hideScanners = true, string $search = ''): array
     {
-        return $this->db->fetchAllAssociative('SELECT id,path,hit_count,referer,last_seen_at FROM mc_not_found_log ORDER BY hit_count DESC,last_seen_at DESC LIMIT ' . max(1, min(200, $limit)));
+        [$where, $params] = $this->notFoundFilter($minHits, $hideScanners, $search);
+
+        return $this->db->fetchAllAssociative('SELECT id,path,hit_count,referer,last_seen_at FROM mc_not_found_log WHERE ' . $where . ' ORDER BY hit_count DESC,last_seen_at DESC LIMIT ' . max(1, min(200, $limit)), $params);
+    }
+
+    /** @return array{paths:int,hits:int,scanner_paths:int} how many addresses / requests the filter leaves, and how many addresses are scanner noise */
+    public function notFoundTotals(int $minHits = 1, bool $hideScanners = true, string $search = ''): array
+    {
+        [$where, $params] = $this->notFoundFilter($minHits, $hideScanners, $search);
+        $row = $this->db->fetchAssociative('SELECT COUNT(*) AS paths, COALESCE(SUM(hit_count),0) AS hits FROM mc_not_found_log WHERE ' . $where, $params) ?: ['paths' => 0, 'hits' => 0];
+        $noise = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_not_found_log WHERE path REGEXP ?', [self::SCANNER_NOISE]);
+
+        return ['paths' => (int) $row['paths'], 'hits' => (int) $row['hits'], 'scanner_paths' => $noise];
+    }
+
+    /** @return array{0:string,1:list<mixed>} */
+    private function notFoundFilter(int $minHits, bool $hideScanners, string $search): array
+    {
+        $where = ['hit_count >= ?'];
+        $params = [max(1, $minHits)];
+        if ($hideScanners) {
+            $where[] = 'path NOT REGEXP ?';
+            $params[] = self::SCANNER_NOISE;
+        }
+        if ($search !== '') {
+            $where[] = 'path LIKE ?';
+            $params[] = '%' . addcslashes($search, '%_\\') . '%';
+        }
+
+        return [implode(' AND ', $where), $params];
     }
 
     /**

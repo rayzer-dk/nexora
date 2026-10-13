@@ -22,10 +22,17 @@ final class CustomRedirectAdminController extends AbstractController
     public function index(Request $request): Response
     {
         $search = mb_substr(trim((string) $request->query->get('search', '')), 0, 190);
+        $minHits = max(1, min(10000, (int) $request->query->get('min', 1)));
+        $hideScanners = (string) $request->query->get('noise', '1') !== '0';
+        $nfSearch = mb_substr(trim((string) $request->query->get('nf', '')), 0, 190);
 
         return $this->render('@storefront/admin/system/custom_redirects.html.twig', [
             'rows' => $this->redirects->all($search),
-            'not_found' => array_map(fn (array $n): array => $n + ['suggestion' => $this->redirects->suggest((string) $n['path'])], $this->redirects->topNotFound(50)),
+            'not_found' => array_map(fn (array $n): array => $n + ['suggestion' => $this->redirects->suggest((string) $n['path'])], $this->redirects->topNotFound(100, $minHits, $hideScanners, $nfSearch)),
+            'not_found_totals' => $this->redirects->notFoundTotals($minHits, $hideScanners, $nfSearch),
+            'nf_min' => $minHits,
+            'nf_noise' => $hideScanners,
+            'nf_search' => $nfSearch,
             'search' => $search,
             'prefill' => CustomRedirectService::normalizePath((string) $request->query->get('source', '')) !== '/' ? (string) $request->query->get('source', '') : '',
         ]);
