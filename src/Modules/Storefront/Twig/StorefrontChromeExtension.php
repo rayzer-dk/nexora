@@ -27,7 +27,7 @@ final class StorefrontChromeExtension extends AbstractExtension
 {
     /** Language subtag -> region used to draw the flag when the locale code carries no region (e.g. "de"). */
     private const DEFAULT_REGION = [
-        'uk' => 'UA', 'en' => 'GB', 'de' => 'DE', 'pl' => 'PL', 'ru' => 'RU', 'da' => 'DK', 'fr' => 'FR', 'es' => 'ES',
+        'uk' => 'UA', 'en' => 'US', 'de' => 'DE', 'pl' => 'PL', 'ru' => 'RU', 'da' => 'DK', 'fr' => 'FR', 'es' => 'ES',
         'it' => 'IT', 'cs' => 'CZ', 'ro' => 'RO', 'bg' => 'BG', 'tr' => 'TR', 'pt' => 'PT', 'nl' => 'NL', 'sv' => 'SE',
         'nb' => 'NO', 'no' => 'NO', 'fi' => 'FI', 'hu' => 'HU', 'sk' => 'SK',
     ];
@@ -324,7 +324,7 @@ final class StorefrontChromeExtension extends AbstractExtension
     {
         $parts = explode('-', str_replace('_', '-', $locale));
         if (strtolower($parts[0]) === 'en') {
-            return 'GB'; // English is shown with the British flag whichever regional variant the locale carries
+            return 'US'; // English is shown with the American flag whichever regional variant the locale carries
         }
         if (isset($parts[1]) && preg_match('/^[A-Za-z]{2}$/', $parts[1]) === 1) {
             return strtoupper($parts[1]);

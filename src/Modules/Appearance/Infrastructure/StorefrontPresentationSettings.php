@@ -125,6 +125,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'support' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.pidtrymka_24_7'),
             ],
             'brand' => [
+                'show_title' => '1',
                 'title' => '',
                 'subtitle' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.suchasni_rishennia_dlia_krashchoho_zhyttia'),
                 'logo' => '',
@@ -224,6 +225,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         foreach (['logo','icon','favicon'] as $key) {
             $out['brand'][$key] = $this->mediaPath($input['brand'][$key] ?? '');
         }
+        $out['brand']['show_title'] = (string) ($input['brand']['show_title'] ?? $defaults['brand']['show_title']) === '0' ? '0' : '1';
         $out['brand']['pwa'] = (string) ($input['brand']['pwa'] ?? $defaults['brand']['pwa']) === '1' ? '1' : '0';
         $preset=(string)($input['theme']['preset']??$defaults['theme']['preset']);
         if(!in_array($preset,$this->presets->codes(),true)){$preset=$defaults['theme']['preset'];}

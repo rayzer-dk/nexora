@@ -74,3 +74,14 @@
 .seo-tip[open] > summary, .seo-tip > summary:hover { color: var(--mc-color-primary); border-color: var(--mc-color-primary); }
 .seo-tip__body { position: absolute; z-index: var(--mc-z-dropdown); left: 0; top: calc(100% + var(--mc-space-2)); width: min(22rem, 80vw); padding: var(--mc-space-3); background: var(--mc-color-surface); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); box-shadow: var(--mc-shadow-md); font-size: var(--mc-font-size-sm); }
 .seo-tip__body ul { margin: var(--mc-space-2) 0 0; padding-left: var(--mc-space-4); display: grid; gap: var(--mc-space-1); }
+
+/* Feed centre: the URL and its copy button stay on one line. */
+.admin-table td > .admin-inline-actions { flex-wrap: nowrap; align-items: center; }
+.admin-table td > .admin-inline-actions > input[readonly] { flex: 1 1 auto; min-width: 0; }
+.admin-table td > .admin-inline-actions > .admin-icon-button { flex: none; }
+
+/* Gift cards: the card controls sit in their own full-width row under the card, not inside the narrow actions cell. */
+.admin-row-detail > td { padding-top: 0; background: var(--mc-color-surface); }
+.admin-card-forms { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--mc-space-4); padding-block: var(--mc-space-3); }
+.admin-card-forms > form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--mc-space-2); }
+.admin-card-forms label { display: grid; gap: var(--mc-space-1); }

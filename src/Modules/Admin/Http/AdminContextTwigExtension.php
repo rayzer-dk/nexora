@@ -98,7 +98,7 @@ final class AdminContextTwigExtension extends AbstractExtension
                 ? $this->db->fetchAllAssociative("SELECT id,code,name FROM mc_store WHERE status='active' ORDER BY name,id")
                 : $this->db->fetchAllAssociative("SELECT s.id,s.code,s.name FROM mc_store s JOIN mc_admin_store_scope sc ON sc.store_id=s.id AND sc.admin_user_id=? WHERE s.status='active' ORDER BY s.name,s.id", [$user->id]);
             $markets = $this->db->fetchAllAssociative("SELECT id,code,name,default_locale,default_currency FROM mc_market WHERE store_id=? AND status='active' ORDER BY name,id", [$ctx->storeId]);
-            $locales = $this->db->fetchAllAssociative('SELECT locale_code,is_default FROM mc_store_locale WHERE store_id=? AND enabled=1 ORDER BY is_default DESC,locale_code', [$ctx->storeId]);
+            $locales = $this->db->fetchAllAssociative('SELECT sl.locale_code,sl.is_default,l.native_name FROM mc_store_locale sl LEFT JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.store_id=? AND sl.enabled=1 ORDER BY sl.is_default DESC,sl.locale_code', [$ctx->storeId]);
             $currencies = $this->db->fetchAllAssociative('SELECT currency_code,is_default FROM mc_store_currency WHERE store_id=? AND enabled=1 ORDER BY is_default DESC,currency_code', [$ctx->storeId]);
 
             return [

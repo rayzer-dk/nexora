@@ -14,8 +14,9 @@ final class VisitReport
     }
 
     /** @return array<string,mixed> */
-    public function build(int $storeId, int $days): array
+    public function build(int $storeId, int $days, int $limit = 10): array
     {
+        $limit = in_array($limit, [10, 25, 50, 100], true) ? $limit : 10; // the lists are fixed-length tops; the admin picks how long
         $days = in_array($days, [7, 30, 90], true) ? $days : 30;
         $tzName = (string) ($this->db->fetchOne('SELECT timezone FROM mc_store WHERE id=?', [$storeId]) ?: 'UTC');
         try {
@@ -82,11 +83,11 @@ final class VisitReport
             ],
             'series' => $series,
             'funnel' => $funnel,
-            'sources' => $this->db->fetchAllAssociative('SELECT source,medium,COUNT(*) sessions,SUM(ordered) orders FROM mc_analytics_session WHERE store_id=? AND started_at>=? AND started_at<? GROUP BY source,medium ORDER BY sessions DESC LIMIT 10', [$storeId, $since, $until]),
+            'sources' => $this->db->fetchAllAssociative('SELECT source,medium,COUNT(*) sessions,SUM(ordered) orders FROM mc_analytics_session WHERE store_id=? AND started_at>=? AND started_at<? GROUP BY source,medium ORDER BY sessions DESC LIMIT ' . $limit, [$storeId, $since, $until]),
             'devices' => $this->db->fetchAllAssociative('SELECT device,COUNT(*) sessions FROM mc_analytics_session WHERE store_id=? AND started_at>=? AND started_at<? GROUP BY device ORDER BY sessions DESC', [$storeId, $since, $until]),
-            'campaigns' => $this->db->fetchAllAssociative("SELECT campaign,source,COUNT(*) sessions,SUM(ordered) orders FROM mc_analytics_session WHERE store_id=? AND started_at>=? AND started_at<? AND campaign<>'' GROUP BY campaign,source ORDER BY sessions DESC LIMIT 10", [$storeId, $since, $until]),
-            'top_pages' => $this->db->fetchAllAssociative('SELECT path,SUM(views) views,SUM(entrances) entrances FROM mc_analytics_page_daily WHERE store_id=? AND day>=? AND day<=? GROUP BY path ORDER BY views DESC LIMIT 15', [$storeId, substr($dayFrom, 0, 10), gmdate('Y-m-d')]),
-            'landing' => $this->db->fetchAllAssociative('SELECT landing_path path,COUNT(*) sessions,SUM(pageviews=1) bounced,SUM(ordered) orders FROM mc_analytics_session WHERE store_id=? AND started_at>=? AND started_at<? GROUP BY landing_path ORDER BY sessions DESC LIMIT 10', [$storeId, $since, $until]),
+            'campaigns' => $this->db->fetchAllAssociative("SELECT campaign,source,COUNT(*) sessions,SUM(ordered) orders FROM mc_analytics_session WHERE store_id=? AND started_at>=? AND started_at<? AND campaign<>'' GROUP BY campaign,source ORDER BY sessions DESC LIMIT " . $limit, [$storeId, $since, $until]),
+            'top_pages' => $this->db->fetchAllAssociative('SELECT path,SUM(views) views,SUM(entrances) entrances FROM mc_analytics_page_daily WHERE store_id=? AND day>=? AND day<=? GROUP BY path ORDER BY views DESC LIMIT ' . max($limit, 15), [$storeId, substr($dayFrom, 0, 10), gmdate('Y-m-d')]),
+            'landing' => $this->db->fetchAllAssociative('SELECT landing_path path,COUNT(*) sessions,SUM(pageviews=1) bounced,SUM(ordered) orders FROM mc_analytics_session WHERE store_id=? AND started_at>=? AND started_at<? GROUP BY landing_path ORDER BY sessions DESC LIMIT ' . $limit, [$storeId, $since, $until]),
             'has_data' => $totals['sessions'] > 0,
         ];
     }

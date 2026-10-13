@@ -43,6 +43,7 @@ final class AppearanceAdminController extends AbstractController
                         'support' => $tx('utility_support'),
                     ],
                     'brand' => [
+                        'show_title' => $request->request->get('brand_show_title','0') === '1' ? '1' : '0',
                         'title' => $tx('brand_title'),
                         'subtitle' => $tx('brand_subtitle'),
                         'logo' => $request->request->get('brand_logo',''),

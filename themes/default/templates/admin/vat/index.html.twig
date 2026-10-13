@@ -13,6 +13,7 @@
 <p class="admin-help">{{ ui_text('admin.vat.note') }}</p></section>
 <section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.vat.vies_title') }}</h2><small>{{ ui_text('admin.vat.vies_hint') }}</small></div></div>
 <form method="post" action="{{ path('admin_vat') }}" class="admin-form-grid" data-vies-form><input type="hidden" name="_token" value="{{ csrf_token('admin_vat_check') }}">
+<p class="admin-help admin-form-wide">{{ ui_text('admin.vat.vies_scope') }}</p>
 <label><span>{{ ui_text('admin.vat.country') }}</span><select name="country">{% for c in countries %}<option value="{{ c }}"{{ check and check.country == c ? ' selected' : '' }}>{{ c }}</option>{% endfor %}</select></label>
 <label><span>{{ ui_text('admin.vat.number') }}</span><input type="text" name="number" maxlength="20" value="{{ check ? check.number : '' }}" required></label>
 <div class="admin-form-actions admin-form-wide"><button class="admin-button is-primary" type="submit">{{ ui_icon('badge-check', 16) }} {{ ui_text('admin.vat.check') }}</button></div></form>

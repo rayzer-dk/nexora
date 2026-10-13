@@ -61,7 +61,7 @@ function body(country) {
 /** Data URI of the flag for a locale code like uk-UA / en-US / de; null when unknown. */
 export function flagFor(code) {
   const [lang, region] = String(code || '').replace('_', '-').split('-');
-  const country = (lang || '').toLowerCase() === 'en' ? 'GB' : (region || '').toUpperCase() || LANG_TO_COUNTRY[(lang || '').toLowerCase()] || '';
+  const country = (lang || '').toLowerCase() === 'en' ? 'US' : (region || '').toUpperCase() || LANG_TO_COUNTRY[(lang || '').toLowerCase()] || '';
   const inner = body(country);
   if (!inner) return null;
   return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20">${inner}</svg>`)}`;

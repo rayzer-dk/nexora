@@ -33,6 +33,6 @@ final class StatusLabelTwigExtension extends AbstractExtension
         $key = $group === '' ? 'status.' . $code : 'status.' . $group . '.' . $code;
         $text = $this->ui->text($context, $key);
 
-        return $text !== $key ? $text : ucfirst(str_replace(['_', '-'], ' ', $code));
+        return $text !== $key ? $text : ucfirst(str_replace(['_', '-', '.'], ' ', $code));
     }
 }

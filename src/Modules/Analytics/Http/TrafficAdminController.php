@@ -26,7 +26,8 @@ final class TrafficAdminController extends AbstractController
         $storeId = $this->contexts->resolve($request)->storeId;
 
         return $this->render('@storefront/admin/analytics/traffic.html.twig', [
-            'report' => $this->report->build($storeId, $request->query->getInt('days', 30)),
+            'report' => $this->report->build($storeId, $request->query->getInt('days', 30), $request->query->getInt('limit', 10)),
+            'limit' => in_array($request->query->getInt('limit', 10), [10, 25, 50, 100], true) ? $request->query->getInt('limit', 10) : 10,
             'settings' => $this->tracker->settings($storeId),
         ]);
     }

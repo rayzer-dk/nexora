@@ -99,15 +99,15 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
     const grid = el('div', 'mc-picker__grid');
     const footer = el('footer', 'mc-picker__foot');
     const count = el('span', 'mc-picker__count');
-    const more = el('button', 'admin-button', { type: 'button' });
-    more.textContent = t('js_media_pick_more');
-    more.hidden = true;
+    // Numbered pages instead of "load more": the person sees how many pictures and pages there are.
+    const pager = el('nav', 'mc-picker__pager');
+    pager.hidden = true;
     const confirm = el('button', 'admin-button is-primary', { type: 'button' });
     confirm.textContent = t('js_media_pick_confirm');
     confirm.disabled = true;
     if (!multiple) confirm.hidden = true;
-    footer.append(count, more, confirm);
-    body.append(header, bar, path, folderForm, status, grid, footer);
+    footer.append(count, confirm);
+    body.append(header, bar, path, folderForm, status, grid, pager, footer);
     dialog.append(body);
     document.body.append(dialog);
 
@@ -117,7 +117,7 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
     let current: number | null = readFolder(); // null = the top level (files without a folder and the first-level folders)
     let page = 1;
     let total = 0;
-    let loaded = 0;
+    const PER_PAGE = 72; // the same page size the library answers with
     let done = false;
     let requestId = 0;
 
@@ -213,14 +213,42 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
     };
 
     /** Files of the open folder, or every file that matches the search text. */
-    const load = async (reset: boolean) => {
+    const renderPager = () => {
+      const pages = Math.max(1, Math.ceil(total / PER_PAGE));
+      pager.hidden = total === 0;
+      if (total === 0) return;
+      const info = el('span', 'mc-picker__pages-info');
+      info.textContent = t('js_media_pager_total', { total, page, pages });
+      const buttons: HTMLElement[] = [];
+      const add = (label: string, target: number, opts: { current?: boolean; disabled?: boolean; aria?: string } = {}) => {
+        const button = el('button', `admin-button mc-picker__page${opts.current ? ' is-current' : ''}`, { type: 'button' });
+        button.textContent = label;
+        if (opts.aria) button.setAttribute('aria-label', opts.aria);
+        if (opts.current) button.setAttribute('aria-current', 'page');
+        button.disabled = Boolean(opts.disabled) || opts.current === true;
+        button.addEventListener('click', () => void load(false, target));
+        buttons.push(button);
+      };
+      add('‹', page - 1, { disabled: page <= 1, aria: t('js_media_prev') });
+      const shown = new Set<number>([1, pages, page, page - 1, page + 1, page - 2, page + 2].filter((n) => n >= 1 && n <= pages));
+      let last = 0;
+      [...shown].sort((a, b) => a - b).forEach((n) => {
+        if (n - last > 1) {
+          const gap = el('span', 'mc-picker__gap');
+          gap.textContent = '…';
+          buttons.push(gap);
+        }
+        add(String(n), n, { current: n === page });
+        last = n;
+      });
+      add('›', page + 1, { disabled: page >= pages, aria: t('js_media_next') });
+      pager.replaceChildren(info, ...buttons);
+    };
+    const load = async (reset: boolean, goto = 1) => {
       const mine = ++requestId;
       const searching = search.value.trim() !== '';
-      if (reset) {
-        page = 1;
-        loaded = 0;
-        note(t('js_loading'));
-      }
+      page = reset ? 1 : Math.max(1, goto);
+      note(t('js_loading'));
       const folderParam = searching ? '' : current === null ? 'none' : String(current);
       try {
         const response = await fetch(`/admin/media.json?q=${encodeURIComponent(search.value.trim())}&folder=${encodeURIComponent(folderParam)}&page=${page}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
@@ -233,9 +261,8 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
         const items = data.items ?? [];
         total = Number(data.total ?? items.length);
         const images = items.filter((item) => String(item.mime_type ?? '').startsWith('image/'));
-        loaded += items.length;
         const nodes: HTMLElement[] = [];
-        if (reset && !searching) {
+        if (page === 1 && !searching) {
           const parent = current === null ? null : (folderById(current)?.parent_id ?? null);
           if (current !== null) {
             const back = el('button', 'mc-picker__folder is-up', { type: 'button', title: t('js_media_up') });
@@ -249,10 +276,10 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
           nodes.push(...folders.filter((f) => f.parent_id === current).map(folderTile));
         }
         nodes.push(...images.map(tile));
-        if (reset) grid.replaceChildren(...nodes);
-        else grid.append(...nodes);
-        if (reset && nodes.length === 0) note(searching ? t('js_no_images') : t('js_media_empty_folder'));
-        more.hidden = loaded >= total || items.length === 0;
+        grid.replaceChildren(...nodes);
+        grid.scrollTop = 0;
+        if (nodes.length === 0) note(searching ? t('js_no_images') : t('js_media_empty_folder'));
+        renderPager();
       } catch {
         if (mine === requestId) note(t('js_media_unavailable'));
       }
@@ -269,10 +296,6 @@ export function pickMedia(options: { multiple?: boolean } = {}): Promise<PickedM
     search.addEventListener('input', () => {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => void load(true), 220);
-    });
-    more.addEventListener('click', () => {
-      page += 1;
-      void load(false);
     });
     up.addEventListener('click', () => open(folderById(current)?.parent_id ?? null));
     refresh.addEventListener('click', () => void load(true));

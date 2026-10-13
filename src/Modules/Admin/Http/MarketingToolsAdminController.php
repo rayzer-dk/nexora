@@ -178,7 +178,11 @@ final class MarketingToolsAdminController extends AbstractController
         $search = trim((string) $request->query->get('search', ''));
         $status = (string) $request->query->get('status', '');
         $status = in_array($status, ['active', 'pending', 'unsubscribed'], true) ? $status : '';
+        $kind = (string) $request->query->get('kind', '');
+        $kind = in_array($kind, ['customers', 'subscribers_only'], true) ? $kind : '';
         $page = max(1, (int) $request->query->get('page', 1));
+        // A subscriber who has placed an order is a customer; one who only left an address is not.
+        $orders = 'SELECT COUNT(*) FROM mc_sales_order o WHERE o.store_id = mc_marketing_subscriber.store_id AND o.customer_email_normalized = mc_marketing_subscriber.email_normalized';
         $where = ['store_id=?'];
         $params = [$storeId];
         if ($search !== '') {
@@ -189,15 +193,20 @@ final class MarketingToolsAdminController extends AbstractController
             $where[] = 'status=?';
             $params[] = $status;
         }
+        if ($kind === 'customers') {
+            $where[] = '(' . $orders . ') > 0';
+        } elseif ($kind === 'subscribers_only') {
+            $where[] = '(' . $orders . ') = 0';
+        }
         $sql = implode(' AND ', $where);
         $count = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_marketing_subscriber WHERE ' . $sql, $params);
         $pages = max(1, (int) ceil($count / 50));
         $page = min($page, $pages);
-        $rows = $this->db->fetchAllAssociative('SELECT id,email,locale,status,consent_source,confirmed_at,unsubscribed_at,created_at FROM mc_marketing_subscriber WHERE ' . $sql . ' ORDER BY id DESC LIMIT 50 OFFSET ' . (($page - 1) * 50), $params);
+        $rows = $this->db->fetchAllAssociative('SELECT id,email,locale,status,consent_source,confirmed_at,unsubscribed_at,created_at,(' . $orders . ') AS orders_count FROM mc_marketing_subscriber WHERE ' . $sql . ' ORDER BY id DESC LIMIT 50 OFFSET ' . (($page - 1) * 50), $params);
         $totals = $this->db->fetchAllKeyValue('SELECT status, COUNT(*) FROM mc_marketing_subscriber WHERE store_id=? GROUP BY status', [$storeId]);
 
         return $this->render('@storefront/admin/commerce/subscribers.html.twig', [
-            'rows' => $rows, 'search' => $search, 'status' => $status, 'page' => $page, 'pages' => $pages, 'count' => $count,
+            'rows' => $rows, 'search' => $search, 'status' => $status, 'kind' => $kind, 'page' => $page, 'pages' => $pages, 'count' => $count,
             'totals' => array_map('intval', $totals),
         ]);
     }

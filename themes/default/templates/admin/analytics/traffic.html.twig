@@ -22,6 +22,7 @@
 <div class="dash-grid">
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.traffic.funnel_hint') }}</small><h2>{{ ui_text('admin.traffic.funnel') }}</h2></div>{{ ui_icon('funnel', 20) }}</div>
   <ol class="dash-funnel dash-funnel--wide">{% for f in report.funnel %}<li><span>{{ {sessions: ui_text('admin.traffic.f_sessions'), product: ui_text('admin.traffic.f_product'), cart: ui_text('admin.traffic.f_cart'), checkout: ui_text('admin.traffic.f_checkout'), order: ui_text('admin.traffic.f_order')}[f.key] }}</span><div class="dash-bar"><i style="width:{{ f.percent }}%"></i></div><strong>{{ f.count }} · {{ f.percent }}%</strong></li>{% endfor %}</ol></section>
+<nav class="admin-inline-actions" aria-label="{{ ui_text('admin.traffic.rows') }}"><span>{{ ui_text('admin.traffic.rows') }}:</span>{% for n in [10, 25, 50, 100] %}<a class="admin-badge{{ limit == n ? ' is-active' : '' }}" href="?days={{ report.days }}&amp;limit={{ n }}"{{ limit == n ? ' aria-current="true"' : '' }}>{{ n }}</a>{% endfor %}</nav>
 <section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.traffic.sources') }}</h2></div></div>
   <ol class="dash-rank">{% for s in report.sources %}<li><span>{{ s.source }}<small>{{ s.medium }}</small></span><strong>{{ s.sessions }} · {{ s.orders }} {{ ui_text('admin.dashboard.orders_short') }}</strong></li>{% endfor %}</ol></section>
 <section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.traffic.top_pages') }}</h2></div></div>

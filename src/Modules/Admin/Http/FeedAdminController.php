@@ -21,6 +21,7 @@ final class FeedAdminController extends AbstractController
         private readonly FeedStorageService $feeds,
         private readonly \Commerce\Modules\Feeds\Application\ProductFeedGenerator $generator,
         private readonly \Commerce\Modules\Feeds\Application\FeedRulesService $rules,
+        private readonly \Commerce\Modules\Admin\Application\ContentLanguageTabs $languageTabs,
         private readonly string $publicBaseUrl,
     ) {}
 
@@ -53,7 +54,9 @@ final class FeedAdminController extends AbstractController
         $categories=$this->db->fetchAllAssociative('SELECT c.id,ct.name FROM mc_category c JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? WHERE c.status=? ORDER BY ct.name',[$context->storeId,$context->locale,'active']);
         $mappings=$this->db->fetchAllAssociative('SELECT m.platform,m.category_id,m.external_category_id,m.external_category_name,ct.name category_name FROM mc_feed_category_mapping m JOIN mc_category_translation ct ON ct.category_id=m.category_id AND ct.store_id=m.store_id AND ct.locale=? WHERE m.store_id=? ORDER BY m.platform,ct.name',[$context->locale,$context->storeId]);
         $storeLocales=array_map('strval',$this->db->fetchFirstColumn('SELECT locale_code FROM mc_store_locale WHERE store_id=? AND enabled=1 ORDER BY locale_code',[$context->storeId]));
-        return $this->render('@storefront/admin/commerce/feeds.html.twig',['store_locales'=>$storeLocales,'rows'=>$rows,'store'=>$store,'locale'=>$context->locale,'categories'=>$categories,'mappings'=>$mappings,'feed_rules'=>$this->rules->all($context->storeId)]);
+        $langTabs=array_map(static fn(array $tab):array=>$tab+['href'=>'?locale='.rawurlencode($tab['code'])],$this->languageTabs->tabs($context->storeId,$context->locale,array_fill_keys($storeLocales,true)));
+        $currencies=array_map('strval',$this->db->fetchFirstColumn('SELECT currency_code FROM mc_store_currency WHERE store_id=? AND enabled=1 ORDER BY is_default DESC, currency_code',[$context->storeId]));
+        return $this->render('@storefront/admin/commerce/feeds.html.twig',['lang_tabs'=>$langTabs,'store_currencies'=>$currencies,'store_locales'=>$storeLocales,'rows'=>$rows,'store'=>$store,'locale'=>$context->locale,'categories'=>$categories,'mappings'=>$mappings,'feed_rules'=>$this->rules->all($context->storeId)]);
     }
 
     #[Route('/admin/commerce/feeds/{platform}/rules', name:'admin_commerce_feed_rules', methods:['POST'], requirements:['platform'=>'[a-z0-9_]{2,30}'])]
