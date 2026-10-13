@@ -17,9 +17,9 @@ final readonly class ContactWidgetSettings
     /** @return array<string,mixed> raw settings as stored (for the admin form) */
     public function get(int $storeId): array
     {
-        $defaults = ['enabled' => false, 'position' => 'right', 'callback_enabled' => true, 'write_enabled' => true, 'phone' => '', 'email' => '', 'viber' => '', 'messenger' => '', 'telegram' => ''];
+        $defaults = ['enabled' => false, 'position' => 'right', 'callback_enabled' => true, 'write_enabled' => true, 'phone' => '', 'email' => '', 'viber' => '', 'whatsapp' => '', 'messenger' => '', 'telegram' => ''];
         try {
-            $row = $this->db->fetchAssociative('SELECT enabled,position,callback_enabled,write_enabled,phone,email,viber,messenger,telegram FROM mc_contact_widget WHERE store_id=?', [$storeId]);
+            $row = $this->db->fetchAssociative('SELECT enabled,position,callback_enabled,write_enabled,phone,email,viber,whatsapp,messenger,telegram FROM mc_contact_widget WHERE store_id=?', [$storeId]);
         } catch (\Throwable) {
             return $defaults;
         }
@@ -35,6 +35,7 @@ final readonly class ContactWidgetSettings
             'phone' => (string) $row['phone'],
             'email' => (string) $row['email'],
             'viber' => (string) $row['viber'],
+            'whatsapp' => (string) ($row['whatsapp'] ?? ''),
             'messenger' => (string) $row['messenger'],
             'telegram' => (string) $row['telegram'],
         ];
@@ -71,6 +72,9 @@ final readonly class ContactWidgetSettings
         if ($s['viber'] !== '') {
             $actions[] = ['code' => 'viber', 'href' => 'viber://chat?number=' . rawurlencode('+' . ltrim((string) $s['viber'], '+')), 'external' => true];
         }
+        if ($s['whatsapp'] !== '') {
+            $actions[] = ['code' => 'whatsapp', 'href' => 'https://wa.me/' . rawurlencode(ltrim((string) $s['whatsapp'], '+')), 'external' => true];
+        }
         if ($s['messenger'] !== '') {
             $actions[] = ['code' => 'messenger', 'href' => 'https://m.me/' . rawurlencode((string) $s['messenger']), 'external' => true];
         }
@@ -99,6 +103,10 @@ final readonly class ContactWidgetSettings
         if ($viber !== '' && (strlen($viber) < 7 || strlen($viber) > 15)) {
             throw new \InvalidArgumentException(CanonicalUiText::get('admin.cw.error.viber'));
         }
+        $whatsapp = preg_replace('/[^0-9]/', '', (string) ($in['whatsapp'] ?? '')) ?? '';
+        if ($whatsapp !== '' && (strlen($whatsapp) < 7 || strlen($whatsapp) > 15)) {
+            throw new \InvalidArgumentException(CanonicalUiText::get('admin.cw.error.whatsapp'));
+        }
         $messenger = self::handle((string) ($in['messenger'] ?? ''), ['m.me', 'facebook.com', 'www.facebook.com', 'fb.me']);
         $telegram = self::handle((string) ($in['telegram'] ?? ''), ['t.me', 'telegram.me']);
         if ($messenger === null) {
@@ -115,6 +123,7 @@ final readonly class ContactWidgetSettings
             'phone' => $phone !== '' ? $phone : null,
             'email' => $email !== '' ? $email : null,
             'viber' => $viber !== '' ? $viber : null,
+            'whatsapp' => $whatsapp !== '' ? $whatsapp : null,
             'messenger' => $messenger !== '' ? $messenger : null,
             'telegram' => $telegram !== '' ? $telegram : null,
             'updated_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u'),

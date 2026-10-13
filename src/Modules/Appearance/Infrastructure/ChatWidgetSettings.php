@@ -44,23 +44,23 @@ final readonly class ChatWidgetSettings
     {
     }
 
-    /** @return array{provider:string,widget_id:string,base_url:string} */
+    /** @return array{provider:string,widget_id:string,base_url:string,delay:int} */
     public function get(int $storeId): array
     {
         try {
-            $row = $this->db->fetchAssociative('SELECT provider,widget_id,base_url FROM mc_chat_widget WHERE store_id=?', [$storeId]);
+            $row = $this->db->fetchAssociative('SELECT provider,widget_id,base_url,load_delay FROM mc_chat_widget WHERE store_id=?', [$storeId]);
         } catch (\Throwable) {
             $row = false;
         }
         if (!is_array($row) || !in_array((string) $row['provider'], self::PROVIDERS, true)) {
-            return ['provider' => 'none', 'widget_id' => '', 'base_url' => ''];
+            return ['provider' => 'none', 'widget_id' => '', 'base_url' => '', 'delay' => 0];
         }
 
-        return ['provider' => (string) $row['provider'], 'widget_id' => (string) $row['widget_id'], 'base_url' => (string) ($row['base_url'] ?? '')];
+        return ['provider' => (string) $row['provider'], 'widget_id' => (string) $row['widget_id'], 'base_url' => (string) ($row['base_url'] ?? ''), 'delay' => (int) ($row['load_delay'] ?? 0)];
     }
 
     /**
-     * @return array{provider:string,id:string,base:string,csp:array<string,list<string>>}|null
+     * @return array{provider:string,id:string,base:string,delay:int,csp:array<string,list<string>>}|null
      */
     public function storefront(int $storeId): ?array
     {
@@ -69,7 +69,7 @@ final readonly class ChatWidgetSettings
             return null;
         }
 
-        return ['provider' => $s['provider'], 'id' => $s['widget_id'], 'base' => $s['base_url'], 'csp' => self::csp($s['provider'], $s['base_url'])];
+        return ['provider' => $s['provider'], 'id' => $s['widget_id'], 'base' => $s['base_url'], 'delay' => $s['delay'], 'csp' => self::csp($s['provider'], $s['base_url'])];
     }
 
     /** @return array<string,list<string>> extra CSP sources per directive */
@@ -90,7 +90,7 @@ final readonly class ChatWidgetSettings
     }
 
     /** Saves the provider from a pasted embed code or a bare ID; provider "none" switches the chat off. */
-    public function save(int $storeId, string $provider, string $embed, string $baseUrl = ''): void
+    public function save(int $storeId, string $provider, string $embed, string $baseUrl = '', int $delay = 0): void
     {
         if ($provider === 'none') {
             $this->db->delete('mc_chat_widget', ['store_id' => $storeId]);
@@ -121,7 +121,7 @@ final readonly class ChatWidgetSettings
                 default => CanonicalUiText::get('admin.chat.error.id_chatwoot'),
             });
         }
-        $row = ['provider' => $provider, 'widget_id' => $id, 'base_url' => $base !== '' ? $base : null, 'updated_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u')];
+        $row = ['provider' => $provider, 'widget_id' => $id, 'base_url' => $base !== '' ? $base : null, 'load_delay' => max(0, min(120, $delay)), 'updated_at' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u')];
         if ((int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_chat_widget WHERE store_id=?', [$storeId]) > 0) {
             $this->db->update('mc_chat_widget', $row, ['store_id' => $storeId]);
         } else {

@@ -50,6 +50,6 @@
 {% endfor %}
 </section>
 {% endif %}{% endfor %}{% endif %}
-<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.forms.save') }}</button></div>
+{% if form.id and locales|length > 1 %}<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.forms.save') }}</button></div>{% endif %}
 </form>
 {{ shell.end() }}

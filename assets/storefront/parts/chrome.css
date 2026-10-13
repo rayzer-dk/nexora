@@ -282,3 +282,6 @@
   .reference-contacts .ui-icon { color: var(--mc-color-primary); }
 }
 @media (max-width: 1280px) { .reference-contacts a:nth-child(2) { display: none; } }
+
+/* Messenger marks of the floating contact buttons. */
+.brand-icon { flex: none; }

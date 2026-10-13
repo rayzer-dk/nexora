@@ -104,3 +104,6 @@
 .admin-picker__results { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; margin: 2px 0 0; padding: var(--mc-space-1); list-style: none; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised, var(--mc-color-surface)); box-shadow: 0 10px 28px rgb(15 23 42 / 0.18); }
 .admin-picker__results button { display: block; width: 100%; padding: var(--mc-space-2); border: 0; border-radius: var(--mc-radius-sm); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .admin-picker__results button:hover { background: color-mix(in srgb, var(--mc-color-primary) 12%, transparent); }
+
+/* File library: the upload "button" is a label; centre its text like the other buttons. */
+.admin-filelib__bar > label.admin-button { display: inline-flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }

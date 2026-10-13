@@ -47,7 +47,7 @@ final class ContactWidgetAdminController extends AbstractController
             throw $this->createAccessDeniedException(CanonicalUiText::get('common.security.invalid_csrf'));
         }
         try {
-            $this->chat->save($context->storeId, (string) $request->request->get('provider', 'none'), (string) $request->request->get('embed', ''), (string) $request->request->get('base_url', ''));
+            $this->chat->save($context->storeId, (string) $request->request->get('provider', 'none'), (string) $request->request->get('embed', ''), (string) $request->request->get('base_url', ''), (int) $request->request->get('delay', 0));
             $this->addFlash('success', CanonicalUiText::get('admin.chat.saved'));
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('error', $e->getMessage());

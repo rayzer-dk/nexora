@@ -13,7 +13,7 @@ import { TextStyleKit } from '@tiptap/extension-text-style';
 import {
   Bold, Italic, Underline, Strikethrough, Subscript as SubIcon, Superscript as SupIcon, Highlighter, List, ListOrdered, Quote, Minus, Table2,
   ImagePlus, Link2, Unlink, RemoveFormatting, Code, Undo2, Redo2, Maximize2, Minimize2, X, FolderOpen,
-  Palette, PaintBucket, Anchor as AnchorIcon, Video as VideoIcon, Smile, Ellipsis, ChevronDown,
+  Palette, PaintBucket, Anchor as AnchorIcon, Video as VideoIcon, Smile, Ellipsis, SlidersHorizontal,
   TextAlignStart, TextAlignCenter, TextAlignEnd, TextAlignJustify, Rows3, Columns3, Trash2,
 } from '@lucide/vue';
 import { BlockAlign } from '../features/editor-align';
@@ -42,7 +42,10 @@ const editor = new Editor({
     TableKit.configure({ table: { resizable: false } }),
     Placeholder.configure({ placeholder: props.placeholder }),
   ],
-  editorProps: { attributes: { class: 'rich-editor__content', spellcheck: 'true' } },
+  editorProps: {
+    attributes: { class: 'rich-editor__content', spellcheck: 'true' },
+    handleDoubleClickOn: (_view, _pos, node) => { if (node.type.name === 'image') { void openImageProps(); return true; } return false; },
+  },
   onUpdate: ({ editor: instance }) => emit('update:modelValue', instance.getHTML()),
 });
 
@@ -154,6 +157,11 @@ const removeLink = () => {
 };
 
 // ---- image dialog ----
+/** A readable alt text from the file name ("red-summer-dress_1.webp" becomes "red summer dress 1") when the library has none. */
+const altFromUrl = (url: string): string => {
+  const file = decodeURIComponent((url.split('?')[0] ?? '').split('/').pop() ?? '');
+  return file.replace(/\.[a-z0-9]{2,5}$/i, '').replace(/[-_+]+/g, ' ').replace(/\s+/g, ' ').trim();
+};
 const imageDialog = reactive({ open: false, url: '', alt: '' });
 const imageUrlInput = ref<HTMLInputElement | null>(null);
 const openImage = async () => {
@@ -167,15 +175,38 @@ const closeImage = () => { imageDialog.open = false; editor.commands.focus(); };
 const insertFromLibrary = async () => {
   imageDialog.open = false;
   const picked = await pickMedia({ multiple: true });
-  for (const item of picked) editor.chain().focus().setImage({ src: item.url, alt: item.alt || item.title || '' }).run();
+  for (const item of picked) editor.chain().focus().setImage({ src: item.url, alt: item.alt || item.title || altFromUrl(item.url) }).run();
 };
 const insertFromUrl = () => {
   const url = imageDialog.url.trim();
   if (url === '') return;
-  editor.chain().focus().setImage({ src: url, alt: imageDialog.alt.trim() }).run();
+  editor.chain().focus().setImage({ src: url, alt: imageDialog.alt.trim() || altFromUrl(url) }).run();
   imageDialog.open = false;
 };
 
+
+// ---- image properties: alt text and the width the picture is shown at (the file itself stays as it is) ----
+const imageProps = reactive({ open: false, alt: '', title: '', width: '' });
+const imagePropsInput = ref<HTMLInputElement | null>(null);
+const SIZE_PRESETS = [300, 600, 1000];
+async function openImageProps() {
+  if (!editor.isActive('image')) return;
+  const attrs = editor.getAttributes('image') as { alt?: string | null; title?: string | null; width?: number | string | null };
+  imageProps.alt = attrs.alt ?? '';
+  imageProps.title = attrs.title ?? '';
+  imageProps.width = attrs.width ? String(attrs.width) : '';
+  imageProps.open = true;
+  await nextTick();
+  imagePropsInput.value?.focus();
+}
+const closeImageProps = () => { imageProps.open = false; editor.commands.focus(); };
+const widthValid = () => imageProps.width.trim() === '' || /^\d{2,4}$/.test(imageProps.width.trim());
+const applyImageProps = () => {
+  if (!widthValid()) return;
+  const width = imageProps.width.trim() === '' ? null : Number(imageProps.width.trim());
+  editor.chain().focus().updateAttributes('image', { alt: imageProps.alt.trim(), title: imageProps.title.trim() || null, width, height: null }).run();
+  imageProps.open = false;
+};
 
 // ---- colour, font, size, line height ----
 const FONTS = ['Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma', 'Trebuchet MS'];
@@ -184,8 +215,28 @@ const LINE_HEIGHTS = ['1', '1.15', '1.3', '1.5', '1.8', '2'];
 const textStyle = (name: string): string => String((editor.getAttributes('textStyle') as Record<string, unknown>)[name] ?? '');
 const fontValue = (): string => textStyle('fontFamily').replace(/["']/g, '').split(',')[0]?.trim() ?? '';
 const normalizeHex = (value: string): string => (/^#[0-9a-fA-F]{6}$/.test(value) ? value : '#000000');
-const setColor = (event: Event) => { const value = (event.target as HTMLInputElement).value; editor.chain().focus().setColor(value).run(); rememberColor('text', value); };
-const setBackground = (event: Event) => { const value = (event.target as HTMLInputElement).value; editor.chain().focus().setBackgroundColor(value).run(); rememberColor('bg', value); };
+const POPULAR = ['#000000', '#434343', '#666666', '#999999', '#cccccc', '#ffffff', '#e03131', '#f76707', '#f59f00', '#fcc419', '#74b816', '#2f9e44', '#0ca678', '#1098ad', '#1971c2', '#3b5bdb', '#7048e8', '#ae3ec9', '#c2255c', '#e64980', '#8d6e63', '#00c853', '#ffd600', '#ff6d00'];
+const hexDraft = ref('');
+const hexOk = (value: string): boolean => /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value.trim());
+const normHex = (value: string): string => {
+  let hex = value.trim().toLowerCase();
+  if (!hex.startsWith('#')) hex = `#${hex}`;
+  return hex.length === 4 ? `#${[...hex.slice(1)].map((c) => c + c).join('')}` : hex;
+};
+const toggleColorMenu = (kind: 'text' | 'bg') => {
+  hexDraft.value = kind === 'text' ? textStyle('color') : textStyle('backgroundColor');
+  colorMenu.value = colorMenu.value === kind ? '' : kind;
+};
+const applyColor = (value: string) => {
+  const kind = colorMenu.value === 'bg' ? 'bg' : 'text';
+  const color = normHex(value);
+  if (kind === 'text') editor.chain().focus().setColor(color).run();
+  else editor.chain().focus().setBackgroundColor(color).run();
+  rememberColor(kind, color);
+  colorMenu.value = '';
+};
+const submitHex = () => { if (hexOk(hexDraft.value)) applyColor(hexDraft.value); };
+const onNativeColor = (event: Event) => applyColor((event.target as HTMLInputElement).value);
 const clearColors = () => { editor.chain().focus().unsetColor().unsetBackgroundColor().run(); };
 const setFont = (event: Event) => {
   const value = (event.target as HTMLSelectElement).value;
@@ -259,7 +310,7 @@ const RECENT_KEY = 'mc_editor_recent_colors';
 const loadRecent = (): { text: string[]; bg: string[] } => {
   try {
     const parsed = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '{}') as { text?: unknown; bg?: unknown };
-    const clean = (list: unknown): string[] => (Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string' && /^#[0-9a-fA-F]{6}$/.test(item)).slice(0, 12) : []);
+    const clean = (list: unknown): string[] => (Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string' && /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(item)).slice(0, 12) : []);
     return { text: clean(parsed.text), bg: clean(parsed.bg) };
   } catch { return { text: [], bg: [] }; }
 };
@@ -268,12 +319,6 @@ const rememberColor = (kind: 'text' | 'bg', value: string) => {
   const color = value.toLowerCase();
   recentColors[kind] = [color, ...recentColors[kind].filter((item) => item !== color)].slice(0, 12);
   try { localStorage.setItem(RECENT_KEY, JSON.stringify({ text: recentColors.text, bg: recentColors.bg })); } catch { /* storage blocked: the list lives for this page only */ }
-};
-const applyRecent = (kind: 'text' | 'bg', color: string) => {
-  if (kind === 'text') editor.chain().focus().setColor(color).run();
-  else editor.chain().focus().setBackgroundColor(color).run();
-  rememberColor(kind, color);
-  colorMenu.value = '';
 };
 
 const insertTable = () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
@@ -307,19 +352,25 @@ const words = (): number => {
         <option v-for="size in SIZES" :key="size" :value="String(size)">{{ size }}</option>
       </select>
       <span class="rich-editor__menu-host rich-editor__colorgroup">
-        <label class="rich-editor__color" :title="tr('text_color')"><Palette :size="16" /><input type="color" :aria-label="tr('text_color')" :disabled="sourceMode" :value="normalizeHex(textStyle('color'))" @change="setColor"></label>
-        <button type="button" class="rich-editor__tiny" :title="tr('recent_colors')" :aria-label="tr('recent_colors')" :aria-expanded="colorMenu === 'text'" :disabled="sourceMode" @click="colorMenu = colorMenu === 'text' ? '' : 'text'"><ChevronDown :size="14" /></button>
-        <div v-if="colorMenu === 'text'" class="rich-editor__swatches" role="group" :aria-label="tr('recent_colors')">
-          <button v-for="color in recentColors.text" :key="color" type="button" class="rich-editor__swatch" :style="{ backgroundColor: color }" :title="color" :aria-label="color" @click="applyRecent('text', color)"></button>
-          <small v-if="recentColors.text.length === 0">{{ tr('recent_none') }}</small>
-        </div>
-      </span>
-      <span class="rich-editor__menu-host rich-editor__colorgroup">
-        <label class="rich-editor__color" :title="tr('bg_color')"><PaintBucket :size="16" /><input type="color" :aria-label="tr('bg_color')" :disabled="sourceMode" :value="normalizeHex(textStyle('backgroundColor') || '#ffff00')" @change="setBackground"></label>
-        <button type="button" class="rich-editor__tiny" :title="tr('recent_colors')" :aria-label="tr('recent_colors')" :aria-expanded="colorMenu === 'bg'" :disabled="sourceMode" @click="colorMenu = colorMenu === 'bg' ? '' : 'bg'"><ChevronDown :size="14" /></button>
-        <div v-if="colorMenu === 'bg'" class="rich-editor__swatches" role="group" :aria-label="tr('recent_colors')">
-          <button v-for="color in recentColors.bg" :key="color" type="button" class="rich-editor__swatch" :style="{ backgroundColor: color }" :title="color" :aria-label="color" @click="applyRecent('bg', color)"></button>
-          <small v-if="recentColors.bg.length === 0">{{ tr('recent_none') }}</small>
+        <button type="button" class="rich-editor__colorbtn" :title="tr('text_color')" :aria-label="tr('text_color')" :aria-expanded="colorMenu === 'text'" :disabled="sourceMode" @click="toggleColorMenu('text')"><Palette :size="16" /><span class="rich-editor__colorbar" :style="{ backgroundColor: textStyle('color') || '#000000' }"></span></button>
+        <button type="button" class="rich-editor__colorbtn" :title="tr('bg_color')" :aria-label="tr('bg_color')" :aria-expanded="colorMenu === 'bg'" :disabled="sourceMode" @click="toggleColorMenu('bg')"><PaintBucket :size="16" /><span class="rich-editor__colorbar" :style="{ backgroundColor: textStyle('backgroundColor') || '#ffff00' }"></span></button>
+        <div v-if="colorMenu === 'text' || colorMenu === 'bg'" class="rich-editor__colorpanel" role="group" :aria-label="colorMenu === 'text' ? tr('text_color') : tr('bg_color')">
+          <strong>{{ colorMenu === 'text' ? tr('text_color') : tr('bg_color') }}</strong>
+          <div class="rich-editor__swatchgrid">
+            <button v-for="color in POPULAR" :key="color" type="button" class="rich-editor__swatch" :style="{ backgroundColor: color }" :title="color" :aria-label="color" @click="applyColor(color)"></button>
+          </div>
+          <div class="rich-editor__hexrow">
+            <span class="rich-editor__hexpreview" :style="{ backgroundColor: hexOk(hexDraft) ? normHex(hexDraft) : 'transparent' }"></span>
+            <input v-model="hexDraft" type="text" class="rich-editor__hex" maxlength="9" spellcheck="false" autocomplete="off" placeholder="#RRGGBB" :aria-label="tr('color_hex')" @keydown.enter.prevent="submitHex">
+            <button type="button" class="rich-editor__hexok" :disabled="!hexOk(hexDraft)" @click="submitHex">{{ tr('apply') }}</button>
+          </div>
+          <label class="rich-editor__nativepick"><span>{{ tr('color_pick') }}</span><input type="color" :aria-label="tr('color_pick')" :value="normalizeHex(hexDraft)" @change="onNativeColor"></label>
+          <template v-if="(colorMenu === 'text' ? recentColors.text : recentColors.bg).length > 0">
+            <small>{{ tr('recent_colors') }}</small>
+            <div class="rich-editor__swatchgrid">
+              <button v-for="color in (colorMenu === 'text' ? recentColors.text : recentColors.bg)" :key="color" type="button" class="rich-editor__swatch" :style="{ backgroundColor: color }" :title="color" :aria-label="color" @click="applyColor(color)"></button>
+            </div>
+          </template>
         </div>
       </span>
       <button type="button" :title="tr('color_reset')" :aria-label="tr('color_reset')" :disabled="sourceMode" @click="clearColors"><X :size="14" /></button>
@@ -338,7 +389,9 @@ const words = (): number => {
       <span class="rich-editor__sep" aria-hidden="true"></span>
       <button type="button" :title="tr('link')" :aria-label="tr('link')" :disabled="sourceMode" :class="{ active: editor.isActive('link') }" @click="openLink"><Link2 :size="16" /></button>
       <button type="button" :title="tr('unlink')" :aria-label="tr('unlink')" :disabled="sourceMode || !editor.isActive('link')" @click="removeLink"><Unlink :size="16" /></button>
+      <button type="button" :title="tr('anchor')" :aria-label="tr('anchor')" :disabled="sourceMode" :class="{ active: editor.getAttributes('heading').id || editor.getAttributes('paragraph').id }" @click="openAnchor"><AnchorIcon :size="16" /></button>
       <button type="button" :title="tr('image')" :aria-label="tr('image')" :disabled="sourceMode" @click="openImage"><ImagePlus :size="16" /></button>
+      <button type="button" :title="tr('image_props')" :aria-label="tr('image_props')" :disabled="sourceMode || !editor.isActive('image')" @click="openImageProps"><SlidersHorizontal :size="16" /></button>
       <button type="button" :title="tr('video')" :aria-label="tr('video')" :disabled="sourceMode" @click="openVideo"><VideoIcon :size="16" /></button>
       <span class="rich-editor__menu-host">
         <button type="button" :title="tr('emoji')" :aria-label="tr('emoji')" :aria-expanded="colorMenu === 'emoji'" :disabled="sourceMode" @click="colorMenu = colorMenu === 'emoji' ? '' : 'emoji'"><Smile :size="16" /></button>
@@ -356,7 +409,6 @@ const words = (): number => {
         <button type="button" :title="tr('superscript')" :aria-label="tr('superscript')" :disabled="sourceMode" :class="{ active: editor.isActive('superscript') }" @click="editor.chain().focus().toggleSuperscript().run()"><SupIcon :size="16" /></button>
         <button type="button" :title="tr('align_justify')" :aria-label="tr('align_justify')" :disabled="sourceMode" :class="{ active: isAligned('justify') }" @click="align('justify')"><TextAlignJustify :size="16" /></button>
         <button type="button" :title="tr('rule')" :aria-label="tr('rule')" :disabled="sourceMode" @click="editor.chain().focus().setHorizontalRule().run()"><Minus :size="16" /></button>
-        <button type="button" :title="tr('anchor')" :aria-label="tr('anchor')" :disabled="sourceMode" :class="{ active: editor.getAttributes('heading').id || editor.getAttributes('paragraph').id }" @click="openAnchor"><AnchorIcon :size="16" /></button>
         <button type="button" :title="tr('clear')" :aria-label="tr('clear')" :disabled="sourceMode" @click="editor.chain().focus().clearNodes().unsetAllMarks().run()"><RemoveFormatting :size="16" /></button>
           <select class="rich-editor__select rich-editor__select--panel" @click.stop :aria-label="tr('line_height')" :title="tr('line_height')" :disabled="sourceMode" :value="textStyle('lineHeight')" @change="setLineHeight">
             <option value="">{{ tr('line_height') }}</option>
@@ -410,6 +462,24 @@ const words = (): number => {
         <div class="rich-editor__dialog-actions">
           <button type="button" class="admin-button" @click="closeImage">{{ tr('cancel') }}</button>
           <button type="submit" class="admin-button is-primary" :disabled="imageDialog.url.trim() === ''">{{ tr('image_insert') }}</button>
+        </div>
+      </form>
+    </div>
+
+    <div v-if="imageProps.open" class="rich-editor__modal" role="presentation" @mousedown.self="closeImageProps">
+      <form class="rich-editor__dialog" role="dialog" aria-modal="true" :aria-label="tr('image_props')" @submit.prevent="applyImageProps" @keydown.esc.stop="closeImageProps">
+        <button type="button" class="admin-modal__close" :title="tr('close')" :aria-label="tr('close')" @click="closeImageProps"><X :size="18" /></button>
+        <h3>{{ tr('image_props') }}</h3>
+        <label><span>{{ tr('image_alt') }}</span><input ref="imagePropsInput" v-model="imageProps.alt" type="text" autocomplete="off"><small>{{ tr('image_alt_help') }}</small></label>
+        <label><span>{{ tr('image_tooltip') }}</span><input v-model="imageProps.title" type="text" autocomplete="off"></label>
+        <label><span>{{ tr('image_width') }}</span><input v-model="imageProps.width" type="text" inputmode="numeric" maxlength="4" :placeholder="tr('image_width_original')" autocomplete="off"><small>{{ widthValid() ? tr('image_width_help') : tr('image_width_invalid') }}</small></label>
+        <div class="rich-editor__presets">
+          <button type="button" class="admin-button" @click="imageProps.width = ''">{{ tr('image_width_original') }}</button>
+          <button v-for="size in SIZE_PRESETS" :key="size" type="button" class="admin-button" @click="imageProps.width = String(size)">{{ size }} px</button>
+        </div>
+        <div class="rich-editor__dialog-actions">
+          <button type="button" class="admin-button" @click="closeImageProps">{{ tr('cancel') }}</button>
+          <button type="submit" class="admin-button is-primary" :disabled="!widthValid()">{{ tr('apply') }}</button>
         </div>
       </form>
     </div>

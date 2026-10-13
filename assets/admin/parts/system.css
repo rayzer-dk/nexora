@@ -196,3 +196,9 @@
 .admin-guide__env { display: flex; flex-wrap: wrap; gap: var(--mc-space-1); }
 .admin-guide__env code { padding: var(--mc-space-1) var(--mc-space-2); border-radius: var(--mc-radius-xs); background: var(--mc-color-surface-subtle); font-size: var(--mc-font-size-xs); }
 .admin-guide__reco { font-size: var(--mc-font-size-sm); }
+
+/* Hints belong next to the field name: inside a label the info icon sits right after the label text, the field goes to the next line. */
+label:has(> .admin-tip--hint) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-1) var(--mc-space-2); }
+label:has(> .admin-tip--hint) > .admin-tip--hint { order: 1; }
+label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100%; min-width: 0; }
+.admin-tip--hint > .admin-tip__pop { white-space: normal; }

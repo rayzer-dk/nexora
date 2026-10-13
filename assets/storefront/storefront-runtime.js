@@ -650,6 +650,7 @@ function initChatWidget() {
   const holder = q('[data-chat-widget]');
   if (!holder) return;
   const { provider, id, base } = holder.dataset;
+  const delay = Math.max(0, Number(holder.dataset.delay || 0)) * 1000;
   const root = () => q('[data-contact-widget]');
   const allowed = () => {
     try { return Boolean(JSON.parse(localStorage.getItem('mc_consent_v1') || 'null')?.preferences); } catch { return false; }
@@ -679,8 +680,9 @@ function initChatWidget() {
     chatwoot: () => window.$chatwoot?.toggle && (window.$chatwoot.toggle('open'), true),
   })[provider]?.() ?? false;
   const open = (attempt = 0) => { if (!api() && attempt < 20) setTimeout(() => open(attempt + 1), 500); }; // the vendor script may still be loading
-  load();
-  window.addEventListener('commerce:consent-changed', load);
+  // The vendor script is the heaviest thing a chat adds: wait for the chosen delay (a click on the chat button loads it at once).
+  if (delay > 0) window.setTimeout(load, delay); else load();
+  window.addEventListener('commerce:consent-changed', () => { if (delay === 0) load(); });
   document.addEventListener('click', (event) => {
     const button = event.target instanceof Element ? event.target.closest('[data-cw-chat]') : null;
     if (!button) return;
