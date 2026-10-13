@@ -221,3 +221,18 @@ label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100
 /* Row actions (icon buttons) stay in one line instead of wrapping under each other. */
 .admin-table td.is-actions { width: 1%; white-space: nowrap; }
 .admin-table td.is-actions .admin-inline-actions { flex-wrap: nowrap; justify-content: flex-end; }
+
+/* Migration centre: pick the platform to move from. */
+.migration-sources__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: var(--mc-space-3); }
+.migration-source { display: grid; gap: var(--mc-space-1); padding: var(--mc-space-4); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); color: var(--mc-color-text); text-decoration: none; transition: border-color .15s, transform .15s; }
+.migration-source:hover { border-color: var(--mc-color-primary); transform: translateY(-1px); }
+.migration-source.is-primary { border-color: var(--mc-color-primary); background: color-mix(in srgb, var(--mc-color-primary) 7%, var(--mc-color-surface)); }
+.migration-source small { color: var(--mc-color-muted); }
+
+/* Small drop-down menu inside a table row (share a receipt). */
+.admin-menu { position: relative; }
+.admin-menu > summary { list-style: none; cursor: pointer; }
+.admin-menu > summary::-webkit-details-marker { display: none; }
+.admin-menu__panel { position: absolute; z-index: var(--mc-z-dropdown); right: 0; top: calc(100% + var(--mc-space-1)); display: grid; min-width: 9rem; padding: var(--mc-space-1); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised, var(--mc-color-surface)); box-shadow: 0 10px 28px rgb(15 23 42 / 0.2); }
+.admin-menu__panel a { padding: var(--mc-space-2) var(--mc-space-3); border-radius: var(--mc-radius-sm); color: var(--mc-color-text); text-decoration: none; }
+.admin-menu__panel a:hover { background: var(--mc-color-surface-subtle); }

@@ -19,7 +19,7 @@ use Symfony\Component\Uid\Uuid;
 /** Cash register (PRRO): account settings, a connection check, and a receipt for one order on demand. */
 final class PrroAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly PrroSettings $settings, private readonly FiscalizationService $fiscal, private readonly Connection $db, private readonly LoggerInterface $logger)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly PrroSettings $settings, private readonly FiscalizationService $fiscal, private readonly Connection $db, private readonly LoggerInterface $logger, private readonly \Commerce\Modules\Notification\Application\NotificationOutbox $notifications)
     {
     }
 
@@ -52,13 +52,71 @@ final class PrroAdminController extends AbstractController
         }
         $cfg = $this->settings->get();
         unset($cfg['password'], $cfg['license']);
-        $recent = $this->db->fetchAllAssociative("SELECT f.status,f.fiscal_code,f.receipt_url,f.error_text,f.updated_at,o.order_number,HEX(o.public_id) AS public_hex FROM mc_fiscal_receipt f JOIN mc_sales_order o ON o.id=f.order_id ORDER BY f.id DESC LIMIT 15");
+        $status = (string) $request->query->get('status', '');
+        $status = in_array($status, ['done', 'error', 'pending'], true) ? $status : '';
+        $term = mb_substr(trim((string) $request->query->get('q', '')), 0, 60);
+        $from = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $request->query->get('from', '')) === 1 ? (string) $request->query->get('from') : '';
+        $to = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $request->query->get('to', '')) === 1 ? (string) $request->query->get('to') : '';
+        $where = ['1=1'];
+        $params = [];
+        if ($status === 'pending') {
+            $where[] = "f.status NOT IN ('done','error')";
+        } elseif ($status !== '') {
+            $where[] = 'f.status=?';
+            $params[] = $status;
+        }
+        if ($term !== '') {
+            $where[] = '(o.order_number LIKE ? OR f.fiscal_code LIKE ?)';
+            $params[] = $params[] = '%' . addcslashes($term, '%_\\') . '%';
+        }
+        if ($from !== '') {
+            $where[] = 'f.updated_at >= ?';
+            $params[] = $from . ' 00:00:00';
+        }
+        if ($to !== '') {
+            $where[] = 'f.updated_at <= ?';
+            $params[] = $to . ' 23:59:59.999999';
+        }
+        $condition = implode(' AND ', $where);
+        $total = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_fiscal_receipt f JOIN mc_sales_order o ON o.id=f.order_id WHERE ' . $condition, $params);
+        $page = max(1, (int) $request->query->get('page', 1));
+        $recent = $this->db->fetchAllAssociative('SELECT f.id,f.kind,f.status,f.fiscal_code,f.receipt_url,f.error_text,f.updated_at,o.order_number,o.customer_email,HEX(o.public_id) AS public_hex FROM mc_fiscal_receipt f JOIN mc_sales_order o ON o.id=f.order_id WHERE ' . $condition . ' ORDER BY f.id DESC LIMIT 25 OFFSET ' . (($page - 1) * 25), $params);
         foreach ($recent as &$r) {
             $r['order_public_id'] = Uuid::fromBinary((string) hex2bin((string) $r['public_hex']))->toRfc4122();
         }
         unset($r);
 
-        return $this->render('@storefront/admin/system/prro.html.twig', ['cfg' => $cfg, 'has_secrets' => $this->settings->get()['configured'], 'recent' => $recent]);
+        return $this->render('@storefront/admin/system/prro.html.twig', ['cfg' => $cfg, 'has_secrets' => $this->settings->get()['configured'], 'recent' => $recent, 'total' => $total, 'page' => $page, 'filter' => ['status' => $status, 'q' => $term, 'from' => $from, 'to' => $to]]);
+    }
+
+    /** Sends the link of a finished receipt to the customer of the order (the cash register may already have e-mailed it; this is the manual resend). */
+    #[Route('/admin/system/prro/receipt/{id}/send', name: 'admin_system_prro_receipt_send', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function send(int $id, Request $request): Response
+    {
+        $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('prro_receipt_send', (string) $request->request->get('_csrf_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+        $row = $this->db->fetchAssociative("SELECT f.id,f.receipt_url,o.order_number,o.customer_email FROM mc_fiscal_receipt f JOIN mc_sales_order o ON o.id=f.order_id WHERE f.id=? AND f.status='done'", [$id]);
+        $email = is_array($row) ? trim((string) $row['customer_email']) : '';
+        if (!is_array($row) || (string) $row['receipt_url'] === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            $this->addFlash('error', CanonicalUiText::get('admin.prro.send_no_email'));
+
+            return $this->redirect($this->back($request));
+        }
+        $subject = CanonicalUiText::get('admin.prro.send_subject', ['order' => (string) $row['order_number']]);
+        $text = CanonicalUiText::get('admin.prro.send_text', ['order' => (string) $row['order_number'], 'url' => (string) $row['receipt_url']]);
+        $this->notifications->enqueue(\Commerce\Modules\Notification\Domain\NotificationChannel::Email, new \Commerce\Modules\Notification\Domain\NotificationMessage('prro_receipt', $subject, $text, [], 'generic'), $email, null, 'prro-receipt:' . $id . ':' . bin2hex(random_bytes(4)));
+        $this->addFlash('success', CanonicalUiText::get('admin.prro.send_ok', ['email' => $email]));
+
+        return $this->redirect($this->back($request));
+    }
+
+    private function back(Request $request): string
+    {
+        $back = (string) $request->request->get('back', '');
+
+        return str_starts_with($back, '/admin/system/prro') && !str_contains($back, "\n") ? $back : '/admin/system/prro';
     }
 
     #[Route('/admin/orders/{publicId}/fiscalize', name: 'admin_order_fiscalize', methods: ['POST'])]

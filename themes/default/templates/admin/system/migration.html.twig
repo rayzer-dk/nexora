@@ -5,6 +5,13 @@
 </header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
 {% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
+<section class="admin-panel migration-sources">
+  <div class="admin-panel__header"><div><small>{{ ui_text('admin.migration.sources.kicker') }}</small><h2>{{ ui_text('admin.migration.sources.title') }}</h2></div></div>
+  <div class="migration-sources__grid">
+    <a class="migration-source is-primary" href="#opencart">{{ ui_icon('database', 22) }}<strong>OpenCart</strong><small>{{ ui_text('admin.migration.sources.opencart') }}</small></a>
+    {% for p in ['woocommerce','shopify','prestashop','prom','horoshop'] %}<a class="migration-source" href="#file-import">{{ ui_icon('file-spreadsheet', 22) }}<strong>{{ ui_text('admin.migration.file.platform_' ~ p) }}</strong><small>{{ ui_text('admin.migration.sources.file') }}</small></a>{% endfor %}
+  </div>
+</section>
 <section class="admin-panel">
   <div><small>{{ ui_text('admin.system.migration.bezpechnyi_zapusk') }}</small><h2>{{ ui_text('admin.system.migration.pidkliuchennia_do_staroho_mahazynu_vykonuietsia_') }}</h2></div>
   <p>{{ ui_text('admin.system.migration.pered_importom_zrobit_povnu_rezervnu_kopiiu_star') }}</p>
@@ -44,7 +51,7 @@
   <div class="admin-form-actions"><button type="button" class="admin-button is-primary" data-image-queue-run>{{ ui_icon('download', 16) }} {{ ui_text('admin.migration.file.queue_run') }}</button>{% if image_queue.failed %}<button type="button" class="admin-button" data-image-queue-run data-retry="1">{{ ui_icon('rotate-ccw', 16) }} {{ ui_text('admin.migration.file.queue_retry') }}</button>{% endif %}</div>
 </section>
 {% endif %}
-<section class="admin-panel">
+<section class="admin-panel" id="opencart">
   <div class="admin-panel__header"><div><small>{{ ui_text('admin.migration.oc.kicker') }}</small><h2>{{ ui_text('admin.migration.oc.title') }}</h2><p>{{ ui_text('admin.migration.oc.intro') }}</p></div></div>
   <form method="post" action="{{ path('admin_system_migration_opencart') }}" class="admin-form-grid" autocomplete="off">
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('migration_opencart') }}">
