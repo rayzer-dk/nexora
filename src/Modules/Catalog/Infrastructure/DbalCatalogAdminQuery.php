@@ -14,6 +14,27 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     {
     }
 
+    /**
+     * Name and SKU of known products by id (the product picker of the promotion form shows names, not numbers).
+     *
+     * @param list<int> $ids
+     * @return list<array{id:int,name:string,sku:string}>
+     */
+    public function namesByIds(int $storeId, string $locale, array $ids): array
+    {
+        $ids = array_slice(array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0))), 0, 200);
+        if ($ids === []) {
+            return [];
+        }
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT p.id, COALESCE(pt.name, \'\') AS name, COALESCE(v.sku, \'\') AS sku FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? LEFT JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id AND pt.locale=? LEFT JOIN mc_product_variant v ON v.product_id=p.id AND v.sort_order=0 WHERE p.id IN (?)',
+            [$storeId, $locale, $ids],
+            [\Doctrine\DBAL\ParameterType::INTEGER, \Doctrine\DBAL\ParameterType::STRING, \Doctrine\DBAL\ArrayParameterType::INTEGER],
+        );
+
+        return array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'name' => (string) $r['name'], 'sku' => (string) $r['sku']], $rows);
+    }
+
     /** @return array{items:list<array<string,mixed>>,total:int,page:int,limit:int} */
     public function products(int $storeId, int $marketId, string $locale, int $page = 1, int $limit = 25, string $search = '', string $sort = '', string $dir = 'desc', array $filters = []): array
     {

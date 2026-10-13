@@ -385,7 +385,7 @@ function initFieldLangTabs() {
       button.dataset.code = code;
       button.lang = code; button.setAttribute('lang', code);
       const short = document.createElement('span'); short.className = 'lang-tabs__code'; short.textContent = code.slice(0, 2).toUpperCase();
-      const name = document.createElement('span'); name.className = 'lang-tabs__name'; name.textContent = first.dataset.langName || code;
+      const name = document.createElement('span'); name.className = 'lang-tabs__name'; name.textContent = (first.dataset.langName || code).replace(/\s*\(.*\)\s*$/, '') || code;
       const flag = document.createElement('span'); flag.className = 'lang-tabs__mark'; flag.textContent = mark(items, code) ? '✓' : '•';
       li.classList.add(mark(items, code) ? 'is-done' : 'is-missing');
       button.append(short, name, flag);
@@ -3105,8 +3105,93 @@ function initVariablePicker() {
   }));
 }
 
+// Product picker for a field that holds product ids ("12, 15, 18"): the person searches by name or SKU and sees names as chips; the field keeps the ids.
+function initProductPickers() {
+  qa('input[data-product-picker]').forEach((input) => {
+    if (input.dataset.pickerReady === '1') return;
+    input.dataset.pickerReady = '1';
+    const wrap = document.createElement('div');
+    wrap.className = 'admin-picker';
+    const chips = document.createElement('div');
+    chips.className = 'admin-picker__chips';
+    const search = document.createElement('input');
+    search.type = 'search';
+    search.className = 'admin-picker__search';
+    search.placeholder = input.dataset.pickerSearchLabel || '';
+    search.autocomplete = 'off';
+    const results = document.createElement('ul');
+    results.className = 'admin-picker__results';
+    results.hidden = true;
+    input.hidden = true;
+    input.after(wrap);
+    wrap.append(chips, search, results);
+
+    const ids = () => input.value.split(',').map((v) => v.trim()).filter((v) => /^\d+$/.test(v));
+    const save = (list) => { input.value = list.join(', '); input.dispatchEvent(new Event('input', { bubbles: true })); };
+    const chip = (id, name, sku) => {
+      const node = document.createElement('span');
+      node.className = 'admin-picker__chip';
+      node.dataset.id = String(id);
+      const label = document.createElement('span');
+      label.textContent = sku ? `${name || '#' + id} · ${sku}` : (name || `#${id}`);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', input.dataset.pickerRemoveLabel || '');
+      remove.addEventListener('click', () => { node.remove(); save(ids().filter((v) => v !== String(id))); });
+      node.append(label, remove);
+      return node;
+    };
+    const known = ids();
+    if (known.length) {
+      fetch(`/admin/api/catalog/products?ids=${encodeURIComponent(known.join(','))}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : { items: [] }))
+        .then((data) => {
+          const byId = new Map((data.items || []).map((item) => [String(item.id), item]));
+          chips.replaceChildren(...known.map((id) => chip(id, byId.get(id)?.name || '', byId.get(id)?.sku || '')));
+        })
+        .catch(() => chips.replaceChildren(...known.map((id) => chip(id, '', ''))));
+    }
+    let timer = 0;
+    let request = 0;
+    search.addEventListener('input', () => {
+      window.clearTimeout(timer);
+      const needle = search.value.trim();
+      if (needle.length < 2) { results.hidden = true; return; }
+      timer = window.setTimeout(async () => {
+        const mine = ++request;
+        try {
+          const response = await fetch(`/admin/api/catalog/products?limit=10&search=${encodeURIComponent(needle)}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+          const data = response.ok ? await response.json() : { items: [] };
+          if (mine !== request) return;
+          const taken = new Set(ids());
+          const rows = (data.items || []).filter((item) => !taken.has(String(item.id)));
+          results.replaceChildren(...rows.map((item) => {
+            const li = document.createElement('li');
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = item.sku ? `${item.name} · ${item.sku}` : String(item.name);
+            button.addEventListener('click', () => {
+              save([...ids(), String(item.id)]);
+              chips.append(chip(item.id, item.name, item.sku));
+              search.value = '';
+              results.hidden = true;
+              search.focus();
+            });
+            li.append(button);
+            return li;
+          }));
+          results.hidden = rows.length === 0;
+        } catch (_) { results.hidden = true; }
+      }, 220);
+    });
+    document.addEventListener('click', (event) => { if (!wrap.contains(event.target)) results.hidden = true; });
+  });
+}
+
 initThemeToggle('mc_admin_theme');
 initUserMenu();
+initProductPickers();
 initDatePickers();
 initVariablePicker();
 initDismissibleNotices();

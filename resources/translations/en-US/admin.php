@@ -829,6 +829,8 @@ return [
     'admin.commerce.promotions.hrupy_pokuptsiv' => 'Customer groups',
     'admin.commerce.promotions.id_katehorii' => 'Category IDs',
     'admin.commerce.promotions.id_tovariv' => 'Product IDs',
+    'admin.commerce.promotions.picker_search' => 'Add a product: start typing a name or SKU',
+    'admin.commerce.promotions.picker_remove' => 'Remove the product from the list',
     'admin.commerce.promotions.kod' => 'Code',
     'admin.commerce.promotions.limit_na_kliienta' => 'Limit per customer',
     'admin.commerce.promotions.mekhanika' => 'Mechanics',

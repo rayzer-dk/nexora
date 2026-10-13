@@ -9,8 +9,8 @@
 <section class="admin-panel"><div class="admin-panel__header"><div><h2>{{ type_labels[type] }}</h2></div></div>
 <div class="admin-form-grid">
 {% for locale in locales %}{% set row = templates[type][locale]|default({title: '', description: ''}) %}
-<label class="admin-form-wide" data-lang="{{ locale }}" data-lang-name="{{ locale }}"><span>{{ ui_text('admin.seotemplates.title_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][title]" value="{{ row.title }}" maxlength="200" placeholder="{name} | {store}"></label>
-<label class="admin-form-wide" data-lang="{{ locale }}" data-lang-name="{{ locale }}"><span>{{ ui_text('admin.seotemplates.description_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][description]" value="{{ row.description }}" maxlength="400"></label>
+<label class="admin-form-wide" data-lang="{{ locale }}" data-lang-name="{{ locale_name(locale) }}"><span>{{ ui_text('admin.seotemplates.title_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][title]" value="{{ row.title }}" maxlength="200" placeholder="{name} | {store}"></label>
+<label class="admin-form-wide" data-lang="{{ locale }}" data-lang-name="{{ locale_name(locale) }}"><span>{{ ui_text('admin.seotemplates.description_field') }}</span><input type="text" name="tpl[{{ type }}][{{ locale }}][description]" value="{{ row.description }}" maxlength="400"></label>
 {% endfor %}
 </div></section>
 {% endfor %}

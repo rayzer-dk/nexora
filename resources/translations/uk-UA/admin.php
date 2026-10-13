@@ -829,6 +829,8 @@ return [
     'admin.commerce.promotions.hrupy_pokuptsiv' => 'Групи покупців',
     'admin.commerce.promotions.id_katehorii' => 'ID категорій',
     'admin.commerce.promotions.id_tovariv' => 'ID товарів',
+    'admin.commerce.promotions.picker_search' => 'Додати товар: почніть вводити назву або артикул',
+    'admin.commerce.promotions.picker_remove' => 'Прибрати товар зі списку',
     'admin.commerce.promotions.kod' => 'Код',
     'admin.commerce.promotions.limit_na_kliienta' => 'Ліміт на клієнта',
     'admin.commerce.promotions.mekhanika' => 'Механіка',

@@ -26,7 +26,27 @@ final class ContentLanguageTwigExtension extends AbstractExtension
 
     public function getFunctions(): array
     {
-        return [new TwigFunction('content_lang_tabs', $this->catalogTabs(...)), new TwigFunction('brand_lang_tabs', $this->brandTabs(...))];
+        return [new TwigFunction('content_lang_tabs', $this->catalogTabs(...)), new TwigFunction('brand_lang_tabs', $this->brandTabs(...)), new TwigFunction('locale_name', $this->localeName(...))];
+    }
+
+    /** @var array<string,string>|null */
+    private ?array $localeNames = null;
+
+    /** The language name for a locale code ("Українська" for uk-UA): what the language tabs and selects show instead of the bare code. */
+    public function localeName(string $code): string
+    {
+        if ($this->localeNames === null) {
+            $this->localeNames = [];
+            try {
+                foreach ($this->db->fetchAllAssociative('SELECT code,native_name FROM mc_locale') as $row) {
+                    $this->localeNames[(string) $row['code']] = ContentLanguageTabs::plainName((string) $row['native_name'], (string) $row['code']);
+                }
+            } catch (\Throwable) {
+                // the code itself is shown
+            }
+        }
+
+        return $this->localeNames[$code] ?? $code;
     }
 
     /** @return list<array{code:string,name:string,short:string,is_default:bool,current:bool,done:bool}> */

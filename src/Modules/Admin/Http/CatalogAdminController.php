@@ -35,6 +35,10 @@ final class CatalogAdminController extends AbstractController
     {
         try {
             $context = $this->context->resolve($request);
+            if ($request->query->has('ids')) {
+                // Names of products chosen earlier (the promotion form shows them as chips).
+                return $this->json(['items' => $this->query->namesByIds($context->storeId, $context->locale, array_map('intval', explode(',', (string) $request->query->get('ids', ''))))]);
+            }
             return $this->json($this->query->products($context->storeId, $context->marketId, $context->locale, (int) $request->query->get('page', 1), (int) $request->query->get('limit', 25), (string) $request->query->get('search', '')));
         } catch (\Throwable $e) {
             return $this->json(['error' => \Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed')], 500);
