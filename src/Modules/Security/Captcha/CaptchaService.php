@@ -61,7 +61,7 @@ final class CaptchaService implements CaptchaVerifier
     }
 
     /** Template data for the form, or null when no captcha is needed. Registers the provider hosts in the page CSP. */
-    /** @return array{provider:string,site_key:string,form:string,token:string,mode:string,question:string}|null */
+    /** @return array{provider:string,site_key:string,form:string,token:string,mode:string,question:string,options:list<array{id:string,icon:string}>}|null */
     public function widget(Request $request, string $form): ?array
     {
         if (!$this->required($request, $form)) {
@@ -71,9 +71,9 @@ final class CaptchaService implements CaptchaVerifier
         if (isset(self::CSP[$c['provider']])) {
             CspExtra::merge($request, self::CSP[$c['provider']]);
         }
-        $issue = $c['provider'] === 'builtin' ? $this->builtin->issue() : ['token' => '', 'mode' => '', 'question' => ''];
+        $issue = $c['provider'] === 'builtin' ? $this->builtin->issue() : ['token' => '', 'mode' => '', 'question' => '', 'options' => []];
 
-        return ['provider' => $c['provider'], 'site_key' => $c['site_key'], 'form' => $form, 'token' => $issue['token'], 'mode' => $issue['mode'], 'question' => $issue['question']];
+        return ['provider' => $c['provider'], 'site_key' => $c['site_key'], 'form' => $form, 'token' => $issue['token'], 'mode' => $issue['mode'], 'question' => $issue['question'], 'options' => $issue['options']];
     }
 
     /** True when the form does not need a captcha or the submitted answer is valid. */

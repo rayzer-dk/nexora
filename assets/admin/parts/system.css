@@ -217,3 +217,7 @@ label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100
 .admin-topbar { border-bottom-color: var(--mc-color-border-strong); }
 .admin-topbar select, .admin-topbar .admin-icon-button, .admin-search-trigger { border-color: var(--mc-color-border-strong); color: var(--mc-color-text); }
 .admin-topbar .admin-context label { color: var(--mc-color-text); font-weight: var(--mc-font-weight-semibold); }
+
+/* Row actions (icon buttons) stay in one line instead of wrapping under each other. */
+.admin-table td.is-actions { width: 1%; white-space: nowrap; }
+.admin-table td.is-actions .admin-inline-actions { flex-wrap: nowrap; justify-content: flex-end; }

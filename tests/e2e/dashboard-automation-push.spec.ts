@@ -15,10 +15,25 @@ function appSecret(): string {
   return process.env.APP_SECRET ?? '';
 }
 const SECRET = appSecret();
-const ALPHABET = 'ACDEFHJKLMNPRTUVWXY34679';
+const ICONS = ['heart', 'star', 'sun', 'moon', 'cloud', 'key', 'bell', 'camera', 'leaf', 'gift', 'umbrella', 'coffee'];
+const mac = (value: string): Buffer => createHmac('sha256', SECRET).update(value).digest();
+/** The four pictures of a token, in the order the page shows them, and the id of the right one (mirrors BuiltinCaptcha::choice()). */
+function builtinChoice(token: string): { ids: string[]; right: string } {
+  const nonce = token.split('.')[0];
+  const options = ICONS.map((icon) => ({ icon, weight: mac(`pick|${nonce}|${icon}`).toString('hex') }))
+    .sort((a, b) => (a.weight < b.weight ? -1 : a.weight > b.weight ? 1 : 0))
+    .slice(0, 4)
+    .map((option) => ({ icon: option.icon, id: mac(`id|${nonce}|${option.icon}`).toString('hex').slice(0, 6).toUpperCase() }));
+  return { ids: options.map((option) => option.id), right: options[mac(`target|${nonce}`)[0] % 4].id };
+}
+/** Mirrors the id of the picture a person would click. */
 function builtinAnswer(token: string): string {
-  const raw = createHmac('sha256', SECRET).update(`code|${token.split('.')[0]}`).digest();
-  return Array.from({ length: 5 }, (_, i) => ALPHABET[raw[i] % ALPHABET.length]).join('');
+  return builtinChoice(token).right;
+}
+/** Another picture than the right one: a wrong answer. */
+function builtinWrongAnswer(token: string): string {
+  const choice = builtinChoice(token);
+  return choice.ids.find((id) => id !== choice.right) ?? '';
 }
 
 async function loginAdmin(page: Page): Promise<void> {
@@ -285,7 +300,7 @@ test('login captcha: built-in challenge gates the customer login, outage mode pe
     await expect(shop.locator('[data-captcha="builtin"]')).toHaveCount(1);
     await shop.locator('input[name="_username"]').fill('nobody@example.test');
     await shop.locator('input[name="_password"]').fill('wrong-password');
-    await shop.locator('input[name="mc_captcha_answer"]').fill('WRONG');
+    await shop.locator(`input[name="mc_captcha_answer"][value="${builtinWrongAnswer(await shop.locator('input[name="mc_captcha_token"]').inputValue())}"]`).check({ force: true });
     await shop.waitForTimeout(1200);
     await shop.locator('.account-form button[type="submit"]').first().click();
     await shop.waitForURL(/\/account\/login/);
@@ -294,7 +309,7 @@ test('login captcha: built-in challenge gates the customer login, outage mode pe
     const token = await shop.locator('input[name="mc_captcha_token"]').inputValue();
     await shop.locator('input[name="_username"]').fill('nobody@example.test');
     await shop.locator('input[name="_password"]').fill('wrong-password');
-    await shop.locator('input[name="mc_captcha_answer"]').fill(builtinAnswer(token));
+    await shop.locator(`input[name="mc_captcha_answer"][value="${builtinAnswer(token)}"]`).check({ force: true });
     await shop.waitForTimeout(1200);
     await shop.locator('.account-form button[type="submit"]').first().click();
     await shop.waitForURL(/\/account\/login/);

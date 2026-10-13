@@ -1,0 +1,7 @@
+{# The picture challenge of the built-in captcha: pick the named picture among four. #}
+<div class="captcha__choice" data-captcha-choice>
+    <p class="captcha__prompt">{{ ui_text('captcha_choose', {icon: ui_text('captcha_icon_' ~ target)}) }}</p>
+    <div class="captcha__options" role="radiogroup" aria-label="{{ ui_text('captcha_choose', {icon: ui_text('captcha_icon_' ~ target)})|e('html_attr') }}">
+        {% for option in options %}<label class="captcha__option"><input type="radio" name="mc_captcha_answer" value="{{ option.id }}" required aria-label="{{ loop.index }}"><span>{{ ui_icon(option.icon, 26) }}</span></label>{% endfor %}
+    </div>
+</div>

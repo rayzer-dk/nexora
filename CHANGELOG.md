@@ -2,6 +2,11 @@
 
 ## Unreleased (next after 3.97.23)
 
+- Captcha: the built-in challenge is now “pick the named picture among four” (no distorted letters), refreshable without reload; 6 languages.
+- Store data: country is a dropdown, the domains field is gone (domains stay as they are); catalogue-only mode no longer shows availability labels/buttons; currency switcher is hidden where there is no catalogue (landing, forum).
+- AI provider test and IndexNow now say the real reason (provider status/message, key-file check) instead of a generic error; the AI test works before the provider is switched on.
+- Admin tables: row action icons stay in one line; exchange-rate cells no longer wrap.
+
 - Admin: left menu now highlights the current page for Tax/VAT, Connections, CRM order connections, API keys, carriers, update and storefront contacts; quick cache menu in the header (what each cache holds, sizes, clear button that returns to the same page); stronger header contrast.
 
 Customisable dashboard, carrier keys in the admin, replies to returns, options and variants, test fixes. Checked on PHP 8.4 + MySQL 8.4 + Chromium (changed specs pass); the full CI pass is still to do.

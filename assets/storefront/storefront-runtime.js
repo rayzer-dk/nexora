@@ -87,8 +87,7 @@ function initAjaxForms() {
         if (!failed && form.hasAttribute('data-ajax-reset')) form.reset();
         // a captcha challenge is single-use: the page is not reloaded, so ask for a fresh one
         form.querySelector('[data-captcha-refresh]')?.click();
-        const answer = form.querySelector('input[name="mc_captcha_answer"]');
-        if (answer) answer.value = '';
+        form.querySelectorAll('input[name="mc_captcha_answer"]').forEach((input) => { input.checked = false; });
       } catch (_) {
         form.submit();
         return;
@@ -783,12 +782,8 @@ async function refreshBuiltinCaptcha(box) {
     const data = await response.json();
     const token = q('[data-captcha-token]', box);
     if (token) token.value = data.token;
-    const image = q('[data-captcha-image]', box);
-    if (image && data.image) image.src = data.image;
-    const question = q('[data-captcha-question]', box);
-    if (question) question.textContent = data.question;
-    const answer = q('input[name="mc_captcha_answer"]', box);
-    if (answer) answer.value = '';
+    const holder = q('[data-captcha-choice]', box);
+    if (holder && data.html) holder.outerHTML = data.html;
   } catch { /* offline: the visitor can retry */ }
 }
 function initCaptcha() {

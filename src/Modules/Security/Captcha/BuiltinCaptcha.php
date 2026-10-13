@@ -15,6 +15,8 @@ final class BuiltinCaptcha
 {
     private const ALPHABET = 'ACDEFHJKLMNPRTUVWXY34679';
     private const TTL = 900;
+    /** Pictures of the "pick the picture" challenge (Lucide names); the page asks for one of four of them. */
+    public const ICONS = ['heart', 'star', 'sun', 'moon', 'cloud', 'key', 'bell', 'camera', 'leaf', 'gift', 'umbrella', 'coffee'];
 
     public function __construct(private readonly string $secret, private readonly CacheItemPoolInterface $cache)
     {
@@ -25,14 +27,36 @@ final class BuiltinCaptcha
         return function_exists('imagecreatetruecolor') && function_exists('imagepng');
     }
 
-    /** @return array{token:string,mode:string,question:string} */
+    /**
+     * Four pictures and the one the visitor must pick, all derived from the nonce: nothing is stored.
+     *
+     * @return array{target:string,options:list<array{id:string,icon:string}>}
+     */
+    public function choice(string $nonce): array
+    {
+        $weights = [];
+        foreach (self::ICONS as $icon) {
+            $weights[$icon] = hash_hmac('sha256', 'pick|' . $nonce . '|' . $icon, $this->secret);
+        }
+        asort($weights, SORT_STRING);
+        $options = [];
+        foreach (array_slice(array_keys($weights), 0, 4) as $icon) {
+            $options[] = ['id' => strtoupper(substr(hash_hmac('sha256', 'id|' . $nonce . '|' . $icon, $this->secret), 0, 6)), 'icon' => $icon];
+        }
+        $target = ord(hash_hmac('sha256', 'target|' . $nonce, $this->secret, true)[0]) % 4;
+
+        return ['target' => $options[$target]['icon'], 'options' => $options];
+    }
+
+    /** @return array{token:string,mode:string,question:string,options:list<array{id:string,icon:string}>} */
     public function issue(): array
     {
         $nonce = bin2hex(random_bytes(8));
         $exp = time() + self::TTL;
         $token = $nonce . '.' . $exp . '.' . $this->sign($nonce, $exp);
+        $choice = $this->choice($nonce);
 
-        return ['token' => $token, 'mode' => $this->imageMode() ? 'image' : 'math', 'question' => $this->imageMode() ? '' : $this->question($nonce)];
+        return ['token' => $token, 'mode' => 'choice', 'question' => $choice['target'], 'options' => $choice['options']];
     }
 
     public function verify(string $token, string $answer): bool
@@ -45,9 +69,8 @@ final class BuiltinCaptcha
         if (!hash_equals($this->sign($nonce, (int) $exp), $sig) || (int) $exp < time()) {
             return false;
         }
-        $expected = $this->answer($nonce);
         $given = strtoupper(preg_replace('/\s+/', '', $answer) ?? '');
-        if ($given === '' || !hash_equals($expected, $given)) {
+        if ($given === '' || !(hash_equals($this->answer($nonce), $given) || hash_equals($this->legacyAnswer($nonce), $given))) {
             return false;
         }
         try {
@@ -74,7 +97,7 @@ final class BuiltinCaptcha
         if (!hash_equals($this->sign($parts[0], (int) $parts[1]), $parts[2]) || (int) $parts[1] < time()) {
             return null;
         }
-        $text = $this->answer($parts[0]);
+        $text = $this->legacyAnswer($parts[0]);
         $w = 168;
         $h = 56;
         $canvas = imagecreatetruecolor($w, $h);
@@ -135,6 +158,19 @@ final class BuiltinCaptcha
     }
 
     private function answer(string $nonce): string
+    {
+        $choice = $this->choice($nonce);
+        foreach ($choice['options'] as $option) {
+            if ($option['icon'] === $choice['target']) {
+                return $option['id'];
+            }
+        }
+
+        return '';
+    }
+
+    /** The old text answer (distorted image / sum) that pages cached before the picture challenge still carry. */
+    private function legacyAnswer(string $nonce): string
     {
         $raw = hash_hmac('sha256', 'code|' . $nonce, $this->secret, true);
         if (!$this->imageMode()) {

@@ -285,3 +285,14 @@
 
 /* Messenger marks of the floating contact buttons. */
 .brand-icon { flex: none; }
+
+/* Built-in captcha: pick the named picture among four. */
+.captcha__challenge { display: flex; align-items: center; gap: var(--mc-space-3); flex-wrap: wrap; }
+.captcha__choice { display: grid; gap: var(--mc-space-2); }
+.captcha__prompt { margin: 0; font-weight: var(--mc-font-weight-semibold); color: var(--mc-color-text); }
+.captcha__options { display: flex; gap: var(--mc-space-2); }
+.captcha__option { position: relative; display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); color: var(--mc-color-text); cursor: pointer; transition: border-color .15s, background-color .15s, transform .15s; }
+.captcha__option:hover { border-color: var(--mc-color-primary); transform: translateY(-1px); }
+.captcha__option input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.captcha__option:has(input:checked) { border-color: var(--mc-color-primary); background: color-mix(in srgb, var(--mc-color-primary) 12%, var(--mc-color-surface)); color: var(--mc-color-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mc-color-primary) 30%, transparent); }
+.captcha__option:has(input:focus-visible) { outline: 2px solid var(--mc-color-primary); outline-offset: 2px; }

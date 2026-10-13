@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class CaptchaController extends AbstractController
 {
-    public function __construct(private readonly BuiltinCaptcha $builtin)
+    public function __construct(private readonly BuiltinCaptcha $builtin, private readonly \Twig\Environment $twig)
     {
     }
 
@@ -32,6 +32,8 @@ final class CaptchaController extends AbstractController
     {
         $issue = $this->builtin->issue();
 
-        return new JsonResponse(['token' => $issue['token'], 'mode' => $issue['mode'], 'question' => $issue['question'], 'image' => $issue['mode'] === 'image' ? '/captcha/image/' . $issue['token'] : ''], 200, ['Cache-Control' => 'no-store']);
+        $html = $this->twig->render('@storefront/components/captcha_choice.html.twig', ['target' => $issue['question'], 'options' => $issue['options']]);
+
+        return new JsonResponse(['token' => $issue['token'], 'mode' => $issue['mode'], 'question' => $issue['question'], 'html' => $html], 200, ['Cache-Control' => 'no-store']);
     }
 }
