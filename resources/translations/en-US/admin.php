@@ -5561,6 +5561,7 @@ return [
     'admin.conn.state_off' => 'Off',
     'admin.conn.state_incomplete' => 'Keys missing',
     'admin.conn.keep' => 'Keep',
+    'admin.logs.quick' => 'Error logs',
     'admin.conn.fld_API_KEY' => 'API key',
     'admin.conn.fld_SECRET_KEY' => 'Secret key',
     'admin.conn.fld_PRIVATE_KEY' => 'Private key',

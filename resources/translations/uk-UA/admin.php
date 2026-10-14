@@ -5556,6 +5556,7 @@ return [
     'admin.conn.state_off' => 'Вимкнено',
     'admin.conn.state_incomplete' => 'Не вистачає ключів',
     'admin.conn.keep' => 'Залишити',
+    'admin.logs.quick' => 'Журнали помилок',
     'admin.conn.fld_API_KEY' => 'API-ключ',
     'admin.conn.fld_SECRET_KEY' => 'Секретний ключ',
     'admin.conn.fld_PRIVATE_KEY' => 'Приватний ключ',
