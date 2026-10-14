@@ -628,6 +628,80 @@ function initQuickPrice() {
   });
 }
 
+/** Stock of a single-variant product right in the list, like the price: Enter or leaving the field saves, Esc puts it back. */
+function initQuickStock() {
+  qa('[data-quick-stock]').forEach((box) => {
+    const input = q('[data-quick-stock-input]', box);
+    if (!input) return;
+    let busy = false;
+    const invalid = () => {
+      box.classList.add('is-invalid');
+      input.setAttribute('aria-invalid', 'true');
+      input.setCustomValidity(t('js_stock_invalid'));
+      input.reportValidity();
+      toast(t('js_stock_invalid'), 'error', 4000);
+    };
+    const clear = () => {
+      box.classList.remove('is-invalid');
+      input.removeAttribute('aria-invalid');
+      input.setCustomValidity('');
+    };
+    const save = async () => {
+      const value = input.value.trim().replace(',', '.');
+      if (busy || value === input.dataset.original) { clear(); return; }
+      if (!/^\d{1,9}(\.\d{1,6})?$/.test(value)) { invalid(); return; }
+      clear();
+      busy = true;
+      box.classList.add('is-saving');
+      try {
+        const body = new URLSearchParams({ _token: box.dataset.token || '', stock: value });
+        const response = await fetch(box.dataset.url || '', { method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' } });
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(String(data.error || 'stock'));
+        input.value = String(data.stock);
+        input.dataset.original = String(data.stock);
+        box.classList.add('is-saved');
+        window.setTimeout(() => box.classList.remove('is-saved'), 1500);
+        toast(t('js_stock_saved'), 'success', 2000);
+      } catch (error) {
+        if (error instanceof Error && error.message === 'format') { invalid(); return; }
+        input.value = input.dataset.original || '';
+        toast(t('js_stock_failed'), 'error', 4000);
+      } finally {
+        busy = false;
+        box.classList.remove('is-saving');
+      }
+    };
+    input.addEventListener('input', clear);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); save(); }
+      if (event.key === 'Escape') { event.preventDefault(); input.value = input.dataset.original || ''; clear(); input.blur(); }
+    });
+    input.addEventListener('change', save);
+  });
+}
+
+/** Bulk "zero stock": the confirmation names how many products are selected. */
+function initBulkZeroStock() {
+  qa('[data-bulk-submit][data-confirm-zero-stock]').forEach((button) => {
+    const form = button.closest('form');
+    const select = form ? q('select[name="action"]', form) : null;
+    if (!form || !select) return;
+    const general = button.dataset.confirm || '';
+    // Runs on the button itself, before the document-level confirmation reads data-confirm.
+    button.addEventListener('click', () => {
+      if (select.value === 'zero_stock') {
+        const count = qa('input[name="product_ids[]"]:checked', form).length;
+        button.dataset.confirm = (button.dataset.confirmZeroStock || general).replaceAll('%count%', String(count));
+        button.dataset.confirmTone = 'reset';
+      } else {
+        button.dataset.confirm = general;
+        delete button.dataset.confirmTone;
+      }
+    });
+  });
+}
+
 const SMS_GSM_BASIC = '@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#¤%&\'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà';
 const SMS_GSM_EXTENDED = '^{}\\[~]|€\f';
 
@@ -742,10 +816,17 @@ function initQuickStatus() {
         const response = await fetch(box.dataset.url || '', { method: 'POST', body, credentials: 'same-origin', headers: { Accept: 'application/json' } });
         const data = await response.json();
         if (!response.ok || !data.ok) throw new Error('status');
+        const onNow = want === on;
+        const state = (onNow ? box.dataset.labelOn : box.dataset.labelOff) || (onNow ? t('js_status_published') : t('js_status_draft'));
         if (badge) {
-          const onNow = want === on;
           badge.className = 'admin-badge is-' + (onNow ? (box.dataset.onTone || 'success') : (box.dataset.offTone || 'warning'));
-          badge.textContent = (onNow ? box.dataset.labelOn : box.dataset.labelOff) || (onNow ? t('js_status_published') : t('js_status_draft'));
+          badge.textContent = state;
+        }
+        // The list shows only the switch: its state is spoken and shown on hover.
+        if (box.dataset.statePrefix) {
+          const label = `${box.dataset.statePrefix}: ${state}`;
+          input.setAttribute('aria-label', label);
+          input.title = label;
         }
         toast(t('js_status_saved'), 'success', 2000);
       } catch (_) {
@@ -1299,7 +1380,7 @@ function initAutoTabs() {
  * actions cell, or a title link). Clicks on controls, links, selected text and tables marked data-no-row-click are left alone.
  */
 function initRowLinks() {
-  const skip = 'a, button, input, select, textarea, label, summary, details, [data-quick-status], [data-quick-order], [data-quick-price], [contenteditable]';
+  const skip = 'a, button, input, select, textarea, label, summary, details, [data-quick-status], [data-quick-order], [data-quick-price], [data-quick-stock], [contenteditable]';
   const unsafe = /delete|remove|export|download|label|pdf|logout|\.csv/i;
   const target = (row) => {
     const candidates = [
@@ -2649,6 +2730,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initSkuGenerator();
   initAttributePicker();
   initQuickPrice();
+  initQuickStock();
+  initBulkZeroStock();
   initQuickStatus();
   initQuickOrder();
   initPrimaryCategory();

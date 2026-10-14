@@ -93,11 +93,12 @@ final class PrroAdminController extends AbstractController
     #[Route('/admin/system/prro/receipt/{id}/send', name: 'admin_system_prro_receipt_send', methods: ['POST'], requirements: ['id' => '\\d+'])]
     public function send(int $id, Request $request): Response
     {
-        $this->contexts->resolve($request);
+        $context = $this->contexts->resolve($request);
         if (!$this->isCsrfTokenValid('prro_receipt_send', (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
-        $row = $this->db->fetchAssociative("SELECT f.id,f.receipt_url,o.order_number,o.customer_email FROM mc_fiscal_receipt f JOIN mc_sales_order o ON o.id=f.order_id WHERE f.id=? AND f.status='done'", [$id]);
+        // Only a receipt of an order of the store being managed: another store's receipt reads as "not found".
+        $row = $this->db->fetchAssociative("SELECT f.id,f.receipt_url,o.order_number,o.customer_email FROM mc_fiscal_receipt f JOIN mc_sales_order o ON o.id=f.order_id WHERE f.id=? AND f.status='done' AND o.store_id=?", [$id, $context->storeId]);
         $email = is_array($row) ? trim((string) $row['customer_email']) : '';
         if (!is_array($row) || (string) $row['receipt_url'] === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             $this->addFlash('error', CanonicalUiText::get('admin.prro.send_no_email'));

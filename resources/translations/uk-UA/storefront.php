@@ -1651,4 +1651,7 @@ return [
     'status.migration_entity.media' => 'Фото',
     'status.migration_entity.price' => 'Ціни',
     'status.migration_entity.inventory' => 'Залишки',
+    'js_stock_saved' => 'Залишок збережено',
+    'js_stock_failed' => 'Не вдалося зберегти залишок',
+    'js_stock_invalid' => 'Введіть число від 0, наприклад 12 або 2.5',
 ];

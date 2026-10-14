@@ -71,7 +71,8 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_review_')||str_starts_with($route,'admin_question_')) return AdminPermissionCatalog::CONTENT_MANAGE;
         if (in_array($route,['admin_commerce_export_products','admin_commerce_export_products_multilingual'],true)) return AdminPermissionCatalog::CATALOG_EXPORT;
         if ($route==='admin_commerce_import_wizard') return AdminPermissionCatalog::CATALOG_MANAGE;
-        if (in_array($route,['admin_commerce_products_bulk','admin_catalog_products_bulk_edit'],true)) return AdminPermissionCatalog::CATALOG_BULK;
+        if (in_array($route,['admin_commerce_products_bulk','admin_catalog_products_bulk_edit'],true)) return AdminPermissionCatalog::CATALOG_BULK; // includes "zero stock"
+        if (in_array($route,['admin_catalog_product_quick_price','admin_catalog_product_quick_stock','admin_catalog_product_quick_status'],true)) return AdminPermissionCatalog::CATALOG_MANAGE;
         if (str_contains($route,'catalog_product_delete')||str_contains($route,'catalog_products_delete')) return AdminPermissionCatalog::CATALOG_DELETE;
         if (str_starts_with($route,'admin_catalog_search')) return $get?AdminPermissionCatalog::SEARCH_VIEW:AdminPermissionCatalog::SEARCH_MANAGE;
         if (preg_match('/^admin_catalog_(?:product|category)_(?:edit|new|translations|translation_save)$/D',$route)===1 || str_contains($route,'products_bulk_edit')) return AdminPermissionCatalog::CATALOG_MANAGE;
@@ -116,7 +117,8 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_system_maintenance')||$route==='admin_system_modules') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (in_array($route,['admin_system_stability','admin_system_components','admin_api_system_health'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_migration')) return AdminPermissionCatalog::SYSTEM_UPDATE;
-        if ($route==='admin_ai_product_draft'||$route==='admin_ai_task') return AdminPermissionCatalog::CATALOG_MANAGE;
+        if ($route==='admin_ai_product_draft'||$route==='admin_ai_task'||$route==='admin_ai_product_from_photo') return AdminPermissionCatalog::CATALOG_MANAGE;
+        if ($route==='admin_system_prro_receipt_send') return AdminPermissionCatalog::SYSTEM_SETTINGS; // the receipts list lives on the PRRO settings page
         return null;
     }
 

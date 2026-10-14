@@ -1651,4 +1651,7 @@ You can still see it while signed in: %url%',
     'status.migration_entity.media' => 'Photos',
     'status.migration_entity.price' => 'Prices',
     'status.migration_entity.inventory' => 'Stock',
+    'js_stock_saved' => 'Stock saved',
+    'js_stock_failed' => 'Could not save the stock',
+    'js_stock_invalid' => 'Enter a number from 0, for example 12 or 2.5',
 ];

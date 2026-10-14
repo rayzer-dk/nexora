@@ -1026,4 +1026,7 @@ return [
     'forum_avatar' => 'Avatar',
     'forum_avatar_remove' => 'Fjern avatar',
     'forum_avatar_hint' => 'JPG, PNG, WebP eller GIF op til 5 MB – beskæres til kvadrat.',
+    'js_stock_saved' => 'Lagerbeholdning gemt',
+    'js_stock_failed' => 'Lagerbeholdningen kunne ikke gemmes',
+    'js_stock_invalid' => 'Indtast et tal fra 0, for eksempel 12 eller 2.5',
 ];

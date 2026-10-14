@@ -1704,6 +1704,20 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-quick-price.is-saving > input { opacity: 0.6; }
 .admin-quick-price.is-saved > input { border-color: var(--mc-color-success, #1a7f37); }
 .admin-quick-price > small { color: var(--mc-color-muted); }
+/* Quick stock: same field as the price; a wrong value stays highlighted until it is fixed or Esc. */
+.admin-quick-stock { display: inline-flex; align-items: center; }
+.admin-quick-stock > input { width: 6rem; min-height: var(--mc-control-height-sm); text-align: right; }
+.admin-quick-stock.is-saving > input { opacity: 0.6; }
+.admin-quick-stock.is-saved > input { border-color: var(--mc-color-success, #1a7f37); }
+.admin-quick-stock.is-invalid > input { border-color: var(--mc-color-danger, #c62828); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mc-color-danger, #c62828) 25%, transparent); }
+.admin-quick-stock-total { font-variant-numeric: tabular-nums; }
+.admin-quick-stock-variants { font-size: var(--mc-font-size-sm); white-space: nowrap; }
+.admin-quick-stock-none { color: var(--mc-color-muted); }
+/* Status column: only the switch (state in title / aria-label), so the column stays narrow. */
+.admin-table .admin-quick-status-cell { width: 1%; white-space: nowrap; text-align: center; }
+.admin-quick-status-cell > .admin-quick-status { margin-inline-start: 0; }
+.admin-quick-status-archived { display: inline-grid; place-items: center; color: var(--mc-color-muted); cursor: help; }
+.admin-quick-count > a { font-weight: var(--mc-font-weight-semibold); font-variant-numeric: tabular-nums; }
 .admin-save-view--inline { position: relative; flex: 0 0 auto; }
 .admin-save-view--inline > .admin-save-view__form { position: absolute; z-index: var(--mc-z-dropdown); top: calc(100% + var(--mc-space-1)); right: 0; flex-wrap: nowrap; margin: 0; padding: var(--mc-space-2); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface-raised); box-shadow: var(--mc-shadow-md); }
 .admin-slug-generate .ui-icon { width: 16px; height: 16px; }

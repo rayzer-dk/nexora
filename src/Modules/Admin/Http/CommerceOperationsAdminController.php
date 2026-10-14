@@ -39,6 +39,8 @@ final class CommerceOperationsAdminController extends AbstractController
         private readonly MarketingSegmentService $segments,
         private readonly \Commerce\Modules\Marketing\Application\CampaignTemplateService $campaignTemplates,
         private readonly \Commerce\Modules\Notification\Application\SmsService $sms,
+        private readonly \Commerce\Modules\Catalog\Application\ProductStockService $stock,
+        private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo,
     ) {}
 
     #[Route('/admin/commerce/promotions', name:'admin_commerce_promotions', methods:['GET','POST'])]
@@ -285,6 +287,16 @@ final class CommerceOperationsAdminController extends AbstractController
             $made=0;$failed=0;
             foreach(array_slice($ids,0,50) as $id){try{$this->catalogMaintenance->duplicateProductDraft($context->storeId,$context->marketId,$context->locale,$id);++$made;}catch(\Throwable){++$failed;}}
             $this->addFlash($failed>0?'warning':'success',\Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.bulk.duplicated',['count'=>$made,'failed'=>$failed]));
+            return $this->redirectToRoute('admin_catalog_products');
+        }
+        if($action==='zero_stock'){
+            // Every active variant of the selected products gets 0 at the market's warehouse; products without stock (digital) are skipped.
+            try{
+                $r=$this->stock->zeroStock($context->storeId,$context->marketId,$ids);
+                $user=$this->getUser();
+                if($r['previous']!==[]&&$user instanceof \Commerce\Modules\Admin\Domain\AdminUser){$this->undo->remember($context->storeId,$user->id,'stock',\Commerce\Core\I18n\CanonicalUiText::get('admin.undo.stock',['count'=>$r['updated']]),['previous'=>$r['previous']]);}
+                $this->addFlash($r['updated']>0?'success':'warning',\Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.bulk.stock_zeroed',['count'=>$r['updated'],'skipped'=>$r['skipped']]));
+            }catch(\Throwable){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
             return $this->redirectToRoute('admin_catalog_products');
         }
         if($status===null){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.oberit_masovu_diiu'));return $this->redirectToRoute('admin_catalog_products');}

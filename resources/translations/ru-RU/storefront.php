@@ -1233,4 +1233,7 @@ return [
     'landing.ui.yes' => 'Да',
     'product_tiers' => 'Цена от количества',
     'product_tiers_from' => 'От %qty% шт',
+    'js_stock_saved' => 'Остаток сохранён',
+    'js_stock_failed' => 'Не удалось сохранить остаток',
+    'js_stock_invalid' => 'Введите число от 0, например 12 или 2.5',
 ];

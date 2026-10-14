@@ -104,6 +104,8 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         }
         $categoryIds = array_values(array_filter(array_map('intval', (array) ($filters['category'] ?? [])), static fn (int $id): bool => $id > 0));
         if ($categoryIds !== []) {
+            // A category means the category with its subcategories: the same products its count in the category list shows.
+            $categoryIds = $this->categoryBranch($storeId, $categoryIds);
             $where .= ' AND EXISTS (SELECT 1 FROM mc_product_category fpc WHERE fpc.product_id=p.id AND fpc.category_id IN (' . implode(',', array_fill(0, count($categoryIds), '?')) . '))';
             array_push($params, ...$categoryIds);
         }
@@ -112,13 +114,20 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
             $params,
         );
         $direction = strtolower($dir) === 'asc' ? 'ASC' : 'DESC';
-        $sortColumns = ['name' => 'pt.name', 'sku' => 'v.sku', 'status' => 'p.status', 'price' => 'pr.amount_minor', 'type' => 'p.product_type', 'updated' => 'p.updated_at'];
+        $sortColumns = ['name' => 'pt.name', 'sku' => 'v.sku', 'status' => 'p.status', 'price' => 'pr.amount_minor', 'stock' => 'stock_total', 'type' => 'p.product_type', 'updated' => 'p.updated_at'];
         $orderBy = isset($sortColumns[$sort]) ? $sortColumns[$sort] . ' ' . $direction . ',p.id DESC' : 'p.updated_at DESC,p.id DESC';
+        // Stock as the product form shows it: the market's first active warehouse (the one ProductWriter writes).
+        $locationId = (int) ($this->connection->fetchOne('SELECT mil.location_id FROM mc_market_inventory_location mil JOIN mc_inventory_location il ON il.id=mil.location_id AND il.status=? WHERE mil.market_id=? ORDER BY mil.priority ASC,mil.location_id ASC LIMIT 1', ['active', $marketId]) ?: 0);
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,pt.name,pt.description,v.sku,v.gtin,b.name AS brand_name,pr.amount_minor,pr.currency,(SELECT ma.storage_key FROM mc_product_media pmi JOIN mc_media_asset ma ON ma.id=pmi.media_asset_id WHERE pmi.product_id=p.id AND ma.mime_type LIKE 'image/%' ORDER BY (pmi.role='primary') DESC,pmi.sort_order LIMIT 1) AS image_key, EXISTS(SELECT 1 FROM mc_product_media pm WHERE pm.product_id=p.id LIMIT 1) AS has_image, EXISTS(SELECT 1 FROM mc_seo_route srq WHERE srq.store_id=sp.store_id AND srq.locale=pt.locale AND srq.entity_type='product' AND srq.entity_public_id=p.public_id AND srq.indexable=1 LIMIT 1) AS has_seo FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id LEFT JOIN mc_product_variant v ON v.product_id=p.id AND v.sort_order=0 LEFT JOIN mc_brand b ON b.id=p.brand_id LEFT JOIN mc_price pr ON pr.id=(SELECT p2.id FROM mc_price p2 WHERE p2.variant_id=v.id AND p2.store_id=sp.store_id AND p2.market_id=? AND p2.customer_group='default' AND p2.price_list_id IS NULL AND p2.max_quantity IS NULL AND p2.starts_at IS NULL AND p2.ends_at IS NULL ORDER BY p2.priority ASC,p2.min_quantity ASC,p2.id DESC LIMIT 1) WHERE {$where} ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}",
-            array_merge([$marketId], $params),
+            "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,pt.name,pt.description,v.sku,v.gtin,v.manage_inventory,b.name AS brand_name,pr.amount_minor,pr.currency,
+                (SELECT COUNT(*) FROM mc_product_variant vc WHERE vc.product_id=p.id) AS variant_count,
+                EXISTS(SELECT 1 FROM mc_variant_inventory_item vin WHERE vin.variant_id=v.id) AS has_inventory,
+                (SELECT sl.stocked_quantity FROM mc_variant_inventory_item vis JOIN mc_stock_level sl ON sl.inventory_item_id=vis.inventory_item_id AND sl.location_id=? WHERE vis.variant_id=v.id ORDER BY vis.inventory_item_id LIMIT 1) AS stock_quantity,
+                (SELECT SUM(slt.stocked_quantity) FROM mc_product_variant vt JOIN mc_variant_inventory_item vit ON vit.variant_id=vt.id JOIN mc_stock_level slt ON slt.inventory_item_id=vit.inventory_item_id AND slt.location_id=? WHERE vt.product_id=p.id AND vt.status='active') AS stock_total,
+                (SELECT ma.storage_key FROM mc_product_media pmi JOIN mc_media_asset ma ON ma.id=pmi.media_asset_id WHERE pmi.product_id=p.id AND ma.mime_type LIKE 'image/%' ORDER BY (pmi.role='primary') DESC,pmi.sort_order LIMIT 1) AS image_key, EXISTS(SELECT 1 FROM mc_product_media pm WHERE pm.product_id=p.id LIMIT 1) AS has_image, EXISTS(SELECT 1 FROM mc_seo_route srq WHERE srq.store_id=sp.store_id AND srq.locale=pt.locale AND srq.entity_type='product' AND srq.entity_public_id=p.public_id AND srq.indexable=1 LIMIT 1) AS has_seo FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id LEFT JOIN mc_product_variant v ON v.product_id=p.id AND v.sort_order=0 LEFT JOIN mc_brand b ON b.id=p.brand_id LEFT JOIN mc_price pr ON pr.id=(SELECT p2.id FROM mc_price p2 WHERE p2.variant_id=v.id AND p2.store_id=sp.store_id AND p2.market_id=? AND p2.customer_group='default' AND p2.price_list_id IS NULL AND p2.max_quantity IS NULL AND p2.starts_at IS NULL AND p2.ends_at IS NULL ORDER BY p2.priority ASC,p2.min_quantity ASC,p2.id DESC LIMIT 1) WHERE {$where} ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}",
+            array_merge([$locationId, $locationId, $marketId], $params),
         );
-        foreach ($rows as &$row) { $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122(); $row['quality']=['image'=>(bool)$row['has_image'],'seo'=>(bool)$row['has_seo'],'gtin'=>trim((string)($row['gtin']??''))!=='','content'=>mb_strlen(trim(strip_tags((string)($row['description']??''))))>=80]; unset($row['has_image'],$row['has_seo'],$row['description']); } unset($row);
+        foreach ($rows as &$row) { $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122(); $row['variant_count'] = (int) $row['variant_count']; $row['has_inventory'] = (bool) $row['has_inventory']; $row['manage_inventory'] = (bool) $row['manage_inventory']; $row['quality']=['image'=>(bool)$row['has_image'],'seo'=>(bool)$row['has_seo'],'gtin'=>trim((string)($row['gtin']??''))!=='','content'=>mb_strlen(trim(strip_tags((string)($row['description']??''))))>=80]; unset($row['has_image'],$row['has_seo'],$row['description']); } unset($row);
         return ['items' => $rows, 'total' => $total, 'page' => $page, 'limit' => $limit];
     }
 
@@ -269,15 +278,90 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     }
 
     /** @return array{items:list<array<string,mixed>>,total:int,page:int,limit:int} */
-    public function categories(int $storeId, string $locale, int $page = 1, int $limit = 25, string $search = ''): array
+    public function categories(int $storeId, string $locale, int $page = 1, int $limit = 25, string $search = '', bool $withCounts = false): array
     {
         $page = max(1, $page); $limit = min(100, max(1, $limit)); $offset = ($page - 1) * $limit;
         $where = 'sc.store_id = ? AND ct.locale = ?'; $params = [$storeId, $locale];
         if (trim($search) !== '') { $where .= ' AND ct.name LIKE ?'; $params[] = '%' . trim($search) . '%'; }
         $total = (int) $this->connection->fetchOne("SELECT COUNT(*) FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=sc.store_id WHERE {$where}", $params);
         $rows = $this->connection->fetchAllAssociative("SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name,(SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id LIMIT 1) AS image_key FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=sc.store_id WHERE {$where} ORDER BY c.sort_order,c.id LIMIT {$limit} OFFSET {$offset}", $params);
-        foreach ($rows as &$row) { $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122(); }
+        $counts = $withCounts ? $this->productCounts($storeId, array_map(static fn (array $r): int => (int) $r['id'], $rows)) : [];
+        foreach ($rows as &$row) { $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122(); if ($withCounts) { $row['product_count'] = $counts[(int) $row['id']]['direct'] ?? 0; $row['product_count_total'] = $counts[(int) $row['id']]['total'] ?? 0; } }
         return ['items' => $rows, 'total' => $total, 'page' => $page, 'limit' => $limit];
+    }
+
+    /**
+     * Products per category: "direct" — attached to the category itself, "total" — distinct products of the category
+     * and all its subcategories in this store (a product in two subcategories counts once). One query for all rows.
+     *
+     * @param list<int>|null $categoryIds null = every category of the store
+     * @return array<int,array{direct:int,total:int}>
+     */
+    public function productCounts(int $storeId, ?array $categoryIds = null): array
+    {
+        $params = [$storeId];
+        $types = [\Doctrine\DBAL\ParameterType::INTEGER];
+        $start = '';
+        if ($categoryIds !== null) {
+            $categoryIds = array_values(array_unique(array_filter(array_map('intval', $categoryIds), static fn (int $id): bool => $id > 0)));
+            if ($categoryIds === []) {
+                return [];
+            }
+            $start = ' WHERE c.id IN (?)';
+            $params[] = $categoryIds;
+            $types[] = \Doctrine\DBAL\ArrayParameterType::INTEGER;
+        }
+        array_push($params, $storeId, $storeId);
+        array_push($types, \Doctrine\DBAL\ParameterType::INTEGER, \Doctrine\DBAL\ParameterType::INTEGER);
+        // depth < 13 matches the tree cap and stops a broken parent chain (a cycle) from recursing forever.
+        $rows = $this->connection->fetchAllAssociative(
+            "WITH RECURSIVE branch (ancestor_id, category_id, depth) AS (
+                SELECT c.id, c.id, 0 FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=?{$start}
+                UNION ALL
+                SELECT b.ancestor_id, c.id, b.depth + 1 FROM branch b JOIN mc_category c ON c.parent_id=b.category_id JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? WHERE b.depth < 13
+             )
+             SELECT b.ancestor_id,
+                    COUNT(DISTINCT pc.product_id) AS total,
+                    COUNT(DISTINCT CASE WHEN pc.category_id=b.ancestor_id THEN pc.product_id END) AS direct
+             FROM branch b
+             JOIN mc_product_category pc ON pc.category_id=b.category_id
+             JOIN mc_store_product sp ON sp.product_id=pc.product_id AND sp.store_id=?
+             GROUP BY b.ancestor_id",
+            $params,
+            $types,
+        );
+        $out = [];
+        foreach ($rows as $row) {
+            $out[(int) $row['ancestor_id']] = ['direct' => (int) $row['direct'], 'total' => (int) $row['total']];
+        }
+
+        return $out;
+    }
+
+    /**
+     * The categories with all their subcategories in this store (ids), for the product list filter.
+     *
+     * @param list<int> $categoryIds
+     * @return list<int>
+     */
+    public function categoryBranch(int $storeId, array $categoryIds): array
+    {
+        $categoryIds = array_values(array_unique(array_filter(array_map('intval', $categoryIds), static fn (int $id): bool => $id > 0)));
+        if ($categoryIds === []) {
+            return [];
+        }
+        $ids = $this->connection->fetchFirstColumn(
+            'WITH RECURSIVE branch (id, depth) AS (
+                SELECT c.id, 0 FROM mc_category c WHERE c.id IN (?)
+                UNION ALL
+                SELECT c.id, b.depth + 1 FROM branch b JOIN mc_category c ON c.parent_id=b.id JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? WHERE b.depth < 13
+             )
+             SELECT DISTINCT id FROM branch',
+            [$categoryIds, $storeId],
+            [\Doctrine\DBAL\ArrayParameterType::INTEGER, \Doctrine\DBAL\ParameterType::INTEGER],
+        );
+
+        return array_values(array_unique(array_merge($categoryIds, array_map('intval', $ids))));
     }
 
     /**
@@ -290,7 +374,6 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     {
         $rows = $this->connection->fetchAllAssociative(
             'SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,ct.name,
-                    (SELECT COUNT(*) FROM mc_product_category pc WHERE pc.category_id=c.id) AS product_count,
                     (SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id LIMIT 1) AS image_key
              FROM mc_category c
              JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=?
@@ -298,8 +381,14 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
              ORDER BY c.sort_order ASC,c.id ASC LIMIT 2000',
             [$storeId, $locale],
         );
+        $counts = $this->productCounts($storeId);
         $byParent = [];
         $names = [];
+        foreach ($rows as &$row) {
+            $row['product_count'] = $counts[(int) $row['id']]['direct'] ?? 0;
+            $row['product_count_total'] = $counts[(int) $row['id']]['total'] ?? 0;
+        }
+        unset($row);
         foreach ($rows as $row) {
             $names[(int) $row['id']] = (string) $row['name'];
             $byParent[$row['parent_id'] === null ? 0 : (int) $row['parent_id']][] = $row;

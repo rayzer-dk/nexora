@@ -71,10 +71,13 @@ final class CatalogAdminPageController extends AbstractController
         $result = $this->query->products($context->storeId, $context->marketId, $context->locale, (int) $request->query->get('page', 1), 25, (string) $request->query->get('search', ''), (string) $request->query->get('sort', ''), (string) $request->query->get('dir', 'desc'), $listFilters);
         foreach ($result['items'] as &$item) {
             $item['price_display'] = $item['amount_minor'] === null ? '—' : number_format(((int) $item['amount_minor']) / 100, 2, ',', ' ') . ' ' . ($item['currency'] ?? $context->currency);
+            $item['stock_display'] = \Commerce\Modules\Catalog\Application\ProductStockService::display($item['stock_quantity'] === null ? '0' : (string) $item['stock_quantity']);
+            $item['stock_total_display'] = \Commerce\Modules\Catalog\Application\ProductStockService::display($item['stock_total'] === null ? '0' : (string) $item['stock_total']);
         }
+        unset($item);
         $views=[];
         $selectedView=max(0,(int)$request->query->get('view',0));
-        $allowedColumns=['name','sku','status','price','type','quality'];
+        $allowedColumns=['name','sku','status','price','stock','type','quality'];
         $activeColumns=array_values(array_intersect($allowedColumns,array_map('strval',(array)$request->query->all('columns'))));
         if($activeColumns===[])$activeColumns=$allowedColumns;
         try {
@@ -101,7 +104,7 @@ final class CatalogAdminPageController extends AbstractController
         $tree = trim($search) === '' ? $this->query->categoryTree($context->storeId, $context->locale) : null;
         $result = $tree !== null
             ? ['items' => $tree, 'total' => count($tree), 'page' => 1, 'limit' => max(1, count($tree))]
-            : $this->query->categories($context->storeId, $context->locale, (int) $request->query->get('page', 1), 25, $search);
+            : $this->query->categories($context->storeId, $context->locale, (int) $request->query->get('page', 1), 25, $search, true);
         return $this->render('@storefront/admin/catalog/categories.html.twig', ['result' => $result, 'search' => $search, 'is_tree' => $tree !== null, 'category_path_in_url' => $this->seoSettings->categoryPathInProductUrl($context->storeId), 'description_position' => $this->seoSettings->categoryDescriptionPosition($context->storeId)]);
     }
 

@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ProductWorkspaceAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly Connection $db, private readonly \Commerce\Modules\Catalog\Application\ProductBulkEditor $editor, private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo, private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus, private readonly \Commerce\Modules\Bulk\Application\ProductBulkActionService $bulk) {}
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly DbalCatalogAdminQuery $query, private readonly Connection $db, private readonly \Commerce\Modules\Catalog\Application\ProductBulkEditor $editor, private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo, private readonly \Commerce\Modules\Catalog\Application\SkuGenerator $skus, private readonly \Commerce\Modules\Bulk\Application\ProductBulkActionService $bulk, private readonly \Commerce\Modules\Catalog\Application\ProductStockService $stock) {}
 
     #[Route('/admin/catalog/products/bulk-edit', name:'admin_catalog_products_bulk_edit', methods:['GET','POST'])]
     public function bulkEdit(Request $request): Response
@@ -72,6 +72,18 @@ final class ProductWorkspaceAdminController extends AbstractController
         return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>true,'price'=>number_format((float)$raw,2,'.','')]);
     }
 
+    /** Changes only the stock of one single-variant product from the list (Enter or leaving the field); the change can be undone. Answers JSON. */
+    #[Route('/admin/catalog/products/{publicId}/quick-stock', name:'admin_catalog_product_quick_stock', methods:['POST'])]
+    public function quickStock(string $publicId, Request $request): \Symfony\Component\HttpFoundation\JsonResponse
+    {
+        $ctx=$this->contexts->resolve($request);
+        if(!$this->isCsrfTokenValid('admin_quick_stock',(string)$request->request->get('_token')))return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false,'error'=>'csrf'],403);
+        $result=$this->stock->setStock($ctx->storeId,$ctx->marketId,$publicId,(string)$request->request->get('stock',''));
+        if(!$result['ok'])return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>false,'error'=>$result['error']??'save'],422);
+        if($result['previous']!==[]&&$this->adminId()!==null){$this->undo->remember($ctx->storeId,(int)$this->adminId(),'stock',\Commerce\Core\I18n\CanonicalUiText::get('admin.undo.stock',['count'=>1]),['previous'=>$result['previous']]);}
+        return new \Symfony\Component\HttpFoundation\JsonResponse(['ok'=>true,'stock'=>$result['quantity']]);
+    }
+
 
     #[Route('/admin/catalog/products/{publicId}/preview', name:'admin_catalog_product_preview', methods:['GET'])]
     public function preview(string $publicId, Request $request): Response
@@ -89,7 +101,7 @@ final class ProductWorkspaceAdminController extends AbstractController
     public function saveView(Request $request): Response
     {
         $ctx=$this->contexts->resolve($request);if(!$this->isCsrfTokenValid('admin_saved_view_save',(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();$name=trim(strip_tags((string)$request->request->get('name','')));if($name===''||mb_strlen($name)>190){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.orderadmincontroller.vkazhit_nazvu_predstavlennia'));return $this->redirectToRoute('admin_catalog_products');}
-        $filters=['search'=>mb_substr(trim((string)$request->request->get('search','')),0,190)];$allowed=['name','sku','status','price','type','quality'];$columns=array_values(array_intersect($allowed,array_map('strval',(array)$request->request->all('columns'))));if($columns===[])$columns=$allowed;$this->db->insert('mc_admin_saved_view',['store_id'=>$ctx->storeId,'admin_id'=>$this->adminId(),'entity_type'=>'products','name'=>$name,'filters_json'=>json_encode($filters,JSON_THROW_ON_ERROR),'columns_json'=>json_encode($columns,JSON_THROW_ON_ERROR),'is_default'=>0,'created_at'=>gmdate('Y-m-d H:i:s.u'),'updated_at'=>gmdate('Y-m-d H:i:s.u')]);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.productworkspaceadmincontroller.predstavlennia_zberezheno'));return $this->redirectToRoute('admin_catalog_products',['search'=>$filters['search'],'columns'=>$columns]);
+        $filters=['search'=>mb_substr(trim((string)$request->request->get('search','')),0,190)];$allowed=['name','sku','status','price','stock','type','quality'];$columns=array_values(array_intersect($allowed,array_map('strval',(array)$request->request->all('columns'))));if($columns===[])$columns=$allowed;$this->db->insert('mc_admin_saved_view',['store_id'=>$ctx->storeId,'admin_id'=>$this->adminId(),'entity_type'=>'products','name'=>$name,'filters_json'=>json_encode($filters,JSON_THROW_ON_ERROR),'columns_json'=>json_encode($columns,JSON_THROW_ON_ERROR),'is_default'=>0,'created_at'=>gmdate('Y-m-d H:i:s.u'),'updated_at'=>gmdate('Y-m-d H:i:s.u')]);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.productworkspaceadmincontroller.predstavlennia_zberezheno'));return $this->redirectToRoute('admin_catalog_products',['search'=>$filters['search'],'columns'=>$columns]);
     }
 
     #[Route('/admin/catalog/products/views/{id}/delete', name:'admin_catalog_saved_view_delete', methods:['POST'], requirements:['id'=>'\\d+'])]

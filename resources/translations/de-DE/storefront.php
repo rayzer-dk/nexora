@@ -959,4 +959,7 @@ return [
     'forum_avatar' => 'Avatar',
     'forum_avatar_remove' => 'Avatar entfernen',
     'forum_avatar_hint' => 'JPG, PNG, WebP oder GIF bis 5 MB – wird quadratisch zugeschnitten.',
+    'js_stock_saved' => 'Bestand gespeichert',
+    'js_stock_failed' => 'Bestand konnte nicht gespeichert werden',
+    'js_stock_invalid' => 'Geben Sie eine Zahl ab 0 ein, zum Beispiel 12 oder 2.5',
 ];

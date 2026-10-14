@@ -10,6 +10,7 @@ use Commerce\Modules\Admin\Authorization\AdminPermissionCatalog;
 use Commerce\Modules\Admin\Domain\AdminUser;
 use Commerce\Modules\Admin\Undo\AdminUndoService;
 use Commerce\Modules\Catalog\Application\ProductBulkEditor;
+use Commerce\Modules\Catalog\Application\ProductStockService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +24,7 @@ final class UndoAdminController extends AbstractController
         private readonly AdminUndoService $undo,
         private readonly AdminAuthorizationService $authorization,
         private readonly ProductBulkEditor $products,
+        private readonly ProductStockService $stock,
     ) {
     }
 
@@ -48,6 +50,14 @@ final class UndoAdminController extends AbstractController
             $rows = is_array($ticket['payload']['rows'] ?? null) ? $ticket['payload']['rows'] : [];
             $result = $this->products->apply($ctx->storeId, $ctx->marketId, $ctx->locale, $ctx->currency, $rows);
             $this->addFlash($result['failed'] === [] ? 'success' : 'warning', sprintf(CanonicalUiText::get('admin.undo.done'), $result['ok'], count($result['failed'])));
+
+            return $this->redirect($back);
+        }
+        // Stock from the list: the quick field (catalog.manage) or the bulk "zero stock" (catalog.bulk).
+        if ($ticket['kind'] === 'stock' && ($this->authorization->isGranted($user, AdminPermissionCatalog::CATALOG_MANAGE, $ctx->storeId) || $this->authorization->isGranted($user, AdminPermissionCatalog::CATALOG_BULK, $ctx->storeId))) {
+            $previous = is_array($ticket['payload']['previous'] ?? null) ? $ticket['payload']['previous'] : [];
+            $restored = $this->stock->restore($previous, $ctx->storeId, $ctx->marketId);
+            $this->addFlash('success', CanonicalUiText::get('admin.undo.stock_done', ['count' => $restored]));
 
             return $this->redirect($back);
         }
