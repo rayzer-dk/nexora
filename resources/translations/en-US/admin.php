@@ -6325,4 +6325,8 @@ return [
     'admin.carriers.keep' => "Leave empty to keep the current value",
     'admin.carriers.clear' => "Remove the value stored here",
     'admin.carriers.save' => "Save",
+    'admin.ai.error_truncated' => 'The AI answer was cut off (the text is too long for the model). Try a shorter text or another model.',
+    'admin.ai.overwrite_confirm' => 'Some fields are already translated. Translate them again and replace them? “Cancel” fills only the empty fields.',
+    'admin.ai.nothing_to_translate' => 'Every field is already filled in — nothing to translate.',
+    'admin.ai.translate_progress' => 'Translating %done% of %total%: %locale% · %field%',
 ];

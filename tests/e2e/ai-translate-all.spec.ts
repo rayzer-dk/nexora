@@ -49,6 +49,13 @@ test('translate every language with one click, one field with its own button, th
     await page.goto(`/admin/catalog/products/${id}/translations`, { waitUntil: 'domcontentloaded' });
     await expectNoServerError(page);
     const name = (locale: string) => page.locator(`form[action$="/translations/${locale}"] input[name="name"]`);
+    // an existing translation is replaced only after a yes: "no" fills the empty fields and keeps the rest
+    await name('en-US').evaluate((input: HTMLInputElement) => { input.value = 'kept by hand'; });
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await page.locator('[data-translate-all]').click();
+    await expect(name('de-DE')).toHaveValue(/^TR-de-DE-/, { timeout: 20_000 });
+    await expect(name('en-US')).toHaveValue('kept by hand');
+    page.once('dialog', (dialog) => dialog.accept());
     await page.locator('[data-translate-all]').click();
     await expect(page.locator('[data-save-all]')).toBeVisible({ timeout: 20_000 });
     await expect(name('en-US')).toHaveValue(/^TR-en-US-/);
@@ -106,6 +113,7 @@ test('forms and navigation labels translate with one click and are saved only wi
     await page.goto('/admin/appearance/navigation', { waitUntil: 'load' });
     await page.locator('form[action$="/navigation/save"] input[name="label[uk-UA]"]').fill('Головна');
     await page.evaluate(() => { (window as unknown as { __kept: boolean }).__kept = true; });
+    page.once('dialog', (dialog) => dialog.accept()); // labels that already exist are replaced after a yes
     await page.locator('[data-translate-all]').click();
     await expect(page.locator('form[action$="/navigation/save"] input[name="label[en-US]"]')).toHaveValue(/^TR-en-US-/, { timeout: 15_000 });
     expect(await page.evaluate(() => (window as unknown as { __kept?: boolean }).__kept)).toBe(true);

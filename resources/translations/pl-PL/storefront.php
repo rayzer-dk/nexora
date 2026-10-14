@@ -382,7 +382,7 @@ return [
     'cancel' => 'Anuluj',
     'category' => 'Kategoria',
     'change_or_reset_filters' => 'Zmień filtry lub je zresetuj.',
-    'check_promotions_engine' => 'Sprawdź mechanizm promocji',
+    'check_promotions_engine' => 'Oferta specjalna',
     'choose_product_arrow' => 'Wybierz produkt',
     'closed' => 'Zamknięte',
     'coffee_comfort' => 'Kawa i komfort',

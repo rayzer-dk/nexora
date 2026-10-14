@@ -102,11 +102,17 @@ final class ContentAdminPageController extends AbstractController
             return $this->redirectToRoute('admin_content_page_edit', ['ref' => $ref, 'locale' => $context->locale]);
         }
         $admin = $this->getUser();
+        $sourceLocale = '';
+        foreach ($this->tabs->tabs($context->storeId, $context->locale) as $tab) {
+            if ($tab['is_default']) {
+                $sourceLocale = (string) $tab['code'];
+            }
+        }
         $translated = [];
         try {
             foreach (self::TEXT_FIELDS as $field) {
                 $text = trim((string) ($source[$field] ?? ''));
-                $translated[$field] = $text === '' ? '' : ($this->ai->run($context->storeId, $admin !== null ? $admin->getUserIdentifier() : 'admin', 'translate', $provider, ['text' => $text, 'target' => $context->locale], $context->locale)['fields']['text'] ?? '');
+                $translated[$field] = $text === '' ? '' : ($this->ai->run($context->storeId, $admin !== null ? $admin->getUserIdentifier() : 'admin', 'translate', $provider, ['text' => $text, 'target' => $context->locale, 'source' => $sourceLocale], $context->locale)['fields']['text'] ?? '');
             }
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());

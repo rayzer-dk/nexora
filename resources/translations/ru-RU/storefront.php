@@ -405,7 +405,7 @@ return [
     'cancel' => 'Отмена',
     'category' => 'Категория',
     'change_or_reset_filters' => 'Измените фильтры или сбросьте их.',
-    'check_promotions_engine' => 'Проверьте механизм акций',
+    'check_promotions_engine' => 'Специальное предложение',
     'choose_product_arrow' => 'Выбрать товар',
     'closed' => 'Закрыто',
     'coffee_comfort' => 'Кофе и комфорт',

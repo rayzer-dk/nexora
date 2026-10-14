@@ -30,8 +30,10 @@ if (aiDraftButton) {
       const response = await fetch('/admin/api/ai/product-draft', {method:'POST', headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body});
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'AI request failed');
-      if (shortDescription) shortDescription.value = data.short_description || shortDescription.value;
-      if (description) description.value = data.description || description.value;
+      // The input event lets the visual editor show the new text (and keeps it when the person edits it afterwards).
+      for (const [field, value] of [[shortDescription, data.short_description], [description, data.description]]) {
+        if (field && value) { field.value = value; field.dispatchEvent(new Event('input', { bubbles: true })); }
+      }
       status.textContent = t('admin.ai.draft_inserted');
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
@@ -58,9 +60,14 @@ document.querySelectorAll('[data-ai-task]').forEach((button) => {
       const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
+      // Several outputs may go into one field (a category has one text for the intro and the SEO part): joined in order.
+      const bySelector = new Map();
       for (const [name, selector] of Object.entries(outputs)) {
+        if (typeof data.fields?.[name] === 'string' && data.fields[name] !== '') bySelector.set(selector, [...(bySelector.get(selector) || []), data.fields[name]]);
+      }
+      for (const [selector, values] of bySelector) {
         const field = document.querySelector(selector);
-        if (field && typeof data.fields?.[name] === 'string') { field.value = data.fields[name]; field.dispatchEvent(new Event('input', { bubbles: true })); }
+        if (field) { field.value = values.join('\n'); field.dispatchEvent(new Event('input', { bubbles: true })); }
       }
       status.textContent = t('admin.ai.draft_inserted');
     } catch (error) {
@@ -148,21 +155,14 @@ document.querySelectorAll('[data-translate-from]').forEach((button) => {
     const status = panel?.querySelector('[data-ai-status]');
     if (!page || !panel || !provider || !status) return;
     const target = panel.dataset.locale || '';
+    const jobs = translateJobs(page, [panel]);
+    if (jobs.length === 0) { status.textContent = t('admin.ai.nothing_to_translate'); return; }
     button.disabled = true;
     let done = 0;
     try {
-      for (const field of panel.querySelectorAll('[data-translate-field]')) {
-        const name = field.getAttribute('name');
-        const text = translateSource(page, field);
-        if (!text) continue;
-        status.textContent = t('admin.ai.generating') + ' ' + name;
-        const body = new URLSearchParams({ _token: page.dataset.aiToken || '', task: 'translate', provider: provider.value });
-        body.append('fields[text]', text);
-        body.append('fields[target]', target);
-        const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
-        const data = await response.json();
-        if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
-        field.value = data.fields?.text || '';
+      for (const { field, text } of jobs) {
+        status.textContent = t('admin.ai.generating') + ' ' + field.getAttribute('name');
+        field.value = await translateText(page, text, target);
         field.dispatchEvent(new Event('input', { bubbles: true }));
         done += 1;
       }
@@ -206,6 +206,9 @@ async function translateText(page, text, target) {
   const body = new URLSearchParams({ _token: page.dataset.aiToken || '', task: 'translate', provider: provider?.value || '' });
   body.append('fields[text]', text);
   body.append('fields[target]', target);
+  // The language of the source panel, so the model (or a translation service) does not have to guess it.
+  const source = page.querySelector('[data-translate-panel][data-source]')?.dataset.locale || '';
+  if (source) body.append('fields[source]', source);
   const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
   const data = await response.json();
   if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
@@ -216,6 +219,21 @@ function translateSource(page, field) {
   const selector = field.dataset.translateSource;
   if (selector) return document.querySelector(selector)?.value?.trim() || '';
   return page.querySelector('[data-translate-panel][data-source]')?.querySelector(`[data-translate-field][name="${field.getAttribute('name')}"]`)?.value?.trim() || '';
+}
+// What a "translate" button will do in the given panels: every field with a source text. When some of them are
+// already translated, the person decides whether those are replaced; otherwise only the untranslated fields are
+// filled. A field still holding a copy of the source (a fallback shown for a missing language) is untranslated.
+function translateJobs(page, panels) {
+  const jobs = [];
+  for (const panel of panels) {
+    for (const field of panel.querySelectorAll('[data-translate-field]')) {
+      const text = translateSource(page, field);
+      const current = String(field.value || '').trim();
+      if (text) jobs.push({ panel, field, text, filled: current !== '' && current !== text });
+    }
+  }
+  if (jobs.some((job) => job.filled) && !window.confirm(t('admin.ai.overwrite_confirm'))) return jobs.filter((job) => !job.filled);
+  return jobs;
 }
 document.querySelectorAll('[data-translate-one]').forEach((button) => {
   button.addEventListener('click', async () => {
@@ -245,17 +263,15 @@ document.querySelectorAll('[data-translate-all]').forEach((button) => {
   const saveAll = page?.querySelector('[data-save-all]');
   if (!page || !status) return;
   button.addEventListener('click', async () => {
+    const jobs = translateJobs(page, Array.from(page.querySelectorAll('[data-translate-panel]:not([data-source])')));
+    if (jobs.length === 0) { status.textContent = t('admin.ai.nothing_to_translate'); return; }
     button.disabled = true;
     let failed = false;
     try {
-      for (const panel of page.querySelectorAll('[data-translate-panel]:not([data-source])')) {
-        for (const field of panel.querySelectorAll('[data-translate-field]')) {
-          const text = translateSource(page, field);
-          if (!text) continue;
-          status.textContent = `${t('admin.ai.generating')} ${panel.dataset.locale} · ${field.getAttribute('name')}`;
-          field.value = await translateText(page, text, panel.dataset.locale || '');
-          field.dispatchEvent(new Event('input', { bubbles: true }));
-        }
+      for (const [index, { panel, field, text }] of jobs.entries()) {
+        status.textContent = t('admin.ai.translate_progress', { done: index + 1, total: jobs.length, locale: panel.dataset.locale || '', field: field.getAttribute('name') || '' });
+        field.value = await translateText(page, text, panel.dataset.locale || '');
+        field.dispatchEvent(new Event('input', { bubbles: true }));
       }
     } catch (error) {
       failed = true;

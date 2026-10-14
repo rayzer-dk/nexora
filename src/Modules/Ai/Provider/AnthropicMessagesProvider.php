@@ -10,6 +10,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final readonly class AnthropicMessagesProvider implements ImageTextGenerationProviderInterface
 {
+    /** Enough for a full product description or a 6000-character part of a translation in any script. */
+    private const MAX_TOKENS = 16000;
+
     public function __construct(private HttpClientInterface $http, private bool $isEnabled, private string $apiKey, private string $model)
     {
     }
@@ -29,19 +32,23 @@ final readonly class AnthropicMessagesProvider implements ImageTextGenerationPro
         if (!$this->enabled()) {
             throw new RuntimeException('ai_provider_disabled');
         }
-        $body = ['model' => trim($this->model), 'max_tokens' => 4096, 'messages' => [['role' => 'user', 'content' => $prompt]]];
+        $body = ['model' => trim($this->model), 'max_tokens' => self::MAX_TOKENS, 'messages' => [['role' => 'user', 'content' => $prompt]]];
         if ($systemInstruction !== null && trim($systemInstruction) !== '') {
             $body['system'] = $systemInstruction;
         }
         $response = $this->http->request('POST', 'https://api.anthropic.com/v1/messages', [
             'headers' => ['x-api-key' => trim($this->apiKey), 'anthropic-version' => '2023-06-01', 'Content-Type' => 'application/json'],
-            'json' => $body, 'max_redirects' => 0, 'timeout' => 45.0,
+            'json' => $body, 'max_redirects' => 0, 'timeout' => 120.0,
         ]);
         if ($response->getStatusCode() >= 300) {
             throw AiHttpError::from($response);
         }
+        $data = $response->toArray(false);
+        if (($data['stop_reason'] ?? '') === 'max_tokens') {
+            throw new RuntimeException('ai_provider_truncated');
+        }
         $texts = [];
-        foreach ((array) ($response->toArray(false)['content'] ?? []) as $part) {
+        foreach ((array) ($data['content'] ?? []) as $part) {
             if (($part['type'] ?? '') === 'text' && is_string($part['text'] ?? null)) {
                 $texts[] = $part['text'];
             }
@@ -59,7 +66,7 @@ final readonly class AnthropicMessagesProvider implements ImageTextGenerationPro
         if (!$this->enabled()) {
             throw new RuntimeException('ai_provider_disabled');
         }
-        $body = ['model' => trim($this->model), 'max_tokens' => 4096, 'messages' => [['role' => 'user', 'content' => [
+        $body = ['model' => trim($this->model), 'max_tokens' => self::MAX_TOKENS, 'messages' => [['role' => 'user', 'content' => [
             ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $mimeType, 'data' => $base64]],
             ['type' => 'text', 'text' => $prompt],
         ]]]];
@@ -68,13 +75,17 @@ final readonly class AnthropicMessagesProvider implements ImageTextGenerationPro
         }
         $response = $this->http->request('POST', 'https://api.anthropic.com/v1/messages', [
             'headers' => ['x-api-key' => trim($this->apiKey), 'anthropic-version' => '2023-06-01', 'Content-Type' => 'application/json'],
-            'json' => $body, 'max_redirects' => 0, 'timeout' => 60.0,
+            'json' => $body, 'max_redirects' => 0, 'timeout' => 120.0,
         ]);
         if ($response->getStatusCode() >= 300) {
             throw AiHttpError::from($response);
         }
+        $data = $response->toArray(false);
+        if (($data['stop_reason'] ?? '') === 'max_tokens') {
+            throw new RuntimeException('ai_provider_truncated');
+        }
         $texts = [];
-        foreach ((array) ($response->toArray(false)['content'] ?? []) as $part) {
+        foreach ((array) ($data['content'] ?? []) as $part) {
             if (($part['type'] ?? '') === 'text' && is_string($part['text'] ?? null)) {
                 $texts[] = $part['text'];
             }

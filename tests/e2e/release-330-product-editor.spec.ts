@@ -45,7 +45,7 @@ test('feeds page lists the reasons and the toggle exists on the storefront', asy
   await login(page);
   await page.goto('/admin/commerce/feeds', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  await expect(page.locator('input.admin-feed-currency').first()).toBeVisible();
+  await expect(page.locator('.admin-feed-currency').first()).toBeVisible();
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-theme-toggle]').first()).toBeVisible();
 });

@@ -18,7 +18,7 @@ final class AiModelCatalog
     private const BUILT_IN = [
         'openai' => ['gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini'],
         'gemini' => ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'],
-        'anthropic' => ['claude-opus-4-5', 'claude-sonnet-5-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
+        'anthropic' => ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5', 'claude-fable-5-1', 'claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
     ];
     private const MAX_MODELS = 300;
     private const TIMEOUT = 15.0;

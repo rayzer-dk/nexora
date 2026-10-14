@@ -403,7 +403,7 @@ return [
     'cancel' => 'Cancel',
     'category' => 'Category',
     'change_or_reset_filters' => 'Change the filters or reset them.',
-    'check_promotions_engine' => 'Check Promotions Engine',
+    'check_promotions_engine' => 'Special offer',
     'choose_product_arrow' => 'Choose a product',
     'closed' => 'Closed',
     'coffee_comfort' => 'Coffee and comfort',

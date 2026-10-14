@@ -2687,12 +2687,23 @@ async function initPageFeatures() {
     'appearance-media': () => import('../admin/features/appearance-media.js'),
     'media-library': () => import('../admin/features/media-library.js'),
   };
+  // The feature arrives a moment after the page: a "choose image" click in that moment is kept and replayed once it
+  // is ready, instead of doing nothing (on a slow first load the person would otherwise have to click twice).
+  let pending = null;
+  const early = (event) => {
+    const target = event.target instanceof Element ? event.target.closest('[data-media-choose]') : null;
+    if (target) pending = target;
+  };
+  document.addEventListener('click', early, true);
   try {
     await loaders[feature]?.();
   } catch (error) {
     console.error(`Admin feature ${feature} failed to load`, error);
     toast(t('js_extra_ui_failed'), 'error', 7000);
+  } finally {
+    document.removeEventListener('click', early, true);
   }
+  if (pending instanceof HTMLElement) pending.click();
 }
 
 document.addEventListener('DOMContentLoaded', initPageFeatures, { once: true });

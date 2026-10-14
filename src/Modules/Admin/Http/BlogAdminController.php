@@ -92,10 +92,12 @@ final class BlogAdminController extends AbstractController
             return $this->redirectToRoute('admin_content_blog_edit', ['id' => $id, 'locale' => $ctx->locale]);
         }
         $source = null;
+        $sourceLocale = '';
         foreach ($this->languageTabs->tabs($ctx->storeId, $ctx->locale) as $tab) {
             $candidate = $tab['is_default'] ? $this->blog->find($ctx->storeId, $id, $tab['code']) : null;
             if ($candidate !== null && $candidate['has_translation']) {
                 $source = $candidate;
+                $sourceLocale = (string) $tab['code'];
             }
         }
         $provider = (string) $request->request->get('provider', '');
@@ -108,7 +110,7 @@ final class BlogAdminController extends AbstractController
         try {
             foreach (['title', 'h1', 'excerpt', 'body_html', 'meta_title', 'meta_description'] as $field) {
                 $text = trim((string) ($source[$field] ?? ''));
-                $article[$field] = $text === '' ? '' : (string) ($this->ai->run($ctx->storeId, $admin !== null ? $admin->getUserIdentifier() : 'admin', 'translate', $provider, ['text' => $text, 'target' => $ctx->locale], $ctx->locale)['fields']['text'] ?? '');
+                $article[$field] = $text === '' ? '' : (string) ($this->ai->run($ctx->storeId, $admin !== null ? $admin->getUserIdentifier() : 'admin', 'translate', $provider, ['text' => $text, 'target' => $ctx->locale, 'source' => $sourceLocale], $ctx->locale)['fields']['text'] ?? '');
             }
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());

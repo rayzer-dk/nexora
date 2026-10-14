@@ -2,6 +2,10 @@
 
 ## Unreleased (next after 3.97.23)
 
+- AI: a draft or a translation now appears in the visual editor at once and stays when the description is edited afterwards (before, the editor kept showing the old text and the first keystroke threw the AI text away). Category AI fills both the intro and the SEO text and starts from the current text. Long texts (descriptions, articles) are translated in parts and joined back whole instead of being cut at 6,000 characters. "Translate all" asks before replacing existing translations ("Cancel" fills only untranslated fields), and the source language is sent with every translation. Any ISO language can be a target. Photo cards without a visible brand no longer fail, characteristics returned as a list are accepted. Claude gets room for long answers (16,000 tokens), GPT-5/o-series run with low reasoning effort, timeouts are 120 s, a cut-off or blocked answer and the provider's own error message are shown. Built-in Claude list: Sonnet 5.5, Opus 5.5, Haiku 5.5, Fable 5.1. Ukrainian UI says «ШІ» everywhere.
+- Storefront: "Similar products" only come from the same category or brand (shared store-wide values such as warranty or shipping time no longer make water "similar" to headphones); the demo links neighbours of the same category only. The coupon banner of the demo says "Special offer" instead of "Check Promotions Engine".
+- Admin: the print button of waybill stickers works under the content security policy (it had an inline handler the browser blocked); a "Choose image" click on Appearance → Storefront made while the page is still loading is no longer lost.
+
 - Forum: new hero with counters and one pill search, calmer board and topic cards. Landing: richer default hero (chart, coloured cards, soft glow). Editor toolbar selects show their values. Hotline.ua XML feed. SEO templates: shorter hints. Connections: translated option values.
 
 - Captcha: slider (drag to the end) is the default built-in challenge; it seals time, real pointer events and speed unevenness into the answer, rejects jumps, too-fast/too-slow drags and has hidden trap fields; the "pick the picture" style stays selectable.

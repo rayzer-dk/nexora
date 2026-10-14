@@ -403,7 +403,7 @@ return [
     'cancel' => 'Скасувати',
     'category' => 'Категорія',
     'change_or_reset_filters' => 'Змініть фільтри або скиньте їх.',
-    'check_promotions_engine' => 'Перевірте Promotions Engine',
+    'check_promotions_engine' => 'Спеціальна пропозиція',
     'choose_product_arrow' => 'Обрати товар',
     'closed' => 'Закрито',
     'coffee_comfort' => 'Кава та комфорт',

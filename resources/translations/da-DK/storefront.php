@@ -380,7 +380,7 @@ return [
     'cancel' => 'Annuller',
     'category' => 'Kategori',
     'change_or_reset_filters' => 'Skift filtrene eller nulstil dem.',
-    'check_promotions_engine' => 'Kontrollér kampagnemotoren',
+    'check_promotions_engine' => 'Særligt tilbud',
     'choose_product_arrow' => 'Vælg produkt',
     'closed' => 'Lukket',
     'coffee_comfort' => 'Kaffe og komfort',

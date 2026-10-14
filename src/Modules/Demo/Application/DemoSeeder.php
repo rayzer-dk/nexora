@@ -92,6 +92,7 @@ final readonly class DemoSeeder
             }
 
             $productIds = [];
+            $productCategory = [];
             $reviewCount = 0;
             foreach ($catalog['products'] as $def) {
                 $brandId = $brands[$def['brand']];
@@ -119,6 +120,7 @@ final readonly class DemoSeeder
                 ));
                 $productId = $created['id'];
                 $productIds[] = $productId;
+                $productCategory[$productId] = (string) $def['category'];
                 $this->products->update(new UpdateProductCommand(
                     $productId,
                     $ctx['store_id'],
@@ -215,7 +217,12 @@ final readonly class DemoSeeder
             $this->enableDemoCurrencies($db, $ctx);
             $reviewCount += $this->translateCatalog($db, $ctx, $categoryIds, $productIds, $brands, $catalog['products'], $now);
 
+            // "Similar products" of the demo: the next product of the same category (headphones next to headphones,
+            // not next to a bottle of water that happens to follow in the list).
             for ($i = 0; $i < count($productIds) - 1; $i++) {
+                if ($productCategory[$productIds[$i]] !== $productCategory[$productIds[$i + 1]]) {
+                    continue;
+                }
                 $db->insert('mc_product_relation', [
                     'product_id' => $productIds[$i],
                     'related_product_id' => $productIds[$i + 1],

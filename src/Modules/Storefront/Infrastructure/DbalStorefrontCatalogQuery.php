@@ -1013,18 +1013,20 @@ final readonly class DbalStorefrontCatalogQuery
             $params = [$context->storeId,$context->storeId,$context->marketId,$productId,...$excluded];
             $ids = array_map('intval', $this->connection->fetchFirstColumn($sql, $params));
         } else {
+            // Shared characteristics only refine the order among products of the same category or brand: store-wide
+            // values ("warranty 1 year", "ships in 1-2 days") would otherwise make water "similar" to headphones.
             $sql = "SELECT p2.id,
-                           (CASE WHEN p2.brand_id=p1.brand_id AND p1.brand_id IS NOT NULL THEN 6 ELSE 0 END)
-                         + (SELECT COUNT(*)*10 FROM mc_product_category c1 JOIN mc_product_category c2 ON c2.category_id=c1.category_id WHERE c1.product_id=p1.id AND c2.product_id=p2.id)
-                         + (SELECT COUNT(*)*2 FROM mc_product_attribute_value a1 JOIN mc_product_attribute_value a2 ON a2.attribute_id=a1.attribute_id AND a2.product_id=p2.id
-                            WHERE a1.product_id=p1.id AND COALESCE(a1.value_text,'')=COALESCE(a2.value_text,'') AND COALESCE(a1.value_decimal,-999999)=COALESCE(a2.value_decimal,-999999) AND COALESCE(a1.value_boolean,-1)=COALESCE(a2.value_boolean,-1)) score
+                           (CASE WHEN p2.brand_id=p1.brand_id AND p1.brand_id IS NOT NULL THEN 6 ELSE 0 END) brand_score,
+                           (SELECT COUNT(*)*10 FROM mc_product_category c1 JOIN mc_product_category c2 ON c2.category_id=c1.category_id WHERE c1.product_id=p1.id AND c2.product_id=p2.id) category_score,
+                           (SELECT COUNT(*)*2 FROM mc_product_attribute_value a1 JOIN mc_product_attribute_value a2 ON a2.attribute_id=a1.attribute_id AND a2.product_id=p2.id
+                            WHERE a1.product_id=p1.id AND COALESCE(a1.value_text,'')=COALESCE(a2.value_text,'') AND COALESCE(a1.value_decimal,-999999)=COALESCE(a2.value_decimal,-999999) AND COALESCE(a1.value_boolean,-1)=COALESCE(a2.value_boolean,-1)) attribute_score
                     FROM mc_product p1
                     JOIN mc_product p2 ON p2.id NOT IN ({$notIn}) AND p2.status='published'
                     JOIN mc_store_product sp2 ON sp2.product_id=p2.id AND sp2.store_id=? AND sp2.status='active'
                     JOIN mc_market_product mp2 ON mp2.product_id=p2.id AND mp2.market_id=? AND mp2.status='active'
                     WHERE p1.id=? AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p2.id AND pxh.hidden=1)
-                    HAVING score>0
-                    ORDER BY score DESC,p2.id DESC LIMIT {$limit}";
+                    HAVING category_score>0 OR brand_score>0
+                    ORDER BY category_score+brand_score+attribute_score DESC,p2.id DESC LIMIT {$limit}";
             $params = [...$excluded,$context->storeId,$context->marketId,$productId];
             $ids = array_map('intval', $this->connection->fetchFirstColumn($sql, $params));
         }

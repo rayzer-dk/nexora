@@ -24,7 +24,7 @@
 </style>
 </head>
 <body>
-<div class="toolbar"><button type="button" onclick="window.print()" data-print>{{ ui_text('admin.orders.bulk.sticker_print') }} ({{ stickers|length }})</button></div>
+<div class="toolbar"><button type="button" data-print>{{ ui_text('admin.orders.bulk.sticker_print') }} ({{ stickers|length }})</button></div>
 {% for s in stickers %}
 <section class="sticker" data-sticker>
   <h2>{{ s.order }}</h2>
@@ -35,5 +35,6 @@
   <div class="barcode">{{ s.barcode|raw }}<div class="code">{{ s.tracking ?: ui_text('admin.orders.bulk.sticker_no_ttn') ~ ' · ' ~ s.order }}</div></div>
 </section>
 {% endfor %}
+<script nonce="{{ app.request.attributes.get('_csp_nonce') }}">document.querySelector('[data-print]')?.addEventListener('click', () => window.print());</script>
 </body>
 </html>

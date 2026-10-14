@@ -49,8 +49,13 @@ const editor = new Editor({
   onUpdate: ({ editor: instance }) => emit('update:modelValue', instance.getHTML()),
 });
 
+// Text set from outside (an AI draft, a translation) shows up at once, also while the HTML source view is open.
 watch(() => props.modelValue, (value) => {
-  if (!sourceMode.value && editor.getHTML() !== value) editor.commands.setContent(value, { emitUpdate: false });
+  if (sourceMode.value) {
+    if (code && code.getValue() !== value) code.setValue(value);
+    return;
+  }
+  if (editor.getHTML() !== value) editor.commands.setContent(value, { emitUpdate: false });
 });
 
 const root = ref<HTMLElement | null>(null);
