@@ -19,6 +19,7 @@ final class HelpCatalog
         'extensibility' => ['file' => 'docs/EXTENSIBILITY.md', 'group' => 'modules'],
         'modules-quickstart' => ['file' => 'docs/QUICKSTART_MODULE.md', 'group' => 'modules'],
         'modules-lifecycle' => ['file' => 'docs/EXTENSION_LIFECYCLE.md', 'group' => 'modules'],
+        'developer-modules' => ['file' => 'docs/DEVELOPER_MODULES_UK.md', 'group' => 'developers'],
         'developer-guide' => ['file' => 'docs/DEVELOPER_GUIDE_UK.md', 'group' => 'developers'],
         'sdk' => ['file' => 'docs/EXTENSION_SDK.md', 'group' => 'developers'],
         'slots' => ['file' => 'docs/EXTENSION_SLOTS.md', 'group' => 'developers'],

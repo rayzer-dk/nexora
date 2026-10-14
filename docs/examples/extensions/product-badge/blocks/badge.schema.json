@@ -1,1 +1,7 @@
-{"schema_version":2,"fields":[{"key":"title","type":"multilingual_text","label":"Badge text","group":"content"},{"key":"accent","type":"color","label":"Color","default":"#0057d9","group":"design"}]}
+{
+  "schema_version": 2,
+  "fields": [
+    {"key": "title", "type": "text", "label": "Заголовок позначки", "group": "content"},
+    {"key": "text", "type": "textarea", "label": "Текст позначки", "group": "content"}
+  ]
+}

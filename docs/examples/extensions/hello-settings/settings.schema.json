@@ -1,8 +1,15 @@
 {
   "schema_version": 2,
   "fields": [
-    {"key":"headline","type":"multilingual_text","label":"Headline","group":"content"},
-    {"key":"accent","type":"color","label":"Accent","default":"#0057d9","group":"design"},
-    {"key":"enabled","type":"boolean","label":"Enabled","default":true,"group":"general"}
+    {"key": "enabled", "type": "boolean", "label": "Увімкнено", "default": true, "group": "general", "help": "Головний вимикач модуля."},
+    {"key": "headline", "type": "text", "label": "Заголовок", "group": "content", "placeholder": "Наприклад: Безкоштовна доставка від 1000 грн", "help": "Підпис і підказка не перекладаються: пишіть їх мовою адмінки."},
+    {"key": "note", "type": "textarea", "label": "Внутрішня нотатка", "group": "content", "placeholder": "Бачить лише команда магазину"},
+    {"key": "accent", "type": "color", "label": "Акцентний колір", "default": "#0057d9", "group": "design", "help": "Формат #RRGGBB."},
+    {"key": "columns", "type": "select", "label": "Кількість колонок", "default": "3", "group": "design", "options": [
+      {"value": "2", "label": "2"},
+      {"value": "3", "label": "3"},
+      {"value": "4", "label": "4"}
+    ]},
+    {"key": "api_key", "type": "secret", "label": "Ключ API", "group": "advanced", "advanced": true, "help": "Зберігається зашифрованим; порожнє поле залишає збережене значення."}
   ]
 }

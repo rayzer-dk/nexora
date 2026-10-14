@@ -1,0 +1,62 @@
+{
+  "code": "example.order_hook",
+  "name": "Order Hook",
+  "version": "1.0.0",
+  "type": "trusted-module",
+  "core": "^3.4.8",
+  "extension_api": "2.0",
+  "execution": "trusted_release",
+  "permissions": [
+    "extension.example_order_hook.view"
+  ],
+  "capabilities": [],
+  "events": [
+    "commerce.order.placed"
+  ],
+  "ui_slots": [],
+  "blocks": [],
+  "routes": [
+    {
+      "name": "extension.example_order_hook.log",
+      "path": "/admin/extensions/example_order_hook/log",
+      "methods": ["GET"],
+      "mode": "trusted_handler",
+      "permission": "extension.example_order_hook.view"
+    }
+  ],
+  "pages": [],
+  "slot_contributions": [],
+  "assets": [],
+  "scheduled_tasks": [
+    {
+      "code": "digest",
+      "interval": 3600,
+      "label": "Order hook digest",
+      "description": "Counts the orders the module has logged since the previous run."
+    }
+  ],
+  "isolation": "contract_only",
+  "hot_disable": true,
+  "data_policy": "retain_on_uninstall",
+  "localization": {
+    "default_locale": "uk-UA",
+    "locales": ["uk-UA", "en-US"],
+    "translations_path": "translations"
+  },
+  "publisher": {
+    "name": "Example Publisher",
+    "key_id": "example.docs.2026"
+  },
+  "signature": {
+    "algorithm": "ed25519",
+    "key_id": "example.docs.2026",
+    "file": "SIGNATURE.ed25519"
+  },
+  "autoload": {
+    "psr4": {
+      "Example\\OrderHook\\": "src"
+    }
+  },
+  "entrypoint": "Example\\OrderHook\\Entrypoint",
+  "migrations": []
+}

@@ -1,9 +1,12 @@
-# Extension examples
+# Приклади модулів
 
-`hello-settings` shows declarative settings and localization.
+Чотири повні приклади. Кожен збирається `commerce:extension:pack` і проходить `commerce:extension:validate`; покроковий розбір — у посібнику [Модулі та інтеграції](../../DEVELOPER_MODULES_UK.md).
 
-`product-badge` shows a product Builder component and a stable product UI slot.
+| Каталог | Що показує | PHP | Підпис |
+| --- | --- | --- | --- |
+| `hello-settings` | сторінка налаштувань модуля в адмінці: шість полів різних типів, ревізії | ні | ні |
+| `product-badge` | блок Конструктора на сторінці товару та внесок у слот `product.after_price` | ні | ні |
+| `remote-crm` + `remote-crm-receiver` | віддалена інтеграція: паспорт `remote_app` і отримувач вебхука замовлення з перевіркою підпису | на боці CRM | ні |
+| `trusted-order-hook` | trusted-модуль: подія `commerce.order.placed`, cron-задача, сторінка адмінки | так | так, Ed25519 |
 
-`remote-crm` shows the manifest shape for an HTTPS remote integration.
-
-`trusted-order-hook` intentionally contains instructions rather than a reusable signature. Trusted packages must be generated and signed with the publisher's own key.
+Готового файлу підпису в прикладах немає навмисно: trusted-пакет підписує видавець власним ключем, який ніколи не потрапляє в репозиторій.
