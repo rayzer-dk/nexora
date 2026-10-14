@@ -2,11 +2,13 @@
 {% block body %}
 {% set rank_names = {newbie: ui_text('forum_rank_newbie'), member: ui_text('forum_rank_member'), active: ui_text('forum_rank_active'), expert: ui_text('forum_rank_expert'), veteran: ui_text('forum_rank_veteran')} %}
 <section class="fx shell">
-    <header class="fx-head">
-        <div><span class="fx-eyebrow">{{ ui_text('community') }}</span><h1>{{ ui_text('forum') }}</h1><p>{{ ui_text('forum_intro') }}</p></div>
+    <header class="fx-head fx-head--hero">
+        <div class="fx-head__text"><span class="fx-eyebrow">{{ ui_text('community') }}</span><h1>{{ ui_text('forum') }}</h1><p>{{ ui_text('forum_intro') }}</p>
+            <ul class="fx-chips" aria-label="{{ ui_text('forum_stats_title') }}"><li>{{ ui_icon('messages-square', 16) }}<b>{{ overview.topics }}</b> {{ ui_text('forum_stat_topics') }}</li><li>{{ ui_icon('message-circle', 16) }}<b>{{ overview.posts }}</b> {{ ui_text('forum_stat_posts') }}</li><li>{{ ui_icon('users', 16) }}<b>{{ overview.members }}</b> {{ ui_text('forum_stat_members') }}</li></ul>
+        </div>
         <div class="fx-head__actions">
-            <form method="get" action="{{ path('storefront_forum_search') }}" class="fx-search"><input type="search" name="q" minlength="2" placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button class="button button--primary" type="submit">{{ ui_icon('search', 16) }}<span>{{ ui_text('forum_search') }}</span></button></form>
-            <a class="button button--secondary" href="{{ path('storefront_forum_rules') }}">{{ ui_text('forum_rules_link') }}</a>
+            <form method="get" action="{{ path('storefront_forum_search') }}" class="fx-search" role="search"><span class="fx-search__icon" aria-hidden="true">{{ ui_icon('search', 18) }}</span><input type="search" name="q" minlength="2" placeholder="{{ ui_text('forum_search_placeholder') }}" aria-label="{{ ui_text('forum_search') }}"><button class="fx-search__go" type="submit" aria-label="{{ ui_text('forum_search') }}">{{ ui_icon('arrow-right', 18) }}</button></form>
+            <a class="button button--secondary" href="{{ path('storefront_forum_rules') }}">{{ ui_icon('shield-check', 16) }}<span>{{ ui_text('forum_rules_link') }}</span></a>
             {% if app.user %}<a class="button button--secondary" href="{{ path('storefront_forum_following') }}">{{ ui_icon('star', 16) }}<span>{{ ui_text('forum_favorites') }}</span>{% if unread_count|default(0) > 0 %}<span class="fx-count">{{ unread_count }}</span>{% endif %}</a>{% endif %}
         </div>
     </header>
@@ -19,7 +21,7 @@
                         <span class="fx-board__icon" aria-hidden="true">{{ ui_icon('messages-square', 20) }}</span>
                         <span class="fx-board__title"><strong>{{ board.name }}</strong><small>{{ board.description|default(ui_text('community_discussion')) }}</small></span>
                         <span class="fx-board__stats"><b>{{ board.topic_count }}</b><small>{{ ui_text('topics_count_label') }}</small><b>{{ board.post_count }}</b><small>{{ ui_text('messages_count_label') }}</small></span>
-                        <span class="fx-board__last">{% if board.last_topic %}<b>{{ board.last_topic.title|length > 38 ? board.last_topic.title|slice(0,38) ~ '…' : board.last_topic.title }}</b><small>{{ board.last_topic.last_author|default('') }}{% if board.last_topic.last_author %} · {% endif %}{{ board.last_topic.active_at|slice(0,16) }}</small>{% else %}<small>{{ ui_text('no_topics_yet') }}</small>{% endif %}</span>
+                        <span class="fx-board__last">{% if board.last_topic %}<b title="{{ board.last_topic.title|e('html_attr') }}">{{ board.last_topic.title }}</b><small>{{ board.last_topic.last_author|default('') }}{% if board.last_topic.last_author %} · {% endif %}{{ board.last_topic.active_at|slice(0,16) }}</small>{% else %}<small>{{ ui_text('no_topics_yet') }}</small>{% endif %}</span>
                     </a>
                     {% set kids = boards|filter(k => k.parent_id == board.id) %}
                     {% if kids %}<div class="fx-board__kids"><span>{{ ui_text('forum_subforums') }}:</span>{% for kid in kids %}<a href="{{ path('storefront_forum_board',{slug:kid.slug}) }}">{{ ui_icon('corner-down-right', 12) }}{{ kid.name }} <small>{{ kid.topic_count }}</small></a>{% endfor %}</div>{% endif %}
@@ -34,12 +36,9 @@
             {% endif %}
         </div>
         <aside class="fx-aside">
-            <section class="fx-panel"><h2>{{ ui_icon('trending-up', 16) }}{{ ui_text('forum_stats_title') }}</h2>
-                <dl class="fx-stats"><div><dt>{{ ui_text('forum_stat_topics') }}</dt><dd>{{ overview.topics }}</dd></div><div><dt>{{ ui_text('forum_stat_posts') }}</dt><dd>{{ overview.posts }}</dd></div><div><dt>{{ ui_text('forum_stat_members') }}</dt><dd>{{ overview.members }}</dd></div></dl>
-                {% if overview.newest %}<p class="fx-muted">{{ ui_text('forum_newest_member') }}: <a href="{{ path('storefront_forum_member',{id:overview.newest.id}) }}">{{ overview.newest.nickname }}</a></p>{% endif %}
-            </section>
             <section class="fx-panel"><h2><span class="fx-dot" aria-hidden="true"></span>{{ ui_text('forum_online_title') }} · {{ overview.online|length }}</h2>
                 {% if overview.online %}<p class="fx-online">{% for m in overview.online %}<a href="{{ path('storefront_forum_member',{id:m.id}) }}">{{ m.nickname }}</a>{% endfor %}</p>{% else %}<p class="fx-muted">{{ ui_text('forum_online_none') }}</p>{% endif %}
+                {% if overview.newest %}<p class="fx-muted">{{ ui_text('forum_newest_member') }}: <a href="{{ path('storefront_forum_member',{id:overview.newest.id}) }}">{{ overview.newest.nickname }}</a></p>{% endif %}
             </section>
         </aside>
     </div>

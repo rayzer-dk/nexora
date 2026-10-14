@@ -1567,7 +1567,8 @@ function initSeoFields() {
     count.className = 'seo-hint__count';
     const advice = document.createElement('span');
     advice.className = 'seo-hint__advice';
-    advice.textContent = `${t(`admin.seo.${kind}_advice`, { min, max })} ${t(`admin.seo.${kind}_example`)}`;
+    const isTemplate = /^tpl\[/.test(field.getAttribute('name') || '');
+    advice.textContent = isTemplate ? t(`admin.seo.${kind}_advice`, { min, max }) : `${t(`admin.seo.${kind}_advice`, { min, max })} ${t(`admin.seo.${kind}_example`)}`;
     box.append(count, advice);
     const form = field.closest('form');
     const tpl = /^tpl\[([a-z]+)\]/.exec(field.getAttribute('name') || '');

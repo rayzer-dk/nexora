@@ -2,6 +2,8 @@
 
 ## Unreleased (next after 3.97.23)
 
+- Forum: new hero with counters and one pill search, calmer board and topic cards. Landing: richer default hero (chart, coloured cards, soft glow). Editor toolbar selects show their values. Hotline.ua XML feed. SEO templates: shorter hints. Connections: translated option values.
+
 - Captcha: slider (drag to the end) is the default built-in challenge; it seals time, real pointer events and speed unevenness into the answer, rejects jumps, too-fast/too-slow drags and has hidden trap fields; the "pick the picture" style stays selectable.
 - Admin: roles/permissions page rewritten (translated labels, risk badges); header context stays in one row; dashboard hides empty widgets; quality monitor says why a fix did not help.
 

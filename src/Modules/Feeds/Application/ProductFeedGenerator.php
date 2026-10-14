@@ -17,7 +17,7 @@ final readonly class ProductFeedGenerator
         $out=[];foreach($this->extensions?->all('provider.feed')??[] as $format){if($format instanceof \Commerce\Modules\Feeds\Contract\FeedFormatProviderInterface&&preg_match('/^[a-z0-9_]{2,30}$/D',$format->code())===1&&!in_array($format->code(),self::BUILT_IN,true))$out[$format->code()]=$format;}return $out;
     }
 
-    public const BUILT_IN=['google','meta','facebook','pinterest','tiktok','rozetka','prom','yml','csv','json','agentic'];
+    public const BUILT_IN=['google','meta','facebook','pinterest','tiktok','rozetka','prom','yml','hotline','csv','json','agentic'];
 
     /** @return array{content:string,content_type:string,extension:string,count:int,skipped:int,warnings:list<string>} */
     public function generate(string $platform,int $storeId,int $marketId,string $locale,string $currency,bool $inStockOnly=false): array
@@ -31,6 +31,7 @@ final readonly class ProductFeedGenerator
             'tiktok'=>$this->tiktokCsv($products),
             'rozetka'=>$this->rozetkaXml($products,$storeId),
             'prom','yml'=>$this->promYml($products,$storeId),
+            'hotline'=>$this->hotlineXml($products),
             'agentic'=>$this->agenticJsonl($products),
             'json'=>['content'=>json_encode(['generated_at'=>gmdate('c'),'products'=>$products],JSON_THROW_ON_ERROR|JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),'content_type'=>'application/json; charset=UTF-8','extension'=>'json','count'=>count($products)],
             'csv'=>$this->catalogCsv($products,'generic'),
@@ -127,6 +128,19 @@ final readonly class ProductFeedGenerator
         $xml=new DOMDocument('1.0','UTF-8');$xml->formatOutput=true;$yml=$xml->createElement('yml_catalog');$yml->setAttribute('date',gmdate('Y-m-d H:i'));$xml->appendChild($yml);$shop=$xml->createElement('shop');$yml->appendChild($shop);$categories=$xml->createElement('categories');$shop->appendChild($categories);$seen=[];
         foreach($products as $p){foreach((array)$p['categories'] as $cat){$id=(int)$cat['id'];if(isset($seen[$id]))continue;$seen[$id]=true;$node=$xml->createElement('category');$node->setAttribute('id',(string)$id);if($cat['parent_id']!==null)$node->setAttribute('parentId',(string)$cat['parent_id']);$map=$this->externalCategory($storeId,'prom',$id);if($map!==null)$node->setAttribute('portal_id',(string)$map['external_category_id']);$node->appendChild($xml->createTextNode((string)$cat['name']));$categories->appendChild($node);}}
         $offers=$xml->createElement('offers');$shop->appendChild($offers);foreach($products as $p){$primary=$this->primaryCategory($p);if($primary===null)continue;$offer=$xml->createElement('offer');$offer->setAttribute('id',(string)$p['id']);$offer->setAttribute('available',$p['availability']==='in_stock'?'true':'false');$offer->setAttribute('in_stock',$p['availability']==='in_stock'?'true':'false');if($p['item_group_id']!==$p['id'])$offer->setAttribute('group_id',(string)$p['item_group_id']);$offers->appendChild($offer);$this->el($xml,$offer,'name',(string)$p['title']);$this->el($xml,$offer,'categoryId',(string)$primary['id']);$this->el($xml,$offer,'url',(string)$p['link']);$this->el($xml,$offer,'price',(string)$p['price']);if($p['sale_price']!==null)$this->el($xml,$offer,'oldprice',(string)$p['regular_price']);$this->el($xml,$offer,'currencyId',(string)$p['currency']);foreach(array_merge([(string)$p['image_link']],(array)$p['additional_image_link']) as $image)$this->el($xml,$offer,'picture',$image);if((string)$p['brand']!=='')$this->el($xml,$offer,'vendor',(string)$p['brand']);$this->el($xml,$offer,'vendorCode',(string)$p['sku']);$this->el($xml,$offer,'description',(string)$p['description']);if((string)$p['gtin']!=='')$this->el($xml,$offer,'gtin',(string)$p['gtin']);if((string)$p['mpn']!=='')$this->el($xml,$offer,'mpn',(string)$p['mpn']);foreach((array)$p['attributes'] as $name=>$value){$param=$xml->createElement('param');$param->setAttribute('name',(string)$name);$param->appendChild($xml->createTextNode((string)$value));$offer->appendChild($param);}}
+        return ['content'=>$xml->saveXML()?:'','content_type'=>'application/xml; charset=UTF-8','extension'=>'xml','count'=>count($products)];
+    }
+
+    /** Hotline.ua price list: firm, categories and items with the price in UAH and the stock state. */
+    private function hotlineXml(array $products): array
+    {
+        $xml=new DOMDocument('1.0','UTF-8');$xml->formatOutput=true;$root=$xml->createElement('price');$xml->appendChild($root);
+        $host=$products!==[]?(string)parse_url((string)$products[0]['link'],PHP_URL_HOST):'shop';
+        $this->el($xml,$root,'date',gmdate('Y-m-d H:i'));$this->el($xml,$root,'firmName',$host);$this->el($xml,$root,'firmId','1');
+        $categories=$xml->createElement('categories');$root->appendChild($categories);$seen=[];
+        foreach($products as $p){foreach((array)$p['categories'] as $cat){$id=(int)$cat['id'];if(isset($seen[$id]))continue;$seen[$id]=true;$node=$xml->createElement('category');$this->el($xml,$node,'id',(string)$id);if($cat['parent_id']!==null)$this->el($xml,$node,'parentId',(string)$cat['parent_id']);$this->el($xml,$node,'name',(string)$cat['name']);$categories->appendChild($node);}}
+        $items=$xml->createElement('items');$root->appendChild($items);
+        foreach($products as $p){$primary=$this->primaryCategory($p);if($primary===null)continue;$item=$xml->createElement('item');$items->appendChild($item);$this->el($xml,$item,'id',(string)$p['id']);$this->el($xml,$item,'categoryId',(string)$primary['id']);$this->el($xml,$item,'code',(string)$p['sku']);if((string)$p['brand']!=='')$this->el($xml,$item,'vendor',(string)$p['brand']);$this->el($xml,$item,'name',(string)$p['title']);$this->el($xml,$item,'description',(string)$p['description']);$this->el($xml,$item,'url',(string)$p['link']);$this->el($xml,$item,'image',(string)$p['image_link']);$this->el($xml,$item,'priceRUAH',(string)$p['price']);$this->el($xml,$item,'stock',$p['availability']==='in_stock'?'В наявності':'Немає в наявності');if((string)$p['gtin']!=='')$this->el($xml,$item,'barcode',(string)$p['gtin']);}
         return ['content'=>$xml->saveXML()?:'','content_type'=>'application/xml; charset=UTF-8','extension'=>'xml','count'=>count($products)];
     }
 

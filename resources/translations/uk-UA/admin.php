@@ -5556,6 +5556,8 @@ return [
     'admin.conn.state_off' => 'Вимкнено',
     'admin.conn.state_incomplete' => 'Не вистачає ключів',
     'admin.conn.keep' => 'Залишити',
+    'admin.conn.opt_PP' => 'PP — оплата частинами',
+    'admin.conn.opt_II' => 'II — миттєва розстрочка',
     'admin.conn.on' => 'Увімкнено',
     'admin.conn.off' => 'Вимкнено',
     'admin.conn.docs' => 'Документація',

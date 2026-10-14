@@ -5516,6 +5516,8 @@ return [
     'admin.conn.state_off' => 'Off',
     'admin.conn.state_incomplete' => 'Keys missing',
     'admin.conn.keep' => 'Keep',
+    'admin.conn.opt_PP' => 'PP — payment in parts',
+    'admin.conn.opt_II' => 'II — instant instalments',
     'admin.conn.on' => 'On',
     'admin.conn.off' => 'Off',
     'admin.conn.docs' => 'Documentation',

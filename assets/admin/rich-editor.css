@@ -139,3 +139,8 @@
 .rich-editor__nativepick input[type="color"] { width: 40px; height: 26px; padding: 0; border: 1px solid var(--mc-color-border); border-radius: 4px; background: none; cursor: pointer; }
 .rich-editor__presets { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); }
 .rich-editor__toolbar select.rich-editor__select:not(.rich-editor__select--narrow, .rich-editor__select--panel) { min-width: 6.5rem; max-width: 8rem; }
+
+/* Toolbar selects must show their value: block style, font and size get a readable width. */
+.rich-editor__toolbar select.rich-editor__select:not(.rich-editor__select--narrow) { min-width: 7rem; max-width: 9rem; text-overflow: ellipsis; }
+.rich-editor__toolbar select.rich-editor__select--narrow { min-width: 4.25rem; max-width: 4.75rem; }
+.rich-editor__toolbar select.rich-editor__select { padding-inline: var(--mc-space-2) var(--mc-space-6); background-position: right var(--mc-space-2) center; font-size: var(--mc-font-size-sm); }
