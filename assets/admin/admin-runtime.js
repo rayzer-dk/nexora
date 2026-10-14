@@ -1,5 +1,190 @@
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
 
+// --- AI insertion feedback -------------------------------------------------------------------------------------------
+// Every AI button writes into form fields. These helpers write only into the fields of the box's own form, count what was really
+// written, show the generated text inside the box and let the person jump to the field (opening its tab, scrolling, flashing).
+const AI_PREVIEW_LIMIT = 300;
+
+const aiScope = (box) => box?.closest('form') || document;
+
+// A selector may be broken (a template typo): that is "field not found", never an exception.
+function aiFind(scope, selector) {
+  try {
+    const found = scope.querySelector(selector);
+    if (found) return found;
+    // ids are unique on a page: a reply box outside its field's form (or on a page without a form) still finds it
+    return scope !== document && /^#[\w-]+$/.test(selector) ? document.querySelector(selector) : null;
+  } catch {
+    return null;
+  }
+}
+
+// The visible name of a field: the label's own text (without hints), then aria-label, then the field name.
+function aiFieldLabel(field, fallback = '') {
+  const own = field.closest('label')?.querySelector(':scope > span');
+  if (own) {
+    const copy = own.cloneNode(true);
+    copy.querySelectorAll('small, em, svg').forEach((node) => node.remove());
+    const text = (copy.textContent || '').replace(/\s+/g, ' ').trim();
+    if (text) return text;
+  }
+  return (field.getAttribute('aria-label') || '').trim() || field.getAttribute('name') || fallback;
+}
+
+// mapping: [{selector, value, label}] -> what was written into the form, which selectors found nothing, which values came back empty.
+function insertAiFields(scope, mapping) {
+  const written = []; const missing = []; const empty = [];
+  for (const item of mapping) {
+    const field = aiFind(scope, item.selector);
+    const label = field ? aiFieldLabel(field, item.label || '') : (item.label || item.selector);
+    const value = typeof item.value === 'string' ? item.value : '';
+    if (value.trim() === '') { empty.push(label); continue; }
+    if (!field) { missing.push(item.selector); continue; }
+    field.value = value;
+    // the input event also carries the text into the visual editor and any live counters
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    written.push({ field, label, value, selector: item.selector });
+  }
+  return { written, missing, empty };
+}
+
+// Open every tab / folded block that hides the field, scroll to it and flash it (the visual editor when the field has one).
+function revealField(field) {
+  if (!(field instanceof Element)) return;
+  for (let panel = field.closest('[data-product-tab], [data-tab]'); panel; panel = panel.parentElement?.closest('[data-product-tab], [data-tab]') || null) {
+    if (!panel.hidden) continue;
+    let button = null;
+    if (panel.matches('[data-product-tab]')) {
+      button = Array.from(document.querySelectorAll('.admin-tab[data-tab-target]')).find((b) => b.dataset.tabTarget === panel.dataset.productTab && !b.closest('[data-tabs]')) || null;
+    } else if (panel.parentElement?.matches('[data-tabs]')) {
+      button = Array.from(panel.parentElement.querySelectorAll(':scope > .admin-tabs .admin-tab[data-tab-target]')).find((b) => b.dataset.tabTarget === panel.dataset.tab) || null;
+    }
+    button?.click();
+  }
+  for (let details = field.closest('details'); details; details = details.parentElement?.closest('details') || null) details.open = true;
+  const editor = field.matches('[data-rich-editor]') && field.nextElementSibling?.classList.contains('rich-editor-mount') ? field.nextElementSibling : null;
+  const target = editor || field;
+  target.scrollIntoView({ block: 'center', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  target.classList.add('is-ai-flash');
+  window.setTimeout(() => target.classList.remove('is-ai-flash'), 2000);
+  if (!editor && typeof field.focus === 'function') field.focus({ preventScroll: true });
+}
+
+async function copyAiText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.append(area);
+    area.select();
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    } finally {
+      area.remove();
+    }
+  }
+}
+
+// result: what insertAiFields returned; fields: [{label, value, selector?}] everything the model produced.
+// Renders [data-ai-result] inside the box: the text of each field (300 characters, "show all"), where it went, or a copy button.
+function showAiResult(box, result, fields) {
+  if (!box) return;
+  box.querySelector('[data-ai-result]')?.remove();
+  const items = fields.filter((item) => typeof item.value === 'string' && item.value.trim() !== '');
+  if (items.length === 0) return;
+  const root = document.createElement('div');
+  root.className = 'admin-ai-result';
+  root.dataset.aiResult = '';
+  const list = document.createElement('ul');
+  for (const item of items) {
+    const hit = item.selector ? result.written.find((w) => w.selector === item.selector) : undefined;
+    const row = document.createElement('li');
+    row.dataset.aiResultItem = item.label;
+    const title = document.createElement('strong');
+    title.textContent = item.label;
+    const text = document.createElement('div');
+    text.className = 'admin-ai-result__text';
+    text.dataset.aiResultText = '';
+    const long = item.value.length > AI_PREVIEW_LIMIT;
+    text.textContent = long ? `${item.value.slice(0, AI_PREVIEW_LIMIT)}…` : item.value;
+    row.append(title, text);
+    if (long) {
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'admin-ai-result__link';
+      more.dataset.aiResultMore = '';
+      more.textContent = t('admin.ai.show_full');
+      let open = false;
+      more.addEventListener('click', () => {
+        open = !open;
+        text.textContent = open ? item.value : `${item.value.slice(0, AI_PREVIEW_LIMIT)}…`;
+        more.textContent = t(open ? 'admin.ai.show_less' : 'admin.ai.show_full');
+      });
+      row.append(more);
+    }
+    const foot = document.createElement('div');
+    foot.className = 'admin-ai-result__foot';
+    if (hit) {
+      const where = document.createElement('small');
+      where.dataset.aiResultWhere = '';
+      where.textContent = t('admin.ai.inserted_in', { field: hit.label });
+      const show = document.createElement('button');
+      show.type = 'button';
+      show.className = 'admin-ai-result__link';
+      show.dataset.aiRevealField = '';
+      show.textContent = t('admin.ai.show_field');
+      show.addEventListener('click', () => revealField(hit.field));
+      foot.append(where, show);
+    } else {
+      const copy = document.createElement('button');
+      copy.type = 'button';
+      copy.className = 'admin-ai-result__link';
+      copy.dataset.aiCopy = '';
+      copy.textContent = t('admin.ai.copy');
+      copy.addEventListener('click', async () => {
+        const ok = await copyAiText(item.value);
+        copy.textContent = t(ok ? 'admin.ai.copied' : 'admin.ai.copy_failed');
+        window.setTimeout(() => { copy.textContent = t('admin.ai.copy'); }, 2000);
+      });
+      foot.append(copy);
+    }
+    row.append(foot);
+    list.append(row);
+  }
+  root.append(list);
+  box.append(root);
+}
+
+// The one honest sentence for the status line: success only when something was written, otherwise why not.
+function aiStatusText(result) {
+  const notes = result.empty.map((label) => t('admin.ai.empty_field', { field: label }));
+  if (result.written.length === 0) return [result.missing.length > 0 ? t('admin.ai.insert_failed') : '', ...notes].filter(Boolean).join(' ') || t('admin.ai.insert_failed');
+  if (result.missing.length > 0) notes.push(t('admin.ai.insert_failed'));
+  return [t('admin.ai.draft_inserted'), ...notes].join(' ');
+}
+
+// Settle one AI answer: write the fields, show the text, set the status. Returns true when something was written.
+function applyAiFields(box, status, scope, mapping) {
+  const result = insertAiFields(scope, mapping);
+  showAiResult(box, result, mapping.map((item) => ({ label: aiMappingLabel(scope, item), value: item.value, selector: item.selector })));
+  status.textContent = aiStatusText(result);
+  status.classList.toggle('is-error', result.written.length === 0);
+  return result.written.length > 0;
+}
+
+function aiMappingLabel(scope, item) {
+  const field = aiFind(scope, item.selector);
+  return field ? aiFieldLabel(field, item.label || '') : (item.label || item.selector);
+}
+
 const checkAll = document.querySelector('[data-check-all]');
 if (checkAll) checkAll.addEventListener('change', () => document.querySelectorAll('[data-row-check]').forEach((box) => { box.checked = checkAll.checked; }));
 
@@ -7,20 +192,22 @@ const aiDraftButton = document.querySelector('[data-ai-product-draft]');
 if (aiDraftButton) {
   aiDraftButton.addEventListener('click', async () => {
     const form = aiDraftButton.closest('form');
-    const status = form?.querySelector('[data-ai-status]');
-    const provider = form?.querySelector('[data-ai-provider]');
-    const token = form?.querySelector('[data-ai-token]');
-    if (!form || !status || !provider || !token) return;
+    const box = aiDraftButton.closest('.admin-ai-helper');
+    const status = box?.querySelector('[data-ai-status]');
+    const provider = box?.querySelector('[data-ai-provider]');
+    const token = box?.querySelector('[data-ai-token]');
+    if (!form || !box || !status || !provider || !token) return;
     const name = form.querySelector('[name="name"]');
     const sku = form.querySelector('[name="sku"]');
     const shortDescription = form.querySelector('[name="short_description"]');
     const description = form.querySelector('[name="description"]');
     aiDraftButton.disabled = true;
+    status.classList.remove('is-error');
     status.textContent = t('admin.ai.generating');
     try {
       const brandSelect = form.querySelector('[name="brand_id"]');
       const brand = brandSelect && brandSelect.value !== '0' ? (brandSelect.selectedOptions[0]?.textContent || '').trim() : '';
-      const categories = Array.from(form.querySelectorAll('[name="category_ids[]"]:checked')).map((box) => box.closest('label')?.textContent?.trim() || '').filter(Boolean).join(', ');
+      const categories = Array.from(form.querySelectorAll('[name="category_ids[]"]:checked')).map((checkbox) => checkbox.closest('label')?.textContent?.trim() || '').filter(Boolean).join(', ');
       const attributes = Array.from(form.querySelectorAll('[name^="attribute["]')).map((input) => {
         const value = input instanceof HTMLSelectElement ? (input.value === '' ? '' : (input.selectedOptions[0]?.textContent || '').trim()) : String(input.value || '').trim();
         const label = input.closest('label')?.querySelector('span')?.textContent?.trim() || '';
@@ -30,12 +217,12 @@ if (aiDraftButton) {
       const response = await fetch('/admin/api/ai/product-draft', {method:'POST', headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest','Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body});
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || 'AI request failed');
-      // The input event lets the visual editor show the new text (and keeps it when the person edits it afterwards).
-      for (const [field, value] of [[shortDescription, data.short_description], [description, data.description]]) {
-        if (field && value) { field.value = value; field.dispatchEvent(new Event('input', { bubbles: true })); }
-      }
-      status.textContent = t('admin.ai.draft_inserted');
+      applyAiFields(box, status, form, [
+        { selector: '[name="short_description"]', value: data.short_description, label: 'short_description' },
+        { selector: '[name="description"]', value: data.description, label: 'description' },
+      ]);
     } catch (error) {
+      status.classList.add('is-error');
       status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
     } finally {
       aiDraftButton.disabled = false;
@@ -52,9 +239,11 @@ document.querySelectorAll('[data-ai-task]').forEach((button) => {
     if (!box || !status || !provider) return;
     let inputs; let outputs;
     try { inputs = JSON.parse(button.dataset.aiIn || '{}'); outputs = JSON.parse(button.dataset.aiOut || '{}'); } catch { return; }
+    const scope = aiScope(box);
     const body = new URLSearchParams({ _token: box.dataset.aiToken || '', task: button.dataset.aiTask || '', provider: provider.value });
-    for (const [name, selector] of Object.entries(inputs)) body.append(`fields[${name}]`, document.querySelector(selector)?.value || '');
+    for (const [name, selector] of Object.entries(inputs)) body.append(`fields[${name}]`, aiFind(scope, selector)?.value || '');
     button.disabled = true;
+    status.classList.remove('is-error');
     status.textContent = t('admin.ai.generating');
     try {
       const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
@@ -63,14 +252,14 @@ document.querySelectorAll('[data-ai-task]').forEach((button) => {
       // Several outputs may go into one field (a category has one text for the intro and the SEO part): joined in order.
       const bySelector = new Map();
       for (const [name, selector] of Object.entries(outputs)) {
-        if (typeof data.fields?.[name] === 'string' && data.fields[name] !== '') bySelector.set(selector, [...(bySelector.get(selector) || []), data.fields[name]]);
+        const value = typeof data.fields?.[name] === 'string' ? data.fields[name] : '';
+        const entry = bySelector.get(selector) || { selector, parts: [], label: name };
+        if (value.trim() !== '') entry.parts.push(value);
+        bySelector.set(selector, entry);
       }
-      for (const [selector, values] of bySelector) {
-        const field = document.querySelector(selector);
-        if (field) { field.value = values.join('\n'); field.dispatchEvent(new Event('input', { bubbles: true })); }
-      }
-      status.textContent = t('admin.ai.draft_inserted');
+      applyAiFields(box, status, scope, Array.from(bySelector.values(), (entry) => ({ selector: entry.selector, value: entry.parts.join('\n'), label: entry.label })));
     } catch (error) {
+      status.classList.add('is-error');
       status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
     } finally {
       button.disabled = false;
@@ -83,7 +272,9 @@ document.querySelectorAll('[data-ai-photo]').forEach((box) => {
   const run = box.querySelector('[data-ai-photo-run]');
   const status = box.querySelector('[data-ai-photo-status]');
   run?.addEventListener('click', async () => {
-    const file = box.querySelector('[data-ai-photo-file]')?.files?.[0] || document.querySelector('[data-ai-photo-source]')?.files?.[0];
+    const scope = aiScope(box);
+    const file = box.querySelector('[data-ai-photo-file]')?.files?.[0] || aiFind(scope, '[data-ai-photo-source]')?.files?.[0];
+    status.classList.remove('is-error');
     if (!file) { status.textContent = t('admin.ai.photo_choose'); return; }
     const body = new FormData();
     body.append('_token', box.dataset.aiPhotoToken || '');
@@ -96,19 +287,25 @@ document.querySelectorAll('[data-ai-photo]').forEach((box) => {
       const response = await fetch(box.dataset.aiPhotoUrl || '', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
-      const set = (selector, value) => {
-        const field = document.querySelector(selector);
-        if (field && typeof value === 'string' && value !== '') { field.value = value; field.dispatchEvent(new Event('input', { bubbles: true })); }
-      };
-      set('[name=name]', data.fields?.name);
-      set('[name=short_description]', data.fields?.short_description);
-      set('[name=description]', data.fields?.description);
+      // Only the fields of this form (a name field elsewhere on the page must never receive the text).
+      const mapping = [
+        { selector: '[name="name"]', value: data.fields?.name, label: 'name' },
+        { selector: '[name="short_description"]', value: data.fields?.short_description, label: 'short_description' },
+        { selector: '[name="description"]', value: data.fields?.description, label: 'description' },
+      ];
+      const result = insertAiFields(scope, mapping);
       const brand = data.fields?.brand ? t('admin.ai.photo_brand') + ': ' + data.fields.brand : '';
       const extra = [brand, data.fields?.attributes || ''].filter(Boolean).join('\n');
       const notes = box.querySelector('[data-ai-photo-notes]');
       if (notes && extra) { notes.textContent = extra; notes.hidden = false; }
-      status.textContent = t('admin.ai.draft_inserted');
+      const shown = mapping.map((item) => ({ label: aiMappingLabel(scope, item), value: item.value, selector: item.selector }));
+      // brand and attributes have no form field: they are shown (with a copy button) next to the written fields
+      if (extra) shown.push({ label: t('admin.ai.photo_notes'), value: extra });
+      showAiResult(box, result, shown);
+      status.textContent = aiStatusText(result);
+      status.classList.toggle('is-error', result.written.length === 0);
     } catch (error) {
+      status.classList.add('is-error');
       status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
     } finally {
       run.disabled = false;
@@ -131,15 +328,20 @@ if (aiPlayground) {
     else if (task === 'translate') { body.append('fields[text]', text); body.append('fields[target]', target); }
     else { body.append('fields[title]', text.split('\n')[0].slice(0, 200)); body.append('fields[body]', text); }
     run.disabled = true;
-    if (status) status.textContent = t('admin.ai.generating');
+    if (status) { status.classList.remove('is-error'); status.textContent = t('admin.ai.generating'); }
     try {
       const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
-      if (output) output.value = Object.values(data.fields || {}).join('\n\n');
-      if (status) status.textContent = t('admin.ai.draft_inserted');
+      const answer = Object.values(data.fields || {}).filter((value) => typeof value === 'string' && value.trim() !== '').join('\n\n');
+      if (output && answer !== '') output.value = answer;
+      if (status) {
+        const written = Boolean(output) && answer !== '';
+        status.classList.toggle('is-error', !written);
+        status.textContent = written ? t('admin.ai.draft_inserted') : t(output ? 'admin.ai.empty_answer' : 'admin.ai.insert_failed');
+      }
     } catch (error) {
-      if (status) status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+      if (status) { status.classList.add('is-error'); status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed'); }
     } finally {
       run.disabled = false;
     }

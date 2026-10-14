@@ -977,6 +977,17 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
 .admin-ai-helper.is-compact { grid-template-columns: auto minmax(0, 1fr); gap: var(--mc-space-2); padding: var(--mc-space-1) 0; border: 0; background: transparent; }
 .admin-ai-helper.is-compact [data-ai-status] { grid-column: auto; }
 .admin-ai-helper [data-ai-status] { grid-column: 1 / -1; font-size: var(--mc-font-size-sm); }
+.admin-ai-helper [data-ai-status].is-error, .admin-ai-helper [data-ai-photo-status].is-error { color: var(--mc-color-danger); font-weight: var(--mc-font-weight-semibold); }
+.admin-ai-helper [data-ai-photo-status] { grid-column: 1 / -1; }
+.admin-ai-result { grid-column: 1 / -1; min-width: 0; padding-top: var(--mc-space-2); border-top: 1px solid color-mix(in srgb, var(--mc-color-primary) 20%, var(--mc-color-background)); }
+.admin-ai-result ul { display: grid; gap: var(--mc-space-3); margin: 0; padding: 0; list-style: none; }
+.admin-ai-result li { display: grid; gap: var(--mc-space-1); min-width: 0; }
+.admin-ai-result__text { max-height: 18rem; overflow: auto; padding: var(--mc-space-2) var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); font-size: var(--mc-font-size-sm); white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-ai-result__foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-3); }
+.admin-ai-result__link { padding: 0; border: 0; background: none; color: var(--mc-color-primary); font: inherit; font-size: var(--mc-font-size-sm); text-decoration: underline; cursor: pointer; justify-self: start; }
+.is-ai-flash { outline: 3px solid var(--mc-color-primary); outline-offset: 2px; border-radius: var(--mc-radius-sm); animation: admin-ai-flash 2s ease-out; }
+@keyframes admin-ai-flash { 0%, 60% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--mc-color-primary) 30%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .is-ai-flash { animation: none; } }
 .admin-variant-stack,
 .admin-document-list { display: grid; gap: var(--mc-space-2); }
 .admin-variant-row,
