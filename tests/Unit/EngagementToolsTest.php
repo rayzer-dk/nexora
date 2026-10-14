@@ -19,7 +19,7 @@ final class EngagementToolsTest extends TestCase
     protected function setUp(): void
     {
         $this->db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $this->db->executeStatement('CREATE TABLE mc_contact_widget (store_id INTEGER PRIMARY KEY, enabled INTEGER, position TEXT, callback_enabled INTEGER, write_enabled INTEGER, phone TEXT, email TEXT, viber TEXT, messenger TEXT, telegram TEXT, updated_at TEXT)');
+        $this->db->executeStatement('CREATE TABLE mc_contact_widget (store_id INTEGER PRIMARY KEY, enabled INTEGER, position TEXT, callback_enabled INTEGER, write_enabled INTEGER, phone TEXT, email TEXT, viber TEXT, whatsapp TEXT, messenger TEXT, telegram TEXT, updated_at TEXT)');
         $this->db->executeStatement('CREATE TABLE mc_store_profile (store_id INTEGER, phone TEXT)');
         $this->db->insert('mc_store_profile', ['store_id' => 1, 'phone' => '+380 (44) 111-22-33']);
     }

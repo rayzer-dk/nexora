@@ -80,13 +80,13 @@ final class ExtensionServicesTest extends TestCase
     public function testFeedFormatOfAModuleIsListedButCannotShadowABuiltInFormat(): void
     {
         $registry = new ExtensionServiceRegistry();
-        $registry->add('provider.feed', $this->format('hotline'));
+        $registry->add('provider.feed', $this->format('skrutka'));
         $registry->add('provider.feed', $this->format('google'));
         $registry->add('provider.feed', $this->format('Bad Code'));
         $db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
         $generator = new ProductFeedGenerator(new CanonicalProductExportService($db, 'https://x.test'), $db, 'https://x.test', $registry);
 
-        $this->assertSame(['hotline'], array_keys($generator->extensionFormats()));
+        $this->assertSame(['skrutka'], array_keys($generator->extensionFormats()));
     }
 
     public function testBooterRunsOnceBeforeTheFirstLookup(): void

@@ -17,7 +17,7 @@ final class ChatWidgetSettingsTest extends TestCase
     protected function setUp(): void
     {
         $this->db = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $this->db->executeStatement('CREATE TABLE mc_chat_widget (store_id INTEGER PRIMARY KEY, provider TEXT, widget_id TEXT, base_url TEXT, updated_at TEXT)');
+        $this->db->executeStatement('CREATE TABLE mc_chat_widget (store_id INTEGER PRIMARY KEY, provider TEXT, widget_id TEXT, base_url TEXT, load_delay INTEGER NOT NULL DEFAULT 0, updated_at TEXT)');
     }
 
     /** @return iterable<string,array{string,string,?string}> */
