@@ -917,6 +917,14 @@ function render(lang){
   WAITS = collectWaits(S);
   const fin = !!S.finishedAt;
   const waiting = !fin && S.waiting ? S.waiting : null;
+  // A chat transcript is not a running supervisor. Never call an old final-stage
+  // snapshot "acceptance in progress" when no recent confirmed state exists.
+  const runnerFresh = RUNNER && RUNNER.updatedAt &&
+    Date.now() - new Date(RUNNER.updatedAt).getTime() < 90000 &&
+    ['running', 'stalled'].includes(RUNNER.status);
+  const lastStateUpdate = toMs(S.updatedAt);
+  const unconfirmed = !fin && !waiting && !runnerFresh &&
+    lastStateUpdate != null && Date.now() - lastStateUpdate > 90000;
 
   const by = st => T.filter(t => t.status === st);
   const done = by('done'), writing = by('in-progress'), inReview = by('review'),
@@ -968,7 +976,7 @@ function render(lang){
   const cpMin = Math.max(0, ...T.map(t => chainMin(t.id, new Set())));
   const stageMin = id => { const s = stage(id); return s.startedAt ? (activeMs(s.startedAt, s.finishedAt) || 0) / 60000 : 0; };
   let left = null, lateEta = false;
-  if (!fin && !waiting && !failedStage) {
+  if (!fin && !waiting && !failedStage && !unconfirmed) {
     const buildSoFar = stageMin('build');
     if (activeStage && activeStage.id === 'build' && median) {
       left = cpMin + Math.max(10, 0.5 * (buildSoFar + cpMin)) + 8;
@@ -1001,6 +1009,13 @@ function render(lang){
     hint = `<span class="hint">${ic('msg','m')}${L.waitHint}</span>`;
     big = `<span data-since="${esc(waiting.since)}">${fmtClock(spanMs(waiting.since, null))}</span>`;
     bigSub = L.waitBig;
+  } else if (unconfirmed && !failedStage) {
+    heroCls = 'ask';
+    stateLine = `<span class="badge-ic">${ic('clock','xs')}</span>${L.lang === 'ru' ? 'Ожидается подтверждение этапа' : 'Waiting for stage confirmation'}`;
+    h2 = L.lang === 'ru' ? 'Нет подтверждённого продолжения' : 'No confirmed continuation';
+    lead = L.lang === 'ru' ? 'Последняя запись состояния устарела. Финальная приёмка и окончание работы не подтверждены; сообщение агента само по себе не закрывает этап.' : 'State has not been updated recently. Acceptance and completion are not confirmed by the agent message alone.';
+    big = '—';
+    bigSub = L.lang === 'ru' ? 'оценка времени приостановлена' : 'time estimate paused';
   } else if (failedStage) {
     heroCls = 'bad';
     stateLine = `<span class="badge-ic">${ic('x','xs')}</span>${L.failState}`;
@@ -1266,6 +1281,12 @@ function render(lang){
       S.depth ? `<span class="tag">${esc(L.depths[S.depth] || S.depth)}</span>` : ''}<span class="when">${when}</span></div>
   </div>
   ${hero}
+  <section class="runnerbar" role="status"><i class="runnerdot" aria-hidden="true"></i><div>
+    <strong>${L.lang === 'ru' ? 'Лимиты и расход' : 'Usage and limits'}</strong>
+    <small>${S.usage && Number.isFinite(Number(S.usage.inputTokens)) && Number.isFinite(Number(S.usage.outputTokens))
+      ? `${L.lang === 'ru' ? 'Зафиксировано CLI: вход' : 'Recorded CLI: input'} ${Number(S.usage.inputTokens).toLocaleString()}, ${L.lang === 'ru' ? 'выход' : 'output'} ${Number(S.usage.outputTokens).toLocaleString()}`
+      : (L.lang === 'ru' ? 'Нет достоверных данных о расходе токенов. Лимиты аккаунта ChatGPT/Codex недоступны локальному навыку; проценты не вычисляются приблизительно.' : 'No verified token usage. ChatGPT/Codex account quotas are not accessible to the local skill; no percentages are guessed.')}</small>
+  </div></section>
   ${(() => {
     const r = RUNNER;
     const age = r && r.updatedAt ? Date.now() - new Date(r.updatedAt).getTime() : Infinity;
