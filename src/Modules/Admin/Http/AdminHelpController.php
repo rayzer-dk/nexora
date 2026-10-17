@@ -23,6 +23,12 @@ final class AdminHelpController extends AbstractController
         return $this->render('@storefront/admin/help/index.html.twig', ['docs' => $this->catalog->all()]);
     }
 
+    #[Route('/admin/project-support', name: 'admin_project_support', methods: ['GET'])]
+    public function projectSupport(): Response
+    {
+        return $this->render('@storefront/admin/help/project_support.html.twig');
+    }
+
     #[Route('/admin/help/{slug}', name: 'admin_help_doc', methods: ['GET'], requirements: ['slug' => '[a-z0-9-]{2,40}'])]
     public function doc(string $slug): Response
     {
