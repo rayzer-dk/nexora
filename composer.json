@@ -117,16 +117,19 @@
         "analyse": "@php vendor/bin/phpstan analyse --configuration=phpstan.neon.dist --memory-limit=2G --no-progress",
         "cs": "@php vendor/bin/phpcs --standard=phpcs.xml.dist",
         "cs:psr12": "@php vendor/bin/phpcs --standard=PSR12 --extensions=php src",
-        "deptrac": "@php vendor/bin/deptrac analyse --config-file=deptrac.php --no-progress",
+        "deptrac": "@php vendor/bin/deptrac analyse --config-file=deptrac.yaml --no-progress",
         "rector:check": "@php vendor/bin/rector process --config=rector.php --dry-run --no-progress-bar",
         "check:encoding": "@php bin/source-encoding-check.php",
+        "check:source-guard": "@php tools/quality/source_guard.php --check src tests config tools",
         "test:source-encoding": "@php vendor/bin/phpunit --configuration=phpunit.xml.dist tests/SourceEncodingCheckTest.php",
+        "test:source-guard": "@php tools/quality/source_guard_test.php",
         "quality:php": [
             "@check:encoding",
+            "@test:source-encoding",
+            "@test:source-guard",
+            "@check:source-guard",
             "@analyse",
-            "@cs",
-            "@deptrac",
-            "@rector:check"
+            "@cs"
         ],
         "audit:ui": "php bin/icons-check.php && php bin/css-coverage-check.php && php bin/design-tokens-check.php",
         "audit:ux-modernization": "php bin/ux-modernization-check.php",

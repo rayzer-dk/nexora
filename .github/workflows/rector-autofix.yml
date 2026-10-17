@@ -1,4 +1,7 @@
-name: Nexora Rector review and controlled main fix
+name: Nexora Rector review (dry-run)
+
+# Rector never writes to main: this workflow only reports proposed changes.
+# Apply a suggestion by hand in main after review, PHPStan, PHPCS and PHPUnit.
 
 on:
   push:
@@ -10,27 +13,26 @@ on:
   workflow_dispatch:
     inputs:
       php_file:
-        description: 'Existing src/*.php file to refactor (required when applying)'
+        description: 'Existing src/*.php file to review (empty: files changed by the last commit)'
         required: false
         type: string
-      apply:
-        description: 'Apply vetted automatic corrections directly in main after checks'
-        required: true
-        type: boolean
-        default: false
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   review:
-    if: github.event_name == 'push' || inputs.apply != true
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 2
+          persist-credentials: false
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -38,13 +40,14 @@ jobs:
           tools: composer:v2
       - name: Install development-only Rector
         run: composer install --working-dir=tools/quality --no-interaction --prefer-dist --no-progress
-      - name: Analyze modified PHP files without rewriting main
+      - name: Report Rector suggestions without rewriting sources
         shell: bash
         env:
           TARGET_FILE: ${{ inputs.php_file }}
         run: |
           set -euo pipefail
-          if [ -n "$TARGET_FILE" ]; then
+          : > rector-report.txt
+          if [ -n "${TARGET_FILE:-}" ]; then
             php_files=("$TARGET_FILE")
           else
             mapfile -d '' -t php_files < <(git diff --name-only -z --diff-filter=ACM HEAD^ HEAD -- src)
@@ -53,57 +56,16 @@ jobs:
             [[ "$file" =~ ^src/[A-Za-z0-9_./-]+\.php$ && "$file" != *..* && -f "$file" && ! -L "$file" ]] || continue
             php tools/quality/source_guard.php --check "$file"
             set +e
-            tools/quality/vendor/bin/rector process "$file" --config=rector.php --dry-run --max-changes=8 --no-progress-bar
-            status=$?
+            tools/quality/vendor/bin/rector process "$file" --config=rector.php --dry-run --no-progress-bar | tee -a rector-report.txt
+            status=${PIPESTATUS[0]}
             set -e
             if [ "$status" -ne 0 ]; then echo "Rector reported suggestions or diagnostics for $file (exit $status)."; fi
           done
-
-  apply:
-    if: github.event_name == 'workflow_dispatch' && inputs.apply == true && github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v5
+          git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          fetch-depth: 2
-          persist-credentials: true
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo_mysql,simplexml,sodium,zip
-          coverage: none
-          tools: composer:v2
-      - name: Install isolated tools and application test dependencies
-        run: |
-          composer install --working-dir=tools/quality --no-interaction --prefer-dist --no-progress
-          composer install --no-interaction --prefer-dist --no-progress
-      - name: Apply Rector and verify selected source
-        shell: bash
-        env:
-          TARGET_FILE: ${{ inputs.php_file }}
-        run: |
-          set -euo pipefail
-          if [[ ! "$TARGET_FILE" =~ ^src/[A-Za-z0-9_./-]+\.php$ || "$TARGET_FILE" == *..* || ! -f "$TARGET_FILE" || -L "$TARGET_FILE" ]]; then
-            echo "Invalid first-party PHP target"
-            exit 2
-          fi
-          php tools/quality/source_guard.php --fix-safe "$TARGET_FILE"
-          tools/quality/vendor/bin/rector process "$TARGET_FILE" --config=rector.php --max-changes=8 --no-progress-bar
-          php tools/quality/source_guard.php --check "$TARGET_FILE"
-          php -l "$TARGET_FILE"
-          tools/quality/vendor/bin/phpcs --standard=phpcs.xml.dist "$TARGET_FILE"
-          tools/quality/vendor/bin/phpstan analyse -c phpstan.neon.dist "$TARGET_FILE" --no-progress --memory-limit=2G
-          if git diff --quiet -- "$TARGET_FILE"; then
-            echo "Rector found no necessary corrections"
-            exit 0
-          fi
-          vendor/bin/phpunit --configuration phpunit.xml.dist
-          git diff --check
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- "$TARGET_FILE"
-          git commit -m "refactor(qa): validated Rector correction on main"
-          git push origin HEAD:main
+          name: rector-dry-run-report
+          path: rector-report.txt
+          if-no-files-found: ignore
+          retention-days: 14

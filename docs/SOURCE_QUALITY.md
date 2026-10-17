@@ -1,15 +1,14 @@
-# Automatic refactoring and source safety
+# Refactoring suggestions and source safety
 
 Nexora uses PHPStan for type/API verification, PHP_CodeSniffer for security
 hygiene, Deptrac for architectural dependencies, and Rector for
-controlled **source code modifications** in main only.
+**refactoring suggestions** (see `docs/QUALITY_TOOLS.md`).
 
-Rector runs read-only after ordinary pushes to main. An operator can
-select one existing `src/*.php` file through the manual GitHub Actions
-workflow and `apply=true`; it applies only the narrow
-`SimplifyIfReturnBoolRector` transformation and commits after source
-integrity, PHP lint, PHPCS, PHPStan, PHPUnit and diff checks pass.
-No temporary branches, automatic deployment or broad rewrites.
+Rector runs only in dry-run mode: after pushes to main and on manual dispatch
+(`.github/workflows/rector-autofix.yml`), and in the PHP quality workflow. It
+reports proposed changes and uploads them as a report; it never commits,
+pushes, opens branches or deploys. A useful suggestion is applied by hand in
+main after review and PHP lint, source guard, PHPCS, PHPStan and PHPUnit pass.
 
 `php tools/quality/source_guard.php --check src` inspects sources.
 `php tools/quality/source_guard.php --fix-safe src` removes only UTF-8

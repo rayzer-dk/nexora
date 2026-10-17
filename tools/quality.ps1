@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('quality:php', 'analyse', 'cs', 'cs:psr12', 'deptrac', 'rector:check', 'check:encoding', 'test:source-encoding')]
+    [ValidateSet('quality:php', 'analyse', 'cs', 'cs:psr12', 'deptrac', 'rector:check', 'check:encoding', 'check:source-guard', 'test:source-encoding', 'test:source-guard')]
     [string]$Task = 'quality:php',
     [string]$PhpBinary = '',
     [string]$ComposerPhar = ''

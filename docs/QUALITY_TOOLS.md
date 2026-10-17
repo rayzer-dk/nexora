@@ -1,63 +1,61 @@
 # Nexora PHP quality tooling
 
-PHPStan, PHP_CodeSniffer, Deptrac, and Rector are development-only tools for Nexora.
-They are not dependencies of the deployed application. The production composer.json
-and composer.lock are deliberately unchanged.
+PHPStan, PHP_CodeSniffer, Deptrac and Rector are development-only tools. They
+are not part of the deployed application: `composer install --no-dev` omits them.
+There is one set of configuration files and one CI workflow:
 
-## Install (PHP 8.4 and Composer 2)
+| File | Purpose |
+| --- | --- |
+| `phpstan.neon.dist` | PHPStan level 3, `src`, no baseline (blocking) |
+| `phpstan.strict.neon.dist` | PHPStan level 5 report (advisory) |
+| `phpcs.xml.dist` | Security, naming and file-hygiene rules (blocking) |
+| `deptrac.yaml` | Core/Domain/Application/Infrastructure/Http layer map (advisory) |
+| `rector.php` | Narrow approved rules, always dry-run (advisory) |
+| `bin/source-encoding-check.php` | Whole repository: UTF-8, no UTF-8/16/32 BOM (blocking) |
+| `tools/quality/source_guard.php` | Invisible/bidi Unicode, confusables, placeholders (blocking) |
+| `.github/workflows/php-quality-tools.yml` | The PHP quality workflow running all of the above |
+| `.github/workflows/rector-autofix.yml` | Rector dry-run report for changed files; never commits |
 
-From the repository root:
+## Local commands
 
-```sh
-cd tools/quality
-composer install
-cd ../..
-```
+Install development dependencies with `composer install` (versions locked in
+`composer.lock`). Run from the repository root with PHP >= 8.4.
 
-The first Composer install resolves dependencies because this isolated tools
-manifest does not yet carry a lockfile. Commit a generated tools/quality/composer.lock
-after a verified run for fully reproducible future installs. Do not run Composer
-updates automatically on the production dependency lockfile.
+| Command | Scope |
+| --- | --- |
+| `composer quality:php` | All blocking checks below; stops at the first failure |
+| `composer check:encoding` | Source text must be valid UTF-8 without BOM |
+| `composer test:source-encoding` | Encoding guard regression tests |
+| `composer check:source-guard` · `composer test:source-guard` | Source guard on `src tests config tools` and its fixtures |
+| `composer analyse` | PHPStan level 3 |
+| `composer cs` | PHPCS with `phpcs.xml.dist` |
+| `composer cs:psr12` | Full PSR-12 audit; existing formatting debt is not rewritten |
+| `composer deptrac` | Deptrac report with `deptrac.yaml` (advisory, legacy violations) |
+| `composer rector:check` | Rector dry-run (advisory, never applies changes) |
 
-## Run
+On Windows, `tools/quality.ps1 -Task analyse` runs the same Composer scripts. It
+uses PHP from PATH or Laragon's PHP 8.4 and Composer from PATH or Laragon; supply
+`-PhpBinary` and `-ComposerPhar` for other locations, or set `LARAGON_ROOT`.
 
-```sh
-# Existing enforced PHPStan: .github/workflows/qa.yml (level 3).
-# For local use, first install application dependencies: composer install
-tools/quality/vendor/bin/phpstan analyse -c phpstan.neon.dist --memory-limit=2G --no-progress
+CI installs the same tools in isolation from `tools/quality/composer.json`
+(`composer install --working-dir=tools/quality`) so that the tool versions do
+not depend on the application lock file.
 
-# Focused security and file-hygiene rules. Does not rewrite files.
-tools/quality/vendor/bin/phpcs --standard=phpcs.xml.dist --report=summary
+## Policy
 
-# Dependency architecture report; current project debt must be reviewed.
-tools/quality/vendor/bin/deptrac analyse --config-file=deptrac.yaml
+- Rector never writes to main by itself. Both workflows run it with `--dry-run`
+  and only report. A suggestion is applied by hand in main, after review and
+  PHPStan, PHPCS, PHPUnit and source guard checks.
+- Deptrac is advisory until the existing violations (Application → Infrastructure,
+  Core → Modules) are triaged. Cross-module exceptions remain documented in
+  `config/architecture/module_boundaries.json`. No Deptrac baseline is installed.
+- Full PSR-12 is a separate audit; enforcing it would reformat unrelated code.
+- Never run PHPCBF or Rector without `--dry-run` across the project, and never
+  hide findings with broad ignores, baselines, casts or invented types.
+- Inspect each finding against the real source and callers; a green static check
+  does not replace runtime tests or security review.
 
-# Read-only Rector check; main-only manual workflow can apply a validated one-file change.
-tools/quality/vendor/bin/rector process --config=rector.php --dry-run --no-progress-bar
-```
-
-The existing PHPStan gate in qa.yml is not replaced or duplicated. It currently
-downloads a pinned PHPStan PHAR and checks level 3. The isolated tool installation
-allows agents and local development to invoke all four tools consistently.
-
-The initial PHPCS profile intentionally checks a small set of high-signal rules.
-Whole-project PSR-12 reformatting is **not** enabled until legacy findings are
-assessed, to avoid unrelated formatting churn.
-
-The Deptrac layer map checks Core/Domain/Application/Infrastructure/Http dependency
-directions. Existing cross-module exceptions are documented in
-config/architecture/module_boundaries.json and must not be expanded without review.
-Deptrac is advisory until the existing violations are triaged and an accurate
-baseline is established.
-
-The regular quality workflow never commits refactoring changes. Rector on main
-reviews changed files in dry-run mode; a separate manual main-only workflow
-can apply corrections to one selected PHP file after tests. Do not use it to
-hide dependency, configuration or PHP-version errors.
-
-## Safety
-
-Never add these tools to production deployments, run php-cbf or Rector auto-fix
-against the full project without review, or suppress errors by automatically
-adding ignore/baseline entries. Any refactor needs focused tests and regression
-checks before being merged.
+The encoding check follows `docs/ENCODING.md` and never rewrites content. Its
+default scan excludes dependencies, local agent state and generated/runtime
+directories. `.editorconfig` asks editors to save UTF-8 without BOM.
+See `docs/SOURCE_QUALITY.md` for the source guard and the CSV/Excel BOM exception.

@@ -5,8 +5,7 @@
 - Confirm real method signatures and existing project services before using any API; check PHPStan and tests.
 - Do not create redundant guards, broad catch-and-ignore exceptions, duplicate implementations, pointless tests or excessive trivial comments.
 - Check Deptrac architecture rules and protect independent modules from hidden mandatory dependencies.
-- On main, Rector reviews changes read-only. A single explicitly selected first-party PHP file may be auto-corrected on main only by manual workflow dispatch with apply=true after PHPStan, PHPUnit, PHPCS, syntax and source guard checks; no changes are deployed automatically.
-
+- Rector is dry-run only, locally and in CI: it reports suggestions and never commits or pushes to main. Apply a suggestion by hand in main after review and PHPStan, PHPUnit, PHPCS, syntax and source guard checks. Tools, configs and the single PHP quality workflow: `docs/QUALITY_TOOLS.md`.
 
 ## Quality Fixer (Codex / Claude Code)
 
@@ -33,9 +32,9 @@ Quality Fixer handles evidenced CI failures and regressions, invoking existing S
 | Команда | Что делает |
 |---------|------------|
 | `composer install` · `npm ci` | Установить зависимости |
-| `composer quality:php` | UTF-8 без BOM, PHPStan, PHPCS, Deptrac, Rector dry-run |
-| `composer analyse` · `composer cs` · `composer deptrac` · `composer rector:check` | Отдельные проверки PHP; без автоматических правок |
-| `composer check:encoding` · `composer test:source-encoding` | Проверка кодировки и тесты защиты от BOM |
+| `composer quality:php` | Блокирующие проверки PHP: UTF-8 без BOM, source guard, PHPStan, PHPCS |
+| `composer analyse` · `composer cs` · `composer check:encoding` · `composer check:source-guard` | Отдельные блокирующие проверки; без автоматических правок |
+| `composer deptrac` · `composer rector:check` | Отчёты (advisory): Deptrac по `deptrac.yaml`, Rector только `--dry-run` |
 | `tools/quality.ps1 -Task analyse` | Те же команды на Windows, включая Laragon без PHP/Composer в PATH |
 | `php bin/console commerce:install --demo …` | Установить магазин с демо-данными (см. `docs/INSTALLATION.md`) |
 | `php -S 127.0.0.1:8000 -t public public/index.php` | Запустить локально |
@@ -47,9 +46,9 @@ Quality Fixer handles evidenced CI failures and regressions, invoking existing S
 
 ## Как здесь работает Autopilot
 
-Правила инструментов разработки: `docs/DEVELOPMENT_QUALITY.md`. Исходники — UTF-8
+Правила инструментов разработки: `docs/QUALITY_TOOLS.md`. Исходники — UTF-8
 без BOM. Codex и Claude Code запускают одни и те же Composer-команды. Rector
-использовать только с `--dry-run`; не запускать массовое форматирование или
+использовать только с `--dry-run`, сам он в main не пишет; не запускать массовое форматирование или
 автоисправление вне согласованной задачи. Не скрывать найденные ошибки общими
 ignore/baseline и не изменять чужие незавершённые правки ради зелёной проверки.
 
