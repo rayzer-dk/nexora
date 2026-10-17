@@ -8,6 +8,10 @@
 | Команда | Что делает |
 |---------|------------|
 | `composer install` · `npm ci` | Установить зависимости |
+| `composer quality:php` | UTF-8 без BOM, PHPStan, PHPCS, Deptrac, Rector dry-run |
+| `composer analyse` · `composer cs` · `composer deptrac` · `composer rector:check` | Отдельные проверки PHP; без автоматических правок |
+| `composer check:encoding` · `composer test:source-encoding` | Проверка кодировки и тесты защиты от BOM |
+| `tools/quality.ps1 -Task analyse` | Те же команды на Windows, включая Laragon без PHP/Composer в PATH |
 | `php bin/console commerce:install --demo …` | Установить магазин с демо-данными (см. `docs/INSTALLATION.md`) |
 | `php -S 127.0.0.1:8000 -t public public/index.php` | Запустить локально |
 | `npm run build:production` | Собрать фронтенд в `public/build` (не в git) |
@@ -17,6 +21,12 @@
 | `php bin/full-release-static-check.php`, `php bin/i18n-template-check.php` | Статические проверки релиза |
 
 ## Как здесь работает Autopilot
+
+Правила инструментов разработки: `docs/DEVELOPMENT_QUALITY.md`. Исходники — UTF-8
+без BOM. Codex и Claude Code запускают одни и те же Composer-команды. Rector
+использовать только с `--dry-run`; не запускать массовое форматирование или
+автоисправление вне согласованной задачи. Не скрывать найденные ошибки общими
+ignore/baseline и не изменять чужие незавершённые правки ради зелёной проверки.
 
 Сборка ведётся навыком `/autopilot`. Требования, спецификация и таски — в `.autopilot/`.
 Прогресс — `.autopilot/dashboard.html`. Требование из `manifest.md` может снять

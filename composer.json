@@ -52,7 +52,11 @@
         "symfony/yaml": "8.1.*"
     },
     "require-dev": {
+        "deptrac/deptrac": "^4.7",
+        "phpstan/phpstan": "^2.3",
         "phpunit/phpunit": "^12.0",
+        "rector/rector": "^2.7",
+        "squizlabs/php_codesniffer": "^4.0",
         "symfony/browser-kit": "8.1.*",
         "symfony/css-selector": "8.1.*",
         "symfony/stopwatch": "8.1.*"
@@ -110,7 +114,20 @@
         "audit:commerce-operations": "php bin/commerce-operations-check.php",
         "audit:backup-feed-seo": "php bin/backup-feed-seo-check.php",
         "audit:xss": "php bin/xss-hardening-check.php",
-        "analyse": "php phpstan.phar analyse --memory-limit=2G --no-progress",
+        "analyse": "@php vendor/bin/phpstan analyse --configuration=phpstan.neon.dist --memory-limit=2G --no-progress",
+        "cs": "@php vendor/bin/phpcs --standard=phpcs.xml.dist",
+        "cs:psr12": "@php vendor/bin/phpcs --standard=PSR12 --extensions=php src",
+        "deptrac": "@php vendor/bin/deptrac analyse --config-file=deptrac.php --no-progress",
+        "rector:check": "@php vendor/bin/rector process --config=rector.php --dry-run --no-progress-bar",
+        "check:encoding": "@php bin/source-encoding-check.php",
+        "test:source-encoding": "@php vendor/bin/phpunit --configuration=phpunit.xml.dist tests/SourceEncodingCheckTest.php",
+        "quality:php": [
+            "@check:encoding",
+            "@analyse",
+            "@cs",
+            "@deptrac",
+            "@rector:check"
+        ],
         "audit:ui": "php bin/icons-check.php && php bin/css-coverage-check.php && php bin/design-tokens-check.php",
         "audit:ux-modernization": "php bin/ux-modernization-check.php",
         "audit:i18n-critical": "php bin/i18n-critical-journey-check.php",

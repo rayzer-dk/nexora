@@ -12,6 +12,40 @@ permissions:
   contents: read
 
 jobs:
+  php-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo_mysql,simplexml,sodium,xmlwriter,zip
+          coverage: none
+          tools: composer:v2
+      - run: composer validate --strict
+      - name: Install locked development tools
+        id: dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+      - name: UTF-8 without BOM
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: composer check:encoding
+      - name: Encoding guard regression tests
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: composer test:source-encoding
+      - name: PHPStan (level 3, no baseline)
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: composer analyse
+      - name: PHP coding conventions
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: composer cs
+      - name: Domain dependency boundary
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: composer deptrac
+      - name: PHP 8.4 Rector checks (dry-run)
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: composer rector:check
+
   static-quality:
     runs-on: ubuntu-latest
     steps:
