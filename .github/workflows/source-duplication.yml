@@ -1,0 +1,31 @@
+name: Source duplication audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'assets/**'
+      - 'themes/**'
+      - 'upload/**'
+      - '.jscpd.json'
+      - '.github/workflows/source-duplication.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  duplicate-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Detect substantial duplicated source blocks
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes jscpd@5.4.1 --config .jscpd.json src assets themes
