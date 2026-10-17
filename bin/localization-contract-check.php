@@ -59,12 +59,27 @@ $allowedCyrillic = [
     // Linguistic data, not interface copy: stemmer suffix tables and native language names.
     realpath($root . '/src/Modules/Search/Application/SqlSearchIndex.php') ?: '',
     realpath($root . '/src/Core/I18n/AdminInterfaceLocale.php') ?: '',
+    // These constants are external provider names, CSV column aliases and feed protocol values, not translatable interface prose.
+    realpath($root . '/src/Modules/Integration/Application/IntegrationCatalog.php') ?: '',
+    realpath($root . '/src/Modules/Migration/Source/File/PlatformCatalogProfiles.php') ?: '',
+    realpath($root . '/src/Modules/Feeds/Application/ProductFeedGenerator.php') ?: '',
 ];
 
 foreach ($runtimeFiles as $path) {
     $real = realpath($path) ?: $path;
     $text = (string) file_get_contents($path);
-    if (preg_match('/[А-Яа-яІіЇїЄєҐґ]/u', $text) && !in_array($real, $allowedCyrillic, true)) {
+    // PHP comments must not count as hardcoded runtime output. Scan executable/literal tokens only.
+    if (str_ends_with($path, '.php')) {
+        $code = '';
+        foreach (token_get_all($text) as $token) {
+            if (is_string($token)) { $code .= $token; continue; }
+            if (!in_array($token[0], [T_COMMENT, T_DOC_COMMENT], true)) $code .= $token[1];
+        }
+        $runtimeCopy = $code;
+    } else {
+        $runtimeCopy = $text;
+    }
+    if (preg_match('/[А-Яа-яІіЇїЄєҐґ]/u', $runtimeCopy) && !in_array($real, $allowedCyrillic, true)) {
         $errors[] = 'Hardcoded Cyrillic runtime text: ' . str_replace($root . '/', '', $path);
     }
 
@@ -89,7 +104,8 @@ if (preg_match_all('/\$emergencyText\(\s*[\'"]([^\'"]+)[\'"]/', $emergencySource
 }
 
 foreach (array_keys($used) as $key) {
-    if (str_ends_with($key, '.')) continue; // dynamic key prefix, e.g. 'admin.localization.rounding.' ~ $step
+    // Prefixes are completed at runtime by concatenation; they are not literal translation keys.
+    if (str_ends_with($key, '.') || str_ends_with($key, '_')) continue;
     if (!array_key_exists($key, $canonical) || trim($canonical[$key]) === '') {
         $errors[] = 'Missing/empty uk-UA UI key: ' . $key;
     }
@@ -139,4 +155,4 @@ echo 'used_ui_keys=' . count($used) . "\n";
 echo 'installer_keys=' . count($installer) . "\n";
 echo 'emergency_keys=' . count($emergency) . "\n";
 echo 'foreign_storefront_counts=' . json_encode($foreignCounts, JSON_UNESCAPED_SLASHES) . "\n";
-echo "hardcoded_runtime_cyrillic=0 (except UkrainianTransliterator algorithm table)\n";
+echo "hardcoded_runtime_cyrillic=0 (reviewed linguistic/protocol data excluded)\n";

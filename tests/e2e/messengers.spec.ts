@@ -7,6 +7,8 @@ import { expect, test, type Page } from '@playwright/test';
 const MOCK = process.env.E2E_TELEGRAM_MOCK || 'http://127.0.0.1:8099';
 const TOKEN = '987654321:BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
 
+type MockMessageCall = { method: string; payload: { url: string; chat_id: number; text: string } };
+
 async function loginAdmin(page: Page): Promise<void> {
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
   await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
@@ -40,7 +42,7 @@ test('a customer links Telegram to an order with a one-time link and stops it ag
 
     // the webhook is registered at the address of this shop, with a secret part
     await Promise.all([page.waitForURL(/connections\/messengers/), page.locator('form[action$="/messengers/webhooks"] button').click()]);
-    const calls: Array<{ method: string; payload: Record<string, any> }> = await (await request.get(`${MOCK}/__log`)).json();
+    const calls: MockMessageCall[] = await (await request.get(`${MOCK}/__log`)).json();
     const hook = calls.find((c) => c.method === 'setWebhook');
     expect(hook?.payload.url).toMatch(/\/webhooks\/messengers\/telegram\/[a-f0-9]{32}$/);
     const hookPath = new URL(hook!.payload.url).pathname;
@@ -69,16 +71,16 @@ test('a customer links Telegram to an order with a one-time link and stops it ag
     await request.post('http://127.0.0.1:8099/__reset');
     const update = (text: string) => ({ data: { message: { text, chat: { id: 424242 }, from: { first_name: 'Ірина' } } } });
     expect((await request.post(hookPath, update('/start ' + 'f'.repeat(24)))).ok()).toBe(true);
-    expect((await (await request.get(`${MOCK}/__log`)).json()).filter((c: any) => c.method === 'sendMessage')).toHaveLength(0); // unknown token
+    expect((await (await request.get(`${MOCK}/__log`)).json()).filter((c: MockMessageCall) => c.method === 'sendMessage')).toHaveLength(0); // unknown token
     expect((await request.post(hookPath, update('/start ' + token))).ok()).toBe(true);
-    const greeting = (await (await request.get(`${MOCK}/__log`)).json()).find((c: any) => c.method === 'sendMessage');
+    const greeting = (await (await request.get(`${MOCK}/__log`)).json()).find((c: MockMessageCall) => c.method === 'sendMessage');
     expect(String(greeting.payload.chat_id)).toBe('424242');
     expect(greeting.payload.text).toBeTruthy();
 
     // stopping switches the chat off
     await request.post(hookPath, update('/stop'));
     const log = await (await request.get(`${MOCK}/__log`)).json();
-    expect(log.filter((c: any) => c.method === 'sendMessage')).toHaveLength(2);
+    expect(log.filter((c: MockMessageCall) => c.method === 'sendMessage')).toHaveLength(2);
   } finally {
     await saveField(page, 'telegram_customers', { CUSTOMER_TELEGRAM_ENABLED: '0' });
   }

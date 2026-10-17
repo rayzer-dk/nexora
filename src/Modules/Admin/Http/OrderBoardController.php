@@ -122,7 +122,7 @@ final class OrderBoardController extends AbstractController
                 'order' => (string) $o['order_number'], 'name' => (string) $o['customer_name'], 'phone' => (string) $o['customer_phone'], 'to' => $to,
                 'carrier' => (string) ($f['provider_code'] ?? ''), 'tracking' => (string) ($f['tracking_number'] ?? ''), 'cod' => $cod ? (int) $o['total_minor'] : 0, 'currency' => (string) $o['currency'],
                 'comment' => mb_substr((string) $o['customer_comment'], 0, 120),
-                'barcode' => \Commerce\Modules\OrderDocument\Application\Code128::svg((string) ($f['tracking_number'] ?? '') !== '' ? (string) $f['tracking_number'] : (string) $o['order_number'], 60),
+                'barcode' => 'data:image/svg+xml;base64,' . base64_encode(\Commerce\Modules\OrderDocument\Application\Code128::svg((string) ($f['tracking_number'] ?? '') !== '' ? (string) $f['tracking_number'] : (string) $o['order_number'], 60)),
             ];
         }
         if ($stickers === []) {

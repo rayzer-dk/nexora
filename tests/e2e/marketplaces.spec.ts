@@ -5,6 +5,13 @@ import { expect, test, type Page } from '@playwright/test';
 
 const MOCK = 'http://127.0.0.1:8099';
 
+type PromLogEntry = {
+  path: string;
+  auth?: string;
+  query?: { limit?: string };
+  body: Array<{ id: string; quantity_in_stock: number; presence: string }> & { status?: string; ids?: number[] };
+};
+
 async function loginAdmin(page: Page): Promise<void> {
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
   await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
@@ -52,8 +59,8 @@ test('a Prom.ua order is taken once, stock is pushed, the status goes back', asy
     // the button runs a pass at once
     await Promise.all([page.waitForURL(/connections\/marketplaces/), page.locator('form[action$="/marketplaces/run"] button').click()]);
     await expect(page.locator('[data-toast-source]').first()).toBeAttached();
-    const log: any[] = await (await request.get(`${MOCK}/__prom-log`)).json();
-    const itemsIn = (calls: any[]): number => calls.filter((c) => c.path === '/products/edit_by_external_id').reduce((n, c) => n + c.body.length, 0);
+    const log: PromLogEntry[] = await (await request.get(`${MOCK}/__prom-log`)).json();
+    const itemsIn = (calls: PromLogEntry[]): number => calls.filter((c) => c.path === '/products/edit_by_external_id').reduce((n, c) => n + c.body.length, 0);
     const pushedOnce = itemsIn(log);
     expect(log.find((c) => c.path === '/orders/list')?.auth).toBe('Bearer e2e-prom-token');
     expect(log.find((c) => c.path === '/orders/list')?.query.limit).toBe('100');
@@ -75,7 +82,7 @@ test('a Prom.ua order is taken once, stock is pushed, the status goes back', asy
     await expect(page.locator('body')).toContainText('NO-SUCH-SKU');
 
     // stock and prices were pushed once, with the variant UUID as the id and in the shop's own numbers
-    const after: any[] = await (await request.get(`${MOCK}/__prom-log`)).json();
+    const after: PromLogEntry[] = await (await request.get(`${MOCK}/__prom-log`)).json();
     const stockCalls = after.filter((c) => c.path === '/products/edit_by_external_id');
     expect(stockCalls.length).toBeGreaterThan(0);
     const first = stockCalls[0].body[0];
@@ -90,10 +97,10 @@ test('a Prom.ua order is taken once, stock is pushed, the status goes back', asy
     expect(after.find((c) => c.path === '/orders/set_status')).toBeUndefined();
     execFileSync('php', ['bin/console', 'dbal:run-sql', "UPDATE mc_sales_order SET status='confirmed' WHERE customer_comment LIKE '[PROM #9001]%'"], { env: process.env, stdio: 'ignore' });
     execFileSync('php', ['bin/console', 'commerce:marketplace:sync', '--only=prom'], { env: process.env, stdio: 'ignore' });
-    const sent: any[] = await (await request.get(`${MOCK}/__prom-log`)).json();
+    const sent: PromLogEntry[] = await (await request.get(`${MOCK}/__prom-log`)).json();
     expect(sent.find((c) => c.path === '/orders/set_status')?.body).toEqual({ status: 'received', ids: [9001] });
     execFileSync('php', ['bin/console', 'commerce:marketplace:sync', '--only=prom'], { env: process.env, stdio: 'ignore' });
-    expect((await (await request.get(`${MOCK}/__prom-log`)).json()).filter((c: any) => c.path === '/orders/set_status')).toHaveLength(1); // told once
+    expect((await (await request.get(`${MOCK}/__prom-log`)).json()).filter((c: PromLogEntry) => c.path === '/orders/set_status')).toHaveLength(1); // told once
   } finally {
     await saveProm(page, { PROM_ENABLED: '0' });
   }

@@ -9,7 +9,7 @@ async function loginAdmin(page: Page): Promise<void> {
   await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
 }
 
-async function publish(page: Page, mutate: (layout: any) => void): Promise<string> {
+async function publish(page: Page, mutate: (layout: { blocks: Array<{ component: string; props?: Record<string, unknown> }> }) => void): Promise<string> {
   await page.goto('/admin/appearance/builder/checkout', { waitUntil: 'domcontentloaded' });
   const original = await page.locator('[data-layout-json]').inputValue();
   const token = await page.locator('form:has([data-layout-json]) input[name="_csrf_token"]').first().inputValue();

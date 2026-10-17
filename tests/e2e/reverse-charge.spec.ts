@@ -53,7 +53,7 @@ test('a valid EU VAT number takes the VAT off the order, a domestic or unknown o
 
     const withVat = await placeOrder(shop, 'DK 1234 5670');
     const row = sql("SELECT vat_relief_minor,tax_minor,tax_calculation_mode,company_vat_status,(subtotal_minor-discount_minor+shipping_minor-total_minor) AS diff FROM mc_sales_order ORDER BY id DESC LIMIT 1");
-    const lines = row.replace(/\x1b\[[0-9;]*m/g, '').split('\n').map((l) => l.trim()).filter((l) => l !== '' && !l.startsWith('---'));
+    const lines = row.replace(new RegExp(String.fromCharCode(27) + '\\[[0-9;]*m', 'g'), '').split('\n').map((l) => l.trim()).filter((l) => l !== '' && !l.startsWith('---'));
     const cells = (lines[lines.length - 1] ?? '').split(/\s+/);
     expect(Number(cells[0])).toBeGreaterThan(0); // the VAT that was taken off
     expect(Number(cells[1])).toBe(0); // no VAT left in the order
