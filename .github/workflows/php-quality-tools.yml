@@ -1,6 +1,16 @@
 name: PHP quality tooling
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tools/quality/**'
+      - 'phpcs.xml.dist'
+      - 'phpstan.strict.neon.dist'
+      - 'deptrac.yaml'
+      - 'rector.php'
+      - '.github/workflows/php-quality-tools.yml'
   pull_request:
     paths:
       - 'src/**'
@@ -56,6 +66,12 @@ jobs:
       - name: Deptrac architectural dependency report (advisory during onboarding)
         continue-on-error: true
         run: tools/quality/vendor/bin/deptrac analyse --config-file=deptrac.yaml
+      - name: Strict PHPStan level 5 report (advisory, no baseline)
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          tools/quality/vendor/bin/phpstan analyse -c phpstan.strict.neon.dist --no-progress --memory-limit=2G
       - name: Rector suggestions (manual trigger, read-only)
         if: github.event_name == 'workflow_dispatch'
         continue-on-error: true
