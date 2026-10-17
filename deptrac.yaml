@@ -1,0 +1,35 @@
+# Architecture review layer map; initial legacy violations are advisory in CI.
+# Cross-module policy and its existing exceptions remain in config/architecture/module_boundaries.json.
+deptrac:
+    paths:
+        - ./src/Core
+        - ./src/Modules
+    exclude_files:
+        - '#/vendor/#'
+    layers:
+        - name: Core
+          collectors:
+              - type: classLike
+                value: '^Commerce\\Core\\.*'
+        - name: Domain
+          collectors:
+              - type: classLike
+                value: '^Commerce\\Modules\\[^\\]+\\Domain\\.*'
+        - name: Application
+          collectors:
+              - type: classLike
+                value: '^Commerce\\Modules\\[^\\]+\\Application\\.*'
+        - name: Infrastructure
+          collectors:
+              - type: classLike
+                value: '^Commerce\\Modules\\[^\\]+\\Infrastructure\\.*'
+        - name: Http
+          collectors:
+              - type: classLike
+                value: '^Commerce\\Modules\\[^\\]+\\Http\\.*'
+    ruleset:
+        Core: ~
+        Domain: [Core]
+        Application: [Core, Domain]
+        Infrastructure: [Core, Domain, Application]
+        Http: [Core, Domain, Application, Infrastructure]

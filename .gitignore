@@ -1,4 +1,5 @@
 /vendor/
+/tools/quality/vendor/
 /node_modules/
 /var/cache/
 /var/log/

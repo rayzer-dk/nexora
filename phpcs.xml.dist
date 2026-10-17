@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="Nexora PHP quality">
+    <description>High-signal security and file hygiene checks. PSR-12 can be enabled separately once existing debt is assessed.</description>
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <file>src</file>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+
+    <rule ref="Generic.Files.ByteOrderMark"/>
+    <rule ref="Generic.PHP.DisallowShortOpenTag"/>
+    <rule ref="Generic.PHP.ForbiddenFunctions">
+        <properties>
+            <property name="forbiddenFunctions" type="array">
+                <element key="exec" value="null"/>
+                <element key="shell_exec" value="null"/>
+                <element key="system" value="null"/>
+                <element key="passthru" value="null"/>
+                <element key="proc_open" value="null"/>
+                <element key="popen" value="null"/>
+                <element key="create_function" value="null"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>
