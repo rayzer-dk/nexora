@@ -56,7 +56,7 @@ jobs:
             if [[ "$file" == *.php ]]; then php -l "$file"; fi
           done
 
-      - name: Full source audit (legacy report)
+      - name: Full source integrity audit (blocking)
         shell: bash
         run: |
           set +e
@@ -66,4 +66,8 @@ jobs:
           echo "Full legacy source audit exit status: $status"
           echo "Reported findings: $(grep -c '^SOURCE GUARD:' /tmp/quality-full-audit.log || true)"
           sed -n '1,45p' /tmp/quality-full-audit.log
-          echo "Full source audit is advisory until existing findings are triaged."
+          if [ "$status" -ne 0 ]; then
+            echo "Full source integrity audit failed"
+            exit "$status"
+          fi
+          echo "Full source integrity audit: CLEAN"
