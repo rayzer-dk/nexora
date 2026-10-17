@@ -8,7 +8,7 @@ final class RectorAutofixProbe
 {
     public function isEmpty(array $items): bool
     {
-        if (!count($items)) {
+        if ($items === []) {
             return true;
         }
 
