@@ -32,7 +32,7 @@ tools/quality/vendor/bin/phpcs --standard=phpcs.xml.dist --report=summary
 # Dependency architecture report; current project debt must be reviewed.
 tools/quality/vendor/bin/deptrac analyse --config-file=deptrac.yaml
 
-# Read-only refactoring proposal. Never use automatic Rector changes in CI.
+# Read-only Rector check; main-only manual workflow can apply a validated one-file change.
 tools/quality/vendor/bin/rector process --config=rector.php --dry-run --no-progress-bar
 ```
 
@@ -50,9 +50,10 @@ config/architecture/module_boundaries.json and must not be expanded without revi
 Deptrac is advisory until the existing violations are triaged and an accurate
 baseline is established.
 
-The GitHub Actions workflow never commits refactoring changes. Rector runs only
-via manual workflow dispatch, in dry-run mode. If the job encounters a dependency,
-config, or PHP-version error, it must be fixed before treating the report as valid.
+The regular quality workflow never commits refactoring changes. Rector on main
+reviews changed files in dry-run mode; a separate manual main-only workflow
+can apply corrections to one selected PHP file after tests. Do not use it to
+hide dependency, configuration or PHP-version errors.
 
 ## Safety
 

@@ -5,4 +5,4 @@
 - Confirm real method signatures and existing project services before using any API; check PHPStan and tests.
 - Do not create redundant guards, broad catch-and-ignore exceptions, duplicate implementations, pointless tests or excessive trivial comments.
 - Check Deptrac architecture rules and protect independent modules from hidden mandatory dependencies.
-- Rector may auto-apply only narrow rules to files modified on the current `autofix/**` branch; never refactor main or production automatically. Review the resulting diffs.
+- On main, Rector reviews changes read-only. A single explicitly selected first-party PHP file may be auto-corrected on main only by manual workflow dispatch with apply=true after PHPStan, PHPUnit, PHPCS, syntax and source guard checks; no changes are deployed automatically.
