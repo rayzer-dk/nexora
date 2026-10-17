@@ -1,0 +1,59 @@
+name: Rector trusted branch autofix
+
+on:
+  push:
+    branches:
+      - 'autofix/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rector-autofix
+  cancel-in-progress: false
+
+jobs:
+  autofix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+          fetch-depth: 2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - name: Install isolated tools and application test dependencies
+        run: |
+          composer install --working-dir=tools/quality --no-interaction --prefer-dist --no-progress
+          composer install --no-interaction --prefer-dist --no-progress
+      - name: Auto-repair and validate only PHP files in latest commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t php_files < <(git diff-tree --no-commit-id --name-only --diff-filter=ACM -r HEAD -- src | grep -E '\.php$' || true)
+          if [ "${#php_files[@]}" -eq 0 ]; then
+            echo "No modified PHP sources: skip"
+            exit 0
+          fi
+          php tools/quality/source_guard.php --fix-safe "${php_files[@]}"
+          tools/quality/vendor/bin/rector process "${php_files[@]}" --config=rector.php --max-changes=8 --no-progress-bar
+          php tools/quality/source_guard.php --check "${php_files[@]}"
+          for file in "${php_files[@]}"; do php -l "$file"; done
+          tools/quality/vendor/bin/phpcs --standard=phpcs.xml.dist "${php_files[@]}"
+          git diff --check
+          if git diff --quiet -- src; then
+            echo "Rector found no changes"
+            exit 0
+          fi
+          vendor/bin/phpunit --configuration phpunit.xml.dist
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- src
+          git commit -m "style(qa): verified Rector source autofixes"
+          git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
