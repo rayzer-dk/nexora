@@ -16,7 +16,7 @@ final readonly class DbalCartQuery
     {
     }
 
-    /** @return array{items:list<array<string,mixed>>,count:int,subtotal_minor:int,subtotal:string,discount_minor:int,discount:string,total_minor:int,total:string,currency:string,requires_shipping:bool} */
+    /** @return array{items:list<array<string,mixed>>,count:int,subtotal_minor:int,subtotal:string,discount_minor:int,discount:string,total_minor:int,total:string,currency:string,requires_shipping:bool,free_shipping:array{reached:bool,percent:int,remaining:string,remaining_minor:int,threshold:string}|null} */
     public function emptySummary(StorefrontContext $context): array
     {
         $zero = $this->money->format(0, $context->currency, $context->locale);
@@ -35,7 +35,7 @@ final readonly class DbalCartQuery
         ];
     }
 
-    /** @return array{items:list<array<string,mixed>>,count:int,subtotal_minor:int,subtotal:string,discount_minor:int,discount:string,total_minor:int,total:string,currency:string,requires_shipping:bool} */
+    /** @return array{items:list<array<string,mixed>>,count:int,subtotal_minor:int,subtotal:string,discount_minor:int,discount:string,total_minor:int,total:string,currency:string,requires_shipping:bool,free_shipping:array{reached:bool,percent:int,remaining:string,remaining_minor:int,threshold:string}|null} */
     public function summary(int $cartId, StorefrontContext $context): array
     {
         $rows = $this->connection->fetchAllAssociative(

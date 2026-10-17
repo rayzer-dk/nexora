@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\IpUtils;
  * Blocks harmful or unwanted crawlers before the application does any work: vulnerability scanners, site copiers, SEO crawlers,
  * AI-training crawlers, requests without a User-Agent, and the shop's own lists of User-Agent words and IP addresses.
  * Everything is built in and offline; nothing is asked from an external service. Search engines (Google, Bing, Yandex...) are never in the lists.
+ * @phpstan-type BotConfig array{enabled:bool,categories:list<string>,empty_ua:bool,custom_agents:list<string>,ips:list<string>,robots_ai:bool,probe_enabled:bool,probe_window:int,probe_max:int,probe_ban:int,rep_sfs:bool,rep_abuse_key:string,rep_abuse_min:int}
  */
 final class BotProtection
 {
@@ -33,12 +34,12 @@ final class BotProtection
     {
     }
 
-    /** @return array{enabled:bool,categories:list<string>,empty_ua:bool,custom_agents:list<string>,ips:list<string>,robots_ai:bool} */
+    /** @return BotConfig */
     public function config(): array
     {
         $item = $this->cache->getItem(self::CACHE);
         if ($item->isHit() && is_array($item->get())) {
-            /** @var array{enabled:bool,categories:list<string>,empty_ua:bool,custom_agents:list<string>,ips:list<string>,robots_ai:bool} $hit */
+            /** @var BotConfig $hit */
             $hit = $item->get();
 
             return $hit;
@@ -232,7 +233,7 @@ final class BotProtection
         return $out;
     }
 
-    /** @param array{enabled:bool,categories:list<string>,empty_ua:bool,custom_agents:list<string>,ips:list<string>,robots_ai:bool} $config */
+    /** @param BotConfig $config */
     private function check(array $config, string $userAgent, string $ip): ?string
     {
         if ($ip !== '' && $config['ips'] !== [] && IpUtils::checkIp($ip, $config['ips'])) {
