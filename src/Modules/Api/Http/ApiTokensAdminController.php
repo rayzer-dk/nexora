@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
 
@@ -43,7 +44,8 @@ final class ApiTokensAdminController extends AbstractController
             $row['expired'] = $row['expires_at'] !== null && strtotime((string) $row['expires_at'] . ' UTC') <= time();
         }
         unset($row);
-        $secret = $request->getSession()->getFlashBag()->get('api_token_secret');
+        $session = $request->getSession();
+        $secret = $session instanceof FlashBagAwareSessionInterface ? $session->getFlashBag()->get('api_token_secret') : [];
 
         return $this->render('@storefront/admin/system/api_tokens.html.twig', [
             'tokens' => $rows,
@@ -83,7 +85,7 @@ final class ApiTokensAdminController extends AbstractController
             'token_prefix' => substr($raw, 0, 12), 'token_hash' => hash('sha256', $raw, true), 'scopes' => json_encode($scopes, JSON_THROW_ON_ERROR),
             'status' => 'active', 'rate_limit_per_minute' => max(10, min(5000, $request->request->getInt('rate_limit', 120))), 'expires_at' => $expires, 'created_at' => gmdate('Y-m-d H:i:s.u'),
         ]);
-        $request->getSession()->getFlashBag()->add('api_token_secret', $raw);
+        $this->addFlash('api_token_secret', $raw);
 
         return $this->redirectToRoute('admin_system_integrations_api');
     }

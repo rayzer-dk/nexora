@@ -20,7 +20,7 @@ final class CaptchaExtension extends AbstractExtension
         return [new TwigFunction('captcha_widget', [$this, 'widget'])];
     }
 
-    /** @return array<string,string>|null */
+    /** @return array{provider:string,site_key:string,form:string,token:string,mode:string,question:string,options:list<array{id:string,icon:string}>,key:string}|null */
     public function widget(string $form): ?array
     {
         $request = $this->requests->getCurrentRequest();
