@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Bonus package Store_Health_Endpoint_v1.0.0.zip is signed again, with the new publisher key nexora.bonus.2027 (added to config/extensions/trusted-publishers.json; nexora.bonus.2026 stays trusted), and installs on 4.0. The secret half of the key is kept outside the repository.
 - Images: sizes are made with libvips (its `vips` tool) when the server has it and with GD otherwise; a size libvips fails to make is made with GD. libvips also makes AVIF where PHP's GD cannot, so "AVIF with a WebP fallback" works on more servers. The AVIF of a photo that is not a main product photo is no longer encoded during the page request: the request queues it and gets the WebP of the same size (cached 5 minutes), and `commerce:media:warm` (every 15 minutes) makes the queued AVIF files. Media library > Image processing shows the engine and the queue length. New optional settings `MEDIA_IMAGE_ENGINE` (auto | gd) and `MEDIA_VIPS_BINARY`. New dependency symfony/process. JPEG XL is not made (only Safari shows it).
 
 ## 4.0.0 — 2026-10-17

@@ -39,11 +39,11 @@
   "execution": "trusted_release",
   "publisher": {
     "name": "Nexora",
-    "key_id": "nexora.bonus.2026"
+    "key_id": "nexora.bonus.2027"
   },
   "signature": {
     "algorithm": "ed25519",
-    "key_id": "nexora.bonus.2026",
+    "key_id": "nexora.bonus.2027",
     "file": "SIGNATURE.ed25519"
   },
   "autoload": {
