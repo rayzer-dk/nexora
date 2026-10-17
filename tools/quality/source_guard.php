@@ -5,7 +5,7 @@ declare(strict_types=1);
 $fix = in_array('--fix-safe', $argv, true);
 $paths = array_values(array_filter(array_slice($argv, 1), static fn ($x) => !in_array($x, ['--check', '--fix-safe'], true)));
 if (!$paths) { fwrite(STDERR, "Usage: source_guard.php [--check|--fix-safe] paths...\n"); exit(2); }
-$extensions = ['php', 'js', 'jsx', 'ts', 'tsx', 'twig', 'css', 'scss', 'xml', 'json', 'yml', 'yaml', 'html', 'svg', 'sql'];
+$extensions = ['php', 'js', 'jsx', 'ts', 'tsx', 'twig', 'css', 'scss', 'xml', 'json', 'yml', 'yaml', 'html', 'svg', 'sql', 'sh', 'py', 'neon', 'md'];
 $ignore = ['.git', 'vendor', 'node_modules', 'cache', 'dist', 'build'];
 $files = [];
 foreach ($paths as $path) {
