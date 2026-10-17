@@ -26,8 +26,12 @@ final class AiAdminController extends AbstractController
             return $this->json(['ok' => false, 'message' => CanonicalUiText::get('common.security.invalid_csrf')], 403);
         }
         $fields = $request->request->all('fields');
+        $task = (string) $request->request->get('task', '');
+        if ($task === 'translate_fields') {
+            return $this->translateFields($request, $fields);
+        }
 
-        return $this->execute($request, (string) $request->request->get('task', ''), $fields);
+        return $this->execute($request, $task, $fields);
     }
 
     /** A product photo in, a draft card out (name, brand, texts, characteristics); nothing is saved. */
@@ -71,6 +75,28 @@ final class AiAdminController extends AbstractController
         }
 
         return $response;
+    }
+
+    /**
+     * All texts of one language in one request: fields[json] is an object name => text, the answer has the same names.
+     *
+     * @param array<string,mixed> $fields
+     */
+    private function translateFields(Request $request, array $fields): JsonResponse
+    {
+        $context = $this->contexts->resolve($request);
+        $texts = json_decode((string) ($fields['json'] ?? ''), true);
+        if (!is_array($texts) || $texts === []) {
+            return $this->json(['ok' => false, 'message' => CanonicalUiText::get('admin.ai.error_input')], 422);
+        }
+        $provider = (string) $request->request->get('provider', '');
+        try {
+            $result = $this->tasks->translateFields($context->storeId, $this->getUser()?->getUserIdentifier() ?? 'admin', $provider, array_filter($texts, 'is_scalar'), (string) ($fields['target'] ?? ''), (string) ($fields['source'] ?? ''));
+
+            return $this->json(['ok' => true, 'fields' => $result['fields'], 'provider' => $provider, 'remaining' => $result['remaining']]);
+        } catch (\DomainException $e) {
+            return $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 
     /** @param array<string,mixed> $fields */

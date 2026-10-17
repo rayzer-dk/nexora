@@ -117,6 +117,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_system_maintenance')||$route==='admin_system_modules') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (in_array($route,['admin_system_stability','admin_system_components','admin_api_system_health'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_migration')) return AdminPermissionCatalog::SYSTEM_UPDATE;
+        if (str_starts_with($route,'admin_ai_batch')) return AdminPermissionCatalog::CATALOG_MANAGE;
         if ($route==='admin_ai_product_draft'||$route==='admin_ai_task'||$route==='admin_ai_product_from_photo') return AdminPermissionCatalog::CATALOG_MANAGE;
         if ($route==='admin_system_prro_receipt_send') return AdminPermissionCatalog::SYSTEM_SETTINGS; // the receipts list lives on the PRRO settings page
         return null;

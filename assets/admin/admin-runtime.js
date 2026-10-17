@@ -348,7 +348,8 @@ if (aiPlayground) {
   });
 }
 
-// Translation editor: fills one language panel from the default-language panel through the AI translate task. Nothing is saved until the form is sent.
+// Translation editor: fills one language panel from the default-language panel. All texts of the language go to the AI in one
+// request (translate_fields); nothing is saved until the form is sent.
 document.querySelectorAll('[data-translate-from]').forEach((button) => {
   button.addEventListener('click', async () => {
     const page = button.closest('[data-translate-page]');
@@ -356,19 +357,13 @@ document.querySelectorAll('[data-translate-from]').forEach((button) => {
     const provider = page?.querySelector('[data-ai-provider]');
     const status = panel?.querySelector('[data-ai-status]');
     if (!page || !panel || !provider || !status) return;
-    const target = panel.dataset.locale || '';
     const jobs = translateJobs(page, [panel]);
     if (jobs.length === 0) { status.textContent = t('admin.ai.nothing_to_translate'); return; }
     button.disabled = true;
-    let done = 0;
+    status.textContent = t('admin.ai.generating');
     try {
-      for (const { field, text } of jobs) {
-        status.textContent = t('admin.ai.generating') + ' ' + field.getAttribute('name');
-        field.value = await translateText(page, text, target);
-        field.dispatchEvent(new Event('input', { bubbles: true }));
-        done += 1;
-      }
-      status.textContent = done > 0 ? t('admin.ai.draft_inserted') : '';
+      const done = await translatePanel(page, jobs, panel.dataset.locale || '');
+      status.textContent = done > 0 ? t('admin.ai.draft_inserted') : t('admin.ai.empty_answer');
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
     } finally {
@@ -403,18 +398,52 @@ document.querySelectorAll('form[data-ajax-save]').forEach((form) => {
 });
 
 // Translation editor, one-click variants: a single field, or every language at once (then one "save all"). Nothing is saved before a save button is pressed.
-async function translateText(page, text, target) {
+function translateBody(page, task, target) {
   const provider = page.querySelector('[data-ai-provider]');
-  const body = new URLSearchParams({ _token: page.dataset.aiToken || '', task: 'translate', provider: provider?.value || '' });
-  body.append('fields[text]', text);
+  const body = new URLSearchParams({ _token: page.dataset.aiToken || '', task, provider: provider?.value || '' });
   body.append('fields[target]', target);
   // The language of the source panel, so the model (or a translation service) does not have to guess it.
   const source = page.querySelector('[data-translate-panel][data-source]')?.dataset.locale || '';
   if (source) body.append('fields[source]', source);
+  return body;
+}
+async function postAiTask(body) {
   const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
-  const data = await response.json();
-  if (!response.ok || !data.ok) throw new Error(data.message || t('admin.ai.draft_failed'));
+  const data = await response.json().catch(() => null);
+  if (!response.ok || !data || !data.ok) throw new Error(data?.message || t('admin.ai.draft_failed'));
+  return data;
+}
+async function translateText(page, text, target) {
+  const body = translateBody(page, 'translate', target);
+  body.append('fields[text]', text);
+  const data = await postAiTask(body);
   return data.fields?.text || '';
+}
+// Every field of one language in one request: the texts travel as one JSON object and come back under the same keys.
+// Returns how many fields received a translation.
+const TRANSLATE_FIELDS_MAX = 50;
+async function translatePanel(page, jobs, target) {
+  let written = 0;
+  for (let start = 0; start < jobs.length; start += TRANSLATE_FIELDS_MAX) {
+    const texts = {};
+    const fields = new Map();
+    jobs.slice(start, start + TRANSLATE_FIELDS_MAX).forEach(({ field, text }, index) => {
+      const key = `${String(field.getAttribute('name') || 'field').replace(/[^A-Za-z0-9_]/g, '_').slice(0, 40)}_${index}`;
+      texts[key] = text;
+      fields.set(key, field);
+    });
+    const body = translateBody(page, 'translate_fields', target);
+    body.append('fields[json]', JSON.stringify(texts));
+    const data = await postAiTask(body);
+    for (const [key, field] of fields) {
+      const value = data.fields?.[key];
+      if (typeof value !== 'string' || value === '') continue;
+      field.value = value;
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      written += 1;
+    }
+  }
+  return written;
 }
 // The text a field is translated from: the field named by data-translate-source, else the same-named field of the default-language panel.
 function translateSource(page, field) {
@@ -469,11 +498,12 @@ document.querySelectorAll('[data-translate-all]').forEach((button) => {
     if (jobs.length === 0) { status.textContent = t('admin.ai.nothing_to_translate'); return; }
     button.disabled = true;
     let failed = false;
+    // One request per language with all of its fields.
+    const panels = [...new Set(jobs.map((job) => job.panel))];
     try {
-      for (const [index, { panel, field, text }] of jobs.entries()) {
-        status.textContent = t('admin.ai.translate_progress', { done: index + 1, total: jobs.length, locale: panel.dataset.locale || '', field: field.getAttribute('name') || '' });
-        field.value = await translateText(page, text, panel.dataset.locale || '');
-        field.dispatchEvent(new Event('input', { bubbles: true }));
+      for (const [index, panel] of panels.entries()) {
+        status.textContent = t('admin.ai.translate_progress_locale', { done: index + 1, total: panels.length, locale: panel.dataset.locale || '' });
+        await translatePanel(page, jobs.filter((job) => job.panel === panel), panel.dataset.locale || '');
       }
     } catch (error) {
       failed = true;

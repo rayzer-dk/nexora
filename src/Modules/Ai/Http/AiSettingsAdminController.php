@@ -6,10 +6,12 @@ namespace Commerce\Modules\Ai\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\Admin\Http\AdminContextResolver;
+use Commerce\Modules\Ai\Application\AiGlossary;
 use Commerce\Modules\Ai\Application\AiModelCatalog;
 use Commerce\Modules\Ai\Application\AiModelCatalogException;
 use Commerce\Modules\Ai\Application\AiSettings;
 use Commerce\Modules\Ai\Application\AiTaskService;
+use Commerce\Modules\Catalog\Application\CatalogTranslationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,7 +20,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class AiSettingsAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly AiSettings $settings, private readonly AiTaskService $tasks, private readonly AiModelCatalog $models)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly AiSettings $settings, private readonly AiTaskService $tasks, private readonly AiModelCatalog $models, private readonly AiGlossary $glossary, private readonly CatalogTranslationService $catalog)
     {
     }
 
@@ -40,7 +42,21 @@ final class AiSettingsAdminController extends AbstractController
             'used' => $this->settings->usedToday($storeId),
             'usage' => $this->settings->recentUsage($storeId),
             'tasks' => AiTaskService::tasks(),
+            'glossary' => $this->glossary->terms($storeId),
+            'glossary_locales' => array_values(array_filter($this->catalog->locales($storeId), static fn (array $l): bool => !$l['is_default'])),
         ]);
+    }
+
+    /** The glossary for every translation: the whole list is saved at once; a row with an empty term is removed. */
+    #[Route('/admin/system/ai/glossary', name: 'admin_system_ai_glossary', methods: ['POST'])]
+    public function glossary(Request $request): RedirectResponse
+    {
+        $this->guard($request);
+        $rows = array_values(array_filter($request->request->all('glossary'), 'is_array'));
+        $this->glossary->save($this->contexts->resolve($request)->storeId, $rows);
+        $this->addFlash('success', CanonicalUiText::get('admin.ai.glossary.saved'));
+
+        return $this->redirect($this->generateUrl('admin_system_ai') . '#glossary');
     }
 
     #[Route('/admin/system/ai/save', name: 'admin_system_ai_save', methods: ['POST'])]

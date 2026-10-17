@@ -13,6 +13,8 @@ use Commerce\Modules\Payment\Application\PaymentProviderRegistry;
 use Commerce\Modules\ProductPage\Application\ProductBlockRegistry;
 use Commerce\Modules\Shipping\Application\DeliveryProviderRegistry;
 use Commerce\Modules\Ai\Application\AiProviderRegistry;
+use Commerce\Modules\Ai\Application\AiGlossary;
+use Commerce\Modules\Ai\Application\AiLimitException;
 use Commerce\Modules\Ai\Application\AiSettings;
 use Commerce\Modules\Ai\Application\AiTaskService;
 use Commerce\Modules\Ai\Contract\TextGenerationProviderInterface;
@@ -34,6 +36,7 @@ final class AiTaskServiceTest extends TestCase
         $this->db->executeStatement('CREATE TABLE mc_ai_usage (id INTEGER PRIMARY KEY AUTOINCREMENT, store_id INT, admin_subject TEXT, task TEXT, provider TEXT, model TEXT, input_chars INT, output_chars INT, status TEXT, created_at TEXT)');
         $this->db->executeStatement('CREATE TABLE mc_ai_settings (store_id INT PRIMARY KEY, daily_limit INT, updated_at TEXT)');
         $this->db->executeStatement('CREATE TABLE mc_ai_provider_config (store_id INT, provider TEXT, enabled INT, model TEXT, api_key_enc TEXT, updated_at TEXT, PRIMARY KEY (store_id, provider))');
+        $this->db->executeStatement('CREATE TABLE mc_ai_glossary (id INTEGER PRIMARY KEY AUTOINCREMENT, store_id INT, term TEXT, mode TEXT, translations_json TEXT, created_at TEXT, updated_at TEXT, UNIQUE(store_id, term))');
         $this->stub = new class implements TextGenerationProviderInterface {
             public string $reply = '{"short_description":"Short","description":"<p>Full</p>"}';
             public string $lastPrompt = '';
@@ -59,7 +62,7 @@ final class AiTaskServiceTest extends TestCase
         $ai = new AiProviderRegistry([$this->stub]);
         $this->translations = new TranslationProviderRegistry();
         $loader = new TrustedExtensionRuntimeLoader($this->db, new TrustedExtensionRuntimeRegistry(), new PaymentProviderRegistry([]), new DeliveryProviderRegistry([]), new ProductBlockRegistry([]), $ai, $this->translations, new \Commerce\Core\Extension\ExtensionServiceRegistry());
-        $this->service = new AiTaskService($settings, new MockHttpClient(), $ai, $this->translations, $loader);
+        $this->service = new AiTaskService($settings, new MockHttpClient(), $ai, $this->translations, $loader, new AiGlossary($this->db));
     }
 
     public function testDraftIsParsedLoggedAndCounted(): void
@@ -312,7 +315,7 @@ final class AiTaskServiceTest extends TestCase
         $ai = new AiProviderRegistry([$provider]);
         $loader = new TrustedExtensionRuntimeLoader($this->db, new TrustedExtensionRuntimeRegistry(), new PaymentProviderRegistry([]), new DeliveryProviderRegistry([]), new ProductBlockRegistry([]), $ai, $this->translations, new \Commerce\Core\Extension\ExtensionServiceRegistry());
 
-        return new AiTaskService(new AiSettings($this->db, new SecretVault(str_repeat('k', 32))), new MockHttpClient(), $ai, $this->translations, $loader);
+        return new AiTaskService(new AiSettings($this->db, new SecretVault(str_repeat('k', 32))), new MockHttpClient(), $ai, $this->translations, $loader, new AiGlossary($this->db));
     }
 
     public function testStoredKeyIsDecryptedOnlyThroughTheVault(): void
@@ -325,5 +328,143 @@ final class AiTaskServiceTest extends TestCase
         self::assertSame('sk-test-1234567890abcdef', $settings->providers(1)['openai']['key']);
         self::assertSame([['code' => 'openai', 'label' => 'OpenAI']], $settings->enabledProviders(1));
         self::assertSame('', (new AiSettings($this->db, new SecretVault(str_repeat('z', 32))))->providers(1)['openai']['key']);
+    }
+    /** A model stub that translates every value of the JSON in <data name="fields"> (or the one text) by prefixing it. */
+    private function echoModel(): TextGenerationProviderInterface
+    {
+        return new class implements TextGenerationProviderInterface {
+            /** @var list<string> */
+            public array $prompts = [];
+
+            public function code(): string
+            {
+                return 'stub';
+            }
+
+            public function enabled(): bool
+            {
+                return true;
+            }
+
+            public function generate(string $prompt, ?string $systemInstruction = null): string
+            {
+                $this->prompts[] = $prompt;
+                if (preg_match('~<data name="fields">(.*)</data>~s', $prompt, $m) === 1) {
+                    $fields = json_decode($m[1], true, 8, JSON_THROW_ON_ERROR);
+
+                    return json_encode(array_map(static fn (string $v): string => 'EN:' . $v, $fields), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+                }
+                preg_match('~<data name="text">(.*)</data>~s', $prompt, $m);
+
+                return json_encode(['text' => 'EN:' . $m[1]], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+            }
+        };
+    }
+
+    public function testAllShortFieldsOfOneLanguageGoInOneRequest(): void
+    {
+        $model = $this->echoModel();
+        $result = $this->serviceWith($model)->translateFields(1, 'a', 'stub', ['name' => 'Чайник', 'meta_title' => 'Чайник купити', 'h1' => '  ', 'description' => '<p>Опис</p>'], 'en-US', 'uk-UA');
+
+        self::assertCount(1, $model->prompts, 'one model call for the whole entity');
+        self::assertSame(['name' => 'EN:Чайник', 'meta_title' => 'EN:Чайник купити', 'description' => 'EN:<p>Опис</p>'], $result['fields'], 'keys kept, the empty field left out');
+        self::assertStringContainsString('Output language: English', $model->prompts[0]);
+        self::assertStringContainsString('Source language: Ukrainian', $model->prompts[0]);
+        self::assertSame(1, (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_ai_usage'));
+        self::assertSame(199, $result['remaining']);
+    }
+
+    public function testLongFieldGoesInPartsNextToTheShortOnes(): void
+    {
+        $model = $this->echoModel();
+        $long = implode("\n", array_fill(0, 30, '<p>' . str_repeat('довгий опис товару ', 25) . '</p>'));
+        self::assertGreaterThan(12000, mb_strlen($long));
+        $result = $this->serviceWith($model)->translateFields(1, 'a', 'stub', ['name' => 'Чайник', 'description' => $long], 'en-US', 'uk-UA');
+
+        $parts = count(\Commerce\Modules\Ai\Application\TranslationChunker::split($long, 6000));
+        self::assertGreaterThan(1, $parts);
+        self::assertCount(1 + $parts, $model->prompts, 'one call for the short fields plus one per part of the long one');
+        self::assertSame('EN:Чайник', $result['fields']['name']);
+        self::assertSame($parts, substr_count($result['fields']['description'], 'EN:'));
+        self::assertSame(1 + $parts, (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_ai_usage'));
+    }
+
+    public function testCallsThatDoNotFitTheDailyLimitAreRefusedBeforeAnyRequest(): void
+    {
+        $this->db->executeStatement("INSERT INTO mc_ai_settings (store_id,daily_limit,updated_at) VALUES (1,2,'x')");
+        $model = $this->echoModel();
+        $long = str_repeat('<p>' . str_repeat('a ', 1000) . '</p>', 10);
+        try {
+            $this->serviceWith($model)->translateFields(1, 'a', 'stub', ['name' => 'X', 'description' => $long], 'en-US');
+            self::fail('expected the limit to stop it');
+        } catch (AiLimitException $e) {
+            self::assertGreaterThan(2, $e->needed);
+            self::assertSame(2, $e->limit);
+        }
+        self::assertSame([], $model->prompts);
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_ai_usage'));
+    }
+
+    public function testGlossaryKeepsTermsAndPutsFixedOnesIntoThePrompt(): void
+    {
+        (new AiGlossary($this->db))->save(1, [['term' => 'Nexora Pro', 'mode' => 'keep'], ['term' => 'чайник', 'mode' => 'fixed', 'translations' => ['en' => 'kettle']]]);
+        $model = $this->echoModel();
+        $result = $this->serviceWith($model)->translateFields(1, 'a', 'stub', ['name' => 'Чайник Nexora Pro'], 'en-US', 'uk-UA');
+
+        self::assertStringNotContainsString('Nexora Pro', $model->prompts[0], 'the kept term never reaches the model');
+        self::assertStringContainsString('⟦T1⟧', $model->prompts[0]);
+        self::assertStringContainsString('"чайник" => "kettle"', $model->prompts[0]);
+        self::assertSame('EN:Чайник Nexora Pro', $result['fields']['name']);
+
+        // the single-text task follows the same glossary
+        $model->prompts = [];
+        $single = $this->serviceWith($model)->run(1, 'a', 'translate', 'stub', ['text' => 'Nexora Pro', 'target' => 'en-US'], 'uk-UA');
+        self::assertStringNotContainsString('Nexora Pro', $model->prompts[0]);
+        self::assertSame('EN:Nexora Pro', $single['fields']['text']);
+    }
+
+    public function testAnswerThatLostAMarkerIsAnErrorAndNothingIsReturned(): void
+    {
+        (new AiGlossary($this->db))->save(1, [['term' => 'Nexora Pro', 'mode' => 'keep']]);
+        $this->stub->reply = '{"name":"Kettle Nexora"}';
+        $this->expectException(\DomainException::class);
+        $this->service->translateFields(1, 'a', 'stub', ['name' => 'Чайник Nexora Pro'], 'en-US');
+    }
+
+    public function testTranslationServiceGetsEveryFieldWithMarkersForKeptAndFixedTerms(): void
+    {
+        (new AiGlossary($this->db))->save(1, [['term' => 'Nexora Pro', 'mode' => 'keep'], ['term' => 'чайник', 'mode' => 'fixed', 'translations' => ['en-US' => 'kettle']]]);
+        $provider = new class implements TranslationProviderInterface {
+            /** @var list<string> */
+            public array $texts = [];
+
+            public function code(): string
+            {
+                return 'deepl_stub';
+            }
+
+            public function label(): string
+            {
+                return 'DeepL';
+            }
+
+            public function enabled(): bool
+            {
+                return true;
+            }
+
+            public function translate(string $text, string $sourceLocale, string $targetLocale): string
+            {
+                $this->texts[] = $text;
+
+                return 'EN ' . $text;
+            }
+        };
+        $this->translations->register($provider);
+        $result = $this->service->translateFields(1, 'a', 'deepl_stub', ['name' => 'Чайник Nexora Pro', 'meta_title' => 'Купити'], 'en-US', 'uk-UA');
+
+        self::assertSame(['⟦T1⟧ ⟦T2⟧', 'Купити'], $provider->texts, 'a service has no prompt: both kinds of terms travel as markers');
+        self::assertSame(['name' => 'EN kettle Nexora Pro', 'meta_title' => 'EN Купити'], $result['fields']);
+        self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_ai_usage'));
     }
 }

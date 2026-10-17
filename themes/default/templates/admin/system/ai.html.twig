@@ -25,6 +25,18 @@
 </div></section>
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai.limit_hint') }}</small><h2>{{ ui_text('admin.ai.limit') }}</h2></div><span class="admin-badge">{{ ui_text('admin.ai.used_today') }}: {{ used }} / {{ limit }}</span></div>
 <form method="post" action="{{ path('admin_system_ai_save') }}" class="admin-inline-form"><input type="hidden" name="_token" value="{{ csrf_token('admin_ai_settings') }}"><label><span>{{ ui_text('admin.ai.daily_limit') }}</span><input type="number" name="daily_limit" min="0" max="100000" value="{{ limit }}"></label><button class="admin-button is-primary" type="submit">{{ ui_text('admin.push.save') }}</button></form></section>
+<section class="admin-panel" id="glossary"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai.glossary.hint') }}</small><h2>{{ ui_text('admin.ai.glossary.title') }}</h2></div>{{ ui_icon('languages', 20) }}</div>
+<form method="post" action="{{ path('admin_system_ai_glossary') }}" class="admin-form-stack"><input type="hidden" name="_token" value="{{ csrf_token('admin_ai_settings') }}">
+<div class="admin-table-wrap"><table class="admin-table ai-glossary"><thead><tr><th>{{ ui_text('admin.ai.glossary.term') }}</th><th>{{ ui_text('admin.ai.glossary.mode') }}</th>{% for l in glossary_locales %}<th>{{ ui_text('admin.ai.glossary.translation', {locale: l.code}) }}</th>{% endfor %}</tr></thead><tbody>
+{% for row in glossary|merge([{term: '', mode: 'keep', translations: {}}, {term: '', mode: 'keep', translations: {}}, {term: '', mode: 'keep', translations: {}}]) %}{% set i = loop.index0 %}<tr data-glossary-row>
+<td><input type="text" name="glossary[{{ i }}][term]" value="{{ row.term }}" maxlength="190" aria-label="{{ ui_text('admin.ai.glossary.term')|e('html_attr') }}"></td>
+<td><select name="glossary[{{ i }}][mode]" aria-label="{{ ui_text('admin.ai.glossary.mode')|e('html_attr') }}"><option value="keep"{{ row.mode == 'keep' ? ' selected' : '' }}>{{ ui_text('admin.ai.glossary.mode_keep') }}</option><option value="fixed"{{ row.mode == 'fixed' ? ' selected' : '' }}>{{ ui_text('admin.ai.glossary.mode_fixed') }}</option></select></td>
+{% for l in glossary_locales %}<td><input type="text" name="glossary[{{ i }}][translations][{{ l.code }}]" value="{{ row.translations[l.code]|default(row.translations[l.code|split('-')[0]]|default('')) }}" maxlength="190" aria-label="{{ ui_text('admin.ai.glossary.translation', {locale: l.code})|e('html_attr') }}"></td>{% endfor %}
+</tr>{% endfor %}
+</tbody></table></div>
+<p class="admin-card-note">{{ ui_text('admin.ai.glossary.help') }}</p>
+<div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('save', 16) }}<span>{{ ui_text('admin.ai.glossary.save') }}</span></button></div>
+</form></section>
 <section class="admin-panel" data-ai-playground data-ai-token="{{ csrf_token('admin_ai') }}"><div class="admin-panel__header"><div><small>{{ ui_text('admin.ai.playground_hint') }}</small><h2>{{ ui_text('admin.ai.playground') }}</h2></div>{{ ui_icon('wand-sparkles', 20) }}</div>
 {% set box_providers = ai_providers()|filter(p => not p.translation_only|default(false)) %}{% if box_providers %}
 <div class="admin-form-grid">

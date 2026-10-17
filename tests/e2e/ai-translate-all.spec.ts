@@ -3,6 +3,17 @@ import { expectNoServerError } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
+// The canned answer of the assistant: "TR-<target>-<start of the text>" for one text, or for every text of a language at once.
+function cannedTranslation(postData: string, cut: number): Record<string, unknown> {
+  const body = new URLSearchParams(postData);
+  const target = body.get('fields[target]');
+  if (body.get('task') === 'translate_fields') {
+    const texts = JSON.parse(body.get('fields[json]') || '{}') as Record<string, string>;
+    return { ok: true, fields: Object.fromEntries(Object.entries(texts).map(([key, text]) => [key, `TR-${target}-${text.slice(0, cut)}`])) };
+  }
+  return { ok: true, fields: { text: `TR-${target}-${(body.get('fields[text]') || '').slice(0, cut)}` } };
+}
+
 async function loginAdmin(page: Page): Promise<void> {
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
   await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
@@ -29,9 +40,10 @@ test('translate every language with one click, one field with its own button, th
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating settings run once.');
   await loginAdmin(page);
   // The assistant itself needs the internet: the browser gets a canned answer, so the click flow is what is tested.
+  const tasks: string[] = [];
   await page.route('**/admin/api/ai/task', async (route) => {
-    const body = new URLSearchParams(route.request().postData() || '');
-    await route.fulfill({ json: { ok: true, fields: { text: `TR-${body.get('fields[target]')}-${(body.get('fields[text]') || '').slice(0, 12)}` } } });
+    tasks.push(new URLSearchParams(route.request().postData() || '').get('task') || '');
+    await route.fulfill({ json: cannedTranslation(route.request().postData() || '', 12) });
   });
   try {
     await setLocale(page, 'en-US', true);
@@ -60,6 +72,8 @@ test('translate every language with one click, one field with its own button, th
     await expect(page.locator('[data-save-all]')).toBeVisible({ timeout: 20_000 });
     await expect(name('en-US')).toHaveValue(/^TR-en-US-/);
     await expect(name('de-DE')).toHaveValue(/^TR-de-DE-/);
+    // every language went out as one request with all of its fields
+    expect(tasks.slice(-2)).toEqual(['translate_fields', 'translate_fields']);
 
     // translating changes the form only; saving is an in-place request and the page is never reloaded
     await page.evaluate(() => { (window as unknown as { __kept: boolean }).__kept = true; });
@@ -102,8 +116,7 @@ test('forms and navigation labels translate with one click and are saved only wi
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating settings run once.');
   await loginAdmin(page);
   await page.route('**/admin/api/ai/task', async (route) => {
-    const body = new URLSearchParams(route.request().postData() || '');
-    await route.fulfill({ json: { ok: true, fields: { text: `TR-${body.get('fields[target]')}-${(body.get('fields[text]') || '').slice(0, 10)}` } } });
+    await route.fulfill({ json: cannedTranslation(route.request().postData() || '', 10) });
   });
   try {
     await setLocale(page, 'en-US', true);

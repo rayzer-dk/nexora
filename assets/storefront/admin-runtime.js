@@ -2759,6 +2759,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initRowActionGroups();
   initScopePresets();
   initImageQueue();
+  initAiBatch();
   initCrmPresets();
 });
 
@@ -3145,6 +3146,76 @@ function initImageQueue() {
         buttons.forEach((b) => { b.disabled = false; });
       }
     }));
+  });
+}
+
+/** AI batch translation: "process now" works the queue in rounds; while a batch runs, the counts refresh from the server
+ *  (the scheduler works without this page too). A changed batch status reloads the page so its buttons match it. */
+function initAiBatch() {
+  const form = q('[data-ai-batch-form]');
+  const start = q('[data-ai-batch-start]', form || document);
+  if (form && start) {
+    // "Translate everything again" replaces existing translations: ask first. Runs before the document-level confirmation.
+    start.addEventListener('click', () => {
+      const overwrite = q('input[name="mode"][value="overwrite"]', form)?.checked;
+      if (overwrite) { start.dataset.confirm = start.dataset.confirmOverwrite || ''; start.dataset.confirmTone = 'reset'; } else { delete start.dataset.confirm; delete start.dataset.confirmTone; }
+    });
+  }
+  const list = q('[data-ai-batch-list]');
+  if (!list) return;
+  const status = q('[data-ai-batch-status]', list);
+  const paint = (data) => {
+    let reload = false;
+    for (const item of data.batches || []) {
+      const box = q(`[data-ai-batch="${item.batch.public_id}"]`, list);
+      if (!box || box.dataset.status !== item.batch.status) { reload = true; continue; }
+      for (const [locale, counts] of Object.entries(item.per_locale || {})) {
+        const row = q(`[data-locale-row="${locale}"]`, box);
+        if (!row) continue;
+        for (const key of ['done', 'failed', 'pending']) { const cell = q(`[data-n="${key}"]`, row); if (cell) cell.textContent = String(counts[key]); }
+        const bar = q('[data-bar]', row);
+        const total = counts.done + counts.failed + counts.pending + counts.skipped;
+        if (bar) { bar.max = Math.max(total, 1); bar.value = total - counts.pending; }
+      }
+    }
+    return reload;
+  };
+  const active = () => qa('[data-ai-batch]', list).some((box) => box.dataset.status === 'running');
+  let busy = false;
+  const refresh = async () => {
+    if (busy || document.hidden) return;
+    try {
+      const response = await fetch(list.dataset.url || '', { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+      if (response.ok && paint(await response.json())) window.location.reload();
+    } catch (_) { /* the next tick tries again */ }
+  };
+  if (active()) window.setInterval(refresh, 20000);
+  const run = q('[data-ai-batch-run]', list);
+  run?.addEventListener('click', async () => {
+    run.disabled = true;
+    busy = true;
+    let reload = false;
+    let idle = 0;
+    try {
+      for (let round = 0; round < 500; round += 1) {
+        const body = new FormData();
+        body.set('_token', list.dataset.token || '');
+        const response = await fetch(list.dataset.runUrl || '', { method: 'POST', body, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.ok) throw new Error(data?.message || t('admin.ai.draft_failed'));
+        const r = data.round || { done: 0, failed: 0, pending: 0, paused_for_limit: false };
+        if (status && list.dataset.template) status.textContent = list.dataset.template.replace('%done%', r.done).replace('%failed%', r.failed).replace('%pending%', r.pending);
+        reload = paint(data) || reload;
+        idle = r.done + r.failed === 0 ? idle + 1 : 0;
+        if (r.paused_for_limit || r.pending === 0 || idle >= 3) break;
+      }
+    } catch (error) {
+      if (status) status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
+    } finally {
+      run.disabled = false;
+      busy = false;
+    }
+    if (reload) window.location.reload();
   });
 }
 
