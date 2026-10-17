@@ -8,10 +8,6 @@ final class RectorAutofixProbe
 {
     public function isEmpty(array $items): bool
     {
-        if ($items === []) {
-            return true;
-        }
-
-        return false;
+        return $items === [];
     }
 }
