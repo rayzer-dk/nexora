@@ -9,6 +9,7 @@ final class HelpCatalog
 {
     /** @var array<string,array{file:string,group:string}> */
     private const DOCS = [
+        'getting-started' => ['file' => 'docs/GETTING_STARTED_UK.md', 'group' => 'system'],
         'install' => ['file' => 'docs/INSTALLATION.md', 'group' => 'system'],
         'update-and-restore' => ['file' => 'docs/UPDATE_AND_RESTORE.md', 'group' => 'system'],
         'language-packs' => ['file' => 'docs/LANGUAGE_PACKS.md', 'group' => 'system'],
