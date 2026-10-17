@@ -10,3 +10,5 @@ Do not recommend blindly removing comments, adding pointless tests, redundant de
 Never let a Rector refactor break functional behavior; check full build, tests and relevant integration contracts.
 Never treat PHPStan / Rector / source guard success as a substitute for runtime tests or security review.
 Honor Symfony dependency injection, module boundaries and multi-store isolation. Check migrations, checkout, queue and frontend behavior.
+
+Avoid repetitive generated comments, duplicate implementations and speculative dependencies. Flag exact file locations; treat duplicate-looking behavior across modules as potentially intentional until verified.
