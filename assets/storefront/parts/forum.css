@@ -162,7 +162,7 @@ img.fx-avatar { border-radius: var(--mc-radius-full); object-fit: cover; }
 .fx-head--hero { position: relative; overflow: hidden; align-items: center; padding: var(--mc-space-6) var(--mc-space-6); border-color: color-mix(in srgb, var(--mc-color-primary) 18%, var(--mc-color-border)); background:
   radial-gradient(60rem 18rem at 100% -40%, color-mix(in srgb, var(--mc-color-primary) 22%, transparent), transparent 70%),
   linear-gradient(135deg, var(--mc-color-surface-raised), var(--mc-color-primary-soft)); }
-.fx-head--hero h1 { font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.25rem); letter-spacing: -.01em; }
+.fx-head--hero h1 { font-size: var(--mc-font-size-forum-hero); letter-spacing: -.01em; }
 .fx-head__text { display: grid; gap: var(--mc-space-1); min-width: 0; }
 .fx-chips { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); margin: var(--mc-space-3) 0 0; padding: 0; list-style: none; }
 .fx-chips li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-full); background: color-mix(in srgb, var(--mc-color-surface-raised) 80%, transparent); color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); backdrop-filter: blur(6px); }
@@ -175,7 +175,7 @@ img.fx-avatar { border-radius: var(--mc-radius-full); object-fit: cover; }
 .fx-search__go:hover { filter: brightness(1.08); }
 .fx-head__actions .button { height: 44px; border-radius: var(--mc-radius-full); }
 .fx-board { transition: border-color .15s, box-shadow .15s, transform .15s; }
-.fx-board:hover { border-color: color-mix(in srgb, var(--mc-color-primary) 40%, var(--mc-color-border)); box-shadow: 0 8px 24px rgb(15 23 42 / .07); }
+.fx-board:hover { border-color: color-mix(in srgb, var(--mc-color-primary) 40%, var(--mc-color-border)); box-shadow: var(--mc-shadow-md); }
 .fx-board__head { padding: var(--mc-space-4) var(--mc-space-5); }
 .fx-board__icon { width: 44px; height: 44px; border-radius: var(--mc-radius-lg); background: linear-gradient(135deg, var(--mc-color-primary-soft), color-mix(in srgb, var(--mc-color-primary) 22%, var(--mc-color-primary-soft))); }
 .fx-board__title strong { font-size: var(--mc-font-size-md, 1.0625rem); }
