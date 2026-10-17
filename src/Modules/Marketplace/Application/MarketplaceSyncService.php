@@ -89,7 +89,7 @@ final class MarketplaceSyncService
         $started = gmdate('Y-m-d H:i:s.u');
         $store = $this->db->fetchAssociative("SELECT s.id AS store_id,m.id AS market_id,m.default_locale,m.default_currency FROM mc_market m JOIN mc_store s ON s.id=m.store_id WHERE m.status='active' ORDER BY s.id,m.id LIMIT 1");
         if (!is_array($store)) {
-            throw new \RuntimeException('No active market to put the orders into.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.marketplace.sync.no_active_market'));
         }
         $imported = 0;
         foreach ($adapter->newOrders($from->format('Y-m-d\TH:i:s')) as $order) {
@@ -124,7 +124,7 @@ final class MarketplaceSyncService
         foreach ($order->lines as $line) {
             $sku = $this->skuFor($line['external_id'], $line['sku']);
             if ($sku === null) {
-                throw new \DomainException('Unknown product ' . ($line['sku'] ?: $line['external_id']) . ' (match it by the SKU of the shop)');
+                throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.marketplace.sync.unknown_sku_prefix') . ($line['sku'] ?: $line['external_id']) . \Commerce\Core\I18n\CanonicalUiText::get('runtime.error.marketplace.sync.unknown_sku_suffix'));
             }
             $lines[] = ['sku' => $sku, 'quantity' => $line['quantity'], 'price' => $line['price']];
         }
