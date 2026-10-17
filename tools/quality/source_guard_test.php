@@ -20,5 +20,13 @@ try {
     $test("<?php\n// ... rest of the code remains the same ...\n", 1);
     $test("\xEF\xBB\xBF<?php\n\$a = 1;\n", 1);
     $test("\xEF\xBB\xBF<?php\n\$a = 1;\n", 0, true);
+    $test('<?php $description = "«Українська» — гарний текст";' . "\n", 0);
+    $test('<?php $html = "&lt;strong&gt;";' . "\n", 0);
+    $test("<?php\n\$x = 1;\n", 1); // U+00A0 in PHP expression
+    $test("<?php\n\$x = 1;\n", 1); // U+202F in PHP expression
+    $test("<?php\n\$x = 1;\u{00AD}\n", 1); // Soft hyphen
+    $test("<?php\n\$x = 1;\u{200B}\n", 1); // ZWSP
+    $test("<?php\n\$x = 1;\u{202E}\n", 1); // Bidi override
+    $test("<?php\nif (\$x &amp;&amp; \$y) {}\n", 1); // HTML entity in executable PHP
     echo "Source guard fixtures: PASS\n";
 } finally { @unlink($dir . '/fixture.php'); @rmdir($dir); }
