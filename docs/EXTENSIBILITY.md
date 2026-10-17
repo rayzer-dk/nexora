@@ -18,7 +18,7 @@
 | Зв'язок із зовнішнім сервісом (CRM, склад) без PHP | `remote_app`, API і вебхуки | remote_app |
 | Власний маршрут, API, обробник | `routes`, `trusted_handler` | підписаний |
 | Сторінка модуля в адмінці з правами | `/admin/extensions/<код>/…` + оголошений дозвіл | підписаний |
-| Реакція на подію (замовлення, оплата, товар, клієнт…) | `events`, 31 подія (`php bin/console commerce:extension:list-events`) | підписаний |
+| Реакція на подію (замовлення, оплата, товар, клієнт…) | `events`, 10 опублікованих подій (`php bin/console commerce:extension:list-events`) | підписаний |
 | Періодична задача (cron) | `scheduled_tasks` | підписаний |
 | Власні таблиці й міграції з відкотом | `migrations/` | підписаний |
 | Спосіб оплати, спосіб доставки | `provider.payment`, `provider.shipping` | підписаний |

@@ -66,7 +66,7 @@ final readonly class PaymentLifecycleService
             $this->activateDigitalEntitlements($db,(int)$order['id'],$now);
             $this->loyalty->earnForPaidOrder($db,(int)$order['id']);
             $this->appendEvent($db,(int)$order['id'],'payment.manual_paid',[],'admin',$actor);
-            $this->events->publish($this->eventFactory->create(EventNames::PAYMENT_STATUS_CHANGED, 'order', $orderPublicId, ['status'=>'paid','provider'=>'manual'], ['actor'=>'admin']));
+            $this->events->publish($this->eventFactory->create(EventNames::PAYMENT_STATUS_CHANGED, 'order', $orderPublicId, ['store_id'=>(int)$order['store_id'],'status'=>'paid','provider'=>'manual'], ['actor'=>'admin']));
         });
     }
 
@@ -82,7 +82,7 @@ final readonly class PaymentLifecycleService
             $this->loyalty->restoreSpendForOrder($db,(int)$order['id'],'cancel');
             $db->update('mc_payment',['status'=>'cancelled','cancelled_at'=>$now,'updated_at'=>$now],['order_id'=>(int)$order['id']]);
             $this->appendEvent($db,(int)$order['id'],'order.cancelled',[],'admin',$actor);
-            $this->events->publish($this->eventFactory->create(EventNames::ORDER_CANCELLED, 'order', $orderPublicId, ['reason'=>'admin_cancel'], ['actor'=>'admin']));
+            $this->events->publish($this->eventFactory->create(EventNames::ORDER_CANCELLED, 'order', $orderPublicId, ['store_id'=>(int)$order['store_id'],'reason'=>'admin_cancel'], ['actor'=>'admin']));
         });
     }
 
@@ -90,7 +90,7 @@ final readonly class PaymentLifecycleService
     public function applyProviderStatus(string $providerCode, string $providerReference, string $providerStatus, ?string $providerModifiedAt, int $amountMinor, string $currency, ?string $failureReason, array $payload): void
     {
         $this->db->transactional(function(Connection $db) use($providerCode,$providerReference,$providerStatus,$providerModifiedAt,$amountMinor,$currency,$failureReason,$payload): void {
-            $payment=$db->fetchAssociative('SELECT p.*,o.public_id order_public_id,o.status order_status,o.payment_status order_payment_status,o.total_minor order_total,o.currency order_currency FROM mc_payment p JOIN mc_sales_order o ON o.id=p.order_id WHERE p.provider_code=? AND p.provider_reference=? LIMIT 1 FOR UPDATE',[$providerCode,$providerReference]);
+            $payment=$db->fetchAssociative('SELECT p.*,o.public_id order_public_id,o.status order_status,o.payment_status order_payment_status,o.total_minor order_total,o.currency order_currency,o.store_id order_store_id FROM mc_payment p JOIN mc_sales_order o ON o.id=p.order_id WHERE p.provider_code=? AND p.provider_reference=? LIMIT 1 FOR UPDATE',[$providerCode,$providerReference]);
             if(!is_array($payment)) throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.payment.application.paymentlifecycleservice.platizh_dlia_webhook_ne_znaideno'));
             $normalizedProviderDate=$this->normalizeProviderDate($providerModifiedAt);
             if($normalizedProviderDate!==null && $payment['provider_modified_at']!==null && strcmp($normalizedProviderDate,(string)$payment['provider_modified_at'])<=0) return;
@@ -132,7 +132,7 @@ final readonly class PaymentLifecycleService
                 EventNames::PAYMENT_STATUS_CHANGED,
                 'order',
                 Uuid::fromBinary((string)$payment['order_public_id'])->toRfc4122(),
-                ['status'=>(string)$paymentUpdate['status'],'provider'=>$providerCode,'provider_status'=>$providerStatus],
+                ['store_id'=>(int)$payment['order_store_id'],'status'=>(string)$paymentUpdate['status'],'provider'=>$providerCode,'provider_status'=>$providerStatus],
                 ['source'=>'payment_provider'],
             ));
         });
@@ -152,7 +152,7 @@ final readonly class PaymentLifecycleService
                 $db->update('mc_sales_order',['status'=>'cancelled','payment_status'=>'expired','updated_at'=>$now],['id'=>(int)$orderId]);
                 $db->update('mc_payment',['status'=>'expired','failed_at'=>$now,'updated_at'=>$now],['order_id'=>(int)$orderId]);
                 $this->appendEvent($db,(int)$orderId,'order.expired',[],'system','reservation_expiry');
-                $this->events->publish($this->eventFactory->create(EventNames::ORDER_CANCELLED, 'order', Uuid::fromBinary((string)$order['public_id'])->toRfc4122(), ['reason'=>'payment_expired'], ['actor'=>'system']));
+                $this->events->publish($this->eventFactory->create(EventNames::ORDER_CANCELLED, 'order', Uuid::fromBinary((string)$order['public_id'])->toRfc4122(), ['store_id'=>(int)$order['store_id'],'reason'=>'payment_expired'], ['actor'=>'system']));
                 $count++;
             });
         }

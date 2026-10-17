@@ -24,6 +24,7 @@ final readonly class ExtensionPackageManager
         private ExtensionConflictGuard $conflicts,
         private ExtensionMigrationRunner $extensionMigrations,
         private string $projectDir,
+        private ?ExtensionSettingsManager $settings = null,
     ) {
     }
 
@@ -153,6 +154,9 @@ final readonly class ExtensionPackageManager
                 ], ['id' => (int) $row['id']]);
             });
 
+            if (!$allowDowngrade) {
+                $this->carryOverSettings($row);
+            }
             if (is_array($previousActive)) {
                 $this->recordLifecycle((int) $previousActive['id'], (string) $previousActive['code'], (string) $previousActive['version'], 'superseded', 'active', 'disabled', 'success', 'Replaced by version ' . (string) $row['version'] . '.');
                 $this->recordLifecycle((int) $row['id'], (string) $row['code'], (string) $row['version'], 'update_activate', (string) $row['status'], 'active', 'success', 'Updated from version ' . (string) $previousActive['version'] . '.');
@@ -168,6 +172,27 @@ final readonly class ExtensionPackageManager
             $this->recordActivationFailure((int) $row['id'], (int) $row['failure_count'], $e->getMessage());
             $this->recordLifecycle((int) $row['id'], (string) $row['code'], (string) $row['version'], 'activate', (string) $row['status'], (string) $row['status'], 'error', $e->getMessage());
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.7caf52e519ee'), 0, $e);
+        }
+    }
+
+    /**
+     * An update starts with the settings of the previous version (see ExtensionSettingsManager::carryOver). The new
+     * version is already active here; a failed copy leaves its defaults and is written to the module journal.
+     *
+     * @param array<string,mixed> $row
+     */
+    private function carryOverSettings(array $row): void
+    {
+        if ($this->settings === null) {
+            return;
+        }
+        try {
+            $copied = $this->settings->carryOver((int) $row['id']);
+            if ($copied > 0) {
+                $this->recordLifecycle((int) $row['id'], (string) $row['code'], (string) $row['version'], 'settings_carry_over', 'active', 'active', 'success', 'Settings carried over from the previous version: ' . $copied . '.');
+            }
+        } catch (\Throwable $e) {
+            $this->recordLifecycle((int) $row['id'], (string) $row['code'], (string) $row['version'], 'settings_carry_over', 'active', 'active', 'warning', mb_substr($e->getMessage(), 0, 900, 'UTF-8'));
         }
     }
 

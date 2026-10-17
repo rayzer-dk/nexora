@@ -15,9 +15,12 @@
         <div class="admin-form-grid">
         {% for field in fields %}
             {% set input_id = 'ext-setting-' ~ loop.index %}
+            {% if field.type in ['multilingual_text','multilingual_textarea'] %}
+            <fieldset class="admin-fieldset is-wide"><legend>{{ field.label }}{% if field.required %} *{% endif %}</legend><div class="admin-form-grid">{% for locale in locales %}<label class="{{ field.type == 'multilingual_textarea' ? 'is-wide' : '' }}"><span>{{ locale.name }} · {{ locale.code }}</span>{% if field.type == 'multilingual_textarea' %}<textarea id="{{ input_id ~ '-' ~ locale.code }}" name="settings[{{ field.key }}][{{ locale.code }}]" rows="4" lang="{{ locale.code }}"{% if field.required and loop.first %} required{% endif %}>{{ field.value[locale.code]|default('') }}</textarea>{% else %}<input id="{{ input_id ~ '-' ~ locale.code }}" type="text" name="settings[{{ field.key }}][{{ locale.code }}]" value="{{ field.value[locale.code]|default('') }}" lang="{{ locale.code }}"{% if field.required and loop.first %} required{% endif %}>{% endif %}</label>{% endfor %}</div>{% if field.help or field.help_url or field.example %}{{ help.hint(field.help|default(''), field.help_url|default(null), null, field.example|default(null)) }}{% endif %}</fieldset>
+            {% else %}
             <label class="{{ field.type == 'textarea' ? 'is-wide' : '' }}"{% if field.type == 'secret' %} data-secret-field{% endif %}>
                 <span>{{ field.label }}{% if field.required %} *{% endif %}</span>
-                {% if field.type in ['textarea','multilingual_textarea'] %}
+                {% if field.type == 'textarea' %}
                     <textarea id="{{ input_id }}" name="settings[{{ field.key }}]" rows="4" {% if field.required %}required{% endif %}>{{ field.value }}</textarea>
                 {% elseif field.type == 'boolean' %}
                     <span class="admin-check"><input id="{{ input_id }}" type="checkbox" name="settings[{{ field.key }}]" value="1" {% if field.value %}checked{% endif %}> {{ ui_text('admin.system.extension_settings.uvimkneno') }}</span>
@@ -31,6 +34,7 @@
                 {% endif %}
                 {% if field.help or field.help_url or field.example %}{{ help.hint(field.help|default(''), field.help_url|default(null), null, field.example|default(null)) }}{% endif %}
             </label>
+            {% endif %}
         {% endfor %}
         </div>
         <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_text('admin.system.extension_settings.pereviryty_ta_zberehty') }}</button></div>

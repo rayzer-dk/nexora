@@ -20,7 +20,9 @@ final readonly class ApiWebhookEventSubscriber implements DomainEventSubscriberI
 
     public function handle(StoredDomainEvent $event):void
     {
-        $storeId=(int)($event->payload['store_id']??$event->metadata['store_id']??0); if($storeId<1)return;
+        $storeId=(int)($event->payload['store_id']??$event->metadata['store_id']??0);
+        if($storeId<1)$storeId=$this->orderStore($event);
+        if($storeId<1)return;
         $rows=$this->db->fetchAllAssociative("SELECT public_id,target_url,target_url_hash,events FROM mc_webhook_subscription WHERE store_id=? AND status='active'",[$storeId]);
         foreach($rows as $row){
             $events=json_decode((string)$row['events'],true); if(!is_array($events)||(!in_array('*',$events,true)&&!in_array($event->eventName,$events,true)))continue;
@@ -28,5 +30,13 @@ final readonly class ApiWebhookEventSubscriber implements DomainEventSubscriberI
             $payload=json_encode(['id'=>$event->eventId,'type'=>$event->eventName,'version'=>$event->eventVersion,'aggregate'=>['type'=>$event->aggregateType,'id'=>$event->aggregateId],'data'=>$event->payload,'occurred_at'=>$event->occurredAt->format(DATE_ATOM)],JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
             try{$this->db->insert('mc_webhook_delivery',['public_id'=>$this->ids->binary(),'store_id'=>$storeId,'subscription_key'=>$subscription,'event_id'=>Uuid::fromString($event->eventId)->toBinary(),'event_type'=>$event->eventName,'payload'=>$payload,'target_url_hash'=>(string)$row['target_url_hash'],'status'=>'pending','attempts'=>0,'next_attempt_at'=>gmdate('Y-m-d H:i:s.u'),'locked_at'=>null,'lock_token'=>null,'response_status'=>null,'last_error'=>null,'created_at'=>gmdate('Y-m-d H:i:s.u'),'completed_at'=>null]);}catch(UniqueConstraintViolationException){}
         }
+    }
+
+    /** Order events queued by an older core carry no store_id; the order itself still names its store. */
+    private function orderStore(StoredDomainEvent $event):int
+    {
+        if($event->aggregateType!=='order'||!Uuid::isValid($event->aggregateId))return 0;
+        $store=$this->db->fetchOne('SELECT store_id FROM mc_sales_order WHERE public_id=? LIMIT 1',[Uuid::fromString($event->aggregateId)->toBinary()]);
+        return $store===false||$store===null?0:(int)$store;
     }
 }

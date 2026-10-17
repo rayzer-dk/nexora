@@ -216,7 +216,7 @@ final readonly class OrderManagementService
                 'updated_at' => $this->now(),
             ], ['id' => (int) $order['id']]);
             $this->appendEvent($db, (int) $order['id'], 'order.completed', [], 'admin', $actor);
-            $this->events->publish($this->eventFactory->create(EventNames::ORDER_COMPLETED, 'order', $orderPublicId, [], ['actor' => 'admin']));
+            $this->events->publish($this->eventFactory->create(EventNames::ORDER_COMPLETED, 'order', $orderPublicId, ['store_id' => (int) $order['store_id']], ['actor' => 'admin']));
         });
     }
 

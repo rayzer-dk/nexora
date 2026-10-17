@@ -33,7 +33,26 @@ final readonly class TrustedExtensionContext
         private array $declaredEvents = [],
         private array $declaredCapabilities = [],
         private array $declaredTasks = [],
+        private ?ExtensionSettingsManager $settings = null,
     ) {
+    }
+
+    /**
+     * Settings of this module as saved in Admin -> System -> Extensions -> Settings: saved values, schema defaults
+     * for fields never saved, secrets decrypted. Read at call time, so a handler always sees the latest save.
+     *
+     * @return array<string,mixed>
+     */
+    public function settings(): array
+    {
+        return $this->settings?->activeSettings($this->code) ?? [];
+    }
+
+    /** One setting of this module (see settings()); $default when the key is neither saved nor has a schema default. */
+    public function setting(string $key, mixed $default = null): mixed
+    {
+        $all = $this->settings();
+        return array_key_exists($key, $all) ? $all[$key] : $default;
     }
 
     public function route(string $name, callable $handler): void

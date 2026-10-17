@@ -20,12 +20,18 @@ final readonly class ExtensionSettingsManager
     ) {
     }
 
-    /** @return array{extension:array<string,mixed>,fields:list<array<string,mixed>>,revisions:list<array<string,mixed>>} */
+    /**
+     * Form model of the settings page. `locales` are the languages a multilingual field gets one input for:
+     * every language enabled in a store (default languages first) plus any language a saved value already has.
+     *
+     * @return array{extension:array<string,mixed>,fields:list<array<string,mixed>>,revisions:list<array<string,mixed>>,locales:list<array{code:string,name:string}>}
+     */
     public function editor(int $installationId): array
     {
         $extension = $this->extension($installationId);
         $schema = $this->schema($extension);
         $stored = $this->stored($installationId);
+        $locales = $this->enabledLocales();
         $fields = [];
         foreach ($schema['fields'] as $field) {
             $key = (string) $field['key'];
@@ -39,6 +45,14 @@ final readonly class ExtensionSettingsManager
             } else {
                 $field['value'] = $field['default'] ?? $this->emptyForType((string) $field['type']);
             }
+            if ($this->isMultilingual((string) $field['type'])) {
+                $field['value'] = $this->localizedMap($field['value'], $locales);
+                foreach (array_keys($field['value']) as $code) {
+                    if (!in_array($code, array_column($locales, 'code'), true)) {
+                        $locales[] = ['code' => $code, 'name' => $code];
+                    }
+                }
+            }
             $fields[] = $field;
         }
         $revisions = $this->connection->fetchAllAssociative(
@@ -49,7 +63,7 @@ final readonly class ExtensionSettingsManager
             $revision['id'] = (int) $revision['id'];
         }
         unset($revision);
-        return ['extension' => $extension, 'fields' => $fields, 'revisions' => $revisions];
+        return ['extension' => $extension, 'fields' => $fields, 'revisions' => $revisions, 'locales' => $locales];
     }
 
     /** @param array<string,mixed> $input */
@@ -95,6 +109,13 @@ final readonly class ExtensionSettingsManager
                 continue;
             }
             $next[$key] = ['value_payload' => $this->encodeValue($value), 'is_secret' => 0];
+        }
+        // Keys the current schema no longer has (carried over from an older version) are kept for modules that still read them.
+        $schemaKeys = array_column($schema['fields'], 'key');
+        foreach ($stored as $key => $row) {
+            if (!in_array($key, $schemaKeys, true)) {
+                $next[$key] = $row;
+            }
         }
 
         $this->connection->transactional(function (Connection $db) use ($installationId, $actor, $stored, $next): void {
@@ -149,6 +170,111 @@ final readonly class ExtensionSettingsManager
                 ]);
             }
         });
+    }
+
+    /**
+     * Gives a freshly updated version the settings of the newest lower version of the same module. Runs only while the
+     * target has never been configured (no values, no revisions), so it never overwrites edits or a version's own
+     * settings and never copies "down" on a rollback. Values the new schema still accepts are copied, a value that no
+     * longer validates is dropped (the new default applies), fields new in this version keep their defaults, and keys
+     * the new schema removed are kept as they were for modules that still read them.
+     *
+     * @return int number of copied values
+     */
+    public function carryOver(int $installationId): int
+    {
+        $target = $this->extension($installationId);
+        if ($this->stored($installationId) !== [] || (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_extension_setting_revision WHERE installation_id=?', [$installationId]) > 0) {
+            return 0;
+        }
+        $source = null;
+        foreach ($this->connection->fetchAllAssociative('SELECT DISTINCT e.id,e.version FROM mc_extension_installation e JOIN mc_extension_setting s ON s.installation_id=e.id WHERE e.code=? AND e.id<>? ORDER BY e.id DESC', [(string) $target['code'], $installationId]) as $candidate) {
+            if (version_compare((string) $candidate['version'], (string) $target['version'], '<') && ($source === null || version_compare((string) $candidate['version'], (string) $source['version'], '>'))) {
+                $source = $candidate;
+            }
+        }
+        if ($source === null) {
+            return 0;
+        }
+        $fields = array_column($this->schema($target)['fields'], null, 'key');
+        $next = [];
+        foreach ($this->stored((int) $source['id']) as $key => $row) {
+            $field = $fields[$key] ?? null;
+            if ($field === null) {
+                $next[$key] = $row;
+                continue;
+            }
+            $isSecret = (string) $field['type'] === 'secret';
+            if ($isSecret !== ((int) $row['is_secret'] === 1)) {
+                continue;
+            }
+            if ($isSecret) {
+                $next[$key] = $row;
+                continue;
+            }
+            try {
+                $value = $this->compatibleValue($field, $this->decodeValue((string) $row['value_payload']));
+            } catch (Throwable) {
+                continue;
+            }
+            if ($value !== null) {
+                $next[$key] = ['value_payload' => $this->encodeValue($value), 'is_secret' => 0];
+            }
+        }
+        if ($next === []) {
+            return 0;
+        }
+        $this->connection->transactional(function (Connection $db) use ($installationId, $next, $source): void {
+            $this->insertRevision($db, $installationId, [], 'system:carry-over from ' . (string) $source['version']);
+            $now = $this->now();
+            foreach ($next as $key => $row) {
+                $db->insert('mc_extension_setting', [
+                    'installation_id' => $installationId,
+                    'setting_key' => $key,
+                    'value_payload' => (string) $row['value_payload'],
+                    'is_secret' => (int) $row['is_secret'],
+                    'updated_at' => $now,
+                ]);
+            }
+        });
+        return count($next);
+    }
+
+    /**
+     * All settings of the active version of a module as the module sees them: saved values, schema defaults for
+     * fields never saved, secrets decrypted. Unknown or inactive modules get an empty array.
+     *
+     * @return array<string,mixed>
+     */
+    public function activeSettings(string $extensionCode): array
+    {
+        try {
+            $id = $this->connection->fetchOne("SELECT id FROM mc_extension_installation WHERE code=? AND status='active' ORDER BY id DESC LIMIT 1", [$extensionCode]);
+            if ($id === false || $id === null) {
+                return [];
+            }
+            $extension = $this->extension((int) $id);
+            $stored = $this->stored((int) $id);
+            $out = [];
+            foreach ($this->schema($extension)['fields'] as $field) {
+                $key = (string) $field['key'];
+                if (isset($stored[$key])) {
+                    $out[$key] = $this->readStored($extensionCode, $key, $stored[$key]);
+                } elseif (array_key_exists('default', $field)) {
+                    $out[$key] = $field['default'];
+                } elseif ((string) $field['type'] === 'boolean') {
+                    $out[$key] = false;
+                }
+                unset($stored[$key]);
+            }
+            foreach ($stored as $key => $row) {
+                $out[$key] = $this->readStored($extensionCode, $key, $row);
+            }
+            return $out;
+        } catch (Throwable) {
+            // Optional extension configuration is never allowed to crash Core/storefront.
+            return [];
+        }
     }
 
     /** @return mixed */
@@ -360,8 +486,86 @@ final readonly class ExtensionSettingsManager
     {
         return match ($type) {
             'boolean' => false,
+            'multilingual_text', 'multilingual_textarea' => [],
             default => '',
         };
+    }
+
+    /** @param array{value_payload:string,is_secret:int} $row */
+    private function readStored(string $extensionCode, string $key, array $row): mixed
+    {
+        return (int) $row['is_secret'] === 1
+            ? $this->vault->decrypt((string) $row['value_payload'], $this->vaultContext($extensionCode, $key))
+            : $this->decodeValue((string) $row['value_payload']);
+    }
+
+    /**
+     * Re-validates a value saved by an older version against the field of the new schema, exactly as a form save
+     * would. A text value becomes the first-language value of a field that turned multilingual.
+     *
+     * @param array<string,mixed> $field
+     */
+    private function compatibleValue(array $field, mixed $value): mixed
+    {
+        $type = (string) $field['type'];
+        if ($type === 'boolean') {
+            return is_bool($value) ? $value : null;
+        }
+        if ($this->isMultilingual($type)) {
+            $map = $this->localizedMap($value, $this->enabledLocales());
+            return $map === [] ? null : $this->multilingual($field, $map, $type === 'multilingual_textarea' ? 20000 : 1000);
+        }
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            return null;
+        }
+        if (trim((string) $value) === '') {
+            return null;
+        }
+        return $this->normalize($field, (string) $value);
+    }
+
+    private function isMultilingual(string $type): bool
+    {
+        return in_array($type, ['multilingual_text', 'multilingual_textarea'], true);
+    }
+
+    /**
+     * A plain string (a default written as text, or a value saved before the field became multilingual) belongs to
+     * the first language of the form.
+     *
+     * @param list<array{code:string,name:string}> $locales
+     * @return array<string,string>
+     */
+    private function localizedMap(mixed $value, array $locales): array
+    {
+        if (is_string($value) || is_int($value) || is_float($value)) {
+            $text = trim((string) $value);
+            return $text === '' ? [] : [(string) ($locales[0]['code'] ?? 'uk-UA') => $text];
+        }
+        $out = [];
+        foreach (is_array($value) ? $value : [] as $code => $text) {
+            if (is_string($code) && is_scalar($text)) {
+                $out[$code] = (string) $text;
+            }
+        }
+        return $out;
+    }
+
+    /** @return list<array{code:string,name:string}> */
+    private function enabledLocales(): array
+    {
+        try {
+            $rows = $this->connection->fetchAllAssociative(
+                "SELECT l.code,COALESCE(NULLIF(l.native_name,''),l.name,l.code) AS name,MAX(sl.is_default) AS is_default,MIN(sl.sort_order) AS sort_order FROM mc_store_locale sl JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.enabled=1 GROUP BY l.code,l.native_name,l.name ORDER BY is_default DESC,sort_order,l.code",
+            );
+        } catch (Throwable) {
+            $rows = [];
+        }
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = ['code' => (string) $row['code'], 'name' => (string) $row['name']];
+        }
+        return $out !== [] ? $out : [['code' => 'uk-UA', 'name' => 'uk-UA']];
     }
 
     private function now(): string
