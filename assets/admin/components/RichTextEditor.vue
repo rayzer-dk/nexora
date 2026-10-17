@@ -16,6 +16,7 @@ import {
   Palette, PaintBucket, Anchor as AnchorIcon, Video as VideoIcon, Smile, Ellipsis, SlidersHorizontal,
   TextAlignStart, TextAlignCenter, TextAlignEnd, TextAlignJustify, Rows3, Columns3, Trash2,
 } from '@lucide/vue';
+import ColorPicker from './ColorPicker.vue';
 import { BlockAlign } from '../features/editor-align';
 import { BlockAnchor, InlineIcon, Video, videoEmbedUrl } from '../features/editor-extras';
 import { pickMedia } from '../features/media-picker';
@@ -65,6 +66,7 @@ const setFullscreen = (value: boolean) => {
   document.body.classList.toggle('has-admin-modal', value);
 };
 const onKey = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && colorMenu.value !== '') { colorMenu.value = ''; return; }
   if (event.key === 'Escape' && fullscreen.value && !linkDialog.open && !imageDialog.open && !anchorDialog.open && !videoDialog.open) setFullscreen(false);
 };
 onMounted(() => document.addEventListener('keydown', onKey));
@@ -219,29 +221,35 @@ const SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 40, 48];
 const LINE_HEIGHTS = ['1', '1.15', '1.3', '1.5', '1.8', '2'];
 const textStyle = (name: string): string => String((editor.getAttributes('textStyle') as Record<string, unknown>)[name] ?? '');
 const fontValue = (): string => textStyle('fontFamily').replace(/["']/g, '').split(',')[0]?.trim() ?? '';
-const normalizeHex = (value: string): string => (/^#[0-9a-fA-F]{6}$/.test(value) ? value : '#000000');
-const POPULAR = ['#000000', '#434343', '#666666', '#999999', '#cccccc', '#ffffff', '#e03131', '#f76707', '#f59f00', '#fcc419', '#74b816', '#2f9e44', '#0ca678', '#1098ad', '#1971c2', '#3b5bdb', '#7048e8', '#ae3ec9', '#c2255c', '#e64980', '#8d6e63', '#00c853', '#ffd600', '#ff6d00'];
-const hexDraft = ref('');
-const hexOk = (value: string): boolean => /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value.trim());
-const normHex = (value: string): string => {
-  let hex = value.trim().toLowerCase();
-  if (!hex.startsWith('#')) hex = `#${hex}`;
-  return hex.length === 4 ? `#${[...hex.slice(1)].map((c) => c + c).join('')}` : hex;
-};
-const toggleColorMenu = (kind: 'text' | 'bg') => {
-  hexDraft.value = kind === 'text' ? textStyle('color') : textStyle('backgroundColor');
-  colorMenu.value = colorMenu.value === kind ? '' : kind;
-};
-const applyColor = (value: string) => {
+const POPULAR = ['#000000', '#6b7280', '#ffffff', '#e03131', '#f76707', '#fcc419', '#2f9e44', '#1098ad', '#1971c2', '#7048e8'];
+const toggleColorMenu = (kind: 'text' | 'bg') => { colorMenu.value = colorMenu.value === kind ? '' : kind; };
+const currentColor = (kind: 'text' | 'bg'): string => (kind === 'text' ? textStyle('color') : textStyle('backgroundColor'));
+const applyColor = (hex: string) => {
   const kind = colorMenu.value === 'bg' ? 'bg' : 'text';
-  const color = normHex(value);
+  const color = hex.toLowerCase();
   if (kind === 'text') editor.chain().focus().setColor(color).run();
   else editor.chain().focus().setBackgroundColor(color).run();
   rememberColor(kind, color);
   colorMenu.value = '';
 };
-const submitHex = () => { if (hexOk(hexDraft.value)) applyColor(hexDraft.value); };
-const onNativeColor = (event: Event) => applyColor((event.target as HTMLInputElement).value);
+const clearColor = () => {
+  if (colorMenu.value === 'bg') editor.chain().focus().unsetBackgroundColor().run();
+  else editor.chain().focus().unsetColor().run();
+  colorMenu.value = '';
+};
+const closeColorMenu = () => { colorMenu.value = ''; editor.commands.focus(); };
+const colorLabels = () => ({
+  title: colorMenu.value === 'bg' ? tr('bg_color') : tr('text_color'),
+  spectrum: tr('color_spectrum'),
+  hue: tr('color_hue'),
+  hex: tr('color_hex'),
+  apply: tr('apply'),
+  invalid: tr('color_invalid'),
+  popular: tr('popular_colors'),
+  recent: tr('recent_colors'),
+  recentEmpty: tr('recent_colors_empty'),
+  none: tr('color_none'),
+});
 const clearColors = () => { editor.chain().focus().unsetColor().unsetBackgroundColor().run(); };
 const setFont = (event: Event) => {
   const value = (event.target as HTMLSelectElement).value;
@@ -315,14 +323,14 @@ const RECENT_KEY = 'mc_editor_recent_colors';
 const loadRecent = (): { text: string[]; bg: string[] } => {
   try {
     const parsed = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '{}') as { text?: unknown; bg?: unknown };
-    const clean = (list: unknown): string[] => (Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string' && /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(item)).slice(0, 12) : []);
+    const clean = (list: unknown): string[] => (Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string' && /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(item)).slice(0, 10) : []);
     return { text: clean(parsed.text), bg: clean(parsed.bg) };
   } catch { return { text: [], bg: [] }; }
 };
 const recentColors = reactive(loadRecent());
 const rememberColor = (kind: 'text' | 'bg', value: string) => {
   const color = value.toLowerCase();
-  recentColors[kind] = [color, ...recentColors[kind].filter((item) => item !== color)].slice(0, 12);
+  recentColors[kind] = [color, ...recentColors[kind].filter((item) => item !== color)].slice(0, 10);
   try { localStorage.setItem(RECENT_KEY, JSON.stringify({ text: recentColors.text, bg: recentColors.bg })); } catch { /* storage blocked: the list lives for this page only */ }
 };
 
@@ -334,7 +342,7 @@ const words = (): number => {
 </script>
 
 <template>
-  <div ref="root" class="rich-editor" :class="{ 'rich-editor--fullscreen': fullscreen }">
+  <div ref="root" class="rich-editor" :class="{ 'rich-editor--fullscreen': fullscreen, 'rich-editor--menu': colorMenu === 'text' || colorMenu === 'bg' }">
     <div class="rich-editor__toolbar" role="toolbar" :aria-label="t('vue.components.richtexteditor.formatuvannia_tekstu')">
       <button type="button" :title="tr('undo')" :aria-label="tr('undo')" :disabled="sourceMode || !editor.can().undo()" @click="editor.chain().focus().undo().run()"><Undo2 :size="16" /></button>
       <button type="button" :title="tr('redo')" :aria-label="tr('redo')" :disabled="sourceMode || !editor.can().redo()" @click="editor.chain().focus().redo().run()"><Redo2 :size="16" /></button>
@@ -359,24 +367,7 @@ const words = (): number => {
       <span class="rich-editor__menu-host rich-editor__colorgroup">
         <button type="button" class="rich-editor__colorbtn" :title="tr('text_color')" :aria-label="tr('text_color')" :aria-expanded="colorMenu === 'text'" :disabled="sourceMode" @click="toggleColorMenu('text')"><Palette :size="16" /><span class="rich-editor__colorbar" :style="{ backgroundColor: textStyle('color') || '#000000' }"></span></button>
         <button type="button" class="rich-editor__colorbtn" :title="tr('bg_color')" :aria-label="tr('bg_color')" :aria-expanded="colorMenu === 'bg'" :disabled="sourceMode" @click="toggleColorMenu('bg')"><PaintBucket :size="16" /><span class="rich-editor__colorbar" :style="{ backgroundColor: textStyle('backgroundColor') || '#ffff00' }"></span></button>
-        <div v-if="colorMenu === 'text' || colorMenu === 'bg'" class="rich-editor__colorpanel" role="group" :aria-label="colorMenu === 'text' ? tr('text_color') : tr('bg_color')">
-          <strong>{{ colorMenu === 'text' ? tr('text_color') : tr('bg_color') }}</strong>
-          <div class="rich-editor__swatchgrid">
-            <button v-for="color in POPULAR" :key="color" type="button" class="rich-editor__swatch" :style="{ backgroundColor: color }" :title="color" :aria-label="color" @click="applyColor(color)"></button>
-          </div>
-          <div class="rich-editor__hexrow">
-            <span class="rich-editor__hexpreview" :style="{ backgroundColor: hexOk(hexDraft) ? normHex(hexDraft) : 'transparent' }"></span>
-            <input v-model="hexDraft" type="text" class="rich-editor__hex" maxlength="9" spellcheck="false" autocomplete="off" placeholder="#RRGGBB" :aria-label="tr('color_hex')" @keydown.enter.prevent="submitHex">
-            <button type="button" class="rich-editor__hexok" :disabled="!hexOk(hexDraft)" @click="submitHex">{{ tr('apply') }}</button>
-          </div>
-          <label class="rich-editor__nativepick"><span>{{ tr('color_pick') }}</span><input type="color" :aria-label="tr('color_pick')" :value="normalizeHex(hexDraft)" @change="onNativeColor"></label>
-          <template v-if="(colorMenu === 'text' ? recentColors.text : recentColors.bg).length > 0">
-            <small>{{ tr('recent_colors') }}</small>
-            <div class="rich-editor__swatchgrid">
-              <button v-for="color in (colorMenu === 'text' ? recentColors.text : recentColors.bg)" :key="color" type="button" class="rich-editor__swatch" :style="{ backgroundColor: color }" :title="color" :aria-label="color" @click="applyColor(color)"></button>
-            </div>
-          </template>
-        </div>
+        <ColorPicker v-if="colorMenu === 'text' || colorMenu === 'bg'" :key="colorMenu" :model-value="currentColor(colorMenu)" :fallback="colorMenu === 'bg' ? '#ffff00' : '#000000'" :popular="POPULAR" :recent="colorMenu === 'text' ? recentColors.text : recentColors.bg" :labels="colorLabels()" @pick="applyColor" @clear="clearColor" @close="closeColorMenu" />
       </span>
       <button type="button" :title="tr('color_reset')" :aria-label="tr('color_reset')" :disabled="sourceMode" @click="clearColors"><X :size="14" /></button>
       <span class="rich-editor__sep" aria-hidden="true"></span>

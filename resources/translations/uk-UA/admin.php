@@ -6347,4 +6347,10 @@ return [
     'admin.ai.empty_field' => 'ШІ повернув порожній текст для «%field%».',
     'admin.ai.empty_answer' => 'ШІ повернув порожню відповідь.',
     'admin.ai.photo_notes' => 'Бренд і характеристики (у форму не вставляються)',
+    'vue.components.richtexteditor.color_spectrum' => 'Спектр кольорів: насиченість і яскравість',
+    'vue.components.richtexteditor.color_hue' => 'Відтінок',
+    'vue.components.richtexteditor.color_invalid' => 'Введіть колір як #RGB або #RRGGBB',
+    'vue.components.richtexteditor.popular_colors' => 'Популярні',
+    'vue.components.richtexteditor.recent_colors_empty' => 'Тут з\'являться останні кольори',
+    'vue.components.richtexteditor.color_none' => 'Без кольору',
 ];

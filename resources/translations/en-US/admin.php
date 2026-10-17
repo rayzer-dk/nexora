@@ -6352,4 +6352,10 @@ return [
     'admin.ai.empty_field' => 'The AI returned empty text for "%field%".',
     'admin.ai.empty_answer' => 'The AI returned an empty answer.',
     'admin.ai.photo_notes' => 'Brand and attributes (not inserted into the form)',
+    'vue.components.richtexteditor.color_spectrum' => 'Colour spectrum: saturation and brightness',
+    'vue.components.richtexteditor.color_hue' => 'Hue',
+    'vue.components.richtexteditor.color_invalid' => 'Enter a colour as #RGB or #RRGGBB',
+    'vue.components.richtexteditor.popular_colors' => 'Popular',
+    'vue.components.richtexteditor.recent_colors_empty' => 'Recent colours will appear here',
+    'vue.components.richtexteditor.color_none' => 'No colour',
 ];
