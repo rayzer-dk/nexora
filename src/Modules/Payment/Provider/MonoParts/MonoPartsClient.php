@@ -57,7 +57,7 @@ final readonly class MonoPartsClient
     private function post(string $path, array $payload): array
     {
         if ($this->storeId === '' || $this->secret === '') {
-            throw new \RuntimeException('monobank instalments are not configured');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.payment.mono_parts.not_configured'));
         }
         $body = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $response = $this->httpClient->request('POST', rtrim($this->apiBase, '/') . $path, [
@@ -69,7 +69,7 @@ final readonly class MonoPartsClient
         $data = json_decode($response->getContent(false), true);
         if ($status < 200 || $status >= 300) {
             $detail = is_array($data) ? (string) ($data['message'] ?? $data['error'] ?? $data['detail'] ?? '') : '';
-            throw new \RuntimeException('monobank instalments answered ' . $status . ($detail !== '' ? ': ' . mb_substr($detail, 0, 200) : ''));
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.payment.mono_parts.http_prefix') . $status . ($detail !== '' ? ': ' . mb_substr($detail, 0, 200) : ''));
         }
 
         return is_array($data) ? $data : [];
