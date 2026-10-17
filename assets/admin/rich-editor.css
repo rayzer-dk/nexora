@@ -126,17 +126,17 @@
 .rich-editor__colorgroup { display: inline-flex; gap: 2px; }
 .rich-editor__colorbtn { position: relative; display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0 0 4px; border: 1px solid transparent; border-radius: var(--mc-radius-xs); background: transparent; color: inherit; cursor: pointer; }
 .rich-editor__colorbtn:hover:not(:disabled), .rich-editor__colorbtn[aria-expanded="true"] { background: var(--mc-color-surface-subtle); }
-.rich-editor__colorbar { position: absolute; inset-inline: 6px; bottom: 4px; height: 3px; border-radius: 2px; }
-.rich-editor__colorpanel { position: absolute; z-index: var(--mc-z-dropdown); top: calc(100% + var(--mc-space-1)); left: 0; display: grid; gap: var(--mc-space-2); width: 15.5rem; padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised, var(--mc-color-surface)); box-shadow: 0 10px 28px rgb(15 23 42 / 0.2); }
+.rich-editor__colorbar { position: absolute; inset-inline: 6px; bottom: 4px; height: 3px; border-radius: var(--mc-radius-micro); }
+.rich-editor__colorpanel { position: absolute; z-index: var(--mc-z-dropdown); top: calc(100% + var(--mc-space-1)); left: 0; display: grid; gap: var(--mc-space-2); width: 15.5rem; padding: var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised, var(--mc-color-surface)); box-shadow: var(--mc-shadow-popover); }
 .rich-editor__swatchgrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
-.rich-editor__colorpanel .rich-editor__swatch { width: 100%; aspect-ratio: 1; min-width: 0; border: 1px solid var(--mc-color-border); border-radius: 4px; cursor: pointer; }
+.rich-editor__colorpanel .rich-editor__swatch { width: 100%; aspect-ratio: 1; min-width: 0; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-xs); cursor: pointer; }
 .rich-editor__hexrow { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--mc-space-2); }
-.rich-editor__hexpreview { width: 28px; height: 28px; border: 1px solid var(--mc-color-border); border-radius: 4px; background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%); background-size: 8px 8px; background-position: 0 0, 4px 4px; }
+.rich-editor__hexpreview { width: 28px; height: 28px; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-xs); background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%); background-size: 8px 8px; background-position: 0 0, 4px 4px; }
 .rich-editor__hex { min-width: 0; height: 30px; padding: 0 var(--mc-space-2); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-xs); background: var(--mc-color-surface); color: inherit; font-family: var(--mc-font-mono); font-size: var(--mc-font-size-sm); }
 .rich-editor__hexok { height: 30px; padding: 0 var(--mc-space-3); border: 0; border-radius: var(--mc-radius-xs); background: var(--mc-color-primary); color: var(--mc-color-primary-contrast, #fff); cursor: pointer; }
 .rich-editor__hexok:disabled { opacity: 0.45; cursor: not-allowed; }
 .rich-editor__nativepick { display: flex; align-items: center; justify-content: space-between; gap: var(--mc-space-2); font-size: var(--mc-font-size-sm); }
-.rich-editor__nativepick input[type="color"] { width: 40px; height: 26px; padding: 0; border: 1px solid var(--mc-color-border); border-radius: 4px; background: none; cursor: pointer; }
+.rich-editor__nativepick input[type="color"] { width: 40px; height: 26px; padding: 0; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-xs); background: none; cursor: pointer; }
 .rich-editor__presets { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); }
 .rich-editor__toolbar select.rich-editor__select:not(.rich-editor__select--narrow, .rich-editor__select--panel) { min-width: 6.5rem; max-width: 8rem; }
 
