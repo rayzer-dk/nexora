@@ -130,7 +130,7 @@
 .lp-inline-form .lp-form { margin-inline: auto; }
 
 /* ---- Landing, richer default look ---- */
-.lp-hero__visual::before, .lp-hero__visual::after { content: ""; position: absolute; z-index: -1; border-radius: 50%; filter: blur(48px); opacity: .55; }
+.lp-hero__visual::before, .lp-hero__visual::after { content: ""; position: absolute; z-index: var(--mc-z-behind); border-radius: 50%; filter: blur(48px); opacity: .55; }
 .lp-hero__visual::before { width: 55%; height: 55%; top: -8%; right: -6%; background: var(--mc-color-primary); opacity: .28; }
 .lp-hero__visual::after { width: 45%; height: 45%; bottom: -10%; left: -4%; background: color-mix(in srgb, var(--mc-color-primary) 40%, #f59e0b); opacity: .22; }
 .lp-hero__image { display: block; width: 100%; height: auto; border-radius: var(--mc-radius-xl); box-shadow: var(--mc-shadow-lg); object-fit: cover; }
@@ -139,8 +139,11 @@
 .lp-mock__cards span { position: relative; display: grid; align-content: end; gap: 6px; padding: 10px; overflow: hidden; }
 .lp-mock__cards span::before { content: ""; position: absolute; inset: 0 0 38% 0; background: linear-gradient(135deg, var(--c1), var(--c2)); opacity: .9; }
 .lp-mock__cards .is-a { --c1: #60a5fa; --c2: #3b82f6; } .lp-mock__cards .is-b { --c1: #34d399; --c2: #10b981; } .lp-mock__cards .is-c { --c1: #fbbf24; --c2: #f59e0b; }
-.lp-mock__cards i { position: relative; display: block; height: 6px; border-radius: 999px; background: var(--mc-color-border-strong); }
+.lp-mock__cards i { position: relative; display: block; height: 6px; border-radius: var(--mc-radius-full); background: var(--mc-color-border-strong); }
 .lp-mock__cards i + i { width: 60%; }
 .lp-card__icon { background: linear-gradient(135deg, var(--mc-color-primary-soft), color-mix(in srgb, var(--mc-color-primary) 24%, var(--mc-color-primary-soft))); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mc-color-primary) 18%, transparent); }
 @media (prefers-reduced-motion: no-preference) { .lp-float { animation: lp-bob 6s ease-in-out infinite; } .lp-float--b { animation-delay: -3s; } }
 @keyframes lp-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+.lp-contact { scroll-margin-top: 5rem; }
+.lp-custom, .lp-hero__copy { min-width: 0; }

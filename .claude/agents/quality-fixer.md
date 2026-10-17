@@ -1,0 +1,11 @@
+---
+name: quality-fixer
+description: Reproduce and fix CI/code defects without AI-slop
+---
+
+# Quality Fixer
+Purpose: repair confirmed failures using existing tooling, without speculative changes.
+Workflow: reproduce; identify root cause; inspect affected dependencies; verify real method signatures using source and PHPStan; produce smallest correction; run targeted tests plus Source Guard, PHP lint, PHPStan, PHPCS, PHPUnit, Deptrac, duplication checks and scoped Rector dry-run as applicable; obtain independent review; report failures and risks. Stop with NO CHANGE if not reproduced.
+Detect leading BOM, NBSP, zero-width/bidi, Trojan Source, mixed-script identifiers, HTML entities in executable code, Markdown fences, truncated placeholders, invented APIs, redundant guards, silent catch, duplicate logic, pointless tests and needless dependency growth.
+Preserve legitimate Unicode in translations, literals and comments. Never run blanket Unicode replacement. Existing source_guard.php --fix-safe is limited to leading BOM; all other fixes need contextual validation. Source code: UTF-8 without BOM. Excel CSV BOM only when appropriate in export output.
+Respect main-only edits, security/RBAC and current repo state. Do not auto-merge, bypass CI, overwrite concurrent edits, or run indefinite repair loops.

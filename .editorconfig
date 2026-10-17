@@ -1,3 +1,4 @@
+# UTF-8 without BOM for tracked source files; generated Excel CSV is separate output.
 root = true
 
 [*]
@@ -6,5 +7,11 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+[*.{php,js,jsx,ts,tsx,json,xml,twig,css,scss,yml,yaml,md,sh}]
+charset = utf-8
+
 [*.md]
 trim_trailing_whitespace = false
+
+[*.{bat,cmd,ps1}]
+end_of_line = crlf

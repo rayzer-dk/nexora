@@ -55,7 +55,7 @@ final class CrmDispatcher
         $ok = $result['status'] >= 200 && $result['status'] < 300;
         $this->connections->log((int) $connection['id'], $number, $event, $ok ? 'ok' : 'failed', $result['status'], $result['body']);
         if (!$ok) {
-            throw new \RuntimeException('The receiver answered HTTP ' . $result['status'] . ': ' . mb_substr($result['body'], 0, 200));
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.integration.crm.http_prefix') . $result['status'] . ': ' . mb_substr($result['body'], 0, 200));
         }
 
         return $result;
@@ -73,7 +73,7 @@ final class CrmDispatcher
         if (!$this->allowPrivateHosts) {
             $this->policy->assertPublicHttps($url);
         } elseif (preg_match('~^https?://~i', $url) !== 1) {
-            throw new \RuntimeException('The address must start with http:// or https://');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.integration.crm.url'));
         }
         $headers = [
             'Content-Type' => 'application/json', 'Accept' => 'application/json', 'User-Agent' => 'Nexora-Commerce/' . \Commerce\Core\Platform\PlatformVersion::VERSION,

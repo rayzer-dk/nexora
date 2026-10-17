@@ -36,7 +36,7 @@ final class TelegramCustomerSender implements NotificationSenderInterface
         $status = $response->getStatusCode();
         $data = json_decode($response->getContent(false), true);
         if ($status < 200 || $status >= 300 || (is_array($data) && ($data['ok'] ?? true) === false)) {
-            throw new \RuntimeException('Telegram answered ' . $status . ': ' . mb_substr(is_array($data) ? (string) ($data['description'] ?? '') : '', 0, 200));
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.messenger.telegram.http_prefix') . $status . ': ' . mb_substr(is_array($data) ? (string) ($data['description'] ?? '') : '', 0, 200));
         }
 
         return is_array($data) ? $data : [];

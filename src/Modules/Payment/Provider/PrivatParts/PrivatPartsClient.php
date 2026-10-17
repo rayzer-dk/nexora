@@ -51,7 +51,7 @@ final readonly class PrivatPartsClient
         ]);
         $token = trim((string) ($data['token'] ?? ''));
         if ($token === '') {
-            throw new \RuntimeException('PrivatBank PayParts returned no token: ' . mb_substr((string) ($data['message'] ?? ''), 0, 200));
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.payment.privat_parts.no_token_prefix') . mb_substr((string) ($data['message'] ?? ''), 0, 200));
         }
 
         return ['token' => $token, 'url' => rtrim($this->apiBase, '/') . '/ipp/v2/payment?token=' . rawurlencode($token)];
@@ -88,7 +88,7 @@ final readonly class PrivatPartsClient
     private function post(string $path, array $payload): array
     {
         if ($this->storeId === '' || $this->password === '') {
-            throw new \RuntimeException('PrivatBank PayParts is not configured');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.payment.privat_parts.not_configured'));
         }
         $response = $this->httpClient->request('POST', rtrim($this->apiBase, '/') . $path, [
             'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'Accept-Encoding' => 'UTF-8'],
@@ -98,7 +98,7 @@ final readonly class PrivatPartsClient
         $status = $response->getStatusCode();
         $data = json_decode($response->getContent(false), true);
         if ($status > 201 || !is_array($data)) {
-            throw new \RuntimeException('PrivatBank PayParts answered ' . $status);
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.payment.privat_parts.http_prefix') . $status);
         }
 
         return $data;

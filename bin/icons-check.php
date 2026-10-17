@@ -25,7 +25,11 @@ foreach ($it as $file) {
     }
     // Data charts (marked data-chart) are drawings of numbers, not icons; every other inline svg is rejected.
     $withoutCharts = (string) preg_replace('#<svg\b[^>]*\bdata-chart\b[^>]*>.*?</svg>#s', '', $text);
-    if (str_ends_with($rel, '.twig') && str_contains($withoutCharts, '<svg') && !str_contains($rel, 'branding')) {
+    // Ignore SVG text mentioned inside Twig expressions; only actual markup is relevant.
+    $markup = (string) preg_replace('/\\{[{%#][\\s\\S]*?[}%#]\\}/', '', $withoutCharts);
+    // Dedicated messenger brand marks are logos, not generic UI icons.
+    $isBrandMark = $rel === 'themes/default/templates/components/brand_icon.html.twig';
+    if (str_ends_with($rel, '.twig') && str_contains($markup, '<svg') && !$isBrandMark && !str_contains($rel, 'branding')) {
         $errors[] = "$rel: inline <svg> is not allowed; use ui_icon() with a Lucide icon";
     }
 }

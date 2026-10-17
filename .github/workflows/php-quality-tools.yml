@@ -1,0 +1,80 @@
+name: PHP quality tooling
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tools/quality/**'
+      - 'phpcs.xml.dist'
+      - 'phpstan.strict.neon.dist'
+      - 'deptrac.yaml'
+      - 'rector.php'
+      - '.github/workflows/php-quality-tools.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tools/quality/**'
+      - 'phpcs.xml.dist'
+      - 'deptrac.yaml'
+      - 'rector.php'
+      - '.github/workflows/php-quality-tools.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tooling:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom,libxml,mbstring,simplexml,tokenizer,xmlwriter,zip
+          coverage: none
+          tools: composer:v2
+      - name: Validate isolated tools manifest
+        working-directory: tools/quality
+        run: composer validate --no-check-publish --no-check-lock
+      - name: Install isolated analysis tools (not production dependencies)
+        working-directory: tools/quality
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Source guard regression fixtures
+        run: php tools/quality/source_guard_test.php
+      - name: Validate changed source integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          php tools/quality/source_guard.php --check tools/quality/source_guard.php tools/quality/source_guard_test.php
+          git diff --name-only --diff-filter=ACM HEAD^ HEAD -- src \
+            | grep -E '\.(php|js|jsx|ts|tsx|twig|css|scss|xml|json|yml|yaml|html)$' > /tmp/changed-quality-files || true
+          while IFS= read -r file; do
+            php tools/quality/source_guard.php --check "$file"
+            if [[ "$file" == *.php ]]; then php -l "$file"; fi
+          done < /tmp/changed-quality-files
+      - name: PHP_CodeSniffer security and hygiene rules
+        run: tools/quality/vendor/bin/phpcs --standard=phpcs.xml.dist --report=summary
+      - name: Deptrac architectural dependency report (advisory during onboarding)
+        continue-on-error: true
+        run: tools/quality/vendor/bin/deptrac analyse --config-file=deptrac.yaml
+      - name: Strict PHPStan level 5 report (advisory, no baseline)
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          tools/quality/vendor/bin/phpstan analyse -c phpstan.strict.neon.dist --no-progress --memory-limit=2G
+      - name: Rector suggestions (manual trigger, read-only)
+        if: github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          tools/quality/vendor/bin/rector process --config=rector.php --dry-run --no-progress-bar --memory-limit=2G

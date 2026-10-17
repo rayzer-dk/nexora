@@ -234,7 +234,7 @@ final class BotProtection
         return $out;
     }
 
-    /** @param array{enabled:bool,categories:list<string>,empty_ua:bool,custom_agents:list<string>,ips:list<string>,robots_ai:bool} $config */
+    /** @param BotConfig $config */
     private function check(array $config, string $userAgent, string $ip): ?string
     {
         if ($ip !== '' && $config['ips'] !== [] && IpUtils::checkIp($ip, $config['ips'])) {

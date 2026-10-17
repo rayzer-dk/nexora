@@ -100,7 +100,7 @@ final class PromAdapter implements MarketplaceAdapterInterface
         $status = $response->getStatusCode();
         $data = json_decode($response->getContent(false), true);
         if ($status < 200 || $status >= 300 || (is_array($data) && !empty($data['error']))) {
-            throw new \RuntimeException('Prom.ua answered ' . $status . ': ' . mb_substr(is_array($data) ? (string) ($data['error'] ?? $data['message'] ?? '') : '', 0, 200));
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.marketplace.prom.http_prefix') . $status . ': ' . mb_substr(is_array($data) ? (string) ($data['error'] ?? $data['message'] ?? '') : '', 0, 200));
         }
 
         return is_array($data) ? $data : [];

@@ -49,8 +49,21 @@ foreach ($scanFiles($root . '/src', ['php']) as $path) {
         || str_ends_with($path, '/Core/Install/InstallationSeeder.php')
         || str_ends_with($path, '/Modules/Seo/Application/UkrainianTransliterator.php')
         || str_ends_with($path, '/Modules/Search/Application/SqlSearchIndex.php')
-        || str_ends_with($path, '/Core/I18n/AdminInterfaceLocale.php');
-    if (!$isDataException && preg_match($cyr, $text)) {
+        || str_ends_with($path, '/Core/I18n/AdminInterfaceLocale.php')
+        // Protocol constants, platform-specific CSV column names, and brand names are data, not UI prose.
+        || str_ends_with($path, '/Modules/Integration/Application/IntegrationCatalog.php')
+        || str_ends_with($path, '/Modules/Migration/Source/File/PlatformCatalogProfiles.php')
+        || str_ends_with($path, '/Modules/Feeds/Application/ProductFeedGenerator.php');
+    // Skip comments and PHPDoc: documentation is not rendered runtime UI.
+    $runtimeCode = '';
+    foreach (token_get_all($text) as $token) {
+        if (is_string($token)) {
+            $runtimeCode .= $token;
+        } elseif (!in_array($token[0], [T_COMMENT, T_DOC_COMMENT], true)) {
+            $runtimeCode .= $token[1];
+        }
+    }
+    if (!$isDataException && preg_match($cyr, $runtimeCode)) {
         $groups['runtime_php_cyrillic'][] = $relative;
     }
 

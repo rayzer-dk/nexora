@@ -244,3 +244,5 @@ html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-g
 
 /* Checkout: no footer columns while paying, only the shop name. */
 .checkout-footer { margin-top: var(--mc-space-8); padding-block: var(--mc-space-5); border-top: 1px solid var(--mc-color-border); color: var(--mc-color-muted); text-align: center; }
+
+.ck-success__messengers { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-3); }

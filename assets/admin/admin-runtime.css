@@ -2259,7 +2259,7 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 
 /* 3.97.24 options and variants: three steps, presets, compact variant rows */
 .admin-flow { display: flex; flex-wrap: wrap; gap: var(--mc-space-2); margin: 0 0 var(--mc-space-4); padding: 0; list-style: none; }
-.admin-flow li { display: inline-flex; align-items: center; gap: var(--mc-space-2); padding: var(--mc-space-1) var(--mc-space-3) var(--mc-space-1) var(--mc-space-1); border: 1px solid var(--mc-color-border); border-radius: 999px; background: var(--mc-color-surface); color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
+.admin-flow li { display: inline-flex; align-items: center; gap: var(--mc-space-2); padding: var(--mc-space-1) var(--mc-space-3) var(--mc-space-1) var(--mc-space-1); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-full); background: var(--mc-color-surface); color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
 .admin-flow li b { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--mc-color-surface-subtle); color: var(--mc-color-text); font-size: var(--mc-font-size-xs); }
 .admin-flow li.is-current { border-color: var(--mc-color-primary); color: var(--mc-color-text); }
 .admin-flow li.is-current b { background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); }
@@ -2323,3 +2323,12 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 .mc-picker__page { min-width: 36px; padding-inline: var(--mc-space-2); }
 .mc-picker__page.is-current { background: var(--mc-color-primary); color: var(--mc-color-primary-contrast); }
 .mc-picker__gap { padding-inline: var(--mc-space-1); color: var(--mc-color-muted); }
+
+/* Numeric metrics and administrative links remain clear in dense interfaces. */
+.admin-code-input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; min-width: 0; }
+.admin-link { color: var(--mc-color-primary); text-underline-offset: 2px; }
+.admin-switch-label { display: inline-flex; align-items: center; gap: var(--mc-space-2); }
+.dash-director { min-width: 0; }
+.num { font-variant-numeric: tabular-nums; }
+.push-explain { color: var(--mc-color-muted); line-height: 1.5; }
+.vies-result { min-height: 1.2em; }

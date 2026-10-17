@@ -51,7 +51,7 @@ test('the FOP page shows income against the limit, warns on the dashboard and gi
     expect(res.headers()['content-type']).toContain('text/csv');
     const body = (await res.body()).toString('utf8');
     expect(body.charCodeAt(0)).toBe(0xfeff);
-    const lines = body.replace(/^﻿/, '').trim().split('\n');
+    const lines = body.replace(/^\uFEFF/, '').trim().split('\n');
     expect(lines.length).toBeGreaterThanOrEqual(2);
     expect(lines[0].split(';').length).toBe(6);
     expect(lines[lines.length - 1]).toMatch(/;\d+\.\d{2};$/);

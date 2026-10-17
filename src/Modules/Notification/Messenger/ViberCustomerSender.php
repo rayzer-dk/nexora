@@ -36,7 +36,7 @@ final class ViberCustomerSender implements NotificationSenderInterface
         $status = $response->getStatusCode();
         $data = json_decode($response->getContent(false), true);
         if ($status < 200 || $status >= 300 || (is_array($data) && (int) ($data['status'] ?? 0) !== 0)) {
-            throw new \RuntimeException('Viber answered ' . $status . ': ' . mb_substr(is_array($data) ? (string) ($data['status_message'] ?? '') : '', 0, 200));
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.messenger.viber.http_prefix') . $status . ': ' . mb_substr(is_array($data) ? (string) ($data['status_message'] ?? '') : '', 0, 200));
         }
 
         return is_array($data) ? $data : [];

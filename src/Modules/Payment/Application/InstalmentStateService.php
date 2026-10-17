@@ -50,7 +50,7 @@ final readonly class InstalmentStateService
             [$providerCode, $providerReference],
         );
         if (!is_array($payment)) {
-            throw new \RuntimeException('payment not found for the instalment');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.payment.instalments.not_found'));
         }
         $failure = $status === 'failure' ? (string) ($payload['order_sub_state'] ?? $payload['message'] ?? $payload['paymentState'] ?? '') : null;
         $this->lifecycle->applyProviderStatus($providerCode, $providerReference, $status, null, (int) $payment['amount_minor'], (string) $payment['currency'], $failure === '' ? null : $failure, $payload);

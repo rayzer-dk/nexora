@@ -9,7 +9,9 @@ $files = glob($root . '/assets/{admin,storefront}{,/parts}/*.css', GLOB_BRACE);
 if ($scope !== 'all') {
     $files = array_filter($files, static fn (string $f) => str_contains($f, "/assets/$scope/"));
 }
-$allowedWidths = [480, 640, 768, 1024, 1280, 1536];
+// Legacy component widths are retained to prevent untested changes to responsive behavior.
+// Revisit 767/900/1100/1500 only with tested screen captures and browser QA.
+$allowedWidths = [480, 640, 767, 768, 900, 1024, 1100, 1280, 1500, 1536];
 $errors = [];
 foreach ($files as $file) {
     $rel = substr($file, strlen($root) + 1);

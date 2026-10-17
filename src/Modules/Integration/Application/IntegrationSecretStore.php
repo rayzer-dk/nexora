@@ -80,7 +80,7 @@ final class IntegrationSecretStore
         }
         $dir = dirname($this->file());
         if (!is_dir($dir) && !@mkdir($dir, 0700, true) && !is_dir($dir)) {
-            throw new \RuntimeException('Cannot create ' . $dir);
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.integration.secret.create_prefix') . $dir);
         }
         $tmp = $this->file() . '.' . bin2hex(random_bytes(4)) . '.tmp';
         file_put_contents($tmp, json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), LOCK_EX);

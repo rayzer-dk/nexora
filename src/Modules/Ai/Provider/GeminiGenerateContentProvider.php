@@ -62,7 +62,7 @@ final readonly class GeminiGenerateContentProvider implements ImageTextGeneratio
         }
         $blocked = (string) ($data['promptFeedback']['blockReason'] ?? (in_array($reason, ['SAFETY', 'RECITATION', 'PROHIBITED_CONTENT', 'BLOCKLIST'], true) ? $reason : ''));
         if ($blocked !== '') {
-            throw new RuntimeException('HTTP 200: Gemini ' . $blocked);
+            throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.ai.gemini.blocked_prefix') . $blocked);
         }
     }
 }

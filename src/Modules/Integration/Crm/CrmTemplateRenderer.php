@@ -27,7 +27,7 @@ final class CrmTemplateRenderer
         try {
             json_decode($out, true, 64, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            throw new \DomainException('The body template does not make valid JSON: ' . $e->getMessage());
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.integration.crm.template_prefix') . $e->getMessage());
         }
 
         return $out;

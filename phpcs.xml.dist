@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ruleset name="Nexora">
-    <description>Basic PHP conventions and BOM checks; full PSR-12 remains a separate audit.</description>
-    <file>src</file>
+<ruleset name="Nexora PHP quality">
+    <description>High-signal security, naming and file hygiene checks. PSR-12 can be enabled separately once existing debt is assessed.</description>
     <arg name="extensions" value="php"/>
     <arg name="encoding" value="utf-8"/>
+    <arg name="colors"/>
+    <file>src</file>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+
     <rule ref="Generic.Files.ByteOrderMark"/>
     <rule ref="Generic.PHP.DisallowAlternativePHPTags"/>
     <rule ref="Generic.PHP.DisallowShortOpenTag"/>
@@ -11,4 +14,17 @@
     <rule ref="Squiz.Classes.ValidClassName"/>
     <rule ref="Generic.NamingConventions.UpperCaseConstantName"/>
     <rule ref="PSR1.Methods.CamelCapsMethodName"/>
+    <rule ref="Generic.PHP.ForbiddenFunctions">
+        <properties>
+            <property name="forbiddenFunctions" type="array">
+                <element key="exec" value="null"/>
+                <element key="shell_exec" value="null"/>
+                <element key="system" value="null"/>
+                <element key="passthru" value="null"/>
+                <element key="proc_open" value="null"/>
+                <element key="popen" value="null"/>
+                <element key="create_function" value="null"/>
+            </property>
+        </properties>
+    </rule>
 </ruleset>

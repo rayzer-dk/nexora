@@ -103,7 +103,7 @@ final class ImportImageQueue
     {
         $tmp = tempnam(sys_get_temp_dir(), 'nexora-img-');
         if ($tmp === false) {
-            throw new \RuntimeException('temporary file');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.migration.image.temp'));
         }
         try {
             $this->download((string) $row['url'], $tmp);
@@ -126,24 +126,24 @@ final class ImportImageQueue
             if ($status >= 300 && $status < 400) {
                 $location = (string) ($response->getHeaders(false)['location'][0] ?? '');
                 if ($location === '') {
-                    throw new \RuntimeException('redirect without a location');
+                    throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.migration.image.redirect'));
                 }
                 $url = $this->absolute($url, $location);
                 continue;
             }
             if ($status !== 200) {
-                throw new \RuntimeException('the old shop answered ' . $status);
+                throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.migration.image.response_prefix') . $status);
             }
             $fh = fopen($target, 'wb');
             if ($fh === false) {
-                throw new \RuntimeException('temporary file');
+                throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.migration.image.temp'));
             }
             $size = 0;
             try {
                 foreach ($this->http->stream($response) as $chunk) {
                     $size += strlen($chunk->getContent());
                     if ($size > self::MAX_BYTES) {
-                        throw new \RuntimeException('the photo is larger than 15 MB');
+                        throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.migration.image.size'));
                     }
                     fwrite($fh, $chunk->getContent());
                 }
@@ -151,12 +151,12 @@ final class ImportImageQueue
                 fclose($fh);
             }
             if ($size < 20) {
-                throw new \RuntimeException('the answer is not a photo');
+                throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.migration.image.not_image'));
             }
 
             return;
         }
-        throw new \RuntimeException('too many redirects');
+        throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.migration.image.redirect_limit'));
     }
 
     private function absolute(string $base, string $location): string

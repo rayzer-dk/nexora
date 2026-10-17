@@ -792,7 +792,7 @@ async function refreshBuiltinCaptcha(box) {
 // Slider captcha: drag to the end. What the drag looked like (time, real pointer events, uneven speed) is sealed into the answer.
 function slideHash(text) {
   let h = 0x811c9dc5;
-  new TextEncoder().encode(text).forEach((byte) => { h = Math.imul(h ^ byte, 0x01000193) >>> 0; });
+  new globalThis.TextEncoder().encode(text).forEach((byte) => { h = Math.imul(h ^ byte, 0x01000193) >>> 0; });
   return h.toString(16).padStart(8, '0');
 }
 function initSlideCaptcha(scope) {
@@ -814,7 +814,7 @@ function initSlideCaptcha(scope) {
       if (done) return;
       paint();
       if (!event.isTrusted) return; // scripted events do not count as movement
-      const now = performance.now();
+      const now = globalThis.performance.now();
       if (!start) start = now;
       moves += 1;
       const value = Number(range.value);
@@ -828,7 +828,7 @@ function initSlideCaptcha(scope) {
     const finish = () => {
       if (done) return;
       if (Number(range.value) < 92) { reset(); return; }
-      const ms = Math.round(performance.now() - start);
+      const ms = Math.round(globalThis.performance.now() - start);
       const seal = slideHash(`${root.dataset.key}|${ms}|${moves}|${jitter}|${mode}`);
       answer.value = `v1.${ms}.${moves}.${jitter}.${mode}.${seal}`;
       done = true;

@@ -24,7 +24,7 @@ test('VAT by country is listed per quarter with a CSV, and VIES answers are show
   const quarter = Math.floor(new Date().getUTCMonth() / 3) + 1;
   const csv = await page.request.get(`/admin/finance/vat/report.csv?year=${year}&quarter=${quarter}`);
   expect(csv.ok()).toBe(true);
-  const text = (await csv.body()).toString('utf8').replace(/^﻿/, '').trim().split('\n');
+  const text = (await csv.body()).toString('utf8').replace(/^\uFEFF/, '').trim().split('\n');
   expect(text[0].split(';').length).toBe(7);
   expect(text.length).toBeGreaterThanOrEqual(2);
   // a quarter without orders says so

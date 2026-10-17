@@ -92,7 +92,7 @@ final readonly class MonoPartsPaymentProvider implements OnlinePaymentProviderIn
         $data = $this->client->createOrder($this->orderBody($request, $phone));
         $orderId = trim((string) ($data['order_id'] ?? ''));
         if ($orderId === '') {
-            throw new \RuntimeException('monobank instalments returned no order_id');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.error.payment.mono_parts.no_order_id'));
         }
 
         // The shopper confirms in the monobank app; the page they come back to explains it and follows the state.

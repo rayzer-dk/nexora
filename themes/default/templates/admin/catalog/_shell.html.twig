@@ -69,6 +69,7 @@
         <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">try{var mcNav=document.querySelector('.admin-nav'),mcNavY=sessionStorage.getItem('mc_admin_nav_scroll');if(mcNav&&mcNavY!==null){mcNav.scrollTop=parseInt(mcNavY,10)||0;}}catch(e){}</script>
         <div class="admin-sidebar__footer">
             <button class="admin-nav__link admin-nav__collapse" type="button" data-sidebar-collapse aria-pressed="false" title="{{ ui_text('admin.nav.collapse') }}">{{ ui_icon('panel-left-close', 20) }}<span>{{ ui_text('admin.nav.collapse') }}</span></button>
+            {{ nav.link(section, 'project_support', '/admin/project-support', 'heart-handshake', app.request.attributes.get('_ui_locale', 'uk-UA') == 'en-US' ? 'Support Nexora' : 'Підтримати Nexora') }}
             {{ nav.link(section, 'security', '/admin/account/security', 'shield-check', ui_text('admin.mfa.nav')) }}
             <form method="post" action="/admin/logout"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button class="admin-nav__link" type="submit">{{ ui_icon('log-out', 20) }}<span>{{ ui_text('admin_logout') }}</span></button></form>
         </div>

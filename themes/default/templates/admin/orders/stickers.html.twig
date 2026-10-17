@@ -18,7 +18,7 @@
   .sticker .to { font-size: 4.6mm; font-weight: bold; }
   .sticker .cod { border: 0.6mm solid #000; padding: 1.5mm 2mm; font-weight: bold; font-size: 4.4mm; }
   .sticker .barcode { margin-top: auto; }
-  .sticker .barcode svg { width: 100%; height: 16mm; display: block; }
+  .sticker .barcode img { width: 100%; height: 16mm; display: block; }
   .sticker .code { text-align: center; font-size: 4mm; letter-spacing: 0.6mm; font-family: "Courier New", monospace; }
   @media print { .toolbar { display: none; } .sticker { border: 0; margin: 0; } }
 </style>
@@ -32,7 +32,7 @@
   <div class="row to"><span class="label">{{ ui_text('admin.orders.bulk.sticker_to') }}</span><br>{{ s.name }}{% if s.phone %}, {{ s.phone }}{% endif %}<br>{{ s.to }}</div>
   {% if s.cod > 0 %}<div class="cod">{{ ui_text('admin.orders.bulk.sticker_cod') }}: {{ (s.cod/100)|number_format(2, '.', ' ') }} {{ s.currency }}</div>{% endif %}
   {% if s.comment %}<div class="row">{{ s.comment }}</div>{% endif %}
-  <div class="barcode">{{ s.barcode|raw }}<div class="code">{{ s.tracking ?: ui_text('admin.orders.bulk.sticker_no_ttn') ~ ' · ' ~ s.order }}</div></div>
+  <div class="barcode"><img src="{{ s.barcode }}" alt="{{ s.tracking ?: s.order }}" width="100%"><div class="code">{{ s.tracking ?: ui_text('admin.orders.bulk.sticker_no_ttn') ~ ' · ' ~ s.order }}</div></div>
 </section>
 {% endfor %}
 <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">document.querySelector('[data-print]')?.addEventListener('click', () => window.print());</script>
