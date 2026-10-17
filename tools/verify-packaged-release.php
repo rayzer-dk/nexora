@@ -42,7 +42,7 @@ if (is_file($classmapFile)) {
     $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir . '/src', FilesystemIterator::SKIP_DOTS));
     foreach ($it as $file) {
         if (!$file->isFile() || $file->getExtension() !== 'php') continue;
-        $relative = substr($file->getPathname(), strlen($dir . '/src/'), -4);
+        $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($dir . '/src/'), -4)); // Windows paths use backslashes
         $class = 'Commerce\\\\' . str_replace('/', '\\\\', $relative);
         if (!str_contains($classmap, "'" . $class . "'")) $missing[] = $relative;
     }

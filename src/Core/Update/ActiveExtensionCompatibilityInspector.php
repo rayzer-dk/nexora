@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Core\Update;
 
+use Commerce\Core\Extension\CoreVersionConstraint;
 use Doctrine\DBAL\Connection;
 
 final readonly class ActiveExtensionCompatibilityInspector
@@ -38,28 +39,10 @@ final readonly class ActiveExtensionCompatibilityInspector
                 continue;
             }
             $constraint = trim((string) ($manifest['core'] ?? ''));
-            if (!$this->supportsCore($targetCoreVersion, $constraint)) {
+            if (!CoreVersionConstraint::allows($constraint, $targetCoreVersion)) {
                 $errors[] = sprintf('%s %s does not declare compatibility with Core %s (%s).', (string) $row['code'], (string) $row['version'], $targetCoreVersion, $constraint !== '' ? $constraint : 'no constraint');
             }
         }
         return $errors;
-    }
-
-    private function supportsCore(string $version, string $constraint): bool
-    {
-        if (preg_match('/^(\^|~|>=)?\s*(\d+)\.(\d+)\.(\d+)$/D', $constraint, $m) !== 1) {
-            return false;
-        }
-        $operator = $m[1] ?? '';
-        $base = $m[2] . '.' . $m[3] . '.' . $m[4];
-        if ($operator === '') return version_compare($version, $base, '==');
-        if ($operator === '>=') return version_compare($version, $base, '>=');
-        if (version_compare($version, $base, '<')) return false;
-        $major=(int)$m[2];$minor=(int)$m[3];$patch=(int)$m[4];
-        if ($operator === '~') $upper=$major.'.'.($minor+1).'.0';
-        elseif ($major>0) $upper=($major+1).'.0.0';
-        elseif ($minor>0) $upper='0.'.($minor+1).'.0';
-        else $upper='0.0.'.($patch+1);
-        return version_compare($version, $upper, '<');
     }
 }

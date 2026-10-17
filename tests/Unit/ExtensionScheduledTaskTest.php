@@ -87,7 +87,7 @@ final class ExtensionScheduledTaskTest extends TestCase
     private function declarativePackageWithTask(): string
     {
         $manifest = [
-            'code' => 'acme.test_theme', 'name' => 'Test', 'version' => '1.0.0', 'type' => 'theme', 'core' => '^3.4.8',
+            'code' => 'acme.test_theme', 'name' => 'Test', 'version' => '1.0.0', 'type' => 'theme', 'core' => '^3.4.8 || ^4.0',
             'extension_api' => PlatformVersion::EXTENSION_API, 'permissions' => [], 'execution' => 'declarative',
             'scheduled_tasks' => [['code' => 'sync', 'interval' => 3600, 'label' => 'Sync']],
         ];

@@ -198,7 +198,7 @@ final class ExtensionPackageValidator
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.2090de367606') . (string) $manifest['extension_api'] . \Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.extra.eaeb56b26026') . PlatformVersion::EXTENSION_API . '.');
         }
         $coreConstraint = trim((string) $manifest['core']);
-        if (!$this->supportsCoreConstraint($coreConstraint)) {
+        if (!CoreVersionConstraint::allows($coreConstraint, PlatformVersion::VERSION)) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.ef7df298b331') . PlatformVersion::VERSION . '.');
         }
         if (!is_array($manifest['permissions'])) {
@@ -552,38 +552,6 @@ final class ExtensionPackageValidator
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.4e467a8f699a'));
             }
         }
-    }
-
-    private function supportsCoreConstraint(string $constraint): bool
-    {
-        if (preg_match('/^(\^|~|>=)?\s*(\d+)\.(\d+)\.(\d+)$/D', $constraint, $match) !== 1) {
-            return false;
-        }
-        $operator = $match[1] ?? '';
-        $base = $match[2] . '.' . $match[3] . '.' . $match[4];
-        $current = PlatformVersion::VERSION;
-        if ($operator === '') {
-            return version_compare($current, $base, '==');
-        }
-        if ($operator === '>=') {
-            return version_compare($current, $base, '>=');
-        }
-        if (version_compare($current, $base, '<')) {
-            return false;
-        }
-        $major = (int) $match[2];
-        $minor = (int) $match[3];
-        $patch = (int) $match[4];
-        if ($operator === '~') {
-            $upper = $major . '.' . ($minor + 1) . '.0';
-        } elseif ($major > 0) {
-            $upper = ($major + 1) . '.0.0';
-        } elseif ($minor > 0) {
-            $upper = '0.' . ($minor + 1) . '.0';
-        } else {
-            $upper = '0.0.' . ($patch + 1);
-        }
-        return version_compare($current, $upper, '<');
     }
 
     private function isSymlink(ZipArchive $zip, int $index): bool

@@ -3,7 +3,7 @@
   "name": "Order Hook",
   "version": "1.0.0",
   "type": "trusted-module",
-  "core": "^3.4.8",
+  "core": "^3.4.8 || ^4.0",
   "extension_api": "2.0",
   "execution": "trusted_release",
   "permissions": [

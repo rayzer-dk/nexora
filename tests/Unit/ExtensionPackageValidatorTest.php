@@ -63,11 +63,52 @@ final class ExtensionPackageValidatorTest extends TestCase
             'name' => 'Test theme',
             'version' => '1.0.0',
             'type' => 'theme',
-            'core' => '^3.4.8',
+            'core' => '^3.4.8 || ^4.0',
             'extension_api' => PlatformVersion::EXTENSION_API,
             'permissions' => [],
             'execution' => 'declarative',
         ], JSON_THROW_ON_ERROR)]];
+    }
+
+    /** The platform is 4.x: a Composer-style OR keeps 3.x modules installable once their authors add the 4.x branch. */
+    #[DataProvider('supportedCoreConstraints')]
+    public function testCoreConstraintThatIncludesTheRunningCoreIsAccepted(string $core): void
+    {
+        $inspection = $this->validator()->inspect($this->archive(['theme.css' => 'a{}'], core: $core), false);
+
+        self::assertSame($core, $inspection->manifest['core']);
+    }
+
+    /** @return iterable<string,array{string}> */
+    public static function supportedCoreConstraints(): iterable
+    {
+        yield 'or with major-minor caret' => ['^3.4.8 || ^4.0'];
+        yield 'or without spaces' => ['^3.4.8||^4.0.0'];
+        yield 'second branch first' => ['^4.0 || ^3.4.8'];
+        yield 'three branches' => ['~2.1.0 || ^3.4.8 || ^4.0'];
+        yield 'caret on the running major' => ['^4.0.0'];
+        yield 'lower bound' => ['>=3.0.0'];
+    }
+
+    /** A bare ^3 must not silently mean 4.x, and a malformed OR is not "any version". */
+    #[DataProvider('unsupportedCoreConstraints')]
+    public function testCoreConstraintThatExcludesTheRunningCoreIsRejected(string $core): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->validator()->inspect($this->archive(['theme.css' => 'a{}'], core: $core), false);
+    }
+
+    /** @return iterable<string,array{string}> */
+    public static function unsupportedCoreConstraints(): iterable
+    {
+        yield 'only 3.x' => ['^3.4.8'];
+        yield 'only 3.x major-minor' => ['^3.4'];
+        yield 'or without the running major' => ['^3.4.8 || ^5.0'];
+        yield 'dangling or' => ['^3.4.8 ||'];
+        yield 'leading or' => ['|| ^4.0'];
+        yield 'single pipe' => ['^3.4.8 | ^4.0'];
+        yield 'empty branch' => ['^3.4.8 |||| ^4.0'];
+        yield 'garbage branch' => ['^3.4.8 || latest'];
     }
 
     public function testArchiveWithoutManifestIsRejected(): void
@@ -86,14 +127,14 @@ final class ExtensionPackageValidatorTest extends TestCase
     }
 
     /** @param array<string,string> $files */
-    private function archive(array $files, bool $withManifest = true): string
+    private function archive(array $files, bool $withManifest = true, string $core = '^3.4.8 || ^4.0'): string
     {
         $manifest = [
             'code' => 'acme.test_theme',
             'name' => 'Test theme',
             'version' => '1.0.0',
             'type' => 'theme',
-            'core' => '^3.4.8',
+            'core' => $core,
             'extension_api' => PlatformVersion::EXTENSION_API,
             'permissions' => [],
             'execution' => 'declarative',

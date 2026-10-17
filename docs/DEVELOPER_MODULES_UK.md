@@ -233,7 +233,7 @@ $context->route('extension.example_order_hook.log', static fn (Request $request,
 
 | Поле | Що означає |
 | --- | --- |
-| `code`, `name`, `version`, `type`, `core`, `extension_api`, `permissions` | обов'язкові; `version` у форматі 1.2.3, `type`: `app`, `trusted-module` або `theme`, `core` на зразок `^3.4.8`, `extension_api` — `2.0` |
+| `code`, `name`, `version`, `type`, `core`, `extension_api`, `permissions` | обов'язкові; `version` у форматі 1.2.3, `type`: `app`, `trusted-module` або `theme`, `core` — версія ядра (формат під таблицею), `extension_api` — `2.0` |
 | `execution` | `declarative` (типово), `remote_app`, `trusted_release` |
 | `isolation`, `hot_disable` | мають бути `contract_only` і `true`, інакше `commerce:extension:test` покаже FAIL |
 | `localization` | `default_locale` лише `uk-UA`; файли `translations/<мова>/*.json` для кожної мови з `locales` |
@@ -244,6 +244,8 @@ $context->route('extension.example_order_hook.log', static fn (Request $request,
 | `commercial` | `model`: `free`, `one_time`, `subscription`, `external` |
 
 Схема маніфесту: `extensions/manifest.schema.json`. Усі ідентифікатори (блоки, маршрути, права, ключі перекладів, сторінки) мають починатися з `extension.<код з _ замість .>.`, наприклад `extension.acme_hello.`.
+
+Поле `core` — обмеження в стилі Composer: `^3.4.8`, `~3.4.8`, `>=3.0.0`, точна `3.4.8` або кілька гілок через «або», наприклад `"core": "^3.4.8 || ^4.0"`. Пакет приймається, якщо поточне ядро входить хоча б в одну гілку; `^3.4.8` без гілки `^4.0` на ядрі 4.x відхиляється, а одна хибна гілка робить невалідним усе обмеження.
 
 ### Налаштування
 
@@ -327,7 +329,7 @@ $context->route('extension.example_order_hook.log', static fn (Request $request,
 | У manifest.json бракує обов'язкового поля | додайте `code`, `name`, `version`, `type`, `core`, `extension_api`, `permissions` |
 | Поле version має бути у форматі 1.2.3 | без `v` і суфіксів |
 | Пакет зроблений для іншої версії API розширень | `extension_api` має бути `2.0` |
-| Пакет не підтримує цю версію ядра | поправте `core`, наприклад `^3.4.8` |
+| Пакет не підтримує цю версію ядра | поправте `core`, додайте гілку поточної мажорної версії ядра (формат під таблицею маніфесту) |
 | Для розширення default_locale має бути uk-UA | українська — обов'язкова типова мова |
 | Відсутній файл локалізації для locale | кожна мова з `locales` потребує файлу в `translations/<мова>/` |
 | manifest.json вказує на файл, якого немає в архіві | перевірте `settings_schema` блоку або модуля |

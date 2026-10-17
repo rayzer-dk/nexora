@@ -1,5 +1,5 @@
 {
-  "core": "^3.4.8",
+  "core": "^3.4.8 || ^4.0",
   "extension_api": "2.0",
   "type": "theme",
   "execution": "declarative",

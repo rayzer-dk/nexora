@@ -3,7 +3,7 @@
   "name": "Product Badge",
   "version": "1.0.0",
   "type": "app",
-  "core": "^3.4.8",
+  "core": "^3.4.8 || ^4.0",
   "extension_api": "2.0",
   "execution": "declarative",
   "permissions": [],
