@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Tests\Unit;
 
+use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\Ai\Provider\AnthropicMessagesProvider;
 use Commerce\Modules\Ai\Provider\GeminiGenerateContentProvider;
 use Commerce\Modules\Ai\Provider\OpenAiResponsesProvider;
@@ -61,7 +62,7 @@ final class AiProviderLimitsTest extends TestCase
             return new MockResponse(json_encode(array_shift($answers)));
         });
         $provider = new GeminiGenerateContentProvider($http, true, 'key', 'gemini-2.5-flash');
-        foreach (['ai_provider_truncated', 'HTTP 200: Gemini SAFETY'] as $expected) {
+        foreach (['ai_provider_truncated', CanonicalUiText::get('runtime.error.ai.gemini.blocked_prefix') . 'SAFETY'] as $expected) {
             try {
                 $provider->generate('x', null);
                 self::fail('expected ' . $expected);
