@@ -1,11 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
-use Rector\CodeQuality\Rector\If_\ExplicitBoolCompareRector;
+use Rector\CodeQuality\Rector\If_\SimplifyIfReturnBoolRector;
 use Rector\Config\RectorConfig;
 
-// Keep automated transformations narrow and compatible with target PHP.
+// One approved, version-independent simplification. No comment stripping, method
+// removal, vendor rewriting or broad changes to OpenCart/Symfony behavior.
 return RectorConfig::configure()
     ->withPaths([__DIR__ . '/src'])
-    ->withRules([ExplicitBoolCompareRector::class])
+    ->withRules([SimplifyIfReturnBoolRector::class])
     ->withCache(__DIR__ . '/var/rector');
