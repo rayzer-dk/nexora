@@ -28,7 +28,7 @@
 <footer class="site-footer"{% if footer_style|trim %} style="{{ footer_style|trim }}"{% endif %}>
     <div class="shell site-footer__brand">
         <div class="site-footer__brand-copy">
-            <div class="brand brand--footer">{% if presentation.brand.logo %}<img class="brand__logo" src="{{ presentation.brand.logo }}" alt="{{ storefront_brand_name }}">{% elseif presentation.brand.icon %}<img class="brand__icon" src="{{ presentation.brand.icon }}" alt="">{% else %}<span class="reference-brand__bag" aria-hidden="true">{{ ui_icon('shopping-bag', 20) }}</span>{% endif %}<span><strong>{{ storefront_brand_name }}</strong><small>{{ presentation.brand.subtitle ?: ui_text('modern_ecommerce') }}</small></span></div>
+            <div class="brand brand--footer">{% if presentation.brand.logo %}<img class="brand__logo" src="{{ presentation.brand.logo }}" alt="{{ storefront_brand_name }}">{% elseif presentation.brand.icon %}<img class="brand__icon" src="{{ presentation.brand.icon }}" alt="">{% else %}<span class="reference-brand__bag" aria-hidden="true">{{ ui_icon('shopping-bag', 20) }}</span>{% endif %}{% if storefront_brand_visible_name or not presentation.brand.logo %}<span>{% if storefront_brand_visible_name %}<strong>{{ storefront_brand_visible_name }}</strong>{% endif %}<small>{{ presentation.brand.subtitle ?: ui_text('modern_ecommerce') }}</small></span>{% endif %}</div>
             <p>{{ fcfg.tagline|default('') ?: ui_text('platform_tagline') }}</p>
         </div>
         <div class="site-footer__grid{{ footer_contact.has_any or storefront_menu('footer') ? ' has-contacts' : '' }}">
@@ -50,5 +50,5 @@
             {% endif %}
         </div>
     </div>
-    <div class="shell site-footer__bottom"><span>{% if fcfg.copyright|default('') %}{{ fcfg.copyright|replace({'{year}': 'now'|date('Y'), '{brand}': storefront_brand_name}) }}{% else %}© {{ 'now'|date('Y') }} {{ storefront_brand_name }}{% endif %}</span>{% if footer_contact.social %}{% include '@storefront/components/social_links.html.twig' with {social: footer_contact.social, variant: 'light'} only %}{% endif %}</div>
+    <div class="shell site-footer__bottom"><span>{% if fcfg.copyright|default('') %}{{ fcfg.copyright|replace({'{year}': 'now'|date('Y'), '{brand}': storefront_brand_visible_name})|trim }}{% else %}© {{ 'now'|date('Y') }}{% if storefront_brand_visible_name %} {{ storefront_brand_visible_name }}{% endif %}{% endif %}</span>{% if footer_contact.social %}{% include '@storefront/components/social_links.html.twig' with {social: footer_contact.social, variant: 'light'} only %}{% endif %}</div>
 </footer>

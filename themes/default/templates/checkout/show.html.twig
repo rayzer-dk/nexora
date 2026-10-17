@@ -1,6 +1,6 @@
 {% extends '@storefront/base.html.twig' %}{% set page_kind = 'cart' %}
 {#- The buyer is paying: no newsletter block and no footer columns, only a quiet line. -#}
-{% block site_footer %}<footer class="checkout-footer"><div class="shell"><small>{{ storefront_brand_name }}</small></div></footer>{% endblock %}
+{% block site_footer %}{% if storefront_brand_visible_name %}<footer class="checkout-footer"><div class="shell"><small>{{ storefront_brand_visible_name }}</small></div></footer>{% endif %}{% endblock %}
 {% block head %}<script type="module" src="{{ vite_asset('assets/storefront/checkout.js', '/assets/checkout.js') }}"></script>{% endblock %}
 {% block body %}
 {% set old = old|default({}) %}

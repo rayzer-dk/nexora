@@ -5,7 +5,7 @@
 {% block site_header %}
 <header class="lp-header" data-lp-header>
     <div class="lp-wrap lp-header__inner">
-        <a class="lp-brand" href="#top" aria-label="{{ storefront_brand_name }}">{% if presentation.brand.logo %}<img src="{{ presentation.brand.logo }}" alt="{{ storefront_brand_name }}" height="32">{% else %}{% if presentation.brand.icon %}<img class="lp-brand__icon" src="{{ presentation.brand.icon }}" alt="" width="32" height="32">{% endif %}<strong>{{ storefront_brand_name }}</strong>{% endif %}</a>
+        <a class="lp-brand" href="#top" aria-label="{{ storefront_brand_name }}">{% if presentation.brand.logo %}<img src="{{ presentation.brand.logo }}" alt="{{ storefront_brand_name }}" height="{{ presentation.brand.logo_height|default(48) }}">{% else %}{% if presentation.brand.icon %}<img class="lp-brand__icon" src="{{ presentation.brand.icon }}" alt="" width="32" height="32">{% endif %}{% if storefront_brand_visible_name %}<strong>{{ storefront_brand_visible_name }}</strong>{% endif %}{% endif %}</a>
         <nav class="lp-nav" aria-label="{{ ui_text('navigation') }}">
             {% set shown = landing.sections|filter(x => x.show)|map(x => x.key) %}
             {% if 'features' in shown %}<a href="#features">{{ ui_text('landing.nav.features') }}</a>{% endif %}{% if 'steps' in shown %}<a href="#how">{{ ui_text('landing.nav.how') }}</a>{% endif %}{% if 'reviews' in shown %}<a href="#reviews">{{ ui_text('landing.nav.reviews') }}</a>{% endif %}{% if 'faq' in shown %}<a href="#faq">{{ ui_text('landing.nav.faq') }}</a>{% endif %}{% if 'cta' in shown %}<a href="#contact">{{ ui_text('landing.nav.contact') }}</a>{% endif %}
@@ -47,9 +47,9 @@ if(location.hash.indexOf('#form-')===0)open(location.hash.slice(1));})();
 {% set hc = header_contacts() %}
 <footer class="lp-footer">
     <div class="lp-wrap lp-footer__inner">
-        <strong>{{ storefront_brand_name }}</strong>
+        {% if storefront_brand_visible_name %}<strong>{{ storefront_brand_visible_name }}</strong>{% endif %}
         <span>{% if hc.phone_href %}<a href="{{ hc.phone_href }}">{{ hc.phone }}</a>{% endif %}{% if hc.email %}<a href="mailto:{{ hc.email }}">{{ hc.email }}</a>{% endif %}</span>
-        <span>© {{ 'now'|date('Y') }} {{ storefront_brand_name }}. {{ ui_text('landing.ui.rights') }} <a href="/privacy-policy">{{ ui_text('landing.ui.privacy') }}</a></span>
+        <span>© {{ 'now'|date('Y') }}{% if storefront_brand_visible_name %} {{ storefront_brand_visible_name }}{% endif %}. {{ ui_text('landing.ui.rights') }} <a href="/privacy-policy">{{ ui_text('landing.ui.privacy') }}</a></span>
     </div>
 </footer>
 {% endblock %}

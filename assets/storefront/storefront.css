@@ -270,7 +270,9 @@ legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-
 .reference-brand small, .brand small { margin-top: var(--mc-space-1); color: var(--mc-color-muted); font-weight: var(--mc-font-weight-regular); }
 .reference-brand small { display: none; }
 .reference-brand strong { overflow: hidden; font-size: var(--mc-font-size-base); text-overflow: ellipsis; white-space: nowrap; }
-.reference-brand__logo, .brand__logo { width: auto; max-height: var(--mc-control-height-md); max-width: 180px; object-fit: contain; }
+.reference-brand__logo { width: auto; height: var(--mc-logo-height, 48px); max-width: 260px; object-fit: contain; }
+.brand__logo { width: auto; max-height: var(--mc-control-height-md); max-width: 180px; object-fit: contain; }
+@media (max-width: 767px) { .reference-brand__logo { height: min(var(--mc-logo-height, 48px), 44px); max-width: 60vw; } }
 .reference-brand__icon, .brand__icon { width: var(--mc-control-height-md); height: var(--mc-control-height-md); border-radius: var(--mc-radius-sm); object-fit: cover; }
 .reference-brand__bag { display: inline-flex; flex: none; align-items: center; justify-content: center; width: var(--mc-control-height-md); height: var(--mc-control-height-md); border-radius: var(--mc-radius-md); background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); }
 

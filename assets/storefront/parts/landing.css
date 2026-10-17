@@ -5,7 +5,7 @@
 .lp-header { position: sticky; top: 0; z-index: var(--mc-z-sticky, 20); border-bottom: 1px solid var(--mc-color-border); background: color-mix(in srgb, var(--mc-color-surface) 86%, transparent); backdrop-filter: saturate(1.4) blur(14px); }
 .lp-header__inner { display: flex; align-items: center; gap: var(--mc-space-5); min-height: 64px; }
 .lp-brand { display: inline-flex; align-items: center; gap: var(--mc-space-2); color: var(--mc-color-text); font-size: var(--mc-font-size-lg); text-decoration: none; }
-.lp-brand img { display: block; max-height: 34px; width: auto; }
+.lp-brand img { display: block; max-height: min(var(--mc-logo-height, 48px), 56px); max-width: 260px; width: auto; }
 .lp-nav { display: none; gap: var(--mc-space-5); margin-inline: auto; }
 .lp-nav a { color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-medium); text-decoration: none; }
 .lp-nav a:hover { color: var(--mc-color-text); }

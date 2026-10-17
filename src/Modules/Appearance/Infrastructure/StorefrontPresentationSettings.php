@@ -129,6 +129,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'title' => '',
                 'subtitle' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.suchasni_rishennia_dlia_krashchoho_zhyttia'),
                 'logo' => '',
+                'logo_height' => 48,
                 'icon' => '',
                 'favicon' => '',
                 'pwa' => '1',
@@ -226,6 +227,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         foreach (['logo','icon','favicon'] as $key) {
             $out['brand'][$key] = $this->mediaPath($input['brand'][$key] ?? '');
         }
+        $out['brand']['logo_height'] = max(32, min(96, (int) ($input['brand']['logo_height'] ?? $defaults['brand']['logo_height'])));
         $out['brand']['show_title'] = (string) ($input['brand']['show_title'] ?? $defaults['brand']['show_title']) === '0' ? '0' : '1';
         $out['brand']['pwa'] = (string) ($input['brand']['pwa'] ?? $defaults['brand']['pwa']) === '1' ? '1' : '0';
         $preset=(string)($input['theme']['preset']??$defaults['theme']['preset']);

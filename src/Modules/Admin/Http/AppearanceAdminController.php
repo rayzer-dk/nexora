@@ -47,6 +47,7 @@ final class AppearanceAdminController extends AbstractController
                         'title' => $tx('brand_title'),
                         'subtitle' => $tx('brand_subtitle'),
                         'logo' => $request->request->get('brand_logo',''),
+                        'logo_height' => $request->request->get('brand_logo_height','48'),
                         'icon' => $request->request->get('brand_icon',''),
                         'favicon' => $request->request->get('brand_favicon',''),
                         'pwa' => $request->request->get('brand_pwa','0') === '1' ? '1' : '0',
