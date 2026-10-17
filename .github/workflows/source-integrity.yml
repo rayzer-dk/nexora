@@ -55,3 +55,15 @@ jobs:
           for file in "${sources[@]}"; do
             if [[ "$file" == *.php ]]; then php -l "$file"; fi
           done
+
+      - name: Full source audit (legacy report)
+        shell: bash
+        run: |
+          set +e
+          php tools/quality/source_guard.php --check src tests config tools > /tmp/quality-full-audit.log 2>&1
+          status=$?
+          set -e
+          echo "Full legacy source audit exit status: $status"
+          echo "Reported findings: $(grep -c '^SOURCE GUARD:' /tmp/quality-full-audit.log || true)"
+          sed -n '1,45p' /tmp/quality-full-audit.log
+          echo "Full source audit is advisory until existing findings are triaged."
