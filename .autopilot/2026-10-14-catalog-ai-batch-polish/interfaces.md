@@ -66,3 +66,45 @@ Repo: `C:\Users\Владимир\Documents\Codex\nexora_live` (Windows, Git Bash
 ## Test seams
 - Unit: `ProductStockService` (SQLite-compatible SQL where possible, or mock Connection), `AiGlossary::protect/restore`, `AiTaskService::translateFields` (stub provider like `AiTaskServiceTest`), `AiBatchService` selection of untranslated + limit pause (SQLite in-memory schema in the test).
 - E2E: one spec per surface ticket (T01–T05, T06/T07) in `tests/e2e/`.
+
+## Built by finished tickets
+
+### T01 (catalog lists)
+- `ProductStockService::setStock(int $storeId, int $marketId, string $publicId, string $quantity): {ok, previous: array<int,string>, quantity, error?: format|not_found|variants|no_location|no_inventory}` (quantity in display form "7.5"); `zeroStock(int $storeId, int $marketId, list<string> $ids): {updated, skipped, previous}` (max 500); `restore(array $previous, ?int $storeId = null, ?int $marketId = null): int`; static `display(?string): string`. Location = market's first **active** warehouse (as ProductWriter).
+- `DbalCatalogAdminQuery::productCounts(int $storeId, ?list<int> $ids = null): array<int,{direct,total}>` (one recursive CTE); `categoryBranch(int $storeId, list<int>): list<int>`; `categories(..., bool $withCounts = false)`; `products()` rows add `variant_count, has_inventory, manage_inventory, stock_quantity, stock_total`; sort key `stock`. Product-list category filter now includes subcategories.
+- Route `admin_catalog_product_quick_stock` POST `/admin/catalog/products/{publicId}/quick-stock` (CSRF `admin_quick_stock`, field `stock`) → `{ok, stock}` | 422 `{ok:false, error}`. Bulk action value `zero_stock`. Undo kind `stock` payload `{previous}`. Products list column key `stock`.
+- Status column: switch only (no `.admin-badge` next to it); state in `title`/`aria-label`.
+
+### T02 (AI result visible)
+- `assets/admin/admin-runtime.js` module-local helpers (not exported): `insertAiFields(scope, mapping[{selector,value,label}]) → {written[{field,label,value,selector}], missing, empty}`; `showAiResult(box, result, fields[{label,value,selector?}])`; `revealField(field)`. DOM hooks `[data-ai-result]`, `[data-ai-result-item]`, `[data-ai-result-text]`, `[data-ai-result-more]`, `[data-ai-result-where]`, `[data-ai-reveal-field]`, `[data-ai-copy]`; CSS `.admin-ai-result`, `.is-ai-flash`, status `.is-error`. Keys `admin.ai.{inserted_in,show_field,show_full,show_less,copy,copied,copy_failed,insert_failed,empty_field,empty_answer,photo_notes}`. Each AI helper reads status/provider/token from its own `.admin-ai-helper`.
+
+### T03 (colour picker)
+- `assets/admin/components/ColorPicker.vue` props `{modelValue?: string, fallback?: string, popular: string[], recent: string[], labels: ColorPickerLabels{title,spectrum,hue,hex,apply,invalid,popular,recent,recentEmpty,none}}`; emits `pick('#rrggbb')`, `clear()`, `close()`. Recent storage `mc_editor_recent_colors` `{text:[],bg:[]}`, max 10 per kind; 10 popular colours. Keys `vue.components.richtexteditor.{color_spectrum,color_hue,color_invalid,popular_colors,recent_colors_empty,color_none}`; `color_pick` now unused. Old `<input type=color>`, `.rich-editor__color`, `.rich-editor__tiny` removed.
+
+### T11 (extension core)
+- `TrustedExtensionContext::settings(): array<string,mixed>` (all fields, defaults applied, secrets decrypted, read live) and `::setting(string $key, mixed $default = null): mixed`; both via `ExtensionSettingsManager::activeSettings(string $code)`.
+- `ExtensionSettingsManager::carryOver(int $installationId): int` — called by `ExtensionPackageManager` on activating an upgrade (not downgrade/rollback, only when the target has no values); revalidates against the new schema, invalid → default, dropped keys kept.
+- `multilingual_text`/`multilingual_textarea` settings stored as `{locale: text}`, one input per enabled store language.
+- Events `commerce.order.cancelled`, `commerce.order.completed`, `commerce.payment.status_changed` carry `store_id`; `ApiWebhookEventSubscriber` falls back to `mc_sales_order.store_id` for legacy events. `resources/event-contracts/v1/*.schema.json` list `store_id` as required (documentation only).
+- `commerce:extension:list-events` prints the 10 published events; `--all` adds 21 reserved names marked «(reserved: …)».
+- NOT built (story 58): extension block schema fields in the builder inspector — needs a schema-driven `renderInspector` in `assets/admin/features/builder.js`; moved to the separate builder build by the user.
+
+### T04 (brand / logo)
+- `brand.logo_height` int 32–96, default 48 (clamped in `StorefrontPresentationSettings::normalize`); POST field `brand_logo_height`; CSS var `--mc-logo-height` on `:root` (phones capped at 44 px, max width 260 px).
+- Twig `storefront_brand_visible_name` computed once in `base.html.twig`; used by header, mobile subtitle, footer, landing, checkout footer. SEO/alt/aria/og/JSON-LD keep `storefront_brand_name`. Email header: store_name → `storefront_identity().name` → 'Nexora Commerce'.
+- Keys `admin.appearance.storefront.logo_height`, `.logo_height.help`, `.logo_help` (`%height%`), uk-UA + en-US.
+
+### T05 (AI batch translation, glossary)
+- `AiTaskService::translateFields(int $storeId, string $admin, string $provider, array $fields, string $target, string $source=''): {fields, remaining}`; optional `?AiGlossary` last ctor arg. Short limit → `AiLimitException(needed, limit, used)` (extends DomainException) from `run()` and `translateFields()`.
+- `POST /admin/api/ai/task` task `translate_fields`, `fields[json]`, `fields[target]`, `fields[source]` → `{ok, fields, provider, remaining}`.
+- `AiGlossary` terms/save/restore/promptHint as spec; `protect(int $storeId, string $text, string $target, bool $withFixed=false)`. Glossary saved via POST `admin_system_ai_glossary`.
+- `AiBatchService::start(int, string, array): string` — throws DomainException `admin.ai.batch.nothing` when nothing new; accepts kind 'generate' (task, product_ids) but `process()` handles only 'translate' jobs. `progress(int $storeId, int $limit=10)` adds `failures`; `pause/resume/cancel/retryFailed(string $publicId, ?int $storeId=null)`; helpers `providers(int)`, static `fields(string)`.
+- Routes: `admin_ai_batch` GET, `admin_ai_batch_start`, `admin_ai_batch_run`, one `admin_ai_batch_action` POST `/admin/catalog/ai-batch/{publicId}/{pause|resume|cancel|retry}` (JSON for XHR). CSRF `admin_ai_batch`; permission `catalog.manage` via `admin_ai_batch*` prefix.
+- Cron task `ai_batch`: `commerce:ai:batch --limit=20 --max-seconds=50`, every 300 s, group catalog. Migration `Version20270101010000` (3 tables).
+
+### T06 (bulk AI)
+- `AiBatchService::GENERATE_FIELDS` (product_draft→short_description,description; seo_meta→meta_title,meta_description); `review(storeId,page)` items `{id,batch,task,product_id,name,changes[{field,before,after}]}`; `reviewCount`, `reviewJobIds`, `applyJobs(storeId,ids): list<int>`, `apply`, `reject`, `undo`; progress per_locale/totals gain `review`. Generate refuses translation-only providers (`error_provider`); no new job while pending/review exists.
+- Routes `admin_ai_batch_review` GET, `admin_ai_batch_review_apply|_reject` POST (ids[] or all=1). Bulk actions `ai_descriptions`, `ai_seo`, `ai_translate` keep selection in session (`AiBatchAdminController::SELECTION`) → `admin_ai_batch?selection=1`. Undo kind `ai_review` payload `{jobs}`.
+
+### T07 (hints, getting started)
+- Help slug `getting-started` (`/admin/help/getting-started`, first in `HelpCatalog::DOCS`), `docs/GETTING_STARTED_UK.md`; keys `admin.help.{sf,pl,cl,cf,pf,tr,ai,ab}.*` (+`.ex` examples), `admin.help.start.link` (dashboard). Hints on sortable headers moved to toolbars.

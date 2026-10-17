@@ -2,7 +2,7 @@ window.STATE =
 {
   "version": 2,
   "slug": "catalog-ai-batch-polish",
-  "dir": "2026-10-14-catalog-ai-batch-polish--wip",
+  "dir": "2026-10-14-catalog-ai-batch-polish",
   "title": "Каталог, ИИ-подстановка, пакетный перевод, редактор, логотип, подсказки, архив",
   "mode": "semi",
   "depth": "normal",
@@ -11,10 +11,10 @@ window.STATE =
   "memoryFile": "AGENTS.md",
   "memoryOwner": "autopilot",
   "skillDir": "C:/Users/Владимир/.claude/skills/autopilot",
-  "baseCommit": null,
+  "baseCommit": "a6e803a8",
   "startedAt": "2026-10-14T18:41:20+02:00",
-  "updatedAt": "2026-10-14T19:10:03+02:00",
-  "finishedAt": null,
+  "updatedAt": "2026-10-17T19:54:58+02:00",
+  "finishedAt": "2026-10-17T19:54:58+02:00",
   "stages": [
     {
       "id": "preflight",
@@ -42,28 +42,37 @@ window.STATE =
     },
     {
       "id": "plan",
-      "status": "active",
-      "startedAt": "2026-10-14T19:07:31+02:00"
+      "status": "done",
+      "startedAt": "2026-10-14T19:07:31+02:00",
+      "finishedAt": "2026-10-14T19:10:36+02:00"
     },
     {
       "id": "build",
-      "status": "pending"
+      "status": "done",
+      "startedAt": "2026-10-14T19:10:36+02:00",
+      "finishedAt": "2026-10-17T19:54:58+02:00"
     },
     {
       "id": "review",
-      "status": "pending"
+      "status": "skipped",
+      "startedAt": "2026-10-17T19:54:56+02:00",
+      "finishedAt": "2026-10-17T19:54:56+02:00",
+      "note": "решение пользователя: код-ревью ветки не нужно (разработка)"
     },
     {
       "id": "final",
-      "status": "pending"
+      "status": "skipped",
+      "startedAt": "2026-10-17T19:54:57+02:00",
+      "finishedAt": "2026-10-17T19:54:57+02:00",
+      "note": "решение пользователя: приёмка не нужна (разработка)"
     }
   ],
   "requirements": {
     "total": 28,
-    "done": 0,
-    "inTicket": 28,
+    "done": 27,
+    "inTicket": 0,
     "inSpec": 0,
-    "placeholder": 0,
+    "placeholder": 1,
     "deferred": 0,
     "dropped": 0
   },
@@ -93,9 +102,20 @@ window.STATE =
       ],
       "review": "да — меняет остатки (данные) и отмену",
       "model": "сильная",
-      "status": "pending",
+      "status": "done",
+      "startedAt": "2026-10-14T19:10:48+02:00",
+      "finishedAt": "2026-10-14T19:47:54+02:00",
       "retries": 0,
-      "repairs": 0
+      "repairs": 2,
+      "repairFindings": [
+        "обновить tests/e2e/product-quick-status-index.spec.ts под переключатель без метки (R05)",
+        "PRRO receipt send: искать чек только в магазине контекста"
+      ],
+      "tests": {
+        "passed": 341,
+        "failed": 3
+      },
+      "commit": "abc0dd25"
     },
     {
       "id": "02",
@@ -119,9 +139,16 @@ window.STATE =
       ],
       "review": "нет",
       "model": "обычная",
-      "status": "pending",
+      "status": "done",
+      "startedAt": "2026-10-14T19:48:03+02:00",
+      "finishedAt": "2026-10-14T19:58:35+02:00",
       "retries": 0,
-      "repairs": 0
+      "repairs": 0,
+      "tests": {
+        "passed": 348,
+        "failed": 4
+      },
+      "commit": "e2a7d052"
     },
     {
       "id": "03",
@@ -143,9 +170,16 @@ window.STATE =
       ],
       "review": "нет",
       "model": "обычная",
-      "status": "pending",
+      "status": "done",
       "retries": 0,
-      "repairs": 0
+      "repairs": 0,
+      "startedAt": "2026-10-17T08:28:42+02:00",
+      "finishedAt": "2026-10-17T08:51:06+02:00",
+      "tests": {
+        "passed": 358,
+        "failed": 3
+      },
+      "commit": "490dfaf2"
     },
     {
       "id": "04",
@@ -175,9 +209,16 @@ window.STATE =
       ],
       "review": "нет",
       "model": "обычная",
-      "status": "pending",
+      "status": "done",
       "retries": 0,
-      "repairs": 0
+      "repairs": 0,
+      "startedAt": "2026-10-17T08:51:21+02:00",
+      "finishedAt": "2026-10-17T09:06:55+02:00",
+      "tests": {
+        "passed": 358,
+        "failed": 3
+      },
+      "commit": "f033ffef"
     },
     {
       "id": "05",
@@ -209,9 +250,16 @@ window.STATE =
       ],
       "review": "да — фундамент (новые таблицы, cron, сервис, который вызывают T06)",
       "model": "сильная",
-      "status": "pending",
+      "status": "done",
       "retries": 0,
-      "repairs": 0
+      "repairs": 0,
+      "startedAt": "2026-10-17T09:06:57+02:00",
+      "finishedAt": "2026-10-17T09:41:53+02:00",
+      "tests": {
+        "passed": 376,
+        "failed": 3
+      },
+      "commit": "e9f4236b"
     },
     {
       "id": "06",
@@ -237,9 +285,16 @@ window.STATE =
       ],
       "review": "нет",
       "model": "обычная",
-      "status": "pending",
+      "status": "done",
       "retries": 0,
-      "repairs": 0
+      "repairs": 0,
+      "startedAt": "2026-10-17T09:42:04+02:00",
+      "finishedAt": "2026-10-17T09:58:15+02:00",
+      "tests": {
+        "passed": 388,
+        "failed": 3
+      },
+      "commit": "75011980"
     },
     {
       "id": "07",
@@ -266,9 +321,16 @@ window.STATE =
       ],
       "review": "нет",
       "model": "обычная",
-      "status": "pending",
+      "status": "done",
       "retries": 0,
-      "repairs": 0
+      "repairs": 0,
+      "startedAt": "2026-10-17T13:41:24+02:00",
+      "finishedAt": "2026-10-17T14:08:41+02:00",
+      "tests": {
+        "passed": 388,
+        "failed": 3
+      },
+      "commit": "7b1b8883"
     },
     {
       "id": "08",
@@ -288,9 +350,16 @@ window.STATE =
       ],
       "review": "нет",
       "model": "обычная",
-      "status": "pending",
-      "retries": 0,
-      "repairs": 0
+      "status": "done",
+      "startedAt": "2026-10-14T19:10:48+02:00",
+      "finishedAt": "2026-10-14T20:00:20+02:00",
+      "retries": 1,
+      "repairs": 0,
+      "tests": {
+        "passed": 348,
+        "failed": 3
+      },
+      "commit": "8f4cf5c8"
     },
     {
       "id": "09",
@@ -315,9 +384,16 @@ window.STATE =
       ],
       "review": "нет",
       "model": "обычная",
-      "status": "pending",
+      "status": "done",
       "retries": 0,
-      "repairs": 0
+      "repairs": 0,
+      "startedAt": "2026-10-17T14:09:02+02:00",
+      "finishedAt": "2026-10-17T16:29:06+02:00",
+      "tests": {
+        "passed": 388,
+        "failed": 3
+      },
+      "commit": "dc9db913"
     },
     {
       "id": "10",
@@ -350,12 +426,59 @@ window.STATE =
       ],
       "review": "да — релиз (упаковка, утечки секретов в архив)",
       "model": "сильная",
-      "status": "pending",
+      "status": "done",
       "retries": 0,
-      "repairs": 0
+      "repairs": 0,
+      "startedAt": "2026-10-17T16:29:20+02:00",
+      "finishedAt": "2026-10-17T19:53:15+02:00",
+      "tests": {
+        "passed": 417,
+        "failed": 3
+      },
+      "commit": "0c20b27d"
+    },
+    {
+      "id": "11",
+      "title": "Ядро модулей: многоязычные настройки, перенос настроек, вебхуки заказа, список событий, схема блока",
+      "requirements": [
+        "R09",
+        "R10",
+        "D03"
+      ],
+      "blockedBy": [
+        "08"
+      ],
+      "wave": 3,
+      "zone": [
+        "themes/default/templates/admin/system/extension_settings.html.twig",
+        "src/Core/Extension/**",
+        "src/Modules/Api/**",
+        "src/Modules/Order/**",
+        "src/Modules/Payment/**",
+        "src/Modules/ProductPage/**",
+        "src/Modules/Appearance/Builder/**",
+        "docs/DEVELOPER_MODULES_UK.md",
+        "tests/Unit/Extension*Test.php",
+        "tests/Unit/ApiWebhook*Test.php"
+      ],
+      "review": "да — вебхуки уходят третьим сторонам, перенос пользовательских настроек при обновлении",
+      "model": "сильная",
+      "status": "done",
+      "retries": 0,
+      "repairs": 0,
+      "startedAt": "2026-10-17T08:28:42+02:00",
+      "finishedAt": "2026-10-17T08:57:22+02:00",
+      "tests": {
+        "passed": 358,
+        "failed": 3
+      },
+      "commit": "8ac2a57b"
     }
   ],
-  "tests": null,
+  "tests": {
+    "passed": 417,
+    "failed": 3
+  },
   "debt": {
     "placeholders": [],
     "assumptions": [],
@@ -371,7 +494,40 @@ window.STATE =
       "Прошлое сообщение (форум/лендинг/рост/миграция) — закрыто прошлой сессией 2aaa34d2, в этой сборке только сверка и план"
     ]
   },
-  "concerns": [],
+  "concerns": [
+    "DbalCatalogAdminQuery.php:108 — фильтр категории в списке товаров теперь с подкатегориями везде, включая сохранённые виды",
+    "ProductStockServiceTest/catalog-lists.spec.ts:50 — нет теста «без дублей» (товар в родителе и потомке = 1) и split direct/total",
+    "catalog-lists.spec.ts:157 — тест вариантов пропускается без фикстуры с 2 вариантами",
+    "ProductStockService.php:96 — нет активного склада → ложная причина «без складського обліку»",
+    "DbalCatalogAdminQuery.php:140 vs :120 — форма читает склад без фильтра active, список — с ним",
+    "ProductStockService.php:211, DbalCatalogAdminQuery.php:120, ProductWriter ×3 — один и тот же SQL выбора склада, нужен общий",
+    "admin-runtime.js:627/642 — неверный ввод + Enter + blur → тост ошибки дважды",
+    "reviews/questions AI reply: старый селектор '#ai-msg-r{{ r.id }}' в одинарных кавычках Twig не интерполировался — ответ на отзыв никогда не подставлялся (исправлено в T02)",
+    "tests/e2e/editor-color-picker.spec.ts — хелпер ждёт два кадра: Tiptap focus() перехватывает выделение после применения цвета",
+    "resources/translations/*/admin.php — ключ vue.components.richtexteditor.color_pick больше не используется",
+    "src/Core/Extension/ExtensionSettingsManager.php:191 — carryOver берёт источник по старшей из младших версий, а не по последней правке (после отката правки теряются)",
+    "src/Core/Extension/ExtensionSettingsManager.php:113 — секреты, чьи ключи убраны из схемы, хранятся и переносятся навсегда, удалить их из интерфейса нельзя, activeSettings отдаёт их модулю",
+    "src/Core/Extension/ExtensionSettingsManager.php:249 — один нерасшифрованный секрет обнуляет все настройки модуля (catch Throwable), без лога",
+    "src/Core/Extension/TrustedExtensionContext.php:52 — setting() каждый раз перечитывает схему и делает 2–3 запроса; нужен кэш на запрос",
+    "src/Core/Extension/ExtensionPackageManager.php:158 — связка activate→carryOver и запрет переноса при откате не покрыты тестом; сервис опционален (?=null)",
+    "docs/DEVELOPER_MODULES_UK.md:84,390 — «перевірено на копії» опирается на временный e2e исполнителя, который удалён; сослаться на юнит-тест",
+    "assets/storefront/storefront-runtime.js — 3 ошибки eslint (TextEncoder/performance no-undef), были до сборки",
+    "themes/default/templates/components/site_footer.html.twig — при скрытом названии копирайт «© 2026» без владельца",
+    "src/Modules/Ai/Application/AiBatchService.php:277 — «Повторити помилкові» у отменённого пакета: задачи становятся pending, но пакет cancelled и их никто не обработает",
+    "src/Modules/Ai/Application/AiBatchService.php:324,464 — пакет с крупной задачей мигает running↔limit весь день, мелкие задачи за ней стоят",
+    "src/Modules/Ai/Application/AiBatchService.php:363,394 — «лише неперекладене»: одинаковые во всех языках названия переотправляются каждый запуск и тратят лимит",
+    "src/Modules/Ai/Application/AiBatchService.php:141 — двойной submit start() может поставить задачи дважды (нет блокировки и UNIQUE)",
+    "src/Modules/Ai/Application/AiGlossary.php:57 — сохранение словаря теряет фиксированные переводы для выключенных языков",
+    "src/Modules/Ai/Application/AiTaskService.php — проверка лимита не атомарна, параллельный перевод может превысить лимит на 1 запрос",
+    "themes/default/templates/admin/catalog/products.html.twig — ИИ-действия видны и без провайдера (ошибка только после запуска)",
+    "assets/storefront/admin-runtime.js — счётчик «на перевірку» и полоса прогресса обновляются только после перезагрузки",
+    "resources/translations/*/storefront.php admin_storefront — пункт меню «Витрина» (рус.) вместо «Вітрина»",
+    "assets/admin — CSS label:has(> .admin-tip--hint) сдвигает иконку у label со span; поповер left:0 обрезается в третьей колонке сетки",
+    "themes/default/templates/admin/catalog/_ai_box.html.twig — ИИ-блок в SEO и форме категории без подсказки",
+    "themes/default/templates/admin/appearance/storefront.html.twig — текст флажка «показувати назву» наезжает на пояснение (T04)",
+    "themes/default/templates/admin/system/access — на 390 px шире экрана на 9 px (admin-mobile:4)",
+    "themes/default/templates/admin/system/migration — ссылка #opencart контраст 4.35 < 4.5 (contrast:103)"
+  ],
   "blind": null,
   "beats": [
     "2026-10-14T18:41:20+02:00",
@@ -385,9 +541,61 @@ window.STATE =
     "2026-10-14T19:07:31+02:00",
     "2026-10-14T19:08:08+02:00",
     "2026-10-14T19:10:01+02:00",
-    "2026-10-14T19:10:03+02:00"
+    "2026-10-14T19:10:03+02:00",
+    "2026-10-14T19:10:22+02:00",
+    "2026-10-14T19:10:36+02:00",
+    "2026-10-14T19:10:48+02:00",
+    "2026-10-14T19:26:58+02:00",
+    "2026-10-14T19:37:53+02:00",
+    "2026-10-14T19:40:17+02:00",
+    "2026-10-14T19:44:08+02:00",
+    "2026-10-14T19:44:09+02:00",
+    "2026-10-14T19:47:54+02:00",
+    "2026-10-14T19:48:03+02:00",
+    "2026-10-14T19:58:35+02:00",
+    "2026-10-14T19:58:36+02:00",
+    "2026-10-14T19:58:44+02:00",
+    "2026-10-14T20:00:20+02:00",
+    "2026-10-14T20:00:59+02:00",
+    "2026-10-14T20:01:00+02:00",
+    "2026-10-14T20:01:01+02:00",
+    "2026-10-17T08:23:53+02:00",
+    "2026-10-17T08:23:54+02:00",
+    "2026-10-17T08:25:25+02:00",
+    "2026-10-17T08:28:38+02:00",
+    "2026-10-17T08:28:39+02:00",
+    "2026-10-17T08:28:40+02:00",
+    "2026-10-17T08:28:42+02:00",
+    "2026-10-17T08:51:06+02:00",
+    "2026-10-17T08:51:07+02:00",
+    "2026-10-17T08:51:20+02:00",
+    "2026-10-17T08:51:21+02:00",
+    "2026-10-17T08:57:22+02:00",
+    "2026-10-17T08:57:24+02:00",
+    "2026-10-17T08:58:18+02:00",
+    "2026-10-17T09:06:55+02:00",
+    "2026-10-17T09:06:56+02:00",
+    "2026-10-17T09:06:57+02:00",
+    "2026-10-17T09:36:42+02:00",
+    "2026-10-17T09:41:53+02:00",
+    "2026-10-17T09:41:54+02:00",
+    "2026-10-17T09:42:04+02:00",
+    "2026-10-17T09:58:15+02:00",
+    "2026-10-17T09:58:16+02:00",
+    "2026-10-17T13:41:24+02:00",
+    "2026-10-17T14:08:41+02:00",
+    "2026-10-17T14:08:43+02:00",
+    "2026-10-17T14:09:02+02:00",
+    "2026-10-17T16:29:06+02:00",
+    "2026-10-17T16:29:08+02:00",
+    "2026-10-17T16:29:20+02:00",
+    "2026-10-17T16:48:01+02:00",
+    "2026-10-17T19:53:15+02:00",
+    "2026-10-17T19:54:56+02:00",
+    "2026-10-17T19:54:57+02:00",
+    "2026-10-17T19:54:58+02:00"
   ],
-  "rev": 13,
+  "rev": 73,
   "waiting": null,
   "waits": [
     {
@@ -469,148 +677,571 @@ window.STATE =
       "g": "G3",
       "ok": true,
       "problems": 0
+    },
+    {
+      "t": "2026-10-14T19:10:36+02:00",
+      "k": "stage",
+      "id": "build",
+      "act": "start"
+    },
+    {
+      "t": "2026-10-14T19:10:48+02:00",
+      "k": "ticket",
+      "ids": [
+        "01",
+        "08"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-14T19:26:58+02:00",
+      "k": "ticket",
+      "ids": [
+        "08"
+      ],
+      "act": "retry"
+    },
+    {
+      "t": "2026-10-14T19:37:53+02:00",
+      "k": "ticket",
+      "ids": [
+        "01"
+      ],
+      "act": "repair",
+      "note": "обновить tests/e2e/product-quick-status-index.spec.ts под переключатель без метки (R05)"
+    },
+    {
+      "t": "2026-10-14T19:40:17+02:00",
+      "k": "ticket",
+      "ids": [
+        "01"
+      ],
+      "act": "review"
+    },
+    {
+      "t": "2026-10-14T19:44:08+02:00",
+      "k": "ticket",
+      "ids": [
+        "01"
+      ],
+      "act": "repair",
+      "note": "PRRO receipt send: искать чек только в магазине контекста"
+    },
+    {
+      "t": "2026-10-14T19:44:09+02:00",
+      "k": "add",
+      "key": "concerns",
+      "n": 7
+    },
+    {
+      "t": "2026-10-14T19:47:54+02:00",
+      "k": "ticket",
+      "ids": [
+        "01"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 341,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-14T19:48:03+02:00",
+      "k": "ticket",
+      "ids": [
+        "02"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-14T19:58:35+02:00",
+      "k": "ticket",
+      "ids": [
+        "02"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 348,
+        "failed": 4
+      }
+    },
+    {
+      "t": "2026-10-14T19:58:36+02:00",
+      "k": "add",
+      "key": "concerns",
+      "n": 1
+    },
+    {
+      "t": "2026-10-14T19:58:44+02:00",
+      "k": "ticket",
+      "ids": [
+        "03"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-14T20:00:20+02:00",
+      "k": "ticket",
+      "ids": [
+        "08"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 348,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-14T20:00:59+02:00",
+      "k": "tickets",
+      "n": 11
+    },
+    {
+      "t": "2026-10-14T20:01:00+02:00",
+      "k": "gate",
+      "g": "G3",
+      "ok": true,
+      "problems": 0
+    },
+    {
+      "t": "2026-10-14T20:01:01+02:00",
+      "k": "ticket",
+      "ids": [
+        "11"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-17T08:23:53+02:00",
+      "k": "ticket",
+      "ids": [
+        "03"
+      ],
+      "act": "reset"
+    },
+    {
+      "t": "2026-10-17T08:23:54+02:00",
+      "k": "ticket",
+      "ids": [
+        "11"
+      ],
+      "act": "reset"
+    },
+    {
+      "t": "2026-10-17T08:25:25+02:00",
+      "k": "ticket",
+      "ids": [
+        "03",
+        "11"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-17T08:28:38+02:00",
+      "k": "ticket",
+      "ids": [
+        "03"
+      ],
+      "act": "reset"
+    },
+    {
+      "t": "2026-10-17T08:28:39+02:00",
+      "k": "ticket",
+      "ids": [
+        "11"
+      ],
+      "act": "reset"
+    },
+    {
+      "t": "2026-10-17T08:28:40+02:00",
+      "k": "tests",
+      "passed": 354,
+      "failed": 4
+    },
+    {
+      "t": "2026-10-17T08:28:42+02:00",
+      "k": "ticket",
+      "ids": [
+        "03",
+        "11"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-17T08:51:06+02:00",
+      "k": "ticket",
+      "ids": [
+        "03"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 358,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-17T08:51:07+02:00",
+      "k": "add",
+      "key": "concerns",
+      "n": 2
+    },
+    {
+      "t": "2026-10-17T08:51:20+02:00",
+      "k": "ticket",
+      "ids": [
+        "11"
+      ],
+      "act": "review"
+    },
+    {
+      "t": "2026-10-17T08:51:21+02:00",
+      "k": "ticket",
+      "ids": [
+        "04"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-17T08:57:22+02:00",
+      "k": "ticket",
+      "ids": [
+        "11"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 358,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-17T08:57:24+02:00",
+      "k": "add",
+      "key": "concerns",
+      "n": 6
+    },
+    {
+      "t": "2026-10-17T08:58:18+02:00",
+      "k": "add",
+      "key": "report",
+      "n": 1
+    },
+    {
+      "t": "2026-10-17T09:06:55+02:00",
+      "k": "ticket",
+      "ids": [
+        "04"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 358,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-17T09:06:56+02:00",
+      "k": "add",
+      "key": "concerns",
+      "n": 2
+    },
+    {
+      "t": "2026-10-17T09:06:57+02:00",
+      "k": "ticket",
+      "ids": [
+        "05"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-17T09:36:42+02:00",
+      "k": "ticket",
+      "ids": [
+        "05"
+      ],
+      "act": "review"
+    },
+    {
+      "t": "2026-10-17T09:41:53+02:00",
+      "k": "ticket",
+      "ids": [
+        "05"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 376,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-17T09:41:54+02:00",
+      "k": "add",
+      "key": "concerns",
+      "n": 6
+    },
+    {
+      "t": "2026-10-17T09:42:04+02:00",
+      "k": "ticket",
+      "ids": [
+        "06"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-17T09:58:15+02:00",
+      "k": "ticket",
+      "ids": [
+        "06"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 388,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-17T09:58:16+02:00",
+      "k": "add",
+      "key": "concerns",
+      "n": 2
+    },
+    {
+      "t": "2026-10-17T13:41:24+02:00",
+      "k": "ticket",
+      "ids": [
+        "07"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-17T14:08:41+02:00",
+      "k": "ticket",
+      "ids": [
+        "07"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 388,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-17T14:08:43+02:00",
+      "k": "add",
+      "key": "concerns",
+      "n": 4
+    },
+    {
+      "t": "2026-10-17T14:09:02+02:00",
+      "k": "ticket",
+      "ids": [
+        "09"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-17T16:29:06+02:00",
+      "k": "ticket",
+      "ids": [
+        "09"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 388,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-17T16:29:08+02:00",
+      "k": "add",
+      "key": "concerns",
+      "n": 2
+    },
+    {
+      "t": "2026-10-17T16:29:20+02:00",
+      "k": "ticket",
+      "ids": [
+        "10"
+      ],
+      "act": "start"
+    },
+    {
+      "t": "2026-10-17T16:48:01+02:00",
+      "k": "add",
+      "key": "report",
+      "n": 1
+    },
+    {
+      "t": "2026-10-17T19:53:15+02:00",
+      "k": "ticket",
+      "ids": [
+        "10"
+      ],
+      "act": "done",
+      "tests": {
+        "passed": 417,
+        "failed": 3
+      }
+    },
+    {
+      "t": "2026-10-17T19:54:56+02:00",
+      "k": "stage",
+      "id": "review",
+      "act": "skip",
+      "note": "решение пользователя: код-ревью ветки не нужно (разработка)"
+    },
+    {
+      "t": "2026-10-17T19:54:57+02:00",
+      "k": "stage",
+      "id": "final",
+      "act": "skip",
+      "note": "решение пользователя: приёмка не нужна (разработка)"
+    },
+    {
+      "t": "2026-10-17T19:54:58+02:00",
+      "k": "finish",
+      "result": "Nexora 4.0.0: каталог (остатки, количество в категориях), ИИ показывает и подставляет текст, пакетный перевод и словарь, массовые ИИ-действия, выбор цвета, логотип без названия, подсказки и «Початок роботи», ядро модулей, архив 4.0.0"
     }
   ],
   "reqList": [
     {
       "id": "R01",
       "text": "«Ты все сделал о чем я просил?»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R02",
       "text": "«в категории товаров в списке не хватает количества товара»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R03",
       "text": "«в масовые действия так же добавь обнулить остаток типа нажимаю и остатки выбраных товаров 0»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R04",
       "text": "«сделай быстрое редактирование остатка так же как цена»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R05",
       "text": "«Столбик Статус можно только переключатели без текста для экономии места»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R06",
       "text": "«при генерации текста ИИ нет показа  самого текста»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R07",
       "text": "«кнопку нажимаю, пишет сделано а где ничего нет. не подставляет»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R08",
       "text": "«для програмистов есть документация как писать модули и интеграции под эту систему с примерами?»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R09",
       "text": "«легко вообще писать и удобно?»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R10",
       "text": "«система гибкая и адаптируется. все можно настроить с помощью модулей»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R11",
       "text": "«в редакторе текста оформление выбора цвета и фона текста ... нужно выбор спектра или ввод hex»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R12",
       "text": "«внизу одна строчка  с популярными»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R13",
       "text": "«и  одна с последними выбраными»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R14",
       "text": "«убираю название магазина а только логотип, но система все равно пишет nexora»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R15",
       "text": "«размер логотипа наверное нужно немного увеличить»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R16",
       "text": "«или писать какие габариты подходящие для максимального заполнения выделегого блока»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R17",
       "text": "«вообще в системе нужно больше информации и подсказок. так как это система новая и нигде еще не устанавливалась»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R18",
       "text": "«делавем все чего не хватает до уровня Лучше конкурентов»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R19",
       "text": "«где готовый архив на github или на пк?»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R20",
       "text": "«пакетный перевод. тоже важно»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R21",
       "text": "«особенно по языкам»",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R22i",
       "text": "(подразумевается) пакетный перевод каталога идёт без открытой вкладки браузера и не выходит за дневной лимит ИИ",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "R23i",
       "text": "(подразумевается) номер версии в архиве совпадает с его именем (архив 4.0.0, внутри 3.97.23)",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "G01",
       "text": "«Ок, согласен со всеми» → пакетный перевод каталога по языкам в фоне",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "G02",
       "text": "«Ок, согласен со всеми» → массовые ИИ-действия по выбранным товарам",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "G03",
       "text": "«Ок, согласен со всеми» → словарь «не переводить» (бренды, термины)",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "G04",
       "text": "«Ок, согласен со всеми» → проверить, что открываются все пункты левого меню админки (п. 48)",
-      "status": "in-ticket"
+      "status": "done"
     },
     {
       "id": "G05",
       "text": "«Ок, согласен со всеми» → полный прогон тестов",
-      "status": "in-ticket"
+      "status": "placeholder",
+      "why": "брифинг, вопрос 3"
     }
   ],
   "gates": {
@@ -629,9 +1260,13 @@ window.STATE =
     },
     "G3": {
       "ok": true,
-      "at": "2026-10-14T19:10:03+02:00",
+      "at": "2026-10-14T20:01:00+02:00",
       "problems": 0
     }
   },
-  "result": null
+  "result": "Nexora 4.0.0: каталог (остатки, количество в категориях), ИИ показывает и подставляет текст, пакетный перевод и словарь, массовые ИИ-действия, выбор цвета, логотип без названия, подсказки и «Початок роботи», ядро модулей, архив 4.0.0",
+  "report": [
+    "Следующая отдельная сборка — конструктор (решение пользователя «вносим отдельно»): панель свойств по схеме блока (в т.ч. блоки модулей, история 58), Undo/Redo, живое обновление реального предпросмотра, защита от одновременной правки; правка текста на холсте — позже",
+    "Код-ревью всей сборки и слепая приёмка не проводились — решение пользователя («это разработка а не финальная версия»); накопленные замечания (concerns) остаются на следующую сборку"
+  ]
 }
