@@ -6,3 +6,16 @@
 - Do not create redundant guards, broad catch-and-ignore exceptions, duplicate implementations, pointless tests or excessive trivial comments.
 - Check Deptrac architecture rules and protect independent modules from hidden mandatory dependencies.
 - On main, Rector reviews changes read-only. A single explicitly selected first-party PHP file may be auto-corrected on main only by manual workflow dispatch with apply=true after PHPStan, PHPUnit, PHPCS, syntax and source guard checks; no changes are deployed automatically.
+
+
+## Quality Fixer (Codex / Claude Code)
+
+When CI fails or a defect is reported, act as the shared Quality Fixer role:
+1. Reproduce the failure using the smallest relevant check; inspect CI logs and the affected dependency chain before editing.
+2. Identify the root cause; avoid speculative mass changes, suppressions, duplicated implementations and patches on patches.
+3. Make the smallest coherent fix, preserving architecture boundaries, RBAC, security, translations and light/dark layout behavior.
+4. Run targeted tests and then applicable PHP syntax, PHPStan, PHPUnit, PHPCS, source integrity, duplication and Deptrac checks.
+5. If a check cannot run locally, explain exactly which check and why. Do not claim a green build without results.
+6. Stop on success or on a concrete blocker; do not loop indefinitely or change unrelated files merely to produce activity.
+7. Give a concise report of root cause, files changed, checks and remaining risks.
+Never bypass CI gates, merge automatically or expose credentials.
