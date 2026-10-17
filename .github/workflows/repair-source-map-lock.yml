@@ -1,0 +1,39 @@
+name: Repair pinned source-map-js security advisory
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repair-source-map-lock.yml'
+permissions:
+  contents: write
+jobs:
+  update-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Repair vulnerable transitive source-map-js in npm lockfile only
+        run: |
+          set -euo pipefail
+          npm update source-map-js --package-lock-only --ignore-scripts --no-audit
+          node -e "const a=require('./package-lock.json').packages['node_modules/source-map-js'];const [x,y,z]=a.version.split('.').map(Number);if (x<1||(x===1&&(y<2||(y===2&&z<2)))) throw Error('source-map-js remains vulnerable: '+a.version);console.log('source-map-js:',a.version)"
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm audit --omit=dev --audit-level=high
+      - name: Commit only lockfile security remediation
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- package-lock.json; then
+            echo "Lockfile already secure"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'fix(deps): resolve source-map-js security advisory in npm lockfile'
+          git push origin HEAD:main
