@@ -5,7 +5,7 @@ declare(strict_types=1);
 $fix = in_array('--fix-safe', $argv, true);
 $paths = array_values(array_filter(array_slice($argv, 1), static fn ($x) => !in_array($x, ['--check', '--fix-safe'], true)));
 if (!$paths) { fwrite(STDERR, "Usage: source_guard.php [--check|--fix-safe] paths...\n"); exit(2); }
-$extensions = ['php', 'js', 'jsx', 'ts', 'tsx', 'twig', 'css', 'scss', 'xml', 'json', 'yml', 'yaml', 'html'];
+$extensions = ['php', 'js', 'jsx', 'ts', 'tsx', 'twig', 'css', 'scss', 'xml', 'json', 'yml', 'yaml', 'html', 'svg', 'sql'];
 $ignore = ['.git', 'vendor', 'node_modules', 'cache', 'dist', 'build'];
 $files = [];
 foreach ($paths as $path) {
@@ -43,7 +43,7 @@ foreach (array_keys($files) as $file) {
         }
     }
     if (preg_match('//u', $source) !== 1) { $errors[] = "$file: invalid UTF-8"; continue; }
-    if (preg_match_all('/[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}-\x{2069}\x{FEFF}]/u', $source, $matches, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/[\x{00AD}\x{061C}\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}-\x{2069}\x{FEFF}]/u', $source, $matches, PREG_OFFSET_CAPTURE)) {
         foreach ($matches[0] as $m) { $record($file, $source, $m[1], 'invisible/bidirectional Unicode control'); }
     }
     if ($ext !== 'php') { continue; }
@@ -66,8 +66,8 @@ foreach (array_keys($files) as $file) {
             ? preg_replace('/[^\r\n]/u', ' ', $value) : $value;
     }
     foreach ([
-        '/[\x{00A0}\x{2018}\x{2019}\x{201C}\x{201D}\x{2013}\x{2014}]/u' => 'typographic quote/dash or NBSP in executable PHP',
-        '/&(?:lt|gt|amp);/i' => 'HTML-escaped PHP operator',
+        '/[\x{00A0}\x{2000}-\x{200A}\x{202F}\x{205F}\x{3000}\x{2018}\x{2019}\x{201A}\x{201C}\x{201D}\x{201E}\x{00AB}\x{00BB}\x{2013}\x{2014}\x{2212}]/u' => 'typographic quote/dash or NBSP in executable PHP',
+        '/&(?:lt|gt|amp|quot|apos|#0?39);/i' => 'HTML-escaped PHP operator',
         '/^\h*\x60{3,}(?:php|js|html|xml)?\h*$/mi' => 'Markdown fence in executable PHP',
     ] as $pattern => $message) {
         if (preg_match_all($pattern, $probe, $matches, PREG_OFFSET_CAPTURE)) {
