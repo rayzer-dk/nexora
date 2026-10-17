@@ -1,44 +1,43 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
-{% set en = app.request.attributes.get('_ui_locale', 'uk-UA') == 'en-US' %}
-{{ shell.start(en ? 'Support Nexora' : 'Підтримати Nexora', 'project_support') }}
+{{ shell.start(ui_text('admin.project_support.title'), 'project_support') }}
 <header class="admin-page-header">
   <div>
     <nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}">
       <a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}
-      <span aria-current="page">{{ en ? 'Support Nexora' : 'Підтримати Nexora' }}</span>
+      <span aria-current="page">{{ ui_text('admin.project_support.title') }}</span>
     </nav>
-    <h1>{{ ui_icon('heart-handshake', 26) }} {{ en ? 'Help Nexora grow' : 'Допоможіть Nexora розвиватися' }}</h1>
-    <p>{{ en ? 'Nexora is an open-source e-commerce platform. Your support helps us build a faster, safer, more convenient system for real online stores.' : 'Nexora — відкрита платформа для електронної комерції. Ваша підтримка допомагає створювати швидшу, безпечнішу та зручнішу систему для реальних інтернет-магазинів.' }}</p>
+    <h1>{{ ui_icon('heart-handshake', 26) }} {{ ui_text('admin.project_support.heading') }}</h1>
+    <p>{{ ui_text('admin.project_support.lead') }}</p>
   </div>
 </header>
 <section class="admin-panel">
-  <div class="admin-panel__header"><div><h2>{{ en ? 'Why your support matters' : 'На що спрямована підтримка' }}</h2></div></div>
-  <p>{{ en ? 'We invest community support in features that benefit many stores, not in unnecessary complexity.' : 'Ми спрямовуємо підтримку спільноти на можливості, корисні багатьом магазинам, а не на зайве ускладнення системи.' }}</p>
+  <div class="admin-panel__header"><div><h2>{{ ui_text('admin.project_support.why_title') }}</h2></div></div>
+  <p>{{ ui_text('admin.project_support.why_text') }}</p>
   <div class="admin-document-list">
-    <article><strong>{{ en ? 'Reliability and security' : 'Надійність і безпека' }}</strong><p>{{ en ? 'Testing, fixing defects and protecting important workflows.' : 'Тестування, усунення помилок і захист важливих процесів.' }}</p></article>
-    <article><strong>{{ en ? 'Speed and convenience' : 'Швидкість і зручність' }}</strong><p>{{ en ? 'Performance improvements and a clearer administration experience.' : 'Оптимізація швидкодії та зручніша адміністративна панель.' }}</p></article>
-    <article><strong>{{ en ? 'Open development' : 'Відкрита розробка' }}</strong><p>{{ en ? 'Documentation, compatibility and useful new capabilities.' : 'Документація, сумісність і нові практичні можливості.' }}</p></article>
+    <article><strong>{{ ui_text('admin.project_support.reliability_title') }}</strong><p>{{ ui_text('admin.project_support.reliability_text') }}</p></article>
+    <article><strong>{{ ui_text('admin.project_support.speed_title') }}</strong><p>{{ ui_text('admin.project_support.speed_text') }}</p></article>
+    <article><strong>{{ ui_text('admin.project_support.open_title') }}</strong><p>{{ ui_text('admin.project_support.open_text') }}</p></article>
   </div>
 </section>
 <section class="admin-panel">
-  <div class="admin-panel__header"><div><h2>{{ en ? 'Support development' : 'Підтримати розробку' }}</h2></div></div>
-  <p>{{ en ? 'Any amount helps. Contributions are voluntary and do not affect access to Nexora features. Payment links are managed by the CodeCart PRO project team.' : 'Будь-яка сума має значення. Внески добровільні та не впливають на доступ до функцій Nexora. Платіжні посилання належать команді проєкту CodeCart PRO.' }}</p>
+  <div class="admin-panel__header"><div><h2>{{ ui_text('admin.project_support.donate_title') }}</h2></div></div>
+  <p>{{ ui_text('admin.project_support.donate_text') }}</p>
   <div class="admin-inline-actions">
     <a class="admin-button admin-button--primary" href="https://send.monobank.ua/jar/7eE1YTYqS3" target="_blank" rel="noopener noreferrer">{{ ui_icon('heart', 16) }} Monobank</a>
     <a class="admin-button" href="https://revolut.me/codecartpro" target="_blank" rel="noopener noreferrer">Revolut</a>
-    <a class="admin-button" href="https://buy.stripe.com/6oU00j3nk0YJ2j3ecEe3e02" target="_blank" rel="noopener noreferrer">{{ ui_icon('credit-card', 16) }} {{ en ? 'Bank card' : 'Банківська картка' }}</a>
+    <a class="admin-button" href="https://buy.stripe.com/6oU00j3nk0YJ2j3ecEe3e02" target="_blank" rel="noopener noreferrer">{{ ui_icon('credit-card', 16) }} {{ ui_text('admin.project_support.bank_card') }}</a>
     <a class="admin-button" href="https://ko-fi.com/codecartpro" target="_blank" rel="noopener noreferrer">Ko-fi</a>
   </div>
 </section>
 <section class="admin-panel">
-  <div class="admin-panel__header"><div><h2>{{ en ? 'You can also help without donating' : 'Допомогти можна й без донатів' }}</h2></div></div>
-  <p>{{ en ? 'Report reproducible bugs, suggest improvements, contribute code or help others discover Nexora.' : 'Повідомляйте про відтворювані помилки, пропонуйте покращення, допомагайте з кодом або розповідайте іншим про Nexora.' }}</p>
+  <div class="admin-panel__header"><div><h2>{{ ui_text('admin.project_support.help_title') }}</h2></div></div>
+  <p>{{ ui_text('admin.project_support.help_text') }}</p>
   <div class="admin-inline-actions">
     <a class="admin-button admin-button--primary" href="https://github.com/rayzer-dk/nexora" target="_blank" rel="noopener noreferrer">{{ ui_icon('github', 16) }} GitHub</a>
-    <a class="admin-button" href="https://github.com/rayzer-dk/nexora/issues" target="_blank" rel="noopener noreferrer">{{ ui_icon('bug', 16) }} {{ en ? 'Report an issue' : 'Повідомити про помилку' }}</a>
+    <a class="admin-button" href="https://github.com/rayzer-dk/nexora/issues" target="_blank" rel="noopener noreferrer">{{ ui_icon('bug', 16) }} {{ ui_text('admin.project_support.report_issue') }}</a>
     <a class="admin-button" href="https://t.me/codecartpro" target="_blank" rel="noopener noreferrer">{{ ui_icon('messages-square', 16) }} Telegram</a>
     <a class="admin-button" href="mailto:support@codecartpro.com">{{ ui_icon('mail', 16) }} support@codecartpro.com</a>
   </div>
 </section>
-<p>{{ en ? 'Thank you for helping build a system that remains useful, transparent and independent.' : 'Дякуємо, що допомагаєте створювати корисну, відкриту та незалежну систему.' }}</p>
+<p>{{ ui_text('admin.project_support.thanks') }}</p>
 {{ shell.end() }}
