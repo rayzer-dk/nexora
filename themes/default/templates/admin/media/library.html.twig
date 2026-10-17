@@ -52,6 +52,7 @@
         <li>{{ ui_text('admin.media.library.creates_cache', {'sizes': processing.presets.thumb ~ ', ' ~ processing.presets.card ~ ', ' ~ processing.presets.product ~ ', ' ~ processing.presets.zoom, 'formats': ui_text('admin.media.format.' ~ processing.format ~ '_short')}) }}</li>
       </ul>
       <small class="admin-muted">{{ ui_text('admin.media.library.storefront_note') }}</small>
+      <small class="admin-muted" data-media-engine>{{ ui_text('admin.media.library.engine', {'engine': image_engine, 'queue': avif_queue}) }}</small>
     </div>
     <details class="media-advanced" data-media-advanced{{ processing.preset == 'custom' ? ' open' : '' }}><summary>{{ ui_text('admin.media.library.advanced') }}</summary>
       <div class="admin-form-grid">

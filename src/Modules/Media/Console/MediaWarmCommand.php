@@ -11,7 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'commerce:media:warm', description: 'Make the everyday sizes (thumb, card, product) of the main product photos that still lack them.')]
+#[AsCommand(name: 'commerce:media:warm', description: 'Make the queued AVIF sizes and the everyday sizes (thumb, card, product) of the main product photos that still lack them.')]
 final class MediaWarmCommand extends Command
 {
     public function __construct(private readonly MediaVariantService $variants)
@@ -27,8 +27,10 @@ final class MediaWarmCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $made = $this->variants->warmPrimaries((int) $input->getOption('limit'), time() + max(5, (int) $input->getOption('max-seconds')));
-        $output->writeln(sprintf('Made %d image sizes.', $made));
+        $deadline = time() + max(5, (int) $input->getOption('max-seconds'));
+        $queued = $this->variants->processQueue($deadline);
+        $made = $this->variants->warmPrimaries((int) $input->getOption('limit'), $deadline);
+        $output->writeln(sprintf('Made %d image sizes (%d from the AVIF queue, %d still queued). Engine: %s.', $made + $queued, $queued, $this->variants->queueLength(), $this->variants->engine()));
 
         return Command::SUCCESS;
     }

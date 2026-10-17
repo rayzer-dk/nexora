@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Images: sizes are made with libvips (its `vips` tool) when the server has it and with GD otherwise; a size libvips fails to make is made with GD. libvips also makes AVIF where PHP's GD cannot, so "AVIF with a WebP fallback" works on more servers. The AVIF of a photo that is not a main product photo is no longer encoded during the page request: the request queues it and gets the WebP of the same size (cached 5 minutes), and `commerce:media:warm` (every 15 minutes) makes the queued AVIF files. Media library > Image processing shows the engine and the queue length. New optional settings `MEDIA_IMAGE_ENGINE` (auto | gd) and `MEDIA_VIPS_BINARY`. New dependency symfony/process. JPEG XL is not made (only Safari shows it).
+
 ## 4.0.0 — 2026-10-17
 
 Version 4.0.0 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. The section collects the changes listed as "Unreleased" after 3.97.23 (below) and this build. Migration Version20270101010000 adds mc_ai_glossary, mc_ai_batch and mc_ai_batch_job.

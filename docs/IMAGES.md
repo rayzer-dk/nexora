@@ -29,8 +29,26 @@ Media library > Image processing:
 
 * **WebP only** (default): every size is WebP.
 * **AVIF with a WebP fallback:** the page contains `<picture>` with an AVIF source first; browsers without AVIF use the WebP
-  `<img>`. Offered only when this PHP build can write AVIF (`imageavif`); otherwise WebP is used and the settings say so.
+  `<img>`. Offered only when the server can write AVIF (GD with `imageavif`, or libvips with `heifsave`); otherwise WebP is
+  used and the settings say so.
 * **JPEG:** maximum compatibility.
+
+## Engine: libvips or GD
+
+Sizes are made with **libvips** when its command line tool `vips` is on the server, otherwise with **GD** (part of PHP).
+libvips decodes only what the size needs, so it uses less memory and time on large photos, and it writes AVIF even where
+PHP's GD cannot. A size that libvips fails to make is made with GD, so a picture is never missing because of the engine.
+Media library > Image processing shows which engine is in use.
+
+* `MEDIA_IMAGE_ENGINE=gd` in `.env.local` switches libvips off; the default `auto` uses it when present.
+* `MEDIA_VIPS_BINARY=/usr/bin/vips` when the tool is not on PATH (Windows: the full path of `vips.exe`).
+* The check for the tool runs at most once an hour and is kept in `var/media-engine.json`; delete that file after
+  installing or removing libvips to see the change at once.
+* Installing: Debian/Ubuntu `apt install libvips-tools`, Alpine `apk add vips-tools`, macOS `brew install vips`,
+  Windows: the `vips-dev-w64-web` build from the libvips releases. AVIF needs a libvips build with libheif (`vips -l foreign`
+  lists `heifsave`). Shared hosting without the tool, or with `proc_open` disabled, keeps GD.
+
+JPEG XL is not made: in 2026 only Safari shows it, so it would cost disk space and processing time for few visitors.
 
 ## When a size is made
 
@@ -38,7 +56,11 @@ Media library > Image processing:
   becomes the primary one.
 * **Every other photo:** on the first request for the URL. The media controller makes the file under a lock, writes it
   atomically and answers; afterwards the web server serves the file straight from disk (one-year immutable cache).
-* **After an import:** `commerce:media:warm` (scheduled every 15 minutes) prepares the everyday sizes of all main photos.
+* **AVIF of every other photo:** not made during the page request (AVIF takes several times longer than WebP). The first
+  request puts the size in a queue (`var/media-queue/`) and is answered with the WebP of the same size, cached for 5 minutes;
+  `commerce:media:warm` makes the queued AVIF files, and later requests get them from disk.
+* **After an import:** `commerce:media:warm` (scheduled every 15 minutes) makes the queued AVIF sizes, then prepares the
+  everyday sizes of all main photos.
 * If the server cannot make a size, the controller answers with the original itself, so a picture is never broken.
 
 Nginx needs `try_files $uri /index.php$is_args$args;`, Apache uses the bundled `.htaccess`.

@@ -28,11 +28,16 @@ final class MediaVariantService
     /** @var array{format:string,quality:int,avif_quality:int,presets:array<string,int>,generation:int}|null */
     private ?array $profile = null;
 
+    /** libvips when the server has it; null keeps GD only. A plain property, so an instance made without the constructor (tests) still has it. */
+    private ?VipsImageEncoder $vips = null;
+
     public function __construct(
         private readonly Connection $connection,
         private readonly ConfigurationRevisionStore $revisions,
         private readonly string $projectDir,
+        ?VipsImageEncoder $vips = null,
     ) {
+        $this->vips = $vips;
     }
 
     /** @return array{format:string,quality:int,avif_quality:int,presets:array<string,int>,generation:int} */
@@ -54,10 +59,22 @@ final class MediaVariantService
         return $this->profile = MediaImageProfile::normalize(is_array($payload) ? $payload : []);
     }
 
-    /** True when the storefront also offers AVIF (chosen in the settings and supported by this PHP build). */
+    /** True when the storefront also offers AVIF (chosen in the settings and this server can write AVIF). */
     public function avifEnabled(): bool
     {
-        return $this->profile()['format'] === 'avif_webp' && function_exists('imageavif');
+        return $this->profile()['format'] === 'avif_webp' && $this->canWriteAvif();
+    }
+
+    /** True when GD (imageavif) or libvips can write AVIF on this server. */
+    public function canWriteAvif(): bool
+    {
+        return function_exists('imageavif') || ($this->vips?->supports('avif') ?? false);
+    }
+
+    /** What makes the sizes: "libvips <version>" or "GD". */
+    public function engine(): string
+    {
+        return $this->vips !== null && $this->vips->available() ? $this->vips->version() : 'GD';
     }
 
     /** The format of the fallback (main) file: webp or jpg. */
@@ -190,6 +207,58 @@ final class MediaVariantService
     }
 
     /**
+     * Notes an AVIF size that a page asked for, to be made by the background job (commerce:media:warm) instead of during
+     * the page request: AVIF takes several times longer to encode than WebP. The queue is one small file per size under
+     * var/media-queue; a size asked for many times is queued once.
+     */
+    public function queue(string $key): void
+    {
+        if ($this->parse($key) === null) {
+            return;
+        }
+        $dir = $this->queueDir();
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+            return;
+        }
+        $file = $dir . '/' . sha1($key) . '.job';
+        if (!is_file($file)) {
+            @file_put_contents($file, $key, LOCK_EX);
+        }
+    }
+
+    /** Makes the queued sizes, oldest first, until the deadline. @return int sizes made */
+    public function processQueue(?int $deadline = null, int $limit = 5000): int
+    {
+        $made = 0;
+        $jobs = glob($this->queueDir() . '/*.job') ?: [];
+        usort($jobs, static fn (string $a, string $b): int => (int) @filemtime($a) <=> (int) @filemtime($b));
+        foreach (array_slice($jobs, 0, max(1, $limit)) as $job) {
+            if ($deadline !== null && time() >= $deadline) {
+                break;
+            }
+            $key = trim((string) @file_get_contents($job));
+            $existed = $key !== '' && is_file($this->path($key));
+            if ($key !== '' && !$existed && $this->ensure($key) !== null) {
+                ++$made;
+            }
+            @unlink($job); // made, already there, or not makeable (old generation, original gone): the job is done
+        }
+
+        return $made;
+    }
+
+    /** Number of sizes waiting in the queue. */
+    public function queueLength(): int
+    {
+        return count(glob($this->queueDir() . '/*.job') ?: []);
+    }
+
+    private function queueDir(): string
+    {
+        return rtrim($this->projectDir, '/\\') . '/var/media-queue';
+    }
+
+    /**
      * Makes the given presets of one stored picture now (the main photo of a product is prepared at once).
      *
      * @param list<string>|null $presets
@@ -270,7 +339,7 @@ final class MediaVariantService
             }
             $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
             $parsed = $this->parse($relative);
-            $isTemporary = str_ends_with($relative, '.tmp');
+            $isTemporary = str_ends_with($relative, '.tmp') || str_starts_with(basename($relative), '.vips-');
             if ($parsed === null && !$isTemporary) {
                 continue; // anything unexpected stays untouched
             }
@@ -352,11 +421,22 @@ final class MediaVariantService
         if (!is_array($info) || $info[0] < 1 || $info[1] < 1 || $info[0] * $info[1] > self::MAX_PIXELS) {
             return false;
         }
-        if ($ext === 'avif' && !function_exists('imageavif')) {
-            return false;
-        }
         $dir = dirname($target);
         if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+            return false;
+        }
+        if ($this->vips !== null && $this->vips->supports($ext)) {
+            // libvips needs the real extension at the end of the output name to pick the format.
+            $vipsTemporary = $dir . '/.vips-' . bin2hex(random_bytes(4)) . '.' . $ext;
+            if ($this->vips->thumbnail($original, $vipsTemporary, $width, $ext, $quality)) {
+                @chmod($vipsTemporary, 0644);
+                if (@rename($vipsTemporary, $target)) {
+                    return true;
+                }
+            }
+            @unlink($vipsTemporary); // fall back to GD
+        }
+        if ($ext === 'avif' && !function_exists('imageavif')) {
             return false;
         }
         $temporary = $target . '.' . bin2hex(random_bytes(4)) . '.tmp';

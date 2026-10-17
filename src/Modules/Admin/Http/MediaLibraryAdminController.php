@@ -32,6 +32,7 @@ final class MediaLibraryAdminController extends AbstractController
         private readonly ConfigurationRevisionStore $revisions,
         private readonly MediaOrphanService $orphans,
         private readonly MediaFileInspector $inspector,
+        private readonly \Commerce\Modules\Media\Application\MediaVariantService $variants,
     ) {}
 
     #[Route('/admin/media', name:'admin_media_library', methods:['GET'])]
@@ -44,7 +45,7 @@ final class MediaLibraryAdminController extends AbstractController
         if($folder!==null&&$folder>0&&!in_array($folder,array_map(static fn(array $f):int=>(int)$f['id'],$folders),true)){$folder=null;}
         $kind=in_array((string)$request->query->get('kind',''),['image','video'],true)?(string)$request->query->get('kind'):null;
         $result=$this->library->search($ctx->storeId,(string)$request->query->get('q',''),$folder,(int)$request->query->get('page',1),48,$kind);
-        $response=$this->render('@storefront/admin/media/library.html.twig',['result'=>$result,'folders'=>$folders,'counts'=>$this->library->folderCounts($ctx->storeId),'folder'=>$folder,'kind'=>$kind,'query'=>(string)$request->query->get('q',''),'processing'=>$this->processing($ctx->storeId),'avif_supported'=>function_exists('imageavif')]);
+        $response=$this->render('@storefront/admin/media/library.html.twig',['result'=>$result,'folders'=>$folders,'counts'=>$this->library->folderCounts($ctx->storeId),'folder'=>$folder,'kind'=>$kind,'query'=>(string)$request->query->get('q',''),'processing'=>$this->processing($ctx->storeId),'avif_supported'=>$this->variants->canWriteAvif(),'image_engine'=>$this->variants->engine(),'avif_queue'=>$this->variants->queueLength()]);
         if($request->query->has('folder')){$response->headers->setCookie(Cookie::create('mc_media_folder',$folder===null?'all':($folder===0?'none':(string)$folder),time()+31536000,'/admin',null,$request->isSecure(),true,false,Cookie::SAMESITE_LAX));}
         return $response;
     }

@@ -33,8 +33,22 @@ final class MediaVariantController
 
             return $redirect;
         }
-        $path = $this->variants->ensure($key);
         $parsed = $this->variants->parse($key);
+        if ($parsed !== null && $parsed['ext'] === 'avif' && !is_file($this->variants->path($key))) {
+            // AVIF is made by the background job, not during the page request; until then the WebP of the same size
+            // answers (browsers that ask for AVIF read WebP too), with a short cache so the AVIF is picked up later.
+            $this->variants->queue($key);
+            $webpKey = substr($key, 0, -4) . 'webp';
+            $webp = $this->variants->ensure($webpKey);
+            if ($webp !== null) {
+                $interim = new BinaryFileResponse($webp, 200, ['Content-Type' => 'image/webp'], false);
+                $interim->headers->set('Cache-Control', 'public, max-age=300');
+                $interim->headers->set('X-Content-Type-Options', 'nosniff');
+
+                return $interim;
+            }
+        }
+        $path = $this->variants->ensure($key);
         if ($path === null) {
             // The size could not be made (unreadable file, no free disk space): show the original instead of a broken picture.
             $original = $parsed !== null && $parsed['gen'] === $this->variants->profile()['generation'] ? $this->variants->findOriginal($parsed['stem']) : null;
