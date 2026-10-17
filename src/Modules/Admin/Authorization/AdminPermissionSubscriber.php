@@ -105,7 +105,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_system_push')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_demo')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_logs')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
-        if ($route==='admin_system_prro'||$route==='admin_system_captcha'||$route==='admin_system_tracking'||$route==='admin_system_bots'||$route==='admin_system_network') return AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if (str_starts_with($route,'admin_system_prro')||$route==='admin_system_captcha'||$route==='admin_system_tracking'||$route==='admin_system_bots'||$route==='admin_system_network') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_seo_')) return $get?AdminPermissionCatalog::SYSTEM_SETTINGS:AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_contains($route,'extension')) return AdminPermissionCatalog::EXTENSIONS_MANAGE;
         if (str_contains($route,'recovery')) return AdminPermissionCatalog::SYSTEM_RECOVERY;
@@ -116,7 +116,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if (str_starts_with($route,'admin_system_maintenance')||$route==='admin_system_modules') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (in_array($route,['admin_system_stability','admin_system_components','admin_api_system_health'],true)) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_migration')) return AdminPermissionCatalog::SYSTEM_UPDATE;
-        if ($route==='admin_ai_product_draft'||$route==='admin_ai_task') return AdminPermissionCatalog::CATALOG_MANAGE;
+        if ($route==='admin_ai_product_draft'||$route==='admin_ai_task'||$route==='admin_ai_product_from_photo') return AdminPermissionCatalog::CATALOG_MANAGE;
         return null;
     }
 
