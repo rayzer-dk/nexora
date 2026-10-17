@@ -41,6 +41,7 @@ final class CommerceOperationsAdminController extends AbstractController
         private readonly \Commerce\Modules\Notification\Application\SmsService $sms,
         private readonly \Commerce\Modules\Catalog\Application\ProductStockService $stock,
         private readonly \Commerce\Modules\Admin\Undo\AdminUndoService $undo,
+        private readonly \Commerce\Modules\Ai\Application\AiBatchService $aiBatches,
     ) {}
 
     #[Route('/admin/commerce/promotions', name:'admin_commerce_promotions', methods:['GET','POST'])]
@@ -288,6 +289,15 @@ final class CommerceOperationsAdminController extends AbstractController
             foreach(array_slice($ids,0,50) as $id){try{$this->catalogMaintenance->duplicateProductDraft($context->storeId,$context->marketId,$context->locale,$id);++$made;}catch(\Throwable){++$failed;}}
             $this->addFlash($failed>0?'warning':'success',\Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.bulk.duplicated',['count'=>$made,'failed'=>$failed]));
             return $this->redirectToRoute('admin_catalog_products');
+        }
+        if(in_array($action,['ai_descriptions','ai_seo','ai_translate'],true)){
+            // The texts are not written here: the selection goes to the AI page, where mode and language are chosen and the result waits for review.
+            if($ids===[]){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('admin.ai.bulk.none_selected'));return $this->redirectToRoute('admin_catalog_products');}
+            $translate=$action==='ai_translate';
+            $usable=array_filter($this->aiBatches->providers($context->storeId),static fn(array $p):bool=>$translate||!$p['translation_only']);
+            if($usable===[]){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get($translate?'admin.ai.bulk.no_translator':'admin.ai.bulk.no_provider'));return $this->redirectToRoute('admin_catalog_products');}
+            $request->getSession()->set(\Commerce\Modules\Ai\Http\AiBatchAdminController::SELECTION,['task'=>$translate?'translate':($action==='ai_seo'?'seo_meta':'product_draft'),'ids'=>array_slice($ids,0,500),'at'=>time()]);
+            return $this->redirectToRoute('admin_ai_batch',['selection'=>1]);
         }
         if($action==='zero_stock'){
             // Every active variant of the selected products gets 0 at the market's warehouse; products without stock (digital) are skipped.

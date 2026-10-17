@@ -9,6 +9,7 @@ use Commerce\Modules\Admin\Authorization\AdminAuthorizationService;
 use Commerce\Modules\Admin\Authorization\AdminPermissionCatalog;
 use Commerce\Modules\Admin\Domain\AdminUser;
 use Commerce\Modules\Admin\Undo\AdminUndoService;
+use Commerce\Modules\Ai\Application\AiBatchService;
 use Commerce\Modules\Catalog\Application\ProductBulkEditor;
 use Commerce\Modules\Catalog\Application\ProductStockService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +26,7 @@ final class UndoAdminController extends AbstractController
         private readonly AdminAuthorizationService $authorization,
         private readonly ProductBulkEditor $products,
         private readonly ProductStockService $stock,
+        private readonly AiBatchService $aiBatches,
     ) {
     }
 
@@ -58,6 +60,13 @@ final class UndoAdminController extends AbstractController
             $previous = is_array($ticket['payload']['previous'] ?? null) ? $ticket['payload']['previous'] : [];
             $restored = $this->stock->restore($previous, $ctx->storeId, $ctx->marketId);
             $this->addFlash('success', CanonicalUiText::get('admin.undo.stock_done', ['count' => $restored]));
+
+            return $this->redirect($back);
+        }
+        // AI texts applied from the "for review" list: the old texts come back, a text edited since stays.
+        if ($ticket['kind'] === 'ai_review' && $this->authorization->isGranted($user, AdminPermissionCatalog::CATALOG_MANAGE, $ctx->storeId)) {
+            $jobs = is_array($ticket['payload']['jobs'] ?? null) ? array_map('intval', $ticket['payload']['jobs']) : [];
+            $this->addFlash('success', CanonicalUiText::get('admin.undo.ai_review_done', ['count' => $this->aiBatches->undo($ctx->storeId, $jobs)]));
 
             return $this->redirect($back);
         }

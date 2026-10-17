@@ -24,6 +24,9 @@ final class AiBatchService
     public const ACTIVE = ['running', 'paused', 'limit'];
     private const MAX_ATTEMPTS = 3;
     private const LOCK = 'nexora_ai_batch';
+    /** writing task => the product fields it fills (in the main language) */
+    public const GENERATE_FIELDS = ['product_draft' => ['short_description', 'description'], 'seo_meta' => ['meta_title', 'meta_description']];
+    private const REVIEW_PAGE = 20;
     private const BRAND_FIELDS = ['description' => 100000, 'meta_title' => 255, 'meta_description' => 500];
     /** entity type => [store link table, its key, translation table, its key, entity table] */
     private const TABLES = [
@@ -86,7 +89,12 @@ final class AiBatchService
         $kind = ($options['kind'] ?? '') === 'generate' ? 'generate' : 'translate';
         $mode = ($options['mode'] ?? 'missing') === 'overwrite' ? 'overwrite' : 'missing';
         $provider = trim((string) ($options['provider'] ?? ''));
-        if ($provider === '' || !in_array($provider, array_column($this->providers($storeId), 'code'), true)) {
+        $known = [];
+        foreach ($this->providers($storeId) as $p) {
+            $known[$p['code']] = $p['translation_only'];
+        }
+        // A machine-translation service cannot write a description: it only translates.
+        if ($provider === '' || !isset($known[$provider]) || ($kind === 'generate' && $known[$provider])) {
             throw new \DomainException(CanonicalUiText::get('admin.ai.batch.error_provider'));
         }
         $default = $this->catalog->defaultLocale($storeId);
@@ -94,7 +102,7 @@ final class AiBatchService
         $productIds = isset($options['product_ids']) ? $this->productIds($storeId, (array) $options['product_ids']) : null;
         if ($kind === 'generate') {
             $task = (string) ($options['task'] ?? '');
-            if (!in_array($task, AiTaskService::tasks(), true)) {
+            if (!isset(self::GENERATE_FIELDS[$task])) {
                 throw new \DomainException(CanonicalUiText::get('admin.ai.error_task'));
             }
             $types = ['product'];
@@ -116,7 +124,7 @@ final class AiBatchService
 
         $queued = [];
         foreach ($this->db->fetchAllAssociative(
-            "SELECT j.entity_type,j.entity_id,j.locale,j.task FROM mc_ai_batch_job j JOIN mc_ai_batch b ON b.id=j.batch_id WHERE j.store_id=? AND j.status='pending' AND b.status IN ('running','paused','limit')",
+            "SELECT j.entity_type,j.entity_id,j.locale,j.task FROM mc_ai_batch_job j JOIN mc_ai_batch b ON b.id=j.batch_id WHERE j.store_id=? AND ((j.status='pending' AND b.status IN ('running','paused','limit')) OR j.status='review')",
             [$storeId],
         ) as $row) {
             $queued[$row['entity_type'] . ':' . $row['entity_id'] . ':' . $row['locale'] . ':' . $row['task']] = true;
@@ -124,7 +132,7 @@ final class AiBatchService
         $jobs = [];
         foreach ($types as $type) {
             foreach ($locales as $locale) {
-                $ids = $kind === 'translate' ? $this->untranslated($storeId, $type, $default, $locale, $mode, $productIds) : ($productIds ?? []);
+                $ids = $kind === 'translate' ? $this->untranslated($storeId, $type, $default, $locale, $mode, $productIds) : $this->needingText($storeId, $default, $task, $mode, $productIds ?? []);
                 foreach ($ids as $id) {
                     if (!isset($queued[$type . ':' . $id . ':' . $locale . ':' . $task])) {
                         $jobs[] = [$type, $id, $locale];
@@ -177,8 +185,8 @@ final class AiBatchService
             $this->wakeUpLimited($storeId);
             $blocked = []; // batches that hit the limit in this round
             $rows = $this->db->fetchAllAssociative(
-                "SELECT j.id,j.batch_id,j.store_id,j.entity_type,j.entity_id,j.locale,j.attempts,b.options_json,b.created_by FROM mc_ai_batch_job j JOIN mc_ai_batch b ON b.id=j.batch_id
-                 WHERE j.status='pending' AND j.task='translate' AND b.status='running'" . ($storeId !== null ? ' AND j.store_id=' . (int) $storeId : '') . ' ORDER BY j.id LIMIT ' . max(1, min(500, $limit)),
+                "SELECT j.id,j.batch_id,j.store_id,j.entity_type,j.entity_id,j.locale,j.task,j.attempts,b.options_json,b.created_by,b.kind FROM mc_ai_batch_job j JOIN mc_ai_batch b ON b.id=j.batch_id
+                 WHERE j.status='pending' AND b.status='running'" . ($storeId !== null ? ' AND j.store_id=' . (int) $storeId : '') . ' ORDER BY j.id LIMIT ' . max(1, min(500, $limit)),
             );
             foreach ($rows as $row) {
                 if (microtime(true) - $started > $budgetSeconds) {
@@ -187,7 +195,7 @@ final class AiBatchService
                 if (isset($blocked[(int) $row['batch_id']])) {
                     continue;
                 }
-                $outcome = $this->runTranslate($row);
+                $outcome = (string) $row['kind'] === 'generate' ? $this->runGenerate($row) : $this->runTranslate($row);
                 if ($outcome === 'limit') {
                     $blocked[(int) $row['batch_id']] = true;
                     $this->setStatus((int) $row['batch_id'], 'limit');
@@ -212,7 +220,7 @@ final class AiBatchService
     /**
      * The latest batches of the store (active ones first) with counts per language.
      *
-     * @return list<array{batch:array<string,mixed>,per_locale:array<string,array{done:int,failed:int,pending:int,skipped:int}>,totals:array{done:int,failed:int,pending:int,skipped:int},failures:list<array<string,mixed>>}>
+     * @return list<array{batch:array<string,mixed>,per_locale:array<string,array{done:int,failed:int,pending:int,skipped:int,review:int}>,totals:array{done:int,failed:int,pending:int,skipped:int,review:int},failures:list<array<string,mixed>>}>
      */
     public function progress(int $storeId, int $limit = 10): array
     {
@@ -225,16 +233,16 @@ final class AiBatchService
             $options = json_decode((string) $b['options_json'], true) ?: [];
             $perLocale = [];
             foreach ((array) ($options['locales'] ?? []) as $locale) {
-                $perLocale[(string) $locale] = ['done' => 0, 'failed' => 0, 'pending' => 0, 'skipped' => 0];
+                $perLocale[(string) $locale] = ['done' => 0, 'failed' => 0, 'pending' => 0, 'skipped' => 0, 'review' => 0];
             }
-            $totals = ['done' => 0, 'failed' => 0, 'pending' => 0, 'skipped' => 0];
+            $totals = ['done' => 0, 'failed' => 0, 'pending' => 0, 'skipped' => 0, 'review' => 0];
             foreach ($this->db->fetchAllAssociative('SELECT locale,status,COUNT(*) AS n FROM mc_ai_batch_job WHERE batch_id=? GROUP BY locale,status', [(int) $b['id']]) as $c) {
                 $key = match ((string) $c['status']) {
-                    'pending', 'failed', 'skipped' => (string) $c['status'],
+                    'pending', 'failed', 'skipped', 'review' => (string) $c['status'],
                     'rejected' => 'skipped',
                     default => 'done',
                 };
-                $perLocale[(string) $c['locale']] ??= ['done' => 0, 'failed' => 0, 'pending' => 0, 'skipped' => 0];
+                $perLocale[(string) $c['locale']] ??= ['done' => 0, 'failed' => 0, 'pending' => 0, 'skipped' => 0, 'review' => 0];
                 $perLocale[(string) $c['locale']][$key] += (int) $c['n'];
                 $totals[$key] += (int) $c['n'];
             }
@@ -286,6 +294,240 @@ final class AiBatchService
         }
 
         return (int) $count;
+    }
+
+    /**
+     * Texts proposed by the AI wait here: one entry per product with the fields it would change (before = what the product has now).
+     *
+     * @return list<array{id:int,batch:string,task:string,product_id:int,name:string,changes:list<array{field:string,before:string,after:string}>}>
+     */
+    public function review(int $storeId, int $page = 1): array
+    {
+        $rows = $this->db->fetchAllAssociative(
+            "SELECT j.id,j.entity_id,j.task,j.locale,j.result_json,b.public_id FROM mc_ai_batch_job j JOIN mc_ai_batch b ON b.id=j.batch_id WHERE j.store_id=? AND j.status='review' ORDER BY j.id LIMIT " . self::REVIEW_PAGE . ' OFFSET ' . (max(1, $page) - 1) * self::REVIEW_PAGE,
+            [$storeId],
+        );
+        $out = [];
+        foreach ($rows as $row) {
+            $result = json_decode((string) $row['result_json'], true) ?: [];
+            $current = $this->texts($storeId, 'product', (int) $row['entity_id'], (string) $row['locale']) ?? [];
+            $changes = [];
+            foreach ((array) ($result['fields'] ?? []) as $field => $after) {
+                $changes[] = ['field' => (string) $field, 'before' => (string) ($current[$field] ?? ''), 'after' => (string) $after];
+            }
+            $out[] = ['id' => (int) $row['id'], 'batch' => (string) $row['public_id'], 'task' => (string) $row['task'], 'product_id' => (int) $row['entity_id'], 'name' => (string) ($current['name'] ?? '#' . $row['entity_id']), 'changes' => $changes];
+        }
+
+        return $out;
+    }
+
+    public function reviewCount(int $storeId): int
+    {
+        return (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_ai_batch_job WHERE store_id=? AND status='review'", [$storeId]);
+    }
+
+    /** @return list<int> ids of all jobs waiting for review (at most 500) */
+    public function reviewJobIds(int $storeId): array
+    {
+        return array_map('intval', $this->db->fetchFirstColumn("SELECT id FROM mc_ai_batch_job WHERE store_id=? AND status='review' ORDER BY id LIMIT 500", [$storeId]));
+    }
+
+    /** @param list<int> $jobIds @return int how many jobs were applied */
+    public function apply(int $storeId, array $jobIds): int
+    {
+        return count($this->applyJobs($storeId, $jobIds));
+    }
+
+    /**
+     * Writes the proposed texts into the products. With mode "only empty fields" a field the owner has filled in meanwhile is kept.
+     * What was there before is remembered in the job, so that undo() can put it back.
+     *
+     * @param list<int> $jobIds
+     * @return list<int> ids of the jobs that were applied
+     */
+    public function applyJobs(int $storeId, array $jobIds): array
+    {
+        $applied = [];
+        foreach (array_slice(array_values(array_unique(array_map('intval', $jobIds))), 0, 500) as $jobId) {
+            $job = $this->db->fetchAssociative("SELECT id,entity_id,locale,result_json FROM mc_ai_batch_job WHERE id=? AND store_id=? AND status='review'", [$jobId, $storeId]);
+            if (!is_array($job) || $this->db->executeStatement("UPDATE mc_ai_batch_job SET status='applied',processed_at=? WHERE id=? AND status='review'", [gmdate('Y-m-d H:i:s.u'), $jobId]) !== 1) {
+                continue;
+            }
+            try {
+                $result = json_decode((string) $job['result_json'], true) ?: [];
+                $productId = (int) $job['entity_id'];
+                $locale = (string) $job['locale'];
+                $current = $this->texts($storeId, 'product', $productId, $locale);
+                if ($current === null) {
+                    throw new \InvalidArgumentException('not_found');
+                }
+                $merged = $current;
+                $before = [];
+                foreach ((array) ($result['fields'] ?? []) as $field => $text) {
+                    if (!isset(CatalogTranslationService::PRODUCT_FIELDS[$field]) || (($result['mode'] ?? 'missing') !== 'overwrite' && trim((string) ($current[$field] ?? '')) !== '')) {
+                        continue;
+                    }
+                    $before[(string) $field] = (string) ($current[$field] ?? '');
+                    $merged[$field] = (string) $text;
+                }
+                if ($before === []) {
+                    $this->db->update('mc_ai_batch_job', ['status' => 'rejected'], ['id' => $jobId]);
+                    continue;
+                }
+                $this->catalog->saveProduct($storeId, $productId, $locale, $merged);
+                $saved = $this->texts($storeId, 'product', $productId, $locale) ?? [];
+                $after = [];
+                foreach (array_keys($before) as $field) {
+                    $after[$field] = (string) ($saved[$field] ?? '');
+                }
+                $this->db->update('mc_ai_batch_job', ['previous_json' => json_encode(['before' => $before, 'after' => $after], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)], ['id' => $jobId]);
+                $applied[] = $jobId;
+            } catch (\Throwable) {
+                $this->db->update('mc_ai_batch_job', ['status' => 'review'], ['id' => $jobId]);
+            }
+        }
+
+        return $applied;
+    }
+
+    /** @param list<int> $jobIds @return int how many jobs were turned down */
+    public function reject(int $storeId, array $jobIds): int
+    {
+        $ids = array_slice(array_values(array_unique(array_map('intval', $jobIds))), 0, 500);
+        if ($ids === []) {
+            return 0;
+        }
+
+        return (int) $this->db->executeStatement(
+            "UPDATE mc_ai_batch_job SET status='rejected',processed_at=? WHERE store_id=? AND status='review' AND id IN (" . implode(',', array_fill(0, count($ids), '?')) . ')',
+            array_merge([gmdate('Y-m-d H:i:s.u'), $storeId], $ids),
+        );
+    }
+
+    /**
+     * Puts the old texts back. A field the owner edited after applying is left alone. The job goes back to the review list.
+     *
+     * @param list<int> $jobIds
+     * @return int how many jobs were restored
+     */
+    public function undo(int $storeId, array $jobIds): int
+    {
+        $count = 0;
+        foreach (array_slice(array_values(array_unique(array_map('intval', $jobIds))), 0, 500) as $jobId) {
+            $job = $this->db->fetchAssociative("SELECT entity_id,locale,previous_json FROM mc_ai_batch_job WHERE id=? AND store_id=? AND status='applied'", [$jobId, $storeId]);
+            $memo = is_array($job) ? json_decode((string) $job['previous_json'], true) : null;
+            if (!is_array($job) || !is_array($memo)) {
+                continue;
+            }
+            try {
+                $current = $this->texts($storeId, 'product', (int) $job['entity_id'], (string) $job['locale']);
+                if ($current === null) {
+                    continue;
+                }
+                $merged = $current;
+                $restored = false;
+                foreach ((array) ($memo['before'] ?? []) as $field => $old) {
+                    if (trim((string) ($current[$field] ?? '')) === trim((string) ($memo['after'][$field] ?? ''))) {
+                        $merged[$field] = (string) $old;
+                        $restored = true;
+                    }
+                }
+                if (!$restored) {
+                    continue;
+                }
+                $this->catalog->saveProduct($storeId, (int) $job['entity_id'], (string) $job['locale'], $merged);
+                $this->db->update('mc_ai_batch_job', ['status' => 'review', 'previous_json' => null], ['id' => $jobId]);
+                ++$count;
+            } catch (\Throwable) {
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Products (of $ids) that have something to write: in mode "missing" an empty field of the task, with "overwrite" any product with a name.
+     *
+     * @param list<int> $ids
+     * @return list<int>
+     */
+    private function needingText(int $storeId, string $default, string $task, string $mode, array $ids): array
+    {
+        $out = [];
+        foreach ($ids as $id) {
+            $texts = $this->texts($storeId, 'product', $id, $default);
+            if ($texts === null || trim($texts['name'] ?? '') === '') {
+                continue;
+            }
+            $empty = array_filter(self::GENERATE_FIELDS[$task], static fn (string $f): bool => trim($texts[$f] ?? '') === '');
+            if ($mode === 'overwrite' || $empty !== []) {
+                $out[] = $id;
+            }
+        }
+
+        return $out;
+    }
+
+    /** @param array<string,mixed> $row a pending generate job joined with its batch @return 'done'|'failed'|'pending'|'skipped'|'limit' */
+    private function runGenerate(array $row): string
+    {
+        $jobId = (int) $row['id'];
+        $storeId = (int) $row['store_id'];
+        $productId = (int) $row['entity_id'];
+        $locale = (string) $row['locale'];
+        $task = (string) $row['task'];
+        $options = json_decode((string) $row['options_json'], true) ?: [];
+        $overwrite = ($options['mode'] ?? 'missing') === 'overwrite';
+        try {
+            $texts = $this->texts($storeId, 'product', $productId, $locale);
+            $wanted = array_values(array_filter(self::GENERATE_FIELDS[$task] ?? [], static fn (string $f): bool => $overwrite || trim($texts[$f] ?? '') === ''));
+            if ($texts === null || $wanted === []) {
+                $this->db->update('mc_ai_batch_job', ['status' => 'skipped', 'processed_at' => gmdate('Y-m-d H:i:s.u')], ['id' => $jobId]);
+
+                return 'skipped';
+            }
+            $input = $task === 'seo_meta'
+                ? ['title' => $texts['name'], 'brand' => $this->brandOf($productId), 'categories' => $this->categoriesOf($storeId, $productId, $locale), 'current' => strip_tags($texts['short_description'] !== '' ? $texts['short_description'] : $texts['description'])]
+                : ['name' => $texts['name'], 'sku' => $this->skuOf($productId), 'brand' => $this->brandOf($productId), 'categories' => $this->categoriesOf($storeId, $productId, $locale), 'short' => $texts['short_description'], 'current' => $texts['description']];
+            $fields = $this->tasks->run($storeId, (string) $row['created_by'], $task, (string) ($options['provider'] ?? ''), $input, $locale)['fields'];
+            $proposal = [];
+            $before = [];
+            foreach ($wanted as $field) {
+                if (isset($fields[$field]) && trim($fields[$field]) !== '') {
+                    $proposal[$field] = $fields[$field];
+                    $before[$field] = $texts[$field];
+                }
+            }
+            $this->db->update('mc_ai_batch_job', [
+                'status' => 'review', 'error' => null, 'processed_at' => gmdate('Y-m-d H:i:s.u'),
+                'result_json' => json_encode(['task' => $task, 'mode' => $overwrite ? 'overwrite' : 'missing', 'fields' => $proposal, 'before' => $before], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            ], ['id' => $jobId]);
+
+            return 'done';
+        } catch (AiLimitException $e) {
+            if ($e->limit <= 0 || $e->needed <= $e->limit) {
+                return 'limit';
+            }
+
+            return $this->fail($jobId, self::MAX_ATTEMPTS, CanonicalUiText::get('admin.ai.batch.too_long', ['needed' => $e->needed, 'limit' => $e->limit]));
+        } catch (\Throwable $e) {
+            return $this->fail($jobId, (int) $row['attempts'] + 1, $e->getMessage());
+        }
+    }
+
+    private function skuOf(int $productId): string
+    {
+        return (string) ($this->db->fetchOne('SELECT sku FROM mc_product_variant WHERE product_id=? ORDER BY sort_order,id LIMIT 1', [$productId]) ?: '');
+    }
+
+    private function brandOf(int $productId): string
+    {
+        return (string) ($this->db->fetchOne('SELECT b.name FROM mc_product p JOIN mc_brand b ON b.id=p.brand_id WHERE p.id=?', [$productId]) ?: '');
+    }
+
+    private function categoriesOf(int $storeId, int $productId, string $locale): string
+    {
+        return implode(', ', array_map('strval', $this->db->fetchFirstColumn('SELECT t.name FROM mc_product_category pc JOIN mc_category_translation t ON t.category_id=pc.category_id AND t.store_id=? AND t.locale=? WHERE pc.product_id=? LIMIT 8', [$storeId, $locale, $productId])));
     }
 
     /** @param array<string,mixed> $row a pending job joined with its batch @return 'done'|'failed'|'pending'|'skipped'|'limit' */
@@ -475,7 +717,7 @@ final class AiBatchService
     private function finishBatches(?int $storeId): void
     {
         $this->db->executeStatement(
-            "UPDATE mc_ai_batch SET status='done',updated_at=? WHERE status='running' AND kind='translate'" . ($storeId !== null ? ' AND store_id=' . (int) $storeId : '') . " AND NOT EXISTS (SELECT 1 FROM mc_ai_batch_job j WHERE j.batch_id=mc_ai_batch.id AND j.status='pending')",
+            "UPDATE mc_ai_batch SET status='done',updated_at=? WHERE status='running'" . ($storeId !== null ? ' AND store_id=' . (int) $storeId : '') . " AND NOT EXISTS (SELECT 1 FROM mc_ai_batch_job j WHERE j.batch_id=mc_ai_batch.id AND j.status='pending')",
             [gmdate('Y-m-d H:i:s.u')],
         );
     }

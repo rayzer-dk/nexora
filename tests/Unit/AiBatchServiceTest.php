@@ -41,6 +41,7 @@ final class AiBatchServiceTest extends TestCase
 {
     private Connection $db;
     private AiBatchService $batches;
+    private TranslationProviderRegistry $translationProviders;
     /** @var TextGenerationProviderInterface&object{prompts:list<string>,fail:bool} */
     private object $model;
     /** @var list<string> */
@@ -53,7 +54,9 @@ final class AiBatchServiceTest extends TestCase
             'CREATE TABLE mc_store (id INTEGER PRIMARY KEY, default_locale TEXT)',
             'CREATE TABLE mc_locale (code TEXT PRIMARY KEY, native_name TEXT)',
             'CREATE TABLE mc_store_locale (store_id INT, locale_code TEXT, enabled INT, is_default INT, sort_order INT)',
-            'CREATE TABLE mc_product (id INTEGER PRIMARY KEY, public_id BLOB)',
+            'CREATE TABLE mc_product (id INTEGER PRIMARY KEY, public_id BLOB, brand_id INT)',
+            'CREATE TABLE mc_product_variant (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INT, sku TEXT, sort_order INT)',
+            'CREATE TABLE mc_product_category (product_id INT, category_id INT)',
             'CREATE TABLE mc_store_product (store_id INT, product_id INT, status TEXT)',
             'CREATE TABLE mc_product_translation (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INT, store_id INT, locale TEXT, name TEXT, h1 TEXT, slug TEXT, short_description TEXT, description TEXT, meta_title TEXT, meta_description TEXT, created_at TEXT, updated_at TEXT, is_fallback INT NOT NULL DEFAULT 0, UNIQUE(product_id, store_id, locale))',
             'CREATE TABLE mc_category (id INTEGER PRIMARY KEY, public_id BLOB)',
@@ -110,6 +113,13 @@ final class AiBatchServiceTest extends TestCase
                     throw new \RuntimeException('HTTP 500: provider down');
                 }
                 preg_match('~Output language: (\w+)~', $prompt, $lang);
+                if (!str_contains($prompt, '<data name="fields">')) {
+                    // a writing task (descriptions, SEO): one text per requested key, built from the product name
+                    preg_match('~JSON keys: ([^\n]+)~', $prompt, $keys);
+                    preg_match('~<data name="(?:name|title)">(.*?)</data>~s', $prompt, $name);
+
+                    return json_encode(array_fill_keys(array_map('trim', explode(',', $keys[1])), 'AI for ' . ($name[1] ?? '?')), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+                }
                 preg_match('~<data name="fields">(.*)</data>~s', $prompt, $m);
                 $fields = json_decode($m[1], true, 8, JSON_THROW_ON_ERROR);
 
@@ -118,7 +128,7 @@ final class AiBatchServiceTest extends TestCase
         };
         $settings = new AiSettings($db, new SecretVault(str_repeat('k', 32)));
         $ai = new AiProviderRegistry([$this->model]);
-        $translations = new TranslationProviderRegistry();
+        $translations = $this->translationProviders = new TranslationProviderRegistry();
         $loader = new TrustedExtensionRuntimeLoader($db, new TrustedExtensionRuntimeRegistry(), new PaymentProviderRegistry([]), new DeliveryProviderRegistry([]), new ProductBlockRegistry([]), $ai, $translations, new \Commerce\Core\Extension\ExtensionServiceRegistry());
         $tasks = new AiTaskService($settings, new MockHttpClient(), $ai, $translations, $loader, new AiGlossary($db));
         $routes = &$this->routes;
@@ -231,7 +241,7 @@ final class AiBatchServiceTest extends TestCase
         $progress = $this->batches->progress(1);
         self::assertSame($id, $progress[0]['batch']['public_id']);
         self::assertSame('done', $progress[0]['batch']['status']);
-        self::assertSame(['done' => 4, 'failed' => 0, 'pending' => 0, 'skipped' => 0], $progress[0]['per_locale']['en-US']);
+        self::assertSame(['done' => 4, 'failed' => 0, 'pending' => 0, 'skipped' => 0, 'review' => 0], $progress[0]['per_locale']['en-US']);
     }
 
     public function testDailyLimitPausesTheBatchUntilTheNextDay(): void
@@ -261,7 +271,7 @@ final class AiBatchServiceTest extends TestCase
             $this->batches->process(20, 30.0);
         }
         $progress = $this->batches->progress(1)[0];
-        self::assertSame(['done' => 0, 'failed' => 4, 'pending' => 0, 'skipped' => 0], $progress['per_locale']['en-US']);
+        self::assertSame(['done' => 0, 'failed' => 4, 'pending' => 0, 'skipped' => 0, 'review' => 0], $progress['per_locale']['en-US']);
         self::assertStringContainsString('HTTP 500: provider down', (string) $this->db->fetchOne("SELECT error FROM mc_ai_batch_job LIMIT 1"));
 
         $this->model->fail = false;
@@ -291,5 +301,195 @@ final class AiBatchServiceTest extends TestCase
         self::assertSame(['done' => 0, 'failed' => 0, 'pending' => 4, 'paused_for_limit' => true], $this->batches->process(20, 30.0));
         self::assertSame([], $this->model->prompts);
         self::assertSame('limit', $this->batches->progress(1)[0]['batch']['status']);
+    }
+
+    /** @param list<int> $ids @return list<string> */
+    private function publicIds(array $ids): array
+    {
+        return array_map(fn (int $id): string => Uuid::fromBinary((string) $this->db->fetchOne('SELECT public_id FROM mc_product WHERE id=?', [$id]))->toRfc4122(), $ids);
+    }
+
+    /** @param list<int> $ids */
+    private function generate(string $task = 'product_draft', array $ids = [1, 2], string $mode = 'missing', string $provider = 'stub'): string
+    {
+        return $this->batches->start(1, 'owner@example.test', ['kind' => 'generate', 'task' => $task, 'product_ids' => $this->publicIds($ids), 'mode' => $mode, 'provider' => $provider]);
+    }
+
+    private function text(int $id, string $field, string $locale = 'uk-UA'): ?string
+    {
+        $value = $this->db->fetchOne("SELECT $field FROM mc_product_translation WHERE product_id=? AND locale=?", [$id, $locale]);
+
+        return $value === false || $value === null ? null : (string) $value;
+    }
+
+    /** @return list<int> */
+    private function reviewIds(): array
+    {
+        return array_map('intval', $this->db->fetchFirstColumn("SELECT id FROM mc_ai_batch_job WHERE status='review' ORDER BY id"));
+    }
+
+    public function testGeneratedTextWaitsForReviewAndTheProductStaysAsItWas(): void
+    {
+        $this->generate();
+        $result = $this->batches->process(20, 30.0);
+
+        self::assertSame(['done' => 2, 'failed' => 0, 'pending' => 0, 'paused_for_limit' => false], $result);
+        self::assertCount(2, $this->reviewIds());
+        self::assertNull($this->text(1, 'short_description'), 'nothing is written before the owner applies it');
+        self::assertSame('<p>Опис 1</p>', $this->text(1, 'description'));
+        self::assertCount(2, $this->model->prompts, 'one request per product');
+    }
+
+    public function testOnlyEmptyFieldsAreFilledByDefaultAndAllFieldsWhenOverwriting(): void
+    {
+        $this->generate();
+        $this->batches->process(20, 30.0);
+        $items = $this->batches->review(1, 1);
+        self::assertSame(['short_description'], array_column($items[0]['changes'], 'field'), 'the description is filled, so only the empty short text is proposed');
+        self::assertSame('', $items[0]['changes'][0]['before']);
+        self::assertSame('AI for Чайник 1', $items[0]['changes'][0]['after']);
+        self::assertSame('Чайник 1', $items[0]['name']);
+
+        $this->db->executeStatement("UPDATE mc_ai_batch_job SET status='rejected'");
+        $this->generate('product_draft', [1], 'overwrite');
+        $this->batches->process(20, 30.0);
+        self::assertSame(['short_description', 'description'], array_column($this->batches->review(1, 1)[0]['changes'], 'field'));
+    }
+
+    public function testApplyWritesTheFieldsAndUndoPutsTheOldTextBack(): void
+    {
+        $this->generate('seo_meta', [1, 2]);
+        $this->batches->process(20, 30.0);
+        [$first, $second] = $this->reviewIds();
+
+        self::assertSame([$first], $this->batches->applyJobs(1, [$first]));
+        self::assertSame('AI for Чайник 1', $this->text(1, 'meta_title'));
+        self::assertSame('AI for Чайник 1', $this->text(1, 'meta_description'));
+        self::assertNull($this->text(2, 'meta_title'), 'the other product is still waiting');
+        self::assertSame([$second], $this->reviewIds());
+        self::assertSame('applied', $this->db->fetchOne('SELECT status FROM mc_ai_batch_job WHERE id=?', [$first]));
+        self::assertSame([], $this->batches->applyJobs(1, [$first]), 'a job is applied once');
+
+        self::assertSame(1, $this->batches->undo(1, [$first]));
+        self::assertNull($this->text(1, 'meta_title'), 'the previous (empty) text is back');
+        self::assertSame([$first, $second], $this->reviewIds(), 'an undone job can be looked at again');
+    }
+
+    public function testUndoDoesNotTouchATextTheOwnerEditedAfterwards(): void
+    {
+        $this->generate('seo_meta', [1]);
+        $this->batches->process(20, 30.0);
+        $ids = $this->batches->applyJobs(1, $this->reviewIds());
+        $this->db->executeStatement("UPDATE mc_product_translation SET meta_title='Мій заголовок' WHERE product_id=1 AND locale='uk-UA'");
+
+        self::assertSame(1, $this->batches->undo(1, $ids));
+        self::assertSame('Мій заголовок', $this->text(1, 'meta_title'));
+        self::assertNull($this->text(1, 'meta_description'));
+    }
+
+    public function testApplyKeepsATextTheOwnerFilledInWhileTheJobWaited(): void
+    {
+        $this->generate('seo_meta', [1]);
+        $this->batches->process(20, 30.0);
+        $this->db->executeStatement("UPDATE mc_product_translation SET meta_title='Мій заголовок' WHERE product_id=1 AND locale='uk-UA'");
+
+        $this->batches->applyJobs(1, $this->reviewIds());
+        self::assertSame('Мій заголовок', $this->text(1, 'meta_title'));
+        self::assertSame('AI for Чайник 1', $this->text(1, 'meta_description'));
+    }
+
+    public function testRejectedJobsChangeNothing(): void
+    {
+        $this->generate();
+        $this->batches->process(20, 30.0);
+        self::assertSame(2, $this->batches->reject(1, $this->reviewIds()));
+        self::assertNull($this->text(1, 'short_description'));
+        self::assertSame([], $this->reviewIds());
+        self::assertSame([], $this->batches->review(1, 1));
+    }
+
+    public function testAnotherStoreCannotApplyTheJob(): void
+    {
+        $this->generate();
+        $this->batches->process(20, 30.0);
+        self::assertSame([], $this->batches->applyJobs(2, $this->reviewIds()));
+        self::assertSame(0, $this->batches->reject(2, $this->reviewIds()));
+        self::assertCount(2, $this->reviewIds());
+    }
+
+    public function testATranslationOnlyProviderCannotWriteTexts(): void
+    {
+        $this->translationProviders->register(new class implements \Commerce\Modules\Ai\Contract\TranslationProviderInterface {
+            public function code(): string
+            {
+                return 'deepl_stub';
+            }
+
+            public function label(): string
+            {
+                return 'DeepL';
+            }
+
+            public function enabled(): bool
+            {
+                return true;
+            }
+
+            public function translate(string $text, string $sourceLocale, string $targetLocale): string
+            {
+                return $text;
+            }
+        });
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage(\Commerce\Core\I18n\CanonicalUiText::get('admin.ai.batch.error_provider'));
+        $this->generate('product_draft', [1], 'missing', 'deepl_stub');
+    }
+
+    public function testNoSecondJobForAProductAndTaskWhileOneWaitsForReview(): void
+    {
+        $this->generate();
+        $this->batches->process(20, 30.0);
+        $this->db->executeStatement("UPDATE mc_ai_batch SET status='done'"); // the batch is over, the texts still wait for the owner
+        try {
+            $this->generate('product_draft', [1, 2]);
+            self::fail('both products already wait for review');
+        } catch (\DomainException) {
+        }
+        $this->generate('seo_meta', [1]);
+        $this->batches->reject(1, $this->reviewIds());
+        $this->generate('product_draft', [1]);
+        self::assertSame(1, (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_ai_batch_job WHERE status='pending' AND task='product_draft'"), 'a rejected job no longer blocks a new one');
+    }
+
+    public function testProgressCountsTextsWaitingForReviewApartFromDone(): void
+    {
+        $this->generate();
+        $this->batches->process(20, 30.0);
+        $progress = $this->batches->progress(1)[0];
+
+        self::assertSame(['done' => 0, 'failed' => 0, 'pending' => 0, 'skipped' => 0, 'review' => 2], $progress['totals']);
+        self::assertSame(2, $progress['per_locale']['uk-UA']['review']);
+        self::assertSame('done', $progress['batch']['status'], 'the work is over, the reviewing is the owner\'s');
+        $this->batches->applyJobs(1, [$this->reviewIds()[0]]);
+        $after = $this->batches->progress(1)[0]['totals'];
+        self::assertSame(1, $after['done']);
+        self::assertSame(1, $after['review']);
+        self::assertSame(1, $this->batches->reviewCount(1));
+    }
+
+    public function testNothingIsQueuedForProductsThatAreAlreadyFilled(): void
+    {
+        $this->db->executeStatement("UPDATE mc_product_translation SET short_description='Коротко' WHERE locale='uk-UA'");
+        $this->expectException(\DomainException::class);
+        $this->generate('product_draft', [1, 2]);
+    }
+
+    public function testALimitHitDuringGenerationKeepsTheJobsWaiting(): void
+    {
+        $this->db->insert('mc_ai_settings', ['store_id' => 1, 'daily_limit' => 1, 'updated_at' => 'x']);
+        $this->generate();
+        $result = $this->batches->process(20, 30.0);
+        self::assertSame(['done' => 1, 'failed' => 0, 'pending' => 1, 'paused_for_limit' => true], $result);
+        self::assertCount(1, $this->reviewIds());
     }
 }
