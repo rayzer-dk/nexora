@@ -43,13 +43,14 @@ final class ApiTokensAdminController extends AbstractController
             $row['expired'] = $row['expires_at'] !== null && strtotime((string) $row['expires_at'] . ' UTC') <= time();
         }
         unset($row);
-        $secret = $request->getSession()->getFlashBag()->get('api_token_secret');
+        $secret = $request->getSession()->get('api_token_secret');
+        $request->getSession()->remove('api_token_secret');
 
         return $this->render('@storefront/admin/system/api_tokens.html.twig', [
             'tokens' => $rows,
             'scopes' => ApiAccessService::SCOPES,
             'presets' => self::PRESETS,
-            'secret' => $secret[0] ?? null,
+            'secret' => is_string($secret) ? $secret : null,
             'base_url' => rtrim($request->getSchemeAndHttpHost() . $request->getBasePath(), '/') . '/api/v1',
         ]);
     }
@@ -83,7 +84,7 @@ final class ApiTokensAdminController extends AbstractController
             'token_prefix' => substr($raw, 0, 12), 'token_hash' => hash('sha256', $raw, true), 'scopes' => json_encode($scopes, JSON_THROW_ON_ERROR),
             'status' => 'active', 'rate_limit_per_minute' => max(10, min(5000, $request->request->getInt('rate_limit', 120))), 'expires_at' => $expires, 'created_at' => gmdate('Y-m-d H:i:s.u'),
         ]);
-        $request->getSession()->getFlashBag()->add('api_token_secret', $raw);
+        $request->getSession()->set('api_token_secret', $raw);
 
         return $this->redirectToRoute('admin_system_integrations_api');
     }

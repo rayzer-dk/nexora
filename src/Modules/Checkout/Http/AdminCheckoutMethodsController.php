@@ -39,8 +39,6 @@ final class AdminCheckoutMethodsController extends AbstractController
 
         return $this->render('@storefront/admin/shipping/methods.html.twig', [
             'enabled' => $this->settings->all($ctx->storeId),
-            'delivery_codes' => CheckoutMethodSettings::DELIVERY,
-            'payment_codes' => CheckoutMethodSettings::PAYMENT,
             'delivery_codes' => $this->settings->ordered($ctx->storeId, CheckoutMethodSettings::DELIVERY),
             'payment_codes' => $this->settings->ordered($ctx->storeId, CheckoutMethodSettings::PAYMENT),
             'other_payments' => $online,

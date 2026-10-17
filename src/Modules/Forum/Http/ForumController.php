@@ -655,10 +655,6 @@ final class ForumController extends AbstractController
         return $this->community->unreadCount($storeId, $user->id());
     }
 
-    /**
-     * @param list<array<string,mixed>> $posts
-     * @return array<string,string> lower-case nickname => member page
-     */
     private function saveUploads(Request $request, int $postId, int $customerId): void
     {
         $files = array_values(array_filter((array) $request->files->get('images', []), static fn (mixed $f): bool => $f instanceof \Symfony\Component\HttpFoundation\File\UploadedFile));
@@ -667,6 +663,10 @@ final class ForumController extends AbstractController
         }
     }
 
+    /**
+     * @param list<array<string,mixed>> $posts
+     * @return array<string,string> lower-case nickname => member page
+     */
     private function mentionMap(int $storeId, array $posts): array
     {
         $names = [];
