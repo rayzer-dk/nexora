@@ -1,0 +1,57 @@
+name: Source integrity (UTF-8, safe Unicode)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: Verify regression fixtures
+        run: php tools/quality/source_guard_test.php
+      - name: Audit all changed tracked source files
+        shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if [ -n "$PR_BASE_SHA" ]; then
+            base="$PR_BASE_SHA"
+          elif git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            base=HEAD^
+          else
+            echo "First commit: no diff base"
+            exit 0
+          fi
+          mapfile -d '' -t candidates < <(git diff --name-only -z --diff-filter=ACM "$base" HEAD)
+          sources=()
+          for file in "${candidates[@]}"; do
+            case "$file" in
+              vendor/*|node_modules/*|var/*|public/build/*|tools/quality/vendor/*|build/*)
+                continue ;;
+              *.php|*.js|*.jsx|*.ts|*.tsx|*.css|*.scss|*.twig|*.html|*.xml|*.svg|*.json|*.yml|*.yaml|*.sh|*.py|*.neon|*.sql|*.md)
+                sources+=("$file") ;;
+            esac
+          done
+          if [ "${#sources[@]}" -eq 0 ]; then
+            echo "No changed source files"
+            exit 0
+          fi
+          php tools/quality/source_guard.php --check "${sources[@]}"
+          for file in "${sources[@]}"; do
+            if [[ "$file" == *.php ]]; then php -l "$file"; fi
+          done
