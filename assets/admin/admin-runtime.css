@@ -2298,3 +2298,12 @@ a.dash-kpi:hover { box-shadow: var(--mc-shadow-sm); text-decoration: none; trans
 .mc-picker__page { min-width: 36px; padding-inline: var(--mc-space-2); }
 .mc-picker__page.is-current { background: var(--mc-color-primary); color: var(--mc-color-primary-contrast); }
 .mc-picker__gap { padding-inline: var(--mc-space-1); color: var(--mc-color-muted); }
+
+/* Numeric metrics and administrative links remain clear in dense interfaces. */
+.admin-code-input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; min-width: 0; }
+.admin-link { color: var(--mc-color-primary); text-underline-offset: 2px; }
+.admin-switch-label { display: inline-flex; align-items: center; gap: var(--mc-space-2); }
+.dash-director { min-width: 0; }
+.num { font-variant-numeric: tabular-nums; }
+.push-explain { color: var(--mc-color-muted); line-height: 1.5; }
+.vies-result { min-height: 1.2em; }

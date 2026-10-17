@@ -290,3 +290,5 @@ label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100
   .admin-topbar .admin-search-trigger { flex: 0 0 auto; width: 2.75rem; }
   .admin-topbar .admin-search-trigger > span, .admin-topbar .admin-search-trigger kbd { display: none; }
 }
+
+.migration-sources { min-width: 0; }

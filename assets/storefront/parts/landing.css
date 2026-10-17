@@ -144,3 +144,6 @@
 .lp-card__icon { background: linear-gradient(135deg, var(--mc-color-primary-soft), color-mix(in srgb, var(--mc-color-primary) 24%, var(--mc-color-primary-soft))); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mc-color-primary) 18%, transparent); }
 @media (prefers-reduced-motion: no-preference) { .lp-float { animation: lp-bob 6s ease-in-out infinite; } .lp-float--b { animation-delay: -3s; } }
 @keyframes lp-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+.lp-contact { scroll-margin-top: 5rem; }
+.lp-custom, .lp-hero__copy { min-width: 0; }

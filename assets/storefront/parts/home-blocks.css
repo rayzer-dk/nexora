@@ -160,3 +160,5 @@ a.banner:hover .banner__media img { transform: scale(1.03); }
 .banner-slider--bleed .banner-slider__track { border-radius: 0; gap: 0; }
 .banner-slider--bleed .banner, .banner-row--bleed .banner { border-radius: 0; }
 .banner-row--bleed { gap: 0; }
+
+.slider-shell--products { min-width: 0; }

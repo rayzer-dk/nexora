@@ -28,13 +28,22 @@ foreach ($targets as $dir) {
         if (str_contains($file->getPathname(), '/order_document/')) {
             continue; // self-contained print/PDF documents carry their own inline stylesheet
         }
+        // Standalone print templates can contain scoped CSS inside a real <style> element.
+        // Match declarations from that same template without suppressing truly unstyled classes.
+        $inlineDefined = [];
+        if (preg_match_all('#<style\\b[^>]*>(.*?)</style>#si', $text, $styleMatches)) {
+            foreach ($styleMatches[1] as $inlineCss) {
+                preg_match_all('/\\.([a-zA-Z_][\\w-]*)/', $inlineCss, $inlineClassMatches);
+                foreach ($inlineClassMatches[1] as $selectorClass) $inlineDefined[$selectorClass] = true;
+            }
+        }
         $text = preg_replace('/\{\{.*?\}\}|\{%.*?%\}|\{#.*?#\}/s', ' ', $text) ?? '';
         if (!preg_match_all('/\bclass="([^"]*)"/', $text, $classes)) {
             continue;
         }
         foreach ($classes[1] as $value) {
             foreach (preg_split('/\s+/', trim($value)) ?: [] as $class) {
-                if ($class !== '' && preg_match('/^[a-zA-Z_][\w-]*$/', $class) && !isset($defined[$class]) && !isset($hooks[$class]) && !str_ends_with($class, '-') && !str_ends_with($class, '--')) {
+                if ($class !== '' && preg_match('/^[a-zA-Z_][\w-]*$/', $class) && !isset($defined[$class]) && !isset($inlineDefined[$class]) && !isset($hooks[$class]) && !str_ends_with($class, '-') && !str_ends_with($class, '--')) {
                     $missing[$class][substr($file->getPathname(), strlen($base) + 1)] = true;
                 }
             }
