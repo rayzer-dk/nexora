@@ -142,11 +142,8 @@ final readonly class ProductWriter
 
                 return;
             }
-            $locationId = $db->fetchOne(
-                'SELECT mil.location_id FROM mc_market_inventory_location mil JOIN mc_inventory_location l ON l.id=mil.location_id AND l.status=? WHERE mil.market_id=? ORDER BY mil.priority ASC,mil.location_id ASC LIMIT 1',
-                ['active', $marketId],
-            );
-            if ($locationId === false) {
+            $locationId = MarketStockLocation::locationId($db, $marketId);
+            if ($locationId === 0) {
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.1cfeecea05f2'));
             }
             foreach ($variants as $variant) {
@@ -328,11 +325,10 @@ final readonly class ProductWriter
         $locationId = 0;
         $stockRowVersion = 0;
         if ((string) $product['product_type'] === 'physical') {
-            $locationIdValue = $db->fetchOne('SELECT mil.location_id FROM mc_market_inventory_location mil JOIN mc_inventory_location l ON l.id=mil.location_id AND l.status=? WHERE mil.market_id=? ORDER BY mil.priority ASC,mil.location_id ASC LIMIT 1', ['active', $command->marketId]);
-            if ($locationIdValue === false) {
+            $locationId = MarketStockLocation::locationId($db, $command->marketId);
+            if ($locationId === 0) {
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.1cfeecea05f2'));
             }
-            $locationId = (int) $locationIdValue;
             $inventoryItemId = $db->fetchOne('SELECT inventory_item_id FROM mc_variant_inventory_item WHERE variant_id=? ORDER BY inventory_item_id LIMIT 1', [(int) $variant['id']]);
             if ($inventoryItemId !== false) {
                 $stockRowVersion = (int) ($db->fetchOne('SELECT row_version FROM mc_stock_level WHERE inventory_item_id=? AND location_id=? LIMIT 1', [(int) $inventoryItemId, $locationId]) ?: 0);
@@ -371,14 +367,11 @@ final readonly class ProductWriter
         if ($taxClassId === false) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.456a3e9ab1e7'));
         }
-        $locationId = $db->fetchOne(
-            'SELECT mil.location_id FROM mc_market_inventory_location mil JOIN mc_inventory_location l ON l.id = mil.location_id AND l.status = ? WHERE mil.market_id = ? ORDER BY mil.priority ASC, mil.location_id ASC LIMIT 1',
-            ['active', $command->marketId],
-        );
-        if ($command->productType === 'physical' && $locationId === false) {
+        $locationId = MarketStockLocation::locationId($db, $command->marketId);
+        if ($command->productType === 'physical' && $locationId === 0) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.1cfeecea05f2'));
         }
-        return ['tax_class_id' => (int) $taxClassId, 'location_id' => (int) ($locationId === false ? 0 : $locationId), 'unit_step' => $unitStep];
+        return ['tax_class_id' => (int) $taxClassId, 'location_id' => $locationId, 'unit_step' => $unitStep];
     }
 
 

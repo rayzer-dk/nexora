@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 
-$root = dirname(__DIR__);
+$root = str_replace('\\', '/', dirname(__DIR__));
 $strict = in_array('--strict', $argv, true);
 $cyr = '/[А-Яа-яІіЇїЄєҐґ]/u';
 
@@ -22,7 +22,7 @@ $scanFiles = static function (string $dir, array $extensions): array {
     $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
     foreach ($it as $file) {
         if (!$file->isFile() || !in_array(strtolower($file->getExtension()), $extensions, true)) continue;
-        $out[] = $file->getPathname();
+        $out[] = str_replace('\\', '/', $file->getPathname());
     }
     return $out;
 };

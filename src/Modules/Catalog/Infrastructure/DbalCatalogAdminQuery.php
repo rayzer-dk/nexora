@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Catalog\Infrastructure;
 
+use Commerce\Modules\Catalog\Application\MarketStockLocation;
 use Commerce\Modules\Catalog\Application\ProductEditQueryInterface;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
@@ -117,7 +118,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         $sortColumns = ['name' => 'pt.name', 'sku' => 'v.sku', 'status' => 'p.status', 'price' => 'pr.amount_minor', 'stock' => 'stock_total', 'type' => 'p.product_type', 'updated' => 'p.updated_at'];
         $orderBy = isset($sortColumns[$sort]) ? $sortColumns[$sort] . ' ' . $direction . ',p.id DESC' : 'p.updated_at DESC,p.id DESC';
         // Stock as the product form shows it: the market's first active warehouse (the one ProductWriter writes).
-        $locationId = (int) ($this->connection->fetchOne('SELECT mil.location_id FROM mc_market_inventory_location mil JOIN mc_inventory_location il ON il.id=mil.location_id AND il.status=? WHERE mil.market_id=? ORDER BY mil.priority ASC,mil.location_id ASC LIMIT 1', ['active', $marketId]) ?: 0);
+        $locationId = MarketStockLocation::locationId($this->connection, $marketId);
         $rows = $this->connection->fetchAllAssociative(
             "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,pt.name,pt.description,v.sku,v.gtin,v.manage_inventory,b.name AS brand_name,pr.amount_minor,pr.currency,
                 (SELECT COUNT(*) FROM mc_product_variant vc WHERE vc.product_id=p.id) AS variant_count,

@@ -45,7 +45,7 @@ final readonly class ProductStockService
         if (count($variants) !== 1) {
             return ['ok' => false, 'previous' => [], 'quantity' => '', 'error' => 'variants'];
         }
-        $locationId = $this->locationId($marketId);
+        $locationId = MarketStockLocation::locationId($this->db, $marketId);
         if ($locationId === 0) {
             return ['ok' => false, 'previous' => [], 'quantity' => '', 'error' => 'no_location'];
         }
@@ -91,7 +91,7 @@ final readonly class ProductStockService
             }
         }
         $requested = count($binary);
-        $locationId = $this->locationId($marketId);
+        $locationId = MarketStockLocation::locationId($this->db, $marketId);
         if ($locationId === 0) {
             // not "without stock tracking": the market has no active warehouse to write the stock to
             return ['updated' => 0, 'skipped' => $requested, 'previous' => [], 'error' => 'no_location'];
@@ -209,12 +209,6 @@ final readonly class ProductStockService
         $row = $this->db->fetchAssociative('SELECT p.id,p.public_id,p.status FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? WHERE p.public_id=? LIMIT 1', [$storeId, Uuid::fromString($publicId)->toBinary()]);
 
         return is_array($row) ? ['id' => (int) $row['id'], 'public_id' => (string) $row['public_id'], 'status' => (string) $row['status']] : null;
-    }
-
-    /** The market's first active warehouse by priority — the one ProductWriter writes; 0 when there is none. */
-    private function locationId(int $marketId): int
-    {
-        return (int) ($this->db->fetchOne('SELECT mil.location_id FROM mc_market_inventory_location mil JOIN mc_inventory_location l ON l.id=mil.location_id AND l.status=? WHERE mil.market_id=? ORDER BY mil.priority ASC,mil.location_id ASC LIMIT 1', ['active', $marketId]) ?: 0);
     }
 
     /**

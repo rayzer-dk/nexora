@@ -343,14 +343,11 @@ final readonly class ProductVariantService
 
     private function primaryLocation(Connection $db, int $marketId): int
     {
-        $id = $db->fetchOne(
-            'SELECT mil.location_id FROM mc_market_inventory_location mil JOIN mc_inventory_location l ON l.id=mil.location_id AND l.status=? WHERE mil.market_id=? ORDER BY mil.priority,mil.location_id LIMIT 1',
-            ['active', $marketId],
-        );
-        if ($id === false) {
+        $id = MarketStockLocation::locationId($db, $marketId);
+        if ($id === 0) {
             throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.catalog.application.productvariantservice.dlia_rynku_ne_nalashtovano_aktyvnyi_sklad'));
         }
-        return (int) $id;
+        return $id;
     }
 
     private function sku(string $sku): string
