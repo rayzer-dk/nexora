@@ -1,7 +1,7 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{% import '@storefront/admin/_help.html.twig' as help %}
 {{ shell.start(ui_text('admin.system.store.dani_mahazynu'),'store') }}
 <header class="admin-page-header">
-    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">Store setup · v{{ platform_version }}</span></nav><h1>{{ ui_text('admin.system.store.dani_mahazynu') }}</h1><p>{{ ui_text('admin.system.store.osnovni_rekvizyty_lokal_valiuta_ta_kontakty_kozh') }}</p></div>
+    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.system.store.dani_mahazynu') }} · v{{ platform_version }}</span></nav><h1>{{ ui_text('admin.system.store.dani_mahazynu') }}</h1><p>{{ ui_text('admin.system.store.osnovni_rekvizyty_lokal_valiuta_ta_kontakty_kozh') }}</p></div>
 </header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 <form method="post" class="admin-panel" data-dirty-guard>

@@ -103,7 +103,8 @@ final readonly class LayoutRevisionStore
         $now = gmdate('Y-m-d H:i:s.u');
         return $this->db->transactional(function (Connection $db) use ($storeId,$type,$validated,$adminId,$now,$baseVersion,$force): int {
             $this->guard($db, $storeId, $type, $baseVersion, $force);
-            $db->update('mc_layout_revision', ['status'=>'archived'], ['store_id'=>$storeId,'layout_type'=>$type,'status'=>'published']);
+            // The published layout replaces the draft too, so the builder does not reopen a stale draft after publishing.
+            $db->executeStatement("UPDATE mc_layout_revision SET status='archived' WHERE store_id=? AND layout_type=? AND status IN ('published','draft')", [$storeId, $type]);
             $db->insert('mc_layout_revision', [
                 'store_id'=>$storeId,'layout_type'=>$type,'status'=>'published','schema_version'=>1,
                 'payload'=>json_encode($validated, JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),

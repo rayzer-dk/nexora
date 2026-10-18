@@ -277,7 +277,7 @@ test('published Home Builder layout changes SSR storefront and can be restored',
   const heroRow = page.locator('[data-builder-list] [data-block-id]').filter({ hasText: 'hero' }).first();
   await expect(heroRow).toBeVisible();
   await heroRow.locator('[data-select]').click();
-  const titleField = page.locator('[data-inspector] input[data-prop="props.title"]');
+  const titleField = page.locator('[data-inspector] [data-field="props.title"]').first();
   await expect(titleField).toBeVisible();
   const originalTitle = await titleField.inputValue();
   const marker = `E2E Home Builder ${Date.now()}`;
@@ -287,10 +287,14 @@ test('published Home Builder layout changes SSR storefront and can be restored',
     expect(await layoutField.inputValue()).toContain(marker);
 
     const publishResponsePromise = page.waitForResponse((response) =>
-      response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
+      response.url().endsWith('/admin/appearance/builder/home/publish.json') && response.request().method() === 'POST'
+    );
+    const reloaded = page.waitForResponse((response) =>
+      response.url().endsWith('/admin/appearance/builder/home') && response.request().isNavigationRequest()
     );
     await page.locator('button[form="builder-form"][name="builder_action"][value="publish"]').click();
     expect((await publishResponsePromise).status()).toBeLessThan(400);
+    await reloaded;
     await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('.admin-notice.is-error,.store-notice.is-error')).toHaveCount(0);
     expect(await page.locator('textarea[data-layout-json]').inputValue()).toContain(marker);
@@ -301,12 +305,16 @@ test('published Home Builder layout changes SSR storefront and can be restored',
   } finally {
     await page.goto('/admin/appearance/builder/home', { waitUntil: 'domcontentloaded' });
     await page.locator('[data-builder-list] [data-block-id]').filter({ hasText: 'hero' }).first().locator('[data-select]').click();
-    await page.locator('[data-inspector] input[data-prop="props.title"]').fill(originalTitle);
+    await page.locator('[data-inspector] [data-field="props.title"]').first().fill(originalTitle);
     const restoreResponsePromise = page.waitForResponse((response) =>
-      response.url().includes('/admin/appearance/builder/home') && response.request().method() === 'POST'
+      response.url().endsWith('/admin/appearance/builder/home/publish.json') && response.request().method() === 'POST'
+    );
+    const reloaded = page.waitForResponse((response) =>
+      response.url().endsWith('/admin/appearance/builder/home') && response.request().isNavigationRequest()
     );
     await page.locator('button[form="builder-form"][name="builder_action"][value="publish"]').click();
     expect((await restoreResponsePromise).status()).toBeLessThan(400);
+    await reloaded;
     await page.waitForLoadState('domcontentloaded');
   }
 });

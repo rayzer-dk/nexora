@@ -42,6 +42,15 @@ final class LayoutRevisionStoreConflictTest extends TestCase
         self::assertNotNull($current['saved_at']);
     }
 
+    public function testPublishingRetiresTheDraftSoTheBuilderOpensThePublishedLayout(): void
+    {
+        $draft = $this->store->saveDraft(self::STORE, 'home', $this->layout('autosaved'), 5);
+        $this->store->publish(self::STORE, 'home', $this->layout('published'), 5);
+
+        self::assertNull($this->store->draft(self::STORE, 'home'));
+        self::assertSame('archived', $this->db->fetchOne('SELECT status FROM mc_layout_revision WHERE id=?', [$draft]));
+    }
+
     public function testStaleDraftSaveIsRefusedWithTheNewerAuthor(): void
     {
         $opened = $this->store->current(self::STORE, 'home')['version'];
