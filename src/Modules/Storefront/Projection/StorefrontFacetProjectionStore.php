@@ -49,6 +49,14 @@ final readonly class StorefrontFacetProjectionStore
         );
     }
 
+    /** @return array{files:int,bytes:int} stored filter lists: how many and their size */
+    public function stats(): array
+    {
+        $row = $this->db->fetchAssociative('SELECT COUNT(*) AS files, COALESCE(SUM(LENGTH(payload)),0) AS bytes FROM mc_storefront_facet_projection');
+
+        return ['files' => (int) ($row['files'] ?? 0), 'bytes' => (int) ($row['bytes'] ?? 0)];
+    }
+
     /** Forgets every stored filter list; they are rebuilt on the next visit. */
     public function clear(): void
     {

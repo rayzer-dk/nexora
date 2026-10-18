@@ -1,12 +1,13 @@
 {#- Fragment of the quick cache menu (admin header). Loaded when the menu opens. -#}
-{% macro size(bytes) %}{{ (bytes / 1048576)|number_format(1, '.', ' ') }} MB{% endmacro %}
+{% macro size(bytes) %}{% if bytes < 1048576 %}{{ (bytes / 1024)|number_format(0, '.', ' ') }} KB{% else %}{{ (bytes / 1048576)|number_format(1, '.', ' ') }} MB{% endif %}{% endmacro %}
 {% macro row(name, note, back) %}<form method="post" action="{{ path('admin_system_maintenance_run', {action: name}) }}" class="admin-cache-menu__row"><input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_maintenance') }}"><input type="hidden" name="back" value="{{ back }}"><span><strong>{{ ui_text('admin.system.maintenance.' ~ name ~ '.title') }}</strong>{% if note %}<small>{{ note }}</small>{% endif %}</span><button type="submit" class="admin-icon-button is-sm" title="{{ ui_text('admin.cache_menu.clear')|e('html_attr') }}" aria-label="{{ ui_text('admin.cache_menu.clear')|e('html_attr') }}">{{ ui_icon('refresh-cw', 14) }}</button></form>{% endmacro %}
 {% set back = app.request.headers.get('referer')|default('')|replace({(app.request.schemeAndHttpHost): ''}) %}
 {% if back is not empty and back starts with '/admin' %}{% else %}{% set back = '/admin' %}{% endif %}
 {% import _self as m %}
-{{ m.row('storefront', null, back) }}
+{{ m.row('storefront', overview.storefront.files ~ ' · ' ~ m.size(overview.storefront.bytes), back) }}
 {{ m.row('templates', overview.templates.files ~ ' · ' ~ m.size(overview.templates.bytes), back) }}
 {{ m.row('images', overview.images.files ~ ' · ' ~ m.size(overview.images.bytes), back) }}
-{{ m.row('app', null, back) }}
+{{ m.row('app', overview.app ? overview.app.files ~ ' · ' ~ m.size(overview.app.bytes) : null, back) }}
 {{ m.row('opcache', overview.opcache ? ui_text('admin.system.maintenance.opcache_on') : ui_text('admin.system.maintenance.opcache_off'), back) }}
+<button type="button" class="admin-cache-menu__all" data-cache-recount>{{ ui_icon('calculator', 14) }} {{ ui_text('admin.cache_menu.recount') }}</button>
 <a class="admin-cache-menu__all" href="{{ path('admin_system_maintenance') }}">{{ ui_icon('settings', 14) }} {{ ui_text('admin.cache_menu.all') }}</a>

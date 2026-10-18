@@ -27,6 +27,7 @@ Email: %email%%product%
 %message%',
     'customer.inquiry.product_line' => '
 Товар: %product%',
+    'customer.inquiry.cheaper_subject' => 'Знайшли дешевше: %product%',
     'customer.inquiry.received_subject' => 'Ми отримали ваше звернення',
     'customer.inquiry.received_text' => 'Дякуємо. Ваше звернення отримано, менеджер відповість найближчим часом.',
     'seo.system_page.about.title' => 'Про компанію',

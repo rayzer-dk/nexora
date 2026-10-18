@@ -26,14 +26,16 @@ final class CacheMaintenance
     ) {
     }
 
-    /** @return array{templates:array{files:int,bytes:int},images:array{files:int,bytes:int},avif:bool,generation:int,opcache:bool} */
+    /** @return array{storefront:array{files:int,bytes:int},templates:array{files:int,bytes:int},images:array{files:int,bytes:int},app:?array{files:int,bytes:int},avif:bool,generation:int,opcache:bool} app is null when the application cache is not kept in files (Redis, Valkey) */
     public function overview(): array
     {
         $profile = $this->variants->profile();
 
         return [
+            'storefront' => $this->facets->stats(),
             'templates' => self::measure($this->cacheDir . '/twig'),
             'images' => self::measure($this->projectDir . '/public/media/cache'),
+            'app' => is_dir($this->cacheDir . '/pools') ? self::measure($this->cacheDir . '/pools') : null,
             'avif' => $this->variants->avifEnabled(),
             'generation' => (int) $profile['generation'],
             'opcache' => function_exists('opcache_reset') && (bool) ini_get('opcache.enable'),

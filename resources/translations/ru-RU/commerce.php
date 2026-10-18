@@ -69,6 +69,7 @@ Email: %email%%product%
 %message%',
     'customer.inquiry.product_line' => '
 Товар: %product%',
+    'customer.inquiry.cheaper_subject' => 'Нашли дешевле: %product%',
     'customer.inquiry.received_subject' => 'Мы получили ваше обращение',
     'customer.inquiry.received_text' => 'Спасибо. Ваше обращение получено, менеджер ответит в ближайшее время.',
     'theme.footer.company.title' => 'Компания',

@@ -27,6 +27,7 @@ Email: %email%%product%
 %message%',
     'customer.inquiry.product_line' => '
 Product: %product%',
+    'customer.inquiry.cheaper_subject' => 'Found cheaper: %product%',
     'customer.inquiry.received_subject' => 'We received your inquiry',
     'customer.inquiry.received_text' => 'Thank you. Your inquiry has been received, a manager will respond shortly.',
     'theme.footer.company.title' => 'Company',

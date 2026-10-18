@@ -3417,8 +3417,8 @@ function initCacheMenu() {
   qa('[data-cache-menu]').forEach((menu) => {
     const panel = q('[data-cache-panel]', menu);
     let loaded = false;
-    menu.addEventListener('toggle', async () => {
-      if (!menu.open || loaded || !panel) return;
+    const load = async () => {
+      if (!panel) return;
       loaded = true;
       try {
         const response = await fetch(menu.dataset.src || '', { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
@@ -3428,6 +3428,11 @@ function initCacheMenu() {
         loaded = false;
         panel.textContent = t('js_media_unavailable');
       }
+    };
+    menu.addEventListener('toggle', () => { if (menu.open && !loaded) void load(); });
+    // "Recalculate" re-reads the sizes without clearing anything.
+    panel?.addEventListener('click', (event) => {
+      if (event.target instanceof Element && event.target.closest('[data-cache-recount]')) void load();
     });
   });
 }
