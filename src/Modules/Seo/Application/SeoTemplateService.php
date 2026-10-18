@@ -15,6 +15,12 @@ final class SeoTemplateService
     public const TYPES = ['product', 'category', 'article', 'page'];
     public const VARIABLES = ['name', 'store', 'price', 'brand', 'category', 'sku'];
 
+    /** Only products are rendered with price, brand, category and sku (see StorefrontCatalogController); the other pages get name and store. @return list<string> */
+    public static function variablesFor(string $type): array
+    {
+        return $type === 'product' ? self::VARIABLES : ['name', 'store'];
+    }
+
     /** @var array<int,array<string,mixed>> */
     private array $cache = [];
 

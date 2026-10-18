@@ -37,7 +37,7 @@ final class CustomRedirectSubscriber
                 return;
             }
             if (preg_match('/\.(?:js|css|map|png|jpe?g|gif|webp|avif|svg|ico|woff2?|ttf|txt|xml|json)$/i', $path) !== 1) {
-                $this->redirects->recordNotFound($path, $request->headers->get('referer'));
+                $this->redirects->recordNotFound($path, $request->headers->get('referer'), (string) $request->headers->get('user-agent', ''));
             }
         } catch (\Throwable) {
             // redirects are a convenience: never turn a 404 into a 500

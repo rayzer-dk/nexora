@@ -25,14 +25,16 @@ final class CustomRedirectAdminController extends AbstractController
         $minHits = max(1, min(10000, (int) $request->query->get('min', 1)));
         $hideScanners = (string) $request->query->get('noise', '1') !== '0';
         $nfSearch = mb_substr(trim((string) $request->query->get('nf', '')), 0, 190);
+        $kind = in_array($request->query->get('kind'), ['humans', 'bots'], true) ? (string) $request->query->get('kind') : 'all';
 
         return $this->render('@storefront/admin/system/custom_redirects.html.twig', [
             'rows' => $this->redirects->all($search),
-            'not_found' => array_map(fn (array $n): array => $n + ['suggestion' => $this->redirects->suggest((string) $n['path'])], $this->redirects->topNotFound(100, $minHits, $hideScanners, $nfSearch)),
-            'not_found_totals' => $this->redirects->notFoundTotals($minHits, $hideScanners, $nfSearch),
+            'not_found' => array_map(fn (array $n): array => $n + ['suggestion' => $this->redirects->suggest((string) $n['path'])], $this->redirects->topNotFound(100, $minHits, $hideScanners, $nfSearch, $kind)),
+            'not_found_totals' => $this->redirects->notFoundTotals($minHits, $hideScanners, $nfSearch, $kind),
             'nf_min' => $minHits,
             'nf_noise' => $hideScanners,
             'nf_search' => $nfSearch,
+            'nf_kind' => $kind,
             'search' => $search,
             'prefill' => CustomRedirectService::normalizePath((string) $request->query->get('source', '')) !== '/' ? (string) $request->query->get('source', '') : '',
         ]);
@@ -45,6 +47,20 @@ final class CustomRedirectAdminController extends AbstractController
         try {
             $this->redirects->add((string) $request->request->get('source', ''), (string) $request->request->get('target', ''), $request->request->getInt('status_code', 301));
             $this->addFlash('success', CanonicalUiText::get('admin.redirects.saved'));
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_system_seo_custom_redirects');
+    }
+
+    #[Route('/admin/system/seo-custom-redirects/bulk', name: 'admin_system_seo_custom_redirect_bulk', methods: ['POST'])]
+    public function bulk(Request $request): Response
+    {
+        $this->guard($request);
+        try {
+            $r = $this->redirects->addForNotFound(array_map('intval', $request->request->all('ids')), (string) $request->request->get('target', ''), $request->request->getInt('status_code', 301));
+            $this->addFlash($r['added'] > 0 ? 'success' : 'warning', CanonicalUiText::get('admin.redirects.bulk_done', ['added' => (string) $r['added'], 'skipped' => (string) $r['skipped']]));
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }

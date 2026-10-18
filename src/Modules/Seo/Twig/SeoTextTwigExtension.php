@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Seo\Twig;
 
+use Commerce\Modules\Seo\Application\SeoTemplateService;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
+use Twig\TwigFunction;
 
 /**
  * Normalises editor HTML into plain text for <meta name="description"> and Open Graph tags:
@@ -21,6 +23,11 @@ final class SeoTextTwigExtension extends AbstractExtension
             // close the script element; the output is therefore safe to print without |raw.
             new TwigFilter('json_ld', $this->jsonLd(...), ['is_safe' => ['html']]),
         ];
+    }
+
+    public function getFunctions(): array
+    {
+        return [new TwigFunction('seo_template_variables', SeoTemplateService::variablesFor(...))];
     }
 
     public function text(mixed $value, int $maxLength = 160): string

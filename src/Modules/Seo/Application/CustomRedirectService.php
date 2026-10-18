@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Seo\Application;
 
+use Commerce\Modules\Security\Bots\BotProtection;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -100,6 +101,40 @@ final class CustomRedirectService
         return ['added' => $added, 'skipped' => $skipped];
     }
 
+    /**
+     * One target for several missing addresses (ids of the 404 log); an address that already has a redirect or equals the target is skipped.
+     *
+     * @param list<int> $notFoundIds
+     * @return array{added:int,skipped:int}
+     */
+    public function addForNotFound(array $notFoundIds, string $target, int $code = 301): array
+    {
+        if (self::normalizeTarget($target) === null) {
+            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.redirects.invalid'));
+        }
+        $ids = array_slice(array_values(array_unique(array_filter($notFoundIds, static fn (int $id): bool => $id > 0))), 0, 200);
+        if ($ids === []) {
+            return ['added' => 0, 'skipped' => 0];
+        }
+        $paths = $this->db->fetchFirstColumn('SELECT path FROM mc_not_found_log WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids);
+        $added = 0;
+        $skipped = 0;
+        foreach ($paths as $path) {
+            if ($this->db->fetchOne('SELECT 1 FROM mc_custom_redirect WHERE source_hash=?', [sha1((string) $path)]) !== false) {
+                ++$skipped;
+                continue;
+            }
+            try {
+                $this->add((string) $path, $target, $code);
+                ++$added;
+            } catch (\DomainException) {
+                ++$skipped;
+            }
+        }
+
+        return ['added' => $added, 'skipped' => $skipped];
+    }
+
     public function setEnabled(int $id, bool $enabled): void
     {
         $this->db->update('mc_custom_redirect', ['enabled' => $enabled ? 1 : 0], ['id' => $id]);
@@ -124,15 +159,33 @@ final class CustomRedirectService
         return $this->db->fetchAllAssociative("SELECT id,source_path,target_url,status_code,enabled,hit_count,last_hit_at,created_at FROM mc_custom_redirect WHERE $where ORDER BY id DESC LIMIT 500", $params);
     }
 
-    public function recordNotFound(string $path, ?string $referer): void
+    /** An empty User-Agent, a crawler of the BotProtection lists (scanners, scrapers, SEO, AI) or a search/preview bot such as Googlebot. */
+    public static function isBotUserAgent(string $userAgent): bool
+    {
+        $ua = strtolower(trim($userAgent));
+        if ($ua === '' || preg_match('/bot|spider|crawl|slurp|yandex|facebookexternalhit/', $ua) === 1) {
+            return true;
+        }
+        foreach (BotProtection::CATEGORIES as $category) {
+            foreach ($category['agents'] as $agent) {
+                if (str_contains($ua, $agent)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public function recordNotFound(string $path, ?string $referer, string $userAgent = ''): void
     {
         $path = self::normalizePath($path);
         if ($path === '/' || mb_strlen($path) > 500) {
             return;
         }
         $this->db->executeStatement(
-            'INSERT INTO mc_not_found_log (path_hash,path,hit_count,referer,first_seen_at,last_seen_at) VALUES (?,?,1,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE hit_count=hit_count+1,last_seen_at=UTC_TIMESTAMP(6),referer=COALESCE(VALUES(referer),referer)',
-            [sha1($path), $path, $referer !== null && $referer !== '' ? mb_substr($referer, 0, 500) : null],
+            'INSERT INTO mc_not_found_log (path_hash,path,hit_count,referer,last_user_agent,is_bot,first_seen_at,last_seen_at) VALUES (?,?,1,?,?,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE hit_count=hit_count+1,last_seen_at=UTC_TIMESTAMP(6),referer=COALESCE(VALUES(referer),referer),last_user_agent=VALUES(last_user_agent),is_bot=VALUES(is_bot)',
+            [sha1($path), $path, $referer !== null && $referer !== '' ? mb_substr($referer, 0, 500) : null, $userAgent !== '' ? mb_substr($userAgent, 0, 255) : null, self::isBotUserAgent($userAgent) ? 1 : 0],
         );
         if (random_int(1, 200) === 1) {
             $this->trimNotFound();
@@ -147,25 +200,25 @@ final class CustomRedirectService
      *
      * @return list<array<string,mixed>>
      */
-    public function topNotFound(int $limit = 50, int $minHits = 1, bool $hideScanners = true, string $search = ''): array
+    public function topNotFound(int $limit = 50, int $minHits = 1, bool $hideScanners = true, string $search = '', string $kind = 'all'): array
     {
-        [$where, $params] = $this->notFoundFilter($minHits, $hideScanners, $search);
+        [$where, $params] = $this->notFoundFilter($minHits, $hideScanners, $search, $kind);
 
-        return $this->db->fetchAllAssociative('SELECT id,path,hit_count,referer,last_seen_at FROM mc_not_found_log WHERE ' . $where . ' ORDER BY hit_count DESC,last_seen_at DESC LIMIT ' . max(1, min(200, $limit)), $params);
+        return $this->db->fetchAllAssociative('SELECT id,path,hit_count,referer,last_user_agent,is_bot,last_seen_at FROM mc_not_found_log WHERE ' . $where . ' ORDER BY hit_count DESC,last_seen_at DESC LIMIT ' . max(1, min(200, $limit)), $params);
     }
 
     /** @return array{paths:int,hits:int,scanner_paths:int} how many addresses / requests the filter leaves, and how many addresses are scanner noise */
-    public function notFoundTotals(int $minHits = 1, bool $hideScanners = true, string $search = ''): array
+    public function notFoundTotals(int $minHits = 1, bool $hideScanners = true, string $search = '', string $kind = 'all'): array
     {
-        [$where, $params] = $this->notFoundFilter($minHits, $hideScanners, $search);
+        [$where, $params] = $this->notFoundFilter($minHits, $hideScanners, $search, $kind);
         $row = $this->db->fetchAssociative('SELECT COUNT(*) AS paths, COALESCE(SUM(hit_count),0) AS hits FROM mc_not_found_log WHERE ' . $where, $params) ?: ['paths' => 0, 'hits' => 0];
         $noise = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_not_found_log WHERE path REGEXP ?', [self::SCANNER_NOISE]);
 
         return ['paths' => (int) $row['paths'], 'hits' => (int) $row['hits'], 'scanner_paths' => $noise];
     }
 
-    /** @return array{0:string,1:list<mixed>} */
-    private function notFoundFilter(int $minHits, bool $hideScanners, string $search): array
+    /** @param 'all'|'humans'|'bots'|string $kind @return array{0:string,1:list<mixed>} */
+    private function notFoundFilter(int $minHits, bool $hideScanners, string $search, string $kind): array
     {
         $where = ['hit_count >= ?'];
         $params = [max(1, $minHits)];
@@ -176,6 +229,10 @@ final class CustomRedirectService
         if ($search !== '') {
             $where[] = 'path LIKE ?';
             $params[] = '%' . addcslashes($search, '%_\\') . '%';
+        }
+        if ($kind === 'humans' || $kind === 'bots') {
+            $where[] = 'is_bot = ?';
+            $params[] = $kind === 'bots' ? 1 : 0;
         }
 
         return [implode(' AND ', $where), $params];
