@@ -305,6 +305,7 @@ final class CommerceOperationsAdminController extends AbstractController
                 $r=$this->stock->zeroStock($context->storeId,$context->marketId,$ids);
                 $user=$this->getUser();
                 if($r['previous']!==[]&&$user instanceof \Commerce\Modules\Admin\Domain\AdminUser){$this->undo->remember($context->storeId,$user->id,'stock',\Commerce\Core\I18n\CanonicalUiText::get('admin.undo.stock',['count'=>$r['updated']]),['previous'=>$r['previous']]);}
+                if(($r['error']??'')==='no_location'){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.bulk.stock_no_location'));return $this->redirectToRoute('admin_catalog_products');}
                 $this->addFlash($r['updated']>0?'success':'warning',\Commerce\Core\I18n\CanonicalUiText::get('admin.catalog.bulk.stock_zeroed',['count'=>$r['updated'],'skipped'=>$r['skipped']]));
             }catch(\Throwable){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('common.error.operation_failed'));}
             return $this->redirectToRoute('admin_catalog_products');

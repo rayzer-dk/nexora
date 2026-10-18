@@ -1235,5 +1235,6 @@ return [
     'product_tiers_from' => 'От %qty% шт',
     'js_stock_saved' => 'Остаток сохранён',
     'js_stock_failed' => 'Не удалось сохранить остаток',
+    'js_stock_no_location' => 'Остаток не сохранён: у этого рынка нет активного склада. Склад создаёт установка магазина; проверьте установку командой php bin/console commerce:install:verify',
     'js_stock_invalid' => 'Введите число от 0, например 12 или 2.5',
 ];

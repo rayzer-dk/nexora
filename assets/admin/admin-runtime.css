@@ -276,6 +276,8 @@
   font-weight: var(--mc-font-weight-medium);
 }
 .admin-check-inline { display: inline-flex; }
+/* an explanation under a checkbox label starts on its own line instead of running into the label */
+.admin-check-inline > span > small { display: block; margin-top: 2px; color: var(--mc-color-text-muted); font-weight: var(--mc-font-weight-regular); }
 
 /* Segmented control (device switch, view switch) and switch. */
 .admin-segmented {

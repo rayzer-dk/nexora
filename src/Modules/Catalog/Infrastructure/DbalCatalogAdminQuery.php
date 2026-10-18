@@ -137,7 +137,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         $binary = Uuid::fromString($publicId)->toBinary();
         $row = $this->connection->fetchAssociative(
             "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,(pt.product_id IS NOT NULL) AS has_translation,pt.name,pt.h1,pt.short_description,pt.description,pt.meta_title,pt.meta_description,v.id AS variant_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,pr.amount_minor,pr.compare_at_minor,pr.currency,sr.slug,COALESCE(sr.indexable,1) AS indexable,COALESCE(ppp.mode,'auto') purchase_mode,ppp.button_label purchase_button_label,ppp.eta_text purchase_eta_text,
-                (SELECT sl.stocked_quantity FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id ORDER BY mil.priority ASC,sl.location_id ASC LIMIT 1) AS stock_quantity
+                (SELECT sl.stocked_quantity FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? JOIN mc_inventory_location il ON il.id=sl.location_id AND il.status='active' WHERE vii.variant_id=v.id ORDER BY mil.priority ASC,sl.location_id ASC LIMIT 1) AS stock_quantity
              FROM mc_product p
              JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?
              LEFT JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
@@ -189,7 +189,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         $rows = $this->connection->fetchAllAssociative(
             "SELECT v.id,v.public_id,v.sku,v.gtin,v.mpn,v.status,v.manage_inventory,v.allow_backorder,v.sort_order,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.weight_kg,v.length_mm,v.width_mm,v.height_mm,
                     pr.amount_minor,pr.currency,
-                    COALESCE((SELECT sl.stocked_quantity FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id ORDER BY mil.priority,sl.location_id LIMIT 1),'0.000000') stock_quantity
+                    COALESCE((SELECT sl.stocked_quantity FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? JOIN mc_inventory_location il ON il.id=sl.location_id AND il.status='active' WHERE vii.variant_id=v.id ORDER BY mil.priority,sl.location_id LIMIT 1),'0.000000') stock_quantity
              FROM mc_product_variant v
              JOIN mc_product p ON p.id=v.product_id
              JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?

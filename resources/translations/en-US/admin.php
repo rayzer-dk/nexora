@@ -6341,6 +6341,7 @@ return [
     'admin.catalog.products.zero_stock_confirm' => 'Set the stock of the selected products (%count%) to zero? All their variants get 0 in the warehouse. You can undo it.',
     'admin.catalog.products.status_archived' => 'Archived: the product is hidden from the site. Bring it back with the bulk action "Publish" or "In drafts".',
     'admin.catalog.bulk.stock_zeroed' => 'Stock set to zero: %count% products, skipped without stock tracking: %skipped%.',
+    'admin.catalog.bulk.stock_no_location' => 'Stock not changed: this market has no active warehouse. The warehouse is created by the shop installation; check it with php bin/console commerce:install:verify.',
     'admin.catalog.categories.products_total_hint' => 'Including subcategories. In the category itself: %count%',
     'admin.undo.stock' => 'Stock changed for products: %count%.',
     'admin.undo.stock_done' => 'Stock restored: %count% stock rows.',

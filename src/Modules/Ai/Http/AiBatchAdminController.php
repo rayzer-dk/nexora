@@ -172,10 +172,10 @@ final class AiBatchAdminController extends AbstractController
         return $this->redirectToRoute('admin_ai_batch');
     }
 
-    /** @return array{batches:list<array<string,mixed>>,limit:int,used:int} */
+    /** @return array{batches:list<array<string,mixed>>,limit:int,used:int,review_count:int} */
     private function state(int $storeId): array
     {
-        return ['batches' => $this->batches->progress($storeId), 'limit' => $this->settings->dailyLimit($storeId), 'used' => $this->settings->usedToday($storeId)];
+        return ['batches' => $this->batches->progress($storeId), 'limit' => $this->settings->dailyLimit($storeId), 'used' => $this->settings->usedToday($storeId), 'review_count' => $this->batches->reviewCount($storeId)];
     }
 
     /** @return array{task:string,ids:list<string>}|null the products ticked in the list, kept in the session by the bulk action */

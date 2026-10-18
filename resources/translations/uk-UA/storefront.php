@@ -720,7 +720,7 @@ return [
     'admin_notifications' => 'Сповіщення',
     'admin_pages' => 'Сторінки',
     'admin_forum' => 'Форум',
-    'admin_storefront' => 'Витрина',
+    'admin_storefront' => 'Вітрина',
     'admin_navigation' => 'Навігація',
     'admin_media_library' => 'Медіатека',
     'admin_system' => 'Система',
@@ -1653,5 +1653,6 @@ return [
     'status.migration_entity.inventory' => 'Залишки',
     'js_stock_saved' => 'Залишок збережено',
     'js_stock_failed' => 'Не вдалося зберегти залишок',
+    'js_stock_no_location' => 'Залишок не збережено: у цього ринку немає активного складу. Склад створює встановлення магазину; перевірте встановлення командою php bin/console commerce:install:verify',
     'js_stock_invalid' => 'Введіть число від 0, наприклад 12 або 2.5',
 ];

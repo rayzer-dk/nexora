@@ -202,6 +202,9 @@ label:has(> .admin-tip--hint) { display: flex; flex-wrap: wrap; align-items: cen
 label:has(> .admin-tip--hint) > .admin-tip--hint { order: 1; }
 label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100%; min-width: 0; }
 .admin-tip--hint > .admin-tip__pop { white-space: normal; }
+/* the label text in a span stays first and keeps its own width; only the control below takes the whole line */
+label:has(> .admin-tip--hint) > span:first-child:not(.admin-tip):not(:has(input, select, textarea)) { order: 0; flex: 0 1 auto; }
+.admin-tip.is-flip > .admin-tip__pop { left: auto; right: 0; }
 
 /* Quick cache menu of the admin header. */
 .admin-cache-menu { position: relative; }
@@ -228,6 +231,7 @@ label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100
 .migration-source:hover { border-color: var(--mc-color-primary); transform: translateY(-1px); }
 .migration-source.is-primary { border-color: var(--mc-color-primary); background: color-mix(in srgb, var(--mc-color-primary) 7%, var(--mc-color-surface)); }
 .migration-source small { color: var(--mc-color-muted); }
+.migration-source strong { color: var(--mc-color-text); }
 
 /* Small drop-down menu inside a table row (share a receipt). */
 .admin-menu { position: relative; }
@@ -256,7 +260,7 @@ label:has(> .admin-tip--hint) > :not(.admin-tip--hint) { order: 2; flex: 1 1 100
 /* Roles and permissions: one readable row per permission. */
 .perm-group { margin: var(--mc-space-4) 0 0; padding: var(--mc-space-3) var(--mc-space-4); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); }
 .perm-group > legend { padding: 0 var(--mc-space-2); font-weight: var(--mc-font-weight-semibold); }
-.perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: var(--mc-space-2); }
+.perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(21rem, 100%), 1fr)); gap: var(--mc-space-2); }
 .perm-item { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--mc-space-3); padding: var(--mc-space-2) var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); cursor: pointer; }
 .perm-item:has(input:checked) { border-color: var(--mc-color-primary); background: color-mix(in srgb, var(--mc-color-primary) 8%, var(--mc-color-surface)); }
 .perm-item.is-risk:has(input:checked) { border-color: var(--mc-color-warning, #b45309); background: color-mix(in srgb, var(--mc-color-warning, #b45309) 10%, var(--mc-color-surface)); }

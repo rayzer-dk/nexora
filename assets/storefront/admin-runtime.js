@@ -635,9 +635,12 @@ function initQuickStock() {
     if (!input) return;
     let busy = false;
     const invalid = () => {
+      // Enter and then leaving the field check the same wrong value twice: say it once
+      const repeated = box.classList.contains('is-invalid');
       box.classList.add('is-invalid');
       input.setAttribute('aria-invalid', 'true');
       input.setCustomValidity(t('js_stock_invalid'));
+      if (repeated) return;
       input.reportValidity();
       toast(t('js_stock_invalid'), 'error', 4000);
     };
@@ -666,7 +669,7 @@ function initQuickStock() {
       } catch (error) {
         if (error instanceof Error && error.message === 'format') { invalid(); return; }
         input.value = input.dataset.original || '';
-        toast(t('js_stock_failed'), 'error', 4000);
+        toast(t(error instanceof Error && error.message === 'no_location' ? 'js_stock_no_location' : 'js_stock_failed'), 'error', 6000);
       } finally {
         busy = false;
         box.classList.remove('is-saving');
@@ -1238,6 +1241,15 @@ function initHelpTips() {
     button.setAttribute('aria-expanded', String(open));
   });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(null); });
+  // A popover opens to the right of its icon; an icon near the right edge (last column of a form grid) opens it to the left.
+  const place = (event) => {
+    const tip = event.target instanceof Element ? event.target.closest('[data-admin-tip]') : null;
+    if (!tip) return;
+    const room = window.innerWidth - tip.getBoundingClientRect().left;
+    tip.classList.toggle('is-flip', room < Math.min(340, window.innerWidth * 0.8 + 16));
+  };
+  document.addEventListener('mouseover', place);
+  document.addEventListener('focusin', place);
 }
 
 function initColorFields() {
@@ -3165,17 +3177,20 @@ function initAiBatch() {
   if (!list) return;
   const status = q('[data-ai-batch-status]', list);
   const paint = (data) => {
-    let reload = false;
+    // new texts waiting for review: reload, so the "For review" button appears with its count
+    let reload = typeof data.review_count === 'number' && data.review_count > Number(list.dataset.reviewCount || 0);
     for (const item of data.batches || []) {
       const box = q(`[data-ai-batch="${item.batch.public_id}"]`, list);
       if (!box || box.dataset.status !== item.batch.status) { reload = true; continue; }
       for (const [locale, counts] of Object.entries(item.per_locale || {})) {
         const row = q(`[data-locale-row="${locale}"]`, box);
         if (!row) continue;
-        for (const key of ['done', 'failed', 'pending']) { const cell = q(`[data-n="${key}"]`, row); if (cell) cell.textContent = String(counts[key]); }
+        for (const key of ['done', 'failed', 'pending', 'review']) { const cell = q(`[data-n="${key}"]`, row); if (cell) cell.textContent = String(counts[key] ?? 0); }
         const bar = q('[data-bar]', row);
-        const total = counts.done + counts.failed + counts.pending + counts.skipped;
-        if (bar) { bar.max = Math.max(total, 1); bar.value = total - counts.pending; }
+        // same as the server-rendered bar: texts waiting for review are not finished work yet
+        const review = counts.review ?? 0;
+        const total = counts.done + counts.failed + counts.pending + counts.skipped + review;
+        if (bar) { bar.max = Math.max(total, 1); bar.value = total - counts.pending - review; }
       }
     }
     return reload;

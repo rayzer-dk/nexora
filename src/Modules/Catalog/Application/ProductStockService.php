@@ -80,7 +80,7 @@ final readonly class ProductStockService
      * inventory item (digital, service) is skipped; so is a product of another store.
      *
      * @param list<string> $productPublicIds
-     * @return array{updated:int,skipped:int,previous:array<int,string>}
+     * @return array{updated:int,skipped:int,previous:array<int,string>,error?:string}
      */
     public function zeroStock(int $storeId, int $marketId, array $productPublicIds): array
     {
@@ -92,8 +92,12 @@ final readonly class ProductStockService
         }
         $requested = count($binary);
         $locationId = $this->locationId($marketId);
-        if ($requested === 0 || $locationId === 0) {
-            return ['updated' => 0, 'skipped' => $requested, 'previous' => []];
+        if ($locationId === 0) {
+            // not "without stock tracking": the market has no active warehouse to write the stock to
+            return ['updated' => 0, 'skipped' => $requested, 'previous' => [], 'error' => 'no_location'];
+        }
+        if ($requested === 0) {
+            return ['updated' => 0, 'skipped' => 0, 'previous' => []];
         }
         $rows = $this->db->fetchAllAssociative(
             "SELECT p.id product_id,p.public_id,p.status,vii.inventory_item_id,sl.id stock_id,sl.stocked_quantity

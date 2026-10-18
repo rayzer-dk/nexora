@@ -147,6 +147,16 @@ final class ProductStockServiceTest extends TestCase
         self::assertSame('8.000000', $this->stock(41, 2));
     }
 
+    public function testAMarketWithoutAnActiveWarehouseIsReportedAsSuchNotAsProductsWithoutStock(): void
+    {
+        $service = $this->service();
+        $this->db->executeStatement("UPDATE mc_inventory_location SET status='disabled'");
+        $result = $service->zeroStock(1, 1, [self::SINGLE, self::MULTI]);
+        self::assertSame('no_location', $result['error'] ?? null);
+        self::assertSame(0, $result['updated']);
+        self::assertSame('5.000000', $this->stock(11, 2), 'nothing is written');
+    }
+
     public function testRestorePutsBackThePreviousQuantities(): void
     {
         $service = $this->service();

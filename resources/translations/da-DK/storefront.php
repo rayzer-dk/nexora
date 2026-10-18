@@ -1028,5 +1028,6 @@ return [
     'forum_avatar_hint' => 'JPG, PNG, WebP eller GIF op til 5 MB – beskæres til kvadrat.',
     'js_stock_saved' => 'Lagerbeholdning gemt',
     'js_stock_failed' => 'Lagerbeholdningen kunne ikke gemmes',
+    'js_stock_no_location' => 'Beholdningen blev ikke gemt: markedet har intet aktivt lager. Lageret oprettes af butiksinstallationen; kontrollér den med php bin/console commerce:install:verify',
     'js_stock_invalid' => 'Indtast et tal fra 0, for eksempel 12 eller 2.5',
 ];

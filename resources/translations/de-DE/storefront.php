@@ -961,5 +961,6 @@ return [
     'forum_avatar_hint' => 'JPG, PNG, WebP oder GIF bis 5 MB – wird quadratisch zugeschnitten.',
     'js_stock_saved' => 'Bestand gespeichert',
     'js_stock_failed' => 'Bestand konnte nicht gespeichert werden',
+    'js_stock_no_location' => 'Bestand nicht gespeichert: Dieser Markt hat kein aktives Lager. Das Lager legt die Shop-Installation an; prüfen Sie sie mit php bin/console commerce:install:verify',
     'js_stock_invalid' => 'Geben Sie eine Zahl ab 0 ein, zum Beispiel 12 oder 2.5',
 ];
