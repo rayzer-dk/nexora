@@ -51,8 +51,7 @@ final readonly class TrustedExtensionContext
     /** One setting of this module (see settings()); $default when the key is neither saved nor has a schema default. */
     public function setting(string $key, mixed $default = null): mixed
     {
-        $all = $this->settings();
-        return array_key_exists($key, $all) ? $all[$key] : $default;
+        return $this->settings !== null ? $this->settings->activeSetting($this->code, $key, $default) : $default;
     }
 
     public function route(string $name, callable $handler): void

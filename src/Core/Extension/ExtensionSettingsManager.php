@@ -8,16 +8,28 @@ use Commerce\Core\Security\SecretVault;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\DBAL\Connection;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
 
 final readonly class ExtensionSettingsManager
 {
+    /**
+     * Parsed settings schemas by file (path, size, mtime): a module that reads its settings often parses the file once.
+     *
+     * @var \ArrayObject<string,array{schema_version:int,fields:list<array<string,mixed>>}>
+     */
+    private \ArrayObject $schemaCache;
+
     public function __construct(
         private Connection $connection,
         private ExtensionSettingsSchemaValidator $schemas,
         private SecretVault $vault,
+        private ?LoggerInterface $logger = null,
     ) {
+        /** @var \ArrayObject<string,array{schema_version:int,fields:list<array<string,mixed>>}> $cache */
+        $cache = new \ArrayObject();
+        $this->schemaCache = $cache;
     }
 
     /**
@@ -111,9 +123,10 @@ final readonly class ExtensionSettingsManager
             $next[$key] = ['value_payload' => $this->encodeValue($value), 'is_secret' => 0];
         }
         // Keys the current schema no longer has (carried over from an older version) are kept for modules that still read them.
+        // A secret is not: no form shows it any more, so the owner could never remove an old API key.
         $schemaKeys = array_column($schema['fields'], 'key');
         foreach ($stored as $key => $row) {
-            if (!in_array($key, $schemaKeys, true)) {
+            if (!in_array($key, $schemaKeys, true) && (int) $row['is_secret'] !== 1) {
                 $next[$key] = $row;
             }
         }
@@ -187,9 +200,17 @@ final readonly class ExtensionSettingsManager
         if ($this->stored($installationId) !== [] || (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mc_extension_setting_revision WHERE installation_id=?', [$installationId]) > 0) {
             return 0;
         }
+        // Of the lower versions, the one whose settings were saved last: after 1.0 -> 2.0 -> back to 1.0 and edits there,
+        // an update to 2.1 starts from the edited 1.0 settings, not from the older 2.0 ones.
         $source = null;
-        foreach ($this->connection->fetchAllAssociative('SELECT DISTINCT e.id,e.version FROM mc_extension_installation e JOIN mc_extension_setting s ON s.installation_id=e.id WHERE e.code=? AND e.id<>? ORDER BY e.id DESC', [(string) $target['code'], $installationId]) as $candidate) {
-            if (version_compare((string) $candidate['version'], (string) $target['version'], '<') && ($source === null || version_compare((string) $candidate['version'], (string) $source['version'], '>'))) {
+        foreach ($this->connection->fetchAllAssociative('SELECT e.id,e.version,MAX(s.updated_at) AS last_saved FROM mc_extension_installation e JOIN mc_extension_setting s ON s.installation_id=e.id WHERE e.code=? AND e.id<>? GROUP BY e.id,e.version ORDER BY e.id DESC', [(string) $target['code'], $installationId]) as $candidate) {
+            if (!version_compare((string) $candidate['version'], (string) $target['version'], '<')) {
+                continue;
+            }
+            $newer = $source === null
+                || strcmp((string) $candidate['last_saved'], (string) $source['last_saved']) > 0
+                || ((string) $candidate['last_saved'] === (string) $source['last_saved'] && version_compare((string) $candidate['version'], (string) $source['version'], '>'));
+            if ($newer) {
                 $source = $candidate;
             }
         }
@@ -201,7 +222,9 @@ final readonly class ExtensionSettingsManager
         foreach ($this->stored((int) $source['id']) as $key => $row) {
             $field = $fields[$key] ?? null;
             if ($field === null) {
-                $next[$key] = $row;
+                if ((int) $row['is_secret'] !== 1) {
+                    $next[$key] = $row; // a secret the new version no longer asks for is not carried along
+                }
                 continue;
             }
             $isSecret = (string) $field['type'] === 'secret';
@@ -258,8 +281,9 @@ final readonly class ExtensionSettingsManager
             $out = [];
             foreach ($this->schema($extension)['fields'] as $field) {
                 $key = (string) $field['key'];
-                if (isset($stored[$key])) {
-                    $out[$key] = $this->readStored($extensionCode, $key, $stored[$key]);
+                $value = isset($stored[$key]) ? $this->readSafely($extensionCode, $key, $stored[$key]) : null;
+                if ($value !== null) {
+                    $out[$key] = $value;
                 } elseif (array_key_exists('default', $field)) {
                     $out[$key] = $field['default'];
                 } elseif ((string) $field['type'] === 'boolean') {
@@ -268,7 +292,13 @@ final readonly class ExtensionSettingsManager
                 unset($stored[$key]);
             }
             foreach ($stored as $key => $row) {
-                $out[$key] = $this->readStored($extensionCode, $key, $row);
+                if ((int) $row['is_secret'] === 1) {
+                    continue; // a secret of a dropped field is never handed out
+                }
+                $value = $this->readSafely($extensionCode, $key, $row);
+                if ($value !== null) {
+                    $out[$key] = $value;
+                }
             }
             return $out;
         } catch (Throwable) {
@@ -331,7 +361,11 @@ final readonly class ExtensionSettingsManager
         if (!is_file($path)) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.a16cf4d39720'));
         }
-        return $this->schemas->decodeAndValidate((string) file_get_contents($path));
+        $cacheKey = $path . '|' . (int) @filesize($path) . '|' . (int) @filemtime($path);
+        if (!isset($this->schemaCache[$cacheKey])) {
+            $this->schemaCache[$cacheKey] = $this->schemas->decodeAndValidate((string) file_get_contents($path));
+        }
+        return $this->schemaCache[$cacheKey];
     }
 
     /** @return array<string,array{value_payload:string,is_secret:int}> */
@@ -489,6 +523,51 @@ final readonly class ExtensionSettingsManager
             'multilingual_text', 'multilingual_textarea' => [],
             default => '',
         };
+    }
+
+    /**
+     * One setting of the active version as the module sees it (see activeSettings()), without decrypting the others.
+     */
+    public function activeSetting(string $extensionCode, string $key, mixed $default = null): mixed
+    {
+        try {
+            $id = $this->connection->fetchOne("SELECT id FROM mc_extension_installation WHERE code=? AND status='active' ORDER BY id DESC LIMIT 1", [$extensionCode]);
+            if ($id === false || $id === null) {
+                return $default;
+            }
+            $extension = $this->extension((int) $id);
+            $fields = array_column($this->schema($extension)['fields'], null, 'key');
+            $row = $this->connection->fetchAssociative('SELECT value_payload,is_secret FROM mc_extension_setting WHERE installation_id=? AND setting_key=?', [(int) $id, $key]);
+            if (is_array($row) && (isset($fields[$key]) || (int) $row['is_secret'] !== 1)) {
+                $value = $this->readSafely($extensionCode, $key, ['value_payload' => (string) $row['value_payload'], 'is_secret' => (int) $row['is_secret']]);
+                if ($value !== null) {
+                    return $value;
+                }
+            }
+            $field = $fields[$key] ?? null;
+            if ($field !== null && array_key_exists('default', $field)) {
+                return $field['default'];
+            }
+            return $field !== null && (string) $field['type'] === 'boolean' ? false : $default;
+        } catch (Throwable) {
+            return $default;
+        }
+    }
+
+    /**
+     * A value that cannot be read (a secret encrypted with a vault key that was replaced since) counts as not set and is
+     * written to the log; the other settings of the module are not affected.
+     *
+     * @param array{value_payload:string,is_secret:int} $row
+     */
+    private function readSafely(string $extensionCode, string $key, array $row): mixed
+    {
+        try {
+            return $this->readStored($extensionCode, $key, $row);
+        } catch (Throwable $e) {
+            $this->logger?->warning('Extension setting could not be read.', ['extension' => $extensionCode, 'key' => $key, 'secret' => (int) $row['is_secret'] === 1, 'error' => $e->getMessage()]);
+            return null;
+        }
     }
 
     /** @param array{value_payload:string,is_secret:int} $row */

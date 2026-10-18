@@ -148,6 +148,54 @@ final class ExtensionSettingsFormTest extends TestCase
         self::assertNull($this->settings->value('example.ml', 'title'));
     }
 
+    public function testAfterARollbackAndEditsTheUpdateStartsFromTheLastSavedSettings(): void
+    {
+        $one = $this->install('1.0.0', [['key' => 'title', 'type' => 'text', 'label' => 'Title']]);
+        $this->settings->save($one, ['title' => 'One'], 'admin@test');
+        $this->db->update('mc_extension_installation', ['status' => 'disabled'], ['id' => $one]);
+        $two = $this->install('2.0.0', [['key' => 'title', 'type' => 'text', 'label' => 'Title']]);
+        $this->settings->carryOver($two);
+        $this->db->executeStatement("UPDATE mc_extension_setting SET updated_at='2026-01-01 10:00:00' WHERE installation_id=?", [$two]);
+        // back to 1.0.0 and edited there
+        $this->db->update('mc_extension_installation', ['status' => 'disabled'], ['id' => $two]);
+        $this->db->update('mc_extension_installation', ['status' => 'active'], ['id' => $one]);
+        $this->settings->save($one, ['title' => 'Edited on 1.0.0'], 'admin@test');
+        $this->db->update('mc_extension_installation', ['status' => 'disabled'], ['id' => $one]);
+
+        $next = $this->install('2.1.0', [['key' => 'title', 'type' => 'text', 'label' => 'Title']]);
+        self::assertSame(1, $this->settings->carryOver($next));
+        self::assertSame('Edited on 1.0.0', $this->settings->value('example.ml', 'title'));
+    }
+
+    public function testASecretTheNewVersionNoLongerAsksForIsNotCarriedKeptOrHandedOut(): void
+    {
+        $old = $this->install('1.0.0', [['key' => 'title', 'type' => 'text', 'label' => 'Title'], ['key' => 'old_key', 'type' => 'secret', 'label' => 'Old key'], ['key' => 'legacy', 'type' => 'text', 'label' => 'Legacy']]);
+        $this->settings->save($old, ['title' => 'T', 'old_key' => 'sk-old', 'legacy' => 'L'], 'admin@test');
+        $this->db->update('mc_extension_installation', ['status' => 'disabled'], ['id' => $old]);
+        $new = $this->install('1.1.0', [['key' => 'title', 'type' => 'text', 'label' => 'Title']]);
+        self::assertSame(2, $this->settings->carryOver($new), 'title and the plain legacy value; not the secret');
+        self::assertSame(['title' => 'T', 'legacy' => 'L'], $this->settings->activeSettings('example.ml'));
+
+        // a secret left over from before this rule is dropped by the next save and never handed to the module
+        $this->db->insert('mc_extension_setting', ['installation_id' => $new, 'setting_key' => 'old_key', 'value_payload' => 'x', 'is_secret' => 1, 'updated_at' => 'x']);
+        self::assertArrayNotHasKey('old_key', $this->settings->activeSettings('example.ml'));
+        self::assertNull($this->settings->activeSetting('example.ml', 'old_key'));
+        $this->settings->save($new, ['title' => 'T2'], 'admin@test');
+        self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_extension_setting WHERE setting_key='old_key' AND installation_id=?", [$new]));
+    }
+
+    public function testASecretThatCannotBeDecryptedDoesNotWipeTheOtherSettings(): void
+    {
+        $id = $this->install('1.0.0', [['key' => 'title', 'type' => 'text', 'label' => 'Title'], ['key' => 'api_key', 'type' => 'secret', 'label' => 'API key'], ['key' => 'columns', 'type' => 'integer', 'label' => 'Columns', 'default' => 3]]);
+        $this->settings->save($id, ['title' => 'Kept', 'api_key' => 'sk-1'], 'admin@test');
+        // the vault key was replaced: the stored secret no longer decrypts
+        $other = new ExtensionSettingsManager($this->db, new ExtensionSettingsSchemaValidator(), new SecretVault(str_repeat('z', 32)));
+        self::assertSame(['title' => 'Kept', 'columns' => 3], $other->activeSettings('example.ml'));
+        self::assertSame('fallback', $other->activeSetting('example.ml', 'api_key', 'fallback'));
+        self::assertSame('Kept', $other->activeSetting('example.ml', 'title'));
+        self::assertSame(3, $other->activeSetting('example.ml', 'columns'), 'a schema default answers for a value never saved');
+    }
+
     /** @param list<array<string,mixed>> $fields */
     private function install(string $version, array $fields, string $status = 'active'): int
     {
