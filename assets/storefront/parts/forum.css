@@ -189,3 +189,17 @@ img.fx-avatar { border-radius: var(--mc-radius-full); object-fit: cover; }
 .fx-panel { border-radius: var(--mc-radius-xl); }
 .fx-stats dd { color: var(--mc-color-primary); }
 @media (max-width: 767px) { .fx-head--hero { padding: var(--mc-space-5); } .fx-search, .fx-search input { width: 100%; } }
+
+/* ---- Forum, third pass: topic rows as separate cards, pinned topics tinted, readable quotes and code ---- */
+.fx-topics { gap: var(--mc-space-2); border: 0; background: transparent; overflow: visible; }
+.fx-topic { border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-lg); background: var(--mc-color-surface-raised); }
+.fx-topic:first-child { border-top: 1px solid var(--mc-color-border); }
+.fx-topic:hover { border-color: color-mix(in srgb, var(--mc-color-primary) 40%, var(--mc-color-border)); box-shadow: var(--mc-shadow-sm, none); }
+.fx-topic.is-pinned { border-color: color-mix(in srgb, var(--mc-color-warning) 45%, var(--mc-color-border)); background: color-mix(in srgb, var(--mc-color-warning) 7%, var(--mc-color-surface-raised)); }
+.fx-topic.is-pinned .fx-topic__main > strong { font-weight: var(--mc-font-weight-semibold); }
+.fx-post { border-radius: var(--mc-radius-xl); }
+.fx-avatar { box-shadow: 0 0 0 3px var(--mc-color-surface); }
+.fx-post__body .forum-quote { border-left-width: 4px; background: var(--mc-color-surface-subtle); color: var(--mc-color-text); }
+.fx-post__body .forum-code { border: 1px solid var(--mc-color-border); color: var(--mc-color-text); }
+.fx-head--topic { align-items: center; }
+@media (max-width: 767px) { .fx-topic { padding: var(--mc-space-3); } .fx-author { border-bottom: 1px solid var(--mc-color-border); } }

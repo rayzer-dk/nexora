@@ -147,3 +147,26 @@
 
 .lp-contact { scroll-margin-top: 5rem; }
 .lp-custom, .lp-hero__copy { min-width: 0; }
+
+/* ---- Landing, third pass: bigger heading, even rhythm, visible button, compact phone cards ---- */
+.lp-hero h1 { font-weight: var(--mc-font-weight-bold); font-size: clamp(2.125rem, 5.6vw, 3.75rem); }
+.lp-lead { font-size: clamp(1.0625rem, 1.6vw, 1.25rem); }
+.lp-btn { min-height: 52px; font-size: var(--mc-font-size-md, 1.0625rem); }
+.lp-btn--sm { min-height: 40px; font-size: var(--mc-font-size-sm); }
+.lp-btn--primary { box-shadow: 0 8px 22px color-mix(in srgb, var(--mc-color-primary-fill) 38%, transparent); }
+.lp-btn--primary:hover { box-shadow: 0 12px 28px color-mix(in srgb, var(--mc-color-primary-fill) 48%, transparent); }
+.lp-btn:focus-visible { outline: 3px solid var(--mc-color-primary); outline-offset: 3px; }
+.lp-section { padding: clamp(var(--mc-space-8), 7vw, calc(var(--mc-space-10) * 1.4)) 0; }
+.lp-section__head h2::after { content: ""; display: block; width: 48px; height: 4px; margin: var(--mc-space-3) auto 0; border-radius: var(--mc-radius-full); background: var(--mc-color-primary-fill); }
+.lp-features, .lp-steps, .lp-reviews { gap: var(--mc-space-5); }
+.lp-card, .lp-steps li, .lp-review { box-shadow: var(--mc-shadow-sm, none); }
+.lp-card__icon { width: 52px; height: 52px; }
+.lp-custom__media img { border-radius: var(--mc-radius-xl); box-shadow: var(--mc-shadow-lg); }
+@media (max-width: 639px) {
+  .lp-hero { padding: var(--mc-space-8) 0; }
+  .lp-actions .lp-btn { flex: 1 1 100%; }
+  .lp-card { display: grid; grid-template-columns: 52px minmax(0, 1fr); column-gap: var(--mc-space-4); padding: var(--mc-space-5); }
+  .lp-card__icon { grid-row: 1 / span 2; margin: 0; }
+  .lp-float--a { right: 0; }
+  .lp-float--b { left: 0; }
+}

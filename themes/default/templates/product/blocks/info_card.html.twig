@@ -1,5 +1,5 @@
 {% set source = block.settings.data_source|default('') %}
-{% set dynamic = source == 'product.name' ? product.name : (source == 'product.brand' ? product.brand|default('') : (source == 'product.sku' ? product.sku|default('') : (source == 'product.gtin' ? product.gtin|default('') : (source == 'product.mpn' ? product.mpn|default('') : (source == 'product.price' ? product.price|default('') : (source == 'product.availability' ? product.availability_label|default('') : '')))))) %}
+{% set dynamic = source == 'product.name' ? product.name : (source == 'product.brand' ? product.brand|default('') : (source == 'product.sku' ? product.sku|default('') : (source == 'product.gtin' ? product.gtin|default('') : (source == 'product.mpn' ? product.mpn|default('') : (source == 'product.price' ? product.price|default('') : (source == 'product.availability' and site_capabilities().features.cart|default(false) ? product.availability_label|default('') : '')))))) %}
 <aside class="product-info-card">
     {% if block.settings.title|default('') %}<strong>{{ block.settings.title }}</strong>{% endif %}
     {% if dynamic %}<p>{{ dynamic }}</p>{% elseif block.settings.text|default('') %}<p>{{ block.settings.text|nl2br }}</p>{% endif %}
