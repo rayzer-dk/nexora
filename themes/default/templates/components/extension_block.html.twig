@@ -1,0 +1,6 @@
+{#- A module block placed by the builder on the home, category or cart page; the caller wraps it in its device and style attributes and sets `shell` where the page has no width container. -#}
+{% set title = block.props.title|default('')|builder_text %}{% set text = block.props.text|default('')|builder_text %}
+<section class="{{ shell|default(false) ? 'shell ' : '' }}extension-block" data-extension-component="{{ block.component|e('html_attr') }}">
+  {% if title %}<h2>{{ title }}</h2>{% endif %}
+  {% if text %}<div>{{ text|nl2br }}</div>{% endif %}
+</section>

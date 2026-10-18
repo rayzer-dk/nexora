@@ -66,7 +66,7 @@ final readonly class LayoutRevisionStore
     public function saveDraft(int $storeId, string $type, array $layout, ?int $adminId = null): int
     {
         $this->assertType($type);
-        $validated=$this->validator->validate($layout, $type); $now=gmdate('Y-m-d H:i:s.u');
+        $validated=$this->validator->validate($layout, $type, true); $now=gmdate('Y-m-d H:i:s.u');
         return $this->db->transactional(function(Connection $db) use($storeId,$type,$validated,$adminId,$now): int {
             $db->delete('mc_layout_revision',['store_id'=>$storeId,'layout_type'=>$type,'status'=>'draft']);
             $db->insert('mc_layout_revision',['store_id'=>$storeId,'layout_type'=>$type,'status'=>'draft','schema_version'=>1,'payload'=>json_encode($validated,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),'created_by'=>$adminId,'created_at'=>$now,'published_at'=>null]);
@@ -78,7 +78,7 @@ final readonly class LayoutRevisionStore
     public function publish(int $storeId, string $type, array $layout, ?int $adminId = null): int
     {
         $this->assertType($type);
-        $validated = $this->validator->validate($layout, $type);
+        $validated = $this->validator->validate($layout, $type, true);
         $now = gmdate('Y-m-d H:i:s.u');
         return $this->db->transactional(function (Connection $db) use ($storeId,$type,$validated,$adminId,$now): int {
             $db->update('mc_layout_revision', ['status'=>'archived'], ['store_id'=>$storeId,'layout_type'=>$type,'status'=>'published']);
@@ -109,7 +109,8 @@ final readonly class LayoutRevisionStore
         if (!is_array($layout)) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.0b19595a5f32'));
         }
-        return $this->publish($storeId,$type,$layout,$adminId);
+        // An old revision may hold values that today's field checks reject; they are dropped as on reading, not refused.
+        return $this->publish($storeId,$type,$this->validator->validate($layout, $type),$adminId);
     }
 
     private function assertType(string $type): void

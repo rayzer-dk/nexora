@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Core\Extension\ExtensionContributionRegistry;
+use Commerce\Modules\Admin\Application\ContentLanguageTabs;
 use Commerce\Modules\Admin\Domain\AdminUser;
+use Commerce\Modules\Appearance\Builder\BuilderComponentCatalog;
 use Commerce\Modules\Appearance\Builder\LayoutRevisionStore;
 use Commerce\Modules\Appearance\Builder\LayoutSnippetStore;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class LayoutBuilderAdminController extends AbstractController
 {
-    public function __construct(private readonly AdminContextResolver $contexts, private readonly LayoutRevisionStore $layouts, private readonly LayoutSnippetStore $snippets, private readonly ExtensionContributionRegistry $extensions, private readonly \Commerce\Modules\Appearance\Builder\LayoutPreviewToken $previewToken, private readonly \Doctrine\DBAL\Connection $db)
+    public function __construct(private readonly AdminContextResolver $contexts, private readonly LayoutRevisionStore $layouts, private readonly LayoutSnippetStore $snippets, private readonly ExtensionContributionRegistry $extensions, private readonly \Commerce\Modules\Appearance\Builder\LayoutPreviewToken $previewToken, private readonly \Doctrine\DBAL\Connection $db, private readonly BuilderComponentCatalog $catalog, private readonly ContentLanguageTabs $languages)
     {
     }
 
@@ -55,9 +57,20 @@ final class LayoutBuilderAdminController extends AbstractController
         $layout=$draft ?? $this->layouts->active($context->storeId,$type);
         $missing=[]; foreach((array)($layout['blocks']??[]) as $block){if(is_array($block)&&($block['missing_extension']??false)===true)$missing[]=(string)($block['component']??'');}
         $previewPath=$this->previewPath($type,$context->storeId,$context->locale);
+        $components=$this->catalog->components($type);
+        $fields=array_column($components,'fields','component');
+        $extensionComponents=$this->extensions->blocksFor($type);
+        $schemaErrors=[];
+        foreach($extensionComponents as $block){
+            $id=(string)($block['id']??'');
+            $own=$this->extensions->blockFields($id);
+            if($own===null){$schemaErrors[$id]=(string)($block['extension_code']??'');}else{$fields[$id]=$this->catalog->withCommonFields($own);}
+        }
         return $this->render('@storefront/admin/appearance/builder.html.twig',[
+            'builder_components'=>$components,'builder_fields'=>$fields,'builder_common_fields'=>$this->catalog->commonFields(),'builder_schema_errors'=>$schemaErrors,
+            'builder_locales'=>array_map(static fn(array $tab): array => ['code'=>$tab['code'],'name'=>$tab['name']],$this->languages->tabs($context->storeId,$context->locale)),
             'preview_url'=>$previewPath.(str_contains($previewPath,'?')?'&':'?').'_layout_preview='.rawurlencode($this->previewToken->issue($context->storeId,$type)),
-            'type'=>$type,'layout'=>$layout,'has_draft'=>$draft!==null,'revisions'=>$this->layouts->history($context->storeId,$type),'snippets'=>$this->snippets->all($context->storeId,$type),'extension_components'=>$this->extensions->blocksFor($type),'missing_extension_components'=>array_values(array_unique(array_filter($missing))),
+            'type'=>$type,'layout'=>$layout,'has_draft'=>$draft!==null,'revisions'=>$this->layouts->history($context->storeId,$type),'snippets'=>$this->snippets->all($context->storeId,$type),'extension_components'=>$extensionComponents,'missing_extension_components'=>array_values(array_unique(array_filter($missing))),
         ]);
     }
 

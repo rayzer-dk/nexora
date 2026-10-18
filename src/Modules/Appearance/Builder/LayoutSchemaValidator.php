@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Commerce\Modules\Appearance\Builder;
 
 use Commerce\Core\Extension\ExtensionContributionRegistry;
+use Commerce\Modules\Storefront\Twig\HomeBlockExtension;
 use RuntimeException;
 
 final class LayoutSchemaValidator
 {
-    public function __construct(private readonly ?ExtensionContributionRegistry $extensions = null)
-    {
+    public function __construct(
+        private readonly ?ExtensionContributionRegistry $extensions = null,
+        private readonly BuilderComponentCatalog $catalog = new BuilderComponentCatalog(),
+        private readonly HomeBlockExtension $blockStyle = new HomeBlockExtension(),
+    ) {
     }
 
     private const ALLOWED_COMPONENTS = [
@@ -20,8 +24,13 @@ final class LayoutSchemaValidator
         'product_reviews','related_products','info_card','checkout_contact','checkout_shipping','checkout_address','checkout_company','checkout_comment','checkout_payment','checkout_coupon','checkout_summary','checkout_consent','category_heading','category_filters','category_subcategories','category_toolbar','category_recommended','category_grid','category_description','cart_heading','cart_lines','cart_summary','cart_saved','cart_recent','logo','search','catalog_button','menu','language','currency','account','wishlist','cart','contacts','social_links','button',
     ];
 
-    /** @param array<string,mixed> $layout @return array<string,mixed> */
-    public function validate(array $layout, ?string $layoutType = null): array
+    /**
+     * Values of described fields (BuilderComponentCatalog, the block schema of a module) are checked too: a save with
+     * $rejectInvalidFields throws on the first wrong one; reading drops it and pulls a number back into its range.
+     *
+     * @param array<string,mixed> $layout @return array<string,mixed>
+     */
+    public function validate(array $layout, ?string $layoutType = null, bool $rejectInvalidFields = false): array
     {
         if ((int) ($layout['schema_version'] ?? 0) !== 1) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.0f7ba0765cf6'));
@@ -44,7 +53,7 @@ final class LayoutSchemaValidator
             $knownExtension = $this->extensions?->hasBuilderComponent($component, $layoutType) ?? false;
             $missingExtension = str_starts_with($component, 'extension.') && preg_match('/^extension\.[a-z0-9_]+\.[a-z][a-z0-9_.-]{0,95}$/D', $component) === 1 && !$knownExtension;
             $allowedBuiltIn = in_array($component, self::ALLOWED_COMPONENTS, true)
-                && ($layoutType === null || in_array($component, $this->allowedForType($layoutType), true));
+                && ($layoutType === null || in_array($component, self::allowedForType($layoutType), true));
             if (!$allowedBuiltIn && !$knownExtension && !$missingExtension) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.f55134ecaa1c') . $component);
             }
@@ -54,7 +63,7 @@ final class LayoutSchemaValidator
             if (count($props) > 64 || count($style) > 32 || count($visibility) > 16) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.2dcea6f9dc7a'));
             }
-            $normalized[] = [
+            $normalized[] = $this->checkFields([
                 'id' => $id,
                 'component' => $component,
                 'enabled' => (bool) ($block['enabled'] ?? true),
@@ -62,14 +71,14 @@ final class LayoutSchemaValidator
                 'style' => $this->sanitizeMap($style),
                 'visibility' => $this->sanitizeMap($visibility),
                 'missing_extension' => $missingExtension,
-            ];
+            ], $layoutType, $knownExtension, $rejectInvalidFields);
             $ids[$id] = true;
         }
         return ['schema_version' => 1, 'blocks' => $normalized];
     }
 
     /** @return list<string> */
-    private function allowedForType(string $layoutType): array
+    public static function allowedForType(string $layoutType): array
     {
         return match ($layoutType) {
             'home' => ['hero','banner','scroll_story','video_hero','category_grid','product_grid','recently_viewed','article_grid'],
@@ -81,6 +90,93 @@ final class LayoutSchemaValidator
             'checkout' => ['checkout_contact','checkout_shipping','checkout_address','checkout_company','checkout_comment','checkout_payment','checkout_coupon','checkout_summary','checkout_consent'],
             default => [],
         };
+    }
+
+    /** @param array{id:string,component:string,enabled:bool,props:array<string,mixed>,style:array<string,mixed>,visibility:array<string,mixed>,missing_extension:bool} $block @return array<string,mixed> */
+    private function checkFields(array $block, ?string $layoutType, bool $extension, bool $reject): array
+    {
+        if ($layoutType === null) {
+            return $block;
+        }
+        // A module's schema is parsed only when saving: storefront pages read layouts on every request.
+        $fields = $extension ? ($reject ? $this->extensions?->blockFields($block['component']) : null) : $this->catalog->fieldsFor($layoutType, $block['component']);
+        foreach ($fields ?? [] as $field) {
+            $path = explode('.', (string) $field['prop'], 2);
+            if (count($path) !== 2 || !in_array($path[0], ['props', 'style', 'visibility'], true) || !array_key_exists($path[1], $block[$path[0]])) {
+                continue;
+            }
+            [$group, $key] = $path;
+            [$valid, $value] = $this->fieldValue($field, $block[$group][$key], $reject);
+            if ($valid) {
+                $block[$group][$key] = $value;
+            } elseif ($reject) {
+                throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('admin.builder.invalid_field', ['block' => $block['id'], 'field' => (string) $field['prop']]));
+            } else {
+                unset($block[$group][$key]);
+            }
+        }
+
+        return $block;
+    }
+
+    /** @param array<string,mixed> $field @return array{0:bool,1:mixed} whether the value fits the field, and the value to keep */
+    private function fieldValue(array $field, mixed $value, bool $reject): array
+    {
+        if ($value === null || $value === '') {
+            return [true, $value];
+        }
+
+        return match ((string) $field['type']) {
+            'url', 'image' => [is_string($value) && self::isSafeLink($value), $value],
+            'color' => [is_string($value) && $this->blockStyle->background($value) === $value, $value],
+            'boolean' => [in_array($value, [true, false, 0, 1, '0', '1'], true), $value],
+            'select' => [is_scalar($value) && !is_bool($value) && in_array((string) $value, array_map(static fn (array $option): string => (string) $option['value'], (array) ($field['options'] ?? [])), true), $value],
+            'number' => $this->numberValue($field, $value, $reject),
+            'multilingual_text', 'multilingual_textarea' => [is_string($value) || (is_array($value) && self::isLocalizedMap($value)), $value],
+            default => [true, $value],
+        };
+    }
+
+    /** @param array<string,mixed> $field @return array{0:bool,1:mixed} */
+    private function numberValue(array $field, mixed $value, bool $reject): array
+    {
+        if (is_bool($value) || !is_numeric($value)) {
+            return [false, $value];
+        }
+        $number = (float) $value;
+        $min = isset($field['min']) ? (float) $field['min'] : -INF;
+        $max = isset($field['max']) ? (float) $field['max'] : INF;
+        if ($number >= $min && $number <= $max) {
+            return [true, $value];
+        }
+        if ($reject) {
+            return [false, $value];
+        }
+        $clamped = max($min, min($max, $number));
+
+        return [true, floor($clamped) === $clamped ? (int) $clamped : $clamped];
+    }
+
+    /** A relative path or anchor, or an absolute http(s), mailto or tel link: no script or data URL, no spaces or quotes. */
+    private static function isSafeLink(string $value): bool
+    {
+        if (strlen($value) > 2000 || preg_match('/[\s"\'<>\\\\\x00-\x1f]/u', $value) === 1) {
+            return false;
+        }
+
+        return preg_match('/^([a-z][a-z0-9+.-]*):/i', $value, $scheme) !== 1 || in_array(strtolower($scheme[1]), ['http', 'https', 'mailto', 'tel'], true);
+    }
+
+    /** @param array<mixed> $value */
+    private static function isLocalizedMap(array $value): bool
+    {
+        foreach ($value as $locale => $text) {
+            if (!is_string($locale) || preg_match('/^[a-z]{2,3}(?:-[A-Z]{2})?$/D', $locale) !== 1 || !is_scalar($text)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** @param array<mixed> $map @return array<string,mixed> */

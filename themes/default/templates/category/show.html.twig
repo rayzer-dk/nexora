@@ -31,6 +31,7 @@
     {% if products.pages > 1 %}<nav class="pager" aria-label="{{ ui_text('pagination') }}">{% if products.page > 1 %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page-1 }}">{{ ui_icon('chevron-left', 16) }}{{ ui_text('back') }}</a>{% endif %}<span>{{ ui_text('page_of')|replace({'%page%': products.page, '%pages%': products.pages}) }}</span>{% if products.page < products.pages %}<a class="button button--secondary" href="?{% if catalog_query_base %}{{ catalog_query_base }}&amp;{% endif %}page={{ products.page+1 }}">{{ ui_text('next') }}{{ ui_icon('chevron-right', 16) }}</a>{% endif %}</nav>{% endif %}
     {% endif %}
     {% endfor %}
+    {% for block in layout_extension_blocks('category') %}{% set block_attrs = home_block_attrs(block) %}<div class="{{ block_attrs.class }}"{% if block_attrs.style %} style="{{ block_attrs.style }}"{% endif %}>{% include '@storefront/components/extension_block.html.twig' with {block: block} only %}</div>{% endfor %}
     </div>
     </div>
     {% if cl.show.description and category_text and category_description_position|default('top') == 'bottom' %}<div class="category-description category-description--bottom">{{ category_text|category_html|with_forms }}</div>{% endif %}

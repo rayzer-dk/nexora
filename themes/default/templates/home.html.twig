@@ -51,6 +51,8 @@
       {% if demo_showcase and site_features.content|default(false) %}
       <section class="shell demo-contact-cta"><div><small>{{ ui_text('form_showcase') }}</small><h2>{{ ui_text('questions_about_product_store') }}</h2><p>{{ ui_text('contact_form_demo_text') }}</p></div><a class="button button--primary button--lg" href="/contact">{{ ui_text('contact_us') }}{{ ui_icon('arrow-right', 16) }}</a></section>
       {% endif %}
+    {% elseif layout_block.component starts with 'extension.' %}
+      {% include '@storefront/components/extension_block.html.twig' with {block: layout_block, shell: true} only %}
     {% endif %}
     </div>
   {% endif %}
