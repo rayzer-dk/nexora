@@ -122,6 +122,28 @@ final class AiBatchService
             throw new \DomainException(CanonicalUiText::get('admin.ai.batch.error_locales'));
         }
 
+        $mysql = $this->db->getDatabasePlatform() instanceof AbstractMySQLPlatform;
+        $startLock = self::LOCK . '_start_' . $storeId;
+        // Two clicks on "Start" must not queue every job twice: the check for waiting jobs and the insert run one at a time.
+        if ($mysql && (int) $this->db->fetchOne('SELECT GET_LOCK(?, 10)', [$startLock]) !== 1) {
+            throw new \DomainException(CanonicalUiText::get('admin.ai.batch.nothing'));
+        }
+        try {
+            return $this->queueJobs($storeId, $admin, $kind, $types, $locales, $mode, $provider, $task, $productIds, $default);
+        } finally {
+            if ($mysql) {
+                $this->db->fetchOne('SELECT RELEASE_LOCK(?)', [$startLock]);
+            }
+        }
+    }
+
+    /**
+     * @param list<string> $types
+     * @param list<string> $locales
+     * @param list<int>|null $productIds
+     */
+    private function queueJobs(int $storeId, string $admin, string $kind, array $types, array $locales, string $mode, string $provider, string $task, ?array $productIds, string $default): string
+    {
         $queued = [];
         foreach ($this->db->fetchAllAssociative(
             "SELECT j.entity_type,j.entity_id,j.locale,j.task FROM mc_ai_batch_job j JOIN mc_ai_batch b ON b.id=j.batch_id WHERE j.store_id=? AND ((j.status='pending' AND b.status IN ('running','paused','limit')) OR j.status='review')",
@@ -183,7 +205,7 @@ final class AiBatchService
         try {
             $started = microtime(true);
             $this->wakeUpLimited($storeId);
-            $blocked = []; // batches that hit the limit in this round
+            $limited = []; // batches with a job that did not fit in today's requests
             $rows = $this->db->fetchAllAssociative(
                 "SELECT j.id,j.batch_id,j.store_id,j.entity_type,j.entity_id,j.locale,j.task,j.attempts,b.options_json,b.created_by,b.kind FROM mc_ai_batch_job j JOIN mc_ai_batch b ON b.id=j.batch_id
                  WHERE j.status='pending' AND b.status='running'" . ($storeId !== null ? ' AND j.store_id=' . (int) $storeId : '') . ' ORDER BY j.id LIMIT ' . max(1, min(500, $limit)),
@@ -192,19 +214,19 @@ final class AiBatchService
                 if (microtime(true) - $started > $budgetSeconds) {
                     break;
                 }
-                if (isset($blocked[(int) $row['batch_id']])) {
-                    continue;
-                }
                 $outcome = (string) $row['kind'] === 'generate' ? $this->runGenerate($row) : $this->runTranslate($row);
                 if ($outcome === 'limit') {
-                    $blocked[(int) $row['batch_id']] = true;
-                    $this->setStatus((int) $row['batch_id'], 'limit');
+                    // The job waits; a smaller job further on may still fit in what is left today.
+                    $limited[(int) $row['batch_id']] = (int) $row['store_id'];
                     $result['paused_for_limit'] = true;
                 } elseif ($outcome === 'done') {
                     ++$result['done'];
                 } elseif ($outcome === 'failed') {
                     ++$result['failed'];
                 }
+            }
+            foreach ($limited as $batchId => $batchStore) {
+                $this->markLimited($batchId, $batchStore);
             }
             $this->finishBatches($storeId);
             $result['pending'] = $this->pendingCount($storeId);
@@ -281,11 +303,11 @@ final class AiBatchService
         }
     }
 
-    /** Puts the failed jobs back in the line and the batch back to work. Returns how many. */
+    /** Puts the failed jobs back in the line and the batch back to work. Returns how many; a cancelled batch stays as it is (0). */
     public function retryFailed(string $publicId, ?int $storeId = null): int
     {
         $id = $this->batchId($publicId, $storeId);
-        if ($id === null) {
+        if ($id === null || $this->db->fetchOne('SELECT status FROM mc_ai_batch WHERE id=?', [$id]) === 'cancelled') {
             return 0;
         }
         $count = $this->db->executeStatement("UPDATE mc_ai_batch_job SET status='pending',attempts=0,error=NULL WHERE batch_id=? AND status='failed'", [$id]);
@@ -632,8 +654,12 @@ final class AiBatchService
         $where = '';
         if ($mode !== 'overwrite') {
             $checks = ['t.id IS NULL', 't.is_fallback=1'];
+            // A text equal to the main language is a copy only until the AI has translated this entity into the language:
+            // after that it is a name that reads the same in both ("iPhone 15") and is not sent again.
+            $translatedBefore = "EXISTS (SELECT 1 FROM mc_ai_batch_job dj WHERE dj.store_id=l.store_id AND dj.entity_type=" . $this->db->quote($type)
+                . " AND dj.entity_id=l.$linkKey AND dj.locale=" . $this->db->quote($locale) . " AND dj.task='translate' AND dj.status='done')";
             foreach (array_keys(self::fields($type)) as $f) {
-                $checks[] = "(COALESCE(s.$f,'')<>'' AND (COALESCE(t.$f,'')='' OR t.$f=s.$f))";
+                $checks[] = "(COALESCE(s.$f,'')<>'' AND (COALESCE(t.$f,'')='' OR (t.$f=s.$f AND NOT $translatedBefore)))";
             }
             $where = ' AND (' . implode(' OR ', $checks) . ')';
         }
@@ -702,16 +728,32 @@ final class AiBatchService
         return (string) ($this->db->fetchOne("SELECT name FROM $table WHERE $key=? AND store_id=? AND locale=?", [$id, $storeId, $this->catalog->defaultLocale($storeId)]) ?: '#' . $id);
     }
 
-    /** A batch waiting for the limit goes back to work once the store has requests left today (after midnight UTC). */
+    /**
+     * A batch waiting for the limit goes back to work when the count of today's requests has started again (a new day, UTC)
+     * or the owner raised the limit. Requests merely being left is not enough: the job that did not fit would hit the limit
+     * again and the batch would switch between "running" and "limit" all day.
+     */
     private function wakeUpLimited(?int $storeId): void
     {
-        $rows = $this->db->fetchAllAssociative("SELECT id,store_id FROM mc_ai_batch WHERE status='limit'" . ($storeId !== null ? ' AND store_id=' . (int) $storeId : ''));
+        $rows = $this->db->fetchAllAssociative("SELECT id,store_id,options_json FROM mc_ai_batch WHERE status='limit'" . ($storeId !== null ? ' AND store_id=' . (int) $storeId : ''));
         foreach ($rows as $row) {
             $store = (int) $row['store_id'];
-            if ($this->settings->usedToday($store) < $this->settings->dailyLimit($store)) {
+            $used = $this->settings->usedToday($store);
+            $limit = $this->settings->dailyLimit($store);
+            $mark = (json_decode((string) $row['options_json'], true) ?: [])['limit_mark'] ?? null;
+            $fresh = !is_array($mark) || $used < (int) ($mark['used'] ?? 0) || $limit > (int) ($mark['limit'] ?? 0);
+            if ($used < $limit && $fresh) {
                 $this->setStatus((int) $row['id'], 'running');
             }
         }
+    }
+
+    /** Puts the batch into "limit" and notes how many requests were used of which limit, for wakeUpLimited(). */
+    private function markLimited(int $batchId, int $storeId): void
+    {
+        $options = json_decode((string) $this->db->fetchOne('SELECT options_json FROM mc_ai_batch WHERE id=?', [$batchId]), true) ?: [];
+        $options['limit_mark'] = ['used' => $this->settings->usedToday($storeId), 'limit' => $this->settings->dailyLimit($storeId)];
+        $this->db->update('mc_ai_batch', ['status' => 'limit', 'options_json' => json_encode($options, JSON_THROW_ON_ERROR), 'updated_at' => gmdate('Y-m-d H:i:s.u')], ['id' => $batchId]);
     }
 
     private function finishBatches(?int $storeId): void

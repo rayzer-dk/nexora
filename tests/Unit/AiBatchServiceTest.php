@@ -492,4 +492,54 @@ final class AiBatchServiceTest extends TestCase
         self::assertSame(['done' => 1, 'failed' => 0, 'pending' => 1, 'paused_for_limit' => true], $result);
         self::assertCount(1, $this->reviewIds());
     }
+
+    public function testAJobThatDoesNotFitTodayLetsSmallerJobsThroughAndTheBatchDoesNotFlipBackTheSameDay(): void
+    {
+        // product 1 has a long description: 4 parts + 1 request for the short fields
+        $this->db->executeStatement("UPDATE mc_product_translation SET description=? WHERE product_id=1 AND locale='uk-UA'", [str_repeat('<p>' . str_repeat('слово ', 790) . '</p>', 4)]);
+        $this->db->insert('mc_ai_settings', ['store_id' => 1, 'daily_limit' => 8, 'updated_at' => 'x']);
+        for ($i = 0; $i < 5; ++$i) {
+            $this->db->insert('mc_ai_usage', ['store_id' => 1, 'task' => 'translate', 'status' => 'ok', 'created_at' => gmdate('Y-m-d H:i:s')]);
+        }
+        $this->start();
+        $result = $this->batches->process(20, 30.0);
+        self::assertSame(['done' => 3, 'failed' => 0, 'pending' => 1, 'paused_for_limit' => true], $result, 'products 2, 3 and 5 fit into the 3 requests left; product 1 waits');
+        self::assertSame('limit', $this->batches->progress(1)[0]['batch']['status']);
+
+        $prompts = count($this->model->prompts);
+        $this->batches->process(20, 30.0);
+        self::assertSame('limit', $this->batches->progress(1)[0]['batch']['status'], 'no switch to "running" while nothing changed today');
+        self::assertCount($prompts, $this->model->prompts);
+
+        $this->db->executeStatement('UPDATE mc_ai_settings SET daily_limit=20');
+        $this->model->fail = true; // only the wake-up matters here
+        $this->batches->process(20, 30.0);
+        self::assertGreaterThan($prompts, count($this->model->prompts), 'a raised limit wakes the batch up the same day');
+    }
+
+    public function testFailedJobsOfACancelledBatchAreNotPutBack(): void
+    {
+        $id = $this->start();
+        $this->model->fail = true;
+        for ($round = 0; $round < 3; ++$round) {
+            $this->batches->process(20, 30.0);
+        }
+        $this->db->executeStatement("UPDATE mc_ai_batch SET status='cancelled'"); // cancelled while its failed jobs were listed
+        self::assertSame(0, $this->batches->retryFailed($id));
+        self::assertSame(4, (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_ai_batch_job WHERE status='failed'"));
+        self::assertSame('cancelled', $this->batches->progress(1)[0]['batch']['status']);
+    }
+
+    public function testANameThatReadsTheSameInBothLanguagesIsNotSentAgainAfterItWasTranslated(): void
+    {
+        $this->start();
+        $this->batches->process(20, 30.0);
+        // the AI kept the name as it is (a model name, a brand)
+        $this->db->executeStatement("UPDATE mc_product_translation SET name='Чайник 3' WHERE product_id=3 AND locale='en-US'");
+        $this->db->executeStatement("UPDATE mc_ai_batch SET status='done'");
+        $this->db->executeStatement("UPDATE mc_product_translation SET description='' WHERE product_id=4 AND locale='en-US'");
+        $this->start();
+        self::assertSame([1, 2, 3, 4, 5], array_values(array_unique($this->queued())), 'product 4 is queued for its emptied field');
+        self::assertSame([4], array_map('intval', $this->db->fetchFirstColumn("SELECT entity_id FROM mc_ai_batch_job WHERE status='pending'")), 'product 3 with the same name is not queued again');
+    }
 }

@@ -76,4 +76,13 @@ final class AiGlossaryTest extends TestCase
         [$plain] = $this->glossary->protect(1, 'Наша кавомашина', 'pl-PL', true);
         self::assertSame('Наша кавомашина', $plain, 'without a translation for the language the term is translated as usual');
     }
+
+    public function testSavingKeepsTheFixedTranslationOfALanguageTheFormDidNotShow(): void
+    {
+        // German is switched off, so the form sends only English: the German translation stays; an English sent empty is cleared
+        $this->glossary->save(1, [['term' => 'кавомашина', 'mode' => 'fixed', 'translations' => ['en' => 'coffee machine']]]);
+        self::assertSame(['en' => 'coffee machine', 'de-DE' => 'Siebträgermaschine'], $this->glossary->terms(1)[0]['translations']);
+        $this->glossary->save(1, [['term' => 'кавомашина', 'mode' => 'fixed', 'translations' => ['en' => '', 'de-DE' => 'Kaffeemaschine']]]);
+        self::assertSame(['de-DE' => 'Kaffeemaschine'], $this->glossary->terms(1)[0]['translations']);
+    }
 }

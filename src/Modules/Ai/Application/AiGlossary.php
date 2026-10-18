@@ -51,11 +51,17 @@ final class AiGlossary
 
     /**
      * Replaces the whole glossary of the store. A row without a term is dropped; the same term twice (any letter case) is kept once.
+     * A fixed translation of a language the row does not mention at all (a language switched off, so the form did not show it)
+     * is kept from the saved glossary; a language sent empty is cleared.
      *
      * @param list<array{term?:mixed,mode?:mixed,translations?:mixed}> $rows
      */
     public function save(int $storeId, array $rows): void
     {
+        $saved = [];
+        foreach ($this->terms($storeId) as $term) {
+            $saved[mb_strtolower($term['term'])] = $term['translations'];
+        }
         $clean = [];
         foreach ($rows as $row) {
             if (!is_array($row)) {
@@ -70,6 +76,12 @@ final class AiGlossary
             foreach (is_array($row['translations'] ?? null) ? $row['translations'] : [] as $locale => $value) {
                 $value = mb_substr(trim(strip_tags((string) $value)), 0, 190);
                 if (is_string($locale) && preg_match('/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/', $locale) === 1 && $value !== '') {
+                    $translations[$locale] = $value;
+                }
+            }
+            $sent = is_array($row['translations'] ?? null) ? $row['translations'] : [];
+            foreach ($saved[$key] ?? [] as $locale => $value) {
+                if (!array_key_exists($locale, $sent)) {
                     $translations[$locale] = $value;
                 }
             }
