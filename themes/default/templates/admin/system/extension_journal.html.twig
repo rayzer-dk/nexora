@@ -1,0 +1,19 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.extensions.journal.title'),'extensions') }}
+<header class="admin-page-header">
+    <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<a href="{{ path('admin_system_extensions') }}">{{ ui_text('admin.system.extensions.rozshyrennia') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.extensions.journal.title') }}</span></nav><h1>{{ ui_text('admin.extensions.journal.title') }}</h1><p>{{ ui_text('admin.extensions.journal.intro') }}</p></div>
+    <a class="admin-button" href="{{ path('admin_system_extensions') }}">{{ ui_text('admin.system.extension_settings.do_rozshyren') }}</a>
+</header>
+<section class="admin-panel" data-extension-journal>
+    <form method="get" class="admin-logs__filters">
+        <label><span>{{ ui_text('admin.extensions.lifecycle.module') }}</span><select name="code" data-autosubmit><option value="">{{ ui_text('admin.extensions.journal.all') }}</option>{% for item in filters.codes %}<option value="{{ item }}"{{ item == code ? ' selected' : '' }}>{{ item }}</option>{% endfor %}</select></label>
+        <label><span>{{ ui_text('admin.extensions.lifecycle.event') }}</span><select name="action" data-autosubmit><option value="">{{ ui_text('admin.extensions.journal.all') }}</option>{% for item in filters.actions %}<option value="{{ item }}"{{ item == action ? ' selected' : '' }}>{{ item }}</option>{% endfor %}</select></label>
+        <button type="submit" class="admin-button is-primary">{{ ui_icon('list-filter', 16) }} {{ ui_text('admin.logs.show') }}</button>
+        <a class="admin-button" href="{{ path('admin_system_extension_journal_csv', {code: code, action: action}) }}">{{ ui_icon('download', 16) }} {{ ui_text('admin.extensions.journal.csv') }}</a>
+    </form>
+    <p class="admin-help">{{ ui_text('admin.extensions.journal.limit', {count: limit}) }}</p>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.extensions.lifecycle.time') }}</th><th>{{ ui_text('admin.extensions.lifecycle.module') }}</th><th>{{ ui_text('admin.extensions.lifecycle.version') }}</th><th>{{ ui_text('admin.extensions.lifecycle.event') }}</th><th>{{ ui_text('admin.extensions.lifecycle.state') }}</th><th>{{ ui_text('admin.extensions.lifecycle.result') }}</th><th>{{ ui_text('admin.extensions.lifecycle.details') }}</th></tr></thead><tbody>
+    {% for event in events %}<tr><td>{{ event.created_at }}</td><td><code>{{ event.code }}</code></td><td>{{ event.version }}</td><td>{{ event.action }}</td><td>{{ event.from_status|default('—') }} {{ ui_icon('arrow-right', 14) }} {{ event.to_status|default('—') }}</td><td><span class="admin-badge is-{{ event.result == 'success' ? 'active' : (event.result == 'warning' ? 'staged' : 'quarantined') }}">{{ event.result }}</span></td><td>{% if event.message %}<details class="admin-cell-sub"><summary>{{ event.message|slice(0, 80) }}{{ event.message|length > 80 ? '…' : '' }}</summary><p>{{ event.message }}</p></details>{% else %}—{% endif %}</td></tr>{% else %}<tr><td colspan="7">{{ ui_text('admin.extensions.lifecycle.empty') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+{{ shell.end() }}

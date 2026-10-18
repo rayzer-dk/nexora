@@ -402,24 +402,46 @@ final readonly class ExtensionPackageManager
     }
 
     /** @return list<array<string,mixed>> */
-    public function lifecycle(int $limit = 100, ?string $code = null): array
+    public function lifecycle(int $limit = 100, ?string $code = null, ?string $action = null): array
     {
         $limit = max(1, min(500, $limit));
+        $where = [];
+        $params = [];
+        if ($code !== null && $code !== '') {
+            $where[] = 'code=?';
+            $params[] = $code;
+        }
+        if ($action !== null && $action !== '') {
+            $where[] = 'action=?';
+            $params[] = $action;
+        }
         try {
             if (!$this->connection->createSchemaManager()->tablesExist(['mc_extension_lifecycle_event'])) {
                 return [];
             }
-            if ($code !== null && $code !== '') {
-                return $this->connection->fetchAllAssociative(
-                    'SELECT id,installation_id,code,version,action,from_status,to_status,result,message,created_at FROM mc_extension_lifecycle_event WHERE code=? ORDER BY id DESC LIMIT ' . $limit,
-                    [$code]
-                );
-            }
             return $this->connection->fetchAllAssociative(
-                'SELECT id,installation_id,code,version,action,from_status,to_status,result,message,created_at FROM mc_extension_lifecycle_event ORDER BY id DESC LIMIT ' . $limit
+                'SELECT id,installation_id,code,version,action,from_status,to_status,result,message,created_at FROM mc_extension_lifecycle_event'
+                . ($where === [] ? '' : ' WHERE ' . implode(' AND ', $where)) . ' ORDER BY id DESC LIMIT ' . $limit,
+                $params
             );
         } catch (\Throwable) {
             return [];
+        }
+    }
+
+    /** @return array{codes:list<string>,actions:list<string>} values the journal can be filtered by */
+    public function lifecycleFilters(): array
+    {
+        try {
+            if (!$this->connection->createSchemaManager()->tablesExist(['mc_extension_lifecycle_event'])) {
+                return ['codes' => [], 'actions' => []];
+            }
+            return [
+                'codes' => array_map('strval', $this->connection->fetchFirstColumn('SELECT DISTINCT code FROM mc_extension_lifecycle_event ORDER BY code')),
+                'actions' => array_map('strval', $this->connection->fetchFirstColumn('SELECT DISTINCT action FROM mc_extension_lifecycle_event ORDER BY action')),
+            ];
+        } catch (\Throwable) {
+            return ['codes' => [], 'actions' => []];
         }
     }
 

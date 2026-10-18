@@ -67,6 +67,36 @@ final readonly class ExtensionMigrationRunner
     }
 
     /**
+     * Read-only: which declared migrations are recorded as applied; `changed` = the file no longer matches the recorded checksum.
+     *
+     * @param array<string,mixed> $manifest
+     * @return list<array{key:string,applied:bool,changed:bool}>
+     */
+    public function status(int $installationId, string $installPath, array $manifest): array
+    {
+        $recorded = [];
+        foreach ($this->connection->fetchAllAssociative('SELECT migration_key,checksum_sha256 FROM mc_extension_migration WHERE installation_id=?', [$installationId]) as $row) {
+            $recorded[(string) $row['migration_key']] = (string) $row['checksum_sha256'];
+        }
+        $status = [];
+        foreach ((array) ($manifest['migrations'] ?? []) as $relative) {
+            if (!is_string($relative) || $relative === '') {
+                continue;
+            }
+            $key = str_replace('\\', '/', $relative);
+            $changed = false;
+            if (isset($recorded[$key])) {
+                $file = realpath($installPath . '/' . $key);
+                $checksum = $file !== false ? hash_file('sha256', $file) : false;
+                $changed = !is_string($checksum) || !hash_equals($recorded[$key], $checksum);
+            }
+            $status[] = ['key' => $key, 'applied' => isset($recorded[$key]), 'changed' => $changed];
+        }
+
+        return $status;
+    }
+
+    /**
      * Compensates only migrations newly applied during a failed activation.
      *
      * @param array<string,mixed> $manifest
