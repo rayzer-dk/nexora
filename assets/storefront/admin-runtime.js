@@ -1703,25 +1703,6 @@ function initSeoFields() {
 }
 
 // Builder: the real preview frame takes the width of the chosen device.
-function initRealPreview() {
-  const box = q('[data-real-preview]');
-  const frame = box ? q('iframe', box) : null;
-  if (!box || !frame) return;
-  qa('[data-real-width]').forEach((button) => button.addEventListener('click', () => {
-    qa('[data-real-width]').forEach((other) => other.classList.toggle('is-active', other === button));
-    frame.style.width = button.dataset.realWidth || '100%';
-  }));
-  frame.addEventListener('load', () => {
-    try {
-      const style = frame.contentDocument.createElement('style');
-      style.textContent = '.mc-consent,.consent-fab,.cw,[data-support-chat],.support-chat{display:none!important}';
-      frame.contentDocument.head.appendChild(style);
-    } catch (_error) {
-      // A frame we cannot reach keeps the plain page.
-    }
-  });
-}
-
 function initCommandPalette() {
   const palette = q('[data-command-palette]');
   const input = q('[data-command-input]', palette || document);
@@ -2720,7 +2701,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initCommandPalette();
   initQuickLinkForm();
   initSeoFields();
-  initRealPreview();
   initCategoryTree();
   initAutoSubmit();
   initRowLinks();

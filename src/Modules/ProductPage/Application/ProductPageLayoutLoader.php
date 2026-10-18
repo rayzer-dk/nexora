@@ -12,9 +12,8 @@ use Commerce\Modules\ProductPage\Domain\ProductPageLayout;
 /**
  * Storefront product-layout loader.
  *
- * Published Builder revisions have priority. If a revision is missing or invalid,
- * the shipped config/product_page/default_layout.json remains the safe fallback.
- * Draft revisions never affect the storefront.
+ * Published Builder revisions have priority (the draft only under the builder's signed preview link). If a revision
+ * is missing or invalid, the shipped config/product_page/default_layout.json remains the safe fallback.
  */
 final readonly class ProductPageLayoutLoader
 {
@@ -50,7 +49,7 @@ final readonly class ProductPageLayoutLoader
     {
         if ($storeId > 0) {
             try {
-                $builder = $this->layoutRevisions->publishedOrNull($storeId, 'product');
+                $builder = $this->layoutRevisions->activeOrNull($storeId, 'product');
                 if (is_array($builder)) {
                     $layout = $this->fromBuilder($builder);
                     if ($layout !== null) {

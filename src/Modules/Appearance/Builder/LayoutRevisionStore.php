@@ -13,11 +13,17 @@ final readonly class LayoutRevisionStore
     {
     }
 
-    /** @return array<string,mixed> */
+    /** @return array<string,mixed> the layout a storefront request shows, else the built-in layout of the type */
     public function active(int $storeId, string $type): array
     {
+        return $this->activeOrNull($storeId, $type)
+            ?? match ($type) { 'product' => $this->safe->product(), 'checkout' => $this->safe->checkout(), 'category' => $this->safe->category(), 'cart' => $this->safe->cart(), default => $this->safe->storefront() };
+    }
+
+    /** @return array<string,mixed>|null the draft under a valid preview link of this store and type, else the published layout */
+    public function activeOrNull(int $storeId, string $type): ?array
+    {
         $this->assertType($type);
-        // A signed preview link shows the saved draft instead of the published layout (only for that page view).
         $token = (string) $this->requests?->getMainRequest()?->query->get('_layout_preview', '');
         if ($token !== '' && $this->preview?->valid($token, $storeId, $type) === true) {
             $draft = $this->draft($storeId, $type);
@@ -25,19 +31,9 @@ final readonly class LayoutRevisionStore
                 return $draft;
             }
         }
-        try {
-            $raw = $this->db->fetchOne('SELECT payload FROM mc_layout_revision WHERE store_id=? AND layout_type=? AND status=? ORDER BY id DESC LIMIT 1', [$storeId,$type,'published']);
-            if (is_string($raw) && $raw !== '') {
-                $data = json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
-                if (is_array($data)) {
-                    return $this->validator->validate($data, $type);
-                }
-            }
-        } catch (\Throwable) {
-        }
-        return match ($type) { 'product' => $this->safe->product(), 'checkout' => $this->safe->checkout(), 'category' => $this->safe->category(), 'cart' => $this->safe->cart(), default => $this->safe->storefront() };
-    }
 
+        return $this->publishedOrNull($storeId, $type);
+    }
 
     /** @return array<string,mixed>|null */
     public function publishedOrNull(int $storeId, string $type): ?array

@@ -11,6 +11,7 @@ use Commerce\Modules\Appearance\Builder\BuilderComponentCatalog;
 use Commerce\Modules\Appearance\Builder\LayoutRevisionStore;
 use Commerce\Modules\Appearance\Builder\LayoutSnippetStore;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -56,7 +57,6 @@ final class LayoutBuilderAdminController extends AbstractController
         $draft=$this->layouts->draft($context->storeId,$type);
         $layout=$draft ?? $this->layouts->active($context->storeId,$type);
         $missing=[]; foreach((array)($layout['blocks']??[]) as $block){if(is_array($block)&&($block['missing_extension']??false)===true)$missing[]=(string)($block['component']??'');}
-        $previewPath=$this->previewPath($type,$context->storeId,$context->locale);
         $components=$this->catalog->components($type);
         $fields=array_column($components,'fields','component');
         $extensionComponents=$this->extensions->blocksFor($type);
@@ -69,9 +69,30 @@ final class LayoutBuilderAdminController extends AbstractController
         return $this->render('@storefront/admin/appearance/builder.html.twig',[
             'builder_components'=>$components,'builder_fields'=>$fields,'builder_common_fields'=>$this->catalog->commonFields(),'builder_schema_errors'=>$schemaErrors,
             'builder_locales'=>array_map(static fn(array $tab): array => ['code'=>$tab['code'],'name'=>$tab['name']],$this->languages->tabs($context->storeId,$context->locale)),
-            'preview_url'=>$previewPath.(str_contains($previewPath,'?')?'&':'?').'_layout_preview='.rawurlencode($this->previewToken->issue($context->storeId,$type)),
+            'preview_url'=>$this->previewUrl($type,$context->storeId,$context->locale),
             'type'=>$type,'layout'=>$layout,'has_draft'=>$draft!==null,'revisions'=>$this->layouts->history($context->storeId,$type),'snippets'=>$this->snippets->all($context->storeId,$type),'extension_components'=>$extensionComponents,'missing_extension_components'=>array_values(array_unique(array_filter($missing))),
         ]);
+    }
+
+    /** Autosave of the builder: the draft is stored without leaving the page; a fresh preview link keeps the preview past the token lifetime. */
+    #[Route('/admin/appearance/builder/{type}/draft.json', name: 'admin_appearance_builder_draft_json', methods: ['POST'], requirements: ['type'=>'home|product|checkout|category|cart'])]
+    public function draftJson(Request $request, string $type): JsonResponse
+    {
+        $context = $this->contexts->resolve($request);
+        if (!$this->isCsrfTokenValid('layout_builder_' . $type, (string) $request->request->get('_csrf_token'))) {
+            return new JsonResponse(['ok' => false, 'error' => 'csrf', 'message' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.ai.http.aiadmincontroller.nediisnyi_token_bezpeky')], 403);
+        }
+        try {
+            $payload = json_decode((string) $request->request->get('layout_json', ''), true, 32, JSON_THROW_ON_ERROR);
+            if (!is_array($payload)) {
+                throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.4764b6f78cab'));
+            }
+            $version = $this->layouts->saveDraft($context->storeId, $type, $payload, $this->adminId());
+        } catch (\JsonException|\RuntimeException $e) {
+            return new JsonResponse(['ok' => false, 'error' => 'invalid', 'message' => $e->getMessage()], 422);
+        }
+
+        return new JsonResponse(['ok' => true, 'version' => $version, 'saved_at' => gmdate(DATE_ATOM), 'preview_url' => $this->previewUrl($type, $context->storeId, $context->locale)]);
     }
 
     #[Route('/admin/appearance/builder/{type}/rollback/{revisionId}', name: 'admin_appearance_builder_rollback', methods: ['POST'], requirements: ['type'=>'home|product|checkout|category|cart','revisionId'=>'\d+'])]
@@ -108,7 +129,14 @@ final class LayoutBuilderAdminController extends AbstractController
         return $user instanceof AdminUser ? $user->id : null;
     }
 
-    /** A real page of the storefront that uses this layout. */
+    /** A real page of the storefront that uses this layout, signed to show the draft. */
+    private function previewUrl(string $type, int $storeId, string $locale): string
+    {
+        $path = $this->previewPath($type, $storeId, $locale);
+
+        return $path . (str_contains($path, '?') ? '&' : '?') . '_layout_preview=' . rawurlencode($this->previewToken->issue($storeId, $type));
+    }
+
     private function previewPath(string $type, int $storeId, string $locale): string
     {
         $entity = match ($type) {'product' => 'product', 'category' => 'category', default => ''};

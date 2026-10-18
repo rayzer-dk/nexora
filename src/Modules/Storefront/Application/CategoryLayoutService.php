@@ -4,27 +4,29 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Storefront\Application;
 
+use Commerce\Core\Extension\ExtensionContributionRegistry;
 use Commerce\Modules\Appearance\Builder\LayoutRevisionStore;
 
 /**
  * Category page layout from the Category Builder: which sections show, on which devices, and in what order the
- * main column is stacked. Nothing published means the built-in layout, so a store never loses its product list.
+ * main column is stacked, with module blocks at their place in it (`extension:<id>` in `main`, the block in
+ * `extensions`). Nothing published means the built-in layout, so a store never loses its product list.
  */
 final readonly class CategoryLayoutService
 {
     private const MAIN = ['category_subcategories' => 'subcategories', 'category_toolbar' => 'toolbar', 'category_recommended' => 'recommended', 'category_grid' => 'grid'];
     private const SIDE = ['category_heading' => 'heading', 'category_filters' => 'filters', 'category_description' => 'description'];
 
-    public function __construct(private LayoutRevisionStore $layouts)
+    public function __construct(private LayoutRevisionStore $layouts, private ExtensionContributionRegistry $extensions)
     {
     }
 
-    /** @return array{main:list<string>,show:array<string,bool>,classes:array<string,string>,subcategories:array{layout:string,columns:int,show_image:bool,show_count:bool,limit:int,order:string}} */
+    /** @return array{main:list<string>,extensions:array<string,array<string,mixed>>,show:array<string,bool>,classes:array<string,string>,subcategories:array{layout:string,columns:int,show_image:bool,show_count:bool,limit:int,order:string}} */
     public function active(int $storeId): array
     {
-        $layout = $this->layouts->publishedOrNull($storeId, 'category');
-        $rows = is_array($layout) ? (array) ($layout['blocks'] ?? []) : [];
+        $rows = (array) ($this->layouts->active($storeId, 'category')['blocks'] ?? []);
         $main = [];
+        $extensions = [];
         $show = ['heading' => true, 'filters' => true, 'description' => true, 'toolbar' => true, 'recommended' => true, 'grid' => true, 'subcategories' => true];
         $subcategories = ['layout' => 'grid', 'columns' => 4, 'show_image' => true, 'show_count' => true, 'limit' => 24, 'order' => 'manual'];
         $classes = array_fill_keys(array_keys($show), '');
@@ -34,6 +36,11 @@ final readonly class CategoryLayoutService
                 continue;
             }
             $component = (string) ($row['component'] ?? '');
+            if (($row['enabled'] ?? true) !== false && $this->extensions->hasBuilderComponent($component, 'category')) {
+                $main[] = $name = 'extension:' . (string) ($row['id'] ?? '');
+                $extensions[$name] = $row;
+                continue;
+            }
             $name = self::MAIN[$component] ?? self::SIDE[$component] ?? null;
             if ($name === null || isset($seen[$name])) {
                 continue;
@@ -71,6 +78,6 @@ final readonly class CategoryLayoutService
             }
         }
 
-        return ['main' => $main, 'show' => $show, 'classes' => array_map('trim', $classes), 'subcategories' => $subcategories];
+        return ['main' => $main, 'extensions' => $extensions, 'show' => $show, 'classes' => array_map('trim', $classes), 'subcategories' => $subcategories];
     }
 }

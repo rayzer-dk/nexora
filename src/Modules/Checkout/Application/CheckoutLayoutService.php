@@ -20,7 +20,7 @@ final readonly class CheckoutLayoutService
     /** @return array{blocks:list<array<string,mixed>>,requirements:array<string,mixed>} */
     public function active(int $storeId): array
     {
-        $layout = $this->layouts->publishedOrNull($storeId, 'checkout') ?? $this->layouts->active($storeId, 'checkout');
+        $layout = $this->layouts->active($storeId, 'checkout');
         $blocks = [];
         $seen = [];
         foreach ((array) ($layout['blocks'] ?? []) as $index => $block) {
