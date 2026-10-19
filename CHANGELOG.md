@@ -1,6 +1,21 @@
 # Changelog
 
-## Unreleased
+## 4.0.1 — 2026-10-18
+
+Version 4.0.1 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. The section collects the fixes listed as "Unreleased" after 4.0.0 (the last items below) and the page builder build. Migrations Version20270101030000 (mc_layout_presence) and Version20270101040000 (mc_not_found_log.last_user_agent, is_bot) run on update. Modules declaring `^3.x || ^4.0` install without changes.
+
+- Page builder, block panel: built-in blocks and blocks from modules are edited with fields from the block description (text, number, list, colour, image, link, multilingual text); the server checks the values on save (link, number range, HEX colour, list option). Layouts saved by 4.0.0 keep every value.
+- Page builder, module blocks: blocks from modules are shown on the home page, category, cart, product and checkout, in their place in the layout.
+- Page builder, undo and preview: Undo / Redo (up to 100 steps); every edit saves the draft and refreshes the preview of the real page; category, cart, product and checkout show the draft only with a preview token, customers keep seeing the published version.
+- Page builder, two editors: saving and publishing compare the layout version; when someone else saved first, the editor sees who and when and chooses to reload or overwrite; an overwritten draft goes to the history. The builder shows who else has the same page open.
+- Page builder: after publishing, the builder no longer opens the older auto-saved draft (the edit looked lost); publishing moves that draft to the archive.
+- Landing page and forum use the storefront style. With the cart switched off, comparison, the sticky buy bar, related products and product blocks show no buy buttons and no availability.
+- Inquiries: "Found it cheaper" shows the product, the competitor link and price in the e-mail subject and the inquiry card.
+- Cache menu shows the size of the storefront filter cache and of the application cache and can recount it. The AI key can be shown; a saved key is marked.
+- 404 log stores the User-Agent and marks bots, with a filter people / bots; selected addresses get a redirect in one action without duplicates. The SEO template legend lists only the variables of the selected type.
+- Module log: installs and updates are filtered by module and action and exported to CSV without settings and secrets. A module diagnostics page shows compatibility, signature, permissions, migrations and recent events of the module.
+- Fixes from the check of this build: breadcrumbs on the store page, the auto-fix button on a narrow screen, the size of contact links in the header.
+- Internal: the market warehouse is chosen in one place (MarketStockLocation::locationId instead of six copies of the SQL); a test covers the transfer of module settings on update and their absence after rollback; the i18n hard-coded text check works on Windows.
 
 - AI batch translation: a job that needs more requests than are left today no longer holds up the smaller jobs of the batch, and the batch no longer switches between "running" and "limit" all day (it wakes up on a new day or when the limit is raised); "Retry failed" does nothing for a cancelled batch (the button is hidden); a name that reads the same in both languages is not sent again after the AI translated the product; two clicks on "Start" no longer queue every job twice (MySQL lock); the counts "for review" and the progress bars refresh without a reload. Glossary: saving keeps the fixed translations of languages that are switched off.
 - Extension settings: an update starts from the lower version whose settings were saved last (edits made after a rollback are no longer lost); a secret of a field the new version no longer has is not carried over, not given to the module and removed on the next save; a secret that cannot be decrypted (vault key replaced) no longer empties all settings of the module, only itself, with a log entry; TrustedExtensionContext::setting() reads one row.

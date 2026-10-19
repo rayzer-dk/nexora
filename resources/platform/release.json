@@ -1,6 +1,6 @@
 {
   "platform": "Nexora Commerce",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "channel": "production",
   "region_profile": "EU-UA",
   "extension_api": "2.0",
@@ -26,7 +26,7 @@
     "axe_core_playwright": "4.13.0"
   },
   "database_schema": "88",
-  "built_at": "2026-10-17",
+  "built_at": "2026-10-18",
   "capabilities": [
     "multistore",
     "multilanguage",
