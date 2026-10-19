@@ -41,7 +41,7 @@ final readonly class ExtensionDiagnostics
             [$installationId]
         );
         if (!is_array($row)) {
-            throw new DomainException('Extension installation not found.');
+            throw new DomainException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.extension_installation_not_found'));
         }
         try {
             $manifest = json_decode((string) $row['manifest_json'], true, 32, JSON_THROW_ON_ERROR);

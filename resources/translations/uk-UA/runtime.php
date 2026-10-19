@@ -1940,6 +1940,8 @@ return [
     'runtime.exception.demo_snapshot_missing' => 'Файл демонстраційного каталогу відсутній.',
     'runtime.exception.demo_snapshot_invalid' => 'Файл демонстраційного каталогу некоректний.',
     'runtime.exception.keygen_id_invalid' => 'Ідентифікатор ключа: 3–64 символи, малі літери, цифри, крапка, дефіс або підкреслення.',
+    'runtime.exception.extension_installation_not_found' => 'Встановлення модуля не знайдено.',
+    'runtime.exception.temp_stream_failed' => 'Не вдалося відкрити тимчасовий потік.',
     'runtime.exception.keygen_exists' => 'Файл ключа вже існує, перезапис заборонено: %s',
     'runtime.exception.keygen_write_failed' => 'Не вдалося записати файл секретного ключа: %s',
     'runtime.exception.mfa_already_enabled' => 'Двофакторну автентифікацію вже ввімкнено.',

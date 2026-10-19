@@ -50,7 +50,7 @@ final class ExtensionJournalAdminController extends AbstractController
         [$code, $action] = $this->filter($request, $this->extensions->lifecycleFilters());
         $handle = fopen('php://temp', 'r+');
         if ($handle === false) {
-            throw new \RuntimeException('Cannot open a temporary stream.');
+            throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.temp_stream_failed'));
         }
         fwrite($handle, "\xEF\xBB\xBF");
         fputcsv($handle, ['time', 'module', 'version', 'event', 'from_status', 'to_status', 'result', 'message'], ';', '"', '');
