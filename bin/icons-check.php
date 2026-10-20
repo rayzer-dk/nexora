@@ -11,7 +11,7 @@ $errors = [];
 $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
 foreach ($it as $file) {
     $path = $file->getPathname();
-    $rel = substr($path, strlen($root) + 1);
+    $rel = str_replace('\\', '/', substr($path, strlen($root) + 1));
     if (preg_match('#^(vendor|node_modules|var|public|\.git|tests|bonus)/#', $rel) || !preg_match('/\.(twig|php|js|ts|vue)$/', $rel) || $rel === 'assets/shared/lucide-icons.js') {
         continue;
     }

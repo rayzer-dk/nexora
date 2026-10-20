@@ -26,7 +26,7 @@ final class Version20270101030000 extends AbstractMigration
             KEY idx_layout_presence_seen (last_seen_at),
             CONSTRAINT fk_layout_presence_store FOREIGN KEY (store_id) REFERENCES mc_store(id) ON DELETE CASCADE,
             CONSTRAINT fk_layout_presence_admin FOREIGN KEY (admin_user_id) REFERENCES mc_admin_user(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
     }
 
     public function down(Schema $schema): void

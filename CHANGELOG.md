@@ -6,7 +6,9 @@
 - Mail: a MAILER_DSN the server cannot use (native://default with a sendmail_path that lacks -t or -bs, as in Laragon) no longer breaks the request or the notification worker; the message stays in the queue with the error and is retried.
 - Media: an AVIF size is queued only for a picture that exists, in the current generation, and while the queue holds fewer than 5000 jobs.
 - 404 log: an address that a person opened once is no longer switched back to "bots" by a later bot visit.
-- Database schema number is 89 (two migrations were added after 88); the migrations of 4.0.1 can be run again after a failed update.
+- Database schema number is 89 (three migrations were added after 88); the migrations of 4.0.1 can be run again after a failed update.
+- Builder presence table (mc_layout_presence) was created with the server default collation; a new migration converts it to utf8mb4_unicode_ci like every other table (the database hardening check failed on it).
+- Page builder: the "fix the fields" notice is built with DOM calls instead of insertAdjacentHTML (the XSS hardening check rejects that sink).
 - Icons: heart-handshake, bug and calculator added to the icon library; the GitHub icon on the support page is replaced by git-branch.
 - Tests: the crontab test accepts a Windows PHP path; the newsletter e2e test opens the home page, where the block is on by default.
 
