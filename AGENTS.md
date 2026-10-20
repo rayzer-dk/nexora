@@ -22,6 +22,10 @@ Never bypass CI gates, merge automatically or expose credentials.
 ## Source integrity and Quality Fixer
 Quality Fixer handles evidenced CI failures and regressions, invoking existing Source Guard, PHPStan, PHPCS, Deptrac, PHPUnit and scoped Rector checks. Check BOM, invisible and bidi controls, suspicious mixed-script identifiers, HTML-escaped executable operators, accidental Markdown fences and omitted-code placeholders. Avoid invented API calls, redundant guards, swallowed exceptions, duplicate code and pointless tests. Source files are UTF-8 without BOM; Excel-oriented CSV may optionally add BOM only at export. Never blanket-rewrite typographic quotes, dashes or Unicode within strings, translations, comments, Twig or documentation; token/context-aware analysis is mandatory. Automatically strip only confirmed leading BOM through the existing source guard; all other suspicious issues require source-aware review. Work directly in main after checking the latest state, validate adjacent dependencies, and never overwrite unrelated work. Stop when fixed or when a specific blocker is known.
 
+## Engineering agent team
+Roles live in `.claude/agents` (Claude Code), `.codex/agents` (Codex) and `.agents/agents`; skills in `.claude/skills`, `.codex/skills` and `.agents/skills`. Before any edit or delegation read `docs/CHANGE_NECESSITY.md` (default outcome is NO CHANGE) and `docs/NEXORA_STANDARD.md`; the process is in `docs/TEAM_PROCESS.md`. Source Guard is a project tool, not an agent: `tools/quality/source_guard.php`. The team's default "no push" rule does not apply to work the owner asked to be made in main and the GitHub copy (rayzer-dk/nexora); a release archive or a deploy still needs the owner's yes.
+In Claude Code `engineering-lead` coordinates only as the main agent (`claude --agent engineering-lead`): a subagent cannot start other subagents. Read-only roles (`code-quality-auditor`, `independent-reviewer`, `security-auditor`, `visual-designer`) have no Bash, so the lead gives them the diff as a file inside the repository to read.
+
 <!-- autopilot:start -->
 # Nexora Commerce
 
