@@ -6,7 +6,7 @@
 
 - **Стек:** PHP 8.4–8.5, Symfony 8.1, Twig SSR-витрина, адмінка на Vue 3.5 + TypeScript 6, Vite 8, MySQL 8.4 / MariaDB 10.11–11.4 (InnoDB, utf8mb4).
 - **Ліцензія:** MIT. Базовий self-hosted магазин не потребує платних компонентів.
-- **Extension API:** 2.0 (Settings Schema v2). Database schema: 52.
+- **Extension API:** 2.0 (Settings Schema v2). Database schema: 89.
 
 ## Можливості
 

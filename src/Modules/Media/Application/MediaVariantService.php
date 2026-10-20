@@ -24,6 +24,7 @@ final class MediaVariantService
     private const STEM = '[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*';
     private const ORIGINAL_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif'];
     private const MAX_PIXELS = 48000000;
+    private const QUEUE_LIMIT = 5000;
 
     /** @var array{format:string,quality:int,avif_quality:int,presets:array<string,int>,generation:int}|null */
     private ?array $profile = null;
@@ -209,11 +210,13 @@ final class MediaVariantService
     /**
      * Notes an AVIF size that a page asked for, to be made by the background job (commerce:media:warm) instead of during
      * the page request: AVIF takes several times longer to encode than WebP. The queue is one small file per size under
-     * var/media-queue; a size asked for many times is queued once.
+     * var/media-queue; a size asked for many times is queued once, only for a picture that exists and while the queue holds
+ * fewer than QUEUE_LIMIT jobs, so an address nobody uses cannot fill the disk.
      */
     public function queue(string $key): void
     {
-        if ($this->parse($key) === null) {
+        $parsed = $this->parse($key);
+        if ($parsed === null || $parsed['gen'] !== $this->profile()['generation'] || $this->findOriginal($parsed['stem']) === null || $this->queueLength() >= self::QUEUE_LIMIT) {
             return;
         }
         $dir = $this->queueDir();

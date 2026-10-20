@@ -37,9 +37,9 @@ Quality Fixer handles evidenced CI failures and regressions, invoking existing S
 | `composer deptrac` · `composer rector:check` | Отчёты (advisory): Deptrac по `deptrac.yaml`, Rector только `--dry-run` |
 | `tools/quality.ps1 -Task analyse` | Те же команды на Windows, включая Laragon без PHP/Composer в PATH |
 | `php bin/console commerce:install --demo …` | Установить магазин с демо-данными (см. `docs/INSTALLATION.md`) |
-| `php -S 127.0.0.1:8000 -t public public/index.php` | Запустить локально |
+| `php -S 127.0.0.1:8000 -t public tests/e2e/router.php` | Запустить локально и для e2e: роутер сам отдаёт статику (`public/build`), с `public/index.php` скрипты получают `text/html` и e2e падают |
 | `npm run build:production` | Собрать фронтенд в `public/build` (не в git) |
-| `php vendor/bin/phpunit` | Юнит-тесты (3 падения на Windows — окружение: WebPush OpenSSL, путь crontab) |
+| `php vendor/bin/phpunit` | Юнит-тесты. На Windows с Laragon задайте `OPENSSL_CONF` на `extras/ssl/openssl.cnf` каталога PHP, иначе два теста WebPush не создают ключ |
 | `npm run typecheck` · `npx eslint assets` | Типы и линтер фронтенда |
 | `npx playwright test` (`E2E_BASE_URL`, `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`) | E2E |
 | `php bin/full-release-static-check.php`, `php bin/i18n-template-check.php` | Статические проверки релиза |

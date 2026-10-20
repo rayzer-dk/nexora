@@ -22,12 +22,16 @@ test('newsletter sign-up and "add to comparison" answer with a toast and never r
   expect(page.url()).toBe(url);
   expect(await kept(page)).toBe(true);
 
+  // The newsletter block is off on the catalogue by default, so it is checked on the home page.
+  await page.goto('/', { waitUntil: 'load' });
+  const homeUrl = page.url();
+  await keep(page);
   const email = page.locator('.newsletter-signup__form input[type="email"]').first();
   await email.scrollIntoViewIfNeeded();
   await email.fill(`ajax-${Date.now()}@e2e.test`);
   await page.waitForTimeout(1500); // the spam guard refuses a form sent within a second of rendering
   await page.locator('.newsletter-signup__form button[type="submit"]').first().click();
   await expect(email).toHaveValue('');
-  expect(page.url()).toBe(url);
+  expect(page.url()).toBe(homeUrl);
   expect(await kept(page)).toBe(true);
 });

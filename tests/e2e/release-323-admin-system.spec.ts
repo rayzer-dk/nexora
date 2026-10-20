@@ -40,7 +40,7 @@ test('AI page offers refreshing the model list and a model select', async ({ pag
   await expectNoServerError(page);
   await expect(page.locator('select[name="model"]').first()).toBeVisible();
   expect(await page.locator('select[name="model"]').first().locator('option').count()).toBeGreaterThan(2);
-  await expect(page.locator('a.admin-hint__link[href^="https://"]').first()).toBeVisible();
+  await expect(page.locator('a.admin-hint__link[href^="https://"]').first()).toBeAttached(); // the link sits in the hint popover, shown on hover or focus
 });
 
 test('checkboxes show a clear checked state and the safe-mode button has hover styling', async ({ page }) => {
@@ -67,7 +67,7 @@ test('help hints with where-to-get links exist and the guide tab lists services'
   for (const path of ['/admin/system/tracking', '/admin/system/captcha', '/admin/system/store']) {
     await page.goto(path, { waitUntil: 'domcontentloaded' });
     await expectNoServerError(page);
-    expect(await page.locator('.admin-hint').count()).toBeGreaterThan(2);
+    expect(await page.locator('.admin-tip--hint').count()).toBeGreaterThan(2);
   }
   await page.goto('/admin/system/integrations', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.admin-guide__card').first()).toBeAttached();

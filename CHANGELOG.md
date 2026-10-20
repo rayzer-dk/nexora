@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- IndexNow: the "New key" button makes a new key (the old key file stops opening); a shop that never pressed it keeps its current key.
+- Mail: a MAILER_DSN the server cannot use (native://default with a sendmail_path that lacks -t or -bs, as in Laragon) no longer breaks the request or the notification worker; the message stays in the queue with the error and is retried.
+- Media: an AVIF size is queued only for a picture that exists, in the current generation, and while the queue holds fewer than 5000 jobs.
+- 404 log: an address that a person opened once is no longer switched back to "bots" by a later bot visit.
+- Database schema number is 89 (two migrations were added after 88); the migrations of 4.0.1 can be run again after a failed update.
+- Icons: heart-handshake, bug and calculator added to the icon library; the GitHub icon on the support page is replaced by git-branch.
+- Tests: the crontab test accepts a Windows PHP path; the newsletter e2e test opens the home page, where the block is on by default.
+
 ## 4.0.1 — 2026-10-18
 
 Version 4.0.1 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. The section collects the fixes listed as "Unreleased" after 4.0.0 (the last items below) and the page builder build. Migrations Version20270101030000 (mc_layout_presence) and Version20270101040000 (mc_not_found_log.last_user_agent, is_bot) run on update. Modules declaring `^3.x || ^4.0` install without changes.

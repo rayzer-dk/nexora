@@ -428,10 +428,6 @@ services:
     Commerce\Modules\Shipping\Console\ClearShippingCacheCommand:
         arguments:
             $shippingCache: '@cache.shipping'
-    Commerce\Modules\Notification\Channel\Email\RuntimeMailer:
-        arguments:
-            $fallback: '@mailer.mailer'
-
     Commerce\Modules\Notification\Channel\Email\EmailNotificationSender:
         arguments:
             $mailer: '@Commerce\Modules\Notification\Channel\Email\RuntimeMailer'

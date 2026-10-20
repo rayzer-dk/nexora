@@ -6,6 +6,7 @@ namespace Commerce\Tests\Unit;
 
 use Commerce\Modules\Appearance\Infrastructure\ContactWidgetSettings;
 use Commerce\Modules\Seo\Application\IndexNowService;
+use Commerce\Tests\Unit\Support\ArraySystemSettingStore;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -69,5 +70,22 @@ final class EngagementToolsTest extends TestCase
         foreach (['http://shop.example.com', 'https://localhost', 'https://127.0.0.1', 'https://shop.local'] as $url) {
             self::assertFalse((new IndexNowService($this->db, new MockHttpClient(), $url, 's'))->usable(), $url);
         }
+    }
+
+    public function testNewKeyReplacesTheOldOneAndSurvivesARestart(): void
+    {
+        $store = new ArraySystemSettingStore();
+        $service = new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a', $store);
+        $first = $service->key();
+        self::assertSame($first, (new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a'))->key(), 'a shop that never rotated keeps its registered key');
+
+        self::assertTrue($service->rotateKey());
+        $second = $service->key();
+        self::assertMatchesRegularExpression('/^[a-f0-9]{32}$/', $second);
+        self::assertNotSame($first, $second);
+        self::assertSame($second, (new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a', $store))->key());
+
+        $service->rotateKey();
+        self::assertNotSame($second, $service->key());
     }
 }

@@ -860,6 +860,7 @@ a.admin-chip:hover { background: var(--mc-color-surface); text-decoration: none;
   flex-wrap: wrap;
   gap: var(--mc-space-2);
 }
+.admin-form-actions.is-start { justify-content: flex-start; margin-top: var(--mc-space-4); }
 .admin-form-actions.is-sticky {
   position: sticky;
   bottom: var(--mc-space-4);

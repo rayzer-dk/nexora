@@ -66,6 +66,8 @@ test('delivery countries and regions can be activated selectively', async ({ pag
   await page.goto('/admin/shipments/countries?country=UA', { waitUntil: 'domcontentloaded' });
   await page.locator('[data-shipping-regions] button[name="action"][value="import"]').click();
   await expect(page.locator('[data-shipping-regions] tbody tr')).toHaveCount(26);
+  // The cleanup at the end of this test leaves every region off, so a rerun starts by switching them all on.
+  for (const box of await page.locator('[data-shipping-regions] input[name="enabled[]"]').all()) await box.check();
   await page.locator('[data-shipping-regions] input[name="enabled[]"]').first().uncheck();
   await page.locator('[data-shipping-regions] form:has(input[value="save"]) button[type="submit"]').last().click();
   await expect(page.locator('[data-shipping-regions] input[name="enabled[]"]').first()).not.toBeChecked();

@@ -128,6 +128,18 @@ final class MediaVariantServiceTest extends TestCase
         self::assertNull($s->ensure('cache/card-g3/phones/apple/f00.webp'));
     }
 
+    public function testOnlyAnExistingPictureOfTheCurrentGenerationIsQueued(): void
+    {
+        $this->original('phones/apple/f00', 1000, 1000);
+        $s = $this->service(2);
+        $s->queue('cache/card-g2/phones/apple/none.avif');
+        $s->queue('cache/card-g1/phones/apple/f00.avif');
+        self::assertSame(0, $s->queueLength());
+        $s->queue('cache/card-g2/phones/apple/f00.avif');
+        $s->queue('cache/card-g2/phones/apple/f00.avif');
+        self::assertSame(1, $s->queueLength());
+    }
+
     public function testCleanupRemovesOnlyOutdatedCacheAndNeverOriginals(): void
     {
         $media = $this->dir . '/public/media';

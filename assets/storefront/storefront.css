@@ -181,6 +181,7 @@ select, textarea {
 }
 textarea { height: auto; min-height: calc(var(--mc-control-height-lg) * 2); padding: var(--mc-space-3); resize: vertical; }
 select { padding-right: var(--mc-space-8); }
+@media (max-width: 767px) { input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="hidden"], [type="submit"], [type="button"]), select, textarea { font-size: var(--mc-font-size-base); } }
 input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mc-color-muted) 75%, transparent); }
 input:not([type="checkbox"], [type="radio"], [type="file"]):hover, select:hover, textarea:hover { border-color: var(--mc-color-muted); }
 input:focus, select:focus, textarea:focus { outline: 0; border-color: var(--mc-color-primary); box-shadow: 0 0 0 3px var(--mc-color-focus); }

@@ -5,24 +5,27 @@ declare(strict_types=1);
 namespace Commerce\Modules\Seo\Application;
 
 use Commerce\Modules\Seo\Http\SitemapController;
+use Commerce\Core\Configuration\SystemSettingStore;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * IndexNow: tells Bing, Yandex, Seznam and other participating engines about new and changed URLs right away
- * instead of waiting for a crawl. The key is derived from the application secret and the host, so there is
- * nothing to store or leak; ownership is proven by serving the key at /{key}.txt.
+ * instead of waiting for a crawl. The key is derived from the application secret, the host and a rotation counter, so
+ * there is no key to store or leak; ownership is proven by serving the key at /{key}.txt.
  */
 final readonly class IndexNowService
 {
     private const ENDPOINT = 'https://api.indexnow.org/IndexNow';
     private const BATCH = 5000;
+    private const ROTATION_SETTING = 'indexnow.key_rotation';
 
     public function __construct(
         private Connection $db,
         private HttpClientInterface $http,
         private string $publicBaseUrl,
         private string $secret,
+        private ?SystemSettingStore $settings = null,
     ) {
     }
 
@@ -33,7 +36,20 @@ final readonly class IndexNowService
 
     public function key(): string
     {
-        return substr(hash_hmac('sha256', 'indexnow:' . $this->host(), $this->secret), 0, 32);
+        $rotation = $this->rotation();
+
+        return substr(hash_hmac('sha256', 'indexnow:' . $this->host() . ($rotation > 0 ? ':' . $rotation : ''), $this->secret), 0, 32);
+    }
+
+    /** Makes a new key; the old key file stops opening, so the next submission registers the new one. */
+    public function rotateKey(): bool
+    {
+        return $this->settings?->setString(self::ROTATION_SETTING, (string) ($this->rotation() + 1)) ?? false;
+    }
+
+    private function rotation(): int
+    {
+        return max(0, (int) $this->settings?->getString(self::ROTATION_SETTING));
     }
 
     public function keyLocation(): string

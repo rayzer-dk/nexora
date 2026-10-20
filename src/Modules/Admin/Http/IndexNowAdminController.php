@@ -38,7 +38,10 @@ final class IndexNowAdminController extends AbstractController
         if (!$this->isCsrfTokenValid('admin_indexnow', (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException(CanonicalUiText::get('common.security.invalid_csrf'));
         }
-        if ($request->request->get('action') === 'submit_all') {
+        if ($request->request->get('action') === 'new_key') {
+            $rotated = $this->indexNow->rotateKey();
+            $this->addFlash($rotated ? 'success' : 'error', CanonicalUiText::get($rotated ? 'admin.indexnow.key_rotated' : 'admin.indexnow.key_rotate_failed'));
+        } elseif ($request->request->get('action') === 'submit_all') {
             $result = $this->indexNow->submit($context->storeId, true);
             $this->addFlash($result['ok'] ? 'success' : 'error', CanonicalUiText::get($result['ok'] ? 'admin.indexnow.sent' : 'admin.indexnow.failed') . ' ' . $result['count'] . ' · ' . $result['status']);
             if (!$result['ok'] && in_array($result['status'], ['http_403', 'http_422', 'http_400'], true)) {

@@ -16,7 +16,7 @@ final class Version20270101030000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('CREATE TABLE mc_layout_presence (
+        $this->addSql('CREATE TABLE IF NOT EXISTS mc_layout_presence (
             store_id BIGINT UNSIGNED NOT NULL,
             layout_type VARCHAR(32) NOT NULL,
             admin_user_id BIGINT UNSIGNED NOT NULL,
@@ -31,6 +31,6 @@ final class Version20270101030000 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        $this->addSql('DROP TABLE mc_layout_presence');
+        $this->addSql('DROP TABLE IF EXISTS mc_layout_presence');
     }
 }

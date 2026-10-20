@@ -18,7 +18,7 @@ final class CronSchedulerTest extends TestCase
         self::assertStringStartsWith('*/5 * * * * ', $line);
         self::assertStringEndsWith(' >/dev/null 2>&1', $line);
         self::assertStringContainsString("'/var/www/my shop/bin/console' commerce:cron:run", $line);
-        self::assertMatchesRegularExpression('#^\*/5 \* \* \* \* /\S+/php\S* #', $line);
+        self::assertMatchesRegularExpression('#^\*/5 \* \* \* \* \'?(?:/|[A-Za-z]:\\\\)\S*php\S* #', $line);
         self::assertStringNotContainsString('fpm', $hint->phpBinary());
     }
 

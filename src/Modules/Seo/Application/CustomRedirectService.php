@@ -184,7 +184,7 @@ final class CustomRedirectService
             return;
         }
         $this->db->executeStatement(
-            'INSERT INTO mc_not_found_log (path_hash,path,hit_count,referer,last_user_agent,is_bot,first_seen_at,last_seen_at) VALUES (?,?,1,?,?,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE hit_count=hit_count+1,last_seen_at=UTC_TIMESTAMP(6),referer=COALESCE(VALUES(referer),referer),last_user_agent=VALUES(last_user_agent),is_bot=VALUES(is_bot)',
+            'INSERT INTO mc_not_found_log (path_hash,path,hit_count,referer,last_user_agent,is_bot,first_seen_at,last_seen_at) VALUES (?,?,1,?,?,?,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE hit_count=hit_count+1,last_seen_at=UTC_TIMESTAMP(6),referer=COALESCE(VALUES(referer),referer),last_user_agent=VALUES(last_user_agent),is_bot=LEAST(is_bot,VALUES(is_bot))',
             [sha1($path), $path, $referer !== null && $referer !== '' ? mb_substr($referer, 0, 500) : null, $userAgent !== '' ? mb_substr($userAgent, 0, 255) : null, self::isBotUserAgent($userAgent) ? 1 : 0],
         );
         if (random_int(1, 200) === 1) {

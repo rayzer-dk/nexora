@@ -64,11 +64,10 @@ final class VipsImageEncoder
             return false;
         }
         $options = match ($ext) {
-            'avif' => 'Q=' . $quality . ',effort=4,strip',
-            'webp' => 'Q=' . $quality . ',effort=4,strip',
+            'avif', 'webp' => 'Q=' . $quality . ',effort=4,strip',
             default => 'Q=' . $quality . ',strip,background=255',
         };
-        // vips picks the saver from the file extension of the output; a temporary name keeps the real extension last.
+        // vips picks the saver from the file extension of the output.
         $process = new Process([$this->tool(), 'thumbnail', $source, $target . '[' . $options . ']', (string) $width, '--size', 'down']);
         $process->setTimeout(self::TIMEOUT);
         try {
