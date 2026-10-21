@@ -14,6 +14,8 @@
 .lp-btn:hover { transform: translateY(-1px); text-decoration: none; }
 .lp-btn--primary { background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); box-shadow: 0 8px 22px color-mix(in srgb, var(--mc-color-primary-fill) 38%, transparent); }
 .lp-btn--ghost { border-color: var(--mc-color-border-strong); background: transparent; color: var(--mc-color-text); }
+.lp-header__tools .store-switcher__button { color: inherit; }
+.lp-header__tools .store-switcher__button:hover, .lp-header__tools .store-switcher[open] > .store-switcher__button { background: var(--mc-color-surface-subtle); }
 .lp-header__tools .lp-btn { display: none; }
 .lp-brand { min-width: 0; white-space: nowrap; }
 .lp-btn--sm { min-height: 40px; padding: 0 var(--mc-space-4); font-size: var(--mc-font-size-sm); }

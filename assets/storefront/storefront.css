@@ -159,7 +159,7 @@ main:has(> .checkout-page) { padding-top: 0; padding-bottom: 0; }
 .button--link:hover { text-decoration: underline; }
 .button--link.button--danger { color: var(--mc-color-danger); }
 .button--sm { height: var(--mc-control-height-sm); padding-inline: var(--mc-space-3); }
-.button--link.button--sm { height: auto; padding: 0; }
+.button--link.button--sm { height: auto; min-height: 32px; padding: 0; }
 .button--lg { height: var(--mc-control-height-lg); padding-inline: var(--mc-space-6); font-size: var(--mc-font-size-base); }
 .button--icon { width: var(--mc-control-height-md); padding: 0; }
 .button--icon.button--sm { width: var(--mc-control-height-sm); }

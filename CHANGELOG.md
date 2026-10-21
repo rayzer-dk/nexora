@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Landing page: the language and currency switchers are readable in the light theme (they were white on white).
+- Cart: the "Remove" link button is at least 32 px high.
+- 404 log: the "people" filter no longer lists old rows written before the User-Agent was stored; they show under "all". A phone brand "Cubot" is no longer taken for a bot.
+- Page builder links: `tel:` values may contain plain spaces (`tel:+380 44 123 45 67`).
+- Product blocks: the data-source value of "custom text" and "info card" blocks is read in one place.
+- Module settings: reading one value and reading all values share the same default rule.
+- Forum and landing styles: the layered overrides are merged into the base rules; the computed styles of the live pages did not change.
+- Tests: one `loginAdmin` helper for the browser tests instead of 84 copies; reflection set-up moved into test factories; AVIF checks are separate tests that are skipped visibly when PHP cannot write AVIF.
+
 ## 4.0.2 — 2026-10-21
 
 Fixes after 4.0.1: IndexNow new key, e-mail that does not break a request when the server cannot send, migrations that run on a clean database and can be run again, database schema number 89, and the findings of the code, security and correctness review. Version 4.0.2 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. Migration Version20270101050000 runs on update.
