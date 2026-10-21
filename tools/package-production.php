@@ -91,10 +91,10 @@ function removeTree(string $path): void
 function excluded(string $relative, bool $isDir): bool
 {
     $top = explode('/', $relative, 2)[0];
-    if (in_array($top, ['.git', '.build-tools', 'node_modules', 'build', 'tests', '.github', '.devcontainer', '.claude', '.autopilot', 'vendor'], true)) {
+    if (in_array($top, ['.git', '.build-tools', 'node_modules', 'build', 'tests', '.github', '.devcontainer', '.claude', '.agents', '.codex', '.autopilot', 'vendor'], true)) {
         return true; // vendor/ is copied separately and reinstalled without dev packages
     }
-    if (in_array($relative, ['phpunit.xml.dist', 'pw.local.config.ts', 'playwright.local.config.ts', 'SHA256SUMS.txt', 'release-manifest.json'], true)) {
+    if (in_array($relative, ['phpunit.xml.dist', 'pw.local.config.ts', 'playwright.local.config.ts', 'SHA256SUMS.txt', 'release-manifest.json', 'docs/CHANGE_NECESSITY.md', 'docs/CODECART_STANDARD.md', 'docs/NEXORA_STANDARD.md', 'docs/TEAM_PROCESS.md'], true)) {
         return true; // SHA256SUMS.txt and release-manifest.json are written fresh for the package
     }
     if (!str_contains($relative, '/') && str_starts_with($relative, '.env') && $relative !== '.env.example') {
@@ -213,7 +213,7 @@ function localSecrets(string $root): array
 function leakCheck(string $stage, string $root): array
 {
     $problems = [];
-    foreach (['.git', '.claude', '.autopilot', 'tests', 'node_modules', '.github', 'build'] as $dir) {
+    foreach (['.git', '.claude', '.agents', '.codex', '.autopilot', 'tests', 'node_modules', '.github', 'build'] as $dir) {
         if (file_exists($stage . '/' . $dir)) {
             $problems[] = $dir . '/ is in the package';
         }
