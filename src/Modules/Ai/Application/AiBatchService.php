@@ -753,7 +753,7 @@ final class AiBatchService
     {
         $options = json_decode((string) $this->db->fetchOne('SELECT options_json FROM mc_ai_batch WHERE id=?', [$batchId]), true) ?: [];
         $options['limit_mark'] = ['used' => $this->settings->usedToday($storeId), 'limit' => $this->settings->dailyLimit($storeId)];
-        $this->db->update('mc_ai_batch', ['status' => 'limit', 'options_json' => json_encode($options, JSON_THROW_ON_ERROR), 'updated_at' => gmdate('Y-m-d H:i:s.u')], ['id' => $batchId]);
+        $this->db->update('mc_ai_batch', ['status' => 'limit', 'options_json' => json_encode($options, JSON_THROW_ON_ERROR), 'updated_at' => gmdate('Y-m-d H:i:s.u')], ['id' => $batchId, 'status' => 'running']);
     }
 
     private function finishBatches(?int $storeId): void

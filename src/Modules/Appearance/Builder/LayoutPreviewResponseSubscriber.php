@@ -17,6 +17,7 @@ final class LayoutPreviewResponseSubscriber
         if ($event->isMainRequest() && $event->getRequest()->query->has('_layout_preview')) {
             $event->getResponse()->headers->set('Cache-Control', 'no-store, private');
             $event->getResponse()->headers->set('X-Robots-Tag', 'noindex, nofollow');
+            $event->getResponse()->headers->set('Referrer-Policy', 'same-origin');
         }
     }
 }

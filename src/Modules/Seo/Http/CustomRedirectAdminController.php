@@ -59,7 +59,7 @@ final class CustomRedirectAdminController extends AbstractController
     {
         $this->guard($request);
         try {
-            $r = $this->redirects->addForNotFound(array_map('intval', $request->request->all('ids')), (string) $request->request->get('target', ''), $request->request->getInt('status_code', 301));
+            $r = $this->redirects->addForNotFound(array_map('intval', array_filter($request->request->all('ids'), 'is_scalar')), (string) $request->request->get('target', ''), $request->request->getInt('status_code', 301));
             $this->addFlash($r['added'] > 0 ? 'success' : 'warning', CanonicalUiText::get('admin.redirects.bulk_done', ['added' => (string) $r['added'], 'skipped' => (string) $r['skipped']]));
         } catch (\DomainException $e) {
             $this->addFlash('error', $e->getMessage());

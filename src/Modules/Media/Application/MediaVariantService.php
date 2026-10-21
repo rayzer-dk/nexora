@@ -215,18 +215,19 @@ final class MediaVariantService
      */
     public function queue(string $key): void
     {
+        $dir = $this->queueDir();
+        $file = $dir . '/' . sha1($key) . '.job';
+        if (is_file($file)) {
+            return;
+        }
         $parsed = $this->parse($key);
         if ($parsed === null || $parsed['gen'] !== $this->profile()['generation'] || $this->findOriginal($parsed['stem']) === null || $this->queueLength() >= self::QUEUE_LIMIT) {
             return;
         }
-        $dir = $this->queueDir();
         if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
             return;
         }
-        $file = $dir . '/' . sha1($key) . '.job';
-        if (!is_file($file)) {
-            @file_put_contents($file, $key, LOCK_EX);
-        }
+        @file_put_contents($file, $key, LOCK_EX);
     }
 
     /** Makes the queued sizes, oldest first, until the deadline. @return int sizes made */

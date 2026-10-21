@@ -12,7 +12,7 @@ use Symfony\Component\Process\Process;
  *
  * libvips reads only the part of the picture it needs, so a size is made with less memory and time than with GD, and it
  * writes AVIF even where the PHP build has no imageavif(). The tool is looked up once per hour (var/media-engine.json),
- * so a page request never starts "vips --version". MEDIA_IMAGE_ENGINE=gd switches libvips off; MEDIA_VIPS_BINARY is the
+ * so a request starts "vips --version" at most once an hour, or on every request when var/ cannot be written. MEDIA_IMAGE_ENGINE=gd switches libvips off; MEDIA_VIPS_BINARY is the
  * path of the tool when it is not on PATH. Any failure of the tool returns false and the caller uses GD.
  */
 final class VipsImageEncoder
