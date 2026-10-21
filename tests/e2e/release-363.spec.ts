@@ -211,7 +211,7 @@ test('the layout builder shows the real draft in a preview frame', async ({ page
   await loginAdmin(page);
   await page.goto('/admin/appearance/builder/home', { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const frame = page.locator('.mc-real-preview iframe');
+  const frame = page.locator('[data-real-preview] iframe');
   await expect(frame).toBeAttached();
   const src = (await frame.getAttribute('src')) ?? (await frame.getAttribute('data-src')) ?? '';
   expect(src).toContain('_layout_preview=');

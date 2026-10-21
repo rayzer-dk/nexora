@@ -87,9 +87,9 @@ final readonly class ExtensionDiagnostics
             return ['state' => 'none', 'fields' => 0, 'message' => ''];
         }
         $relative = str_replace('\\', '/', (string) $manifest['settings_schema']);
-        $file = $relative === '' || str_starts_with($relative, '/') || preg_match('#(^|/)\.\.(?:/|$)#', $relative) === 1
-            ? false
-            : rtrim($installPath, '/\\') . '/' . $relative;
+        $file = ExtensionSettingsManager::isSafeRelativePath($relative)
+            ? rtrim($installPath, '/\\') . '/' . $relative
+            : false;
         if ($file === false || !is_file($file)) {
             return ['state' => 'error', 'fields' => 0, 'message' => $relative];
         }

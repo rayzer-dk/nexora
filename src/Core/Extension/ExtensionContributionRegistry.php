@@ -149,7 +149,7 @@ final class ExtensionContributionRegistry
     {
         $relative = str_replace('\\', '/', $relative);
         $path = rtrim($installPath, '/\\') . '/' . $relative;
-        if ($relative === '' || str_starts_with($relative, '/') || preg_match('#(^|/)\.\.(?:/|$)#', $relative) === 1 || !is_file($path)) {
+        if (!ExtensionSettingsManager::isSafeRelativePath($relative) || !is_file($path)) {
             throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.a16cf4d39720') . ' ' . $relative);
         }
 

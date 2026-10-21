@@ -37,17 +37,33 @@ test('404 log separates people from bots and creates redirects in one action; SE
   await expect(notFound.locator('tbody tr', { hasText: humanPaths[0] })).toHaveCount(1);
   await expect(notFound.locator('tbody tr', { hasText: botPath })).toHaveCount(0);
 
-  for (const path of humanPaths) {
-    await notFound.locator('tbody tr', { hasText: path }).locator('input[name="ids[]"]').check();
-  }
-  await notFound.locator('#nf-bulk input[name="target"]').fill('/');
-  await notFound.locator('#nf-bulk button[type="submit"]').click();
-  await page.locator('[data-confirm-accept]').click();
-  await page.waitForLoadState('domcontentloaded');
-  await expectNoServerError(page);
-  for (const path of humanPaths) {
-    const r = await request.get(path, { maxRedirects: 0, headers: { 'user-agent': human } });
-    expect(r.status()).toBe(301);
+  const removeRedirects = async () => {
+    await page.goto(`/admin/system/seo-custom-redirects?search=e2e-old-human-`, { waitUntil: 'domcontentloaded' });
+    const ownTab = page.getByRole('tab').first();
+    if (await ownTab.count()) await ownTab.click();
+    const rows = page.locator('[data-tab="own"] tbody tr', { hasText: `-${stamp}` });
+    for (let i = 0; i < humanPaths.length && (await rows.count()) > 0; i++) {
+      await rows.first().locator('form[action$="/delete"] button[type="submit"]').click();
+      await page.locator('[data-confirm-accept]').click();
+      await page.waitForLoadState('domcontentloaded');
+    }
+  };
+
+  try {
+    for (const path of humanPaths) {
+      await notFound.locator('tbody tr', { hasText: path }).locator('input[name="ids[]"]').check();
+    }
+    await notFound.locator('#nf-bulk input[name="target"]').fill('/');
+    await notFound.locator('#nf-bulk button[type="submit"]').click();
+    await page.locator('[data-confirm-accept]').click();
+    await page.waitForLoadState('domcontentloaded');
+    await expectNoServerError(page);
+    for (const path of humanPaths) {
+      const r = await request.get(path, { maxRedirects: 0, headers: { 'user-agent': human } });
+      expect(r.status()).toBe(301);
+    }
+  } finally {
+    await removeRedirects();
   }
 
   await page.goto('/admin/system/seo-templates', { waitUntil: 'domcontentloaded' });

@@ -1,5 +1,5 @@
 /* One-page landing (site profile "landing"). Colours come from the store theme tokens, so it follows light/dark and the brand colour. */
-:root { --mc-lp-title-size: clamp(var(--mc-font-size-3xl), 5.2vw, var(--mc-font-size-5xl)); --mc-lp-h2-size: clamp(var(--mc-font-size-2xl), 3.4vw, var(--mc-font-size-4xl)); }
+:root { --mc-lp-h2-size: clamp(var(--mc-font-size-2xl), 3.4vw, var(--mc-font-size-4xl)); }
 .lp-wrap { width: min(100% - 2 * var(--mc-space-5), 1180px); margin-inline: auto; }
 .lp-wrap--narrow { max-width: 820px; }
 .lp-header { position: sticky; top: 0; z-index: var(--mc-z-sticky, 20); border-bottom: 1px solid var(--mc-color-border); background: color-mix(in srgb, var(--mc-color-surface) 86%, transparent); backdrop-filter: saturate(1.4) blur(14px); }
@@ -23,7 +23,7 @@
   radial-gradient(50% 50% at 5% 90%, color-mix(in srgb, var(--mc-color-primary) 12%, transparent), transparent 70%); }
 .lp-hero__grid { display: grid; gap: var(--mc-space-8); align-items: center; }
 .lp-pill { display: inline-flex; align-items: center; gap: var(--mc-space-1); padding: var(--mc-space-1) var(--mc-space-3); border: 1px solid color-mix(in srgb, var(--mc-color-primary) 30%, transparent); border-radius: var(--mc-radius-full); background: var(--mc-color-primary-soft); color: var(--mc-color-primary); font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-semibold); }
-.lp-hero h1 { margin: var(--mc-space-4) 0; font-size: var(--mc-lp-title-size); line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+.lp-hero h1 { margin: var(--mc-space-4) 0; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
 .lp-lead { max-width: 56ch; margin: 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-lg); line-height: 1.6; }
 .lp-actions { display: flex; flex-wrap: wrap; gap: var(--mc-space-3); margin-top: var(--mc-space-6); }
 .lp-note { display: flex; align-items: center; gap: var(--mc-space-2); margin: var(--mc-space-4) 0 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }

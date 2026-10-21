@@ -342,6 +342,12 @@ final readonly class ExtensionSettingsManager
         return $row;
     }
 
+    /** A path from a module manifest is used only when it is relative, not empty and does not climb out of the module folder. */
+    public static function isSafeRelativePath(string $relative): bool
+    {
+        return $relative !== '' && !str_starts_with($relative, '/') && preg_match('#(^|/)\.\.(?:/|$)#', $relative) !== 1;
+    }
+
     /** @param array<string,mixed> $extension @return array{schema_version:int,fields:list<array<string,mixed>>} */
     private function schema(array $extension): array
     {
@@ -354,7 +360,7 @@ final readonly class ExtensionSettingsManager
             return ['schema_version' => 2, 'fields' => []];
         }
         $relative = str_replace('\\', '/', (string) $manifest['settings_schema']);
-        if ($relative === '' || str_starts_with($relative, '/') || preg_match('#(^|/)\.\.(?:/|$)#', $relative) === 1) {
+        if (!self::isSafeRelativePath($relative)) {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.5ff53c978bd0'));
         }
         $path = rtrim((string) $extension['install_path'], '/\\') . '/' . $relative;

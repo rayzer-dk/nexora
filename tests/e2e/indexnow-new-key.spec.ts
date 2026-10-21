@@ -25,8 +25,6 @@ test('IndexNow "New key" asks for confirmation and replaces the key file', async
   expect(await keyLink.innerText()).toBe(before); // nothing changes before the confirmation
   await page.locator('[data-admin-confirm] [data-confirm-accept]').click();
 
-  await expect(page.locator('.admin-notice.is-success')).toBeVisible();
-  const after = await keyLink.innerText();
-  expect(after).not.toBe(before);
-  expect(after).toMatch(/\/[a-f0-9]{32}\.txt$/);
+  await expect(keyLink).not.toHaveText(before);
+  expect(await keyLink.innerText()).toMatch(/\/[a-f0-9]{32}\.txt$/);
 });

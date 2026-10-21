@@ -25,7 +25,7 @@ final readonly class IndexNowService
         private HttpClientInterface $http,
         private string $publicBaseUrl,
         private string $secret,
-        private ?SystemSettingStore $settings = null,
+        private SystemSettingStore $settings,
     ) {
     }
 
@@ -44,12 +44,12 @@ final readonly class IndexNowService
     /** Makes a new key; the old key file stops opening, so the next submission registers the new one. */
     public function rotateKey(): bool
     {
-        return $this->settings?->setString(self::ROTATION_SETTING, (string) ($this->rotation() + 1)) ?? false;
+        return $this->settings->setString(self::ROTATION_SETTING, (string) ($this->rotation() + 1));
     }
 
     private function rotation(): int
     {
-        return max(0, (int) $this->settings?->getString(self::ROTATION_SETTING));
+        return max(0, (int) $this->settings->getString(self::ROTATION_SETTING));
     }
 
     public function keyLocation(): string

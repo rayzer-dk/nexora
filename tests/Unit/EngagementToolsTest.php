@@ -61,14 +61,14 @@ final class EngagementToolsTest extends TestCase
 
     public function testIndexNowKeyIsStablePerHostAndNeedsPublicHttps(): void
     {
-        $public = new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a');
+        $public = new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a', new ArraySystemSettingStore());
         self::assertMatchesRegularExpression('/^[a-f0-9]{32}$/', $public->key());
-        self::assertSame($public->key(), (new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a'))->key());
-        self::assertNotSame($public->key(), (new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-b'))->key());
+        self::assertSame($public->key(), (new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a', new ArraySystemSettingStore()))->key());
+        self::assertNotSame($public->key(), (new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-b', new ArraySystemSettingStore()))->key());
         self::assertSame('https://shop.example.com/' . $public->key() . '.txt', $public->keyLocation());
         self::assertTrue($public->usable());
         foreach (['http://shop.example.com', 'https://localhost', 'https://127.0.0.1', 'https://shop.local'] as $url) {
-            self::assertFalse((new IndexNowService($this->db, new MockHttpClient(), $url, 's'))->usable(), $url);
+            self::assertFalse((new IndexNowService($this->db, new MockHttpClient(), $url, 's', new ArraySystemSettingStore()))->usable(), $url);
         }
     }
 
@@ -77,7 +77,7 @@ final class EngagementToolsTest extends TestCase
         $store = new ArraySystemSettingStore();
         $service = new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a', $store);
         $first = $service->key();
-        self::assertSame($first, (new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a'))->key(), 'a shop that never rotated keeps its registered key');
+        self::assertSame($first, (new IndexNowService($this->db, new MockHttpClient(), 'https://shop.example.com', 'secret-a', new ArraySystemSettingStore()))->key(), 'a shop that never rotated keeps its registered key');
 
         self::assertTrue($service->rotateKey());
         $second = $service->key();

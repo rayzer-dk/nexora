@@ -211,7 +211,7 @@ final class MediaVariantService
      * Notes an AVIF size that a page asked for, to be made by the background job (commerce:media:warm) instead of during
      * the page request: AVIF takes several times longer to encode than WebP. The queue is one small file per size under
      * var/media-queue; a size asked for many times is queued once, only for a picture that exists and while the queue holds
- * fewer than QUEUE_LIMIT jobs, so an address nobody uses cannot fill the disk.
+     * fewer than QUEUE_LIMIT jobs, so an address nobody uses cannot fill the disk.
      */
     public function queue(string $key): void
     {

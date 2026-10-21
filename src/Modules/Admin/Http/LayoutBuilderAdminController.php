@@ -102,7 +102,7 @@ final class LayoutBuilderAdminController extends AbstractController
         $context = $this->contexts->resolve($request);
         $adminId = $this->adminId();
         if ($adminId === null || !$this->isCsrfTokenValid('layout_builder_' . $type, (string) $request->request->get('_csrf_token'))) {
-            return new JsonResponse(['ok' => false, 'error' => 'csrf', 'message' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.ai.http.aiadmincontroller.nediisnyi_token_bezpeky')], 403);
+            return new JsonResponse(['ok' => false, 'error' => 'csrf', 'message' => \Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf')], 403);
         }
         if ($request->request->getBoolean('leave')) {
             $this->presence->leave($context->storeId, $type, $adminId);
@@ -117,7 +117,7 @@ final class LayoutBuilderAdminController extends AbstractController
     {
         $context = $this->contexts->resolve($request);
         if (!$this->isCsrfTokenValid('layout_builder_' . $type, (string) $request->request->get('_csrf_token'))) {
-            return new JsonResponse(['ok' => false, 'error' => 'csrf', 'message' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.ai.http.aiadmincontroller.nediisnyi_token_bezpeky')], 403);
+            return new JsonResponse(['ok' => false, 'error' => 'csrf', 'message' => \Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf')], 403);
         }
         $base = $this->baseVersion($request);
         $force = $request->request->getBoolean('force');
