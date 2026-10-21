@@ -1,17 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0 });
 test.setTimeout(300_000);
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')), page.locator('button[type="submit"]').click()]);
-}
 
 async function upload(page: Page, file: string): Promise<void> {
   await page.goto('/admin/system/extensions', { waitUntil: 'domcontentloaded' });

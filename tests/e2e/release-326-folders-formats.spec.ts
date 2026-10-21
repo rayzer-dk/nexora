@@ -1,21 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError, openProductTab } from './helpers';
+import { expectNoServerError, openProductTab, loginAdmin as login } from './helpers';
 
 // Release 3.26.0: originals live in real library folders, sizes and formats are a separate cache, the format is a choice
 // (WebP only / AVIF with a WebP fallback), photos and videos of a product are one list ordered by dragging.
 
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
 const unique = () => Buffer.concat([PNG, Buffer.from(`-${Date.now()}-${Math.random()}`)]);
-
-async function login(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([
-    page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')),
-    page.locator('button[type="submit"]').click(),
-  ]);
-}
 
 async function saveProduct(page: Page): Promise<void> {
   await Promise.all([

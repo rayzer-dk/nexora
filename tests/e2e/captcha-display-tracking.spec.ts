@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
@@ -38,13 +38,6 @@ async function giveAnswer(scope: Locator, answer: string): Promise<void> {
     const range = el.closest('[data-captcha-slide]')?.querySelector<HTMLInputElement>('[data-captcha-range]');
     range?.setCustomValidity('');
   }, answer);
-}
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')), page.locator('button[type="submit"]').click()]);
 }
 
 test.beforeEach(async ({}, testInfo) => {

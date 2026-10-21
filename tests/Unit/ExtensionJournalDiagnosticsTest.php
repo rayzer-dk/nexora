@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Commerce\Tests\Unit;
 
-use Commerce\Core\Extension\ExtensionConflictGuard;
 use Commerce\Core\Extension\ExtensionDiagnostics;
 use Commerce\Core\Extension\ExtensionMigrationRunner;
 use Commerce\Core\Extension\ExtensionPackageManager;
-use Commerce\Core\Extension\ExtensionPackageValidator;
 use Commerce\Core\Extension\ExtensionSettingsSchemaValidator;
-use Commerce\Core\Id\PublicIdFactory;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use Commerce\Tests\Unit\Support\ExtensionPackageManagerFactory;
 use PHPUnit\Framework\TestCase;
 
 final class ExtensionJournalDiagnosticsTest extends TestCase
@@ -31,15 +29,7 @@ final class ExtensionJournalDiagnosticsTest extends TestCase
         $this->db->executeStatement('CREATE TABLE mc_extension_migration (id INTEGER PRIMARY KEY AUTOINCREMENT, installation_id INTEGER, migration_key TEXT, checksum_sha256 TEXT, applied_at TEXT)');
         $this->db->executeStatement('CREATE TABLE mc_extension_lifecycle_event (id INTEGER PRIMARY KEY AUTOINCREMENT, installation_id INTEGER NULL, code TEXT, version TEXT, action TEXT, from_status TEXT NULL, to_status TEXT NULL, result TEXT, message TEXT NULL, created_at TEXT)');
         $runner = new ExtensionMigrationRunner($this->db);
-        // lifecycle() never touches the validator, the conflict guard or the id factory
-        $this->manager = new ExtensionPackageManager(
-            $this->db,
-            new PublicIdFactory(),
-            (new \ReflectionClass(ExtensionPackageValidator::class))->newInstanceWithoutConstructor(),
-            (new \ReflectionClass(ExtensionConflictGuard::class))->newInstanceWithoutConstructor(),
-            $runner,
-            $this->tmp,
-        );
+        $this->manager = ExtensionPackageManagerFactory::forInstalledModules($this->db, $runner, $this->tmp);
         $this->diagnostics = new ExtensionDiagnostics($this->db, $runner, new ExtensionSettingsSchemaValidator(), $this->manager);
     }
 

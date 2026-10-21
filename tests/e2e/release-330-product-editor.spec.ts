@@ -1,17 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError, openProductTab } from './helpers';
+import { expect, test } from '@playwright/test';
+import { expectNoServerError, openProductTab, loginAdmin as login } from './helpers';
 
 // Release 3.30.0: product code generator, attribute search, category dropdown, editor extras, feed reasons.
-
-async function login(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([
-    page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')),
-    page.locator('button[type="submit"]').click(),
-  ]);
-}
 
 test('new product: code generator, searchable categories, editor toolbar extras', async ({ page }) => {
   await login(page);

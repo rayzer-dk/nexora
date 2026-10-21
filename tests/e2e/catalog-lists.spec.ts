@@ -1,17 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin as login } from './helpers';
 
 // Catalog lists: product counts with subcategories, the stock column (quick edit + undo), bulk "zero stock", switch-only status.
-
-async function login(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([
-    page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')),
-    page.locator('button[type="submit"]').click(),
-  ]);
-}
 
 async function undoLast(page: Page): Promise<void> {
   const undo = page.locator('form.admin-undo[data-undo-form]');

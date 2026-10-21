@@ -1,13 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 // Release 3.97.24: the checkout builder can switch the region choice and the city / branch search off; the buyer then types one address.
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 async function publish(page: Page, mutate: (layout: { blocks: Array<{ component: string; props?: Record<string, unknown> }> }) => void): Promise<string> {
   await page.goto('/admin/appearance/builder/checkout', { waitUntil: 'domcontentloaded' });

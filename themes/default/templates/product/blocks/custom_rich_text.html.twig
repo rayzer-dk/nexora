@@ -1,5 +1,5 @@
-{% set source = block.settings.data_source|default('') %}
-{% set dynamic = source == 'product.name' ? product.name : (source == 'product.brand' ? product.brand|default('') : (source == 'product.sku' ? product.sku|default('') : (source == 'product.gtin' ? product.gtin|default('') : (source == 'product.mpn' ? product.mpn|default('') : (source == 'product.price' ? product.price|default('') : (source == 'product.availability' and site_capabilities().features.cart|default(false) ? product.availability_label|default('') : '')))))) %}
+{% import '@storefront/product/blocks/_dynamic_value.html.twig' as dyn %}
+{% set dynamic = dyn.value(block, product) %}
 <section class="product-custom-content">
     {% if block.settings.title|default('') %}<h2>{{ block.settings.title }}</h2>{% endif %}
     {% if dynamic %}<p>{{ dynamic }}</p>{% elseif block.settings.text|default('') %}<p>{{ block.settings.text|nl2br }}</p>{% endif %}

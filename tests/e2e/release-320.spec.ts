@@ -1,17 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError, openProductTab } from './helpers';
+import { expectNoServerError, openProductTab, loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([
-    page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')),
-    page.locator('button[type="submit"]').click(),
-  ]);
-}
 
 async function setLocale(page: Page, code: string, enabled: boolean): Promise<void> {
   await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });

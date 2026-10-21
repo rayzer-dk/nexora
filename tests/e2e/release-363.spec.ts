@@ -1,16 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
-import { demoProductEditUrl, expectNoServerError, openProductTab } from './helpers';
+import { expect, test } from '@playwright/test';
+import { demoProductEditUrl, expectNoServerError, openProductTab, loginAdmin } from './helpers';
 
 // Release 3.63.0: option price modes, weight in checkout methods, own search words, optional review e-mail.
 
 test.describe.configure({ mode: 'serial' });
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 test('the product form offers the price action, weight and start stock of an option value', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');

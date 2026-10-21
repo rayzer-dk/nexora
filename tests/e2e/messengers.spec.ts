@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 // Release 3.97.24: customers follow an order in Telegram or Viber through a one-time link token.
 // Needs the stand-in on :8099 and TELEGRAM_API_BASE pointing at it.
@@ -8,13 +9,6 @@ const MOCK = process.env.E2E_TELEGRAM_MOCK || 'http://127.0.0.1:8099';
 const TOKEN = '987654321:BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
 
 type MockMessageCall = { method: string; payload: { url: string; chat_id: number; text: string } };
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 async function saveField(page: Page, provider: string, values: Record<string, string>): Promise<void> {
   await page.goto('/admin/system/integrations/connections/messengers', { waitUntil: 'domcontentloaded' });

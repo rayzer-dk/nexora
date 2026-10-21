@@ -1,18 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
 // No AI provider is ever called here. Part 1 queues the bulk action with the daily limit at 0 and cancels the batch. Part 2 walks the
 // "for review" page (apply, undo, reject) over jobs that were prepared by a stub model through `commerce:ai:batch` on the test copy
 // (E2E_REVIEW_SEEDED=1); the same flow with real database rows is covered by tests/Unit/AiBatchServiceTest.php.
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 async function setAi(page: Page, enabled: boolean): Promise<void> {
   await page.goto('/admin/system/ai', { waitUntil: 'domcontentloaded' });

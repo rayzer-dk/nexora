@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 // Release 3.97.24: Prom.ua orders become shop orders once, stock and status go back. Runs against the stand-in on :8099.
 
@@ -11,13 +12,6 @@ type PromLogEntry = {
   query?: { limit?: string };
   body: Array<{ id: string; quantity_in_stock: number; presence: string }> & { status?: string; ids?: number[] };
 };
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 async function saveProm(page: Page, values: Record<string, string>): Promise<void> {
   await page.goto('/admin/system/integrations/connections/marketplaces', { waitUntil: 'domcontentloaded' });

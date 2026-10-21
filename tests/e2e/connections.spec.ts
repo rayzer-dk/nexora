@@ -1,13 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 // Release 3.97.24: keys and switches of payment services typed in the admin, and the instalment methods that use them.
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 test('instalments are switched on in the admin and offered at the checkout, then switched off', async ({ page, browser }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutates shared settings once.');

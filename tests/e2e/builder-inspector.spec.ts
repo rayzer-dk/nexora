@@ -1,16 +1,9 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
 const BADGE = 'extension.example_product_badge.badge';
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 async function postLayout(page: Page, type: string, layoutJson: string, action: 'draft' | 'publish'): Promise<void> {
   await page.goto(`/admin/appearance/builder/${type}`, { waitUntil: 'domcontentloaded' });

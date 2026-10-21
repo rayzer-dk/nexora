@@ -1,14 +1,8 @@
 import { execFileSync } from 'node:child_process';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 // Release 3.97.24: the store director proposes up to three actions a day; the sale price can be applied and undone.
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 const sql = (q: string): string => execFileSync('php', ['bin/console', 'dbal:run-sql', q], { encoding: 'utf8', env: process.env });
 const onSale = (): number => Number((sql('SELECT COUNT(*) AS n FROM mc_price WHERE compare_at_minor IS NOT NULL').match(/\b(\d+)\s*$/m) ?? ['0', '0'])[1]);

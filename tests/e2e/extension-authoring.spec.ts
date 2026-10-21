@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0 });
 
@@ -12,13 +12,6 @@ const work = path.resolve('var/e2e-authoring');
 
 function console_(...args: string[]): string {
   return execFileSync('php', ['bin/console', ...args, '--no-interaction'], { encoding: 'utf8', env: process.env });
-}
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
 }
 
 const row = (page: Page, version: string) =>

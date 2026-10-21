@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace Commerce\Tests\Unit;
 
-use Commerce\Core\Extension\ExtensionConflictGuard;
 use Commerce\Core\Extension\ExtensionMigrationRunner;
 use Commerce\Core\Extension\ExtensionPackageManager;
-use Commerce\Core\Extension\ExtensionPackageValidator;
 use Commerce\Core\Extension\ExtensionSettingsManager;
 use Commerce\Core\Extension\ExtensionSettingsSchemaValidator;
-use Commerce\Core\Id\PublicIdFactory;
 use Commerce\Core\Security\SecretVault;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
+use Commerce\Tests\Unit\Support\ExtensionPackageManagerFactory;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -39,16 +37,7 @@ final class ExtensionPackageManagerActivateTest extends TestCase
         $this->db->executeStatement('CREATE TABLE mc_locale (code TEXT PRIMARY KEY, name TEXT, native_name TEXT)');
         $this->db->executeStatement('CREATE TABLE mc_store_locale (store_id INTEGER, locale_code TEXT, enabled INTEGER, is_default INTEGER, sort_order INTEGER)');
         $this->settings = new ExtensionSettingsManager($this->db, new ExtensionSettingsSchemaValidator(), new SecretVault(str_repeat('k', 32)));
-        // install() is the only user of the validator, the conflict guard and the id factory
-        $this->manager = new ExtensionPackageManager(
-            $this->db,
-            new PublicIdFactory(),
-            (new \ReflectionClass(ExtensionPackageValidator::class))->newInstanceWithoutConstructor(),
-            (new \ReflectionClass(ExtensionConflictGuard::class))->newInstanceWithoutConstructor(),
-            new ExtensionMigrationRunner($this->db),
-            $this->tmp,
-            $this->settings,
-        );
+        $this->manager = ExtensionPackageManagerFactory::forInstalledModules($this->db, new ExtensionMigrationRunner($this->db), $this->tmp, $this->settings);
     }
 
     protected function tearDown(): void

@@ -1,13 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 // Release 3.97.24: a catalogue moves in from the product file of another platform.
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 test('a Shopify product file is imported: product page, old address redirect, brand, category and photo line', async ({ page, request }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutates shared demo data once.');

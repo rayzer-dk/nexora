@@ -1,15 +1,9 @@
 import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 // Release 3.97.24: orders are sent to a CRM or any address with a body template of the shop owner.
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 const HOOK = 'http://127.0.0.1:8099/crm-hook';
 

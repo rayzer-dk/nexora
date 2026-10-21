@@ -1,16 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expect, test } from '@playwright/test';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 // Release 3.58.0: own delivery methods, own redirects, order card (edit, message), subscriber import, analytics ranges.
 
 test.describe.configure({ mode: 'serial' });
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 test('an own delivery method can be added and is offered at the checkout with a free-text address', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');

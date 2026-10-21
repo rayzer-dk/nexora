@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
@@ -12,13 +12,6 @@ function cannedTranslation(postData: string, cut: number): Record<string, unknow
     return { ok: true, fields: Object.fromEntries(Object.entries(texts).map(([key, text]) => [key, `TR-${target}-${text.slice(0, cut)}`])) };
   }
   return { ok: true, fields: { text: `TR-${target}-${(body.get('fields[text]') || '').slice(0, cut)}` } };
-}
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
 }
 
 async function setLocale(page: Page, code: string, enabled: boolean): Promise<void> {

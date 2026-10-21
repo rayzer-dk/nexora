@@ -1,14 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
-import { expectNoHorizontalOverflow, expectNoServerError } from './helpers';
+import { expect, test } from '@playwright/test';
+import { expectNoHorizontalOverflow, expectNoServerError, loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')), page.locator('button[type="submit"]').click()]);
-}
 
 // 1x1 PNG is enough for the cover upload; the storefront crops it with object-fit.
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');

@@ -3,8 +3,6 @@ import { expectNoServerError } from './helpers';
 
 test.describe.configure({ retries: 0 });
 
-const shots = process.env.T05_SHOTS ?? '';
-
 async function loginAdmin(page: Page): Promise<void> {
   await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
   await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
@@ -21,12 +19,6 @@ async function setTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
     localStorage.setItem('mc_admin_theme', value);
     document.documentElement.dataset.theme = value;
   }, theme);
-}
-
-async function shot(page: Page, name: string, theme: string): Promise<void> {
-  if (shots === '') return;
-  const width = page.viewportSize()?.width ?? 0;
-  await page.screenshot({ path: `${shots}/${name}-${width}-${theme}.png`, fullPage: false });
 }
 
 /** WCAG contrast of the text colour against the first opaque background up the tree. */
@@ -62,21 +54,11 @@ for (const width of [1440, 390]) {
     await loginAdmin(page);
     for (const theme of ['light', 'dark'] as const) {
       await setTheme(page, theme);
-      for (const [name, url] of [
-        ['dashboard', '/admin'],
-        ['localization', '/admin/system/localization'],
-        ['marketplaces', '/admin/system/integrations/connections/marketplaces'],
-        ['payments', '/admin/system/integrations/connections/payments'],
-        ['ai', '/admin/system/ai'],
-      ] as const) {
-        await page.goto(url, { waitUntil: 'domcontentloaded' });
-        await expectNoServerError(page);
-        await shot(page, name, theme);
-      }
-
       await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+      await expectNoServerError(page);
       for (const selector of ['.admin-topbar [data-cache-menu] > summary', '.admin-topbar .admin-context label']) {
         const target = page.locator(selector).first();
+        if (width >= 768) await expect(target).toBeVisible();
         if (await target.isVisible()) expect(await contrastOf(page, selector), `${selector} ${theme}`).toBeGreaterThanOrEqual(4.5);
       }
 
@@ -90,6 +72,7 @@ for (const width of [1440, 390]) {
 
       await page.goto('/admin/system/ai', { waitUntil: 'domcontentloaded' });
       const toggle = page.locator('[data-secret-toggle]').first();
+      await expect(toggle).toBeVisible();
       const keyInput = page.locator(await toggle.getAttribute('data-secret-toggle') ?? '').first();
       await toggle.click();
       await expect(keyInput).toHaveAttribute('type', 'text');

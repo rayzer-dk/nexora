@@ -6,6 +6,7 @@ namespace Commerce\Tests\Unit;
 
 use Commerce\Modules\Media\Application\MediaImageProfile;
 use Commerce\Modules\Media\Application\MediaVariantService;
+use Commerce\Tests\Unit\Support\MediaVariantServiceFactory;
 use PHPUnit\Framework\TestCase;
 
 final class MediaVariantServiceTest extends TestCase
@@ -29,11 +30,7 @@ final class MediaVariantServiceTest extends TestCase
     /** @param array<string,mixed> $override */
     private function service(int $generation = 1, array $override = []): MediaVariantService
     {
-        $service = (new \ReflectionClass(MediaVariantService::class))->newInstanceWithoutConstructor();
-        (new \ReflectionProperty($service, 'projectDir'))->setValue($service, $this->dir);
-        (new \ReflectionProperty($service, 'profile'))->setValue($service, ['generation' => $generation] + $override + MediaImageProfile::RECOMMENDED);
-
-        return $service;
+        return MediaVariantServiceFactory::make($this->dir, ['generation' => $generation] + $override + MediaImageProfile::RECOMMENDED);
     }
 
     private function original(string $stem, int $width, int $height, string $ext = 'jpg'): void

@@ -3,16 +3,10 @@ import { writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0 });
 test.setTimeout(600_000);
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')), page.locator('button[type="submit"]').click()]);
-}
 
 async function setScheme(page: Page, scheme: 'light' | 'dark'): Promise<void> {
   await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });

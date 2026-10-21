@@ -184,6 +184,24 @@ final class ExtensionSettingsFormTest extends TestCase
         self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) FROM mc_extension_setting WHERE setting_key='old_key' AND installation_id=?", [$new]));
     }
 
+    public function testOneSettingAnswersTheSameAsTheWholeList(): void
+    {
+        $id = $this->install('1.0.0', [
+            ['key' => 'title', 'type' => 'text', 'label' => 'Title'],
+            ['key' => 'columns', 'type' => 'integer', 'label' => 'Columns', 'default' => 3],
+            ['key' => 'enabled', 'type' => 'boolean', 'label' => 'Enabled'],
+            ['key' => 'note', 'type' => 'text', 'label' => 'Note'],
+            ['key' => 'api_key', 'type' => 'secret', 'label' => 'API key'],
+        ]);
+        $this->settings->save($id, ['title' => 'Saved', 'api_key' => 'sk-1'], 'admin@test');
+
+        $all = $this->settings->activeSettings('example.ml');
+        foreach (['title', 'columns', 'enabled', 'note', 'api_key', 'missing'] as $key) {
+            self::assertSame($all[$key] ?? 'none', $this->settings->activeSetting('example.ml', $key, 'none'), $key);
+        }
+        self::assertSame(['title' => 'Saved', 'columns' => 3, 'enabled' => false, 'api_key' => 'sk-1'], $all);
+    }
+
     public function testASecretThatCannotBeDecryptedDoesNotWipeTheOtherSettings(): void
     {
         $id = $this->install('1.0.0', [['key' => 'title', 'type' => 'text', 'label' => 'Title'], ['key' => 'api_key', 'type' => 'secret', 'label' => 'API key'], ['key' => 'columns', 'type' => 'integer', 'label' => 'Columns', 'default' => 3]]);

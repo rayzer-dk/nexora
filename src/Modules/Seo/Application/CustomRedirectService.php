@@ -163,7 +163,7 @@ final class CustomRedirectService
     public static function isBotUserAgent(string $userAgent): bool
     {
         $ua = strtolower(trim($userAgent));
-        if ($ua === '' || preg_match('/bot|spider|crawl|slurp|yandex|facebookexternalhit/', $ua) === 1) {
+        if ($ua === '' || preg_match('/(?<!cu)bot|spider|crawl|slurp|yandex|facebookexternalhit/', $ua) === 1) {
             return true;
         }
         foreach (BotProtection::CATEGORIES as $category) {

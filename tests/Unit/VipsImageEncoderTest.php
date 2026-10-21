@@ -7,6 +7,8 @@ namespace Commerce\Tests\Unit;
 use Commerce\Modules\Media\Application\MediaImageProfile;
 use Commerce\Modules\Media\Application\MediaVariantService;
 use Commerce\Modules\Media\Application\VipsImageEncoder;
+use Commerce\Tests\Unit\Support\MediaVariantServiceFactory;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -86,12 +88,7 @@ exit(2);
 
     private function service(VipsImageEncoder $vips, array $override = []): MediaVariantService
     {
-        $service = (new \ReflectionClass(MediaVariantService::class))->newInstanceWithoutConstructor();
-        (new \ReflectionProperty($service, 'projectDir'))->setValue($service, $this->dir);
-        (new \ReflectionProperty($service, 'profile'))->setValue($service, $override + MediaImageProfile::RECOMMENDED);
-        (new \ReflectionProperty($service, 'vips'))->setValue($service, $vips);
-
-        return $service;
+        return MediaVariantServiceFactory::make($this->dir, $override + MediaImageProfile::RECOMMENDED, $vips);
     }
 
     public function testTheToolIsFoundOnceAndItsSaversDecideTheFormats(): void
@@ -161,9 +158,17 @@ exit(2);
         $service->queue('cache/thumb-g1/phones/gone.avif');
         self::assertSame(1, $service->processQueue());
         self::assertSame(0, $service->queueLength(), 'made and not makeable jobs are both removed');
-        if (function_exists('imageavif')) {
-            self::assertSame('image/avif', getimagesize($this->dir . '/public/media/cache/card-g1/phones/d.avif')['mime']);
-        }
+    }
+
+    #[RequiresFunction('imageavif')]
+    public function testAQueuedAvifIsWrittenByTheBackgroundJob(): void
+    {
+        $this->original('phones/d', 1600, 800);
+        $service = $this->service(new VipsImageEncoder($this->dir, 'auto', $this->fakeVips()), ['format' => 'avif_webp']);
+        $service->queue('cache/card-g1/phones/d.avif');
+
+        self::assertSame(1, $service->processQueue());
+        self::assertSame('image/avif', getimagesize($this->dir . '/public/media/cache/card-g1/phones/d.avif')['mime']);
     }
 
     public function testAPageAskingForAMissingAvifGetsTheWebpAtOnceAndTheAvifIsQueued(): void
@@ -177,12 +182,19 @@ exit(2);
         self::assertSame('max-age=300, public', $response->headers->get('Cache-Control'), 'short cache: the AVIF replaces it later');
         self::assertSame(1, $service->queueLength());
         self::assertFileDoesNotExist($this->dir . '/public/media/cache/card-g1/phones/e.avif');
+    }
 
-        if (function_exists('imageavif')) {
-            $service->processQueue();
-            $after = $controller('cache/card-g1/phones/e.avif');
-            self::assertSame('image/avif', $after->headers->get('Content-Type'));
-            self::assertStringContainsString('immutable', (string) $after->headers->get('Cache-Control'));
-        }
+    #[RequiresFunction('imageavif')]
+    public function testOnceTheAvifIsMadeThePageGetsItWithALongCache(): void
+    {
+        $this->original('phones/e', 1600, 800);
+        $service = $this->service(new VipsImageEncoder($this->dir, 'gd'), ['format' => 'avif_webp']);
+        $controller = new \Commerce\Modules\Media\Http\MediaVariantController($service);
+        $controller('cache/card-g1/phones/e.avif');
+
+        $service->processQueue();
+        $after = $controller('cache/card-g1/phones/e.avif');
+        self::assertSame('image/avif', $after->headers->get('Content-Type'));
+        self::assertStringContainsString('immutable', (string) $after->headers->get('Cache-Control'));
     }
 }

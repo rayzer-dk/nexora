@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 // Needs the Telegram stand-in: `php -S 127.0.0.1:8099 tests/e2e/fixtures/telegram-mock.php` and TELEGRAM_API_BASE pointing at it.
 const MOCK = process.env.E2E_TELEGRAM_MOCK || 'http://127.0.0.1:8099';
@@ -7,13 +7,6 @@ const TOKEN = '123456789:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 const GROUP = '-1001234567890';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 async function mockLog(page: Page): Promise<Array<{ method: string; payload: Record<string, unknown> }>> {
   return (await page.request.get(`${MOCK}/__log`)).json();

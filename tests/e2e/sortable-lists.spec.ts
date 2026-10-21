@@ -1,14 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
-import { demoProductEditUrl, expectNoServerError, openProductTab } from './helpers';
+import { expect, test } from '@playwright/test';
+import { demoProductEditUrl, expectNoServerError, openProductTab, loginAdmin } from './helpers';
 
 // Release 3.97.24: lists that are ordered by dragging a handle (or with the arrow keys on the focused handle).
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 test.describe.configure({ mode: 'serial' });
 

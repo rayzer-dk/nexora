@@ -1,18 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
 // No AI provider is ever called here: the daily AI limit is set to 0, so every round of the batch stops before a request
 // and the batch waits in status "limit". The translation itself (one request per entity and language, the glossary, saving
 // as a real translation) is covered by tests/Unit/AiBatchServiceTest.php with a stub model.
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 async function setLocale(page: Page, code: string, enabled: boolean): Promise<void> {
   await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });

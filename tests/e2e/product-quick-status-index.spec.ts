@@ -1,17 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expect, test } from '@playwright/test';
+import { expectNoServerError, loginAdmin as login } from './helpers';
 
 // Release 3.39.0: one-click publish / draft in the product list and a per-page index / noindex switch in the product editor.
-
-async function login(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([
-    page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')),
-    page.locator('button[type="submit"]').click(),
-  ]);
-}
 
 test('product list: the status switch publishes and hides a product without leaving the list', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating data runs once.');

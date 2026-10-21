@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { loginAdmin } from './helpers';
 
 const shotsDir = process.env.LOOK_SHOTS_DIR ?? '';
 const viewports = [
@@ -26,13 +27,6 @@ async function expectLookIsClean(page: Page, label: string, path: string, scheme
     await page.addStyleTag({ content: '.mc-consent{display:none!important}' });
     await page.screenshot({ path: join(shotsDir, `${label}.png`), fullPage: true });
   }
-}
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
 }
 
 async function setMode(page: Page, mode: string): Promise<void> {

@@ -1,17 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expect, test } from '@playwright/test';
+import { expectNoServerError, loginAdmin as login } from './helpers';
 
 // Release 3.29.0: product list — working copy button, quick price, actions header, thumbnails, sort keeps the page.
-
-async function login(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([
-    page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')),
-    page.locator('button[type="submit"]').click(),
-  ]);
-}
 
 test('product list: actions header, copy button, quick price', async ({ page }) => {
   await login(page);

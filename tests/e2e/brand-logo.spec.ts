@@ -1,15 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
 const LOGO = '/assets/branding/nexora-logo.png';
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 type Brand = { logo: string; showTitle: boolean; titles: Record<string, string>; height: string };
 

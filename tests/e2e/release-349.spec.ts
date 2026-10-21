@@ -1,16 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expect, test } from '@playwright/test';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 // Release 3.49.0: contacts of an unfinished checkout, icon picker, editable footer, several announcement messages.
 
 test.describe.configure({ mode: 'serial' });
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 test('a shopper who leaves the checkout keeps a lead with the contacts typed so far', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');

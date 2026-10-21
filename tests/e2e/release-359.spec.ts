@@ -1,16 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expect, test } from '@playwright/test';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 // Release 3.59.0: missing pages come with a suggested target; the dashboard lists the work that needs attention.
 
 test.describe.configure({ mode: 'serial' });
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 test('a missing address is counted and the shop suggests the page it most likely meant', async ({ page, request }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Runs once.');

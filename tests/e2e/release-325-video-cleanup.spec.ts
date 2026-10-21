@@ -1,21 +1,11 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { expectNoServerError, openProductTab, waitMediaReady } from './helpers';
+import { expectNoServerError, openProductTab, waitMediaReady, loginAdmin as login } from './helpers';
 
 // Release 3.25.0: product videos (a link, preview first, player after a click), manual review of unused pictures with a
 // restorable trash, files of a picture in the library, and the remembered library folder.
 
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
 const unique = () => Buffer.concat([PNG, Buffer.from(`-${Date.now()}-${Math.random()}`)]);
-
-async function login(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([
-    page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')),
-    page.locator('button[type="submit"]').click(),
-  ]);
-}
 
 /** Saves the product form and waits until the redirect after the POST has loaded (the URL is /edit before and after). */
 async function saveProduct(page: Page): Promise<void> {

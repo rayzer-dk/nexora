@@ -1,0 +1,13 @@
+{% macro value(block, product) -%}
+{%- set source = block.settings.data_source|default('') -%}
+{%- set values = {
+    'product.name': product.name|default(''),
+    'product.brand': product.brand|default(''),
+    'product.sku': product.sku|default(''),
+    'product.gtin': product.gtin|default(''),
+    'product.mpn': product.mpn|default(''),
+    'product.price': product.price|default(''),
+    'product.availability': site_capabilities().features.cart|default(false) ? product.availability_label|default('') : '',
+} -%}
+{{- values[source]|default('') -}}
+{%- endmacro %}

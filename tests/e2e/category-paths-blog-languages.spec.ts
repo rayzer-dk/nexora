@@ -1,17 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
-import { expectNoServerError } from './helpers';
+import { expectNoServerError, loginAdmin } from './helpers';
 
 // Release 3.45.0: main category of a product, optional category path in product addresses (the flat address stays
 // canonical), blog subcategories, and a demo catalogue that is complete in Ukrainian, English and Russian.
 
 test.describe.configure({ mode: 'serial' });
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([page.waitForURL(/\/admin(?:\/(?!login)|$)/), page.locator('button[type="submit"]').click()]);
-}
 
 async function setCategoryPath(page: Page, enabled: boolean): Promise<void> {
   await page.goto('/admin/catalog/categories', { waitUntil: 'domcontentloaded' });

@@ -272,22 +272,20 @@ final readonly class ExtensionSettingsManager
     public function activeSettings(string $extensionCode): array
     {
         try {
-            $id = $this->connection->fetchOne("SELECT id FROM mc_extension_installation WHERE code=? AND status='active' ORDER BY id DESC LIMIT 1", [$extensionCode]);
-            if ($id === false || $id === null) {
+            $id = $this->activeInstallationId($extensionCode);
+            if ($id === null) {
                 return [];
             }
-            $extension = $this->extension((int) $id);
-            $stored = $this->stored((int) $id);
+            $extension = $this->extension($id);
+            $stored = $this->stored($id);
             $out = [];
             foreach ($this->schema($extension)['fields'] as $field) {
                 $key = (string) $field['key'];
                 $value = isset($stored[$key]) ? $this->readSafely($extensionCode, $key, $stored[$key]) : null;
                 if ($value !== null) {
                     $out[$key] = $value;
-                } elseif (array_key_exists('default', $field)) {
-                    $out[$key] = $field['default'];
-                } elseif ((string) $field['type'] === 'boolean') {
-                    $out[$key] = false;
+                } elseif (($fallback = $this->defaultOf($field)) !== null) {
+                    $out[$key] = $fallback['value'];
                 }
                 unset($stored[$key]);
             }
@@ -537,27 +535,42 @@ final readonly class ExtensionSettingsManager
     public function activeSetting(string $extensionCode, string $key, mixed $default = null): mixed
     {
         try {
-            $id = $this->connection->fetchOne("SELECT id FROM mc_extension_installation WHERE code=? AND status='active' ORDER BY id DESC LIMIT 1", [$extensionCode]);
-            if ($id === false || $id === null) {
+            $id = $this->activeInstallationId($extensionCode);
+            if ($id === null) {
                 return $default;
             }
-            $extension = $this->extension((int) $id);
+            $extension = $this->extension($id);
             $fields = array_column($this->schema($extension)['fields'], null, 'key');
-            $row = $this->connection->fetchAssociative('SELECT value_payload,is_secret FROM mc_extension_setting WHERE installation_id=? AND setting_key=?', [(int) $id, $key]);
+            $row = $this->connection->fetchAssociative('SELECT value_payload,is_secret FROM mc_extension_setting WHERE installation_id=? AND setting_key=?', [$id, $key]);
             if (is_array($row) && (isset($fields[$key]) || (int) $row['is_secret'] !== 1)) {
                 $value = $this->readSafely($extensionCode, $key, ['value_payload' => (string) $row['value_payload'], 'is_secret' => (int) $row['is_secret']]);
                 if ($value !== null) {
                     return $value;
                 }
             }
-            $field = $fields[$key] ?? null;
-            if ($field !== null && array_key_exists('default', $field)) {
-                return $field['default'];
-            }
-            return $field !== null && (string) $field['type'] === 'boolean' ? false : $default;
+            $fallback = isset($fields[$key]) ? $this->defaultOf($fields[$key]) : null;
+
+            return $fallback !== null ? $fallback['value'] : $default;
         } catch (Throwable) {
             return $default;
         }
+    }
+
+    private function activeInstallationId(string $extensionCode): ?int
+    {
+        $id = $this->connection->fetchOne("SELECT id FROM mc_extension_installation WHERE code=? AND status='active' ORDER BY id DESC LIMIT 1", [$extensionCode]);
+
+        return $id === false || $id === null ? null : (int) $id;
+    }
+
+    /** What a field answers when nothing was saved: its schema default, false for a switch, nothing for the rest. @return array{value:mixed}|null */
+    private function defaultOf(array $field): ?array
+    {
+        if (array_key_exists('default', $field)) {
+            return ['value' => $field['default']];
+        }
+
+        return (string) $field['type'] === 'boolean' ? ['value' => false] : null;
     }
 
     /**

@@ -29,6 +29,14 @@ export async function expectNoBrokenImages(page: Page): Promise<void> {
   expect(broken, `broken images: ${broken.join(', ')}`).toEqual([]);
 }
 
+/** Signs in with the E2E admin account and waits until the browser has left the login page. */
+export async function loginAdmin(page: Page): Promise<void> {
+  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
+  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
+  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
+  await Promise.all([page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')), page.locator('button[type="submit"]').click()]);
+}
+
 export async function expectNoServerError(page: Page): Promise<void> {
   await expect(page.locator('body')).not.toContainText('500 Internal Server Error');
   await expect(page.locator('body')).not.toContainText('Ой! Произошла ошибка');

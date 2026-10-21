@@ -1,20 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
+import { loginAdmin } from './helpers';
 
 test.describe.configure({ retries: 0, mode: 'serial' });
 
 const stamp = Date.now().toString(36);
 const slugA = `e2e-page-${stamp}`;
 const slugB = `e2e-page-renamed-${stamp}`;
-
-async function loginAdmin(page: Page): Promise<void> {
-  await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input[name="_username"]').fill(process.env.E2E_ADMIN_EMAIL!);
-  await page.locator('input[name="_password"]').fill(process.env.E2E_ADMIN_PASSWORD!);
-  await Promise.all([
-    page.waitForURL((url) => url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login')),
-    page.locator('button[type="submit"]').click(),
-  ]);
-}
 
 async function setBody(page: Page, html: string): Promise<void> {
   await page.evaluate((value) => {
