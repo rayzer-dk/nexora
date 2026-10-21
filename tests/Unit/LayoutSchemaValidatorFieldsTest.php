@@ -79,6 +79,24 @@ final class LayoutSchemaValidatorFieldsTest extends TestCase
         yield 'colour with a script' => [[], ['color' => 'expression(alert(1))']];
     }
 
+    public function testAPhoneLinkMayHaveSpacesButNoOtherWhitespace(): void
+    {
+        $validator = new LayoutSchemaValidator();
+        $layout = static fn (string $url): array => ['schema_version' => 1, 'blocks' => [self::block('banner', ['button_url' => $url])]];
+
+        $saved = $validator->validate($layout('tel:+380 44 123 45 67'), 'home', true);
+        self::assertSame('tel:+380 44 123 45 67', $saved['blocks'][0]['props']['button_url']);
+
+        foreach (["tel:+380\u{00A0}44", "tel:+380\t44", 'mailto:a b@example.com'] as $url) {
+            try {
+                $validator->validate($layout($url), 'home', true);
+                self::fail('A link with other whitespace was accepted: ' . json_encode($url));
+            } catch (RuntimeException) {
+                self::addToAssertionCount(1);
+            }
+        }
+    }
+
     /** @param array<string,mixed> $props @param array<string,mixed> $style */
     #[\PHPUnit\Framework\Attributes\DataProvider('invalidValues')]
     public function testSavingRejectsAnInvalidValue(array $props, array $style): void

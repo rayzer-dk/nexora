@@ -160,7 +160,9 @@ final class LayoutSchemaValidator
     /** A relative path or anchor, or an absolute http(s), mailto or tel link: no script or data URL, no spaces or quotes. */
     private static function isSafeLink(string $value): bool
     {
-        if (strlen($value) > 2000 || preg_match('/[\s"\'<>\\\\\x00-\x1f]/u', $value) === 1) {
+        // A phone number is usually written with spaces, so a plain space is allowed in tel: links only.
+        $forbidden = stripos($value, 'tel:') === 0 ? '/[^\S ]|["\'<>\\\\\x00-\x1f]/u' : '/[\s"\'<>\\\\\x00-\x1f]/u';
+        if (strlen($value) > 2000 || preg_match($forbidden, $value) === 1) {
             return false;
         }
 

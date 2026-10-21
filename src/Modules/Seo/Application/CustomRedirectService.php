@@ -230,9 +230,11 @@ final class CustomRedirectService
             $where[] = 'path LIKE ?';
             $params[] = '%' . addcslashes($search, '%_\\') . '%';
         }
-        if ($kind === 'humans' || $kind === 'bots') {
-            $where[] = 'is_bot = ?';
-            $params[] = $kind === 'bots' ? 1 : 0;
+        if ($kind === 'bots') {
+            $where[] = 'is_bot = 1';
+        } elseif ($kind === 'humans') {
+            // Rows written before the User-Agent was stored carry no agent and are not told apart: they show under "all" only.
+            $where[] = 'is_bot = 0 AND last_user_agent IS NOT NULL';
         }
 
         return [implode(' AND ', $where), $params];
