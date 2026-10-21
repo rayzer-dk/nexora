@@ -8,6 +8,7 @@
 - 404 log: an address that a person opened once is no longer switched back to "bots" by a later bot visit.
 - Database schema number is 89 (three migrations were added after 88); the migrations of 4.0.1 can be run again after a failed update.
 - Builder presence table (mc_layout_presence) was created with the server default collation; a new migration converts it to utf8mb4_unicode_ci like every other table (the database hardening check failed on it).
+- Module diagnostics: the signature line says "Declared as a trusted release" (it is read from the module manifest, the signature is checked at install, not on this page).
 - Page builder: the "fix the fields" notice is built with DOM calls instead of insertAdjacentHTML (the XSS hardening check rejects that sink).
 - Icons: heart-handshake, bug and calculator added to the icon library; the GitHub icon on the support page is replaced by git-branch.
 - Tests: the crontab test accepts a Windows PHP path; the newsletter e2e test opens the home page, where the block is on by default.

@@ -6617,7 +6617,7 @@ return [
     'admin.extensions.diag.core_bad' => 'Не сумісний',
     'admin.extensions.diag.core_platform' => 'ядро',
     'admin.extensions.diag.signature' => 'Підпис',
-    'admin.extensions.diag.signature_trusted' => 'Довірений випуск, підпис перевірено',
+    'admin.extensions.diag.signature_trusted' => 'Заявлено як довірений випуск',
     'admin.extensions.diag.signature_not_required' => 'Без виконуваного коду, підпис не потрібен',
     'admin.extensions.diag.signature_quarantined' => 'У карантині',
     'admin.extensions.diag.permissions' => 'Оголошені права',

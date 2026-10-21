@@ -6622,7 +6622,7 @@ return [
     'admin.extensions.diag.core_bad' => 'Not compatible',
     'admin.extensions.diag.core_platform' => 'core',
     'admin.extensions.diag.signature' => 'Signature',
-    'admin.extensions.diag.signature_trusted' => 'Trusted release, signature verified',
+    'admin.extensions.diag.signature_trusted' => 'Declared as a trusted release',
     'admin.extensions.diag.signature_not_required' => 'No executable code, signature not required',
     'admin.extensions.diag.signature_quarantined' => 'Quarantined',
     'admin.extensions.diag.permissions' => 'Declared permissions',
