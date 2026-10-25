@@ -1,0 +1,128 @@
+name: Capture reviewed visual baselines
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/visual-baselines.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: visual-baseline-capture
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: nexora_e2e
+          MYSQL_USER: nexora
+          MYSQL_PASSWORD: nexora
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      CI: '1'
+      APP_ENV: prod
+      APP_DEBUG: '0'
+      APP_SECRET: e2e-secret-0123456789abcdef0123456789abcdef
+      DATABASE_URL: mysql://nexora:nexora@127.0.0.1:3306/nexora_e2e?charset=utf8mb4
+      DATABASE_SERVER_VERSION: '8.4.0'
+      LOCK_DSN: flock
+      MAILER_DSN: null://null
+      E2E_BASE_URL: http://127.0.0.1:8000
+      APP_PUBLIC_URL: http://127.0.0.1:8000
+      E2E_ADMIN_EMAIL: e2e-admin@example.test
+      E2E_ADMIN_PASSWORD: Nexora-E2E-2026-Strong!
+      E2E_VISUAL: '1'
+      TELEGRAM_API_BASE: http://127.0.0.1:8099
+      PRRO_CHECKBOX_BASE_URL: http://127.0.0.1:8099/checkbox/api/v1
+      VIES_API_BASE: http://127.0.0.1:8099/vies
+      COMMERCE_SUPPLIER_ALLOW_PRIVATE_HOSTS: '1'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install application and browsers
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:production
+          npx playwright install --with-deps chromium firefox webkit
+      - name: Install isolated demo shop
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p var/cache var/log var/install public/media
+          chmod -R u+rwX var public/media
+          rm -f var/install/installed.lock
+          php bin/console commerce:install --no-interaction \
+            --store-name="Nexora E2E" \
+            --admin-name="E2E Admin" \
+            --admin-email="$E2E_ADMIN_EMAIL" \
+            --admin-password="$E2E_ADMIN_PASSWORD" \
+            --public-url="$E2E_BASE_URL" \
+            --site-mode=hybrid --demo
+      - name: Start clean storefront
+        shell: bash
+        run: |
+          php -S 127.0.0.1:8099 tests/e2e/fixtures/telegram-mock.php > var/log/e2e-telegram.log 2>&1 &
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8000 -t public tests/e2e/router.php > var/log/e2e-web.log 2>&1 &
+          for i in {1..40}; do
+            if curl --fail --silent --show-error "$E2E_BASE_URL/" >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat var/log/e2e-web.log
+          exit 1
+      - name: Generate real browser screenshots
+        run: npx playwright test tests/e2e/visual.spec.ts --update-snapshots --retries=0
+      - name: Validate screenshots by a second independent capture
+        run: npx playwright test tests/e2e/visual.spec.ts --retries=0
+      - name: Verify and commit the validated PNG references
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find tests/e2e/__snapshots__ -type f -name '*.png' | wc -l)" -eq 16
+          git add tests/e2e/__snapshots__/
+          if git diff --cached --quiet; then
+            echo 'All 16 screenshot baselines were already committed.'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test(visual): commit 16 stable browser-rendered screenshot baselines"
+          git push origin HEAD:main
+      - name: Archive baseline images and comparison reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reviewed-visual-baselines
+          path: |
+            tests/e2e/__snapshots__/
+            playwright-report/
+            var/test-results/playwright/
+            var/log/e2e-web.log
+          if-no-files-found: ignore
+          retention-days: 14

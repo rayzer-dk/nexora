@@ -11,6 +11,8 @@ for (const [route, name] of routes) {
   test(`${name} visual regression`, async ({ page }) => {
     test.skip(process.env.E2E_VISUAL !== '1', 'Visual snapshots run only when E2E_VISUAL=1');
     await page.goto(route, { waitUntil: 'networkidle' });
+    // Capture only after web fonts are ready; CSS transitions and caret are disabled below.
+    await page.evaluate(() => document.fonts.ready);
     await expect(page).toHaveScreenshot(`${name}.png`, {
       fullPage: true,
       animations: 'disabled',
