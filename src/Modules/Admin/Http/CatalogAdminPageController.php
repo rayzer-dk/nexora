@@ -236,7 +236,7 @@ final class CatalogAdminPageController extends AbstractController
                     $categoryIds = $this->primaryFirst(array_values(array_filter(array_map('intval', $request->request->all('category_ids')), static fn (int $id): bool => $id > 0)), (int) $request->request->get('primary_category_id', 0));
                     $created = $this->products->create(new CreateProductCommand(
                         storeId: $context->storeId, marketId: $context->marketId, locale: $context->locale,
-                        name: (string) $request->request->get('name', ''), sku: trim((string) $request->request->get('sku', '')) !== '' ? (string) $request->request->get('sku', '') : $this->skus->next(),
+                        name: (string) $request->request->get('name', ''), sku: trim((string) $request->request->get('sku', '')) !== '' ? (string) $request->request->get('sku', '') : ($this->skus->next() ?: 'NX-' . strtoupper(bin2hex(random_bytes(8)))),
                         priceMinor: $this->moneyMinor((string) $request->request->get('price', '0')), currency: $context->currency,
                         stockQuantity: $this->quantity((string) $request->request->get('stock_quantity', '0')),
                         unitCode: (string) $request->request->get('unit_code', 'item'), productType: (string) $request->request->get('product_type', 'physical'),
