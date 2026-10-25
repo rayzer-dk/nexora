@@ -133,6 +133,7 @@ jobs:
           tests/e2e/order-board.spec.ts
           tests/e2e/orders-export.spec.ts
           tests/e2e/quick-add.spec.ts
+          tests/e2e/release-325-video-cleanup.spec.ts
           tests/e2e/release-326-folders-formats.spec.ts
           tests/e2e/reverse-charge.spec.ts
           tests/e2e/vat.spec.ts

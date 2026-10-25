@@ -222,20 +222,39 @@ const LINE_HEIGHTS = ['1', '1.15', '1.3', '1.5', '1.8', '2'];
 const textStyle = (name: string): string => String((editor.getAttributes('textStyle') as Record<string, unknown>)[name] ?? '');
 const fontValue = (): string => textStyle('fontFamily').replace(/["']/g, '').split(',')[0]?.trim() ?? '';
 const POPULAR = ['#000000', '#6b7280', '#ffffff', '#e03131', '#f76707', '#fcc419', '#2f9e44', '#1098ad', '#1971c2', '#7048e8'];
-const toggleColorMenu = (kind: 'text' | 'bg') => { colorMenu.value = colorMenu.value === kind ? '' : kind; };
+// Preserve the selected text across colour-panel focus, pointer dragging and HEX editing.
+let colorSelection: { from: number; to: number } | null = null;
+const toggleColorMenu = (kind: 'text' | 'bg') => {
+  if (colorMenu.value === kind) { colorMenu.value = ''; colorSelection = null; return; }
+  const { from, to } = editor.state.selection;
+  colorSelection = { from, to };
+  colorMenu.value = kind;
+};
+const selectedColorChain = () => {
+  const chain = editor.chain().focus();
+  const selection = colorSelection;
+  if (selection && selection.from < selection.to && selection.to <= editor.state.doc.content.size) {
+    return chain.setTextSelection(selection);
+  }
+  return chain;
+};
 const currentColor = (kind: 'text' | 'bg'): string => (kind === 'text' ? textStyle('color') : textStyle('backgroundColor'));
 const applyColor = (hex: string) => {
   const kind = colorMenu.value === 'bg' ? 'bg' : 'text';
   const color = hex.toLowerCase();
-  if (kind === 'text') editor.chain().focus().setColor(color).run();
-  else editor.chain().focus().setBackgroundColor(color).run();
+  const chain = selectedColorChain();
+  if (kind === 'text') chain.setColor(color).run();
+  else chain.setBackgroundColor(color).run();
   rememberColor(kind, color);
   colorMenu.value = '';
+  colorSelection = null;
 };
 const clearColor = () => {
-  if (colorMenu.value === 'bg') editor.chain().focus().unsetBackgroundColor().run();
-  else editor.chain().focus().unsetColor().run();
+  const chain = selectedColorChain();
+  if (colorMenu.value === 'bg') chain.unsetBackgroundColor().run();
+  else chain.unsetColor().run();
   colorMenu.value = '';
+  colorSelection = null;
 };
 const closeColorMenu = () => { colorMenu.value = ''; editor.commands.focus(); };
 const colorLabels = () => ({
