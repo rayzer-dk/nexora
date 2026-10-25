@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
 import { expectNoServerError, openProductTab, loginAdmin as login } from './helpers';
 
@@ -96,6 +97,11 @@ test('the format is a choice: WebP only or AVIF with a WebP fallback', async ({ 
   const avifSet = (await source.getAttribute('srcset')) ?? '';
   expect(avifSet).toMatch(/cache\/card-g\d+\/.*\.avif 480w/);
   const avifUrl = avifSet.split(',').map((s) => s.trim().split(' ')[0]).find((u) => u.includes('/card-g')) ?? '';
+  // AVIF is queued on the first request; WebP is the temporary response until the media worker runs.
+  const initial = await request.get(avifUrl);
+  expect(initial.status()).toBe(200);
+  expect(initial.headers()['content-type']).toMatch(/image\/(?:webp|avif)/);
+  execFileSync('php', ['bin/console', 'commerce:media:warm', '--limit=1', '--max-seconds=60'], { env: process.env, timeout: 65_000 });
   const avif = await request.get(avifUrl);
   expect(avif.status()).toBe(200);
   expect(avif.headers()['content-type']).toMatch(/image\/avif/);
