@@ -111,7 +111,7 @@ jobs:
         shell: bash
         run: |
           php -S 127.0.0.1:8099 tests/e2e/fixtures/telegram-mock.php > var/log/e2e-telegram.log 2>&1 &
-          php -S 127.0.0.1:8000 -t public tests/e2e/router.php > var/log/e2e-web.log 2>&1 &
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8000 -t public tests/e2e/router.php > var/log/e2e-web.log 2>&1 &
           for i in {1..40}; do
             if curl --fail --silent --show-error "$E2E_BASE_URL/" > /dev/null; then exit 0; fi
             sleep 1
@@ -134,6 +134,8 @@ jobs:
           tests/e2e/orders-export.spec.ts
           tests/e2e/quick-add.spec.ts
           tests/e2e/release-325-video-cleanup.spec.ts
+          tests/e2e/category-seo.spec.ts
+          tests/e2e/release-331-options.spec.ts
           tests/e2e/release-326-folders-formats.spec.ts
           tests/e2e/reverse-charge.spec.ts
           tests/e2e/vat.spec.ts

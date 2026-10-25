@@ -15,11 +15,16 @@ test('category H1, title and description set in the editor reach the storefront 
 
   const save = async (h1: string, title: string, description: string): Promise<string> => {
     await page.goto(editHref!, { waitUntil: 'domcontentloaded' });
-    await page.locator('input[name="h1"]').evaluate((el: HTMLInputElement, v: string) => { el.value = v; }, h1);
-    await page.locator('input[name="meta_title"]').evaluate((el: HTMLInputElement, v: string) => { el.value = v; }, title);
-    await page.locator('textarea[name="meta_description"]').evaluate((el: HTMLTextAreaElement, v: string) => { el.value = v; }, description);
+    // Fill as a user would, including input/change events for form observers and dirty guards.
+    await page.locator('input[name="h1"]').fill(h1);
+    await page.locator('input[name="meta_title"]').fill(title);
+    await page.locator('textarea[name="meta_description"]').fill(description);
     await Promise.all([page.waitForURL(/\/admin\/catalog\/categories/), page.locator('form.admin-form').first().evaluate((f: HTMLFormElement) => f.requestSubmit())]);
     await page.goto(editHref!, { waitUntil: 'domcontentloaded' });
+    // Verify the database-backed edit form before checking the cached storefront projection.
+    await expect(page.locator('input[name="h1"]')).toHaveValue(h1);
+    await expect(page.locator('input[name="meta_title"]')).toHaveValue(title);
+    await expect(page.locator('textarea[name="meta_description"]')).toHaveValue(description);
     return page.locator('input[name="slug"]').inputValue();
   };
 
