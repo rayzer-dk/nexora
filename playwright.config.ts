@@ -36,7 +36,7 @@ export default defineConfig({
   ],
   webServer: useLocalServer
     ? {
-        command: 'php -S 127.0.0.1:8000 -t public public/index.php',
+        command: 'php -S 127.0.0.1:8000 -t public tests/e2e/router.php',
         url: 'http://127.0.0.1:8000',
         reuseExistingServer: !process.env.CI,
         timeout: 30_000,
