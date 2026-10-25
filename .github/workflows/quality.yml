@@ -114,6 +114,21 @@ jobs:
             zip -q "$GITHUB_WORKSPACE/var/e2e-extension.zip" manifest.json
           )
           unzip -t var/e2e-extension.zip
+      - name: Mandatory visual regression on untouched demo data
+        shell: bash
+        env:
+          E2E_VISUAL: '1'
+        run: |
+          set -euo pipefail
+          expected=16
+          actual="$(find tests/e2e/__snapshots__ -type f -name '*.png' | wc -l)"
+          if [ "$actual" -ne "$expected" ]; then
+            echo "::error::Expected $expected committed browser snapshots, found $actual."
+            exit 1
+          fi
+          # Run before the mutating functional suite so screenshots describe
+          # a clean, reproducible demo shop, not prior tests' database changes.
+          npm run e2e:visual
       - name: Playwright Chromium, Firefox and WebKit
         shell: bash
         run: |
@@ -142,15 +157,6 @@ jobs:
             exit 1
           fi
           echo "Runtime error audit: clean"
-      - name: Visual regression
-        shell: bash
-        run: |
-          if find tests/e2e/__snapshots__ -type f -name '*.png' -print -quit 2>/dev/null | grep -q .; then
-            npm run e2e:visual
-          else
-            echo '::warning::Visual regression NOT RUN: reviewed snapshot baselines are absent.'
-            echo 'Baselines must be approved and committed before visual comparisons are enforced.'
-          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
