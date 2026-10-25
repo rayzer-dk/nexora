@@ -61,8 +61,10 @@ class CommerceSlider extends HTMLElement {
             if (!looping || setWidth <= 0) return;
             const first = track.querySelector(':scope > :not([data-slider-clone])');
             const origin = first ? pos(first) : 0;
-            if (track.scrollLeft < origin - setWidth / 2) jump(track.scrollLeft + setWidth);
-            else if (track.scrollLeft > origin + setWidth / 2) jump(track.scrollLeft - setWidth);
+            // Wrap only after entering an adjacent copy. Moving at half a set
+            // interrupts an in-flight smooth scroll and can pin Firefox on one slide.
+            if (track.scrollLeft < origin - 1) jump(track.scrollLeft + setWidth);
+            else if (track.scrollLeft >= origin + setWidth - 1) jump(track.scrollLeft - setWidth);
         };
 
         const update = () => {
@@ -95,11 +97,17 @@ class CommerceSlider extends HTMLElement {
         };
         this.querySelector('[data-slider-prev]')?.addEventListener('click', () => navigate(-1));
         this.querySelector('[data-slider-next]')?.addEventListener('click', () => navigate(1));
+        const supportsScrollEnd = 'onscrollend' in track;
         track.addEventListener('scroll', () => {
             update();
-            window.clearTimeout(settleTimer);
-            settleTimer = window.setTimeout(settle, 140);
+            if (!supportsScrollEnd) {
+                window.clearTimeout(settleTimer);
+                settleTimer = window.setTimeout(settle, 250);
+            }
         }, { passive: true });
+        // scrollend fires after the native smooth animation and CSS snap complete.
+        // Do not recenter while an arrow/swipe is still animating.
+        if (supportsScrollEnd) track.addEventListener('scrollend', settle, { passive: true });
         new ResizeObserver(() => { if (looping) measure(); update(); }).observe(track);
         update();
         // Built on the first touch of the track or an arrow, and also at once when the page is idle, so the first swipe already goes round.
