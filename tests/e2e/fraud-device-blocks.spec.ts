@@ -202,7 +202,9 @@ test('product info blocks render on the product page and articles link to produc
   await form.locator('input[name="title"]').fill(title);
   await form.locator('input[name="slug"]').fill(slug);
   await form.locator('textarea[name="excerpt"]').fill('Linked article excerpt.');
-  await form.locator('input[name="product_skus"]').fill(sku);
+  const picker = form.locator('.admin-picker__search');
+  await picker.fill(sku);
+  await form.locator('.admin-picker__results button').filter({ hasText: sku }).first().click();
   await form.locator('select[name="status"]').selectOption('published');
   const toggle = page.locator('.rich-editor__source-toggle').first();
   await toggle.click();
