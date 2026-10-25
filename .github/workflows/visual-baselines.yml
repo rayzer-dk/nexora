@@ -1,4 +1,4 @@
-name: Capture reviewed visual baselines
+name: Capture verified visual baselines
 
 on:
   push:
@@ -113,12 +113,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "test(visual): commit 16 stable browser-rendered screenshot baselines"
+          # Other CI fixes may reach main during the capture. Rebase only the new
+          # snapshot commit (never force-push or discard another contributor's work).
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
       - name: Archive baseline images and comparison reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reviewed-visual-baselines
+          name: verified-visual-baselines
           path: |
             tests/e2e/__snapshots__/
             playwright-report/
