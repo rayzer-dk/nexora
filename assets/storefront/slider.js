@@ -77,6 +77,9 @@ class CommerceSlider extends HTMLElement {
         // Navigate to a measured slide instead, so each arrow selects a real destination.
         const navigate = (direction) => {
             build();
+            // Recenter before EVERY arrow activation. Browser scrollend may be
+            // missed after scroll snapping, leaving us stuck at the last clone.
+            if (looping) settle();
             if (!looping) {
                 track.scrollBy({ left: direction * step(), behavior: 'smooth' });
                 return;
@@ -97,17 +100,19 @@ class CommerceSlider extends HTMLElement {
         };
         this.querySelector('[data-slider-prev]')?.addEventListener('click', () => navigate(-1));
         this.querySelector('[data-slider-next]')?.addEventListener('click', () => navigate(1));
-        const supportsScrollEnd = 'onscrollend' in track;
         track.addEventListener('scroll', () => {
             update();
-            if (!supportsScrollEnd) {
-                window.clearTimeout(settleTimer);
-                settleTimer = window.setTimeout(settle, 250);
-            }
+            window.clearTimeout(settleTimer);
+            // A quiet-period fallback is essential: Firefox sometimes never emits
+            // scrollend after a smooth scroll plus scroll-snap.
+            settleTimer = window.setTimeout(settle, 400);
         }, { passive: true });
-        // scrollend fires after the native smooth animation and CSS snap complete.
-        // Do not recenter while an arrow/swipe is still animating.
-        if (supportsScrollEnd) track.addEventListener('scrollend', settle, { passive: true });
+        if ('onscrollend' in track) {
+            track.addEventListener('scrollend', () => {
+                window.clearTimeout(settleTimer);
+                settle();
+            }, { passive: true });
+        }
         new ResizeObserver(() => { if (looping) measure(); update(); }).observe(track);
         update();
         // Built on the first touch of the track or an arrow, and also at once when the page is idle, so the first swipe already goes round.
