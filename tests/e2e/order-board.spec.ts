@@ -48,7 +48,13 @@ test('an order moves across the board by select and by drag, and stickers print 
   const [popup] = await Promise.all([context.waitForEvent('page'), page.locator('[data-print-stickers]').click()]);
   await popup.waitForLoadState('domcontentloaded');
   await expect(popup.locator('[data-sticker]')).toHaveCount(1);
-  expect(await popup.locator('[data-sticker] svg rect').count()).toBeGreaterThan(20);
+  const barcode = popup.locator('[data-sticker] .barcode img');
+  await expect(barcode).toHaveCount(1);
+  await expect(barcode).toHaveAttribute('src', /^(data:image\/|\/)/);
+  expect(await barcode.evaluate(async (img: HTMLImageElement) => {
+    await img.decode();
+    return img.naturalWidth;
+  })).toBeGreaterThan(20);
   await expect(popup.locator('[data-print]')).toBeVisible();
   await popup.close();
 });
