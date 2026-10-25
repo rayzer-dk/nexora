@@ -33,7 +33,10 @@ test('an order note is added in place: the page is not reloaded and the note sho
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating data runs once.');
   await loginAdmin(page);
   await page.goto('/admin/orders', { waitUntil: 'domcontentloaded' });
-  const href = await page.locator('a[href^="/admin/orders/"]:not([href*="export"]):not([href*="manual"]):not([href*="preview"])').first().getAttribute('href');
+  const href = await page.locator('a[href^="/admin/orders/"]').evaluateAll((links) =>
+    links.map((link) => link.getAttribute('href')).find((url) => /^\/admin\/orders\/[0-9a-f-]{36}$/.test(url ?? '')) ?? null,
+  );
+  expect(href, 'the order list must include a link to an actual order').toBeTruthy();
   await page.goto(href!, { waitUntil: 'load' });
   await page.evaluate(() => { (window as unknown as { __kept: boolean }).__kept = true; });
   const note = `in-place note ${Date.now()}`;
