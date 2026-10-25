@@ -147,8 +147,8 @@ jobs:
           if find tests/e2e/__snapshots__ -type f -name '*.png' -print -quit 2>/dev/null | grep -q .; then
             npm run e2e:visual
           else
-            echo 'No committed visual baseline yet; generating the canonical baseline for review.'
-            npm run e2e:update
+            echo '::warning::Visual regression NOT RUN: reviewed snapshot baselines are absent.'
+            echo 'Baselines must be approved and committed before visual comparisons are enforced.'
           fi
       - uses: actions/upload-artifact@v4
         if: always()
