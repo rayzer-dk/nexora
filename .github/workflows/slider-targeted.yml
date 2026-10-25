@@ -1,0 +1,43 @@
+name: Slider Firefox targeted E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/storefront/slider.js'
+      - 'tests/e2e/slider-loop.spec.ts'
+      - '.github/workflows/slider-targeted.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  slider:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: '1'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install browser test dependencies
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install --with-deps firefox
+      - name: Repeat actual Firefox carousel interactions 12 times (no retry)
+        run: npx playwright test tests/e2e/slider-loop.spec.ts --project=firefox-desktop --repeat-each=12 --retries=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: slider-firefox-report
+          path: |
+            playwright-report/
+            var/test-results/playwright/
+          if-no-files-found: ignore
+          retention-days: 7

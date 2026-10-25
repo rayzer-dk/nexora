@@ -71,8 +71,30 @@ class CommerceSlider extends HTMLElement {
             this.toggleAttribute('data-at-end', track.scrollLeft + track.clientWidth >= track.scrollWidth - 4);
         };
 
-        this.querySelector('[data-slider-prev]')?.addEventListener('click', () => { build(); track.scrollBy({ left: -step(), behavior: 'smooth' }); });
-        this.querySelector('[data-slider-next]')?.addEventListener('click', () => { build(); track.scrollBy({ left: step(), behavior: 'smooth' }); });
+        // Native scrollBy + scroll-snap can occasionally settle on the same slide in Firefox.
+        // Navigate to a measured slide instead, so each arrow selects a real destination.
+        const navigate = (direction) => {
+            build();
+            if (!looping) {
+                track.scrollBy({ left: direction * step(), behavior: 'smooth' });
+                return;
+            }
+            const slides = Array.from(track.children).filter((el) => el instanceof HTMLElement);
+            if (!slides.length) return;
+            const left = track.scrollLeft;
+            let current = 0;
+            let nearest = Infinity;
+            slides.forEach((slide, index) => {
+                const distance = Math.abs(pos(slide) - left);
+                if (distance < nearest) { nearest = distance; current = index; }
+            });
+            const stride = slides.length > 1 ? Math.abs(pos(slides[1]) - pos(slides[0])) : step();
+            const distance = Math.max(1, Math.round(step() / Math.max(1, stride)));
+            const target = slides[Math.max(0, Math.min(slides.length - 1, current + direction * distance))];
+            if (target) track.scrollTo({ left: pos(target), behavior: 'smooth' });
+        };
+        this.querySelector('[data-slider-prev]')?.addEventListener('click', () => navigate(-1));
+        this.querySelector('[data-slider-next]')?.addEventListener('click', () => navigate(1));
         track.addEventListener('scroll', () => {
             update();
             window.clearTimeout(settleTimer);
