@@ -1,0 +1,107 @@
+name: Category SEO targeted E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/e2e/category-seo.spec.ts'
+      - '.github/workflows/category-seo-targeted.yml'
+      - 'src/Modules/Catalog/Application/CategoryTextService.php'
+      - 'src/Modules/Admin/Http/CatalogAdminPageController.php'
+
+permissions:
+  contents: read
+
+jobs:
+  category-seo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: nexora_e2e
+          MYSQL_USER: nexora
+          MYSQL_PASSWORD: nexora
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      CI: '1'
+      APP_ENV: prod
+      APP_DEBUG: '0'
+      DATABASE_URL: mysql://nexora:nexora@127.0.0.1:3306/nexora_e2e?charset=utf8mb4
+      DATABASE_SERVER_VERSION: '8.4.0'
+      LOCK_DSN: flock
+      MAILER_DSN: null://null
+      E2E_BASE_URL: http://127.0.0.1:8000
+      APP_PUBLIC_URL: http://127.0.0.1:8000
+      E2E_ADMIN_EMAIL: e2e-admin@example.test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Prepare isolated credentials
+        shell: bash
+        run: |
+          echo "APP_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "E2E_ADMIN_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+      - name: Install and build
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:production
+          npx playwright install --with-deps chromium
+      - name: Prepare isolated shop
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p var/cache var/log var/install public/media
+          chmod -R u+rwX var public/media
+          rm -f var/install/installed.lock
+          php bin/console commerce:install --no-interaction \
+            --store-name="Nexora E2E" \
+            --admin-name="E2E Admin" \
+            --admin-email="$E2E_ADMIN_EMAIL" \
+            --admin-password="$E2E_ADMIN_PASSWORD" \
+            --public-url="$E2E_BASE_URL" \
+            --site-mode=hybrid --demo
+      - name: Start HTTP server
+        shell: bash
+        run: |
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8000 -t public tests/e2e/router.php > var/log/e2e-web.log 2>&1 &
+          for i in {1..40}; do
+            if curl --fail --silent "$E2E_BASE_URL/" > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat var/log/e2e-web.log
+          exit 1
+      - name: Repeat category SEO save, clear and restore without retry
+        run: >
+          npx playwright test tests/e2e/category-seo.spec.ts
+          --project=chromium-desktop --repeat-each=3 --retries=0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: category-seo-targeted-report
+          path: |
+            playwright-report/
+            var/test-results/playwright/
+            var/log/e2e-web.log
+            var/log/prod.log
+          if-no-files-found: ignore
+          retention-days: 7
