@@ -29,6 +29,9 @@ final class MediaVariantService
     /** @var array{format:string,quality:int,avif_quality:int,presets:array<string,int>,generation:int}|null */
     private ?array $profile = null;
 
+    /** @var array<string,array{int,int}|null> width and height of the originals read in this request */
+    private array $dimensions = [];
+
     /** libvips when the server has it; null keeps GD only. A plain property, so an instance made without the constructor (tests) still has it. */
     private ?VipsImageEncoder $vips = null;
 
@@ -101,6 +104,27 @@ final class MediaVariantService
         $ext = $ext === 'avif' ? 'avif' : $this->mainExtension();
 
         return '/media/cache/' . $preset . '-g' . $profile['generation'] . '/' . $m['stem'] . '.' . $ext;
+    }
+
+    /**
+     * Width and height of the stored original behind a /media/ picture (only the file header is read), or null when the address is not
+     * a stored picture. The storefront uses it to stop a small photo from being enlarged more than the owner allows.
+     *
+     * @return array{int,int}|null
+     */
+    public function dimensions(string $url): ?array
+    {
+        if (array_key_exists($url, $this->dimensions)) {
+            return $this->dimensions[$url];
+        }
+        $size = null;
+        $key = str_starts_with($url, '/media/') ? substr($url, 7) : '';
+        if (!str_starts_with($key, 'cache/') && preg_match('~^' . self::STEM . '\.(?:webp|avif|jpe?g|png)$~', $key) === 1) {
+            $info = @getimagesize($this->path($key));
+            $size = is_array($info) && $info[0] > 0 && $info[1] > 0 ? [(int) $info[0], (int) $info[1]] : null;
+        }
+
+        return $this->dimensions[$url] = $size;
     }
 
     /**

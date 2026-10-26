@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Product photos: Admin → Appearance → Storefront has photo scaling next to the background. Background: none, white or dark. Scaling: fit the whole photo (no crop) or fill the frame (crop). Enlarging small photos: never, up to 2x, up to 3x (the default) or without a limit; a photo smaller than its frame is no longer stretched past that factor. The common values can be overridden for catalogue cards, the main product photo and the thumbnails, and a preview shows the effect before saving. Everything is drawn by CSS: the photo files and the cache are not touched, so changing a setting needs no new image files.
+- Gallery: the size of the original is passed to the page; a stored size under 16 px is treated as unknown.
 - Landing page: the language and currency switchers are readable in the light theme (they were white on white).
 - Cart: the "Remove" link button is at least 32 px high.
 - 404 log: the "people" filter no longer lists old rows written before the User-Agent was stored; they show under "all". A phone brand "Cubot" is no longer taken for a bot.

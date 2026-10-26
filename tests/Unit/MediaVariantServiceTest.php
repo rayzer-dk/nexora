@@ -137,6 +137,18 @@ final class MediaVariantServiceTest extends TestCase
         self::assertSame(1, $s->queueLength());
     }
 
+    public function testTheSizeOfTheStoredOriginalIsReadFromItsFile(): void
+    {
+        $this->original('phones/apple/f00', 640, 480);
+        $s = $this->service();
+
+        self::assertSame([640, 480], $s->dimensions('/media/phones/apple/f00.jpg'));
+        self::assertNull($s->dimensions('/media/phones/apple/missing.jpg'), 'no such file');
+        self::assertNull($s->dimensions('/media/cache/card-g1/phones/apple/f00.webp'), 'a cache file is not an original');
+        self::assertNull($s->dimensions('/media/../composer.json'), 'nothing outside the picture library');
+        self::assertNull($s->dimensions('https://example.com/media/phones/apple/f00.jpg'), 'a picture of another site');
+    }
+
     public function testCleanupRemovesOnlyOutdatedCacheAndNeverOriginals(): void
     {
         $media = $this->dir . '/public/media';

@@ -816,7 +816,7 @@ commerce-slider, .slider-shell { display: block; min-width: 0; }
 .commerce-carousel > * { flex: none; scroll-snap-align: start; }
 .related-card { display: grid; grid-template-rows: 1fr auto; width: 200px; overflow: hidden; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised); color: var(--mc-color-text); }
 .related-card:hover { border-color: var(--mc-color-primary); text-decoration: none; }
-.related-card img { width: 100%; aspect-ratio: 1 / 1; padding: var(--mc-space-3); background: var(--mc-media-bg); object-fit: contain; }
+.related-card img { width: 100%; aspect-ratio: 1 / 1; padding: var(--mc-pad-cards, var(--mc-space-3)); background: var(--mc-media-bg); object-fit: var(--mc-fit-cards, contain); }
 .related-card__link { display: grid; grid-template-rows: auto 1fr; color: inherit; }
 .related-card__link:hover { text-decoration: none; }
 .related-card__cart { padding: 0 var(--mc-space-3) var(--mc-space-3); }
@@ -1284,3 +1284,5 @@ body.has-quick-view { overflow: hidden; }
 /* The background under product photos is an owner's choice (Admin → Appearance → Storefront): none by default, white on request; one rule for every place a photo is shown. */
 :root { --mc-media-bg: transparent; }
 body[data-image-bg="white"] { --mc-media-bg: #fff; }
+body[data-image-bg="dark"] { --mc-media-bg: #111827; }
+body[data-image-bg="dark"] :is(.catalog-card__media img, .product-gallery__open img, .product-gallery__thumb img, .related-card img, .wishlist-card > a img, .cart-line > a img, .summary-image, .compare-table thead img, .live-search__item img) { mix-blend-mode: normal; }

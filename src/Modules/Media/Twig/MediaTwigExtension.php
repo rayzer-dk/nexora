@@ -27,6 +27,7 @@ final class MediaTwigExtension extends AbstractExtension
         return [
             new TwigFunction('media_attrs', $this->attrs(...), ['is_safe' => ['html']]),
             new TwigFunction('media_picture', $this->picture(...), ['is_safe' => ['html']]),
+            new TwigFunction('media_size_style', $this->sizeStyle(...)),
         ];
     }
 
@@ -60,6 +61,10 @@ final class MediaTwigExtension extends AbstractExtension
     public function picture(mixed $url, string $preset, array $set = [], string $sizes = '', array $attributes = []): string
     {
         $url = (string) $url;
+        $size = $this->sizeStyle($url);
+        if ($size !== '' && !isset($attributes['style'])) {
+            $attributes['style'] = $size;
+        }
         $img = '<img ' . $this->attrs($url, $preset, $set, $sizes);
         foreach ($attributes as $name => $value) {
             $name = (string) $name;
@@ -82,6 +87,14 @@ final class MediaTwigExtension extends AbstractExtension
         }
 
         return '<picture>' . $source . '>' . $img . '</picture>';
+    }
+
+    /** The pixel size of the stored original as CSS custom properties (--iw, --ih), or '' for a picture that is not stored here; the storefront CSS caps the enlargement of a small photo with it. */
+    public function sizeStyle(mixed $url): string
+    {
+        $size = $this->variants->dimensions((string) $url);
+
+        return $size === null ? '' : '--iw:' . $size[0] . ';--ih:' . $size[1];
     }
 
     public function getFilters(): array

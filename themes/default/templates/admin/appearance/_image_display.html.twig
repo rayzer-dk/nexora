@@ -1,0 +1,23 @@
+{% set d = settings.display %}
+<fieldset class="admin-fieldset"><legend>{{ ui_text('admin.display.image_bg') }}</legend><div class="admin-choice-grid">
+{% for value in ['none', 'white', 'dark'] %}<label class="admin-choice"><input type="radio" name="display_image_background" value="{{ value }}"{% if d.image_background|default('none') == value %} checked{% endif %}><strong>{{ ui_text('admin.display.image_bg.' ~ value) }}</strong><small>{{ ui_text('admin.display.image_bg.' ~ value ~ '_hint') }}</small></label>{% endfor %}
+</div></fieldset>
+<fieldset class="admin-fieldset"><legend>{{ ui_text('admin.display.image_fit') }}</legend><div class="admin-choice-grid">
+{% for value in ['contain', 'cover'] %}<label class="admin-choice"><input type="radio" name="display_image_fit" value="{{ value }}"{% if d.image_fit|default('contain') == value %} checked{% endif %}><strong>{{ ui_text('admin.display.image_fit.' ~ value) }}</strong><small>{{ ui_text('admin.display.image_fit.' ~ value ~ '_hint') }}</small></label>{% endfor %}
+</div></fieldset>
+<fieldset class="admin-fieldset"><legend>{{ ui_text('admin.display.image_upscale') }}</legend><div class="admin-choice-grid">
+{% for value in ['none', '2', '3', 'unlimited'] %}<label class="admin-choice"><input type="radio" name="display_image_upscale" value="{{ value }}"{% if d.image_upscale|default('3') == value %} checked{% endif %}><strong>{{ ui_text('admin.display.image_upscale.' ~ value) }}</strong></label>{% endfor %}
+</div><small class="admin-help">{{ ui_text('admin.display.image_upscale.hint') }}</small></fieldset>
+<details class="admin-more"><summary>{{ ui_text('admin.display.image_places') }}</summary><div class="admin-form-grid">
+{% for place in ['cards', 'gallery', 'thumbs'] %}
+<label>{{ ui_text('admin.display.image_places.' ~ place) }} · {{ ui_text('admin.display.image_fit') }}<select name="display_image_fit_{{ place }}"><option value="inherit"{% if d['image_fit_' ~ place]|default('inherit') == 'inherit' %} selected{% endif %}>{{ ui_text('admin.display.image_places.inherit') }}</option>{% for value in ['contain', 'cover'] %}<option value="{{ value }}"{% if d['image_fit_' ~ place]|default('inherit') == value %} selected{% endif %}>{{ ui_text('admin.display.image_fit.' ~ value) }}</option>{% endfor %}</select></label>
+<label>{{ ui_text('admin.display.image_places.' ~ place) }} · {{ ui_text('admin.display.image_upscale') }}<select name="display_image_upscale_{{ place }}"><option value="inherit"{% if d['image_upscale_' ~ place]|default('inherit') == 'inherit' %} selected{% endif %}>{{ ui_text('admin.display.image_places.inherit') }}</option>{% for value in ['none', '2', '3', 'unlimited'] %}<option value="{{ value }}"{% if d['image_upscale_' ~ place]|default('inherit') == value %} selected{% endif %}>{{ ui_text('admin.display.image_upscale.' ~ value) }}</option>{% endfor %}</select></label>
+{% endfor %}
+</div></details>
+<section class="image-preview" data-image-preview aria-label="{{ ui_text('admin.display.image_preview') }}">
+<h3>{{ ui_text('admin.display.image_preview') }}</h3>
+<div class="image-preview__row">
+{% for demo in [{shape: 'wide', iw: 60, ih: 40}, {shape: 'tall', iw: 40, ih: 60}, {shape: 'square', iw: 50, ih: 50}, {shape: 'wide', iw: 400, ih: 267}] %}<figure class="image-preview__item"><div class="image-preview__frame"><img src="/assets/image-demo/{{ demo.shape }}.svg" alt="" style="--iw:{{ demo.iw }};--ih:{{ demo.ih }}"></div><figcaption>{{ ui_text('admin.display.image_preview.' ~ demo.shape) }}{% if demo.iw > 100 %} · {{ ui_text('admin.display.image_preview.large') }}{% else %} · {{ ui_text('admin.display.image_preview.small') }}{% endif %}</figcaption></figure>{% endfor %}
+</div>
+<small class="admin-help">{{ ui_text('admin.display.image_preview.note') }}</small>
+</section>
