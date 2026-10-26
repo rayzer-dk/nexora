@@ -12,7 +12,7 @@ $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, Filesy
 foreach ($it as $file) {
     $path = $file->getPathname();
     $rel = str_replace('\\', '/', substr($path, strlen($root) + 1));
-    if (preg_match('#^(vendor|node_modules|var|public|\.git|tests|bonus)/#', $rel) || !preg_match('/\.(twig|php|js|ts|vue)$/', $rel) || $rel === 'assets/shared/lucide-icons.js') {
+    if (preg_match('#^(vendor|node_modules|var|public|build|\.git|tests|bonus)/#', $rel) || !preg_match('/\.(twig|php|js|ts|vue)$/', $rel) || $rel === 'assets/shared/lucide-icons.js') {
         continue;
     }
     $text = (string) file_get_contents($path);
