@@ -61,8 +61,10 @@ class CommerceSlider extends HTMLElement {
             if (!looping || setWidth <= 0) return;
             const first = track.querySelector(':scope > :not([data-slider-clone])');
             const origin = first ? pos(first) : 0;
-            if (track.scrollLeft < origin - setWidth / 2) jump(track.scrollLeft + setWidth);
-            else if (track.scrollLeft > origin + setWidth / 2) jump(track.scrollLeft - setWidth);
+            // Wrap only after entering an adjacent copy. Moving at half a set
+            // interrupts an in-flight smooth scroll and can pin Firefox on one slide.
+            if (track.scrollLeft < origin - 1) jump(track.scrollLeft + setWidth);
+            else if (track.scrollLeft >= origin + setWidth - 1) jump(track.scrollLeft - setWidth);
         };
 
         const update = () => {
@@ -71,13 +73,46 @@ class CommerceSlider extends HTMLElement {
             this.toggleAttribute('data-at-end', track.scrollLeft + track.clientWidth >= track.scrollWidth - 4);
         };
 
-        this.querySelector('[data-slider-prev]')?.addEventListener('click', () => { build(); track.scrollBy({ left: -step(), behavior: 'smooth' }); });
-        this.querySelector('[data-slider-next]')?.addEventListener('click', () => { build(); track.scrollBy({ left: step(), behavior: 'smooth' }); });
+        // Native scrollBy + scroll-snap can occasionally settle on the same slide in Firefox.
+        // Navigate to a measured slide instead, so each arrow selects a real destination.
+        const navigate = (direction) => {
+            build();
+            // Recenter before EVERY arrow activation. Browser scrollend may be
+            // missed after scroll snapping, leaving us stuck at the last clone.
+            if (looping) settle();
+            if (!looping) {
+                track.scrollBy({ left: direction * step(), behavior: 'smooth' });
+                return;
+            }
+            const slides = Array.from(track.children).filter((el) => el instanceof HTMLElement);
+            if (!slides.length) return;
+            const left = track.scrollLeft;
+            let current = 0;
+            let nearest = Infinity;
+            slides.forEach((slide, index) => {
+                const distance = Math.abs(pos(slide) - left);
+                if (distance < nearest) { nearest = distance; current = index; }
+            });
+            const stride = slides.length > 1 ? Math.abs(pos(slides[1]) - pos(slides[0])) : step();
+            const distance = Math.max(1, Math.round(step() / Math.max(1, stride)));
+            const target = slides[Math.max(0, Math.min(slides.length - 1, current + direction * distance))];
+            if (target) track.scrollTo({ left: pos(target), behavior: 'smooth' });
+        };
+        this.querySelector('[data-slider-prev]')?.addEventListener('click', () => navigate(-1));
+        this.querySelector('[data-slider-next]')?.addEventListener('click', () => navigate(1));
         track.addEventListener('scroll', () => {
             update();
             window.clearTimeout(settleTimer);
-            settleTimer = window.setTimeout(settle, 140);
+            // A quiet-period fallback is essential: Firefox sometimes never emits
+            // scrollend after a smooth scroll plus scroll-snap.
+            settleTimer = window.setTimeout(settle, 400);
         }, { passive: true });
+        if ('onscrollend' in track) {
+            track.addEventListener('scrollend', () => {
+                window.clearTimeout(settleTimer);
+                settle();
+            }, { passive: true });
+        }
         new ResizeObserver(() => { if (looping) measure(); update(); }).observe(track);
         update();
         // Built on the first touch of the track or an arrow, and also at once when the page is idle, so the first swipe already goes round.

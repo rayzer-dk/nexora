@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { expect, test, type Page } from '@playwright/test';
 import { expectNoServerError, openProductTab, loginAdmin as login } from './helpers';
 
@@ -76,6 +77,8 @@ test('a picture is stored as an original in the real folder chosen at upload; si
 });
 
 test('the format is a choice: WebP only or AVIF with a WebP fallback', async ({ page, request }, testInfo) => {
+  // The explicit AVIF background worker can legitimately run for up to 60 seconds.
+  test.setTimeout(90_000);
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutates shared settings once.');
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
   await login(page);
@@ -85,24 +88,33 @@ test('the format is a choice: WebP only or AVIF with a WebP fallback', async ({ 
     await Promise.all([page.waitForURL(/\/admin\/media/), page.locator('.media-processing-form button[type="submit"]').click()]);
     await expectNoServerError(page);
   };
-  await choose('modern');
-  // A PHP build without AVIF in GD keeps serving WebP (the settings page says so); there is nothing to compare then.
+  // Check the encoder before changing persistent settings, even on unsupported platforms.
   await page.goto('/admin/media', { waitUntil: 'domcontentloaded' });
   test.skip((await page.locator('[data-media-preset-form]').getAttribute('data-avif-supported')) !== '1', 'This server has no AVIF encoder in GD.');
-  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  await choose('modern');
+  try {
+    await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   const picture = page.locator('[data-product-card] picture').first();
   await expect(picture).toHaveCount(1);
   const source = picture.locator('source[type="image/avif"]');
   const avifSet = (await source.getAttribute('srcset')) ?? '';
   expect(avifSet).toMatch(/cache\/card-g\d+\/.*\.avif 480w/);
   const avifUrl = avifSet.split(',').map((s) => s.trim().split(' ')[0]).find((u) => u.includes('/card-g')) ?? '';
+  // AVIF is queued on the first request; WebP is the temporary response until the media worker runs.
+  const initial = await request.get(avifUrl);
+  expect(initial.status()).toBe(200);
+  expect(initial.headers()['content-type']).toMatch(/image\/(?:webp|avif)/);
+  execFileSync('php', ['bin/console', 'commerce:media:warm', '--limit=1', '--max-seconds=60'], { env: process.env, timeout: 65_000 });
   const avif = await request.get(avifUrl);
   expect(avif.status()).toBe(200);
   expect(avif.headers()['content-type']).toMatch(/image\/avif/);
   const fallback = (await picture.locator('img').getAttribute('src')) ?? '';
   expect(fallback).toMatch(/\.webp$/);
 
-  await choose('recommended');
+  } finally {
+    // A failed assertion must not leave the shared shop in AVIF mode for later tests.
+    await choose('recommended');
+  }
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-product-card] picture')).toHaveCount(0);
   await expect(page.locator('[data-product-card] img[srcset]').first()).toHaveAttribute('srcset', /\.webp/);

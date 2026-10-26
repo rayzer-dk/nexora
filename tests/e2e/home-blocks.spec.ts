@@ -97,9 +97,9 @@ test('the builder offers the new blocks with their own settings', async ({ page 
   await page.locator('[data-add-block]').click();
   const inspector = page.locator('[data-inspector]');
   await expect(inspector.locator('.mc-pos-grid')).toBeVisible();
-  await expect(inspector.locator('select[data-prop="props.width"]')).toBeVisible();
-  await expect(inspector.locator('[data-open-media="image_mobile"]')).toBeVisible();
-  await inspector.locator('input[data-prop="props.title"]').fill('Builder banner');
+  await expect(inspector.locator('select[data-field="props.width"]')).toBeVisible();
+  await expect(inspector.locator('[data-open-media="props.image_mobile"]')).toBeVisible();
+  await inspector.locator('input[data-field="props.title"]').fill('Builder banner');
   await inspector.locator('.mc-pos-grid__cell input[value="br"]').check({ force: true });
   const json = JSON.parse(await page.locator('textarea[data-layout-json]').inputValue());
   const block = json.blocks.find((b: { component: string }) => b.component === 'banner');

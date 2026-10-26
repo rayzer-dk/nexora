@@ -31,8 +31,14 @@ test('a product video is a link: preview first, the player loads only after a cl
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutates shared demo data once.');
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
   await login(page);
-  await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
-  await page.locator('tr').filter({ hasNotText: /Picked|E2E|Warm/i }).locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().click();
+  // Select a published demo product from the filtered catalog, not a fixed SKU:
+  // other mutating E2E scenarios may archive or replace individual seeded products.
+  await page.goto('/admin/catalog/products?status=published&sort=sku&dir=asc', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const productRow = page.locator('.admin-table tbody tr').filter({ hasText: /DEMO-\d{3}/ }).first();
+  await expect(productRow, 'a published demo product with an image must be available').toBeVisible();
+  await expect(productRow.locator('.admin-quick-status input[type="checkbox"]')).toBeChecked();
+  await productRow.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().click();
   await page.waitForURL(/\/edit/);
   await openProductTab(page, 'media');
   const editUrl = page.url();

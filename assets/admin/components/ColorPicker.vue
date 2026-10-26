@@ -155,12 +155,13 @@ const fit = () => {
   const left = Math.max(box.left, 0) + 4;
   const right = Math.min(box.right, viewport) - 4;
   el.style.maxWidth = `${Math.max(200, right - left)}px`;
-  el.style.transform = '';
+  // Position the layout box itself: a negative transform can still enlarge document.scrollWidth.
+  el.style.left = '0px';
   const rect = el.getBoundingClientRect();
   let shift = 0;
   if (rect.right > right) shift = right - rect.right;
   if (rect.left + shift < left) shift = left - rect.left;
-  if (shift !== 0) el.style.transform = `translateX(${Math.round(shift)}px)`;
+  el.style.left = `${Math.round(shift)}px`;
 };
 onMounted(() => { void nextTick(fit); });
 </script>

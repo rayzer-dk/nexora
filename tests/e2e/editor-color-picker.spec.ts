@@ -28,7 +28,13 @@ async function selectSomeText(editor: Locator, page: Page): Promise<void> {
   await content.click();
   if ((await content.innerText()).trim() === '') await page.keyboard.type('Colour sample');
   await expect(async () => {
-    await page.keyboard.press('Control+A');
+    await content.evaluate((node) => {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    });
     await nextFrames(page);
     expect(await page.evaluate(() => String(window.getSelection()))).toContain('Colour sample');
   }).toPass({ timeout: 5000 });

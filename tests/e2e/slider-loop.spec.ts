@@ -34,8 +34,11 @@ test('the carousel keeps going forward and backward round the circle', async ({ 
 
   const forward: number[] = [await leftmost(page)];
   for (let i = 0; i < 9; i++) {
+    const previous = forward[forward.length - 1];
     await page.locator('[data-slider-next]').click();
-    await page.waitForTimeout(650);
+    // Observe real movement instead of assuming all engines settle in exactly 650 ms.
+    await expect.poll(() => leftmost(page), { timeout: 5_000 }).not.toBe(previous);
+    await page.waitForTimeout(250);
     forward.push(await leftmost(page));
   }
   // every step moves ahead by a few slides (mod 6): never back to the start in one jump
@@ -46,8 +49,10 @@ test('the carousel keeps going forward and backward round the circle', async ({ 
 
   const backward: number[] = [forward[forward.length - 1]];
   for (let i = 0; i < 9; i++) {
+    const previous = backward[backward.length - 1];
     await page.locator('[data-slider-prev]').click();
-    await page.waitForTimeout(650);
+    await expect.poll(() => leftmost(page), { timeout: 5_000 }).not.toBe(previous);
+    await page.waitForTimeout(250);
     backward.push(await leftmost(page));
   }
   for (let i = 1; i < backward.length; i++) {

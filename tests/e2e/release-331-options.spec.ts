@@ -30,7 +30,7 @@ async function openProductWithoutOptions(page: Page): Promise<void> {
   throw new Error('No published, in-stock product without options is available for this test.');
 }
 
-test('options create variants and the storefront price follows the chosen value', async ({ page }) => {
+test('options create variants and the storefront price follows the chosen value', async ({ page }, testInfo) => {
   await login(page);
   await openProductWithoutOptions(page);
   const slug = await page.locator('input[name="slug"]').inputValue();
@@ -60,13 +60,26 @@ test('options create variants and the storefront price follows the chosen value'
   const before = await price.textContent();
   const variantInput = page.locator('input[name="variant_id"]').first();
   const variantBefore = await variantInput.inputValue();
-  await picker.locator('[data-option-value]').filter({ hasText: blackLabel }).click();
+  const selectValue = async (name: string) => {
+    const button = picker.locator('[data-option-value]').filter({ hasText: name });
+    await expect(button).toBeVisible();
+    if (testInfo.project.name.endsWith('-mobile')) {
+      // Use a touch event on mobile. Force skips WebKit's unstable layout-position wait,
+      // while the assertions below still verify that the real picker changes the variant.
+      await button.tap({ force: true });
+    } else {
+      await button.click();
+    }
+  };
+  await selectValue(blackLabel);
   await expect(variantInput).not.toHaveValue(variantBefore);
   await expect(price).not.toHaveText(before ?? '');
 
   // A new combination has no stock yet, so it cannot be bought; the main one can, and its value is shown in the cart.
   await expect(page.locator('form[data-buy-actions] button[type="submit"]').first()).toBeDisabled();
-  await picker.locator('[data-option-value]').filter({ hasText: red }).click();
+  await selectValue(red);
+  await expect(variantInput).toHaveValue(variantBefore);
+  await expect(page.locator('form[data-buy-actions] button[type="submit"]').first()).toBeEnabled();
   const added = page.waitForResponse((r) => r.request().method() === 'POST' && /\/cart/.test(new URL(r.url()).pathname));
   await page.locator('form[data-buy-actions] button[type="submit"]').first().click();
   expect((await added).status()).toBeLessThan(400);
