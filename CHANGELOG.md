@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 4.0.3 — 2026-10-26
+
+Photo scaling for product images (fit, limited enlargement, dark background, per place, with a preview), fixes found by the review of 4.0.2, and the browser test fixes of the CI. Version 4.0.3 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No new migration.
 
 - Product photos: Admin → Appearance → Storefront has photo scaling next to the background. Background: none, white or dark. Scaling: fit the whole photo (no crop) or fill the frame (crop). Enlarging small photos: never, up to 2x, up to 3x (the default) or without a limit; a photo smaller than its frame is no longer stretched past that factor. The common values can be overridden for catalogue cards, the main product photo and the thumbnails, and a preview shows the effect before saving. Everything is drawn by CSS: the photo files and the cache are not touched, so changing a setting needs no new image files.
 - Gallery: the size of the original is passed to the page; a stored size under 16 px is treated as unknown.
