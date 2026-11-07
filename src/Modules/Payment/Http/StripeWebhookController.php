@@ -34,11 +34,15 @@ final readonly class StripeWebhookController
         $type = (string) ($event['type'] ?? '');
         $object = is_array($event['data']['object'] ?? null) ? $event['data']['object'] : [];
         $reference = trim((string) ($object['id'] ?? ''));
+        // A Google Pay payment is a bare PaymentIntent (no Checkout session); its metadata says whose it is.
+        $provider = ($object['metadata']['channel'] ?? '') === 'google_pay' ? 'google_pay' : 'stripe';
         $status = match (true) {
             $type === 'checkout.session.completed' && ($object['payment_status'] ?? '') === 'paid',
             $type === 'checkout.session.async_payment_succeeded' => 'success',
             $type === 'checkout.session.expired' => 'expired',
             $type === 'checkout.session.async_payment_failed' => 'failure',
+            $provider === 'google_pay' && $type === 'payment_intent.succeeded' => 'success',
+            $provider === 'google_pay' && $type === 'payment_intent.payment_failed' => 'failure',
             default => '',
         };
         if ($reference === '' || $status === '') {
@@ -50,8 +54,8 @@ final readonly class StripeWebhookController
         }
         try {
             $this->lifecycle->applyProviderStatus(
-                'stripe', $reference, $status, isset($event['created']) ? gmdate('c', (int) $event['created']) : null,
-                (int) ($object['amount_total'] ?? 0), strtoupper((string) ($object['currency'] ?? '')), null, $object,
+                $provider, $reference, $status, isset($event['created']) ? gmdate('c', (int) $event['created']) : null,
+                (int) ($object['amount_total'] ?? $object['amount_received'] ?? $object['amount'] ?? 0), strtoupper((string) ($object['currency'] ?? '')), null, $object,
             );
         } catch (\RuntimeException) {
             $this->replays->release('stripe', $fingerprint);

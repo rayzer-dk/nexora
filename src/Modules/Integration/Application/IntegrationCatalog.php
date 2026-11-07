@@ -40,6 +40,10 @@ final class IntegrationCatalog
                     'STRIPE_ENABLED' => ['type' => 'bool'], 'STRIPE_SECRET_KEY' => ['type' => 'secret'], 'STRIPE_WEBHOOK_SECRET' => ['type' => 'secret'],
                     'STRIPE_PAYMENT_METHODS' => ['type' => 'text', 'optional' => true],
                 ]],
+                'google_pay' => ['label' => 'Google Pay (via Stripe)', 'docs' => 'https://developers.google.com/pay/api/web/guides/tutorial', 'fields' => [
+                    'GOOGLE_PAY_ENABLED' => ['type' => 'bool'], 'GOOGLE_PAY_STRIPE_PUBLISHABLE_KEY' => ['type' => 'text'],
+                    'GOOGLE_PAY_ENVIRONMENT' => ['type' => 'select', 'options' => ['TEST', 'PRODUCTION'], 'default' => 'TEST'], 'GOOGLE_PAY_MERCHANT_ID' => ['type' => 'text', 'optional' => true],
+                ]],
                 'paypal' => ['label' => 'PayPal', 'docs' => 'https://developer.paypal.com/api/rest/', 'fields' => [
                     'PAYPAL_ENABLED' => ['type' => 'bool'], 'PAYPAL_CLIENT_ID' => ['type' => 'text'], 'PAYPAL_SECRET' => ['type' => 'secret'], 'PAYPAL_WEBHOOK_ID' => ['type' => 'text', 'optional' => true], 'PAYPAL_SANDBOX' => ['type' => 'bool'],
                 ]],

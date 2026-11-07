@@ -570,6 +570,14 @@ services:
         arguments:
             $isEnabled: '%env(bool:STRIPE_ENABLED)%'
 
+    Commerce\Modules\Payment\Provider\GooglePay\GooglePayPaymentProvider:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
+    Commerce\Modules\Payment\Http\GooglePayController:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
     Commerce\Modules\Payment\Provider\PayPal\PayPalClient:
         arguments:
             $clientId: '%env(PAYPAL_CLIENT_ID)%'

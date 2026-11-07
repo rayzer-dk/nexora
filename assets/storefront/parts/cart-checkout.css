@@ -171,8 +171,9 @@ html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-g
 
 /* mobile: sticky submit bar with the total, always visible */
 @media not all and (min-width: 1024px) {
-  html:has(.checkout-page) { scroll-padding-bottom: calc(var(--mc-space-20) + var(--mc-space-6)); }
-  .checkout-page { padding-bottom: calc(var(--mc-space-20) + var(--mc-space-6)); }
+  /* --mc-bar-pad is the real height of the fixed bar (chrome.js), so the last block can always be scrolled clear of it. */
+  html:has(.checkout-page) { scroll-padding-bottom: calc(var(--mc-bar-pad, 96px) + var(--mc-space-6)); }
+  .checkout-page { padding-bottom: calc(var(--mc-bar-pad, 96px) + var(--mc-space-6)); }
   .checkout-page .checkout-builder-slot.is-right { order: 80; }
   .checkout-bar {
     position: fixed; right: 0; bottom: 0; left: 0; z-index: var(--mc-z-sticky);
@@ -188,6 +189,7 @@ html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-g
   .checkout-page .summary-total--grand { display: none; }
   body:has(.checkout-page) [data-contact-widget] { display: none; }
   body:has(.checkout-page) [data-consent-fab] { display: none; }
+  body:has(.checkout-page) .back-to-top { bottom: calc(var(--mc-bar-h, 96px) + var(--mc-space-3)); }
 }
 
 @media (min-width: 640px) {
@@ -246,3 +248,12 @@ html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-g
 .checkout-footer { margin-top: var(--mc-space-8); padding-block: var(--mc-space-5); border-top: 1px solid var(--mc-color-border); color: var(--mc-color-muted); text-align: center; }
 
 .ck-success__messengers { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-3); }
+
+/* ---------- Google Pay payment page ---------- */
+.gpay { text-align: center; }
+.gpay__box { display: grid; gap: var(--mc-space-3); max-width: 360px; margin-block: var(--mc-space-5); }
+.gpay__button { min-height: var(--mc-control-height-lg); }
+.gpay__button > * { width: 100%; }
+.gpay__status { min-height: 1.5em; margin: 0; color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }
+.gpay__status.is-error { color: var(--mc-color-danger); }
+.gpay__note { margin-bottom: var(--mc-space-4); color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); }

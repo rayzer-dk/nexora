@@ -114,8 +114,35 @@ function initSwitchers() {
   }));
 }
 
+// A fixed bar at the bottom (checkout submit, mobile buy bar) covers the end of the page and the floating buttons. Its real
+// height goes into CSS variables, whatever its label wraps to: --mc-bar-pad is always its height (page padding),
+// --mc-bar-h only while it is on screen (the floating buttons lift over it).
+function initBottomBar() {
+  const bars = qa('.checkout-bar, .mobile-buy-bar');
+  if (!bars.length) return;
+  const root = document.documentElement;
+  const apply = () => {
+    let pad = 0;
+    let shown = 0;
+    bars.forEach((bar) => {
+      if (window.getComputedStyle(bar).position !== 'fixed') return;
+      const height = Math.ceil(bar.offsetHeight);
+      pad = Math.max(pad, height);
+      if (!bar.classList.contains('mobile-buy-bar') || bar.classList.contains('is-visible')) shown = Math.max(shown, height);
+    });
+    root.style.setProperty('--mc-bar-pad', `${pad}px`);
+    root.style.setProperty('--mc-bar-h', `${shown}px`);
+  };
+  const resize = new ResizeObserver(apply);
+  const mutate = new MutationObserver(apply);
+  bars.forEach((bar) => { resize.observe(bar); mutate.observe(bar, { attributes: true, attributeFilter: ['class'] }); });
+  window.addEventListener('resize', apply);
+  apply();
+}
+
 function boot() {
   try { initMegaMenu(); } catch (_) { /* the plain catalog link keeps working */ }
   try { initSwitchers(); } catch (_) { /* plain links keep working */ }
+  try { initBottomBar(); } catch (_) { /* the CSS fallbacks keep the page usable */ }
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

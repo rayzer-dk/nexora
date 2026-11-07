@@ -4,9 +4,15 @@
 .reference-topbar { background: var(--mc-color-ink); color: color-mix(in srgb, #fff 78%, transparent); font-size: var(--mc-font-size-xs); }
 .reference-topbar__inner { display: flex; align-items: center; gap: var(--mc-space-3); min-height: var(--mc-control-height-sm); }
 .reference-topbar__service { display: none; gap: var(--mc-space-5); margin-right: auto; }
-.reference-topbar nav { display: flex; flex: 1; justify-content: flex-start; gap: var(--mc-space-4); min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.reference-topbar__nav { display: none; flex: 1; justify-content: flex-start; gap: var(--mc-space-4); min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .reference-topbar a:not(.store-switcher__option) { color: inherit; white-space: nowrap; }
 .reference-topbar a:not(.store-switcher__option):hover { color: #fff; text-decoration: none; }
+/* Phones: the service links do not fit in one line, so they sit behind one menu button. */
+.topbar-more { margin-right: auto; }
+.topbar-more .store-switcher__menu { right: auto; left: 0; }
+.topbar-more__menu a { display: block; padding: var(--mc-space-2) var(--mc-space-3); border-radius: var(--mc-radius-sm); }
+.reference-topbar .topbar-more__menu a { color: var(--mc-color-text); }
+.reference-topbar .topbar-more__menu a:hover { background: var(--mc-color-primary-soft); color: var(--mc-color-primary); }
 
 .store-switchers { display: flex; flex: none; align-items: center; gap: var(--mc-space-1); }
 .store-switcher { position: relative; }
@@ -53,11 +59,13 @@
 
 .reference-catalog-toggle {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--mc-space-2);
-  width: auto; min-width: var(--mc-control-height-lg); height: var(--mc-control-height-lg); padding-inline: var(--mc-control-padding-x);
+  width: var(--mc-control-height-lg); min-width: var(--mc-control-height-lg); height: var(--mc-control-height-lg); padding-inline: 0;
   border-radius: var(--mc-radius-md); background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast);
   font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); cursor: pointer; white-space: nowrap;
 }
 .reference-catalog-toggle:hover { background: var(--mc-color-primary-fill-hover); text-decoration: none; }
+/* Phones: the catalogue button is an icon, so the search gets the width; the label stays for screen readers. */
+.reference-catalog-toggle > span, .reference-catalog-toggle > .ui-icon:last-child { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .reference-catalog-toggle > .ui-icon:last-child { transition: transform var(--mc-transition); }
 .reference-catalog-toggle[aria-expanded="true"] > .ui-icon:last-child { transform: rotate(180deg); }
 .mega { flex: 1; min-width: 0; }
@@ -204,8 +212,10 @@
   .cw[data-position="left"] ~ .consent-fab { left: calc(var(--mc-space-4) + 6px); bottom: calc(var(--mc-space-4) + 56px + var(--mc-space-3)); }
 }
 @media (max-width: 768px) {
-  body:has(.mobile-buy-bar) .back-to-top, body:has(.mobile-buy-bar) .consent-fab { bottom: calc(var(--mc-space-4) + 72px); }
-  body:has(.mobile-buy-bar) .cw[data-position="right"] ~ .back-to-top, body:has(.mobile-buy-bar) .cw[data-position="left"] ~ .consent-fab { bottom: calc(var(--mc-space-4) + 72px + 56px + var(--mc-space-3)); }
+  body:has(.mobile-buy-bar) .back-to-top, body:has(.mobile-buy-bar) .consent-fab { bottom: calc(var(--mc-space-4) + var(--mc-bar-h, 72px)); }
+  body:has(.mobile-buy-bar) .cw[data-position="right"] ~ .back-to-top, body:has(.mobile-buy-bar) .cw[data-position="left"] ~ .consent-fab { bottom: calc(var(--mc-space-4) + var(--mc-bar-h, 72px) + 56px + var(--mc-space-3)); }
+  /* The floating buttons sit over the bottom corner: the footer keeps room so its last line is never under them. */
+  .site-footer { padding-bottom: calc(var(--mc-space-16) + var(--mc-space-4)); }
   body:has(.mc-consent:not([hidden])) .back-to-top { display: none; }
 }
 @media (min-width: 640px) {
@@ -229,7 +239,8 @@
   .reference-header .reference-brand strong { font-size: var(--mc-font-size-lg); }
   .reference-header:not(:has(.mega)) .reference-search { grid-column: auto; }
   [data-currency-switch] .store-switcher__code { display: inline; }
-  .reference-topbar nav { flex: none; justify-content: flex-end; }
+  .reference-topbar__nav { display: flex; flex: none; justify-content: flex-end; }
+  .topbar-more { display: none; }
   .store-switchers { padding-left: var(--mc-space-4); border-left: 1px solid color-mix(in srgb, #fff 18%, transparent); }
   .reference-header__main { grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--mc-space-6); }
   .reference-search { grid-column: auto; grid-row: auto; }

@@ -8,7 +8,11 @@ Google Merchant Center features. Migration `Version20270102010000` (database sch
 - Order confirmation page: one Google Ads purchase conversion (with the order number as the transaction ID) and the Google Customer Reviews survey opt-in. Neither is sent for an order that waits for payment or is cancelled.
 - Product reviews feed for Google (XML 2.3) at `/feeds/{store}/google-reviews`: published reviews of published products that have a page link; products with reviews turned off are left out. The address is shown in Admin → Feeds.
 - Loyalty program in Merchant Center: with the points program on and a label set, the Google XML feed and the Merchant API product sync carry `loyalty_program` with the points a buyer earns (same rule as the points for a paid order).
-- Google Pay is not a button of the store: it is offered on the hosted payment pages of Stripe, Monobank, LiqPay and WayForPay, so it is turned on in the provider's own cabinet.
+- Google Pay button: a new payment method "Google Pay" (Admin → Integrations → Connections → Google Pay, needs Stripe connected). The order is placed first, then the buyer lands on `/payment/google-pay/{order}` with the Google Pay button; the card token Google returns is charged through a Stripe PaymentIntent (3-D Secure redirect supported). The PaymentIntent id is the payment reference, so refunds and cancelling work through Stripe; the Stripe webhook also needs `payment_intent.succeeded` and `payment_intent.payment_failed`. TEST environment works without Google approval, PRODUCTION needs the merchant ID and Google's approval.
+- Phones, header: the service links (About, Delivery, …) are one menu button instead of a clipped line, the catalogue button is an icon so the search gets the width.
+- Phones, spacing: the product page no longer swallows the gap before "Similar products" (an unclosed `<small>` in the question form had put the following blocks inside it), the quick order button has a gap under the buy button, the catalogue toolbar shows the count on its own line.
+- Phones, bottom bars: the page padding follows the real height of the checkout and buy bars (`--mc-bar-pad`), the floating buttons (up, chat, cookies) lift over the bar by its real height, the footer keeps room for them.
+- uk-UA / ru-RU: the carrier is "Нова пошта" / "Новая почта" instead of "Nova Post".
 
 ## 4.0.3 — 2026-10-26
 

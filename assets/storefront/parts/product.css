@@ -64,6 +64,12 @@
 .cf-toolbar__field select { height: var(--mc-control-height-sm); padding-block: 0; font-size: var(--mc-font-size-sm); }
 .cf-toolbar__field > span { display: none; }
 .cf-toolbar__field--per { display: none; }
+/* Phones: the count is a line of its own, the filters button and the sort share the next one, nothing touches. */
+@media (max-width: 640px) {
+  .cf-toolbar__count { order: -1; flex: 1 1 100%; }
+  .cf-toolbar__field:not(.cf-toolbar__field--per) { flex: 1; min-width: 0; }
+  .cf-toolbar__field select { width: 100%; min-width: 0; }
+}
 
 /* Active-filter chips */
 .cf-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-2); }
@@ -266,6 +272,10 @@
   transform: translateY(110%); transition: transform var(--mc-transition);
 }
 .mobile-buy-bar.is-visible { transform: none; }
+/* The bar hides the end of the page, so the page keeps room for it (its real height comes from chrome.js). */
+@media (max-width: 767px) { .product-page:has(.mobile-buy-bar) { padding-bottom: calc(var(--mc-bar-pad, 72px) + var(--mc-space-4)); } }
+/* Quantity + buy button, the quick order button and the other actions are one stack with one gap. */
+.product-block--buy_actions { display: flex; flex-direction: column; gap: var(--mc-space-3); }
 .mobile-buy-bar div { display: grid; line-height: var(--mc-line-height-snug); }
 .mobile-buy-bar strong { font-size: var(--mc-font-size-lg); }
 .mobile-buy-bar span { color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); }

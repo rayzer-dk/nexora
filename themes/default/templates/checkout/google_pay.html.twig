@@ -1,0 +1,16 @@
+{% extends '@storefront/base.html.twig' %}
+{% block head %}<script type="module" src="{{ vite_asset('assets/storefront/google-pay.js', '/assets/google-pay.js') }}"></script>{% endblock %}
+{% block body %}
+<section class="shell content-shell"><div class="content-card gpay">
+<span class="eyebrow">{{ ui_text('order_number', {number: order_number}) }}</span>
+<h1>{{ ui_text('gpay_title') }}</h1>
+<p>{{ ui_text('gpay_lead', {amount: amount_label}) }}</p>
+<div class="gpay__box" data-google-pay data-config="{{ config|merge({csrf: csrf_token('google_pay_' ~ order_public_id)})|json_encode|e('html_attr') }}">
+    <div class="gpay__button" data-gpay-button></div>
+    <p class="gpay__status" data-gpay-status role="status" aria-live="polite"></p>
+    <noscript><p class="store-notice is-error">{{ ui_text('gpay_needs_js') }}</p></noscript>
+</div>
+<p class="gpay__note">{{ ui_text('gpay_note') }}</p>
+<a class="button" href="/checkout">{{ ui_icon('arrow-left', 16) }} {{ ui_text('gpay_other_method') }}</a>
+</div></section>
+{% endblock %}

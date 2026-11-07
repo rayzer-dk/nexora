@@ -21,6 +21,7 @@ export default defineConfig({
         storefront: 'assets/storefront/product-page.js',
         storefrontRuntime: 'assets/storefront/storefront-runtime.js',
         checkout: 'assets/storefront/checkout.js',
+        googlePay: 'assets/storefront/google-pay.js',
         cart: 'assets/storefront/cart.js',
         consent: 'assets/storefront/consent.js',
         slider: 'assets/storefront/slider.js',
