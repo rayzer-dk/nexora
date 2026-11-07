@@ -76,7 +76,7 @@ final readonly class DemoCommerceSeeder
     ];
 
     private const CARRIERS = [
-        'nova_post' => ['Nova Post', 'pickup_point', 8000],
+        'nova_post' => ['Нова пошта', 'pickup_point', 8000],
         'ukrposhta' => ['Ukrposhta', 'pickup_point', 6000],
         'meest' => ['Meest', 'courier', 9000],
         'delivery_auto' => ['Delivery Auto', 'pickup_point', 8500],

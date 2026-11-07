@@ -20,7 +20,7 @@ use Commerce\Modules\Payment\Provider\Stripe\StripeClient;
  */
 final readonly class GooglePayPaymentProvider implements OnlinePaymentProviderInterface
 {
-    public function __construct(private StripeClient $stripe, private string $publicBaseUrl)
+    public function __construct(private StripeClient $stripe)
     {
     }
 
@@ -47,7 +47,10 @@ final readonly class GooglePayPaymentProvider implements OnlinePaymentProviderIn
     public function createPayment(OnlinePaymentRequest $request): OnlinePaymentSession
     {
         // The money is taken on the payment page, once the buyer has chosen a card in Google Pay.
-        return new OnlinePaymentSession('gpay-' . $request->orderPublicId, rtrim($this->publicBaseUrl, '/') . '/payment/google-pay/' . $request->orderPublicId, null, ['provider' => 'google_pay']);
+        // The return URL is {base}/payment/return/{order}; the payment page sits next to it.
+        $payPage = str_replace('/payment/return/', '/payment/google-pay/', $request->returnUrl);
+
+        return new OnlinePaymentSession('gpay-' . $request->orderPublicId, $payPage, null, ['provider' => 'google_pay']);
     }
 
     /** The token Google returned: a Stripe token ("tok_…") inside a JSON string. */

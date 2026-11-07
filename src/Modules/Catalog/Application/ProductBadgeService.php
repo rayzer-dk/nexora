@@ -16,6 +16,8 @@ use Doctrine\DBAL\Connection;
 final class ProductBadgeService
 {
     public const KINDS = ['new', 'sale', 'bestseller', 'manual'];
+    /** What an automatic badge shows when its rule has no icon of its own. */
+    private const AUTOMATIC_ICONS = ['sale' => 'badge-percent', 'new' => 'sparkles', 'bestseller' => 'star'];
     public const TONES = ['primary', 'success', 'danger', 'warning', 'info', 'neutral'];
 
     /** @var array<int,list<array<string,mixed>>> */
@@ -174,7 +176,7 @@ final class ProductBadgeService
                     default => isset($set[$id]),
                 };
                 if ($match && count($item['badges']) < 3) {
-                    $item['badges'][] = ['code' => $rule['code'], 'tone' => str_starts_with((string) $rule['tone'], '#') ? 'custom' : $rule['tone'], 'color' => str_starts_with((string) $rule['tone'], '#') ? substr((string) $rule['tone'], 0, 7) : '', 'fg' => str_starts_with((string) $rule['tone'], '#') ? (strlen((string) $rule['tone']) === 15 ? substr((string) $rule['tone'], 8) : self::contrastOn(substr((string) $rule['tone'], 0, 7))) : '', 'label' => $this->label($rule, $locale), 'icon' => (string) ($rule['icon'] ?? '')];
+                    $item['badges'][] = ['code' => $rule['code'], 'tone' => str_starts_with((string) $rule['tone'], '#') ? 'custom' : $rule['tone'], 'color' => str_starts_with((string) $rule['tone'], '#') ? substr((string) $rule['tone'], 0, 7) : '', 'fg' => str_starts_with((string) $rule['tone'], '#') ? (strlen((string) $rule['tone']) === 15 ? substr((string) $rule['tone'], 8) : self::contrastOn(substr((string) $rule['tone'], 0, 7))) : '', 'label' => $this->label($rule, $locale), 'icon' => (string) (($rule['icon'] ?? '') !== '' ? $rule['icon'] : (self::AUTOMATIC_ICONS[(string) ($rule['kind'] ?? '')] ?? ''))];
                 }
             }
             unset($item);

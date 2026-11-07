@@ -32,7 +32,7 @@ final class GooglePayPaymentProviderTest extends TestCase
             return new MockResponse(json_encode($next, JSON_THROW_ON_ERROR), ['http_code' => isset($next['error']) ? 402 : 200]);
         });
 
-        return new GooglePayPaymentProvider(new StripeClient($client, $secret, 'whsec_x'), 'https://shop.test');
+        return new GooglePayPaymentProvider(new StripeClient($client, $secret, 'whsec_x'));
     }
 
     public function testItIsOfferedOnlyWhenStripeAndTheGooglePayKeysAreSet(): void
@@ -50,7 +50,7 @@ final class GooglePayPaymentProviderTest extends TestCase
 
     public function testThePaymentStartsOnOurOwnPageNotAtAProvider(): void
     {
-        $session = $this->provider([])->createPayment(new OnlinePaymentRequest('0194b0c0-0000-7000-8000-000000000001', 'N-1', 1000, 'UAH', 'https://shop.test/payment/return/x', 'https://shop.test/hook'));
+        $session = $this->provider([])->createPayment(new OnlinePaymentRequest('0194b0c0-0000-7000-8000-000000000001', 'N-1', 1000, 'UAH', 'https://shop.test/payment/return/0194b0c0-0000-7000-8000-000000000001', 'https://shop.test/hook'));
 
         self::assertSame('https://shop.test/payment/google-pay/0194b0c0-0000-7000-8000-000000000001', $session->redirectUrl);
         self::assertSame('gpay-0194b0c0-0000-7000-8000-000000000001', $session->providerReference);
