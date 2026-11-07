@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+Google Merchant Center features. Migration `Version20270102010000` (database schema 90) adds the new settings columns to `mc_tracking_settings`.
+
+- Admin → Analytics and pixels: Google Ads conversion ID and purchase label, Google Customer Reviews Merchant Center ID with the estimated delivery days, and the loyalty program label. Only validated identifiers are stored; the tags load after the visitor accepts marketing cookies.
+- Order confirmation page: one Google Ads purchase conversion (with the order number as the transaction ID) and the Google Customer Reviews survey opt-in. Neither is sent for an order that waits for payment or is cancelled.
+- Product reviews feed for Google (XML 2.3) at `/feeds/{store}/google-reviews`: published reviews of published products that have a page link; products with reviews turned off are left out. The address is shown in Admin → Feeds.
+- Loyalty program in Merchant Center: with the points program on and a label set, the Google XML feed and the Merchant API product sync carry `loyalty_program` with the points a buyer earns (same rule as the points for a paid order).
+- Google Pay is not a button of the store: it is offered on the hosted payment pages of Stripe, Monobank, LiqPay and WayForPay, so it is turned on in the provider's own cabinet.
+
 ## 4.0.3 — 2026-10-26
 
 Photo scaling for product images (fit, limited enlargement, dark background, per place, with a preview), fixes found by the review of 4.0.2, and the browser test fixes of the CI. Version 4.0.3 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No new migration.

@@ -42,6 +42,7 @@ final readonly class OrderConfirmationQuery
             ];
         }
         $paymentCode = is_array($payment) ? (string) $payment['provider_code'] : '';
+        $counted = !in_array((string) $order['status'], ['awaiting_payment', 'cancelled'], true);
 
         return [
             'order_number' => (string) $order['order_number'],
@@ -49,7 +50,34 @@ final readonly class OrderConfirmationQuery
             'email' => (string) ($order['customer_email'] ?? ''),
             'delivery' => $delivery,
             'payment' => $paymentCode !== '' ? ['code' => $paymentCode, 'label' => $this->methods->payment($paymentCode, $locale), 'pay_on_receipt' => $paymentCode === 'cash_on_delivery'] : null,
+            'google' => $counted ? $this->googleData($orderId, $storeId, $order, $destination) : null,
             'items' => array_map(fn (array $i): array => ['name' => (string) $i['name'], 'quantity' => rtrim(rtrim((string) $i['quantity'], '0'), '.'), 'unit' => (string) $i['unit_code'], 'total' => $this->money->format((int) $i['line_total_minor'], $currency, $locale)], $items),
+        ];
+    }
+
+    /**
+     * What the Google Ads conversion and the Google Customer Reviews opt-in need. Only given for an order that is
+     * neither waiting for payment nor cancelled, so an abandoned online payment is not counted as a sale.
+     *
+     * @param array<string,mixed> $order
+     * @param array<string,mixed> $destination
+     * @return array{id:string,value:string,currency:string,email:string,country:string,gtins:list<string>}
+     */
+    private function googleData(int $orderId, int $storeId, array $order, array $destination): array
+    {
+        $country = strtoupper((string) ($destination['country'] ?? ''));
+        if (preg_match('/^[A-Z]{2}$/D', $country) !== 1) {
+            $country = strtoupper((string) $this->db->fetchOne('SELECT default_country FROM mc_store WHERE id=?', [$storeId]));
+        }
+        $gtins = $this->db->fetchFirstColumn("SELECT DISTINCT v.gtin FROM mc_sales_order_item i JOIN mc_product_variant v ON v.id=i.variant_id WHERE i.order_id=? AND v.gtin<>'' LIMIT 50", [$orderId]);
+
+        return [
+            'id' => (string) $order['order_number'],
+            'value' => number_format((int) $order['total_minor'] / 100, 2, '.', ''),
+            'currency' => (string) $order['currency'],
+            'email' => (string) ($order['customer_email'] ?? ''),
+            'country' => $country,
+            'gtins' => array_map('strval', $gtins),
         ];
     }
 }

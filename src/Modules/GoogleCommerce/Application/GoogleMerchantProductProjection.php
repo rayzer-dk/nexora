@@ -14,6 +14,7 @@ final readonly class GoogleMerchantProductProjection
         private Connection $db,
         private CanonicalMerchantProductBuilder $canonical,
         private string $publicBaseUrl,
+        private ?\Commerce\Modules\Rewards\Application\MerchantLoyaltyProgram $loyalty = null,
     ) {}
 
     /** @return array{product_id:int,store_id:int,status:string,canonical:array<string,mixed>,input:array<string,mixed>} */
@@ -30,7 +31,7 @@ final readonly class GoogleMerchantProductProjection
             "SELECT p.id product_id,p.status product_status,p.manufacturer_part_number,p.brand_id,sp.store_id,sp.status publication_status,
                     s.default_locale,s.default_currency,s.default_country,pt.name,pt.short_description,pt.description,
                     v.id variant_id,v.sku,v.gtin,COALESCE(v.mpn,p.manufacturer_part_number) mpn,v.manage_inventory,v.allow_backorder,
-                    pr.amount_minor,pr.currency,COALESCE(b.name,'') brand,sr.path
+                    pr.amount_minor,pr.currency,COALESCE(b.name,'') brand,sr.path,pe.points_percent
              FROM mc_product p
              JOIN mc_store_product sp ON sp.product_id=p.id{$storeFilter}
              JOIN mc_store s ON s.id=sp.store_id
@@ -38,6 +39,7 @@ final readonly class GoogleMerchantProductProjection
              JOIN mc_product_variant v ON v.product_id=p.id AND v.sort_order=0
              LEFT JOIN mc_price pr ON pr.variant_id=v.id AND pr.store_id=sp.store_id AND pr.customer_group='default' AND pr.price_list_id IS NULL AND pr.max_quantity IS NULL AND pr.starts_at IS NULL AND pr.ends_at IS NULL
              LEFT JOIN mc_brand b ON b.id=p.brand_id
+             LEFT JOIN mc_product_extra pe ON pe.product_id=p.id
              LEFT JOIN mc_seo_route sr ON sr.store_id=sp.store_id AND sr.locale=s.default_locale AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
              WHERE p.public_id=? ORDER BY sp.store_id LIMIT 1",
             array_merge(array_slice($params, 1), [$binary])
@@ -79,6 +81,11 @@ final readonly class GoogleMerchantProductProjection
         if (!empty($canonical['brand'])) $attrs['brand']=$canonical['brand'];
         if (!empty($canonical['gtins'])) $attrs['gtins']=$canonical['gtins'];
         if (!empty($canonical['mpn'])) $attrs['mpn']=$canonical['mpn'];
+        $program = $minor > 0 ? $this->loyalty?->forStore((int)$row['store_id']) : null;
+        if ($program !== null) {
+            $points = \Commerce\Modules\Rewards\Application\MerchantLoyaltyProgram::points($minor, $program['points_per_major'], $row['points_percent'] !== null ? (int)$row['points_percent'] : null);
+            if ($points > 0) $attrs['loyaltyPrograms']=[['programLabel'=>$program['label'],'loyaltyPoints'=>(string)$points]];
+        }
         return [
             'product_id'=>(int)$row['product_id'],'store_id'=>(int)$row['store_id'],'status'=>$published ? 'published' : 'inactive','canonical'=>$canonical,
             'input'=>['offerId'=>(string)$canonical['offer_id'],'contentLanguage'=>(string)$canonical['content_language'],'feedLabel'=>(string)$canonical['feed_label'],'productAttributes'=>$attrs],

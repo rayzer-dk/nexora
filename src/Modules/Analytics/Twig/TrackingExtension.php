@@ -25,7 +25,7 @@ final class TrackingExtension extends AbstractExtension
         return [new TwigFunction('tracking_tags', [$this, 'tags'])];
     }
 
-    /** @return array{ga4:string,gtm:string,pixel:string}|null */
+    /** @return array{ga4:string,gtm:string,pixel:string,ads:string,ads_label:string,gcr:string,gcr_days:int}|null */
     public function tags(): ?array
     {
         $request = $this->requests->getCurrentRequest();
@@ -39,7 +39,9 @@ final class TrackingExtension extends AbstractExtension
             }
             CspExtra::merge($request, $tags['csp']);
 
-            return ['ga4' => $tags['ga4'], 'gtm' => $tags['gtm'], 'pixel' => $tags['pixel']];
+            unset($tags['csp']);
+
+            return $tags;
         } catch (\Throwable) {
             return null;
         }

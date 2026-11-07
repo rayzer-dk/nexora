@@ -387,6 +387,10 @@ services:
         arguments:
             $publicBaseUrl: '%commerce.app_public_url%'
 
+    Commerce\Modules\Review\Application\GoogleProductReviewsFeed:
+        arguments:
+            $publicBaseUrl: '%commerce.app_public_url%'
+
     Commerce\Modules\Feeds\Application\ProductFeedGenerator:
         arguments:
             $publicBaseUrl: '%commerce.app_public_url%'

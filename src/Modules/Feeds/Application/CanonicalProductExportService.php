@@ -13,7 +13,7 @@ final readonly class CanonicalProductExportService
 {
     private const BATCH_SIZE = 1000;
 
-    public function __construct(private Connection $db, private string $publicBaseUrl) {}
+    public function __construct(private Connection $db, private string $publicBaseUrl, private ?\Commerce\Modules\Rewards\Application\MerchantLoyaltyProgram $loyalty = null) {}
 
     /** @return list<array<string,mixed>> */
     public function products(int $storeId,int $marketId,string $locale,string $currency,bool $inStockOnly=false): array
@@ -26,7 +26,7 @@ final readonly class CanonicalProductExportService
                     sr.path seo_path,
                     COALESCE(gpo.google_category_id,gcm.google_category_id) google_category_id,
                     COALESCE(gpo.product_type_path,gcm.google_category_path) product_type_path,
-                    pex.custom_label_0,pex.custom_label_1,pex.custom_label_2,pex.custom_label_3,pex.custom_label_4
+                    pex.custom_label_0,pex.custom_label_1,pex.custom_label_2,pex.custom_label_3,pex.custom_label_4,pex.points_percent
              FROM mc_product p
              JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active'
              JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active'
@@ -51,6 +51,7 @@ final readonly class CanonicalProductExportService
         $categoryMap=$this->loadCategories($productIds,$storeId,$locale);
         [$baseAttributes,$variantAttributes]=$this->loadAttributes($productIds,$locale);
 
+        $loyalty=$this->loyalty?->forStore($storeId);
         $out=[];
         foreach($rows as $row){
             $qty=(float)$row['available_quantity']; if($inStockOnly&&$qty<=0)continue;
@@ -73,6 +74,7 @@ final readonly class CanonicalProductExportService
                 'brand'=>(string)$row['brand'],'gtin'=>trim((string)($row['gtin']??'')),'mpn'=>trim((string)($row['mpn']??'')),'condition'=>'new',
                 'google_product_category'=>$row['google_category_id']!==null?(string)$row['google_category_id']:'','product_type'=>(string)($row['product_type_path']??''),'custom_labels'=>array_map(static fn(int $i): string=>trim((string)($row['custom_label_'.$i]??'')),range(0,4)),
                 'categories'=>$categories,'attributes'=>$attributes,'updated_at'=>(string)$row['updated_at'],
+                'loyalty'=>$loyalty!==null&&$price>0?['label'=>$loyalty['label'],'points'=>\Commerce\Modules\Rewards\Application\MerchantLoyaltyProgram::points($price,$loyalty['points_per_major'],$row['points_percent']!==null?(int)$row['points_percent']:null)]:null,
             ];
         }
         return $out;

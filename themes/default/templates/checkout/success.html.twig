@@ -32,4 +32,9 @@
     <a class="button button--primary" href="/catalog">{{ ui_text('continue_shopping') }}{{ ui_icon('arrow-right', 16) }}</a>
   </div>
 </section>
+{% set trk = tracking_tags() %}{% set g = order_info ? order_info.google : null %}
+{% if trk and g %}
+{% if trk.ads and trk.ads_label %}<script type="text/plain" data-consent-category="marketing" nonce="{{ app.request.attributes.get('_csp_nonce') }}">window.gtag('event','conversion',{send_to:'{{ trk.ads }}/{{ trk.ads_label }}',value:{{ g.value }},currency:'{{ g.currency|e('js') }}',transaction_id:'{{ g.id|e('js') }}'});</script>{% endif %}
+{% if trk.gcr and g.email %}<script type="text/plain" data-consent-category="marketing" nonce="{{ app.request.attributes.get('_csp_nonce') }}">window.renderOptIn=function(){window.gapi.load('surveyoptin',function(){window.gapi.surveyoptin.render({merchant_id:{{ trk.gcr }},order_id:'{{ g.id|e('js') }}',email:'{{ g.email|e('js') }}',delivery_country:'{{ g.country|e('js') }}',estimated_delivery_date:'{{ ('now'|date_modify('+' ~ trk.gcr_days ~ ' days'))|date('Y-m-d') }}'{% if g.gtins %},products:[{% for gtin in g.gtins %}{gtin:'{{ gtin|e('js') }}'}{% if not loop.last %},{% endif %}{% endfor %}]{% endif %}});});};</script><script type="text/plain" data-consent-category="marketing" async defer src="https://apis.google.com/js/platform.js?onload=renderOptIn"></script>{% endif %}
+{% endif %}
 {% endblock %}
