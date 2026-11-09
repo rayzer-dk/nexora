@@ -1,4 +1,5 @@
 name: Capture verified visual baselines
+# Re-run after storefront layout changes: touching this file on main starts the capture.
 
 on:
   push:
