@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 4.0.4 — 2026-11-09
+
+Google Merchant Center features, the Google Pay button, phone layout fixes and photo/badge fixes. Version 4.0.4 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK.
+
+Migration `Version20270102010000` (database schema 90) adds the new settings columns to `mc_tracking_settings`. Also:
+
+- Product page: the main photo fits its frame on wide screens instead of being cut at the bottom (the frame height comes from aspect-ratio + max-height, so the photo is now placed by position, not by a percentage height).
+- Product badges (Sale, New, Bestseller): a restyled rectangle with an icon by default.
 
 Google Merchant Center features. Migration `Version20270102010000` (database schema 90) adds the new settings columns to `mc_tracking_settings`.
 
