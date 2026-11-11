@@ -121,6 +121,8 @@
 {% if presentation.display.back_to_top %}<button class="back-to-top" type="button" data-back-to-top hidden aria-label="{{ ui_text('back_to_top') }}" title="{{ ui_text('back_to_top') }}">{{ ui_icon('arrow-up', 20) }}</button>{% endif %}
 <button class="consent-fab" type="button" data-consent-open data-consent-fab hidden aria-label="{{ ui_text('cookie_settings') }}" title="{{ ui_text('cookie_settings') }}">{{ ui_icon('cookie', 20) }}</button>
 <script nonce="{{ app.request.attributes.get('_csp_nonce') }}">window.MC_I18N={{ ui_catalog_json(['js_']) }};</script>
+{# Browser-side prefetch of the page a visitor is about to open (hover/touch intent). Only plain GET pages: never the cart, checkout, account, payment or switcher links. #}
+<script type="speculationrules" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{"prefetch":[{"where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":["/cart*","/checkout*","/account*","/admin*","/payment*","/logout*","/login*","/api/*","/webhooks/*","/feeds/*","/compare*","/wishlist*","/messenger*"]}},{"not":{"href_matches":{"search":"*currency=*"}}},{"not":{"href_matches":{"search":"*lang=*"}}},{"not":{"selector_matches":"[rel~=nofollow], [data-no-prefetch], [download], [target=_blank]"}}]},"eagerness":"moderate"}]}</script>
 <script type="module" src="{{ vite_asset('assets/storefront/storefront-runtime.js', '/assets/storefront-runtime.js') }}"></script>
 {% for ext_asset in extension_assets() %}
   {% if ext_asset.type == 'js' %}<script type="module" src="{{ ext_asset.url }}"{% if ext_asset.defer|default(true) %} defer{% endif %}></script>{% endif %}

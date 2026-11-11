@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Storefront: Speculation Rules prefetch (moderate eagerness, plain GET pages only): a product or category page the visitor is about to open is fetched in the background. The cart, checkout, account, payment, login, feeds and the currency/language switcher links are excluded.
+
 ## 4.0.4 — 2026-11-09
 
 Google Merchant Center features, the Google Pay button, phone layout fixes and photo/badge fixes. Version 4.0.4 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK.
