@@ -31,6 +31,7 @@ UCP:
 - default protocol version in this prototype: 2026-04-08;
 - UCP is not enabled automatically because rollout and merchant eligibility are still evolving;
 - checkout, fulfillment and order lifecycle adapters must be versioned independently from Core.
+- the profile points at {base}/ucp/v1, which is NOT implemented yet (no checkout endpoint): keep GOOGLE_UCP_ENABLED=0 in production until the checkout adapter exists, otherwise an agent that reads the profile gets a 404 where it expects a cart.
 
 Merchant API MCP:
 - treated as experimental;
