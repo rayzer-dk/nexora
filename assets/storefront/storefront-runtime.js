@@ -988,3 +988,38 @@ initEcommerceEvents();
     })
     .catch(() => {});
 })();
+
+// Core Web Vitals of real visitors (LCP, CLS, INP): a sample of visits reports once, when the page is hidden. No identifiers are sent.
+(() => {
+  if (!('PerformanceObserver' in window) || !('sendBeacon' in navigator) || navigator.webdriver || Math.random() >= 0.25) return;
+  const vitals = { LCP: null, CLS: 0, INP: null };
+  const interactions = new Map();
+  const observe = (type, callback, options = {}) => {
+    try { new PerformanceObserver((list) => list.getEntries().forEach(callback)).observe({ type, buffered: true, ...options }); } catch (_) { /* not supported */ }
+  };
+  observe('largest-contentful-paint', (entry) => { vitals.LCP = Math.round(entry.startTime); });
+  observe('layout-shift', (entry) => { if (!entry.hadRecentInput) vitals.CLS += entry.value; });
+  observe('event', (entry) => {
+    if (!entry.interactionId) return;
+    interactions.set(entry.interactionId, Math.max(interactions.get(entry.interactionId) || 0, entry.duration));
+    vitals.INP = Math.round(Math.max(...interactions.values()));
+  }, { durationThreshold: 40 });
+  const kind = () => {
+    const path = window.location.pathname;
+    if (path === '/') return 'home';
+    if (path.startsWith('/catalog')) return 'catalog';
+    if (path.startsWith('/cart')) return 'cart';
+    if (path.startsWith('/checkout')) return 'checkout';
+    return document.querySelector('.product-page') ? 'product' : 'content';
+  };
+  let sent = false;
+  const send = () => {
+    if (sent || vitals.LCP === null) return;
+    sent = true;
+    const metrics = { LCP: vitals.LCP, CLS: Math.round(vitals.CLS * 1000) / 1000 };
+    if (vitals.INP !== null) metrics.INP = vitals.INP;
+    navigator.sendBeacon('/rum/vitals', new Blob([JSON.stringify({ p: kind(), d: window.matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop', m: metrics })], { type: 'application/json' }));
+  };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') send(); });
+  window.addEventListener('pagehide', send);
+})();

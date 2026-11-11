@@ -1,0 +1,11 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.vitals.title'),'vitals') }}
+<header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.vitals.title') }}</span></nav><h1>{{ ui_text('admin.vitals.title') }}</h1><p>{{ ui_text('admin.vitals.intro') }}</p></div>
+<nav class="dash-period" aria-label="{{ ui_text('admin.traffic.period') }}">{% for d in [7, 30, 90] %}<a href="?days={{ d }}"{{ days == d ? ' aria-current="true" class="is-active"' : '' }}>{{ d }} {{ ui_text('admin.dashboard.days_short') }}</a>{% endfor %}</nav></header>
+<section class="admin-panel">
+{% if rows %}
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.vitals.page') }}</th><th>{{ ui_text('admin.vitals.device') }}</th><th>{{ ui_text('admin.vitals.metric') }}</th><th>{{ ui_text('admin.vitals.p75') }}</th><th>{{ ui_text('admin.vitals.target') }}</th><th>{{ ui_text('admin.vitals.samples') }}</th><th>{{ ui_text('admin.vitals.rating') }}</th></tr></thead><tbody>
+{% for r in rows %}<tr><td>{{ ui_text('admin.vitals.page.' ~ r.page_kind) }}</td><td>{{ ui_text('admin.vitals.device.' ~ r.device) }}</td><td>{{ r.metric }}</td><td>{{ r.metric == 'CLS' ? r.p75|number_format(3, '.', ' ') : (r.p75|round|number_format(0, '.', ' ') ~ ' ' ~ ui_text('admin.vitals.ms')) }}</td><td>{{ r.metric == 'CLS' ? '≤ ' ~ limits.CLS[0] : '≤ ' ~ limits[r.metric][0]|number_format(0, '.', ' ') ~ ' ' ~ ui_text('admin.vitals.ms') }}</td><td>{{ r.samples }}</td><td><span class="admin-badge is-{{ r.rating == 'good' ? 'success' : (r.rating == 'poor' ? 'danger' : 'warning') }}">{{ ui_text('admin.vitals.rating.' ~ r.rating) }}</span></td></tr>{% endfor %}
+</tbody></table></div>
+{% else %}<p class="admin-muted">{{ ui_text('admin.vitals.empty') }}</p>{% endif %}
+</section>
+{{ shell.end() }}

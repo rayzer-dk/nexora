@@ -18,4 +18,10 @@ The current SOURCE package has no database or web server in its release artifact
 
 ## Concurrent traffic profile
 
-The repository includes `tests/load/k6-storefront.js`. Run the same populated database at progressively higher concurrency, for example `VUS=50`, `VUS=250` and `VUS=1000`, while collecting DB, PHP-FPM, queue and host metrics. Do not treat virtual-user count as a capacity guarantee: the accepted capacity is the highest level that remains inside the configured p95/p99/error budgets on the target topology.
+The repository includes `qa/load/k6-storefront.js`. Run the same populated database at progressively higher concurrency, for example `VUS=50`, `VUS=250` and `VUS=1000`, while collecting DB, PHP-FPM, queue and host metrics. Do not treat virtual-user count as a capacity guarantee: the accepted capacity is the highest level that remains inside the configured p95/p99/error budgets on the target topology.
+
+## Core Web Vitals
+
+- Real visitors: a quarter of the visits report LCP, CLS and INP once, when the page is hidden (`/rum/vitals`, no identifiers, table `mc_web_vital`, kept 90 days). Admin → Analytics → Traffic → Site speed shows the 75th percentile per page kind and device, rated against the Google limits (LCP 2500 ms, INP 200 ms, CLS 0.1).
+- Lab: `tests/e2e/web-vitals.spec.ts` keeps CLS under 0.1 and LCP under 4 s on the home page, catalogue and cart, and checks that the first catalogue cards are loaded at once (`loading=eager`, `fetchpriority=high` for the first two).
+- The first request for a picture size that was not generated yet builds it on the spot, which can make the first visitor's LCP several seconds slower; warm the media cache after a large import.

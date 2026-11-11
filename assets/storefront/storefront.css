@@ -631,6 +631,7 @@ legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-
 .account-card__head { display: grid; gap: var(--mc-space-2); }
 .account-card__head p { color: var(--mc-color-muted); }
 .account-card__foot { color: var(--mc-color-muted); font-size: var(--mc-font-size-sm); text-align: center; }
+.account-card__foot a { font-weight: var(--mc-font-weight-semibold); text-decoration: underline; text-underline-offset: 2px; }
 .account-page > * + * { margin-top: var(--mc-space-6); }
 .account-page__header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--mc-space-4); }
 .account-page__header > div { display: grid; gap: var(--mc-space-1); justify-items: start; }

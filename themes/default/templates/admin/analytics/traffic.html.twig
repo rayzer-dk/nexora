@@ -1,7 +1,7 @@
 {% import '@storefront/admin/catalog/_shell.html.twig' as shell %}{{ shell.start(ui_text('admin.traffic.title'),'traffic') }}
 {% set t = report.totals %}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.traffic.title') }}</span></nav><h1>{{ ui_text('admin.traffic.title') }}</h1><p>{{ ui_text('admin.traffic.intro') }}</p></div>
-<nav class="dash-period" aria-label="{{ ui_text('admin.traffic.period') }}">{% for d in [7, 30, 90] %}<a href="?days={{ d }}"{{ report.days == d ? ' aria-current="true" class="is-active"' : '' }}>{{ d }} {{ ui_text('admin.dashboard.days_short') }}</a>{% endfor %}</nav></header>
+<nav class="dash-period" aria-label="{{ ui_text('admin.traffic.period') }}">{% for d in [7, 30, 90] %}<a href="?days={{ d }}"{{ report.days == d ? ' aria-current="true" class="is-active"' : '' }}>{{ d }} {{ ui_text('admin.dashboard.days_short') }}</a>{% endfor %}<a href="{{ path('admin_analytics_vitals') }}">{{ ui_text('admin.vitals.title') }}</a></nav></header>
 {% for message in app.flashes('success') %}<div class="admin-notice is-success">{{ message }}</div>{% endfor %}
 {% if not settings.enabled %}<div class="admin-notice is-warning">{{ ui_text('admin.traffic.disabled') }}</div>{% endif %}
 <section class="dash-kpis" aria-label="{{ ui_text('admin.dashboard.kpi_title') }}">

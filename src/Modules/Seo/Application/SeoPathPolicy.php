@@ -13,7 +13,7 @@ final class SeoPathPolicy
     /** @var list<string> */
     private const INTERNAL_RESERVED_ROOTS = [
         'admin', 'api', 'graphql', 'assets', 'build', 'sitemap.xml', 'robots.txt', 'llms.txt', 'llms-full.txt', '.well-known',
-        'health', 'webhooks', 'media', 'uploads', 'manifest.webmanifest', 'sw.js', 'offline', 'withdrawal', 'accessibility',
+        'health', 'webhooks', 'media', 'uploads', 'manifest.webmanifest', 'sw.js', 'offline', 'withdrawal', 'accessibility', 'rum',
     ];
 
     public function __construct(private readonly SystemPageRouteCatalog $systemPages)

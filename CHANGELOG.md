@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Core Web Vitals: a sampled report of LCP, CLS and INP from real visitors (`/rum/vitals`, migration `Version20270103010000`, schema 91) and Admin → Analytics → Traffic → Site speed with the 75th percentile per page and device; the first catalogue cards are loaded eagerly (the LCP picture was lazy).
+- Accessibility (WCAG 2.2 AA): links inside text on the login page are underlined; the accessibility e2e now covers the product page, checkout, login, registration, blog, contact and the dark theme, and counts every axe violation, not only the serious ones.
+- Tests: a real-MySQL concurrency test where eight processes race for three units of stock (no oversell).
+
 - Storefront: Speculation Rules prefetch (moderate eagerness, plain GET pages only): a product or category page the visitor is about to open is fetched in the background. The cart, checkout, account, payment, login, feeds and the currency/language switcher links are excluded.
 
 ## 4.0.4 — 2026-11-09

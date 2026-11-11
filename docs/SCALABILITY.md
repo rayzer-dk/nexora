@@ -32,7 +32,7 @@ Popular facets can be precomputed into `mc_storefront_facet_projection`. Missing
 
 Shared Redis and Valkey profiles are opt-in. Default small-store installs keep filesystem application cache and do not require an external cache/search service.
 
-Use `php bin/console commerce:db:observe` for DB counter snapshots and `tests/load/k6-storefront.js` for concurrent HTTP validation. Capacity claims still require a deployed dataset and measured p95/p99.
+Use `php bin/console commerce:db:observe` for DB counter snapshots and `qa/load/k6-storefront.js` for concurrent HTTP validation. Capacity claims still require a deployed dataset and measured p95/p99.
 
 ## Measured at 10 000 products (3.36.0)
 
