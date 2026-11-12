@@ -33,6 +33,7 @@ if (($manifest['contains_compiled_assets'] ?? false) !== true) $errors[] = 'rele
 if (!is_file($dir . '/composer.lock')) $errors[] = 'composer.lock is missing.';
 if (!is_file($dir . '/package-lock.json')) $errors[] = 'package-lock.json is missing.';
 if (!is_file($dir . '/vendor/autoload_runtime.php')) $errors[] = 'vendor runtime is missing.';
+if (!is_file($dir . '/vendor/composer/InstalledVersions.php')) $errors[] = 'vendor/composer/InstalledVersions.php is missing: the package was built with Composer 1 and the installer would fail with "installed with Composer 1".';
 if (!is_file($dir . '/public/build/.vite/manifest.json')) $errors[] = 'compiled Vite manifest is missing.';
 // Every class under src/ must be resolvable by the shipped (authoritative) class map.
 $classmapFile = $dir . '/vendor/composer/autoload_classmap.php';

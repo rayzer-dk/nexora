@@ -333,6 +333,8 @@ if (!is_dir($stage . '/public/media')) {
 }
 
 if (!is_file($stage . '/vendor/autoload_runtime.php')) fail('vendor missing from production stage.', 30);
+// Composer 1 rewrites vendor/composer without this class; Symfony then refuses to build the container ("installed with Composer 1").
+if (!is_file($stage . '/vendor/composer/InstalledVersions.php')) fail('vendor/composer/InstalledVersions.php is missing: the package was built with Composer 1. Build it with Composer 2.', 37);
 if (!is_file($stage . '/public/build/.vite/manifest.json')) fail('Vite manifest missing from production stage.', 31);
 if (is_dir($stage . '/node_modules')) fail('node_modules leaked into production stage.', 32);
 if (file_exists($stage . '/.env')) fail('.env leaked into production stage.', 33);

@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 4.0.7 — 2026-11-13
+
+Fix of the 4.0.6 archive: it was built with Composer 1, which drops `vendor/composer/InstalledVersions.php`, and the installer stopped with "dependencies have been installed with Composer 1". The packagers now require Composer 2 and the package verifier rejects an archive without that file. Also: the installer language selector works, product translations are typed in the product form, and a double-sent checkout form returns the one order. Version 4.0.7 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK.
 
 - Installer (`setup.php`): the language selector now switches the page at once (it had no handler and only worked without JavaScript); the failure message names the log file (`var/log/installer.log`) where the diagnostic code is explained.
 - Product form: the other languages are typed in the form itself (General tab → Translations: one tab per language with name, short description, description and SEO title/description) and saved together with the product, on create and on edit; the language bar above the tabs is gone. A language left empty is skipped.

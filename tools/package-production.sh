@@ -38,6 +38,7 @@ rsync -a ./ "$OUT_DIR/" \
 # The shipped vendor/ uses an authoritative class map (no filesystem lookups at runtime), so the map MUST be
 # rebuilt from the files that are actually in this package; a map copied from an older build silently lacks
 # every class added since ("Expected to find class ... but it was not found" during installation).
+composer --version 2>/dev/null | grep -qE 'Composer (version )?2\.' || { echo 'ERROR: Composer 2 is required to build the package (Composer 1 drops vendor/composer/InstalledVersions.php).' >&2; exit 37; }
 (cd "$OUT_DIR" && COMPOSER_ALLOW_SUPERUSER=1 composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scripts --no-interaction) >/dev/null
 
 mkdir -p "$OUT_DIR/var/cache" "$OUT_DIR/var/log" "$OUT_DIR/var/install" "$OUT_DIR/var/extensions" "$OUT_DIR/var/feeds" "$OUT_DIR/var/recovery" "$OUT_DIR/var/sessions" "$OUT_DIR/public/media"
@@ -52,6 +53,7 @@ rm -f "$OUT_DIR/.env" "$OUT_DIR/.env.local"
 
 
 [ -f "$OUT_DIR/vendor/autoload_runtime.php" ] || { echo 'ERROR: vendor missing from production stage.' >&2; exit 30; }
+[ -f "$OUT_DIR/vendor/composer/InstalledVersions.php" ] || { echo 'ERROR: vendor/composer/InstalledVersions.php is missing (the package was built with Composer 1).' >&2; exit 38; }
 [ -f "$OUT_DIR/public/build/.vite/manifest.json" ] || { echo 'ERROR: Vite manifest missing from production stage.' >&2; exit 31; }
 [ ! -d "$OUT_DIR/node_modules" ] || { echo 'ERROR: node_modules leaked into production stage.' >&2; exit 32; }
 [ ! -e "$OUT_DIR/var/install/installed.lock" ] || { echo 'ERROR: installed.lock leaked into package (installer would refuse to run).' >&2; exit 35; }
