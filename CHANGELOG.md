@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 4.0.5 — 2026-11-12
+
+Storefront speed (CSS split by page), accessibility of search, security patches of Symfony. Version 4.0.5 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
+
 - Storefront search: the live suggestions are a proper combobox (`role=combobox`/`listbox`/`option`, `aria-expanded`, `aria-activedescendant`); Arrow Up/Down move over the suggestions and Enter opens the highlighted one.
 - Catalog paging: the newest request wins (earlier ones are aborted). Before, a click or the Back button during loading was ignored and the address no longer matched the grid.
 - Build: the asset budgets are now measured on the compiled files in `public/build` (before, on the old copies in `public/assets`, which let the real size pass unnoticed); the limits are set to the current sizes so the guard catches growth. ESLint knows `PerformanceObserver` (the lint error in the Web Vitals code). The favicon links in the default theme are no longer printed twice.
