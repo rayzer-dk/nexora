@@ -2368,3 +2368,4 @@ form:has(input[name="display_image_fit"][value="cover"]:checked) .image-preview_
 .admin-cart-contact { display: inline-block; min-height: 24px; padding-block: var(--mc-space-1); }
 .admin-help a, .admin-hint a, .admin-notice a, .admin-panel p a, .admin-field small a { text-decoration: underline; text-underline-offset: 2px; }
 .admin-tabs__list { display: contents; }
+[data-lang-panel][hidden] { display: none; }

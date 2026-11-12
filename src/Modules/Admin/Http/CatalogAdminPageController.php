@@ -224,6 +224,25 @@ final class CatalogAdminPageController extends AbstractController
         return $this->render('@storefront/admin/catalog/product_quick.html.twig', ['categories' => $this->query->categories($context->storeId, $context->locale, 1, 100, '')['items'], 'currency' => $context->currency]);
     }
 
+    /** Texts typed in the "other languages" block of the product form are saved with the product; a language left empty is skipped. */
+    private function saveInlineTranslations(Request $request, int $storeId, int $productId, string $currentLocale): void
+    {
+        foreach ($request->request->all('tr') as $locale => $fields) {
+            if (!is_array($fields) || (string) $locale === $currentLocale) {
+                continue;
+            }
+            $typed = array_filter($fields, static fn (mixed $value): bool => is_string($value) && trim($value) !== '');
+            if ($typed === []) {
+                continue;
+            }
+            try {
+                $this->translations->saveProduct($storeId, $productId, (string) $locale, array_map(static fn (mixed $v): string => is_string($v) ? $v : '', $fields));
+            } catch (\InvalidArgumentException $e) {
+                $this->addFlash('error', (string) $locale . ': ' . \Commerce\Core\I18n\CanonicalUiText::get('admin.translations.error.' . $e->getMessage()));
+            }
+        }
+    }
+
     #[Route('/admin/catalog/products/new', name: 'admin_catalog_product_new', methods: ['GET', 'POST'])]
     public function productNew(Request $request): Response
     {
@@ -249,6 +268,7 @@ final class CatalogAdminPageController extends AbstractController
                         purchaseButtonLabel: trim((string) $request->request->get('purchase_button_label', '')) ?: null,
                         purchaseEtaText: trim((string) $request->request->get('purchase_eta_text', '')) ?: null,
                     ));
+                    $this->saveInlineTranslations($request, $context->storeId, (int) $created['id'], $context->locale);
                     $mediaErrors = $this->attachUploadedImages($request, $context->storeId, (int) $created['id'], (string) $request->request->get('name', ''));
                     $mediaErrors = array_merge($mediaErrors, $this->saveVideos($request, $context->storeId, (int) $created['id']));
                     $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.chernetku_tovaru_stvoreno'));
@@ -342,6 +362,7 @@ final class CatalogAdminPageController extends AbstractController
                 $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.contentadminpagecontroller.sesiiu_formy_vtracheno_povtorit_diiu'));
             } else {
                 try {
+                    $this->saveInlineTranslations($request, $context->storeId, (int) $product['id'], $context->locale);
                     $missingLocales = [];
                     if ((string) $request->request->get('status', 'draft') === 'published' && ($policy = $this->contentPolicy->mode($context->storeId)) !== 'off') {
                         $missingLocales = array_values(array_diff($this->translations->missingForProduct($context->storeId, (int) $product['id']), trim((string) $request->request->get('name', '')) !== '' && trim((string) $request->request->get('description', '')) !== '' ? [$context->locale] : []));
@@ -462,6 +483,7 @@ final class CatalogAdminPageController extends AbstractController
             'categories' => $categories,
             'brands' => $brands,
             'product' => $product,
+            'tr_texts' => $this->translations->productTexts($context->storeId, (int) $product['id']),
             'images' => $this->media->productImages((int) $product['id']),
             'videos' => $this->videos->forAdmin((int) $product['id']),
             'media_items' => $this->mediaOrder->merge($this->media->productImages((int) $product['id']), $this->videos->forAdmin((int) $product['id'])),
