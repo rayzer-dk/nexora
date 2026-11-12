@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Content\Infrastructure;
 
+use Commerce\Modules\Content\Contract\LatestArticlesInterface;
 use Commerce\Modules\Content\Application\BlogContentProcessor;
 use Doctrine\DBAL\Connection;
 use IntlDateFormatter;
 use Symfony\Component\Uid\Uuid;
 
 /** Read side of the blog for the storefront, feed and sitemap. Only published, non-future articles are visible. */
-final readonly class DbalBlogQuery
+final readonly class DbalBlogQuery implements LatestArticlesInterface
 {
     private const PUBLISHED = "ce.content_type='article' AND ce.status='published' AND (ce.published_at IS NULL OR ce.published_at<=UTC_TIMESTAMP(6))";
     private const SELECT = "ce.id,ce.public_id,ce.published_at,ce.updated_at,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description,sr.path,

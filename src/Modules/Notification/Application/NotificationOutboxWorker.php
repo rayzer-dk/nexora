@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Notification\Application;
 
+use Commerce\Core\Runtime\DeferredWorkerInterface;
 use Commerce\Modules\Notification\Domain\NotificationChannel;
 use Commerce\Modules\Notification\Domain\NotificationMessage;
 use DateInterval;
@@ -11,7 +12,7 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Throwable;
 
-final readonly class NotificationOutboxWorker
+final readonly class NotificationOutboxWorker implements DeferredWorkerInterface
 {
     private const MAX_ATTEMPTS = 5;
     private const STALE_LOCK_SECONDS = 900;
@@ -20,6 +21,11 @@ final readonly class NotificationOutboxWorker
         private Connection $connection,
         private NotificationDispatcher $dispatcher,
     ) {
+    }
+
+    public function queue(): string
+    {
+        return 'notifications';
     }
 
     /** @return array{scanned:int,sent:int,retried:int,failed:int} */

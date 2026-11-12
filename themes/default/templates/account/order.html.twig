@@ -1,4 +1,4 @@
-{% extends '@storefront/base.html.twig' %}
+{% extends '@storefront/base.html.twig' %}{% set page_css = 'account' %}
 {% block body %}
 <section class="shell account-page">
 <div class="account-page__header"><div><a class="section-link" href="{{ path('customer_account') }}">{{ ui_icon('arrow-left', 16) }}{{ ui_text('back_account') }}</a><h1>{{ ui_text('order_number', {number: order.order_number}) }}</h1><p>{{ order.created_at }}</p></div><span class="badge">{{ order.status|status_label }}</span></div>

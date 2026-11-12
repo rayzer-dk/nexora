@@ -108,7 +108,7 @@ if (form instanceof HTMLFormElement) {
 (() => {
   const grid = () => document.querySelector('.product-grid');
   if (!grid() || !window.fetch || !window.history?.pushState) return;
-  let busy = false;
+  let pending = null; // the newest request wins: a click or Back while loading must not leave the address and the grid out of step
   const swap = (doc) => {
     ['.product-grid', 'nav.pager'].forEach((selector) => {
       const current = document.querySelector(selector);
@@ -119,22 +119,26 @@ if (form instanceof HTMLFormElement) {
     document.dispatchEvent(new CustomEvent('commerce:content-updated'));
   };
   const load = async (url, push) => {
-    if (busy) return;
-    busy = true;
+    pending?.abort();
+    const request = new AbortController();
+    pending = request;
     const target = grid();
     target?.setAttribute('aria-busy', 'true');
     try {
-      const response = await fetch(url, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+      const response = await fetch(url, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', signal: request.signal });
       if (!response.ok) throw new Error('page');
       const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
       if (!doc.querySelector('.product-grid')) throw new Error('page');
       swap(doc);
       if (push) history.pushState({ mcCatalog: true }, '', url);
       grid()?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-    } catch (_) {
-      window.location.assign(url);
+    } catch (error) {
+      if (error?.name !== 'AbortError') window.location.assign(url);
     } finally {
-      busy = false;
+      if (pending === request) {
+        pending = null;
+        grid()?.removeAttribute('aria-busy');
+      }
     }
   };
   document.addEventListener('click', (event) => {

@@ -7,7 +7,7 @@ namespace Commerce\Core\Install;
 use Commerce\Core\Id\PublicIdFactory;
 use Commerce\Core\Platform\PlatformVersion;
 use Commerce\Core\Site\SiteCapabilitySettings;
-use Commerce\Modules\Admin\Domain\AdminUser;
+use Commerce\Core\Security\AdminAccount;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\DBAL\Connection;
@@ -108,7 +108,7 @@ final readonly class InstallationSeeder
             $locationId = (int) $db->lastInsertId();
             $db->insert('mc_market_inventory_location', ['market_id' => $marketId, 'location_id' => $locationId, 'priority' => 100]);
 
-            $hasher = $this->passwordHashers->getPasswordHasher(AdminUser::class);
+            $hasher = $this->passwordHashers->getPasswordHasher(AdminAccount::class);
             $db->insert('mc_admin_user', [
                 'public_id' => $this->publicIds->binary(),
                 'email' => trim($request->adminEmail),

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Demo\Application;
 
-use Commerce\Modules\Content\Infrastructure\DbalBlogQuery;
+use Commerce\Modules\Content\Contract\LatestArticlesInterface;
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
 use Doctrine\DBAL\Connection;
 
 final readonly class DemoShowcaseQuery
 {
-    public function __construct(private Connection $connection, private DbalBlogQuery $blog){}
+    public function __construct(private Connection $connection, private LatestArticlesInterface $blog){}
 
     /** @return array<string,mixed>|null */
     public function homepage(StorefrontContext $context): ?array

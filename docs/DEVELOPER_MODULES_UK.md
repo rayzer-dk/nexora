@@ -360,7 +360,7 @@ $context->route('extension.example_order_hook.log', static fn (Request $request,
 | Вебхуки Public API | remote | події замовлення, товарів і реєстрації на ваш HTTPS-сервер з підписом (див. обмеження в прикладі 3) | `src/Modules/Api/Webhook/ApiWebhookDeliveryWorker.php` |
 | Public API | remote | читати каталог, клієнтів, замовлення; змінювати залишки, замовлення, кошики | `src/Modules/Api/Http/PublicApiV1Controller.php` |
 | Cron-задачі | trusted | власна періодична задача від 5 хвилин | `src/Core/Extension/TrustedExtensionRuntimeRegistry.php` |
-| Маршрути адмінки | trusted | власна сторінка під `/admin/extensions/<код>/` з власним правом | `src/Core/Extension/AdminExtensionRouteController.php` |
+| Маршрути адмінки | trusted | власна сторінка під `/admin/extensions/<код>/` з власним правом | `src/Modules/Admin/Http/AdminExtensionRouteController.php` |
 | Провайдери оплати | trusted | новий спосіб оплати | `src/Modules/Payment/Contract/PaymentProviderInterface.php` |
 | Провайдери доставки | trusted | новий перевізник | `src/Modules/Shipping/Contract/DeliveryProviderInterface.php` |
 | Провайдери ШІ та перекладу | trusted | власна модель для генерації або перекладу | `src/Modules/Ai/Contract/TextGenerationProviderInterface.php` |

@@ -1,4 +1,4 @@
-{% extends '@storefront/base.html.twig' %}
+{% extends '@storefront/base.html.twig' %}{% set page_css = 'account' %}
 {% block body %}
 <section class="shell account-page">
   <div class="account-page__header"><div><span class="eyebrow">{{ ui_text('personal_account') }}</span><h1>{{ customer.display_name|default(app.user.displayName) }}</h1><p>{{ customer.email|default(app.user.email) }}</p></div><form method="post" action="{{ path('customer_logout') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token('customer_logout') }}"><button class="button button--ghost" type="submit">{{ ui_text('logout') }}</button></form></div>

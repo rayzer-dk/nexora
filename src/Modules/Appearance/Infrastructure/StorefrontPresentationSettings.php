@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Appearance\Infrastructure;
 
+use Commerce\Modules\Appearance\Contract\StorefrontPresentationReaderInterface;
 use Commerce\Modules\Appearance\Application\StorefrontPresentationWriterInterface;
 use Commerce\Core\Configuration\ConfigurationRevisionStore;
 
-final readonly class StorefrontPresentationSettings implements StorefrontPresentationWriterInterface
+final readonly class StorefrontPresentationSettings implements StorefrontPresentationWriterInterface, StorefrontPresentationReaderInterface
 {
     public function __construct(
         private ConfigurationRevisionStore $revisions,

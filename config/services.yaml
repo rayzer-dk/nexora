@@ -202,6 +202,10 @@ services:
             tags: ['commerce.payment_provider']
         Commerce\Core\Event\DomainEventSubscriberInterface:
             tags: ['commerce.domain_event_subscriber']
+        Commerce\Core\Extension\ExtensionProviderSinkInterface:
+            tags: ['commerce.extension_provider_sink']
+        Commerce\Core\Runtime\DeferredWorkerInterface:
+            tags: ['commerce.deferred_worker']
         Commerce\Modules\Marketing\Contract\MarketingEventProviderInterface:
             tags: ['commerce.marketing_event_provider']
         Commerce\Modules\Ai\Contract\TextGenerationProviderInterface:

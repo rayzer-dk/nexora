@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Core\Runtime;
 
 use Commerce\Core\Event\DomainEventOutboxWorker;
-use Commerce\Modules\Notification\Application\NotificationOutboxWorker;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\TerminateEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -20,7 +20,8 @@ final readonly class DeferredWorkTerminateSubscriber implements EventSubscriberI
     public function __construct(
         private DeferredWorkSignal $signal,
         private DomainEventOutboxWorker $events,
-        private NotificationOutboxWorker $notifications,
+        /** @var iterable<DeferredWorkerInterface> */
+        #[AutowireIterator('commerce.deferred_worker')] private iterable $workers = [],
     ) {
     }
 
@@ -40,10 +41,12 @@ final readonly class DeferredWorkTerminateSubscriber implements EventSubscriberI
         } catch (Throwable) {
             return;
         }
-        try {
-            $this->notifications->run(8);
-        } catch (Throwable) {
-            // The durable queues retain work for the CLI worker/retry path.
+        foreach ($this->workers as $worker) {
+            try {
+                $worker->run(8);
+            } catch (Throwable) {
+                // The durable queues retain work for the CLI worker/retry path.
+            }
         }
     }
 }

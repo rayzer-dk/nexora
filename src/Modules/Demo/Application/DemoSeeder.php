@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Demo\Application;
 
 use Commerce\Core\Id\PublicIdFactory;
+use Commerce\Core\Install\DemoDataInstallerInterface;
 use Commerce\Modules\Catalog\Application\CatalogTranslationService;
 use Commerce\Modules\Catalog\Application\CategoryWriter;
 use Commerce\Modules\Catalog\Application\Command\CreateCategoryCommand;
@@ -21,7 +22,7 @@ use DateTimeZone;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
-final readonly class DemoSeeder
+final readonly class DemoSeeder implements DemoDataInstallerInterface
 {
     public function __construct(
         private Connection $connection,
@@ -252,7 +253,7 @@ final readonly class DemoSeeder
             $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name'], array_filter($promoTitles)), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
-                'version' => '4.0.4',
+                'version' => '4.0.5',
                 'catalog_source' => 'DummyJSON',
             ]);
 

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Storefront\Infrastructure;
 
+use Commerce\Modules\Storefront\Contract\PickupPointResolverInterface;
 use Doctrine\DBAL\Connection;
 
 /** Self-pickup points of a store (shops, warehouses, parcel desks) offered as the "Self pickup" delivery method. */
-final readonly class PickupPointRepository
+final readonly class PickupPointRepository implements PickupPointResolverInterface
 {
     public function __construct(private Connection $db, private StorefrontContactSettings $contacts)
     {

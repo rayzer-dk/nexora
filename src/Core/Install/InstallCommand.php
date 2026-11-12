@@ -6,7 +6,6 @@ namespace Commerce\Core\Install;
 
 use Commerce\Core\Health\RequirementLevel;
 use Commerce\Core\Health\SystemPreflightInspector;
-use Commerce\Modules\Demo\Application\DemoSeeder;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -24,9 +23,9 @@ final class InstallCommand extends Command
         private readonly Connection $connection,
         private readonly InstallationState $state,
         private readonly InstallationSeeder $seeder,
-        private readonly DemoSeeder $demoSeeder,
         private readonly InstallationHealthVerifier $healthVerifier,
         private readonly string $projectDir,
+        private readonly ?DemoDataInstallerInterface $demoSeeder = null,
     ) {
         parent::__construct();
     }
@@ -123,6 +122,9 @@ final class InstallCommand extends Command
         $demoWarning = null;
         if ((bool) $input->getOption('demo')) {
             try {
+                if ($this->demoSeeder === null) {
+                    throw new \LogicException(\Commerce\Core\I18n\CanonicalUiText::get('install.error.demo_failed'));
+                }
                 $this->demoSeeder->install();
                 $demoInstalled = true;
             } catch (\Throwable $e) {

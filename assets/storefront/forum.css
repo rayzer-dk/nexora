@@ -1,3 +1,2 @@
-/* Forum pages only (loaded by the forum templates through page_css = 'forum'). */
-@import url('../shared/tokens.css');
+/* Forum pages only (loaded by the forum templates through page_css = 'forum', after storefront.css which carries the design tokens). */
 @import url('./parts/forum.css');

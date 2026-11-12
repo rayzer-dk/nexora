@@ -1,4 +1,4 @@
-{% extends '@storefront/base.html.twig' %}{% set page_kind = 'home' %}
+{% extends '@storefront/base.html.twig' %}{% set page_css = 'home' %}{% set page_kind = 'home' %}
 {% set presentation = storefront_presentation() %}
 {% block head %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and (b.component in ['scroll_story', 'video_hero'] or (b.component == 'banner' and b.props.slide|default(false) is same as(true))))|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/home-blocks.js', '/assets/home-blocks.js') }}"></script>{% endif %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and b.component == 'product_grid' and b.props.display|default('') == 'carousel')|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/slider.js', '/assets/slider.js') }}"></script>{% endif %}{% endblock %}
 {% block body %}

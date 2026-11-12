@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\SupportChat\Infrastructure;
 
+use Commerce\Modules\SupportChat\Application\TelegramApiInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /** Thin Telegram Bot API client. Every call takes the token so one instance serves several stores. */
-final readonly class TelegramBotClient
+final readonly class TelegramBotClient implements TelegramApiInterface
 {
     /** @param string $apiBase https://api.telegram.org, or a local stand-in during end-to-end tests */
     public function __construct(private HttpClientInterface $http, #[Autowire('%env(TELEGRAM_API_BASE)%')] private string $apiBase = 'https://api.telegram.org')

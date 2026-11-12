@@ -18,11 +18,6 @@ use Commerce\Core\Extension\TrustedExtensionRuntimeRegistry;
 use Commerce\Core\Extension\TrustedExtensionSignatureVerifier;
 use Commerce\Core\Security\OutboundUrlPolicy;
 use Commerce\Modules\Admin\Help\HelpCatalog;
-use Commerce\Modules\Ai\Application\AiProviderRegistry;
-use Commerce\Modules\Ai\Application\TranslationProviderRegistry;
-use Commerce\Modules\Payment\Application\PaymentProviderRegistry;
-use Commerce\Modules\ProductPage\Application\ProductBlockRegistry;
-use Commerce\Modules\Shipping\Application\DeliveryProviderRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -117,11 +112,13 @@ final class DeveloperExamplesTest extends TestCase
             $manifest['version'],
             $installPath,
             $runtime,
-            new PaymentProviderRegistry([]),
-            new DeliveryProviderRegistry([]),
-            new ProductBlockRegistry([]),
-            new AiProviderRegistry([]),
-            new TranslationProviderRegistry(),
+            new \Commerce\Core\Extension\ExtensionProviderSinks([
+                new \Commerce\Modules\Payment\Application\PaymentProviderExtensionSink(new \Commerce\Modules\Payment\Application\PaymentProviderRegistry([])),
+                new \Commerce\Modules\Shipping\Application\DeliveryProviderExtensionSink(new \Commerce\Modules\Shipping\Application\DeliveryProviderRegistry([])),
+                new \Commerce\Modules\ProductPage\Application\ProductBlockExtensionSink(new \Commerce\Modules\ProductPage\Application\ProductBlockRegistry([])),
+                new \Commerce\Modules\Ai\Application\AiProviderExtensionSink(new \Commerce\Modules\Ai\Application\AiProviderRegistry([])),
+                new \Commerce\Modules\Ai\Application\TranslationProviderExtensionSink(new \Commerce\Modules\Ai\Application\TranslationProviderRegistry()),
+            ]),
             new ExtensionServiceRegistry(),
             array_column($manifest['routes'], 'name'),
             $manifest['events'],

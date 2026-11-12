@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\GoogleCommerce\Infrastructure;
 
+use Commerce\Modules\GoogleCommerce\Application\MerchantApiInterface;
 use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-final readonly class GoogleMerchantApiClient
+final readonly class GoogleMerchantApiClient implements MerchantApiInterface
 {
     public function __construct(
         private HttpClientInterface $http,

@@ -6,7 +6,7 @@ namespace Commerce\Modules\System\Application;
 
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\Media\Application\MediaVariantService;
-use Commerce\Modules\Storefront\Infrastructure\StorefrontCacheVersion;
+use Commerce\Modules\Storefront\Contract\CatalogCacheVersionInterface;
 use Commerce\Modules\Storefront\Projection\StorefrontFacetProjectionStore;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -17,7 +17,7 @@ final class CacheMaintenance
     public const ACTIONS = ['storefront', 'templates', 'app', 'images', 'warm', 'opcache', 'all'];
 
     public function __construct(
-        private readonly StorefrontCacheVersion $version,
+        private readonly CatalogCacheVersionInterface $version,
         private readonly StorefrontFacetProjectionStore $facets,
         private readonly CacheInterface $cache,
         private readonly MediaVariantService $variants,

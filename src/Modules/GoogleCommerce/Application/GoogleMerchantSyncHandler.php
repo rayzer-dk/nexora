@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\GoogleCommerce\Application;
 
-use Commerce\Modules\GoogleCommerce\Infrastructure\GoogleMerchantApiClient;
+use Commerce\Modules\GoogleCommerce\Application\MerchantApiInterface;
 use Doctrine\DBAL\Connection;
 
 final readonly class GoogleMerchantSyncHandler
 {
-    public function __construct(private Connection $db, private GoogleMerchantProductProjection $projection, private GoogleMerchantApiClient $api, private string $accountId) {}
+    public function __construct(private Connection $db, private GoogleMerchantProductProjection $projection, private MerchantApiInterface $api, private string $accountId) {}
 
     /** @param array<string,mixed> $job */
     public function handle(array $job): void

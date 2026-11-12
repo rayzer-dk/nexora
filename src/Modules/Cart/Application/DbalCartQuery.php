@@ -7,12 +7,12 @@ namespace Commerce\Modules\Cart\Application;
 use Commerce\Modules\Catalog\Measurement\Quantity;
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
 use Commerce\Modules\Promotion\Application\PromotionEngine;
-use Commerce\Modules\Storefront\Infrastructure\StorefrontMoneyFormatter;
+use Commerce\Modules\Storefront\Contract\MoneyFormatterInterface;
 use Doctrine\DBAL\Connection;
 
 final readonly class DbalCartQuery
 {
-    public function __construct(private Connection $connection, private StorefrontMoneyFormatter $money, private PromotionEngine $promotions, private \Commerce\Modules\Catalog\Application\ProductAddonService $addons, private ?\Commerce\Modules\Checkout\Application\CheckoutMethodSettings $methods = null)
+    public function __construct(private Connection $connection, private MoneyFormatterInterface $money, private PromotionEngine $promotions, private \Commerce\Modules\Catalog\Application\ProductAddonService $addons, private ?\Commerce\Modules\Checkout\Application\CheckoutMethodSettings $methods = null)
     {
     }
 

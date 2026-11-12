@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Seo\Application;
 
-use Commerce\Modules\Content\Infrastructure\DbalBlogQuery;
-use Commerce\Modules\Storefront\Infrastructure\DbalStorefrontCatalogQuery;
+use Commerce\Modules\Content\Contract\LatestArticlesInterface;
+use Commerce\Modules\Storefront\Contract\StorefrontCatalogReaderInterface;
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
 
 /**
@@ -16,8 +16,8 @@ final class LlmsTxtBuilder
 {
     public function __construct(
         private readonly LlmsSettings $settings,
-        private readonly DbalStorefrontCatalogQuery $catalog,
-        private readonly DbalBlogQuery $blog,
+        private readonly StorefrontCatalogReaderInterface $catalog,
+        private readonly LatestArticlesInterface $blog,
         private readonly string $publicBaseUrl,
     ) {
     }

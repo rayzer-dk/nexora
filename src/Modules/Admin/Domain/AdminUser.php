@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Admin\Domain;
 
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Commerce\Core\Security\AdminAccount;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterface
+final class AdminUser implements UserInterface, AdminAccount
 {
     /** @param list<string> $roles */
     public function __construct(

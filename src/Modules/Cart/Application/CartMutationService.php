@@ -9,7 +9,7 @@ use Commerce\Modules\Catalog\Measurement\Quantity;
 use Commerce\Modules\B2B\Application\B2bCommerceService;
 use Commerce\Modules\Customer\Application\CustomerStoreMembershipService;
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
-use Commerce\Modules\Storefront\Infrastructure\DbalStorefrontCatalogQuery;
+use Commerce\Modules\Storefront\Contract\StorefrontCatalogReaderInterface;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\DBAL\Connection;
@@ -19,7 +19,7 @@ final readonly class CartMutationService
     public function __construct(
         private Connection $connection,
         private PublicIdFactory $publicIds,
-        private DbalStorefrontCatalogQuery $catalog,
+        private StorefrontCatalogReaderInterface $catalog,
         private B2bCommerceService $b2b,
         private \Commerce\Modules\Catalog\Application\ProductAddonService $addons,
         private CustomerStoreMembershipService $memberships,
