@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Demo\Application;
 
 use Commerce\Core\Id\PublicIdFactory;
+use Commerce\Core\Install\DemoDataInstallerInterface;
 use Commerce\Modules\Catalog\Application\CatalogTranslationService;
 use Commerce\Modules\Catalog\Application\CategoryWriter;
 use Commerce\Modules\Catalog\Application\Command\CreateCategoryCommand;
@@ -21,7 +22,7 @@ use DateTimeZone;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
-final readonly class DemoSeeder
+final readonly class DemoSeeder implements DemoDataInstallerInterface
 {
     public function __construct(
         private Connection $connection,

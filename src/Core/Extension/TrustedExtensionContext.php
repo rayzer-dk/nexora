@@ -4,15 +4,10 @@ declare(strict_types=1);
 
 namespace Commerce\Core\Extension;
 
-use Commerce\Modules\Ai\Application\AiProviderRegistry;
-use Commerce\Modules\Ai\Application\TranslationProviderRegistry;
 use Commerce\Modules\Ai\Contract\TextGenerationProviderInterface;
 use Commerce\Modules\Ai\Contract\TranslationProviderInterface;
-use Commerce\Modules\Payment\Application\PaymentProviderRegistry;
 use Commerce\Modules\Payment\Contract\PaymentProviderInterface;
-use Commerce\Modules\ProductPage\Application\ProductBlockRegistry;
 use Commerce\Modules\ProductPage\Contract\ProductBlockProviderInterface;
-use Commerce\Modules\Shipping\Application\DeliveryProviderRegistry;
 use Commerce\Modules\Shipping\Contract\DeliveryProviderInterface;
 
 final readonly class TrustedExtensionContext
@@ -23,11 +18,7 @@ final readonly class TrustedExtensionContext
         public string $version,
         public string $installPath,
         private TrustedExtensionRuntimeRegistry $runtime,
-        private PaymentProviderRegistry $payments,
-        private DeliveryProviderRegistry $shipping,
-        private ProductBlockRegistry $productBlocks,
-        private AiProviderRegistry $ai,
-        private TranslationProviderRegistry $translations,
+        private ExtensionProviderSinks $providers,
         private ExtensionServiceRegistry $services,
         private array $declaredRoutes = [],
         private array $declaredEvents = [],
@@ -82,31 +73,31 @@ final readonly class TrustedExtensionContext
     public function paymentProvider(PaymentProviderInterface $provider): void
     {
         $this->requireCapability('provider.payment');
-        $this->payments->register($provider);
+        $this->providers->accept('provider.payment', $provider);
     }
 
     public function deliveryProvider(DeliveryProviderInterface $provider): void
     {
         $this->requireCapability('provider.shipping');
-        $this->shipping->register($provider);
+        $this->providers->accept('provider.shipping', $provider);
     }
 
     public function productBlockProvider(ProductBlockProviderInterface $provider): void
     {
         $this->requireCapability('provider.product_block');
-        $this->productBlocks->register($provider);
+        $this->providers->accept('provider.product_block', $provider);
     }
 
     public function aiProvider(TextGenerationProviderInterface $provider): void
     {
         $this->requireCapability('provider.ai');
-        $this->ai->register($provider);
+        $this->providers->accept('provider.ai', $provider);
     }
 
     public function translationProvider(TranslationProviderInterface $provider): void
     {
         $this->requireCapability('provider.translation');
-        $this->translations->register($provider);
+        $this->providers->accept('provider.translation', $provider);
     }
 
     /**

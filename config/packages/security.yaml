@@ -2,6 +2,8 @@ security:
     password_hashers:
         Commerce\Modules\Admin\Domain\AdminUser:
             algorithm: sodium
+        Commerce\Core\Security\AdminAccount:
+            algorithm: sodium
         Commerce\Modules\Customer\Domain\CustomerUser:
             algorithm: sodium
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:

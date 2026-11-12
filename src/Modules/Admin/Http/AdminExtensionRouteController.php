@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Commerce\Core\Extension;
+namespace Commerce\Modules\Admin\Http;
 
+use Commerce\Core\Extension\ExtensionContributionRegistry;
+use Commerce\Core\Extension\TrustedExtensionRuntimeLoader;
+use Commerce\Core\Extension\TrustedExtensionRuntimeRegistry;
 use Commerce\Modules\Admin\Authorization\AdminAuthorizationService;
 use Commerce\Modules\Admin\Domain\AdminUser;
-use Commerce\Modules\Admin\Http\AdminContextResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;

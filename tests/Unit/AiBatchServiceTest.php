@@ -129,7 +129,7 @@ final class AiBatchServiceTest extends TestCase
         $settings = new AiSettings($db, new SecretVault(str_repeat('k', 32)));
         $ai = new AiProviderRegistry([$this->model]);
         $translations = $this->translationProviders = new TranslationProviderRegistry();
-        $loader = new TrustedExtensionRuntimeLoader($db, new TrustedExtensionRuntimeRegistry(), new PaymentProviderRegistry([]), new DeliveryProviderRegistry([]), new ProductBlockRegistry([]), $ai, $translations, new \Commerce\Core\Extension\ExtensionServiceRegistry());
+        $loader = new TrustedExtensionRuntimeLoader($db, new TrustedExtensionRuntimeRegistry(), new \Commerce\Core\Extension\ExtensionProviderSinks([new \Commerce\Modules\Payment\Application\PaymentProviderExtensionSink(new PaymentProviderRegistry([])), new \Commerce\Modules\Shipping\Application\DeliveryProviderExtensionSink(new DeliveryProviderRegistry([])), new \Commerce\Modules\ProductPage\Application\ProductBlockExtensionSink(new ProductBlockRegistry([])), new \Commerce\Modules\Ai\Application\AiProviderExtensionSink($ai), new \Commerce\Modules\Ai\Application\TranslationProviderExtensionSink($translations)]), new \Commerce\Core\Extension\ExtensionServiceRegistry());
         $tasks = new AiTaskService($settings, new MockHttpClient(), $ai, $translations, $loader, new AiGlossary($db));
         $routes = &$this->routes;
         $repository = new class ($routes) implements SeoUrlRepositoryInterface {

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Architecture: Core no longer depends on modules (Deptrac: 0 violations). Extension providers reach their module through `ExtensionProviderSinkInterface` (one sink per capability in Payment, Shipping, ProductPage, Ai); `commerce:work` and the terminate subscriber drain every `DeferredWorkerInterface` (Notification's outbox is one); the installer takes `?DemoDataInstallerInterface` and hashes the first administrator through the `AdminAccount` marker; `AdminExtensionRouteController` moved to `Modules\Admin\Http`. Extension SDK methods and the `commerce:work` output are unchanged; `TrustedExtensionContext`/`TrustedExtensionRuntimeLoader` constructors take `ExtensionProviderSinks` instead of five registries (internal).
 - Architecture: the 16 Application→Infrastructure/Http dependencies reported by Deptrac now go through contracts (`Storefront\Contract\{MoneyFormatter,StorefrontCatalogReader,PickupPointResolver,CatalogCacheVersion}Interface`, `Content\Contract\LatestArticlesInterface`, `Appearance\Contract\StorefrontPresentationReaderInterface`, `Catalog\Application\ProductEditQueryInterface::variantsForEdit`, `SupportChat\Application\TelegramApiInterface`, `GoogleCommerce\Application\MerchantApiInterface`, `Seo\Domain\SitemapVisibility`). Behaviour is unchanged; the cross-module baseline in `config/architecture/module_boundaries.json` is empty. Deptrac: 32 → 16 violations (all Core→Modules).
 
 ## 4.0.5 — 2026-11-12

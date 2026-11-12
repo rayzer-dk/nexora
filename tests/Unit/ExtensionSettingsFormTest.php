@@ -122,9 +122,13 @@ final class ExtensionSettingsFormTest extends TestCase
 
         $context = new \Commerce\Core\Extension\TrustedExtensionContext(
             'example.ml', '1.1.0', $this->tmp . '/1.1.0', new \Commerce\Core\Extension\TrustedExtensionRuntimeRegistry(),
-            new \Commerce\Modules\Payment\Application\PaymentProviderRegistry([]), new \Commerce\Modules\Shipping\Application\DeliveryProviderRegistry([]),
-            new \Commerce\Modules\ProductPage\Application\ProductBlockRegistry([]), new \Commerce\Modules\Ai\Application\AiProviderRegistry([]),
-            new \Commerce\Modules\Ai\Application\TranslationProviderRegistry(), new \Commerce\Core\Extension\ExtensionServiceRegistry(),
+            new \Commerce\Core\Extension\ExtensionProviderSinks([
+                new \Commerce\Modules\Payment\Application\PaymentProviderExtensionSink(new \Commerce\Modules\Payment\Application\PaymentProviderRegistry([])),
+                new \Commerce\Modules\Shipping\Application\DeliveryProviderExtensionSink(new \Commerce\Modules\Shipping\Application\DeliveryProviderRegistry([])),
+                new \Commerce\Modules\ProductPage\Application\ProductBlockExtensionSink(new \Commerce\Modules\ProductPage\Application\ProductBlockRegistry([])),
+                new \Commerce\Modules\Ai\Application\AiProviderExtensionSink(new \Commerce\Modules\Ai\Application\AiProviderRegistry([])),
+                new \Commerce\Modules\Ai\Application\TranslationProviderExtensionSink(new \Commerce\Modules\Ai\Application\TranslationProviderRegistry()),
+            ]), new \Commerce\Core\Extension\ExtensionServiceRegistry(),
             settings: $this->settings,
         );
         self::assertSame('Kept', $context->setting('title'));

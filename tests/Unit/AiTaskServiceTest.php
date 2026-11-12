@@ -61,7 +61,7 @@ final class AiTaskServiceTest extends TestCase
         $settings = new AiSettings($this->db, new SecretVault(str_repeat('k', 32)));
         $ai = new AiProviderRegistry([$this->stub]);
         $this->translations = new TranslationProviderRegistry();
-        $loader = new TrustedExtensionRuntimeLoader($this->db, new TrustedExtensionRuntimeRegistry(), new PaymentProviderRegistry([]), new DeliveryProviderRegistry([]), new ProductBlockRegistry([]), $ai, $this->translations, new \Commerce\Core\Extension\ExtensionServiceRegistry());
+        $loader = new TrustedExtensionRuntimeLoader($this->db, new TrustedExtensionRuntimeRegistry(), new \Commerce\Core\Extension\ExtensionProviderSinks([new \Commerce\Modules\Payment\Application\PaymentProviderExtensionSink(new PaymentProviderRegistry([])), new \Commerce\Modules\Shipping\Application\DeliveryProviderExtensionSink(new DeliveryProviderRegistry([])), new \Commerce\Modules\ProductPage\Application\ProductBlockExtensionSink(new ProductBlockRegistry([])), new \Commerce\Modules\Ai\Application\AiProviderExtensionSink($ai), new \Commerce\Modules\Ai\Application\TranslationProviderExtensionSink($this->translations)]), new \Commerce\Core\Extension\ExtensionServiceRegistry());
         $this->service = new AiTaskService($settings, new MockHttpClient(), $ai, $this->translations, $loader, new AiGlossary($this->db));
     }
 
@@ -313,7 +313,7 @@ final class AiTaskServiceTest extends TestCase
     private function serviceWith(TextGenerationProviderInterface $provider): AiTaskService
     {
         $ai = new AiProviderRegistry([$provider]);
-        $loader = new TrustedExtensionRuntimeLoader($this->db, new TrustedExtensionRuntimeRegistry(), new PaymentProviderRegistry([]), new DeliveryProviderRegistry([]), new ProductBlockRegistry([]), $ai, $this->translations, new \Commerce\Core\Extension\ExtensionServiceRegistry());
+        $loader = new TrustedExtensionRuntimeLoader($this->db, new TrustedExtensionRuntimeRegistry(), new \Commerce\Core\Extension\ExtensionProviderSinks([new \Commerce\Modules\Payment\Application\PaymentProviderExtensionSink(new PaymentProviderRegistry([])), new \Commerce\Modules\Shipping\Application\DeliveryProviderExtensionSink(new DeliveryProviderRegistry([])), new \Commerce\Modules\ProductPage\Application\ProductBlockExtensionSink(new ProductBlockRegistry([])), new \Commerce\Modules\Ai\Application\AiProviderExtensionSink($ai), new \Commerce\Modules\Ai\Application\TranslationProviderExtensionSink($this->translations)]), new \Commerce\Core\Extension\ExtensionServiceRegistry());
 
         return new AiTaskService(new AiSettings($this->db, new SecretVault(str_repeat('k', 32))), new MockHttpClient(), $ai, $this->translations, $loader, new AiGlossary($this->db));
     }

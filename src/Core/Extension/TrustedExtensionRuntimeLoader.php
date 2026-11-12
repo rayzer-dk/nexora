@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Commerce\Core\Extension;
 
-use Commerce\Modules\Ai\Application\AiProviderRegistry;
-use Commerce\Modules\Ai\Application\TranslationProviderRegistry;
-use Commerce\Modules\Payment\Application\PaymentProviderRegistry;
-use Commerce\Modules\ProductPage\Application\ProductBlockRegistry;
-use Commerce\Modules\Shipping\Application\DeliveryProviderRegistry;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\DBAL\Connection;
@@ -21,11 +16,7 @@ final class TrustedExtensionRuntimeLoader
     public function __construct(
         private readonly Connection $connection,
         private readonly TrustedExtensionRuntimeRegistry $runtime,
-        private readonly PaymentProviderRegistry $payments,
-        private readonly DeliveryProviderRegistry $shipping,
-        private readonly ProductBlockRegistry $productBlocks,
-        private readonly AiProviderRegistry $ai,
-        private readonly TranslationProviderRegistry $translations,
+        private readonly ExtensionProviderSinks $providers,
         private readonly ExtensionServiceRegistry $services,
         private readonly ?ExtensionSettingsManager $settings = null,
     ) {}
@@ -64,7 +55,7 @@ final class TrustedExtensionRuntimeLoader
         $declaredRoutes=[];foreach((array)($manifest['routes']??[]) as $route){if(is_array($route)&&is_string($route['name']??null))$declaredRoutes[]=(string)$route['name'];}
         $declaredEvents=array_values(array_filter((array)($manifest['events']??[]),'is_string'));
         $declaredTasks=[];foreach((array)($manifest['scheduled_tasks']??[]) as $task){if(is_array($task)&&is_string($task['code']??null))$declaredTasks[(string)$task['code']]=['interval'=>(int)($task['interval']??3600),'label'=>(string)($task['label']??$task['code']),'description'=>(string)($task['description']??'')];}
-        $instance->boot(new TrustedExtensionContext((string)$row['code'],(string)$row['version'],$path,$this->runtime,$this->payments,$this->shipping,$this->productBlocks,$this->ai,$this->translations,$this->services,$declaredRoutes,$declaredEvents,array_values(array_filter((array)($manifest['capabilities']??[]),'is_string')),$declaredTasks,$this->settings));
+        $instance->boot(new TrustedExtensionContext((string)$row['code'],(string)$row['version'],$path,$this->runtime,$this->providers,$this->services,$declaredRoutes,$declaredEvents,array_values(array_filter((array)($manifest['capabilities']??[]),'is_string')),$declaredTasks,$this->settings));
     }
 
     /** @param array<string,mixed> $row */
