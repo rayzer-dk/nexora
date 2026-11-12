@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Order\Application;
 
 use Commerce\Core\Event\DomainEventFactory;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Commerce\Core\Event\EventBusInterface;
 use Commerce\Core\Event\EventNames;
 use Commerce\Core\Id\PublicIdFactory;
@@ -94,6 +95,7 @@ final readonly class CheckoutOrderService
         if ($request !== null && !str_starts_with($request->getPathInfo(), '/admin')) {
             $this->fraud->preflight($context->storeId, $email, $phone, $clientIp);
         }
+        try {
         $result = $this->db->transactional(function(Connection $db) use($context,$cartId,$input,$idempotencyKey,$name,$phone,$email,$providerCode,$payment,$customerId,$companyName,$companyTaxId,$buyerVat,$reverseCharge,$customerComment,$purchaseOrderNumber,$unitPriceOverrides): array {
             $existing = $db->fetchAssociative("SELECT public_id,order_number,total_minor,currency FROM mc_sales_order WHERE checkout_idempotency_key=? AND store_id=? LIMIT 1", [$idempotencyKey, $context->storeId]);
             if (is_array($existing)) return ['public_id'=>Uuid::fromBinary((string)$existing['public_id'])->toRfc4122(),'order_number'=>(string)$existing['order_number'],'total_minor'=>(int)$existing['total_minor'],'currency'=>(string)$existing['currency']];
@@ -242,6 +244,15 @@ final readonly class CheckoutOrderService
             $db->update('mc_cart',['status'=>'converted','updated_at'=>$now],['id'=>$cartId]);
             return ['public_id'=>$public->toRfc4122(),'order_number'=>$orderNumber,'total_minor'=>$total,'currency'=>$context->currency];
         });
+        } catch (UniqueConstraintViolationException $e) {
+            // The same form sent twice at once (double click, retry): the other request placed the order a moment ago, so this one answers with it.
+            $existing = $this->db->fetchAssociative('SELECT public_id,order_number,total_minor,currency FROM mc_sales_order WHERE checkout_idempotency_key=? AND store_id=? LIMIT 1', [$idempotencyKey, $context->storeId]);
+            if (!is_array($existing)) {
+                throw $e;
+            }
+
+            return ['public_id' => Uuid::fromBinary((string) $existing['public_id'])->toRfc4122(), 'order_number' => (string) $existing['order_number'], 'total_minor' => (int) $existing['total_minor'], 'currency' => (string) $existing['currency']];
+        }
         if ($request !== null && !str_starts_with($request->getPathInfo(), '/admin')) {
             try { $this->fraud->assess($context->storeId, (string)$result['public_id'], $clientIp); } catch (\Throwable) { /* scoring is advisory and must never fail a placed order */ }
         }
