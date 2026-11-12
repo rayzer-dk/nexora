@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Storefront search: the live suggestions are a proper combobox (`role=combobox`/`listbox`/`option`, `aria-expanded`, `aria-activedescendant`); Arrow Up/Down move over the suggestions and Enter opens the highlighted one.
+- Catalog paging: the newest request wins (earlier ones are aborted). Before, a click or the Back button during loading was ignored and the address no longer matched the grid.
+- Build: the asset budgets are now measured on the compiled files in `public/build` (before, on the old copies in `public/assets`, which let the real size pass unnoticed); the limits are set to the current sizes so the guard catches growth. ESLint knows `PerformanceObserver` (the lint error in the Web Vitals code). The favicon links in the default theme are no longer printed twice.
 - Core Web Vitals: a sampled report of LCP, CLS and INP from real visitors (`/rum/vitals`, migration `Version20270103010000`, schema 91) and Admin → Analytics → Traffic → Site speed with the 75th percentile per page and device; the first catalogue cards are loaded eagerly (the LCP picture was lazy).
 - Accessibility (WCAG 2.2 AA): links inside text on the login page are underlined; the accessibility e2e now covers the product page, checkout, login, registration, blog, contact and the dark theme, and counts every axe violation, not only the serious ones.
 - Tests: a real-MySQL concurrency test where eight processes race for three units of stock (no oversell).

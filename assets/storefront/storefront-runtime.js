@@ -183,25 +183,53 @@ function initLiveSearch() {
   let timer = 0;
   let controller = null;
   let generation = 0;
+  let active = -1;
+
+  // Combobox pattern: the field keeps focus, arrow keys move a highlight over the suggestions (aria-activedescendant).
+  results.id = results.id || 'live-search-results';
+  results.setAttribute('role', 'listbox');
+  input.setAttribute('role', 'combobox');
+  input.setAttribute('aria-autocomplete', 'list');
+  input.setAttribute('aria-controls', results.id);
+  input.setAttribute('aria-expanded', 'false');
+
+  const options = () => Array.from(results.querySelectorAll('a[role="option"]'));
+  const setActive = (index) => {
+    const list = options();
+    active = list.length ? (index + list.length) % list.length : -1;
+    list.forEach((option, i) => option.setAttribute('aria-selected', i === active ? 'true' : 'false'));
+    if (active >= 0) {
+      input.setAttribute('aria-activedescendant', list[active].id);
+      list[active].scrollIntoView({ block: 'nearest' });
+    } else {
+      input.removeAttribute('aria-activedescendant');
+    }
+  };
 
   const hide = () => {
     results.hidden = true;
     results.innerHTML = '';
     form.classList.remove('has-live-results');
+    input.setAttribute('aria-expanded', 'false');
+    setActive(-1);
   };
 
   const render = (items, query) => {
     results.innerHTML = '';
+    active = -1;
+    input.removeAttribute('aria-activedescendant');
     if (!Array.isArray(items) || !items.length) {
       const empty = document.createElement('a');
       empty.className = 'live-search__all';
       empty.href = `/catalog?q=${encodeURIComponent(query)}`;
       empty.textContent = t('js_show_search_results');
+      empty.setAttribute('role', 'option');
       results.appendChild(empty);
     } else {
       items.forEach((item) => {
         const link = document.createElement('a');
         link.className = 'live-search__item';
+        link.setAttribute('role', 'option');
         link.href = typeof item.url === 'string' && item.url.startsWith('/') ? item.url : '/catalog';
 
         const image = document.createElement('img');
@@ -226,9 +254,12 @@ function initLiveSearch() {
       all.className = 'live-search__all';
       all.href = `/catalog?q=${encodeURIComponent(query)}`;
       all.textContent = t('js_all_results');
+      all.setAttribute('role', 'option');
       results.appendChild(all);
     }
+    options().forEach((option, i) => { option.id = `live-search-option-${i}`; });
     results.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
     form.classList.add('has-live-results');
   };
 
@@ -264,7 +295,16 @@ function initLiveSearch() {
     timer = window.setTimeout(search, 180);
   });
   input.addEventListener('focus', () => {
-    if (input.value.trim().length >= 2 && results.children.length) results.hidden = false;
+    if (input.value.trim().length >= 2 && results.children.length) {
+      results.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+    }
+  });
+  input.addEventListener('keydown', (event) => {
+    if (results.hidden || !options().length) return;
+    if (event.key === 'ArrowDown') { event.preventDefault(); setActive(active + 1); }
+    else if (event.key === 'ArrowUp') { event.preventDefault(); setActive(active < 0 ? -1 : active - 1); }
+    else if (event.key === 'Enter' && active >= 0) { event.preventDefault(); options()[active].click(); }
   });
   document.addEventListener('click', (event) => {
     if (!form.contains(event.target)) hide();

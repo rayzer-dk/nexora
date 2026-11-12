@@ -1,8 +1,8 @@
 {
-  "storefront_css": {"max_brotli_bytes": 14000},
-  "admin_core_css": {"max_brotli_bytes": 10000},
+  "storefront_css": {"max_brotli_bytes": 30500},
+  "admin_core_css": {"max_brotli_bytes": 26300},
   "admin_feature_css": {"max_brotli_bytes": 3500},
-  "admin_runtime_js": {"max_brotli_bytes": 5000},
+  "admin_runtime_js": {"max_brotli_bytes": 31700},
   "compiled": {
     "storefront_initial_js_max_brotli_bytes": 150000,
     "admin_initial_js_max_brotli_bytes": 250000,

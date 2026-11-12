@@ -5,7 +5,6 @@ import { gzipSync, brotliCompressSync, constants } from 'node:zlib';
 const root = resolve(process.cwd());
 const configPath = join(root, 'config/performance/asset-budgets.json');
 const budgets = JSON.parse(readFileSync(configPath, 'utf8'));
-const publicDir = join(root, 'public/assets');
 const buildDir = join(root, 'public/build');
 
 const compressed = (file) => {
@@ -18,22 +17,6 @@ const compressed = (file) => {
 };
 
 let failed = false;
-const checks = [
-  ['storefront_css', join(publicDir, 'storefront.css')],
-  ['admin_core_css', join(publicDir, 'admin-runtime.css')],
-  ['admin_feature_css', join(publicDir, 'admin-builder-media.css')],
-  ['admin_runtime_js', join(publicDir, 'admin-runtime.js')],
-];
-for (const [key, file] of checks) {
-  if (!existsSync(file)) continue;
-  const size = compressed(file);
-  const budget = budgets[key];
-  console.log(`${key}: raw=${size.raw} gzip=${size.gzip} br=${size.brotli}`);
-  if (budget && size.brotli > budget.max_brotli_bytes) {
-    failed = true;
-    console.error(`BUDGET FAIL ${key}: ${size.brotli} > ${budget.max_brotli_bytes} Brotli bytes`);
-  }
-}
 
 const manifestPath = join(buildDir, '.vite/manifest.json');
 if (!existsSync(manifestPath)) {
@@ -48,6 +31,28 @@ const fileFor = (key) => {
   const file = join(buildDir, entry.file);
   return existsSync(file) ? file : null;
 };
+// Budgets apply to the compiled files that are served (public/build); the committed public/assets copies are only a fallback.
+const checks = [
+  ['storefront_css', 'assets/storefront/storefront.css'],
+  ['admin_core_css', 'assets/admin/admin-runtime.css'],
+  ['admin_feature_css', 'assets/admin/admin-builder-media.css'],
+  ['admin_runtime_js', 'assets/storefront/admin-runtime.js'],
+];
+for (const [budgetKey, entryKey] of checks) {
+  const file = fileFor(entryKey);
+  if (!file) {
+    failed = true;
+    console.error(`BUDGET FAIL ${budgetKey}: compiled output for ${entryKey} is missing.`);
+    continue;
+  }
+  const size = compressed(file);
+  const budget = budgets[budgetKey];
+  console.log(`${budgetKey}: raw=${size.raw} gzip=${size.gzip} br=${size.brotli}`);
+  if (budget && size.brotli > budget.max_brotli_bytes) {
+    failed = true;
+    console.error(`BUDGET FAIL ${budgetKey}: ${size.brotli} > ${budget.max_brotli_bytes} Brotli bytes`);
+  }
+}
 const collectImportKeys = (key, seen = new Set()) => {
   if (seen.has(key)) return seen;
   seen.add(key);

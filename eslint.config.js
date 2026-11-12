@@ -33,6 +33,7 @@ const browserGlobals = Object.fromEntries(
     'IntersectionObserver',
     'ResizeObserver',
     'MutationObserver',
+    'PerformanceObserver',
     'AbortController',
     'customElements',
     'requestAnimationFrame',
