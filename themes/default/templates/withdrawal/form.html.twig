@@ -1,4 +1,4 @@
-{% extends '@storefront/base.html.twig' %}
+{% extends '@storefront/base.html.twig' %}{% set page_css = 'account' %}
 {% block body %}
 <section class="shell account-auth"><div class="account-card">
 <div class="account-card__head"><span class="eyebrow">{{ ui_text('withdrawal_eyebrow') }}</span><h1>{{ ui_text('withdrawal_title') }}</h1><p>{{ ui_text(step == 'confirm' ? 'withdrawal_confirm_intro' : 'withdrawal_intro') }}</p></div>

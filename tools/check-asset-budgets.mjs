@@ -34,6 +34,13 @@ const fileFor = (key) => {
 // Budgets apply to the compiled files that are served (public/build); the committed public/assets copies are only a fallback.
 const checks = [
   ['storefront_css', 'assets/storefront/storefront.css'],
+  ['page_css_product', 'assets/storefront/pages/product.css'],
+  ['page_css_cart', 'assets/storefront/pages/cart.css'],
+  ['page_css_home', 'assets/storefront/pages/home.css'],
+  ['page_css_account', 'assets/storefront/pages/account.css'],
+  ['page_css_blog', 'assets/storefront/pages/blog.css'],
+  ['page_css_forum', 'assets/storefront/forum.css'],
+  ['page_css_landing', 'assets/storefront/landing.css'],
   ['admin_core_css', 'assets/admin/admin-runtime.css'],
   ['admin_feature_css', 'assets/admin/admin-builder-media.css'],
   ['admin_runtime_js', 'assets/storefront/admin-runtime.js'],

@@ -1,5 +1,12 @@
 {
-  "storefront_css": {"max_brotli_bytes": 30500},
+  "storefront_css": {"max_brotli_bytes": 20500},
+  "page_css_product": {"max_brotli_bytes": 5200},
+  "page_css_cart": {"max_brotli_bytes": 3800},
+  "page_css_home": {"max_brotli_bytes": 4000},
+  "page_css_account": {"max_brotli_bytes": 1800},
+  "page_css_blog": {"max_brotli_bytes": 1800},
+  "page_css_forum": {"max_brotli_bytes": 4200},
+  "page_css_landing": {"max_brotli_bytes": 3400},
   "admin_core_css": {"max_brotli_bytes": 26300},
   "admin_feature_css": {"max_brotli_bytes": 3500},
   "admin_runtime_js": {"max_brotli_bytes": 31700},

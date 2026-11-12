@@ -8,6 +8,7 @@
 - Core Web Vitals: a sampled report of LCP, CLS and INP from real visitors (`/rum/vitals`, migration `Version20270103010000`, schema 91) and Admin → Analytics → Traffic → Site speed with the 75th percentile per page and device; the first catalogue cards are loaded eagerly (the LCP picture was lazy).
 - Accessibility (WCAG 2.2 AA): links inside text on the login page are underlined; the accessibility e2e now covers the product page, checkout, login, registration, blog, contact and the dark theme, and counts every axe violation, not only the serious ones.
 - Tests: a real-MySQL concurrency test where eight processes race for three units of stock (no oversell).
+- Storefront CSS is split by page: `storefront.css` keeps what several page groups share (19.5 KB Brotli, was 29.1 KB); rules used by one group only moved to `assets/storefront/pages/{product,cart,home,account,blog}.css`, loaded through `page_css` like the forum and landing styles (1.5-4.4 KB Brotli each). Measured with Playwright coverage: the CSS a page downloads fell from 235 KB to 146-175 KB raw and the used share rose from 9-20 % to 12-27 %; full-page screenshots of 16 pages in light/dark and desktop/mobile are pixel-identical. Each file has its own budget in `config/performance/asset-budgets.json`.
 
 - Storefront: Speculation Rules prefetch (moderate eagerness, plain GET pages only): a product or category page the visitor is about to open is fetched in the background. The cart, checkout, account, payment, login, feeds and the currency/language switcher links are excluded.
 

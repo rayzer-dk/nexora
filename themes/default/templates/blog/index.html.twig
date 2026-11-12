@@ -1,4 +1,4 @@
-{% extends '@storefront/base.html.twig' %}{% set page_kind = 'blog' %}
+{% extends '@storefront/base.html.twig' %}{% set page_css = 'blog' %}{% set page_kind = 'blog' %}
 {% block head %}<link rel="alternate" type="application/rss+xml" title="{{ ui_text('blog_rss')|e('html_attr') }}" href="/blog/feed.xml">{% endblock %}
 {% block body %}
 {% set bi = presentation.blog.index|default({}) %}
