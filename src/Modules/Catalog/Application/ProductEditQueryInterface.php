@@ -8,4 +8,7 @@ interface ProductEditQueryInterface
 {
     /** @return array<string,mixed> */
     public function productForEdit(int $storeId, int $marketId, string $locale, string $publicId): array;
+
+    /** @return list<array<string,mixed>> */
+    public function variantsForEdit(int $productId, int $storeId, int $marketId): array;
 }

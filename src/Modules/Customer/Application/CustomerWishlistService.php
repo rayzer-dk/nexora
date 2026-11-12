@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Customer\Application;
 
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
-use Commerce\Modules\Storefront\Infrastructure\StorefrontMoneyFormatter;
+use Commerce\Modules\Storefront\Contract\MoneyFormatterInterface;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\DBAL\Connection;
@@ -15,7 +15,7 @@ final readonly class CustomerWishlistService
 {
     public function __construct(
         private Connection $db,
-        private StorefrontMoneyFormatter $money,
+        private MoneyFormatterInterface $money,
     ) {
     }
 

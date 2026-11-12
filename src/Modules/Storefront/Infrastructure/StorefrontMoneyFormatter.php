@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Storefront\Infrastructure;
 
+use Commerce\Modules\Storefront\Contract\MoneyFormatterInterface;
 use NumberFormatter;
 
-final class StorefrontMoneyFormatter
+final class StorefrontMoneyFormatter implements MoneyFormatterInterface
 {
     public function format(int $minor, string $currency, string $locale): string
     {

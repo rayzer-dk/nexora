@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Catalog\Application;
 
 use Commerce\Modules\Catalog\Application\Command\CreateProductCommand;
-use Commerce\Modules\Catalog\Infrastructure\DbalCatalogAdminQuery;
+use Commerce\Modules\Catalog\Application\ProductEditQueryInterface;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
@@ -13,7 +13,7 @@ final readonly class CatalogMaintenanceService
 {
     public function __construct(
         private Connection $connection,
-        private DbalCatalogAdminQuery $query,
+        private ProductEditQueryInterface $query,
         private ProductWriter $products,
         private ProductVariantService $variants,
     ) {

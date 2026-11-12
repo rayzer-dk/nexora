@@ -31,7 +31,7 @@ final class LinkCheckService
         private readonly Connection $db,
         private readonly RouterInterface $router,
         private readonly SystemSettingStore $store,
-        private readonly \Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings $presentation,
+        private readonly \Commerce\Modules\Appearance\Contract\StorefrontPresentationReaderInterface $presentation,
         private readonly string $projectDir,
     ) {
     }

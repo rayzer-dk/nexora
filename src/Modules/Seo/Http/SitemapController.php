@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Seo\Http;
 
+use Commerce\Modules\Seo\Domain\SitemapVisibility;
 use Commerce\Modules\Seo\System\SystemPageRouteCatalog;
 use Doctrine\DBAL\Connection;
 use DOMDocument;
@@ -14,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class SitemapController extends AbstractController
 {
     /** Draft and scheduled articles must never be advertised: their route rows exist before publication. */
-    public const VISIBLE_ARTICLE="(sr.entity_type<>'blog_article' OR EXISTS (SELECT 1 FROM mc_content_entry pe JOIN mc_content_translation pt ON pt.content_id=pe.id AND pt.locale=sr.locale WHERE pe.public_id=sr.entity_public_id AND pe.store_id=sr.store_id AND pe.status='published' AND (pe.published_at IS NULL OR pe.published_at<=UTC_TIMESTAMP(6))))";
+    public const VISIBLE_ARTICLE=SitemapVisibility::VISIBLE_ARTICLE;
 
     private const PAGE_SIZE=20000;
     public function __construct(private readonly Connection $db,private readonly string $publicBaseUrl,private readonly SystemPageRouteCatalog $systemPages,private readonly \Commerce\Modules\Security\Bots\BotProtection $bots,private readonly \Commerce\Modules\Storefront\Infrastructure\LocalePrefixes $prefixes){}

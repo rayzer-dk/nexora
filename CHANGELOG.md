@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Architecture: the 16 Application→Infrastructure/Http dependencies reported by Deptrac now go through contracts (`Storefront\Contract\{MoneyFormatter,StorefrontCatalogReader,PickupPointResolver,CatalogCacheVersion}Interface`, `Content\Contract\LatestArticlesInterface`, `Appearance\Contract\StorefrontPresentationReaderInterface`, `Catalog\Application\ProductEditQueryInterface::variantsForEdit`, `SupportChat\Application\TelegramApiInterface`, `GoogleCommerce\Application\MerchantApiInterface`, `Seo\Domain\SitemapVisibility`). Behaviour is unchanged; the cross-module baseline in `config/architecture/module_boundaries.json` is empty. Deptrac: 32 → 16 violations (all Core→Modules).
+
 ## 4.0.5 — 2026-11-12
 
 Storefront speed (CSS split by page), accessibility of search, security patches of Symfony. Version 4.0.5 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.

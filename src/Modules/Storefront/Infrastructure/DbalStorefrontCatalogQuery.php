@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Storefront\Infrastructure;
 
+use Commerce\Modules\Storefront\Contract\StorefrontCatalogReaderInterface;
 use Commerce\Modules\Search\Application\SearchSynonymService;
 use Commerce\Modules\Search\Contract\SearchCandidateProviderInterface;
 use Commerce\Modules\Storefront\Domain\ProductCatalogFilter;
@@ -11,7 +12,7 @@ use Commerce\Modules\Storefront\Domain\StorefrontContext;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
-final readonly class DbalStorefrontCatalogQuery
+final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogReaderInterface
 {
     public function __construct(
         private Connection $connection,

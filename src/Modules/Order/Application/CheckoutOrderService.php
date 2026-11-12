@@ -44,7 +44,7 @@ final readonly class CheckoutOrderService
         private \Commerce\Modules\Checkout\Application\CheckoutMethodSettings $methodSettings,
         private \Commerce\Modules\Checkout\Application\CartWeightCalculator $weights,
         private \Commerce\Modules\Catalog\Application\ProductAddonService $addons,
-        private \Commerce\Modules\Storefront\Infrastructure\PickupPointRepository $pickupPoints,
+        private \Commerce\Modules\Storefront\Contract\PickupPointResolverInterface $pickupPoints,
         private \Commerce\Modules\Tax\Application\BuyerVatCheck $buyerVat,
         private \Commerce\Modules\Affiliate\Application\AffiliateService $affiliates,
     ) {}

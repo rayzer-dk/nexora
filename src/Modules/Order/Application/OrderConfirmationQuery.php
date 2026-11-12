@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Order\Application;
 
-use Commerce\Modules\Storefront\Infrastructure\StorefrontMoneyFormatter;
+use Commerce\Modules\Storefront\Contract\MoneyFormatterInterface;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
 /** Data for the "order accepted" page: number, totals, chosen delivery and payment. No personal data beyond what the buyer typed. */
 final readonly class OrderConfirmationQuery
 {
-    public function __construct(private Connection $db, private OrderMethodPresenter $methods, private StorefrontMoneyFormatter $money)
+    public function __construct(private Connection $db, private OrderMethodPresenter $methods, private MoneyFormatterInterface $money)
     {
     }
 

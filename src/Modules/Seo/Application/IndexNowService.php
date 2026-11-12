@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Seo\Application;
 
-use Commerce\Modules\Seo\Http\SitemapController;
+use Commerce\Modules\Seo\Domain\SitemapVisibility;
 use Commerce\Core\Configuration\SystemSettingStore;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -109,7 +109,7 @@ final readonly class IndexNowService
              LEFT JOIN mc_category c ON sr.entity_type='category' AND c.public_id=sr.entity_public_id
              LEFT JOIN mc_brand b ON sr.entity_type='brand' AND b.public_id=sr.entity_public_id
              LEFT JOIN mc_content_entry ce ON sr.entity_type IN ('cms_page','blog_article','landing_page') AND ce.public_id=sr.entity_public_id
-             WHERE sr.store_id=? AND sr.indexable=1 AND " . SitemapController::VISIBLE_ARTICLE . ($since !== null ? " AND {$lastmod} > ?" : '') . ' ORDER BY sr.id LIMIT ' . max(1, $limit),
+             WHERE sr.store_id=? AND sr.indexable=1 AND " . SitemapVisibility::VISIBLE_ARTICLE . ($since !== null ? " AND {$lastmod} > ?" : '') . ' ORDER BY sr.id LIMIT ' . max(1, $limit),
             $since !== null ? [$storeId, $since] : [$storeId],
         );
         $base = rtrim($this->publicBaseUrl, '/');

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Catalog\Application;
 
 use Commerce\Modules\Catalog\Application\Command\UpdateProductCommand;
-use Commerce\Modules\Catalog\Infrastructure\DbalCatalogAdminQuery;
+use Commerce\Modules\Catalog\Application\ProductEditQueryInterface;
 
 /**
  * Applies the rows of the bulk editor (name, SKU, price, stock, status) and reports the values they had
@@ -15,7 +15,7 @@ final readonly class ProductBulkEditor
 {
     private const STATUSES = ['draft', 'published', 'archived'];
 
-    public function __construct(private DbalCatalogAdminQuery $query, private ProductWriter $writer)
+    public function __construct(private ProductEditQueryInterface $query, private ProductWriter $writer)
     {
     }
 

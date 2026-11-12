@@ -7,7 +7,7 @@ namespace Commerce\Modules\Catalog\Application;
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Core\Id\PublicIdFactory;
 use Commerce\Modules\Pricing\Application\CurrencyPriceSynchronizer;
-use Commerce\Modules\Storefront\Infrastructure\StorefrontMoneyFormatter;
+use Commerce\Modules\Storefront\Contract\MoneyFormatterInterface;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -25,7 +25,7 @@ final class ProductAddonService
         private readonly Connection $db,
         private readonly PublicIdFactory $ids,
         private readonly CurrencyPriceSynchronizer $fx,
-        private readonly StorefrontMoneyFormatter $money,
+        private readonly MoneyFormatterInterface $money,
     ) {
     }
 

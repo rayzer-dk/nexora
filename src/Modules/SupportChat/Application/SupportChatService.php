@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\SupportChat\Application;
 
 use Commerce\Core\I18n\CanonicalUiText;
-use Commerce\Modules\SupportChat\Infrastructure\TelegramBotClient;
+use Commerce\Modules\SupportChat\Application\TelegramApiInterface;
 use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
 
@@ -20,7 +20,7 @@ final class SupportChatService
     public function __construct(
         private readonly Connection $db,
         private readonly SupportChatSettings $settings,
-        private readonly TelegramBotClient $bot,
+        private readonly TelegramApiInterface $bot,
         private readonly LoggerInterface $logger,
     ) {
     }

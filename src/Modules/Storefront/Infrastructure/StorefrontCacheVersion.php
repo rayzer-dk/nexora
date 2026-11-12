@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Storefront\Infrastructure;
 
+use Commerce\Modules\Storefront\Contract\CatalogCacheVersionInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
@@ -12,7 +13,7 @@ use Symfony\Contracts\Cache\ItemInterface;
  * (the old entries simply expire), so an edit in the admin area shows on the shop immediately instead of after the short
  * lifetime of the stored data.
  */
-final class StorefrontCacheVersion
+final class StorefrontCacheVersion implements CatalogCacheVersionInterface
 {
     private const KEY = 'storefront.catalog.version';
 
