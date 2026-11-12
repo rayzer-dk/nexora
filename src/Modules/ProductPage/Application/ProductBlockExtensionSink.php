@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Commerce\Modules\ProductPage\Application;
 
 use Commerce\Core\Extension\ExtensionProviderSinkInterface;
-use Commerce\Modules\ProductPage\Contract\ProductBlockProviderInterface;
 
 final readonly class ProductBlockExtensionSink implements ExtensionProviderSinkInterface
 {
@@ -20,9 +19,6 @@ final readonly class ProductBlockExtensionSink implements ExtensionProviderSinkI
 
     public function accept(object $provider): void
     {
-        if (!$provider instanceof ProductBlockProviderInterface) {
-            throw new \InvalidArgumentException('provider.product_block expects ProductBlockProviderInterface.');
-        }
         $this->registry->register($provider);
     }
 }
