@@ -122,7 +122,7 @@ return [
     'installer.document_root_shared_hosting' => 'Document Root does not point to public/, but the shared-hosting gateway is active. For production, point the Document Root to public/.',
     'installer.admin_password_length' => 'The administrator password must be 12 to 128 characters long.',
     'installer.innodb_unavailable' => 'The InnoDB engine is not available on the database server.',
-    'installer.application_install_failed_trace' => 'Installation could not be completed. Diagnostic code: %trace%.',
+    'installer.application_install_failed_trace' => 'Installation could not be completed. Diagnostic code: %trace%. Details: file var/log/installer.log, search for this code.',
     'installer.db_access_denied_details' => 'Database access denied for user “%user%” on host “%host%”. Check the login and password.',
     'installer.db_create_not_allowed' => 'The database user is not allowed to create a database. Create it manually or grant the required privileges.',
     'installer.db_unreachable_details' => 'The database server is unreachable: %host%:%port%. Check the address, port and network access.',

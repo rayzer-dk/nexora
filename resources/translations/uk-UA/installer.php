@@ -122,7 +122,7 @@ return [
     'installer.document_root_shared_hosting' => 'Document Root не вказує на public/, але працює шлюз спільного хостингу. Для production краще спрямувати Document Root на public/.',
     'installer.admin_password_length' => 'Пароль адміністратора має містити від 12 до 128 символів.',
     'installer.innodb_unavailable' => 'Рушій InnoDB недоступний на сервері бази даних.',
-    'installer.application_install_failed_trace' => 'Не вдалося завершити встановлення. Код діагностики: %trace%.',
+    'installer.application_install_failed_trace' => 'Не вдалося завершити встановлення. Код діагностики: %trace%. Подробиці: файл var/log/installer.log, знайдіть цей код.',
     'installer.db_access_denied_details' => 'Доступ до бази даних відхилено для користувача «%user%» на хості «%host%». Перевірте логін і пароль.',
     'installer.db_create_not_allowed' => 'Користувачу бази даних не дозволено створювати базу. Створіть базу вручну або надайте потрібні права.',
     'installer.db_unreachable_details' => 'Сервер бази даних недоступний: %host%:%port%. Перевірте адресу, порт і мережевий доступ.',

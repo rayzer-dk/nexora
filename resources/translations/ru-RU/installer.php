@@ -122,7 +122,7 @@ return [
     'installer.document_root_shared_hosting' => 'Document Root не указывает на public/, но шлюз общего хостинга работает. Для production направьте Document Root на public/.',
     'installer.admin_password_length' => 'Пароль администратора должен содержать от 12 до 128 символов.',
     'installer.innodb_unavailable' => 'Механизм InnoDB недоступен на сервере базы данных.',
-    'installer.application_install_failed_trace' => 'Не удалось завершить установку. Код диагностики: %trace%.',
+    'installer.application_install_failed_trace' => 'Не удалось завершить установку. Код диагностики: %trace%. Подробности: файл var/log/installer.log, найдите этот код.',
     'installer.db_access_denied_details' => 'Доступ к базе данных запрещен для пользователя «%user%» на хосте «%host%». Проверьте логин и пароль.',
     'installer.db_create_not_allowed' => 'Пользователю базы данных не разрешено создавать базы. Создайте базу вручную или предоставьте необходимые права.',
     'installer.db_unreachable_details' => 'Сервер базы данных недоступен: %host%:%port%. Проверьте адрес, порт и сетевое соединение.',

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Installer (`setup.php`): the language selector now switches the page at once (it had no handler and only worked without JavaScript); the failure message names the log file (`var/log/installer.log`) where the diagnostic code is explained.
 - Product form: the other languages are typed in the form itself (General tab → Translations: one tab per language with name, short description, description and SEO title/description) and saved together with the product, on create and on edit; the language bar above the tabs is gone. A language left empty is skipped.
 - Checkout: the same form sent twice at once (double click, retry) returns the order the first request created instead of an error page; e2e `order-integrity` also checks that a later price change leaves the order and what the buyer sees unchanged.
 - Admin accessibility (WCAG 2.2 AA): the audit of all 93 menu screens found 8 groups of violations; fixed. Controls without a visible label get a name from the table header, title or field name (`initAccessibleNames`), icon-only buttons and image links are named, the all-sections button no longer sits inside `role=tablist`, language tabs are toggle buttons, checkboxes are 24 px, links in text are underlined, code blocks that scroll take focus. New CI checks: every admin screen, the signed-in customer account and the keyboard (skip link, visible focus, menu from the keyboard).
