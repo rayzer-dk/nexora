@@ -12,7 +12,7 @@
         {% if tab.href is defined and tab.href %}
           <a class="lang-tabs__tab" href="{{ tab.href }}"{{ tab.current ? ' aria-current="page"' : '' }} lang="{{ tab.code }}">
         {% else %}
-          <button type="button" class="lang-tabs__tab" data-lang-tab="lang-{{ tab.code }}" aria-selected="{{ tab.current ? 'true' : 'false' }}" lang="{{ tab.code }}">
+          <button type="button" class="lang-tabs__tab" data-lang-tab="lang-{{ tab.code }}" aria-pressed="{{ tab.current ? 'true' : 'false' }}" lang="{{ tab.code }}">
         {% endif %}
           <span class="lang-tabs__code">{{ tab.short }}</span>
           <span class="lang-tabs__name">{{ tab.name }}</span>

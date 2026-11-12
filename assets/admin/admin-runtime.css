@@ -2362,3 +2362,9 @@ form:has(input[name="display_image_upscale"][value="none"]:checked) .image-previ
 form:has(input[name="display_image_upscale"][value="2"]:checked) .image-preview__frame { --up: 2; }
 form:has(input[name="display_image_upscale"][value="unlimited"]:checked) .image-preview__frame { --up: 1000; }
 form:has(input[name="display_image_fit"][value="cover"]:checked) .image-preview__frame { --fit: cover; --up: 1000; }
+
+/* WCAG 2.2 target size: a checkbox or radio is at least 24 x 24 px, a phone link in a table has room, text links are not told apart by colour alone. */
+.admin-shell input[type="checkbox"], .admin-shell input[type="radio"] { min-width: 24px; min-height: 24px; }
+.admin-cart-contact { display: inline-block; min-height: 24px; padding-block: var(--mc-space-1); }
+.admin-help a, .admin-hint a, .admin-notice a, .admin-panel p a, .admin-field small a { text-decoration: underline; text-underline-offset: 2px; }
+.admin-tabs__list { display: contents; }

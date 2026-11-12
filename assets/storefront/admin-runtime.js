@@ -357,7 +357,7 @@ function initFieldLangTabs() {
       const has = items.some((item) => item.dataset.lang === code);
       const active = has ? code : items[0].dataset.lang;
       items.forEach((item) => { item.hidden = item.dataset.lang !== active; });
-      tabs.forEach((tab) => { const on = tab.dataset.code === active; tab.setAttribute('aria-selected', on ? 'true' : 'false'); tab.closest('.lang-tabs__item').classList.toggle('is-current', on); });
+      tabs.forEach((tab) => { const on = tab.dataset.code === active; tab.setAttribute('aria-pressed', on ? 'true' : 'false'); tab.closest('.lang-tabs__item').classList.toggle('is-current', on); });
       scope.classList.add('has-lang-tabs');
     });
     try { window.localStorage.setItem('mc_admin_lang', code); } catch (_) { /* ignore */ }
@@ -1425,7 +1425,11 @@ function initTabs() {
     const key = `mc_tab_${location.pathname}_${root.dataset.tabs}`;
     const list = document.createElement('div');
     list.className = 'admin-tabs';
-    list.setAttribute('role', 'tablist');
+    // The "all sections" button is not a tab, so it stays outside the element that carries role=tablist.
+    const tablist = document.createElement('div');
+    tablist.className = 'admin-tabs__list';
+    tablist.setAttribute('role', 'tablist');
+    list.appendChild(tablist);
     const buttons = panels.map((panel) => {
       const id = panel.dataset.tab;
       const heading = q('h2, h3', panel);
@@ -1444,7 +1448,7 @@ function initTabs() {
       panel.setAttribute('role', 'tabpanel');
       return b;
     });
-    list.append(...buttons);
+    tablist.append(...buttons);
     // Long pages offer "all sections": every panel stays open one under another (remembered on this device).
     const flex = root.hasAttribute('data-tabs-flex');
     const readAll = () => { try { return localStorage.getItem('mc_admin_tabs') === 'all'; } catch { return false; } };
@@ -2684,6 +2688,52 @@ function initAdminPush() {
   });
 }
 
+// Accessible names. A control the template leaves without a visible label (a cell of an edit table, an icon-only button, an image link)
+// gets one from its table column header, its title, its target or its field name, so a screen reader never meets an unnamed control.
+function initAccessibleNames() {
+  const humanize = (value) => String(value || '').replace(/\[\]$/, '').replace(/[_\-.]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').trim();
+  const named = (el) => el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby') || Boolean(el.title) || Array.from(el.labels || []).some((label) => label.textContent.trim() !== '');
+  const columnHeader = (el) => {
+    const cell = el.closest('td');
+    const table = cell?.closest('table');
+    if (!cell || !table) return '';
+    const index = Array.from(cell.parentElement.children).indexOf(cell);
+    return table.querySelectorAll('thead th')[index]?.textContent.trim() || '';
+  };
+  const apply = (root) => {
+    root.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="image"]), select, textarea').forEach((el) => {
+      if (named(el) || el.closest('label')?.textContent.trim()) return;
+      const first = Object.keys(el.dataset)[0];
+      const name = columnHeader(el) || el.getAttribute('placeholder') || humanize(el.getAttribute('name')) || humanize(first);
+      if (name) el.setAttribute('aria-label', name);
+    });
+    root.querySelectorAll('button, [role="button"]').forEach((el) => {
+      if (el.textContent.trim() || named(el)) return;
+      const alt = el.querySelector('img[alt]:not([alt=""])')?.getAttribute('alt');
+      let name = alt || '';
+      if (!name && (el.classList.contains('is-danger') || el.hasAttribute('data-delete'))) name = t('js_a11y_delete');
+      if (!name && el.matches('[data-media-edit]')) name = t('js_a11y_media');
+      if (!name) name = humanize(Object.keys(el.dataset)[0]) || t('js_a11y_action');
+      el.setAttribute('aria-label', name);
+    });
+    root.querySelectorAll('a[href]').forEach((el) => {
+      if (el.textContent.trim() || named(el) || el.querySelector('img[alt]:not([alt=""]), svg[aria-label]')) return;
+      let name;
+      try { name = humanize(decodeURIComponent(new URL(el.href, location.href).pathname.split('/').filter(Boolean).pop() || '')); } catch { name = ''; }
+      el.setAttribute('aria-label', name || t('js_a11y_open'));
+    });
+    root.querySelectorAll('summary').forEach((el) => {
+      if (el.textContent.trim() || named(el)) return;
+      el.setAttribute('aria-label', el.parentElement?.getAttribute('aria-label') || t('js_a11y_details'));
+    });
+    // A code block that scrolls must be reachable from the keyboard.
+    root.querySelectorAll('pre:not([tabindex])').forEach((el) => { el.tabIndex = 0; });
+  };
+  apply(document);
+  let timer = 0;
+  new MutationObserver(() => { window.clearTimeout(timer); timer = window.setTimeout(() => apply(document), 150); }).observe(document.body, { childList: true, subtree: true });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initFlashToasts();
   initAdminAjaxForms();
@@ -2706,6 +2756,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initRowLinks();
   initAutoTabs();
   initTabs();
+  initAccessibleNames();
   initTemplateEditors();
   initDataTables();
   initMediaPresetForm();

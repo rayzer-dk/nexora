@@ -995,7 +995,7 @@ initEcommerceEvents();
   const vitals = { LCP: null, CLS: 0, INP: null };
   const interactions = new Map();
   const observe = (type, callback, options = {}) => {
-    try { new PerformanceObserver((list) => list.getEntries().forEach(callback)).observe({ type, buffered: true, ...options }); } catch (_) { /* not supported */ }
+    try { new window.PerformanceObserver((list) => list.getEntries().forEach(callback)).observe({ type, buffered: true, ...options }); } catch (_) { /* not supported */ }
   };
   observe('largest-contentful-paint', (entry) => { vitals.LCP = Math.round(entry.startTime); });
   observe('layout-shift', (entry) => { if (!entry.hadRecentInput) vitals.CLS += entry.value; });

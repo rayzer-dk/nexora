@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Admin accessibility (WCAG 2.2 AA): the audit of all 93 menu screens found 8 groups of violations; fixed. Controls without a visible label get a name from the table header, title or field name (`initAccessibleNames`), icon-only buttons and image links are named, the all-sections button no longer sits inside `role=tablist`, language tabs are toggle buttons, checkboxes are 24 px, links in text are underlined, code blocks that scroll take focus. New CI checks: every admin screen, the signed-in customer account and the keyboard (skip link, visible focus, menu from the keyboard).
+- `docs/TZ_AUDIT.md`: the specification audited section by section, each item marked as checked by a run, partly checked, not checked or deviating.
+
 - Core Web Vitals: a sampled report of LCP, CLS and INP from real visitors (`/rum/vitals`, migration `Version20270103010000`, schema 91) and Admin → Analytics → Traffic → Site speed with the 75th percentile per page and device; the first catalogue cards are loaded eagerly (the LCP picture was lazy).
 - Accessibility (WCAG 2.2 AA): links inside text on the login page are underlined; the accessibility e2e now covers the product page, checkout, login, registration, blog, contact and the dark theme, and counts every axe violation, not only the serious ones.
 - Tests: a real-MySQL concurrency test where eight processes race for three units of stock (no oversell).

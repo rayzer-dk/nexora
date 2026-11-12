@@ -12,7 +12,7 @@ function activate(bar: HTMLElement, id: string, updateHash: boolean): void {
   for (const panel of panels) panel.hidden = panel.dataset.langPanel !== id;
   for (const tab of bar.querySelectorAll<HTMLElement>('[data-lang-tab]')) {
     const on = tab.dataset.langTab === id;
-    tab.setAttribute('aria-selected', on ? 'true' : 'false');
+    tab.setAttribute('aria-pressed', on ? 'true' : 'false');
     tab.closest('.lang-tabs__item')?.classList.toggle('is-current', on);
   }
   if (updateHash) {
