@@ -15,7 +15,7 @@ final class ContentSchemaType
     public static function validate(string $value, bool $article = false): string
     {
         if (!in_array($value, $article ? self::ARTICLE : self::PAGE, true)) {
-            throw new InvalidArgumentException('Unknown Schema.org content type.');
+            throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.unknown_type'));
         }
         return $value;
     }

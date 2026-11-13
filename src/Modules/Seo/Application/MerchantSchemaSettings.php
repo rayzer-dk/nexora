@@ -90,63 +90,63 @@ final readonly class MerchantSchemaSettings
             $codes = array_values(array_unique($codes));
             $allowed = ShippingCountryService::allCountryCodes();
             if (count($codes) > 50 || array_diff($codes, $allowed) !== []) {
-                throw new InvalidArgumentException('Country codes must be valid ISO 3166-1 alpha-2 codes (maximum 50).');
+                throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.countries'));
             }
             $v[$key] = implode(', ', $codes);
         }
         foreach (['shipping_currency', 'return_currency'] as $key) {
             $v[$key] = strtoupper(trim((string) $input[$key]));
             if ($v[$key] !== '' && preg_match('/^[A-Z]{3}$/D', $v[$key]) !== 1) {
-                throw new InvalidArgumentException('Use an ISO 4217 three-letter currency code.');
+                throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.currency'));
             }
         }
         foreach (['shipping_rate', 'return_cost'] as $key) {
             $v[$key] = trim((string) $input[$key]);
             if ($v[$key] !== '' && preg_match('/^\d{1,8}(?:\.\d{1,4})?$/D', $v[$key]) !== 1) {
-                throw new InvalidArgumentException('Shipping and return costs must be non-negative decimals with a dot.');
+                throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.amount'));
             }
         }
         foreach (['handling_min', 'handling_max', 'transit_min', 'transit_max', 'return_days'] as $key) {
             $v[$key] = trim((string) $input[$key]);
             if ($v[$key] !== '' && preg_match('/^\d{1,4}$/D', $v[$key]) !== 1) {
-                throw new InvalidArgumentException('Time ranges and return days must be non-negative integers.');
+                throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.days'));
             }
         }
         $v['return_category'] = (string) $input['return_category'];
         if (!in_array($v['return_category'], ['finite', 'unlimited', 'not_permitted'], true)) {
-            throw new InvalidArgumentException('Invalid return policy category.');
+            throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.return_category'));
         }
         $v['return_method'] = (string) $input['return_method'];
         if (!in_array($v['return_method'], ['', 'ReturnByMail', 'ReturnInStore', 'ReturnAtKiosk'], true)) {
-            throw new InvalidArgumentException('Invalid return method.');
+            throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.return_method'));
         }
         $v['return_fees'] = (string) $input['return_fees'];
         if (!in_array($v['return_fees'], ['', 'FreeReturn', 'ReturnFeesCustomerResponsibility', 'ReturnShippingFees'], true)) {
-            throw new InvalidArgumentException('Invalid return fees.');
+            throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.return_fees'));
         }
         if ($v['shipping_enabled']) {
             if ($v['shipping_countries'] === '' || $v['shipping_currency'] === '' || $v['shipping_rate'] === '') {
-                throw new InvalidArgumentException('Enabled shipping policy needs countries, currency and an unconditional flat rate.');
+                throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.shipping_required'));
             }
             foreach (['handling', 'transit'] as $key) {
                 if ($v[$key . '_min'] === '' || $v[$key . '_max'] === '' || (int) $v[$key . '_min'] > (int) $v[$key . '_max']) {
-                    throw new InvalidArgumentException('Enabled shipping policy needs valid handling and transit day ranges.');
+                    throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.shipping_time'));
                 }
             }
         }
         if ($v['shipping_on_offers'] && !$v['shipping_enabled']) {
-            throw new InvalidArgumentException('Enable the general shipping policy before adding shipping to individual offers.');
+            throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.shipping_offers'));
         }
         if ($v['returns_enabled']) {
             if ($v['return_countries'] === '') {
-                throw new InvalidArgumentException('Enabled return policy needs the applicable countries.');
+                throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.return_countries'));
             }
             if ($v['return_category'] === 'finite' && ($v['return_days'] === '' || (int) $v['return_days'] < 1)) {
-                throw new InvalidArgumentException('Finite returns need the number of days allowed.');
+                throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.return_days'));
             }
             if ($v['return_category'] !== 'not_permitted' && $v['return_fees'] === 'ReturnShippingFees'
                 && ($v['return_cost'] === '' || $v['return_currency'] === '')) {
-                throw new InvalidArgumentException('Fixed return shipping fees need both cost and currency.');
+                throw new InvalidArgumentException(\Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.return_cost'));
             }
         }
 

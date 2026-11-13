@@ -24,7 +24,7 @@ final class MerchantSchemaAdminController extends AbstractController
         $context = $this->contexts->resolve($request);
         if ($request->isMethod('POST')) {
             if (!$this->isCsrfTokenValid('merchant_schema', (string) $request->request->get('_token'))) {
-                $this->addFlash('error', 'The form session expired; no settings were saved.');
+                $this->addFlash('error', \Commerce\Core\I18n\CanonicalUiText::get('admin.merchant.validation.session'));
                 return $this->redirectToRoute('admin_system_merchant_schema');
             }
             try {
