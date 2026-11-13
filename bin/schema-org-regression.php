@@ -3,6 +3,7 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/src/Core/I18n/CanonicalUiText.php';
 require_once dirname(__DIR__) . '/src/Modules/Seo/StructuredData/ContentSchemaType.php';
 require_once dirname(__DIR__) . '/src/Modules/Seo/StructuredData/StructuredDataGraphBuilder.php';
 require_once dirname(__DIR__) . '/src/Modules/Seo/StructuredData/ArticleStructuredDataBuilder.php';

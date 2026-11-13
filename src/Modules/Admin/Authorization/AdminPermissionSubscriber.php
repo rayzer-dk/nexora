@@ -43,6 +43,7 @@ final readonly class AdminPermissionSubscriber implements EventSubscriberInterfa
         if ($route==='admin_dashboard'||$route==='admin_dashboard_layout_save'||$route==='admin_onboarding'||$route==='admin_api_session'||$route==='admin_api_quick_search'||$route==='admin_api_slug'||$route==='admin_interface_language'||$route==='admin_undo'||$route==='admin_mfa_challenge'||str_starts_with($route,'admin_account')||str_starts_with($route,'admin_help')||$route==='admin_project_support') return AdminPermissionCatalog::DASHBOARD_VIEW; // Self-service: an administrator manages only their own second factor.
         if (str_starts_with($route,'admin_system_tax')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if (str_starts_with($route,'admin_system_storefront_')) return AdminPermissionCatalog::SYSTEM_SETTINGS;
+        if ($route==='admin_system_merchant_schema') return AdminPermissionCatalog::SYSTEM_SETTINGS;
         if ($route==='admin_analytics'||$route==='admin_analytics_export') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_analytics_traffic'||$route==='admin_analytics_vitals') return AdminPermissionCatalog::ANALYTICS_VIEW;
         if ($route==='admin_fop'||$route==='admin_fop_income_book') return AdminPermissionCatalog::ANALYTICS_VIEW;
