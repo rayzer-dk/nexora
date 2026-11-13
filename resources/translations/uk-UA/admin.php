@@ -6703,4 +6703,18 @@ return [
     'admin.extensions.diag.settings_fields' => 'Полів: %count%',
     'admin.extensions.diag.settings_error' => 'Помилка схеми',
     'admin.extensions.diag.events' => 'Останні 10 подій',
+    'admin.schema.content_type' => 'Тип розмітки Schema.org',
+    'admin.schema.auto' => 'Автоматично (рекомендовано)',
+    'admin.schema.webpage' => 'Звичайна сторінка (WebPage)',
+    'admin.schema.about' => 'Про компанію (AboutPage)',
+    'admin.schema.contact' => 'Контакти (ContactPage)',
+    'admin.schema.faq' => 'Запитання й відповіді (FAQPage)',
+    'admin.schema.collection' => 'Добірка / каталог (CollectionPage)',
+    'admin.schema.article' => 'Стаття (Article)',
+    'admin.schema.blogposting' => 'Запис блогу (BlogPosting)',
+    'admin.schema.newsarticle' => 'Новина (NewsArticle)',
+    'admin.schema.none' => 'Без розмітки цього матеріалу',
+    'admin.schema.page_help' => 'Обирайте за змістом конкретної сторінки. Автоматично: Про компанію — AboutPage, Контакти — ContactPage, FAQ — FAQPage, інші — WebPage. FAQPage не гарантує розширений результат Google. Зберігається звичайною кнопкою.',
+    'admin.schema.blog_help' => 'Автоматично — BlogPosting. Article — редакційний матеріал, NewsArticle — справжня новина. Загальні дані магазину і навігація не вимикаються.',
+
 ];

@@ -15,7 +15,7 @@ final readonly class DbalBlogQuery implements LatestArticlesInterface
 {
     private const PUBLISHED = "ce.content_type='article' AND ce.status='published' AND (ce.published_at IS NULL OR ce.published_at<=UTC_TIMESTAMP(6))";
     private const SELECT = "ce.id,ce.public_id,ce.published_at,ce.updated_at,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description,sr.path,
-                    em.value_json AS image_meta,bm.cover_url,bm.cover_alt,bm.image_size,bm.image_align,bm.author_name,bm.featured,bm.noindex,bm.canonical_url,bm.reading_minutes,bm.category_id,
+                    em.value_json AS image_meta,bm.cover_url,bm.cover_alt,bm.image_size,bm.image_align,bm.author_name,bm.featured,bm.noindex,COALESCE(bm.schema_type,'auto') AS schema_type,bm.canonical_url,bm.reading_minutes,bm.category_id,
                     bc.slug AS category_slug,COALESCE(bct.name,bc.slug) AS category_name";
     private const JOINS = "FROM mc_content_entry ce
              JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=:locale
@@ -248,6 +248,7 @@ final readonly class DbalBlogQuery implements LatestArticlesInterface
             'updated_iso' => $this->iso($row['updated_at']),
             'canonical_url' => (string) ($row['canonical_url'] ?? ''),
             'noindex' => (int) ($row['noindex'] ?? 0) === 1,
+            'schema_type' => (string) ($row['schema_type'] ?? 'auto'),
             'category_id' => (int) ($row['category_id'] ?? 0),
             'tags' => array_map(static fn (array $t): array => ['slug' => (string) $t['slug'], 'name' => (string) $t['name']], $tags),
         ];
@@ -327,6 +328,7 @@ final readonly class DbalBlogQuery implements LatestArticlesInterface
         return [
             'public_id' => Uuid::fromBinary((string) $r['public_id'])->toRfc4122(),
             'title' => (string) $r['title'],
+            'schema_type' => (string) ($r['schema_type'] ?? 'auto'),
             'excerpt' => $excerpt,
             'url' => '/' . ltrim((string) $r['path'], '/'),
             'date' => $published ? $this->formatDate((string) $published, $locale) : '',

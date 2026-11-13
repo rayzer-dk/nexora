@@ -1,0 +1,49 @@
+name: Nexora Schema.org contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Modules/Seo/StructuredData/**'
+      - 'src/Modules/Seo/Application/MerchantSchemaSettings.php'
+      - 'src/Modules/Content/**'
+      - 'src/Modules/Storefront/Http/StorefrontCatalogController.php'
+      - 'src/Modules/Storefront/HomeController.php'
+      - 'src/Modules/Admin/Http/MerchantSchemaAdminController.php'
+      - 'migrations/Version20261113120000.php'
+      - 'themes/default/templates/admin/system/merchant_schema.html.twig'
+      - 'bin/schema-org-regression.php'
+      - '.github/workflows/schema-org.yml'
+  pull_request:
+    paths:
+      - 'src/Modules/Seo/**'
+      - 'src/Modules/Content/**'
+      - 'bin/schema-org-regression.php'
+      - '.github/workflows/schema-org.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  schema:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl,mbstring,pdo_mysql
+          coverage: none
+      - name: PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l src/Modules/Seo/Application/MerchantSchemaSettings.php
+          php -l src/Modules/Seo/StructuredData/ContentSchemaType.php
+          php -l src/Modules/Storefront/Http/StorefrontCatalogController.php
+          php -l src/Modules/Content/Http/InformationPageController.php
+          php -l src/Modules/Admin/Http/MerchantSchemaAdminController.php
+          php -l migrations/Version20261113120000.php
+      - name: Structured data regression
+        run: php bin/schema-org-regression.php

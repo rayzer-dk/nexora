@@ -51,6 +51,7 @@ final class StorefrontCatalogController extends AbstractController
         private readonly SiteCapabilitySettings $capabilities,
         private readonly \Commerce\Modules\Content\Infrastructure\DbalInformationPageQuery $informationPages,
         private readonly \Commerce\Modules\Seo\Application\SeoSettings $seoSettings,
+        private readonly \Commerce\Modules\Seo\Application\MerchantSchemaSettings $merchantSchema,
         private readonly \Commerce\Modules\Storefront\Infrastructure\CategoryProductPath $categoryPaths,
     ) {
     }
@@ -237,6 +238,32 @@ final class StorefrontCatalogController extends AbstractController
         }
         $canonical = $request->getSchemeAndHttpHost() . $category['url'] . (!$filter->isFiltered() && $page > 1 ? '?page=' . $page : '');
 
+        $categorySchema = null;
+        if (!$filter->isFiltered() && $this->merchantSchema->enabled($context->storeId)) {
+            $base = $request->getSchemeAndHttpHost();
+            $categoryUrl = $base . $category['url'];
+            $items = [];
+            foreach ((array) ($products['items'] ?? []) as $index => $item) {
+                if (empty($item['url']) || empty($item['name'])) { continue; }
+                $items[] = ['@type' => 'ListItem', 'position' => $index + 1,
+                    'name' => (string) $item['name'],
+                    'url' => str_starts_with((string) $item['url'], 'http') ? (string) $item['url'] : $base . $item['url']];
+            }
+            $pageNode = ['@type' => 'CollectionPage', '@id' => $categoryUrl . '#webpage',
+                'url' => $categoryUrl, 'name' => (string) $category['name'], 'inLanguage' => $context->locale];
+            $crumbs = [['name' => $context->storeName, 'url' => $base . '/']];
+            foreach ($categoryTrail as $step) {
+                $crumbs[] = ['name' => (string) $step['name'], 'url' => $base . $step['url']];
+            }
+            $crumbs[] = ['name' => (string) $category['name'], 'url' => $categoryUrl];
+            $nodes = [$pageNode, $this->breadcrumbsSchema->build($crumbs)];
+            if ($items !== []) {
+                $nodes[] = ['@type' => 'ItemList', 'name' => (string) $category['name'],
+                    'numberOfItems' => count($items), 'itemListElement' => $items];
+            }
+            $categorySchema = $this->graph->build(...$nodes);
+        }
+
         return $this->render('@storefront/category/show.html.twig', [
             'page_title' => $category['name'],
             'store_name' => $context->storeName,
@@ -257,6 +284,7 @@ final class StorefrontCatalogController extends AbstractController
                 'title' => (string) ($category['meta_title'] ?? '') !== '' ? $this->seoTemplates->expand((string) $category['meta_title'], ['name' => (string) ($category['name'] ?? ''), 'store' => $context->storeName]) : $this->seoTemplates->render($context->storeId, $context->locale, 'category', 'title', ['name' => (string) ($category['name'] ?? ''), 'store' => $context->storeName], (string) ($category['name'] ?? '')),
                 'description' => (string) ($category['meta_description'] ?? '') !== '' ? $this->seoTemplates->expand((string) $category['meta_description'], ['name' => (string) ($category['name'] ?? ''), 'store' => $context->storeName]) : $this->seoTemplates->render($context->storeId, $context->locale, 'category', 'description', ['name' => (string) ($category['name'] ?? ''), 'store' => $context->storeName], (string) ($category['description'] ?? '')),
                 'image' => $this->shareImage($request->getSchemeAndHttpHost(), [(string) ($category['image'] ?? '')]),
+                'json_ld' => $categorySchema,
                 'canonical' => $canonical,
                 'robots' => $filter->isFiltered() ? 'noindex,follow' : 'index,follow,max-image-preview:large',
                 'hreflang' => $filter->isFiltered() ? [] : [$context->locale => $canonical, 'x-default' => $canonical],
@@ -276,6 +304,19 @@ final class StorefrontCatalogController extends AbstractController
         $canonical = trim((string) ($page['canonical_url'] ?? '')) !== '' ? (string) $page['canonical_url'] : $own;
         $image = (string) ($page['og_key'] ?? '') !== '' ? $this->shareImage($base, ['/media/' . ltrim((string) $page['og_key'], '/')]) : null;
 
+        $cmsSchema = null;
+        if (empty($page['noindex']) && $this->merchantSchema->enabled($context->storeId)) {
+            $pageNode = \Commerce\Modules\Seo\StructuredData\ContentSchemaType::pageNode(
+                (string) ($page['schema_type'] ?? 'auto'), null, (string) $page['title'],
+                $own, $context->locale, (string) ($page['excerpt'] ?? ''),
+                $base . '/#organization'
+            );
+            if ($pageNode !== null) {
+                $crumbs = [['name' => $context->storeName, 'url' => $base . '/'], ['name' => (string) $page['title'], 'url' => $own]];
+                $cmsSchema = $this->graph->build($pageNode, $this->breadcrumbsSchema->build($crumbs));
+            }
+        }
+
         return $this->render('@storefront/content/page.html.twig', [
             'page_title' => (string) $page['title'],
             'store_name' => $context->storeName,
@@ -285,6 +326,7 @@ final class StorefrontCatalogController extends AbstractController
                 'title' => (string) ($page['meta_title'] ?? '') !== '' ? $this->seoTemplates->expand((string) $page['meta_title'], ['name' => (string) ($page['title'] ?? ''), 'store' => $context->storeName]) : $this->seoTemplates->render($context->storeId, $context->locale, 'page', 'title', ['name' => (string) ($page['title'] ?? ''), 'store' => $context->storeName], ''),
                 'description' => (string) ($page['meta_description'] ?? '') !== '' ? $this->seoTemplates->expand((string) $page['meta_description'], ['name' => (string) ($page['title'] ?? ''), 'store' => $context->storeName]) : $this->seoTemplates->render($context->storeId, $context->locale, 'page', 'description', ['name' => (string) ($page['title'] ?? ''), 'store' => $context->storeName], (string) ($page['excerpt'] ?? '')),
                 'image' => $image,
+                'json_ld' => $cmsSchema,
                 'canonical' => $canonical,
                 'robots' => !empty($page['noindex']) ? 'noindex,follow' : 'index,follow,max-image-preview:large',
                 'hreflang' => [$context->locale => $own, 'x-default' => $own],
@@ -319,23 +361,30 @@ final class StorefrontCatalogController extends AbstractController
             'description' => $article['meta_description'],
             'image' => $image !== '' ? [$image] : [],
         ];
-        $articleNode = $this->articleSchema->build($schema);
-        $articleNode['mainEntityOfPage'] = ['@type' => 'WebPage', '@id' => $ownUrl];
-        $articleNode['inLanguage'] = $context->locale;
-        $articleNode['wordCount'] = (int) preg_match_all('/[\p{L}\p{N}]+/u', \Commerce\Modules\Content\Application\BlogContentProcessor::plainText((string) $article['body_html']));
-        if (is_array($article['category'])) {
-            $articleNode['articleSection'] = (string) $article['category']['name'];
+        $articleType = \Commerce\Modules\Seo\StructuredData\ContentSchemaType::article((string) ($article['schema_type'] ?? 'auto'));
+        $articleNode = $articleType !== null ? $this->articleSchema->build($schema + ['schema_type' => $articleType]) : null;
+        if ($articleNode !== null) {
+            $articleNode['mainEntityOfPage'] = ['@type' => 'WebPage', '@id' => $ownUrl];
+            $articleNode['inLanguage'] = $context->locale;
+            $articleNode['wordCount'] = (int) preg_match_all('/[\p{L}\p{N}]+/u', \Commerce\Modules\Content\Application\BlogContentProcessor::plainText((string) $article['body_html']));
+            if (is_array($article['category'])) {
+                $articleNode['articleSection'] = (string) $article['category']['name'];
+            }
+            if ($article['tags'] !== []) {
+                $articleNode['keywords'] = implode(', ', array_map(static fn (array $t): string => (string) $t['name'], $article['tags']));
+            }
         }
-        if ($article['tags'] !== []) {
-            $articleNode['keywords'] = implode(', ', array_map(static fn (array $t): string => (string) $t['name'], $article['tags']));
-        }
-        try {
-            $structuredDataJson = json_encode(
-                $this->graph->build($articleNode, $this->breadcrumbsSchema->build($breadcrumbs)),
-                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR,
-            );
-        } catch (JsonException) {
-            $structuredDataJson = '{}';
+        $structuredDataJson = null;
+        if ($this->merchantSchema->enabled($context->storeId) && !$article['noindex']) {
+            $nodes = $articleNode !== null ? [$articleNode] : [];
+            $nodes[] = $this->breadcrumbsSchema->build($breadcrumbs);
+            try {
+                $structuredDataJson = json_encode($this->graph->build(...$nodes),
+                    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP
+                    | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
+            } catch (JsonException) {
+                $structuredDataJson = null;
+            }
         }
         $hreflang = [];
         if (!$article['noindex']) {
@@ -372,7 +421,9 @@ final class StorefrontCatalogController extends AbstractController
         if ($product === null) {
             throw $this->createNotFoundException();
         }
-        $reviewsEnabled = $this->capabilities->enabled($context->storeId, 'reviews');
+        $productExtra = $this->productExtras->forStorefront((int) ($product['internal_id'] ?? 0));
+        $reviewsEnabled = $this->capabilities->enabled($context->storeId, 'reviews')
+            && empty($productExtra['reviews_off']);
         if (!$reviewsEnabled) {
             $product['rating'] = null;
             $product['reviews'] = [];
@@ -396,12 +447,36 @@ final class StorefrontCatalogController extends AbstractController
             }
         }
         unset($item);
-        $schemaProduct = $this->productSchema->build($product);
-        $schemaBreadcrumb = $this->breadcrumbsSchema->build($breadcrumbs);
-        try {
-            $structuredDataJson = json_encode($this->graph->build($schemaProduct, $schemaBreadcrumb), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
-        } catch (JsonException) {
-            $structuredDataJson = '{}';
+        $structuredDataJson = null;
+        if ($this->merchantSchema->enabled($context->storeId) && ($product['indexable'] ?? true) !== false) {
+            $nodes = [];
+            $realPhoto = false;
+            foreach ((array) ($product['images'] ?? []) as $image) {
+                if (isset($image['media_id']) && !str_contains((string) ($image['url'] ?? ''), '/product-placeholder.svg')) {
+                    $realPhoto = true;
+                    break;
+                }
+            }
+            if ($realPhoto) {
+                $shipping = $this->merchantSchema->offerShipping($context->storeId, (string) $context->currency,
+                    (string) ($product['product_type'] ?? '') !== 'digital');
+                if ($shipping !== null) {
+                    $product['shipping'] = ['shippingDetails' => $shipping];
+                }
+                try {
+                    $nodes[] = $this->productSchema->build($product);
+                } catch (\InvalidArgumentException) {
+                    // Do not publish incomplete product markup or break the page.
+                }
+            }
+            $nodes[] = $this->breadcrumbsSchema->build($breadcrumbs);
+            try {
+                $structuredDataJson = json_encode($this->graph->build(...$nodes),
+                    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG
+                    | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
+            } catch (JsonException) {
+                $structuredDataJson = null;
+            }
         }
         foreach ($product['images'] as &$image) {
             $image['url'] = str_starts_with($image['url'], $baseUrl) ? substr($image['url'], strlen($baseUrl)) : $image['url'];
@@ -418,7 +493,6 @@ final class StorefrontCatalogController extends AbstractController
 
         $layout = $this->layoutLoader->loadForStore($context->storeId);
         $regions = $this->composer->compose($layout);
-        $productExtra = $this->productExtras->forStorefront((int) ($product['internal_id'] ?? 0));
         $reviewsEnabled = $reviewsEnabled && !$productExtra['reviews_off'];
         if (!$reviewsEnabled) {
             foreach ($regions as &$blocks) {

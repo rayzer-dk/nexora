@@ -30,6 +30,7 @@ final class HomeController extends AbstractController
         private readonly WebSiteBuilder $webSite,
         private readonly OrganizationCommerceBuilder $organization,
         private readonly StructuredDataGraphBuilder $graph,
+        private readonly \Commerce\Modules\Seo\Application\MerchantSchemaSettings $merchantSchema,
         private readonly \Commerce\Modules\Storefront\Infrastructure\StorefrontContactSettings $contact,
         private readonly \Commerce\Modules\Storefront\Application\LandingContent $landing,
     ) {
@@ -169,8 +170,9 @@ final class HomeController extends AbstractController
     /** Organization + WebSite with a sitelinks SearchAction pointing at the catalog search. */
     private function homeStructuredData(string $homeUrl, string $storeName, bool $searchEnabled, int $storeId): array
     {
+        if (!$this->merchantSchema->enabled($storeId)) { return []; }
         $webSite = $this->webSite->build($storeName, $homeUrl);
-        $webSite['publisher'] = ['@id' => rtrim($homeUrl, '/') . '#organization'];
+        $webSite['publisher'] = ['@id' => rtrim($homeUrl, '/') . '/#organization'];
         if ($searchEnabled) {
             $webSite['potentialAction'] = [
                 '@type' => 'SearchAction',
@@ -191,6 +193,7 @@ final class HomeController extends AbstractController
     private function organizationNode(string $homeUrl, string $storeName, int $storeId): array
     {
         $node = $this->organization->build(['name' => $storeName, 'url' => $homeUrl]);
+        $node = $this->merchantSchema->enrichOrganization($node, $storeId, $homeUrl);
         try {
             return $node + $this->contact->organizationData($storeId);
         } catch (\Throwable) {

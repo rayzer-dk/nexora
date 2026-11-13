@@ -19,6 +19,7 @@ final class BlogController extends AbstractController
     public function __construct(
         private readonly StorefrontContextResolver $contexts,
         private readonly DbalBlogQuery $blog,
+        private readonly \Commerce\Modules\Seo\Application\MerchantSchemaSettings $merchantSchema,
     ) {
     }
 
@@ -158,7 +159,10 @@ final class BlogController extends AbstractController
             'name' => $heading,
             'url' => $base . $path,
             'inLanguage' => $context->locale,
-            'blogPost' => array_map(static fn (array $a): array => ['@type' => 'BlogPosting', 'headline' => $a['title'], 'url' => $base . $a['url'], 'datePublished' => $a['iso']], array_slice($result['items'], 0, 10)),
+            'blogPost' => array_values(array_filter(array_map(static function (array $a) use ($base): ?array {
+                $kind = \Commerce\Modules\Seo\StructuredData\ContentSchemaType::article((string) ($a['schema_type'] ?? 'auto'));
+                return $kind === null ? null : ['@type' => $kind, 'headline' => $a['title'], 'url' => $base . $a['url'], 'datePublished' => $a['iso']];
+            }, array_slice($result['items'], 0, 10)))),
         ];
 
         return $this->render('@storefront/blog/index.html.twig', [
@@ -185,7 +189,7 @@ final class BlogController extends AbstractController
                 'robots' => ($tagSlug !== null || $search !== '') ? 'noindex,follow' : 'index,follow,max-image-preview:large',
                 'hreflang' => ($tagSlug !== null || $search !== '') ? [] : [$context->locale => $canonical, 'x-default' => $canonical],
                 'type' => 'website',
-                'json_ld' => $listSchema,
+                'json_ld' => $this->merchantSchema->enabled($context->storeId) ? $listSchema : null,
             ],
         ]);
     }

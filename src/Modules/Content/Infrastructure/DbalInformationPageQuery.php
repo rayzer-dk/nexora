@@ -17,9 +17,10 @@ final readonly class DbalInformationPageQuery
     public function bySystemKey(StorefrontContext $context, string $systemKey): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT ce.id,ce.system_key,ce.status,ce.published_at,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description
+            "SELECT ce.id,ce.system_key,ce.status,ce.published_at,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description,COALESCE(pm.schema_type,'auto') AS schema_type
              FROM mc_content_entry ce
              JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=?
+             LEFT JOIN mc_content_page_meta pm ON pm.content_id=ce.id
              WHERE ce.store_id=? AND ce.content_type='page' AND ce.system_key=? LIMIT 1",
             [$context->locale, $context->storeId, $systemKey],
         );
@@ -65,7 +66,7 @@ final readonly class DbalInformationPageQuery
         }
         $row = $this->connection->fetchAssociative(
             "SELECT ce.id,ce.status,ce.published_at,ce.system_key,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description,
-                    pm.noindex,pm.canonical_url,ma.storage_key AS og_key
+                    pm.noindex,COALESCE(pm.schema_type,'auto') AS schema_type,pm.canonical_url,ma.storage_key AS og_key
              FROM mc_content_entry ce
              JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=?
              LEFT JOIN mc_content_page_meta pm ON pm.content_id=ce.id

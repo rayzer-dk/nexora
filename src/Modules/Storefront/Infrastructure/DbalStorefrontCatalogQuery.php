@@ -608,6 +608,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         if (!is_array($row) || $row['amount_minor'] === null) { return null; }
 
         $product = $this->badges->decorate([$this->productCardRow($row, $context)], $context->storeId, $context->locale)[0];
+        $product['product_type'] = (string) ($row['product_type'] ?? 'physical');
         $product['description'] = (string) ($row['description'] ?? '');
         $product['short_description'] = (string) ($row['short_description'] ?? '');
         $product['gtin'] = $row['gtin'] ?: null; $product['mpn'] = $row['mpn'] ?: null;

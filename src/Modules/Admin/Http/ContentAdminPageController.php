@@ -196,7 +196,7 @@ final class ContentAdminPageController extends AbstractController
             'slug' => (string) ($input['slug'] ?? ''), 'page_group' => (string) ($input['page_group'] ?? 'company'),
             'show_in_footer' => $request->request->getBoolean('show_in_footer'), 'show_in_menu' => $request->request->getBoolean('show_in_menu'),
             'sort_order' => (int) ($input['sort_order'] ?? 100), 'noindex' => (string) ($input['robots'] ?? 'index') === 'noindex',
-            'canonical_url' => (string) ($input['canonical_url'] ?? ''), 'og_asset_id' => (int) ($input['og_asset_id'] ?? 0), 'og_url' => '',
+            'canonical_url' => (string) ($input['canonical_url'] ?? ''), 'schema_type' => (string) ($input['schema_type'] ?? 'auto'), 'og_asset_id' => (int) ($input['og_asset_id'] ?? 0), 'og_url' => '',
         ];
         if (!$this->isCsrfTokenValid('admin_content_page_' . $key, (string) $request->request->get('_token'))) {
             $this->addFlash('error', CanonicalUiText::get('admin.pages.error.session'));

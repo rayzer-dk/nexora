@@ -3,6 +3,7 @@
 <header class="admin-page-header">
     <div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.system.store.dani_mahazynu') }} · v{{ platform_version }}</span></nav><h1>{{ ui_text('admin.system.store.dani_mahazynu') }}</h1><p>{{ ui_text('admin.system.store.osnovni_rekvizyty_lokal_valiuta_ta_kontakty_kozh') }}</p></div>
 </header>
+<div class="admin-page-actions"><a href="{{ path('admin_system_merchant_schema') }}" class="admin-button">{{ ui_icon('file-code-2',16) }} {{ ui_text('admin.merchant.link') }}</a></div>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
 <form method="post" class="admin-panel" data-dirty-guard>
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('store_identity') }}">

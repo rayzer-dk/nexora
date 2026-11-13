@@ -105,7 +105,7 @@ final class BlogService
         }
         $publicId = Uuid::fromBinary((string) $entry['public_id'])->toRfc4122();
         $tr = $this->db->fetchAssociative('SELECT title, h1, excerpt, body_html, meta_title, meta_description FROM mc_content_translation WHERE content_id = ? AND locale = ?', [$id, $locale]);
-        $meta = $this->db->fetchAssociative('SELECT category_id, cover_url, cover_alt, image_size, image_align, author_name, featured, noindex, canonical_url, reading_minutes FROM mc_blog_article_meta WHERE content_id = ?', [$id]);
+        $meta = $this->db->fetchAssociative('SELECT category_id, cover_url, cover_alt, image_size, image_align, author_name, featured, noindex, schema_type, canonical_url, reading_minutes FROM mc_blog_article_meta WHERE content_id = ?', [$id]);
         $route = $this->routes->findByEntity($storeId, $locale, SeoEntityType::BlogArticle, $publicId);
         $tags = $this->db->fetchFirstColumn('SELECT tag_name FROM mc_blog_article_tag WHERE content_id = ? ORDER BY tag_name', [$id]);
         return [
@@ -130,6 +130,7 @@ final class BlogService
             'author_name' => (string) ($meta['author_name'] ?? ''),
             'featured' => (int) ($meta['featured'] ?? 0) === 1,
             'noindex' => (int) ($meta['noindex'] ?? 0) === 1,
+            'schema_type' => (string) ($meta['schema_type'] ?? 'auto'),
             'canonical_url' => (string) ($meta['canonical_url'] ?? ''),
             'tags' => implode(', ', array_map('strval', $tags)),
             'product_skus' => $this->links->skusFor($id),
@@ -168,6 +169,10 @@ final class BlogService
         $categoryId = (int) ($in['category_id'] ?? 0);
         if ($categoryId > 0 && (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_blog_category WHERE id = ? AND store_id = ?', [$categoryId, $storeId]) !== 1) {
             $categoryId = 0;
+        }
+        if (!array_key_exists('schema_type', $in) && $id !== null) {
+            $previousType = $this->db->fetchOne('SELECT schema_type FROM mc_blog_article_meta WHERE content_id = ?', [$id]);
+            $in['schema_type'] = is_string($previousType) && $previousType !== '' ? $previousType : 'auto';
         }
         $publishedAt = $this->parseDate((string) ($in['published_at'] ?? ''));
         $now = $this->now();
@@ -221,6 +226,7 @@ final class BlogService
                 'author_name' => $this->nullable((string) ($in['author_name'] ?? ''), 190),
                 'featured' => !empty($in['featured']) ? 1 : 0,
                 'noindex' => !empty($in['noindex']) ? 1 : 0,
+                'schema_type' => \Commerce\Modules\Seo\StructuredData\ContentSchemaType::validate((string) ($in['schema_type'] ?? 'auto'), true),
                 'canonical_url' => $canonical === '' ? null : $canonical,
                 'reading_minutes' => BlogContentProcessor::readingMinutes($body),
             ];

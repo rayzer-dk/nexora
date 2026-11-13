@@ -1,0 +1,45 @@
+{% import '@storefront/admin/catalog/_shell.html.twig' as shell %}
+{{ shell.start(ui_text('admin.merchant.title'), 'store') }}
+<header class="admin-page-header"><div>
+  <nav class="admin-breadcrumb"><a href="{{ path('admin_system_store') }}">{{ ui_text('admin.system.store.dani_mahazynu') }}</a> {{ ui_icon('chevron-right', 14) }} <span>{{ ui_text('admin.merchant.title') }}</span></nav>
+  <h1>{{ ui_text('admin.merchant.title') }}</h1><p>{{ ui_text('admin.merchant.hint') }}</p>
+</div></header>
+{% for kind in ['success','warning','error'] %}{% for message in app.flashes(kind) %}
+<div class="admin-notice is-{{ kind }}" data-toast-source>{{ message }}</div>
+{% endfor %}{% endfor %}
+<form method="post" class="admin-panel admin-form" data-dirty-guard>
+  <input type="hidden" name="_token" value="{{ csrf_token('merchant_schema') }}">
+  <div class="admin-panel__header"><h2>Schema.org / JSON-LD</h2></div>
+  <label><span>{{ ui_text('admin.merchant.switch') }}</span>
+    <select name="enabled"><option value="1"{{ settings.enabled ? ' selected' : '' }}>{{ ui_text('admin.merchant.on') }}</option><option value="0"{{ not settings.enabled ? ' selected' : '' }}>{{ ui_text('admin.merchant.off') }}</option></select>
+    <small>{{ ui_text('admin.merchant.switchhelp') }}</small></label>
+  <div class="admin-notice is-info">{{ ui_text('admin.merchant.already') }}</div>
+  <div class="admin-panel__header"><h2>{{ ui_text('admin.merchant.shipping') }}</h2></div>
+  <div class="admin-form-grid admin-form-grid--dense">
+    <label><span>{{ ui_text('admin.merchant.shipping_on') }}</span><select name="shipping_enabled"><option value="0"{{ not settings.shipping_enabled ? ' selected' : '' }}>{{ ui_text('admin.merchant.off') }}</option><option value="1"{{ settings.shipping_enabled ? ' selected' : '' }}>{{ ui_text('admin.merchant.on') }}</option></select></label>
+    {% for key, placeholder in {'shipping_name':'', 'shipping_countries':'UA, PL', 'shipping_currency':'UAH', 'shipping_rate':'0.00', 'handling_min':'0', 'handling_max':'1', 'transit_min':'1', 'transit_max':'3'} %}
+    <label><span>{{ ui_text('admin.merchant.' ~ key) }}</span><input type="text" name="{{ key }}" value="{{ attribute(settings,key) }}" placeholder="{{ placeholder }}" maxlength="160" autocomplete="off"></label>
+    {% endfor %}
+    <label><span>{{ ui_text('admin.merchant.shipping_offers') }}</span><select name="shipping_on_offers"><option value="0"{{ not settings.shipping_on_offers ? ' selected' : '' }}>{{ ui_text('admin.merchant.off') }}</option><option value="1"{{ settings.shipping_on_offers ? ' selected' : '' }}>{{ ui_text('admin.merchant.on') }}</option></select><small>{{ ui_text('admin.merchant.shipping_offers_help') }}</small></label>
+  </div>
+  <div class="admin-panel__header"><h2>{{ ui_text('admin.merchant.returns') }}</h2></div>
+  <div class="admin-form-grid admin-form-grid--dense">
+    <label><span>{{ ui_text('admin.merchant.returns_on') }}</span><select name="returns_enabled"><option value="0"{{ not settings.returns_enabled ? ' selected' : '' }}>{{ ui_text('admin.merchant.off') }}</option><option value="1"{{ settings.returns_enabled ? ' selected' : '' }}>{{ ui_text('admin.merchant.on') }}</option></select></label>
+    <label><span>{{ ui_text('admin.merchant.return_countries') }}</span><input type="text" name="return_countries" value="{{ settings.return_countries }}" placeholder="UA, PL"></label>
+    <label><span>{{ ui_text('admin.merchant.return_category') }}</span><select name="return_category">
+      {% for value, label in {'finite':'finite','unlimited':'unlimited','not_permitted':'not_permitted'} %}<option value="{{ value }}"{{ settings.return_category == value ? ' selected' : '' }}>{{ ui_text('admin.merchant.' ~ label) }}</option>{% endfor %}
+    </select></label>
+    <label><span>{{ ui_text('admin.merchant.return_days') }}</span><input type="text" name="return_days" value="{{ settings.return_days }}" placeholder="14"></label>
+    <label><span>{{ ui_text('admin.merchant.return_method') }}</span><select name="return_method">
+      {% for value, label in {'':'method_none','ReturnByMail':'method_mail','ReturnInStore':'method_store','ReturnAtKiosk':'method_kiosk'} %}<option value="{{ value }}"{{ settings.return_method == value ? ' selected' : '' }}>{{ ui_text('admin.merchant.' ~ label) }}</option>{% endfor %}
+    </select></label>
+    <label><span>{{ ui_text('admin.merchant.return_fees') }}</span><select name="return_fees">
+      {% for value, label in {'':'fee_none','FreeReturn':'fee_free','ReturnFeesCustomerResponsibility':'fee_customer','ReturnShippingFees':'fee_fixed'} %}<option value="{{ value }}"{{ settings.return_fees == value ? ' selected' : '' }}>{{ ui_text('admin.merchant.' ~ label) }}</option>{% endfor %}
+    </select></label>
+    <label><span>{{ ui_text('admin.merchant.return_cost') }}</span><input type="text" name="return_cost" value="{{ settings.return_cost }}" placeholder="0.00"></label>
+    <label><span>{{ ui_text('admin.merchant.return_currency') }}</span><input type="text" name="return_currency" value="{{ settings.return_currency }}" placeholder="UAH"></label>
+  </div>
+  <p class="admin-help">{{ ui_text('admin.merchant.policy') }}</p>
+  <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('save',16) }} {{ ui_text('admin.merchant.save') }}</button></div>
+</form>
+{{ shell.end() }}

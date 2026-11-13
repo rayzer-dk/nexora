@@ -124,7 +124,7 @@ final class InformationPageService
         $translation = $this->db->fetchAssociative('SELECT title, excerpt, body_html, meta_title, meta_description FROM mc_content_translation WHERE content_id = ? AND locale = ?', [$id, $locale]);
         $defaultText = $locale === $default ? null : $this->db->fetchAssociative('SELECT title, excerpt, body_html, meta_title, meta_description FROM mc_content_translation WHERE content_id = ? AND locale = ?', [$id, $default]);
         $meta = $this->db->fetchAssociative(
-            'SELECT pm.page_group, pm.show_in_footer, pm.show_in_menu, pm.sort_order, pm.noindex, pm.canonical_url, pm.og_asset_id, ma.storage_key AS og_key
+            'SELECT pm.page_group, pm.show_in_footer, pm.show_in_menu, pm.sort_order, pm.noindex, pm.schema_type, pm.canonical_url, pm.og_asset_id, ma.storage_key AS og_key
              FROM mc_content_page_meta pm LEFT JOIN mc_media_asset ma ON ma.id = pm.og_asset_id WHERE pm.content_id = ?',
             [$id],
         ) ?: [];
@@ -153,6 +153,7 @@ final class InformationPageService
             'show_in_menu' => (bool) ($meta['show_in_menu'] ?? false),
             'sort_order' => (int) ($meta['sort_order'] ?? 100),
             'noindex' => (bool) ($meta['noindex'] ?? false),
+            'schema_type' => (string) ($meta['schema_type'] ?? 'auto'),
             'canonical_url' => (string) ($meta['canonical_url'] ?? ''),
             'og_asset_id' => isset($meta['og_asset_id']) ? (int) $meta['og_asset_id'] : 0,
             'og_url' => isset($meta['og_key']) ? '/media/' . ltrim((string) $meta['og_key'], '/') : '',
@@ -172,9 +173,9 @@ final class InformationPageService
     {
         if ($id !== null && empty($in['placement_present'])) {
             // A client that sends only the texts (an API call, an old form) must not reset placement, robots and image.
-            $kept = $this->db->fetchAssociative('SELECT page_group, show_in_footer, show_in_menu, sort_order, noindex, canonical_url, og_asset_id FROM mc_content_page_meta WHERE content_id = ?', [$id]);
+            $kept = $this->db->fetchAssociative('SELECT page_group, show_in_footer, show_in_menu, sort_order, noindex, schema_type, canonical_url, og_asset_id FROM mc_content_page_meta WHERE content_id = ?', [$id]);
             if (is_array($kept)) {
-                $in = array_merge($in, ['page_group' => $kept['page_group'], 'show_in_footer' => $kept['show_in_footer'], 'show_in_menu' => $kept['show_in_menu'], 'sort_order' => $kept['sort_order'], 'robots' => $kept['noindex'] ? 'noindex' : 'index', 'canonical_url' => $kept['canonical_url'] ?? '', 'og_asset_id' => $kept['og_asset_id'] ?? 0]);
+                $in = array_merge($in, ['page_group' => $kept['page_group'], 'show_in_footer' => $kept['show_in_footer'], 'show_in_menu' => $kept['show_in_menu'], 'sort_order' => $kept['sort_order'], 'robots' => $kept['noindex'] ? 'noindex' : 'index', 'canonical_url' => $kept['canonical_url'] ?? '', 'og_asset_id' => $kept['og_asset_id'] ?? 0, 'schema_type' => $kept['schema_type'] ?? 'auto']);
             }
         }
         $title = trim((string) ($in['title'] ?? ''));
@@ -199,6 +200,10 @@ final class InformationPageService
         $ogId = (int) ($in['og_asset_id'] ?? 0);
         if ($ogId > 0 && (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_store_media_asset WHERE store_id = ? AND asset_id = ?', [$storeId, $ogId]) !== 1) {
             throw new InvalidArgumentException(CanonicalUiText::get('admin.pages.error.og_image'));
+        }
+        if (!array_key_exists('schema_type', $in) && $id !== null) {
+            $previousType = $this->db->fetchOne('SELECT schema_type FROM mc_content_page_meta WHERE content_id = ?', [$id]);
+            $in['schema_type'] = is_string($previousType) && $previousType !== '' ? $previousType : 'auto';
         }
         $now = gmdate('Y-m-d H:i:s.u');
 
@@ -254,6 +259,7 @@ final class InformationPageService
                 'show_in_menu' => !empty($in['show_in_menu']) ? 1 : 0,
                 'sort_order' => max(0, min(9999, (int) ($in['sort_order'] ?? 100))),
                 'noindex' => (string) ($in['robots'] ?? (!empty($in['noindex']) ? 'noindex' : 'index')) === 'noindex' ? 1 : 0,
+                'schema_type' => \Commerce\Modules\Seo\StructuredData\ContentSchemaType::validate((string) ($in['schema_type'] ?? 'auto')),
                 'canonical_url' => $canonical === '' ? null : $canonical,
                 'og_asset_id' => $ogId > 0 ? $ogId : null,
             ];
@@ -310,7 +316,7 @@ final class InformationPageService
                 $row['title'] = mb_substr((string) $row['title'], 0, 255 - mb_strlen($suffix, 'UTF-8'), 'UTF-8') . $suffix;
                 $db->insert('mc_content_translation', $row + ['content_id' => $copyId, 'created_at' => $now, 'updated_at' => $now]);
             }
-            $meta = $db->fetchAssociative('SELECT page_group, show_in_footer, show_in_menu, sort_order, noindex, canonical_url, og_asset_id FROM mc_content_page_meta WHERE content_id = ?', [$id]);
+            $meta = $db->fetchAssociative('SELECT page_group, show_in_footer, show_in_menu, sort_order, noindex, schema_type, canonical_url, og_asset_id FROM mc_content_page_meta WHERE content_id = ?', [$id]);
             if (is_array($meta)) {
                 $meta['canonical_url'] = null;
                 $db->insert('mc_content_page_meta', $meta + ['content_id' => $copyId]);

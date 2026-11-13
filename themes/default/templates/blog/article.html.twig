@@ -1,5 +1,5 @@
 {% extends '@storefront/base.html.twig' %}{% set page_css = 'blog' %}{% set page_kind = 'blog' %}
-{% block head %}<link rel="alternate" type="application/rss+xml" title="{{ ui_text('blog_rss')|e('html_attr') }}" href="/blog/feed.xml"><script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>{% endblock %}
+{% block head %}<link rel="alternate" type="application/rss+xml" title="{{ ui_text('blog_rss')|e('html_attr') }}" href="/blog/feed.xml">{% if structured_data_json is defined and structured_data_json %}<script type="application/ld+json" nonce="{{ app.request.attributes.get('_csp_nonce') }}">{{ structured_data_json|raw }}</script>{% endif %}{% endblock %}
 {% block body %}
 {% set ba = presentation.blog.article|default({}) %}
 <article class="shell article-page" data-article data-lightbox-scope>

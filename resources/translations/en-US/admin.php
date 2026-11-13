@@ -6708,4 +6708,18 @@ return [
     'admin.extensions.diag.settings_fields' => 'Fields: %count%',
     'admin.extensions.diag.settings_error' => 'Schema error',
     'admin.extensions.diag.events' => 'Last 10 events',
+    'admin.schema.content_type' => 'Schema.org markup type',
+    'admin.schema.auto' => 'Automatic (recommended)',
+    'admin.schema.webpage' => 'Standard page (WebPage)',
+    'admin.schema.about' => 'About company (AboutPage)',
+    'admin.schema.contact' => 'Contacts (ContactPage)',
+    'admin.schema.faq' => 'Questions and answers (FAQPage)',
+    'admin.schema.collection' => 'Collection / directory (CollectionPage)',
+    'admin.schema.article' => 'Article (Article)',
+    'admin.schema.blogposting' => 'Blog post (BlogPosting)',
+    'admin.schema.newsarticle' => 'News report (NewsArticle)',
+    'admin.schema.none' => 'No markup for this page or article',
+    'admin.schema.page_help' => 'Choose the actual page content. Automatic: About -> AboutPage, Contacts -> ContactPage, FAQ -> FAQPage, other pages -> WebPage. FAQPage does not guarantee Google rich results. Saved by the normal Save button.',
+    'admin.schema.blog_help' => 'Automatic uses BlogPosting. Select Article for editorial work and NewsArticle only for news reporting. Site-wide organization and navigation remain.',
+
 ];

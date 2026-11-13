@@ -284,7 +284,7 @@ final class BlogAdminController extends AbstractController
      */
     private function merge(array $base, array $in): array
     {
-        foreach (['title', 'h1', 'slug', 'excerpt', 'body_html', 'meta_title', 'meta_description', 'status', 'published_at', 'cover_alt', 'author_name', 'canonical_url', 'tags', 'product_skus', 'image_size', 'image_align'] as $key) {
+        foreach (['title', 'h1', 'slug', 'excerpt', 'body_html', 'meta_title', 'meta_description', 'status', 'published_at', 'cover_alt', 'author_name', 'canonical_url', 'tags', 'product_skus', 'image_size', 'image_align', 'schema_type'] as $key) {
             if (array_key_exists($key, $in)) {
                 $base[$key] = (string) $in[$key];
             }
@@ -301,7 +301,7 @@ final class BlogAdminController extends AbstractController
         return [
             'id' => null, 'public_id' => '', 'status' => 'draft', 'published_at' => '', 'has_translation' => false, 'title' => '', 'excerpt' => '',
             'body_html' => '', 'h1' => '', 'meta_title' => '', 'meta_description' => '', 'slug' => '', 'path' => '', 'category_id' => 0, 'cover_url' => '',
-            'cover_alt' => '', 'image_size' => 'm', 'image_align' => 'none', 'author_name' => '', 'featured' => false, 'noindex' => false, 'canonical_url' => '', 'tags' => '', 'product_skus' => '',
+            'cover_alt' => '', 'image_size' => 'm', 'image_align' => 'none', 'schema_type' => 'auto', 'author_name' => '', 'featured' => false, 'noindex' => false, 'canonical_url' => '', 'tags' => '', 'product_skus' => '',
         ];
     }
 }

@@ -37,6 +37,7 @@ final class InformationPageController extends AbstractController
         private readonly \Commerce\Modules\Storefront\Infrastructure\StorefrontContactSettings $contact,
         private readonly \Commerce\Modules\Seo\StructuredData\OrganizationCommerceBuilder $organization,
         private readonly \Commerce\Modules\Seo\StructuredData\StructuredDataGraphBuilder $graph,
+        private readonly \Commerce\Modules\Seo\Application\MerchantSchemaSettings $merchantSchema,
     ) {
     }
 
@@ -71,12 +72,23 @@ final class InformationPageController extends AbstractController
         $canonical = $request->getSchemeAndHttpHost() . '/' . $route->path;
 
         $jsonLd = null;
-        if ($key === 'contacts') {
-            try {
-                $home = $request->getSchemeAndHttpHost() . '/';
-                $jsonLd = $this->graph->build(['@type' => 'ContactPage', 'name' => (string) ($page['title'] ?: $definition->title), 'url' => $canonical], $this->organization->build(['name' => $context->storeName, 'url' => $home]) + $this->contact->organizationData($context->storeId));
-            } catch (\Throwable) {
-                $jsonLd = null;
+        if ($published && $definition->indexable && $this->merchantSchema->enabled($context->storeId)) {
+            $home = $request->getSchemeAndHttpHost() . '/';
+            $pageNode = \Commerce\Modules\Seo\StructuredData\ContentSchemaType::pageNode(
+                (string) ($page['schema_type'] ?? 'auto'), $key,
+                (string) ($page['title'] ?: $definition->title),
+                $canonical, $context->locale, trim((string) ($page['excerpt'] ?? '')),
+                rtrim($home, '/') . '/#organization'
+            );
+            if ($pageNode !== null) {
+                if (in_array($key, ['contacts', 'about'], true)) {
+                    $organization = $this->organization->build(['name' => $context->storeName, 'url' => $home])
+                        + $this->contact->organizationData($context->storeId);
+                    $organization = $this->merchantSchema->enrichOrganization($organization, $context->storeId, $home);
+                    $jsonLd = $this->graph->build($pageNode, $organization);
+                } else {
+                    $jsonLd = $this->graph->build($pageNode);
+                }
             }
         }
         $anchored = BlogContentProcessor::withAnchors((string) ($page['body_html'] ?? ''));
