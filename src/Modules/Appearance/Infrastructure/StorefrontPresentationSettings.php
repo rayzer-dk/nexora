@@ -131,7 +131,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             'brand' => [
                 'show_title' => '1',
                 'title' => '',
-                'subtitle' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.suchasni_rishennia_dlia_krashchoho_zhyttia'),
+                'subtitle' => '',
                 'logo' => '',
                 'logo_height' => 48,
                 'icon' => '',

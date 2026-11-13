@@ -250,7 +250,7 @@ final readonly class DemoSeeder implements DemoDataInstallerInterface
             foreach (array_merge([$ctx['locale']], $this->extraLocales($db, $ctx['store_id'], $ctx['locale'])) as $promoLocale) {
                 $promoTitles[$promoLocale] = (string) ($this->loadDemoCatalog($promoLocale, $ctx['currency'])['categories'][2]['name'] ?? '');
             }
-            $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, $ctx['store_name'], array_filter($promoTitles)), 'demo:seed');
+            $this->presentation->save($ctx['store_id'], $this->demoPresentation($catalog, array_filter($promoTitles)), 'demo:seed');
 
             $this->tag($db, $ctx['store_id'], 'store', Uuid::fromBinary($ctx['store_public_id'])->toRfc4122(), 'installed', [
                 'version' => '4.0.7',
@@ -791,7 +791,7 @@ final readonly class DemoSeeder implements DemoDataInstallerInterface
      * @param array<string,string> $promoRightTitles locale => title of the second promo (a category name)
      * @return array<string,mixed>
      */
-    private function demoPresentation(array $catalog, string $storeName, array $promoRightTitles = []): array
+    private function demoPresentation(array $catalog, array $promoRightTitles = []): array
     {
         $restore = in_array(substr((string) ($this->context()['locale'] ?? ''), 0, 2), ['uk', 'ru'], true) ? 'uk-UA' : 'en-US';
         $t = function (string $key, string $ru) use ($restore): array {
@@ -812,7 +812,7 @@ final readonly class DemoSeeder implements DemoDataInstallerInterface
                 'delivery' => $t('php.modules.demo.application.demoseeder.bezkoshtovna_dostavka_vid_2_000', 'Бесплатная доставка от 2 000 ₴'),
                 'support' => $t('php.modules.demo.application.demoseeder.pidtrymka_shchodnia', 'Поддержка ежедневно'),
             ],
-            'brand' => ['title' => $storeName, 'subtitle' => $t('php.modules.demo.application.demoshowcasequery.demo_vitryna_modern_commerce', 'Демо-витрина Nexora Commerce'), 'icon' => ''],
+            'brand' => ['icon' => ''],
             'theme' => ['primary' => '#0B63F6', 'accent' => '#FF7A1A', 'success' => '#0F7A4B'],
             'header' => ['search_placeholder' => $t('php.modules.demo.application.demoseeder.poshuk_tovariv_brendiv_abo_katehorii', 'Поиск товаров, брендов или категорий…'), 'show_category_nav' => true],
             'home' => ['show_benefits' => true, 'show_categories' => true, 'show_products' => true, 'show_promos' => true, 'show_articles' => true],

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Storefront header, footer and landing page: until the owner sets a brand title, logo or icon in Appearance, the Nexora logo is shown (a light variant on dark themes) instead of the store name and the shopping-bag placeholder. A brand title, logo or icon set in Appearance replaces it; the installed store name is no longer used as the visible brand. e2e `storefront.spec.ts` checks the default logo.
+
 ## 4.0.7 — 2026-11-13
 
 Fix of the 4.0.6 archive: it was built with Composer 1, which drops `vendor/composer/InstalledVersions.php`, and the installer stopped with "dependencies have been installed with Composer 1". The packagers now require Composer 2 and the package verifier rejects an archive without that file. Also: the installer language selector works, product translations are typed in the product form, and a double-sent checkout form returns the one order. Version 4.0.7 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK.

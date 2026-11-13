@@ -25,8 +25,14 @@ test('interactive controls have usable labels and target sizes', async ({ page }
 });
 
 
-test('storefront header uses the installed store identity rather than the platform brand', async ({ page }) => {
+test('storefront header shows the Nexora logo by default', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const brand = page.locator('.reference-brand');
+  await expect(brand).toBeVisible();
+  await expect(brand.locator('img[src*="nexora-logo"]').first()).toHaveAttribute('alt', 'Nexora');
+  await expect(brand.locator('.reference-brand__bag')).toHaveCount(0);
+});
   await expectNoServerError(page);
   const brand = page.locator('.reference-brand');
   await expect(brand).toBeVisible();
