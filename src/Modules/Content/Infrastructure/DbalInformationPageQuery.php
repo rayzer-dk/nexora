@@ -17,7 +17,7 @@ final readonly class DbalInformationPageQuery
     public function bySystemKey(StorefrontContext $context, string $systemKey): ?array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT ce.id,ce.system_key,ce.status,ce.published_at,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description,COALESCE(pm.schema_type,'auto') AS schema_type
+            "SELECT ce.id,ce.system_key,ce.status,ce.published_at,ct.title,ct.excerpt,ct.body_html,ct.meta_title,ct.meta_description,COALESCE(pm.schema_type,'auto') AS schema_type,COALESCE(pm.noindex,0) AS noindex
              FROM mc_content_entry ce
              JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=?
              LEFT JOIN mc_content_page_meta pm ON pm.content_id=ce.id

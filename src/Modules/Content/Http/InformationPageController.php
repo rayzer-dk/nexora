@@ -72,7 +72,7 @@ final class InformationPageController extends AbstractController
         $canonical = $request->getSchemeAndHttpHost() . '/' . $route->path;
 
         $jsonLd = null;
-        if ($published && $definition->indexable && $this->merchantSchema->enabled($context->storeId)) {
+        if ($published && $definition->indexable && empty($page['noindex']) && $this->merchantSchema->enabled($context->storeId)) {
             $home = $request->getSchemeAndHttpHost() . '/';
             $pageNode = \Commerce\Modules\Seo\StructuredData\ContentSchemaType::pageNode(
                 (string) ($page['schema_type'] ?? 'auto'), $key,
@@ -118,7 +118,7 @@ final class InformationPageController extends AbstractController
                 'description' => (string) ($page['meta_description'] ?? '') !== '' ? (string) $page['meta_description'] : (string) ($page['excerpt'] ?? ''),
                 'canonical' => $canonical,
                 'json_ld' => $jsonLd,
-                'robots' => $published && $definition->indexable ? 'index,follow,max-image-preview:large' : 'noindex,follow',
+                'robots' => $published && $definition->indexable && empty($page['noindex']) ? 'index,follow,max-image-preview:large' : 'noindex,follow',
                 'hreflang' => [$context->locale => $canonical, 'x-default' => $canonical],
             ],
         ], new Response('', $published ? 200 : 503));
