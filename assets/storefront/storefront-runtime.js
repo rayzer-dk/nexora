@@ -605,6 +605,25 @@ function initRecentlyViewed() {
     list.append(li);
   });
   box.hidden = false;
+  const previous = box.querySelector('[data-recent-prev]');
+  const next = box.querySelector('[data-recent-next]');
+  const updateControls = () => {
+    const max = Math.max(0, list.scrollWidth - list.clientWidth);
+    if (previous) previous.disabled = list.scrollLeft <= 2;
+    if (next) next.disabled = list.scrollLeft >= max - 2;
+  };
+  const move = (direction) => {
+    const first = list.querySelector('li');
+    if (!first) return;
+    const gap = parseFloat(window.getComputedStyle(list).columnGap) || 0;
+    const distance = first.getBoundingClientRect().width + gap;
+    list.scrollBy({ left: direction * distance, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
+  previous?.addEventListener('click', () => move(-1));
+  next?.addEventListener('click', () => move(1));
+  list.addEventListener('scroll', updateControls, { passive: true });
+  window.addEventListener('resize', updateControls, { passive: true });
+  window.requestAnimationFrame(updateControls);
 }
 initRecentlyViewed();
 document.addEventListener('commerce:consent-changed', initRecentlyViewed);
