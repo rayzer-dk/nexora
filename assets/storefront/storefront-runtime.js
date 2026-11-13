@@ -25,8 +25,15 @@ function toast(message, type = 'success', timeout = 4200) {
     stack.setAttribute('aria-live', 'polite');
     document.body.appendChild(stack);
   }
+  // One semantic failure can be raised by both server flash and an AJAX callback.
+  // Keep one visible message instead of stacking identical errors.
+  const duplicate = [...stack.querySelectorAll('.storefront-toast')].some((node) =>
+    node.dataset.toastMessage === message && node.dataset.toastType === type);
+  if (duplicate) return;
   const item = document.createElement('div');
   item.className = `storefront-toast ${type === 'error' ? 'is-error' : ''}`;
+  item.dataset.toastMessage = message;
+  item.dataset.toastType = type;
   const text = document.createElement('span');
   text.textContent = message;
   const close = document.createElement('button');
@@ -541,11 +548,21 @@ function initRecentlyViewed() {
   let items;
   try { items = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { items = []; }
   if (!Array.isArray(items)) items = [];
+  const tracked = new Set();
+  items = items.filter((item) => {
+    if (!item || typeof item !== 'object' || typeof item.id !== 'string' || typeof item.url !== 'string'
+        || !item.url.startsWith('/') || item.url.startsWith('//') || !item.name) return false;
+    const key = item.id || item.url.split('?')[0];
+    if (tracked.has(key)) return false;
+    tracked.add(key);
+    return true;
+  }).slice(0, 12);
   const track = document.querySelector('[data-recent-track]');
   const currentId = track?.dataset.id ?? '';
   if (track && currentId) {
-    const { id, name, url, image, price, variant } = track.dataset;
-    items = [{ id, name, url, image, price, variant }, ...items.filter((item) => item && item.id !== id)].slice(0, 12);
+    const { id, name, url, image } = track.dataset;
+    // Do not persist a price or variant as if it were a live checkout quote.
+    items = [{ id, name, url, image }, ...items.filter((item) => item && item.id !== id && item.url !== url)].slice(0, 12);
     try { localStorage.setItem(KEY, JSON.stringify(items)); } catch { /* storage unavailable */ }
   }
   const box = document.querySelector('[data-recent-list]');
@@ -553,6 +570,8 @@ function initRecentlyViewed() {
   if (!box || !list) return;
   const safeUrl = (value) => typeof value === 'string' && value.startsWith('/') && !value.startsWith('//');
   const visible = items.filter((item) => item && item.id !== currentId && item.name && safeUrl(item.url)).slice(0, 6);
+  // Persist normalization even on listing pages, so older duplicates cannot return.
+  try { localStorage.setItem(KEY, JSON.stringify(items)); } catch { /* storage unavailable */ }
   if (!visible.length) return;
   visible.forEach((item) => {
     const li = document.createElement('li');
@@ -573,36 +592,16 @@ function initRecentlyViewed() {
     name.className = 'recent-viewed__name';
     name.textContent = item.name;
     link.append(name);
-    if (item.price) {
-      const price = document.createElement('strong');
-      price.textContent = item.price;
-      link.append(price);
-    }
-    li.append(link);
-    const cartToken = document.querySelector('meta[name="mc-cart-token"]')?.content;
-    if (cartToken && /^[0-9a-f-]{32,36}$/i.test(item.variant || '')) {
-      const form = document.createElement('form');
-      form.className = 'recent-viewed__cart';
-      form.method = 'post'; form.action = '/cart/add'; form.dataset.cardAddToCart = '';
-      [['_token', cartToken], ['variant_id', item.variant], ['quantity', '1']].forEach(([name, value]) => {
-        const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; form.append(input);
-      });
-      const button = document.createElement('button');
-      button.type = 'submit'; button.className = 'button button--primary catalog-card__buy';
-      button.innerHTML = '<svg class="ui-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
-      const label = document.createElement('span'); label.textContent = t('js_add_to_cart'); button.append(label);
-      form.append(button);
-      li.append(form);
-    } else {
-      const wrap = document.createElement('div');
-      wrap.className = 'recent-viewed__cart';
-      const more = document.createElement('a');
-      more.className = 'button button--secondary';
-      more.href = item.url;
-      more.textContent = t('js_details');
-      wrap.append(more);
-      li.append(wrap);
-    }
+    // Re-check prices, selected options and stock on the actual product page.
+    // Old localStorage entries are not proof that a variant is still for sale.
+    const wrap = document.createElement('div');
+    wrap.className = 'recent-viewed__cart';
+    const more = document.createElement('a');
+    more.className = 'button button--secondary';
+    more.href = item.url;
+    more.textContent = t('js_details');
+    wrap.append(more);
+    li.append(wrap);
     list.append(li);
   });
   box.hidden = false;

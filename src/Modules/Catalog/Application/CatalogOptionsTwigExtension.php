@@ -22,7 +22,7 @@ final class CatalogOptionsTwigExtension extends AbstractExtension
     {
         return [
             new TwigFunction('measurement_units', fn (): array => $this->units->all($this->locale())),
-            new TwigFunction('measurement_unit_label', fn (string $code): string => $this->units->shortLabel($code, $this->locale())),
+            new TwigFunction('measurement_unit_label', fn (string $code, ?string $locale = null): string => $this->units->shortLabel($code, $locale ?: $this->locale())),
             new TwigFunction('custom_document_types', $this->customDocumentTypes(...)),
         ];
     }

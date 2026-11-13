@@ -36,7 +36,7 @@ return [
     'accept_all' => 'Прийняти всі',
     'save_choice' => 'Зберегти вибір',
     'news_offers' => 'Новини та пропозиції',
-    'newsletter_title' => 'Підписка без спаму',
+    'newsletter_title' => 'Новини, акції та пропозиції',
     'newsletter_text' => 'Після введення email потрібно підтвердити підписку листом.',
     'subscribe' => 'Підписатися',
     'company' => 'Компанія',

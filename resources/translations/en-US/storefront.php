@@ -36,7 +36,7 @@ return [
     'accept_all' => 'Accept all',
     'save_choice' => 'Save choice',
     'news_offers' => 'News and offers',
-    'newsletter_title' => 'Useful updates without spam',
+    'newsletter_title' => 'News, offers and updates',
     'newsletter_text' => 'Confirm the subscription from the email we send you.',
     'subscribe' => 'Subscribe',
     'company' => 'Company',

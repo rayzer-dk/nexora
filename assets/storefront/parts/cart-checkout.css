@@ -60,6 +60,30 @@
 .cart-drawer__empty-icon { display: inline-flex; align-items: center; justify-content: center; width: var(--mc-space-16); height: var(--mc-space-16); border-radius: var(--mc-radius-full); background: var(--mc-color-surface-subtle); color: var(--mc-color-muted); }
 html.has-cart-drawer body { overflow: hidden; padding-right: var(--cart-drawer-gutter, 0); }
 
+/* On a phone use a content-height bottom sheet rather than leaving a full screen of
+   empty space between the cart lines and checkout. The list alone scrolls for large carts. */
+@media (max-width: 767px) {
+  .cart-drawer__panel {
+    top: auto;
+    bottom: 0;
+    height: auto;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: var(--mc-radius-lg) var(--mc-radius-lg) 0 0;
+    transform: translateY(100%);
+  }
+  .cart-drawer__inner { flex: 0 1 auto; }
+  .cart-drawer__lines {
+    flex: 0 1 auto;
+    max-height: min(58vh, calc(100vh - 290px));
+    max-height: min(58dvh, calc(100dvh - 290px));
+  }
+  .drawer-line { grid-template-columns: 72px minmax(0, 1fr); padding-right: 30px; }
+  .drawer-line__remove { position: absolute; top: var(--mc-space-3); right: 0; }
+  .drawer-line__row { flex-wrap: wrap; gap: var(--mc-space-2); }
+  .drawer-line__info { min-width: 0; }
+}
+
 @media (min-width: 768px) {
   .cart-drawer__panel { width: 440px; }
 }

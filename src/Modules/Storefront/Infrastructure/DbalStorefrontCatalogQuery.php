@@ -161,6 +161,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
             '(sp.published_at IS NULL OR sp.published_at<=UTC_TIMESTAMP(6))',
             '(mp.published_at IS NULL OR mp.published_at<=UTC_TIMESTAMP(6))',
             "NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)",
+            'pr.amount_minor IS NOT NULL',
         ];
         $filterParams = [];
 
@@ -266,7 +267,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         }
 
         $where = implode(' AND ', $conditions);
-        $priceJoin = "LEFT JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)";
+        $priceJoin = "JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)";
 
         $baseJoins = "FROM mc_product p
                 JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?
@@ -274,6 +275,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
                 JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
                 JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active' AND v.sort_order=0
                 LEFT JOIN mc_brand b ON b.id=p.brand_id
+                LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id
                 {$priceJoin}";
 
         $baseParams = [
@@ -349,7 +351,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
             }
         }
 
-        $selectList = "p.id,p.public_id,p.product_type,pt.name,pt.short_description,v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,
+        $selectList = "p.id,p.public_id,p.product_type,pt.name,pt.short_description,v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.allow_backorder,v.manage_inventory,COALESCE(ppp.mode,'auto') AS purchase_mode,
                        pr.amount_minor,pr.compare_at_minor,pr.ends_at AS price_ends_at,pr.currency,pr.tax_included,sr.path,
                        COALESCE(b.name,'') AS brand_name,
                        COALESCE((SELECT AVG(rv.rating) FROM mc_product_review rv WHERE rv.product_id=p.id AND rv.status='published'),0) AS rating_value,
@@ -402,6 +404,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
             '(sp.published_at IS NULL OR sp.published_at<=UTC_TIMESTAMP(6))',
             '(mp.published_at IS NULL OR mp.published_at<=UTC_TIMESTAMP(6))',
             "NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)",
+            'pr.amount_minor IS NOT NULL',
         ];
         $filterParams = [];
         if ($categoryId !== null) {
@@ -413,7 +416,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         }
         $where = implode(' AND ', $conditions);
         $fetchLimit = $limit + 1;
-        $sql = "SELECT p.id,p.public_id,p.product_type,pt.name,pt.short_description,v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,
+        $sql = "SELECT p.id,p.public_id,p.product_type,pt.name,pt.short_description,v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.allow_backorder,v.manage_inventory,COALESCE(ppp.mode,'auto') AS purchase_mode,
                        pr.amount_minor,pr.compare_at_minor,pr.ends_at AS price_ends_at,pr.currency,pr.tax_included,sr.path,
                        COALESCE(b.name,'') AS brand_name,
                        COALESCE((SELECT AVG(rv.rating) FROM mc_product_review rv WHERE rv.product_id=p.id AND rv.status='published'),0) AS rating_value,
@@ -427,7 +430,8 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
                 JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
                 JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active' AND v.sort_order=0
                 LEFT JOIN mc_brand b ON b.id=p.brand_id
-                LEFT JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
+                LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id
+                JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
                 JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='product' AND sr.entity_public_id=p.public_id
                 LEFT JOIN mc_tax_rate tr ON tr.id=(SELECT tx.id FROM mc_tax_rate tx WHERE tx.tax_class_id=p.tax_class_id AND tx.country_code=? AND tx.enabled=1 AND tx.valid_from<=UTC_TIMESTAMP(6) AND (tx.valid_to IS NULL OR tx.valid_to>UTC_TIMESTAMP(6)) ORDER BY tx.priority ASC,tx.id DESC LIMIT 1)
                 WHERE {$where}
@@ -590,7 +594,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         }
         $row = $this->connection->fetchAssociative(
             "SELECT p.id,p.public_id,p.product_type,p.condition_code,p.country_of_origin,pt.name,pt.h1,pt.short_description,pt.description,pt.meta_title,pt.meta_description,
-                    v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.allow_backorder,
+                    v.id AS variant_id,v.public_id AS variant_public_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,v.quantity_step,v.min_order_quantity,v.max_order_quantity,v.allow_backorder,v.manage_inventory,
                     pr.amount_minor,pr.compare_at_minor,pr.ends_at AS price_ends_at,pr.currency,pr.tax_included,sr.path,sr.indexable AS route_indexable,p.brand_id,COALESCE(b.name,'') AS brand_name,tr.rate_bps,
                     mtp.consumer_display_mode,COALESCE(ppp.mode,'auto') AS purchase_mode,ppp.button_label AS purchase_button_label,ppp.eta_text AS purchase_eta_text,
                     COALESCE((SELECT SUM(GREATEST(sl.stocked_quantity-sl.reserved_quantity-sl.safety_stock,0)) FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id JOIN mc_market_inventory_location mil ON mil.location_id=sl.location_id AND mil.market_id=? WHERE vii.variant_id=v.id),0) AS available_quantity
@@ -768,7 +772,11 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
              FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id AND p.status='published' JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? AND sp.status='active' JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=? AND mp.status='active' JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
              LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id
              JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
-             WHERE v.public_id=? AND v.status='active' LIMIT 1",
+             WHERE v.public_id=? AND v.status='active'
+               AND (sp.published_at IS NULL OR sp.published_at<=UTC_TIMESTAMP(6))
+               AND (mp.published_at IS NULL OR mp.published_at<=UTC_TIMESTAMP(6))
+               AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=p.id AND pxh.hidden=1)
+             LIMIT 1",
             [$context->marketId,$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->marketId,$context->currency,Uuid::fromString($variantPublicId)->toBinary()],
         );
         if (!is_array($row)) { return null; }
@@ -790,13 +798,17 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         $mode = $this->taxDisplayMode((int) $context->marketId);
         $showNet = in_array($mode, ['net', 'net_with_gross'], true);
         $netCompare = $compareMinor !== null ? $compareMinor - ($rate > 0 ? $compareMinor - intdiv(($compareMinor * 10000) + intdiv(10000 + $rate,2),10000+$rate) : 0) : null;
+        $purchaseState = $this->purchaseState($row);
+        if ($row['amount_minor'] === null || (string) ($row['currency'] ?? '') !== $context->currency) {
+            $purchaseState['purchase_allowed'] = false;
+        }
         return [
             'id'=>Uuid::fromBinary((string)$row['public_id'])->toRfc4122(), 'internal_id'=>(int)$row['id'], 'variant_id'=>Uuid::fromBinary((string)$row['variant_public_id'])->toRfc4122(),
             'product_type'=>(string)($row['product_type'] ?? 'physical'), 'name'=>(string)$row['name'], 'h1'=>(string)($row['h1']??''), 'meta_title'=>(string)($row['meta_title']??''), 'meta_description'=>(string)($row['meta_description']??''), 'indexable'=>(bool)($row['route_indexable']??1), 'brand'=>(string)($row['brand_name']??''), 'brand_id'=>isset($row['brand_id']) && $row['brand_id'] !== null ? (int)$row['brand_id'] : null, 'sku'=>(string)$row['sku'], 'url'=>'/'.ltrim((string)$row['path'],'/'),
             'price'=>$this->money->format($showNet?$priceMinor-$taxMinor:$priceMinor,(string)$row['currency'],$context->locale), 'price_minor'=>$priceMinor,
             'compare_at_price'=>$compareMinor!==null?$this->money->format($showNet?(int)$netCompare:$compareMinor,(string)$row['currency'],$context->locale):null, 'discount_percent'=>($compareMinor!==null && $compareMinor>$priceMinor && $compareMinor>0)?max(1,min(99,(int)round((1-$priceMinor/$compareMinor)*100))):0, 'currency'=>(string)$row['currency'], 'gross_price'=>number_format($priceMinor/100,2,'.',''), 'merchant_price'=>number_format($priceMinor/100,2,'.',''),
             'sale_ends_at'=>($compareMinor!==null && $compareMinor>$priceMinor && !empty($row['price_ends_at']))?(new \DateTimeImmutable((string)$row['price_ends_at'],new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z'):null,
-            'image'=>$this->mediaUrl($row['image_key']??null), ...$this->purchaseState($row), 'available_quantity'=>(string)$row['available_quantity'],
+            'image'=>$this->mediaUrl($row['image_key']??null), ...$purchaseState, 'available_quantity'=>(string)$row['available_quantity'],
             'quantity'=>['unit_code'=>(string)$row['sale_unit_code'],'unit_label'=>(string)$row['sale_unit_code'],'step'=>$this->trimDecimal((string)$row['quantity_step']),'min'=>$this->trimDecimal((string)$row['min_order_quantity']),'max'=>$row['max_order_quantity']!==null?$this->trimDecimal((string)$row['max_order_quantity']):null],
             'rating'=>['value'=>round((float)($row['rating_value'] ?? 0),1),'count'=>(int)($row['review_count'] ?? 0)],
             'tax'=>['display_mode'=>$mode,'rate_label'=>$rate>0?($rate/100).'%':'0%','tax_amount'=>$this->money->format($taxMinor,(string)$row['currency'],$context->locale),'net_price'=>$this->money->format($priceMinor-$taxMinor,(string)$row['currency'],$context->locale),'gross_price'=>$this->money->format($priceMinor,(string)$row['currency'],$context->locale)],
@@ -825,24 +837,6 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         return $memo[$key];
     }
 
-    /** @return array<int,true> physical products whose stock is not tracked: always available, never oversold */
-    private function untrackedProducts(): array
-    {
-        static $ids = null;
-        if ($ids === null) {
-            $ids = [];
-            try {
-                foreach ($this->connection->fetchFirstColumn("SELECT DISTINCT v.product_id FROM mc_product_variant v JOIN mc_product p ON p.id=v.product_id WHERE v.manage_inventory=0 AND p.product_type='physical'") as $id) {
-                    $ids[(int) $id] = true;
-                }
-            } catch (\Throwable) {
-                $ids = [];
-            }
-        }
-
-        return $ids;
-    }
-
     private function taxDisplayMode(int $marketId): string
     {
         static $cache = [];
@@ -861,7 +855,8 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
     /** @return array{availability_label:string,availability:string,purchase_mode:string,purchase_allowed:bool,purchase_button_label:string,purchase_eta_text:?string,notify_available:bool,price_request:bool} */
     private function purchaseState(array $row): array
     {
-        $digital = (string) ($row['product_type'] ?? 'physical') === 'digital' || isset($this->untrackedProducts()[(int) ($row['id'] ?? 0)]);
+        $digital = (string) ($row['product_type'] ?? 'physical') === 'digital';
+        $untracked = !$digital && (int) ($row['manage_inventory'] ?? 1) === 0;
         $stock = (float) ($row['available_quantity'] ?? 0);
         $mode = (string) ($row['purchase_mode'] ?? 'auto');
         $variantBackorder = (bool) ($row['allow_backorder'] ?? false);
@@ -900,7 +895,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
             $label = \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.tsina_za_zapytom');
             $priceRequest = true;
             $button = \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.zapytaty_tsinu');
-        } elseif ($digital || $stock > 0) {
+        } elseif ($digital || $untracked || $stock > 0) {
             $label = \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.infrastructure.dbalstorefrontcatalogquery.v_naiavnosti');
             $schema = 'https://schema.org/InStock';
             $allowed = true;
@@ -950,7 +945,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
              JOIN mc_product_translation rpt ON rpt.product_id=rp.id AND rpt.store_id=? AND rpt.locale=?
              JOIN mc_product_variant rv ON rv.product_id=rp.id AND rv.status='active' AND rv.sort_order=0
              JOIN mc_seo_route rsr ON rsr.store_id=? AND rsr.locale=? AND rsr.entity_type='product' AND rsr.entity_public_id=rp.public_id
-             LEFT JOIN mc_price rr ON rr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=rv.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
+             JOIN mc_price rr ON rr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=rv.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
              WHERE rel.product_id=? AND rel.relation_type=? AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=rp.id AND pxh.hidden=1) ORDER BY rel.sort_order,rel.related_product_id LIMIT {$limit}",
             [$context->marketId,$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,$context->storeId,$context->marketId,$context->currency,$productId,$relationType],
         );
@@ -1062,7 +1057,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
              JOIN mc_product_translation rpt ON rpt.product_id=rp.id AND rpt.store_id=? AND rpt.locale=?
              JOIN mc_product_variant rv ON rv.product_id=rp.id AND rv.status='active' AND rv.sort_order=0
              JOIN mc_seo_route rsr ON rsr.store_id=? AND rsr.locale=? AND rsr.entity_type='product' AND rsr.entity_public_id=rp.public_id
-             LEFT JOIN mc_price rr ON rr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=rv.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
+             JOIN mc_price rr ON rr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=rv.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)
              WHERE rp.id IN ({$placeholders}) AND NOT EXISTS (SELECT 1 FROM mc_product_extra pxh WHERE pxh.product_id=rp.id AND pxh.hidden=1)",
             [$context->marketId,$context->storeId,$context->marketId,$context->storeId,$context->locale,$context->storeId,$context->locale,$context->storeId,$context->marketId,$context->currency,...$ids],
         );

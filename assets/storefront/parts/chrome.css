@@ -148,6 +148,11 @@
 .back-to-top { border-color: transparent; background: color-mix(in srgb, var(--mc-color-primary) 14%, var(--mc-color-surface-raised)); color: var(--mc-color-primary); }
 .back-to-top:hover { background: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); }
 .back-to-top[hidden] { display: none; }
+/* Do not overlay fullscreen galleries or cart controls with floating shortcuts. */
+body:has(dialog.gallery-lightbox[open]) .back-to-top,
+body:has(dialog.gallery-lightbox[open]) .consent-fab,
+html.has-cart-drawer .back-to-top,
+html.has-cart-drawer .consent-fab { visibility: hidden; pointer-events: none; }
 .cw[data-position="right"] ~ .back-to-top { right: calc(var(--mc-space-5) + 6px); bottom: calc(var(--mc-space-5) + 56px + var(--mc-space-3)); }
 .cw[data-position="right"][data-chat-loaded="1"] ~ .back-to-top { bottom: calc(var(--mc-space-5) + 76px + 56px + var(--mc-space-3)); }
 .cw:has([aria-expanded="true"]) ~ .back-to-top { visibility: hidden; }

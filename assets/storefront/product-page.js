@@ -295,8 +295,12 @@ function storefrontToast(message, type = 'success') {
         stack.dataset.storefrontToastStack = '';
         document.body.appendChild(stack);
     }
+    if ([...stack.querySelectorAll('.storefront-toast')].some((node) =>
+        node.dataset.toastMessage === message && node.dataset.toastType === type)) return;
     const item = document.createElement('div');
     item.className = `storefront-toast is-${type}`;
+    item.dataset.toastMessage = message;
+    item.dataset.toastType = type;
     item.setAttribute('role', type === 'error' ? 'alert' : 'status');
     const text = document.createElement('span');
     text.textContent = message;

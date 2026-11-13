@@ -29,7 +29,8 @@
     <div class="shell site-footer__brand">
         <div class="site-footer__brand-copy">
             <div class="brand brand--footer">{% if presentation.brand.logo %}<img class="brand__logo" src="{{ presentation.brand.logo }}" alt="{{ storefront_brand_name }}">{% elseif presentation.brand.icon %}<img class="brand__icon" src="{{ presentation.brand.icon }}" alt="">{% else %}<span class="reference-brand__bag" aria-hidden="true">{{ ui_icon('shopping-bag', 20) }}</span>{% endif %}{% if storefront_brand_visible_name or not presentation.brand.logo %}<span>{% if storefront_brand_visible_name %}<strong>{{ storefront_brand_visible_name }}</strong>{% endif %}<small>{{ presentation.brand.subtitle ?: ui_text('modern_ecommerce') }}</small></span>{% endif %}</div>
-            <p>{{ fcfg.tagline|default('') ?: ui_text('platform_tagline') }}</p>
+            {# Storefront footer must advertise this merchant, not the Nexora software platform. #}
+            {% if fcfg.tagline|default('')|trim %}<p>{{ fcfg.tagline }}</p>{% endif %}
         </div>
         <div class="site-footer__grid{{ footer_contact.has_any or storefront_menu('footer') ? ' has-contacts' : '' }}">
             {% set company_links %}{% if capabilities.features.content and 'about' not in fhide %}<a href="/about-us">{{ ui_text('about') }}</a>{% endif %}{% if capabilities.features.content and 'contacts' not in fhide %}<a href="/contact">{{ ui_text('contacts') }}</a>{% endif %}{% if capabilities.features.blog and 'blog' not in fhide %}<a href="/blog">{{ ui_text('blog') }}</a>{% endif %}{% if capabilities.features.forum|default(false) and 'forum' not in fhide %}<a href="/forum">{{ ui_text('forum') }}</a>{% endif %}{% for placed_page in placed_pages('footer') %}<a href="{{ placed_page.url }}">{{ placed_page.title }}</a>{% endfor %}{% endset %}

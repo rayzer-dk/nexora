@@ -44,7 +44,7 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
     public function handle(StoredDomainEvent $event): void
     {
         $row = $this->connection->fetchAssociative(
-            'SELECT id,public_id,order_number,subtotal_minor,discount_minor,total_minor,currency,customer_email,customer_phone,customer_name,locale FROM mc_sales_order WHERE public_id=? LIMIT 1',
+            'SELECT id,store_id,public_id,order_number,subtotal_minor,discount_minor,total_minor,currency,customer_email,customer_phone,customer_name,locale FROM mc_sales_order WHERE public_id=? LIMIT 1',
             [Uuid::fromString($event->aggregateId)->toBinary()],
         );
         if (!is_array($row)) {
@@ -57,7 +57,8 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
             $item['image_url'] = ($item['image_key'] ?? '') !== '' && $this->publicUrl !== '' ? rtrim($this->publicUrl, '/') . '/media/' . ltrim((string) $item['image_key'], '/') : '';
         }
         unset($item);
-        $locale = trim((string) ($row['locale'] ?? '')) ?: 'en-US';
+        $locale = trim((string) ($row['locale'] ?? '')) ?: 'uk-UA';
+        $storeName = (string) $this->connection->fetchOne('SELECT name FROM mc_store WHERE id=? LIMIT 1', [(int) $row['store_id']]);
         $fulfillment = $this->connection->fetchAssociative('SELECT provider_code,destination_snapshot FROM mc_fulfillment WHERE order_id=? ORDER BY id DESC LIMIT 1', [(int) $row['id']]);
         $payment = $this->connection->fetchOne('SELECT provider_code FROM mc_payment WHERE order_id=? ORDER BY id DESC LIMIT 1', [(int) $row['id']]);
         $destination = is_array($fulfillment) ? json_decode((string) $fulfillment['destination_snapshot'], true) : null;
@@ -69,6 +70,7 @@ final readonly class OrderPlacedNotificationSubscriber implements DomainEventSub
             $this->translator->translate('order_received_plain', $locale),
             [
                 'locale' => $locale,
+                'store_name' => $storeName,
                 'order_number' => (string) $row['order_number'],
                 'customer_name' => (string) $row['customer_name'],
                 'subtotal_minor' => (int) $row['subtotal_minor'],

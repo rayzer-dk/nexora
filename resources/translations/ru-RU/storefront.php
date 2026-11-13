@@ -36,7 +36,7 @@ return [
     'accept_all' => 'Принять все',
     'save_choice' => 'Сохранить выбор',
     'news_offers' => 'Новости и предложения',
-    'newsletter_title' => 'Подписка без спама',
+    'newsletter_title' => 'Новости, акции и предложения',
     'newsletter_text' => 'После ввода email подтвердите подписку в письме.',
     'subscribe' => 'Подписаться',
     'company' => 'Компания',
