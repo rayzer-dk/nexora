@@ -6,6 +6,7 @@ namespace Commerce\Modules\Seo\Application;
 
 use Commerce\Core\Configuration\ConfigurationRevisionStore;
 use Commerce\Modules\Shipping\Application\ShippingCountryService;
+use Commerce\Modules\Seo\System\SystemPageRouteCatalog;
 use Doctrine\DBAL\Connection;
 use InvalidArgumentException;
 
@@ -13,11 +14,15 @@ use InvalidArgumentException;
  * Store-scoped, opt-in merchant structured-data policies.
  * Does not change checkout shipping prices, customer rights, or Merchant Center settings.
  */
-final readonly class MerchantSchemaSettings
+final class MerchantSchemaSettings
 {
+    /** @var array<int,array<string,mixed>> */
+    private array $cached = [];
+
     public function __construct(
-        private ConfigurationRevisionStore $revisions,
-        private Connection $db,
+        private readonly ConfigurationRevisionStore $revisions,
+        private readonly Connection $db,
+        private readonly SystemPageRouteCatalog $systemRoutes,
     ) {
     }
 
@@ -50,23 +55,28 @@ final readonly class MerchantSchemaSettings
     /** @return array<string,mixed> */
     public function get(int $storeId): array
     {
+        if (isset($this->cached[$storeId])) {
+            return $this->cached[$storeId];
+        }
         $raw = $this->revisions->latestValidPayload($storeId, 'seo', 'merchant_schema');
         if (!is_array($raw)) {
-            return self::defaults();
+            return $this->cached[$storeId] = self::defaults();
         }
 
         try {
-            return $this->normalize(array_replace(self::defaults(), $raw));
+            return $this->cached[$storeId] = $this->normalize(array_replace(self::defaults(), $raw));
         } catch (InvalidArgumentException) {
             // Invalid legacy payload must never publish a shipping or returns claim.
-            return self::defaults();
+            return $this->cached[$storeId] = self::defaults();
         }
     }
 
     /** @param array<string,mixed> $input */
     public function save(int $storeId, array $input, string $actor = 'admin'): int
     {
-        return $this->revisions->activateStoreJson($storeId, 'seo', 'merchant_schema', $this->normalize($input), $actor);
+        $revision = $this->revisions->activateStoreJson($storeId, 'seo', 'merchant_schema', $this->normalize($input), $actor);
+        unset($this->cached[$storeId]);
+        return $revision;
     }
 
     public function enabled(int $storeId): bool
@@ -154,7 +164,7 @@ final readonly class MerchantSchemaSettings
     }
 
     /** @param array<string,mixed> $node @return array<string,mixed> */
-    public function enrichOrganization(array $node, int $storeId, string $base): array
+    public function enrichOrganization(array $node, int $storeId, string $base, string $locale = 'uk-UA'): array
     {
         if (!$this->enabled($storeId)) {
             return $node;
@@ -175,10 +185,18 @@ final readonly class MerchantSchemaSettings
 
         $shipping = $this->shippingService($storeId, $base);
         if ($shipping !== null) {
+            $shippingUrl = $this->publishedSystemPageUrl($storeId, 'delivery', $base, $locale);
+            if ($shippingUrl !== '') {
+                $shipping['url'] = $shippingUrl;
+            }
             $node['hasShippingService'] = [$shipping];
         }
         $returns = $this->returnPolicy($storeId);
         if ($returns !== null) {
+            $returnUrl = $this->publishedSystemPageUrl($storeId, 'returns', $base, $locale);
+            if ($returnUrl !== '') {
+                $returns['merchantReturnLink'] = $returnUrl;
+            }
             $node['hasMerchantReturnPolicy'] = $returns;
         }
         return $node;
@@ -262,6 +280,30 @@ final readonly class MerchantSchemaSettings
             }
         }
         return $policy;
+    }
+
+    /** Link to the policy only when published and translated for this store. */
+    private function publishedSystemPageUrl(int $storeId, string $key, string $base, string $locale): string
+    {
+        try {
+            $row = $this->db->fetchAssociative(
+                "SELECT ce.status,ct.body_html,COALESCE(pm.noindex,0) AS noindex
+                 FROM mc_content_entry ce
+                 JOIN mc_content_translation ct ON ct.content_id=ce.id AND ct.locale=?
+                 LEFT JOIN mc_content_page_meta pm ON pm.content_id=ce.id
+                 WHERE ce.store_id=? AND ce.content_type='page' AND ce.system_key=? LIMIT 1",
+                [$locale, $storeId, $key],
+            );
+            if (!is_array($row) || (string) $row['status'] !== 'published'
+                || trim((string) ($row['body_html'] ?? '')) === ''
+                || (int) ($row['noindex'] ?? 0) !== 0) {
+                return '';
+            }
+
+            return rtrim($base, '/') . '/' . ltrim($this->systemRoutes->route($key, $locale)->path, '/');
+        } catch (\Throwable) {
+            return '';
+        }
     }
 
     /** @param array<string,mixed> $data */

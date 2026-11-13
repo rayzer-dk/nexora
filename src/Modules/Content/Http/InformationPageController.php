@@ -84,7 +84,7 @@ final class InformationPageController extends AbstractController
                 if (in_array($key, ['contacts', 'about'], true)) {
                     $organization = $this->organization->build(['name' => $context->storeName, 'url' => $home])
                         + $this->contact->organizationData($context->storeId);
-                    $organization = $this->merchantSchema->enrichOrganization($organization, $context->storeId, $home);
+                    $organization = $this->merchantSchema->enrichOrganization($organization, $context->storeId, $home, $context->locale);
                     $jsonLd = $this->graph->build($pageNode, $organization);
                 } else {
                     $jsonLd = $this->graph->build($pageNode);

@@ -158,6 +158,7 @@ final class HomeController extends AbstractController
                     $context->storeName,
                     (bool) ($features['search'] ?? false),
                     $context->storeId,
+                    $context->locale,
                 ),
                 'description' => \Commerce\Core\I18n\CanonicalUiText::get('seo.home.description', ['store' => $context->storeName]),
                 'canonical' => $request->getSchemeAndHttpHost() . '/',
@@ -168,7 +169,7 @@ final class HomeController extends AbstractController
     }
 
     /** Organization + WebSite with a sitelinks SearchAction pointing at the catalog search. */
-    private function homeStructuredData(string $homeUrl, string $storeName, bool $searchEnabled, int $storeId): array
+    private function homeStructuredData(string $homeUrl, string $storeName, bool $searchEnabled, int $storeId, string $locale): array
     {
         if (!$this->merchantSchema->enabled($storeId)) { return []; }
         $webSite = $this->webSite->build($storeName, $homeUrl);
@@ -184,16 +185,16 @@ final class HomeController extends AbstractController
         }
 
         return $this->graph->build(
-            $this->organizationNode($homeUrl, $storeName, $storeId),
+            $this->organizationNode($homeUrl, $storeName, $storeId, $locale),
             $webSite,
         );
     }
 
     /** Organization node enriched with the public contact details (social profiles, phone, address, geo) when the owner filled them in. */
-    private function organizationNode(string $homeUrl, string $storeName, int $storeId): array
+    private function organizationNode(string $homeUrl, string $storeName, int $storeId, string $locale): array
     {
         $node = $this->organization->build(['name' => $storeName, 'url' => $homeUrl]);
-        $node = $this->merchantSchema->enrichOrganization($node, $storeId, $homeUrl);
+        $node = $this->merchantSchema->enrichOrganization($node, $storeId, $homeUrl, $locale);
         try {
             return $node + $this->contact->organizationData($storeId);
         } catch (\Throwable) {
