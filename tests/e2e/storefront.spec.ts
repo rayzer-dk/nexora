@@ -33,13 +33,6 @@ test('storefront header shows the Nexora logo by default', async ({ page }) => {
   await expect(brand.locator('img[src*="nexora-logo"]').first()).toHaveAttribute('alt', 'Nexora');
   await expect(brand.locator('.reference-brand__bag')).toHaveCount(0);
 });
-  await expectNoServerError(page);
-  const brand = page.locator('.reference-brand');
-  await expect(brand).toBeVisible();
-  await expect(brand.locator('strong')).toHaveText('Nexora E2E');
-  await expect(brand.locator('img[src*="nexora-mark.png"]')).toHaveCount(0);
-});
-
 
 test('unknown SEO route returns a normal 404 without a storefront runtime exception', async ({ page }) => {
   const response = await page.goto('/e2e-definitely-missing-seo-route', { waitUntil: 'domcontentloaded' });
