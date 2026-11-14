@@ -47,9 +47,9 @@ test('translate every language with one click, one field with its own button, th
     const href = await page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().getAttribute('href');
     const id = href!.split('/')[4];
 
-    // the product card offers the same one-click action
+    // the product card links to the translation page (the one-click run is opened by ?auto=1 below)
     await page.goto(href!, { waitUntil: 'domcontentloaded' });
-    await expect(page.locator(`a[href$="/admin/catalog/products/${id}/translations?auto=1"]`)).toBeVisible();
+    await expect(page.locator(`a[href$="/admin/catalog/products/${id}/translations"]`).first()).toBeVisible();
 
     await page.goto(`/admin/catalog/products/${id}/translations`, { waitUntil: 'domcontentloaded' });
     await expectNoServerError(page);

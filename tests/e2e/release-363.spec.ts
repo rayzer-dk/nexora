@@ -158,11 +158,12 @@ test('SEO fields show a counter, an example and variable chips; a variable typed
   await page.goto(await demoProductEditUrl(page), { waitUntil: 'domcontentloaded' });
   await openProductTab(page, 'seo');
   const field = page.locator('input[name="meta_title"]');
-  await expect(page.locator('.seo-hint').first()).toBeVisible();
+  // The translation tabs of the General tab carry the same hints (hidden); the SEO tab's own are the visible ones.
+  await expect(page.locator('.seo-hint:visible').first()).toBeVisible();
   await field.fill('');
-  await page.locator('.seo-chip', { hasText: '{name}' }).first().click();
+  await page.locator('.seo-chip:visible', { hasText: '{name}' }).first().click();
   await expect(field).toHaveValue('{name}');
-  await expect(page.locator('.seo-hint__count').first()).toContainText('/ 60');
+  await expect(page.locator('.seo-hint__count:visible').first()).toContainText('/ 60');
 });
 
 test('the list of shoppers waiting for a product has search, period, sorting and a CSV export', async ({ page }, testInfo) => {

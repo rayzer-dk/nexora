@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 4.0.11 — 2026-11-14
+
+Version 4.0.11 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations. Found by the full e2e run on PHP 8.4 (429 tests).
+
+- Blog: the size (`s`, `m`, `l`) and the side (`left`, `right`) of an article image set in the admin were ignored on the page: the defaults of `pages/blog.css` (`width: 100%`, `margin`) were loaded after the core rules and won over them since the stylesheet was split by page. The defaults now have no specificity, so the figure is 200/300/400 px and floats again.
+- e2e tests brought in line with the product: the store name in the header (the default Nexora logo is shown until a brand is set), the structured data node of the store (`OnlineStore`), the visible SEO hints of the product form (the translation tabs carry hidden copies) and the translations link of the product card.
+
 ## 4.0.10 — 2026-11-14
 
 Version 4.0.10 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.

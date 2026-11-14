@@ -117,7 +117,7 @@ test.describe('admin-managed content', () => {
       await expect(page.locator('.contact-cards a[href*="facebook.com"]')).toHaveCount(0);
       await expectNoHorizontalOverflow(page);
       const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').first().textContent()) ?? '{}');
-      const org = (ld['@graph'] as Array<Record<string, unknown>>).find((n) => n['@type'] === 'Organization')!;
+      const org = (ld['@graph'] as Array<Record<string, unknown>>).find((n) => n['@type'] === 'Organization' || n['@type'] === 'OnlineStore')!;
       expect(org.sameAs).toContain('https://instagram.com/nexora_e2e');
       expect((org.address as Record<string, string>).streetAddress).toContain('Khreshchatyk');
       expect((org.geo as Record<string, number>).latitude).toBeCloseTo(50.4501, 3);

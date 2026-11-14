@@ -108,11 +108,12 @@ test('shop name is hidden when only the logo is wanted, logo height is configura
     await writeBrand(page, { logo: LOGO, showTitle: true, titles: emptyTitles, height: '5' });
     expect((await readBrand(page)).height).toBe('32');
 
-    // no logo + empty name: the store name is shown so the header is not empty
+    // no logo + empty name: the Nexora logo is shown (not the store name) so the header is not empty
     await writeBrand(page, { logo: '', showTitle: true, titles: emptyTitles, height: '48' });
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('header.reference-header .reference-brand strong')).toHaveText(storeName);
+    await expect(page.locator('header.reference-header .reference-brand img[src*="nexora-logo"]').first()).toHaveAttribute('alt', 'Nexora');
+    await expect(page.locator('header.reference-header .reference-brand strong')).toHaveCount(0);
 
     // the hint next to the logo field names the size and the current height
     await page.goto('/admin/appearance/storefront', { waitUntil: 'domcontentloaded' });
