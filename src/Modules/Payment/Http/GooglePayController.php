@@ -71,19 +71,32 @@ final class GooglePayController extends AbstractController
             return new JsonResponse(['status' => 'failed', 'message' => CanonicalUiText::get('payment.google_pay.bad_token')], 400);
         }
         $returnUrl = rtrim($this->publicBaseUrl, '/') . '/payment/return/' . $order;
+        // Every attempt carries its own token, so a double click would charge twice: one attempt per order at a time.
+        $lock = 'gpay:' . $order;
+        if ((int) $this->db->fetchOne('SELECT GET_LOCK(?, 0)', [$lock]) !== 1) {
+            return new JsonResponse(['status' => 'failed', 'message' => CanonicalUiText::get('payment.google_pay.closed')], 409);
+        }
         try {
-            $result = $this->provider()->charge($tokenId, $order, (string) $row['order_number'], (int) $row['total_minor'], (string) $row['currency'], $returnUrl);
-        } catch (\RuntimeException) {
-            return new JsonResponse(['status' => 'failed', 'message' => CanonicalUiText::get('payment.google_pay.declined')], 402);
-        }
-        if ($result['id'] !== '') {
-            $this->db->update('mc_payment', ['provider_reference' => $result['id'], 'updated_at' => gmdate('Y-m-d H:i:s.u')], ['id' => (int) $row['payment_id']]);
-        }
-        if ($result['status'] === 'failed') {
-            return new JsonResponse(['status' => 'failed', 'message' => CanonicalUiText::get('payment.google_pay.declined')], 402);
-        }
-        if ($result['status'] === 'paid') {
-            $this->lifecycle->applyProviderStatus('google_pay', $result['id'], 'success', null, $result['amount_minor'], $result['currency'], null, $result['payload']);
+            $row = $this->payableOrder($order);
+            if ($row === null || !in_array((string) $row['payment_status'], self::OPEN_STATUSES, true)) {
+                return new JsonResponse(['status' => 'failed', 'message' => CanonicalUiText::get('payment.google_pay.closed')], 409);
+            }
+            try {
+                $result = $this->provider()->charge($tokenId, $order, (string) $row['order_number'], (int) $row['total_minor'], (string) $row['currency'], $returnUrl);
+            } catch (\RuntimeException) {
+                return new JsonResponse(['status' => 'failed', 'message' => CanonicalUiText::get('payment.google_pay.declined')], 402);
+            }
+            if ($result['id'] !== '') {
+                $this->db->update('mc_payment', ['provider_reference' => $result['id'], 'updated_at' => gmdate('Y-m-d H:i:s.u')], ['id' => (int) $row['payment_id']]);
+            }
+            if ($result['status'] === 'failed') {
+                return new JsonResponse(['status' => 'failed', 'message' => CanonicalUiText::get('payment.google_pay.declined')], 402);
+            }
+            if ($result['status'] === 'paid') {
+                $this->lifecycle->applyProviderStatus('google_pay', $result['id'], 'success', null, $result['amount_minor'], $result['currency'], null, $result['payload']);
+            }
+        } finally {
+            $this->db->fetchOne('SELECT RELEASE_LOCK(?)', [$lock]);
         }
 
         return new JsonResponse(['status' => $result['status'], 'redirect' => $result['redirect_url'] ?? $returnUrl]);

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 4.0.10 — 2026-11-14
+
+Version 4.0.10 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
+
+- Google Pay: every attempt carries its own token and the idempotency key is built from it, so two requests at once (a double tap, a retry) charged the card twice. One attempt per order runs at a time (`GET_LOCK`); the status is read again under the lock and the second request gets "payment closed".
+
 ## 4.0.9 — 2026-11-14
 
 Money and customer-data fixes. Version 4.0.9 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations. Run on PHP 8.4.27 and MariaDB 10.11: PHPUnit 555 tests, PHPStan, PHPCS, Deptrac (0 violations), lint:container/twig, e2e (order integrity, withdrawal, customer groups, admin menu crawl, console sweep).
