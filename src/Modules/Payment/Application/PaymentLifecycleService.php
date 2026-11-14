@@ -61,6 +61,7 @@ final readonly class PaymentLifecycleService
             $payment=$db->fetchAssociative('SELECT * FROM mc_payment WHERE order_id=? ORDER BY id DESC LIMIT 1 FOR UPDATE',[(int)$order['id']]);
             if(!is_array($payment)) throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.payment.application.paymentlifecycleservice.platizh_zamovlennia_ne_znaideno'));
             $this->commitReservations($db,(int)$order['id']); $now=$this->now();
+            $this->reapplyRewards($db,(int)$order['id']);
             $db->update('mc_payment',['status'=>'paid','paid_at'=>$now,'updated_at'=>$now],['id'=>(int)$payment['id']]);
             $db->update('mc_sales_order',['status'=>'confirmed','payment_status'=>'paid','updated_at'=>$now],['id'=>(int)$order['id']]);
             $this->activateDigitalEntitlements($db,(int)$order['id'],$now);
@@ -101,6 +102,7 @@ final readonly class PaymentLifecycleService
             $paymentUpdate=['provider_modified_at'=>$normalizedProviderDate,'provider_payload'=>json_encode($payload,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),'failure_reason'=>$failureReason,'updated_at'=>$now];
             if($providerStatus==='success') {
                 if((string)$payment['status']!=='paid') $this->commitReservations($db,$orderId);
+                $this->reapplyRewards($db,$orderId);
                 $paymentUpdate += ['status'=>'paid','paid_at'=>$now];
                 $db->update('mc_sales_order',['status'=>'confirmed','payment_status'=>'paid','updated_at'=>$now],['id'=>$orderId]);
                 $this->activateDigitalEntitlements($db,$orderId,$now);
@@ -164,6 +166,14 @@ final readonly class PaymentLifecycleService
     {
         $row=$db->fetchAssociative('SELECT * FROM mc_sales_order WHERE public_id=? FOR UPDATE',[Uuid::fromString($id)->toBinary()]);
         if(!is_array($row)) throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.order.application.ordermanagementservice.zamovlennia_ne_znaideno')); return $row;
+    }
+
+    /** A payment that arrives after the order was failed, expired or cancelled spends its gift card and points again; a shortfall is left as an order event for the manager. */
+    private function reapplyRewards(Connection $db,int $orderId): void
+    {
+        $gift=$this->giftCards->reapplyForOrder($db,$orderId);
+        $points=$this->loyalty->reapplySpendForOrder($db,$orderId);
+        if(!$gift||!$points) $this->appendEvent($db,$orderId,'payment.rewards_not_reapplied',['gift_card'=>$gift,'loyalty'=>$points],'system','payment');
     }
 
     private function commitReservations(Connection $db,int $orderId): void

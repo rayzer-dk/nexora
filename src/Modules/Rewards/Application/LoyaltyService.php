@@ -42,12 +42,45 @@ final readonly class LoyaltyService
         $db->insert('mc_loyalty_transaction',['store_id'=>$sid,'customer_id'=>$cid,'order_id'=>$orderId,'tx_type'=>'earn','points'=>$points,'balance_after'=>$balance,'idempotency_key'=>$key,'created_at'=>$now]);
     }
 
+    /** Gives back the points the order spent; see GiftCardService::restoreForOrder for how spending and giving back alternate. */
     public function restoreSpendForOrder(Connection $db,int $orderId,string $reason): void
     {
-        $tx=$db->fetchAssociative("SELECT * FROM mc_loyalty_transaction WHERE order_id=? AND tx_type='redeem' LIMIT 1 FOR UPDATE",[$orderId]); if(!is_array($tx)) return; $key='order:'.$orderId.':restore'; if($db->fetchOne('SELECT id FROM mc_loyalty_transaction WHERE idempotency_key=?',[$key])) return;
-        $sid=(int)$tx['store_id'];$cid=(int)$tx['customer_id'];$a=$db->fetchAssociative('SELECT * FROM mc_loyalty_account WHERE store_id=? AND customer_id=? FOR UPDATE',[$sid,$cid]); if(!is_array($a))return;$points=abs((int)$tx['points']);$balance=(int)$a['points_balance']+$points;$now=$this->now();
+        [$spent,$restored,$last]=$this->spendState($db,$orderId);
+        if($last===null||$spent<=$restored) return;
+        $sid=(int)$last['store_id'];$cid=(int)$last['customer_id'];
+        $a=$db->fetchAssociative('SELECT * FROM mc_loyalty_account WHERE store_id=? AND customer_id=? FOR UPDATE',[$sid,$cid]); if(!is_array($a)) return;
+        $points=abs((int)$last['points']);$balance=(int)$a['points_balance']+$points;$now=$this->now();
         $db->update('mc_loyalty_account',['points_balance'=>$balance,'lifetime_spent'=>max(0,(int)$a['lifetime_spent']-$points),'updated_at'=>$now],['store_id'=>$sid,'customer_id'=>$cid]);
-        $db->insert('mc_loyalty_transaction',['store_id'=>$sid,'customer_id'=>$cid,'order_id'=>$orderId,'tx_type'=>'restore_'.$reason,'points'=>$points,'balance_after'=>$balance,'idempotency_key'=>$key,'created_at'=>$now]);
+        $db->insert('mc_loyalty_transaction',['store_id'=>$sid,'customer_id'=>$cid,'order_id'=>$orderId,'tx_type'=>'restore_'.$reason,'points'=>$points,'balance_after'=>$balance,'idempotency_key'=>$restored===0?'order:'.$orderId.':restore':'order:'.$orderId.':restore:'.($restored+1),'created_at'=>$now]);
+    }
+
+    /** Spends again the points given back for an order that is paid after all; false when the balance no longer covers them. */
+    public function reapplySpendForOrder(Connection $db,int $orderId): bool
+    {
+        [$spent,$restored,$last]=$this->spendState($db,$orderId);
+        if($last===null||$spent>$restored) return true;
+        $sid=(int)$last['store_id'];$cid=(int)$last['customer_id'];
+        $a=$db->fetchAssociative('SELECT * FROM mc_loyalty_account WHERE store_id=? AND customer_id=? FOR UPDATE',[$sid,$cid]);
+        $points=abs((int)$last['points']);
+        if(!is_array($a)||(int)$a['points_balance']<$points) return false;
+        $balance=(int)$a['points_balance']-$points;$now=$this->now();
+        $db->update('mc_loyalty_account',['points_balance'=>$balance,'lifetime_spent'=>(int)$a['lifetime_spent']+$points,'updated_at'=>$now],['store_id'=>$sid,'customer_id'=>$cid]);
+        $db->insert('mc_loyalty_transaction',['store_id'=>$sid,'customer_id'=>$cid,'order_id'=>$orderId,'tx_type'=>'reapply','points'=>-$points,'balance_after'=>$balance,'idempotency_key'=>'order:'.$orderId.':reapply:'.($spent+1),'created_at'=>$now]);
+
+        return true;
+    }
+
+    /** @return array{0:int,1:int,2:?array<string,mixed>} spends, give-backs and the last spend of the order (locked) */
+    private function spendState(Connection $db,int $orderId): array
+    {
+        $spent=0; $restored=0; $last=null;
+        foreach($db->fetchAllAssociative('SELECT * FROM mc_loyalty_transaction WHERE order_id=? ORDER BY id FOR UPDATE',[$orderId]) as $tx){
+            $type=(string)$tx['tx_type'];
+            if($type==='redeem'||$type==='reapply'){ ++$spent; $last=$tx; }
+            elseif(str_starts_with($type,'restore_')) ++$restored;
+        }
+
+        return [$spent,$restored,$last];
     }
 
     public function reverseEarnForOrder(Connection $db,int $orderId): void

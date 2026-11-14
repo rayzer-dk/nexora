@@ -155,21 +155,24 @@ final class CommerceOperationsAdminController extends AbstractController
     #[Route('/admin/commerce/customers', name:'admin_commerce_customers', methods:['GET','POST'])]
     public function customers(Request $request): Response
     {
-        $this->contexts->resolve($request);
+        $context=$this->contexts->resolve($request);
+        // Customers belong to the stores they registered or ordered in; an administrator sees only those of the store being managed.
+        $inStore="EXISTS (SELECT 1 FROM mc_store_customer sc WHERE sc.customer_id=%s AND sc.store_id=?)";
         if($request->isMethod('POST')){
             $id=(int)$request->request->get('id');if(!$this->isCsrfTokenValid('customer_group_'.$id,(string)$request->request->get('_csrf_token')))throw $this->createAccessDeniedException();
+            if($this->db->fetchOne('SELECT 1 FROM mc_store_customer WHERE store_id=? AND customer_id=?',[$context->storeId,$id])===false)throw $this->createNotFoundException();
             $group=strtolower(trim((string)$request->request->get('customer_group_code','default')));if(preg_match('/^[a-z0-9_-]{1,64}$/D',$group)!==1)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.nekorektnyi_kod_hrupy'));
             $this->db->update('mc_customer',['customer_group_code'=>$group,'updated_at'=>$this->now()],['id'=>$id]);$this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.commerceoperationsadmincontroller.hrupu_pokuptsia_onovleno'));return $this->redirectToRoute('admin_commerce_customers');
         }
         $q=trim((string)$request->query->get('q',''));$group=trim((string)$request->query->get('group',''));$status=(string)$request->query->get('status','');$sort=(string)$request->query->get('sort','new');
-        $where=['1=1'];$params=[];
+        $where=[sprintf($inStore,'c.id')];$params=[$context->storeId];
         if($q!==''){$like='%'.addcslashes($q,'%_\\').'%';$where[]='(c.display_name LIKE ? OR c.email LIKE ? OR c.phone_e164 LIKE ?)';array_push($params,$like,$like,$like);}
         if($group!==''){$where[]='c.customer_group_code=?';$params[]=$group;}
         if(in_array($status,['active','blocked'],true)){$where[]='c.status=?';$params[]=$status;}
         $orderBy=match($sort){'spent'=>'spent_minor DESC','orders'=>'orders_count DESC','last'=>'last_order_at IS NULL, last_order_at DESC',default=>'c.id DESC'};
         $rows=$this->db->fetchAllAssociative("SELECT c.id,c.display_name,c.email,c.phone_e164,c.status,c.customer_group_code,c.created_at,(SELECT COUNT(*) FROM mc_sales_order o WHERE o.customer_id=c.id AND o.status NOT IN ('cancelled','expired')) orders_count,(SELECT COALESCE(SUM(o.total_minor),0) FROM mc_sales_order o WHERE o.customer_id=c.id AND o.status NOT IN ('cancelled','expired')) spent_minor,(SELECT o.currency FROM mc_sales_order o WHERE o.customer_id=c.id ORDER BY o.id DESC LIMIT 1) currency,(SELECT MAX(o.created_at) FROM mc_sales_order o WHERE o.customer_id=c.id) last_order_at FROM mc_customer c WHERE ".implode(' AND ',$where)." ORDER BY $orderBy LIMIT 2000",$params);
-        $groups=array_map('strval',$this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer WHERE customer_group_code IS NOT NULL AND customer_group_code<>'' ORDER BY 1"));
-        $totals=$this->db->fetchAssociative("SELECT COUNT(*) total,SUM(status='blocked') blocked,SUM(created_at>=UTC_TIMESTAMP(6)-INTERVAL 30 DAY) new30 FROM mc_customer")?:[];
+        $groups=array_map('strval',$this->db->fetchFirstColumn("SELECT DISTINCT customer_group_code FROM mc_customer c WHERE customer_group_code IS NOT NULL AND customer_group_code<>'' AND ".sprintf($inStore,'c.id')." ORDER BY 1",[$context->storeId]));
+        $totals=$this->db->fetchAssociative("SELECT COUNT(*) total,SUM(status='blocked') blocked,SUM(created_at>=UTC_TIMESTAMP(6)-INTERVAL 30 DAY) new30 FROM mc_customer c WHERE ".sprintf($inStore,'c.id'),[$context->storeId])?:[];
         return $this->render('@storefront/admin/commerce/customers.html.twig',['rows'=>$rows,'filters'=>['q'=>$q,'group'=>$group,'status'=>$status,'sort'=>$sort],'groups'=>$groups,'totals'=>$totals]);
     }
 

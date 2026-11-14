@@ -61,8 +61,8 @@ final class QuickSearchAdminController extends AbstractController
             }
             if ($this->authorization->isGranted($user, AdminPermissionCatalog::CUSTOMERS_VIEW, $storeId)) {
                 $rows = $this->db->fetchAllAssociative(
-                    "SELECT display_name,email FROM mc_customer WHERE status<>'deleted' AND (email LIKE ? OR display_name LIKE ? OR phone_e164 LIKE ?) ORDER BY id DESC LIMIT " . self::LIMIT,
-                    [$like, $like, $like],
+                    "SELECT display_name,email FROM mc_customer WHERE status<>'deleted' AND EXISTS (SELECT 1 FROM mc_store_customer sc WHERE sc.customer_id=mc_customer.id AND sc.store_id=?) AND (email LIKE ? OR display_name LIKE ? OR phone_e164 LIKE ?) ORDER BY id DESC LIMIT " . self::LIMIT,
+                    [$storeId, $like, $like, $like],
                 );
                 foreach ($rows as $row) {
                     $results[] = ['type' => 'customer', 'label' => (string) ($row['display_name'] ?: $row['email']), 'detail' => (string) $row['email'], 'href' => '/admin/commerce/customers?search=' . rawurlencode((string) $row['email'])];

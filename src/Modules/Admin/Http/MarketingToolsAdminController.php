@@ -36,11 +36,14 @@ final class MarketingToolsAdminController extends AbstractController
     #[Route('/admin/commerce/customers/export.csv', name: 'admin_commerce_customers_export', methods: ['GET'])]
     public function customers(Request $request): Response
     {
-        $this->contexts->resolve($request);
+        $context = $this->contexts->resolve($request);
         $rows = $this->db->iterateAssociative(
             "SELECT c.public_id, c.display_name, c.email, c.phone_e164, c.status, c.customer_group_code, c.locale, c.created_at, c.last_seen_at,
-                    (SELECT COUNT(*) FROM mc_sales_order o WHERE o.customer_email_normalized = c.email_normalized AND o.status NOT IN ('cancelled','expired')) AS orders
-             FROM mc_customer c ORDER BY c.id"
+                    (SELECT COUNT(*) FROM mc_sales_order o WHERE o.customer_email_normalized = c.email_normalized AND o.store_id = ? AND o.status NOT IN ('cancelled','expired')) AS orders
+             FROM mc_customer c
+             WHERE EXISTS (SELECT 1 FROM mc_store_customer sc WHERE sc.customer_id = c.id AND sc.store_id = ?)
+             ORDER BY c.id",
+            [$context->storeId, $context->storeId],
         );
 
         return $this->csv('customers', ['id', 'name', 'email', 'phone', 'status', 'group', 'language', 'orders', 'registered_at', 'last_seen_at'], static function () use ($rows): \Generator {

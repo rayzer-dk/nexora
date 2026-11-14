@@ -21,11 +21,11 @@ final class CustomerCardAdminController extends AbstractController
     public function view(int $id, Request $request): Response
     {
         $ctx = $this->contexts->resolve($request);
-        $customer = $this->db->fetchAssociative('SELECT id,public_id,email,email_normalized,phone_e164,display_name,locale,status,customer_group_code,email_verified_at,phone_verified_at,created_at,last_seen_at FROM mc_customer WHERE id=?', [$id]);
+        $customer = $this->db->fetchAssociative('SELECT id,public_id,email,email_normalized,phone_e164,display_name,locale,status,customer_group_code,email_verified_at,phone_verified_at,created_at,last_seen_at FROM mc_customer WHERE id=? AND EXISTS (SELECT 1 FROM mc_store_customer sc WHERE sc.customer_id=mc_customer.id AND sc.store_id=?)', [$id, $ctx->storeId]);
         if (!is_array($customer)) {
             throw $this->createNotFoundException();
         }
-        $orders = $this->db->fetchAllAssociative("SELECT public_id,order_number,status,payment_status,fulfillment_status,currency,total_minor,created_at FROM mc_sales_order WHERE customer_id=? ORDER BY id DESC LIMIT 100", [$id]);
+        $orders = $this->db->fetchAllAssociative("SELECT public_id,order_number,status,payment_status,fulfillment_status,currency,total_minor,created_at FROM mc_sales_order WHERE customer_id=? AND store_id=? ORDER BY id DESC LIMIT 100", [$id, $ctx->storeId]);
         foreach ($orders as &$o) {
             $o['public_id'] = Uuid::fromBinary((string) $o['public_id'])->toRfc4122();
         }

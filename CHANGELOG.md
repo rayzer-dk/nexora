@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 4.0.9 — 2026-11-14
+
+Money and customer-data fixes. Version 4.0.9 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations. Run on PHP 8.4.27 and MariaDB 10.11: PHPUnit 555 tests, PHPStan, PHPCS, Deptrac (0 violations), lint:container/twig, e2e (order integrity, withdrawal, customer groups, admin menu crawl, console sweep).
+
+- Gift card and loyalty points: when an order's payment failed, expired or the order was cancelled, the card balance and the points were given back; a payment that arrived late (second attempt, a notification from the provider) then marked the order paid without spending them again, so the buyer kept the discount and the balance. A late payment, and a manual "mark as paid", now spend the card and the points again; if the balance no longer covers it the order stays paid and gets the event `payment.rewards_not_reapplied` for the manager. A refund of such an order gives them back once more. Spending and giving back alternate (transactions `reapply` and `restore_*:N`); existing data is read as before. New test `RewardsLatePaymentTest` (runs on a MySQL/MariaDB `DATABASE_URL`, session-only tables).
+- Administration, customers: the list, the export, the customer card, the quick search and the customer group change showed customers and orders of every store; they are limited to the customers of the store being managed (`mc_store_customer`). The `personal_data.view` permission is still not enforced (listed in the access matrix only).
+- New test `PromotionRedemptionRecorderTest` for the customer-group discount fix of 4.0.8 (a foreign key violation without it).
+
 ## 4.0.8 — 2026-11-14
 
 Security and correctness fixes from a read-only audit of 4.0.7 (admin, platform, checkout, payments). Version 4.0.8 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations. Checked by PHPStan, PHPCS, source guard, encoding and release static checks; PHPUnit and e2e were NOT run because the audit environment has no PHP 8.4.

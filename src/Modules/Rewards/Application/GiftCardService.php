@@ -46,13 +46,50 @@ final readonly class GiftCardService
         return ['amount_minor'=>$amount,'last4'=>(string)$row['code_last4']];
     }
 
+    /**
+     * Gives back what the order spent. Spending and giving back alternate: a payment that failed and was paid later
+     * spends again (reapplyForOrder), so the next give-back is a new transaction with its own key.
+     */
     public function restoreForOrder(Connection $db,int $orderId,string $reason): void
     {
-        $tx=$db->fetchAssociative("SELECT t.*,g.balance_minor FROM mc_gift_card_transaction t JOIN mc_gift_card g ON g.id=t.gift_card_id WHERE t.order_id=? AND t.tx_type='redeem' LIMIT 1 FOR UPDATE",[$orderId]);
-        if(!is_array($tx)) return; $key='order:'.$orderId.':restore'; if($db->fetchOne('SELECT id FROM mc_gift_card_transaction WHERE idempotency_key=?',[$key])) return;
-        $amount=abs((int)$tx['amount_minor']); $balance=(int)$tx['balance_minor']+$amount; $now=$this->now();
-        $db->update('mc_gift_card',['balance_minor'=>$balance,'status'=>'active','updated_at'=>$now],['id'=>(int)$tx['gift_card_id']]);
-        $db->insert('mc_gift_card_transaction',['gift_card_id'=>(int)$tx['gift_card_id'],'order_id'=>$orderId,'tx_type'=>'restore_'.$reason,'amount_minor'=>$amount,'balance_after_minor'=>$balance,'idempotency_key'=>$key,'created_at'=>$now]);
+        [$spent,$restored,$last]=$this->spendState($db,$orderId);
+        if($last===null||$spent<=$restored) return;
+        $card=$db->fetchAssociative('SELECT id,balance_minor FROM mc_gift_card WHERE id=? FOR UPDATE',[(int)$last['gift_card_id']]);
+        if(!is_array($card)) return;
+        $amount=abs((int)$last['amount_minor']); $balance=(int)$card['balance_minor']+$amount; $now=$this->now();
+        $db->update('mc_gift_card',['balance_minor'=>$balance,'status'=>'active','updated_at'=>$now],['id'=>(int)$card['id']]);
+        $db->insert('mc_gift_card_transaction',['gift_card_id'=>(int)$card['id'],'order_id'=>$orderId,'tx_type'=>'restore_'.$reason,'amount_minor'=>$amount,'balance_after_minor'=>$balance,'idempotency_key'=>$restored===0?'order:'.$orderId.':restore':'order:'.$orderId.':restore:'.($restored+1),'created_at'=>$now]);
+    }
+
+    /**
+     * Spends again what restoreForOrder gave back, when the order is paid after all (late payment, manual confirmation).
+     * False when the card can no longer cover it: the order stays paid and the caller records that for the manager.
+     */
+    public function reapplyForOrder(Connection $db,int $orderId): bool
+    {
+        [$spent,$restored,$last]=$this->spendState($db,$orderId);
+        if($last===null||$spent>$restored) return true;
+        $card=$db->fetchAssociative('SELECT id,balance_minor,status FROM mc_gift_card WHERE id=? FOR UPDATE',[(int)$last['gift_card_id']]);
+        $amount=abs((int)$last['amount_minor']);
+        if(!is_array($card)||$card['status']==='blocked'||(int)$card['balance_minor']<$amount) return false;
+        $balance=(int)$card['balance_minor']-$amount; $now=$this->now();
+        $db->update('mc_gift_card',['balance_minor'=>$balance,'status'=>$balance===0?'exhausted':'active','updated_at'=>$now],['id'=>(int)$card['id']]);
+        $db->insert('mc_gift_card_transaction',['gift_card_id'=>(int)$card['id'],'order_id'=>$orderId,'tx_type'=>'reapply','amount_minor'=>-$amount,'balance_after_minor'=>$balance,'idempotency_key'=>'order:'.$orderId.':reapply:'.($spent+1),'created_at'=>$now]);
+
+        return true;
+    }
+
+    /** @return array{0:int,1:int,2:?array<string,mixed>} spends, give-backs and the last spend of the order (locked) */
+    private function spendState(Connection $db,int $orderId): array
+    {
+        $spent=0; $restored=0; $last=null;
+        foreach($db->fetchAllAssociative('SELECT * FROM mc_gift_card_transaction WHERE order_id=? ORDER BY id FOR UPDATE',[$orderId]) as $tx){
+            $type=(string)$tx['tx_type'];
+            if($type==='redeem'||$type==='reapply'){ ++$spent; $last=$tx; }
+            elseif(str_starts_with($type,'restore_')) ++$restored;
+        }
+
+        return [$spent,$restored,$last];
     }
 
     /** Blocks a card (it cannot be spent) or makes it usable again; a card with no balance stays exhausted. */
