@@ -1,5 +1,5 @@
 name: Capture verified visual baselines
-# Re-run after storefront layout changes: touching this file on main starts the capture.
+# Re-run after storefront layout changes: touching this file on main starts the capture (last: 2026-11-14, default Nexora logo in the header).
 
 on:
   push:
