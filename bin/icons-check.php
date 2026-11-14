@@ -21,10 +21,10 @@ foreach ($it as $file) {
         continue;
     }
     $text = (string) file_get_contents($path);
-    if (preg_match_all("/(?:ui_icon|lucideIcon)\(\s*'([a-z0-9-]+)'/", $text, $m)) {
+    if (preg_match_all("/(?:ui_icon|lucideIcon)\(\s*'([a-z0-9-]+)'\s*(?=,|\))/", $text, $m)) {
         foreach ($m[1] as $name) {
             if (!isset($icons[$name])) {
-                $errors[] = "$rel: icon \"$name\" is not in resources/icons/lucide.json (add it to tools/lucide-manifest.json and run node tools/build-lucide-icons.mjs)";
+                $errors[] = "$rel: icon \"$name\" is not in the Lucide or Tabler icon sets (update the relevant icon manifest)";
             }
         }
     }
