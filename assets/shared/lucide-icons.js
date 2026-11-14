@@ -1,10 +1,11 @@
 // Real Lucide icons, generated from the installed package by tools/build-lucide-icons.mjs.
 import data from '../../resources/icons/lucide.json';
+import tablerBrands from '../../resources/icons/tabler-brands.json';
 
 const sizes = [14, 16, 20, 24, 32];
 
 export function lucideIcon(name, size = 20, className = '') {
-  const body = data.icons[name];
+  const body = tablerBrands.icons[name] ?? data.icons[name];
   if (!body) return '';
   const safeSize = sizes.find((step) => Number(size) <= step) ?? 32;
   const safeClass = String(className).replace(/[^a-zA-Z0-9_:\- ]/g, '');

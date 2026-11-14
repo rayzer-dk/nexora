@@ -42,7 +42,9 @@ final class StorefrontUiTwigExtension extends AbstractExtension
     public function icon(string $name, int $size = 20, string $class = ''): string
     {
         self::$icons ??= self::loadIcons();
-        $body = self::$icons[$name] ?? '';
+        $body = str_starts_with($name, 'brand-')
+            ? (self::loadBrandIcons()[$name] ?? '')
+            : (self::$icons[$name] ?? '');
         if ($body === '' && preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $name) === 1) {
             // An icon an owner picked in the admin icon picker may come from the full Lucide library.
             self::$library ??= self::loadIconLibrary();
@@ -73,6 +75,21 @@ final class StorefrontUiTwigExtension extends AbstractExtension
         );
     }
 
+    /** @var array<string,string>|null Official Tabler brand marks, loaded only when needed. */
+    private static ?array $brandIcons = null;
+
+    /** @return array<string,string> */
+    private static function loadBrandIcons(): array
+    {
+        if (self::$brandIcons !== null) {
+            return self::$brandIcons;
+        }
+        $file = dirname(__DIR__, 3) . '/resources/icons/tabler-brands.json';
+        $data = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
+
+        return self::$brandIcons = is_array($data['icons'] ?? null) ? $data['icons'] : [];
+    }
+
     /** @var array<string,string>|null every Lucide icon, loaded only when an icon is missing from the curated set */
     private static ?array $library = null;
 
@@ -82,7 +99,7 @@ final class StorefrontUiTwigExtension extends AbstractExtension
         $file = dirname(__DIR__, 3) . '/resources/icons/lucide-library.json';
         $data = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
 
-        return is_array($data['icons'] ?? null) ? $data['icons'] : [];
+        return array_merge(is_array($data['icons'] ?? null) ? $data['icons'] : [], self::loadBrandIcons());
     }
 
     /** @return array<string,string> */

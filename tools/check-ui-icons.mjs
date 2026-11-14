@@ -21,8 +21,8 @@ function walk(dir) {
 
 for (const root of roots) walk(root);
 if (violations.length) {
-  console.error('Text-symbol UI icons found. Use Lucide via ui_icon() or @lucide/vue.');
+  console.error('Text-symbol UI icons found. Use Lucide or Tabler brands via ui_icon() or @lucide/vue.');
   for (const item of violations) console.error(`- ${item.file}: ${item.matches.join(' | ')}`);
   process.exit(1);
 }
-console.log('Lucide-only interactive icon audit: OK');
+console.log('Lucide and Tabler interactive icon audit: OK');

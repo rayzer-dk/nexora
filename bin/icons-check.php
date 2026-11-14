@@ -2,12 +2,17 @@
 
 declare(strict_types=1);
 
-// Release gate: every icon name used in templates, PHP or JS must be a real Lucide icon in resources/icons/lucide.json,
+// Release gate: icon names used in templates, PHP or JS must be in the Lucide or official Tabler brand set,
 // and no template may draw its own inline <svg>.
 $root = dirname(__DIR__);
 $data = json_decode((string) file_get_contents($root . '/resources/icons/lucide.json'), true, 16, JSON_THROW_ON_ERROR);
-$icons = $data['icons'] ?? [];
+$brands = json_decode((string) file_get_contents($root . '/resources/icons/tabler-brands.json'), true, 16, JSON_THROW_ON_ERROR)['icons'] ?? [];
+$icons = array_merge($data['icons'] ?? [], $brands);
 $errors = [];
+$manifest = json_decode((string) file_get_contents($root . '/tools/lucide-manifest.json'), true, 16, JSON_THROW_ON_ERROR);
+if (!empty($manifest['custom'])) {
+    $errors[] = 'Custom SVG bodies in the Lucide manifest are forbidden; use the official Tabler brand set.';
+}
 $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
 foreach ($it as $file) {
     $path = $file->getPathname();
@@ -27,9 +32,7 @@ foreach ($it as $file) {
     $withoutCharts = (string) preg_replace('#<svg\b[^>]*\bdata-chart\b[^>]*>.*?</svg>#s', '', $text);
     // Ignore SVG text mentioned inside Twig expressions; only actual markup is relevant.
     $markup = (string) preg_replace('/\\{[{%#][\\s\\S]*?[}%#]\\}/', '', $withoutCharts);
-    // Dedicated messenger brand marks are logos, not generic UI icons.
-    $isBrandMark = $rel === 'themes/default/templates/components/brand_icon.html.twig';
-    if (str_ends_with($rel, '.twig') && str_contains($markup, '<svg') && !$isBrandMark && !str_contains($rel, 'branding')) {
+    if (str_ends_with($rel, '.twig') && str_contains($markup, '<svg') && !str_contains($rel, 'branding')) {
         $errors[] = "$rel: inline <svg> is not allowed; use ui_icon() with a Lucide icon";
     }
 }
@@ -37,4 +40,4 @@ if ($errors !== []) {
     fwrite(STDERR, implode("\n", array_unique($errors)) . "\n");
     exit(1);
 }
-echo 'Icons OK: ' . count($icons) . " Lucide icons, Lucide {$data['lucide_version']}.\n";
+echo 'Icons OK: ' . count($data['icons'] ?? []) . " Lucide icons + " . count($brands) . " Tabler brand icons.\n";
