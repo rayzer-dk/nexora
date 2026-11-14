@@ -53,3 +53,7 @@ framework:
             policy: fixed_window
             limit: 120
             interval: '1 minute'
+        checkout_coupon:
+            policy: fixed_window
+            limit: 15
+            interval: '5 minutes'

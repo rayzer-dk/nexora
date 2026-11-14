@@ -60,10 +60,11 @@ final readonly class WayForPayPaymentProvider implements OnlinePaymentProviderIn
         return new OnlinePaymentSession($request->orderNumber, $url, null, ['provider' => 'wayforpay']);
     }
 
-    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey): RefundResult
+    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey, string $currency = ''): RefundResult
     {
         $amount = number_format($amountMinor / 100, 2, '.', '');
-        $currency = 'UAH';
+        // The refund goes in the currency of the payment (the invoice may have been created in USD or EUR).
+        $currency = in_array($currency, self::CURRENCIES, true) ? $currency : 'UAH';
         $data = $this->client->request([
             'transactionType' => 'REFUND',
             'apiVersion' => 1,

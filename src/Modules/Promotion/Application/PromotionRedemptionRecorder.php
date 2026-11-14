@@ -19,6 +19,8 @@ final readonly class PromotionRedemptionRecorder
         $now=(new DateTimeImmutable('now',new DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
         $email=$email !== null && trim($email)!=='' ? mb_strtolower(trim($email)) : null;
         foreach($result->applied as $applied){
+            // The customer-group discount is not a row of mc_promotion (id 0); it is already part of the order totals.
+            if ((int)$applied['id']<=0) continue;
             $this->db->insert('mc_order_promotion',[
                 'order_id'=>$orderId,'promotion_id'=>$applied['id'],'name'=>$applied['name'],'coupon_code'=>$applied['code'],'discount_minor'=>$applied['discount_minor'],
                 'snapshot_json'=>json_encode($applied,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),

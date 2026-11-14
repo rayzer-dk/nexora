@@ -47,7 +47,7 @@ final readonly class LiqPayPaymentProvider implements OnlinePaymentProviderInter
         return new OnlinePaymentSession($request->orderNumber, $this->client->checkoutUrl($payload), null, ['provider' => 'liqpay']);
     }
 
-    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey): RefundResult
+    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey, string $currency = ''): RefundResult
     {
         $data = $this->client->request([
             'action' => 'refund',

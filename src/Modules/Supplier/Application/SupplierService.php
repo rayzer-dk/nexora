@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Supplier\Application;
 
 use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Core\Security\OutboundUrlPolicy;
 use Commerce\Core\Security\SecretVault;
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -370,7 +371,28 @@ final class SupplierService
         if (!$this->safeUrl((string) $supplier['feed_url'])) {
             throw new \DomainException(CanonicalUiText::get('supplier.runtime.invalid'));
         }
-        $response = $this->http->request('GET', (string) $supplier['feed_url'], $options);
+        // Redirects are followed here, not by the client: every address on the way must pass the same check as the first one.
+        $options['max_redirects'] = 0;
+        $url = (string) $supplier['feed_url'];
+        for ($hop = 0;; ++$hop) {
+            $response = $this->http->request('GET', $url, $options);
+            $status = $response->getStatusCode();
+            if ($status < 300 || $status >= 400 || $hop >= 3) {
+                break;
+            }
+            $next = (string) ($response->getHeaders(false)['location'][0] ?? '');
+            $base = parse_url($url);
+            if (str_starts_with($next, '/') && !str_starts_with($next, '//') && is_array($base) && isset($base['scheme'], $base['host'])) {
+                $next = $base['scheme'] . '://' . $base['host'] . (isset($base['port']) ? ':' . $base['port'] : '') . $next;
+            }
+            if (!$this->safeUrl($next)) {
+                throw new \DomainException(CanonicalUiText::get('supplier.runtime.invalid'));
+            }
+            if ((parse_url($next, PHP_URL_HOST) ?? '') !== ($base['host'] ?? '')) {
+                unset($options['auth_basic']);
+            }
+            $url = $next;
+        }
         if ($response->getStatusCode() >= 400) {
             throw new \DomainException(CanonicalUiText::get('supplier.runtime.http', ['code' => (string) $response->getStatusCode()]));
         }
@@ -438,12 +460,13 @@ final class SupplierService
         if ($this->allowPrivateHosts) {
             return true;
         }
-        $host = strtolower((string) $parts['host']);
-        if ($host === 'localhost' || str_ends_with($host, '.local') || str_ends_with($host, '.internal')) {
+        try {
+            (new OutboundUrlPolicy())->assertPublicHttps($url, true);
+        } catch (\RuntimeException) {
             return false;
         }
 
-        return filter_var($host, FILTER_VALIDATE_IP) === false || filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+        return true;
     }
 
     /** @param array{rows:int,matched:int,changed:int,applied:int,new:int} $stats */

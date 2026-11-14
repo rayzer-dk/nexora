@@ -319,6 +319,8 @@ final class SystemAdminController extends AbstractController
     #[Route('/admin/system/recovery/upload-restore', name: 'admin_system_recovery_upload_restore', methods: ['POST'])]
     public function uploadAndRestoreRecovery(Request $request): Response
     {
+        // An uploaded archive can replace code, .env and the administrator tables; it carries no signature, so only a super administrator may restore one.
+        $this->denyAccessUnlessGranted('ROLE_SUPER_ADMIN');
         if (!$this->isCsrfTokenValid('recovery_upload_restore', (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -369,6 +371,8 @@ final class SystemAdminController extends AbstractController
     #[Route('/admin/system/recovery/{id}/download', name: 'admin_system_recovery_download', methods: ['GET'], requirements: ['id' => '\\d+'])]
     public function downloadRecoverySnapshot(int $id): Response
     {
+        // A snapshot contains .env (the application secret and the database password).
+        $this->denyAccessUnlessGranted('ROLE_SUPER_ADMIN');
         try {
             $row = $this->recovery->get($id);
         } catch (\DomainException) {

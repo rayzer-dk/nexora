@@ -102,7 +102,7 @@ final readonly class GooglePayPaymentProvider implements OnlinePaymentProviderIn
         ];
     }
 
-    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey): RefundResult
+    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey, string $currency = ''): RefundResult
     {
         if (!str_starts_with($providerReference, 'pi_')) {
             throw new \RuntimeException(CanonicalUiText::get('payment.stripe.nothing_to_refund'));

@@ -122,7 +122,7 @@ final readonly class MonoPartsPaymentProvider implements OnlinePaymentProviderIn
         return ['status' => self::status($state, (string) ($data['order_sub_state'] ?? '')), 'payload' => $data];
     }
 
-    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey): RefundResult
+    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey, string $currency = ''): RefundResult
     {
         throw new \DomainException(CanonicalUiText::get('payment.mono_parts.refund_in_bank'));
     }

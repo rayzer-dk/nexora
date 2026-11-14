@@ -128,8 +128,11 @@ final class NotificationTemplateService
             return null;
         }
         $vars = $this->variables($message, $store['name']);
+        $html = (bool) ($row['is_html'] ?? false);
+        // The saved HTML body is sanitized; the values put into it (customer name, tracking number) come from visitors and are escaped here.
+        $bodyVars = $html ? array_map(static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), $vars) : $vars;
 
-        return ['subject' => $this->render((string) $row['subject'], $vars), 'body' => $this->render((string) $row['body'], $vars), 'html' => (bool) ($row['is_html'] ?? false)];
+        return ['subject' => $this->render((string) $row['subject'], $vars), 'body' => $this->render((string) $row['body'], $bodyVars), 'html' => $html];
     }
 
     /** The sanitizer of the rich-text profile; without it every tag is removed. */

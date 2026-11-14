@@ -22,12 +22,14 @@ use Commerce\Modules\Rewards\Application\LoyaltyService;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontMoneyFormatter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class CheckoutController extends AbstractController
@@ -53,7 +55,16 @@ final class CheckoutController extends AbstractController
         private readonly \Commerce\Modules\Rewards\Application\GiftCardService $giftCards,
         private readonly CheckoutLeadService $leads,
         private readonly \Commerce\Modules\Checkout\Application\CartWeightCalculator $weights,
+        #[Autowire(service: 'limiter.checkout_coupon')] private readonly RateLimiterFactoryInterface $couponLimiter,
     ) {}
+
+    /** Every try of a coupon or gift card code counts, so the codes cannot be guessed by repeating the preview or the order. */
+    private function codeTryAllowed(Request $request): bool
+    {
+        $filled = trim((string) $request->request->get('coupon_code')) !== '' || trim((string) $request->request->get('gift_card_code')) !== '';
+
+        return !$filled || $this->couponLimiter->create('checkout_code:' . ($request->getClientIp() ?? 'unknown'))->consume(1)->isAccepted();
+    }
 
     /** Delivery and payment fee for the method the shopper has picked so far, for the advisory totals. */
     private function previewShipping(Request $request, int $storeId, int $afterDiscountMinor, int $cartId = 0): int
@@ -178,6 +189,7 @@ final class CheckoutController extends AbstractController
     public function promotionPreview(Request $request): JsonResponse
     {
         if (!$this->isCsrfTokenValid('checkout_promotion', (string)$request->request->get('_token'))) return $this->json(['ok'=>false,'message'=>\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.sesiia_formy_zavershylas')], 403);
+        if (!$this->codeTryAllowed($request)) return $this->json(['ok'=>false,'message'=>\Commerce\Core\I18n\CanonicalUiText::get('php.core.runtime.failsafesubscriber.servis_tymchasovo_nedostupnyi_povtorit_zapyt_piznish')], 429);
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         $customer=$this->getUser(); if($customer instanceof CustomerUser)$this->carts->bindCustomer($cart['id'],$context->storeId,$customer->id());
         $result=$this->promotions->calculateForCart($context->storeId,$cart['id'],trim((string)$request->request->get('coupon_code')) ?: null,$customer instanceof CustomerUser ? $customer->id() : null,trim((string)$request->request->get('email')) ?: null);
@@ -199,6 +211,7 @@ final class CheckoutController extends AbstractController
     {
         $text = static fn (string $key, array $replace = []): string => \Commerce\Core\I18n\CanonicalUiText::get($key, $replace);
         if (!$this->isCsrfTokenValid('checkout_promotion', (string)$request->request->get('_token'))) return $this->json(['ok'=>false,'message'=>$text('reward_gift_invalid')], 403);
+        if (!$this->codeTryAllowed($request)) return $this->json(['ok'=>false,'message'=>\Commerce\Core\I18n\CanonicalUiText::get('php.core.runtime.failsafesubscriber.servis_tymchasovo_nedostupnyi_povtorit_zapyt_piznish')], 429);
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         $customer=$this->getUser(); $customerId=$customer instanceof CustomerUser?$customer->id():null;
         $result=$this->promotions->calculateForCart($context->storeId,$cart['id'],trim((string)$request->request->get('coupon_code')) ?: null,$customerId,trim((string)$request->request->get('email')) ?: null);
@@ -229,6 +242,7 @@ final class CheckoutController extends AbstractController
     public function place(Request $request): Response
     {
         if (!$this->isCsrfTokenValid('checkout_place', (string)$request->request->get('_token'))) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf')); $this->rememberInput($request); return $this->redirectToRoute('storefront_checkout'); }
+        if (!$this->codeTryAllowed($request)) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('php.core.runtime.failsafesubscriber.servis_tymchasovo_nedostupnyi_povtorit_zapyt_piznish')); $this->rememberInput($request); return $this->redirectToRoute('storefront_checkout'); }
         $context=$this->contexts->resolve($request); $cart=$this->carts->open($context,$request->cookies->get('mc_cart')); $context=$this->carts->contextFor($context,$cart);
         if (!$this->shippingCountries->allows($context->storeId, $context->countryCode)) { $this->addFlash('checkout_error', \Commerce\Core\I18n\CanonicalUiText::get('checkout_country_blocked')); $this->rememberInput($request); return $this->redirectToRoute('storefront_checkout'); }
         $key=(string)$request->request->get('checkout_key');

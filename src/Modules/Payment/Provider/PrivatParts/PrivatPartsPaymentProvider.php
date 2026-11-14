@@ -73,7 +73,7 @@ final readonly class PrivatPartsPaymentProvider implements OnlinePaymentProvider
         return ['status' => self::status($state), 'payload' => $data];
     }
 
-    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey): RefundResult
+    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey, string $currency = ''): RefundResult
     {
         $data = $this->client->decline($providerReference, $amountMinor);
 

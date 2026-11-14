@@ -6,6 +6,7 @@ namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Core\Id\PublicIdFactory;
 use Commerce\Modules\Admin\Domain\AdminUser;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,6 +48,7 @@ final class AdminAccessController extends AbstractController
         try {
             $allowed=array_map('strval',$this->db->fetchFirstColumn('SELECT code FROM mc_admin_permission'));
             $selected=array_values(array_intersect($allowed,array_map('strval',(array)$request->request->all('permissions'))));
+            $this->assertRoleChangeAllowed($code,$selected);
             $now=(new \DateTimeImmutable('now',new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
             $this->db->transactional(function(Connection $db)use($code,$name,$description,$selected,$now):void{
                 $existing=$db->fetchAssociative('SELECT is_system FROM mc_admin_role WHERE code=?',[$code]);
@@ -81,6 +83,7 @@ final class AdminAccessController extends AbstractController
         try{
             $roleCodes=array_map('strval',$this->db->fetchFirstColumn('SELECT code FROM mc_admin_role'));
             $roles=array_values(array_intersect($roleCodes,array_map('strval',(array)$request->request->all('roles')))); if($roles===[])$roles=['ROLE_VIEWER'];
+            $this->assertUserChangeAllowed($id,$roles);
             $storeIds=array_values(array_unique(array_filter(array_map('intval',(array)$request->request->all('stores')),fn(int $v)=>$v>0)));
             $now=(new \DateTimeImmutable('now',new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
             $this->db->transactional(function(Connection $db)use(&$id,$email,$name,$password,$status,$roles,$storeIds,$now):void{
@@ -98,6 +101,48 @@ final class AdminAccessController extends AbstractController
             $this->addFlash('success',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.adminaccesscontroller.dostup_administratora_zberezheno'));
         }catch(Throwable $e){$this->addFlash('error',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.adminaccesscontroller.dostup_ne_zberezheno').$this->safe($e));}
         return $this->redirectToRoute('admin_access_index');
+    }
+
+    /**
+     * Only a super administrator may hand out what the access screen grants: everyone else stays inside
+     * the permissions he holds himself, cannot edit system roles, super administrators or his own roles.
+     *
+     * @param list<string> $permissions
+     */
+    private function assertRoleChangeAllowed(string $code,array $permissions): void
+    {
+        if($this->isGranted('ROLE_SUPER_ADMIN'))return;
+        if((int)$this->db->fetchOne('SELECT is_system FROM mc_admin_role WHERE code=?',[$code])===1)throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('admin.access.super_only'));
+        if(array_diff($permissions,$this->actorPermissions())!==[])throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('admin.access.super_only'));
+    }
+
+    /** @param list<string> $roles */
+    private function assertUserChangeAllowed(int $id,array $roles): void
+    {
+        if($this->isGranted('ROLE_SUPER_ADMIN'))return;
+        $actor=$this->getUser();
+        if(in_array('ROLE_SUPER_ADMIN',$roles,true))throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('admin.access.super_only'));
+        if($id>0){
+            $before=json_decode((string)$this->db->fetchOne('SELECT roles FROM mc_admin_user WHERE id=?',[$id]),true)?:[];
+            if(in_array('ROLE_SUPER_ADMIN',$before,true))throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('admin.access.super_only'));
+            if($actor instanceof AdminUser && $actor->id===$id){
+                $beforeSorted=$before;$rolesSorted=$roles;sort($beforeSorted);sort($rolesSorted);
+                if($beforeSorted!==$rolesSorted)throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('admin.access.super_only'));
+            }
+        }
+        $held=$this->actorPermissions();
+        $rolePermissions=$roles===[]?[]:array_map('strval',$this->db->fetchFirstColumn('SELECT DISTINCT permission_code FROM mc_admin_role_permission WHERE role_code IN (?)',[$roles],[ArrayParameterType::STRING]));
+        if(array_diff($rolePermissions,$held)!==[])throw new \RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('admin.access.super_only'));
+    }
+
+    /** @return list<string> */
+    private function actorPermissions(): array
+    {
+        $actor=$this->getUser();
+        $roles=$actor instanceof AdminUser?$actor->getRoles():[];
+        if($roles===[])return [];
+
+        return array_map('strval',$this->db->fetchFirstColumn('SELECT DISTINCT permission_code FROM mc_admin_role_permission WHERE role_code IN (?)',[$roles],[ArrayParameterType::STRING]));
     }
 
     private function activeSuperAdminCount(Connection $db): int { return (int)$db->fetchOne("SELECT COUNT(*) FROM mc_admin_user WHERE status='active' AND JSON_CONTAINS(roles, ?)",[json_encode('ROLE_SUPER_ADMIN',JSON_THROW_ON_ERROR)]); }

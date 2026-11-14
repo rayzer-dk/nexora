@@ -6,7 +6,7 @@ namespace Commerce\Modules\ConsumerRights\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\ConsumerRights\Withdrawal\WithdrawalNoticeService;
-use Commerce\Modules\Security\Captcha\CaptchaVerifier;
+use Commerce\Modules\Security\Spam\PublicFormProtection;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,7 +19,7 @@ final class WithdrawalController extends AbstractController
     public function __construct(
         private readonly StorefrontContextResolver $contexts,
         private readonly WithdrawalNoticeService $notices,
-        private readonly CaptchaVerifier $captcha,
+        private readonly PublicFormProtection $protection,
     ) {
     }
 
@@ -41,7 +41,7 @@ final class WithdrawalController extends AbstractController
                 $error = 'withdrawal_error_invalid';
             } elseif ($stage === 'review') {
                 $step = 'confirm';
-            } elseif (!$this->captcha->verify($request, 'withdrawal')) {
+            } elseif (!$this->protection->allow($request, 'withdrawal')) {
                 $error = 'withdrawal_error_bot';
                 $step = 'confirm';
             } else {

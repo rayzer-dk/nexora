@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 4.0.8 — 2026-11-14
+
+Security and correctness fixes from a read-only audit of 4.0.7 (admin, platform, checkout, payments). Version 4.0.8 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations. Checked by PHPStan, PHPCS, source guard, encoding and release static checks; PHPUnit and e2e were NOT run because the audit environment has no PHP 8.4.
+
+- Checkout: a buyer in a customer group with a discount could not place an order. The group discount was written to `mc_order_promotion` and `mc_promotion_redemption` with `promotion_id = 0`, which violates the foreign key to `mc_promotion` and rolled the order back. The discount is part of the order totals; only real promotions are recorded now.
+- Admin access: a role with only `admin_users.manage` could grant itself `ROLE_SUPER_ADMIN`. Anyone but a super administrator can no longer assign `ROLE_SUPER_ADMIN`, edit a super administrator, change his own roles, edit a system role, or hand out permissions he does not hold himself.
+- Recovery: restoring an uploaded archive (no signature, it can replace code, `.env` and the administrator tables) and downloading a snapshot (it contains `.env`) are limited to a super administrator.
+- Checkout promotions: coupon and gift card codes could be tried without limit in the preview and in the order. Every try now counts against the limiter `checkout_coupon` (15 per 5 minutes per address); above it the answer is "temporarily unavailable".
+- Withdrawal form (`/withdrawal`): sent the confirmation to any address without a rate limit. It goes through `PublicFormProtection` (honeypot, rate limit, captcha) like the other public forms.
+- E-mail: values put into an HTML notification template (customer name, tracking number) are escaped; a visitor could put HTML into the name of a guest order.
+- Payments: a WayForPay refund was always sent in UAH although the invoice may be USD or EUR; `OnlinePaymentProviderInterface::refund()` takes the currency of the order (optional last argument, existing implementations accept it).
+- Supplier feeds: the address check only looked at the host name as a string (`http://[::1]/`, a numeric host, a name resolving to a private address passed) and redirects were followed freely. The address goes through `OutboundUrlPolicy` and each redirect (up to 3) is checked again; the Basic password is not sent to another host.
+- Installer: `.env` values with `$` (a database password, the store name) are written escaped, so Dotenv does not expand them.
+- PRRO: a receipt can be created only for an order of the store being managed.
+
+Carried from Unreleased:
+
 - Storefront header, footer and landing page: until the owner sets a brand title, logo or icon in Appearance, the Nexora logo is shown (a light variant on dark themes) instead of the store name and the shopping-bag placeholder. A brand title, logo or icon set in Appearance replaces it; the installed store name is no longer used as the visible brand. e2e `storefront.spec.ts` checks the default logo.
 
 ## 4.0.7 — 2026-11-13

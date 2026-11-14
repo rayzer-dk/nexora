@@ -633,7 +633,8 @@ function isLocalHost(string $host): bool
 
 function envQuote(string $value): string
 {
-    return '"' . str_replace(["\\", '"', "\r", "\n"], ["\\\\", '\\"', '', '\\n'], $value) . '"';
+    // Dotenv expands $VAR and $(cmd) inside double quotes; a password or store name containing "$" must stay literal.
+    return '"' . str_replace(["\\", '"', '$', "\r", "\n"], ["\\\\", '\\"', '\\$', '', '\\n'], $value) . '"';
 }
 
 function atomicWrite(string $path, string $contents, int $mode): void

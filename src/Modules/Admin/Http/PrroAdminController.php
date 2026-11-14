@@ -123,7 +123,7 @@ final class PrroAdminController extends AbstractController
     #[Route('/admin/orders/{publicId}/fiscalize', name: 'admin_order_fiscalize', methods: ['POST'])]
     public function fiscalize(string $publicId, Request $request): Response
     {
-        $this->contexts->resolve($request);
+        $context = $this->contexts->resolve($request);
         if (!$this->isCsrfTokenValid('prro_order_' . $publicId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
         }
@@ -132,7 +132,7 @@ final class PrroAdminController extends AbstractController
         } catch (\Throwable) {
             throw $this->createNotFoundException();
         }
-        $orderId = $this->db->fetchOne('SELECT id FROM mc_sales_order WHERE public_id=?', [$binary]);
+        $orderId = $this->db->fetchOne('SELECT id FROM mc_sales_order WHERE public_id=? AND store_id=?', [$binary, $context->storeId]);
         if ($orderId === false) {
             throw $this->createNotFoundException();
         }

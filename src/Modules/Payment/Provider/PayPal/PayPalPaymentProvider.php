@@ -89,7 +89,7 @@ final readonly class PayPalPaymentProvider implements OnlinePaymentProviderInter
         ];
     }
 
-    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey): RefundResult
+    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey, string $currency = ''): RefundResult
     {
         $order = $this->client->request('GET', '/v2/checkout/orders/' . rawurlencode($providerReference));
         $capture = $order['purchase_units'][0]['payments']['captures'][0] ?? null;

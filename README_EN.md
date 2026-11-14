@@ -1,4 +1,4 @@
-# Nexora Commerce 4.0.7
+# Nexora Commerce 4.0.8
 
 <p align="center"><img src="public/assets/branding/nexora-logo.png" width="360" alt="Nexora Commerce"></p>
 

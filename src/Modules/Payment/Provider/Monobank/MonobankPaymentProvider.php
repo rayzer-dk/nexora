@@ -32,7 +32,7 @@ final readonly class MonobankPaymentProvider implements OnlinePaymentProviderInt
         return new OnlinePaymentSession($invoice,$url,isset($data['appUrl'])?(string)$data['appUrl']:null,['provider'=>'monobank']);
     }
 
-    public function refund(string $providerReference,int $amountMinor,string $idempotencyKey): RefundResult
+    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey, string $currency = ''): RefundResult
     {
         $data=$this->client->refund($providerReference,$amountMinor,$idempotencyKey);
         return new RefundResult((string)($data['status']??'processing'),$data);

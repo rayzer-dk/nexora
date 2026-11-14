@@ -65,7 +65,7 @@ final readonly class StripePaymentProvider implements OnlinePaymentProviderInter
         return new OnlinePaymentSession($id, $url, null, ['provider' => 'stripe']);
     }
 
-    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey): RefundResult
+    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey, string $currency = ''): RefundResult
     {
         $session = $this->client->get('/checkout/sessions/' . rawurlencode($providerReference));
         $intent = trim((string) ($session['payment_intent'] ?? ''));

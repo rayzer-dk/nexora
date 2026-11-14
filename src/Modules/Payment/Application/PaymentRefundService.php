@@ -64,7 +64,7 @@ final readonly class PaymentRefundService
         $prepared = $this->db->transactional(function (Connection $db) use ($binary, $amountMinor, $actor): array {
             $row = $db->fetchAssociative(
                 'SELECT o.id order_id,o.order_number,p.id payment_id,p.provider_code,p.provider_reference,
-                        p.status payment_status,p.amount_minor,p.refunded_minor
+                        p.status payment_status,p.amount_minor,p.refunded_minor,o.currency order_currency
                  FROM mc_sales_order o
                  JOIN mc_payment p ON p.order_id=o.id
                  WHERE o.public_id=?
@@ -131,13 +131,14 @@ final readonly class PaymentRefundService
                 'reference' => (string) $row['provider_reference'],
                 'amount' => $amountMinor,
                 'key' => $key,
+                'currency' => strtoupper((string) $row['order_currency']),
                 'actor' => $actor,
             ];
         });
 
         try {
             /** @var RefundResult $result */
-            $result = $prepared['provider']->refund($prepared['reference'], $prepared['amount'], $prepared['key']);
+            $result = $prepared['provider']->refund($prepared['reference'], $prepared['amount'], $prepared['key'], $prepared['currency']);
             $status = $this->normalizeProviderRefundStatus($result->status);
             $this->recordProviderResult(
                 (int) $prepared['refund_id'],

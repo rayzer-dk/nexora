@@ -12,7 +12,7 @@ interface OnlinePaymentProviderInterface extends PaymentProviderInterface
 {
     public function createPayment(OnlinePaymentRequest $request): OnlinePaymentSession;
 
-    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey): RefundResult;
+    public function refund(string $providerReference, int $amountMinor, string $idempotencyKey, string $currency = ''): RefundResult;
 
     public function cancel(string $providerReference): void;
 }

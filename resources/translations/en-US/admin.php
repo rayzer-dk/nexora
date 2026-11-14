@@ -6721,5 +6721,6 @@ return [
     'admin.schema.none' => 'No markup for this page or article',
     'admin.schema.page_help' => 'Choose the actual page content. Automatic: About -> AboutPage, Contacts -> ContactPage, FAQ -> FAQPage, other pages -> WebPage. FAQPage does not guarantee Google rich results. Saved by the normal Save button.',
     'admin.schema.blog_help' => 'Automatic uses BlogPosting. Select Article for editorial work and NewsArticle only for news reporting. Site-wide organization and navigation remain.',
+    'admin.access.super_only' => 'Only a super administrator can do this: grant ROLE_SUPER_ADMIN, change a super administrator or your own roles, edit a system role, or give permissions you do not hold yourself.',
 
 ];
