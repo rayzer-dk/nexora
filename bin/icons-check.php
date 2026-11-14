@@ -7,8 +7,18 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 $data = json_decode((string) file_get_contents($root . '/resources/icons/lucide.json'), true, 16, JSON_THROW_ON_ERROR);
 $brands = json_decode((string) file_get_contents($root . '/resources/icons/tabler-brands.json'), true, 16, JSON_THROW_ON_ERROR)['icons'] ?? [];
-$icons = array_merge($data['icons'] ?? [], $brands);
+$fullLucide = json_decode((string) file_get_contents($root . '/resources/icons/lucide-library.json'), true, 16, JSON_THROW_ON_ERROR)['icons'] ?? [];
+$icons = array_merge($fullLucide, $data['icons'] ?? [], $brands);
 $errors = [];
+$socialSettings = (string) file_get_contents($root . '/src/Modules/Storefront/Infrastructure/StorefrontContactSettings.php');
+if (preg_match('/public const SOCIAL = \\[([\\s\\S]*?)\\n    \\];/', $socialSettings, $networkSource)) {
+    preg_match_all("/'([a-z0-9-]+)'\\s*=>\\s*\\[\\[/", $networkSource[1], $socialNames);
+    foreach ($socialNames[1] as $code) {
+        if (!isset($brands['brand-' . $code])) {
+            $errors[] = 'Contact network "' . $code . '" has no official self-hosted Tabler brand icon.';
+        }
+    }
+}
 $manifest = json_decode((string) file_get_contents($root . '/tools/lucide-manifest.json'), true, 16, JSON_THROW_ON_ERROR);
 if (!empty($manifest['custom'])) {
     $errors[] = 'Custom SVG bodies in the Lucide manifest are forbidden; use the official Tabler brand set.';
@@ -24,7 +34,7 @@ foreach ($it as $file) {
     if (preg_match_all("/(?:ui_icon|lucideIcon)\(\s*'([a-z0-9-]+)'\s*(?=,|\))/", $text, $m)) {
         foreach ($m[1] as $name) {
             if (!isset($icons[$name])) {
-                $errors[] = "$rel: icon \"$name\" is not in the Lucide or Tabler icon sets (update the relevant icon manifest)";
+                $errors[] = "$rel: icon \"$name\" is not in the installed Lucide or Tabler icon sets";
             }
         }
     }
@@ -40,4 +50,4 @@ if ($errors !== []) {
     fwrite(STDERR, implode("\n", array_unique($errors)) . "\n");
     exit(1);
 }
-echo 'Icons OK: ' . count($data['icons'] ?? []) . " Lucide icons + " . count($brands) . " Tabler brand icons.\n";
+echo 'Icons OK: ' . count($data['icons'] ?? []) . ' bundled Lucide + ' . count($fullLucide) . ' optional Lucide + ' . count($brands) . " Tabler brand icons.\n";

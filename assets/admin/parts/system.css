@@ -298,3 +298,8 @@ label:has(> .admin-tip--hint) > span:first-child:not(.admin-tip):not(:has(input,
 .migration-sources { min-width: 0; }
 button.admin-cache-menu__all { width: 100%; border-width: 1px 0 0; background: none; font: inherit; font-size: var(--mc-font-size-sm); cursor: pointer; text-align: start; }
 .admin-rate-form label { display: inline-flex; align-items: center; gap: var(--mc-space-2); white-space: nowrap; }
+
+/* Additional contact/social networks stay compact until the merchant expands them. */
+.admin-social-extra { margin-top: var(--mc-space-3); border-top: 1px solid var(--mc-color-border); padding-top: var(--mc-space-2); }
+.admin-social-extra > summary { display: flex; align-items: center; gap: var(--mc-space-2); cursor: pointer; color: var(--mc-color-primary); font-weight: var(--mc-font-weight-semibold); }
+.admin-social-extra > .admin-form-grid { margin-top: var(--mc-space-3); }

@@ -39,3 +39,12 @@ test('unknown SEO route returns a normal 404 without a storefront runtime except
   expect(response?.status()).toBe(404);
   await expectNoServerError(page);
 });
+
+test('local icon feed serves optional Lucide and Tabler marks by name', async ({ request }) => {
+  const response = await request.get('/icons.json?names=alarm-clock-check,brand-discord');
+  expect(response.status()).toBe(200);
+  const data = (await response.json()) as { icons: Record<string, string> };
+  expect(Object.keys(data.icons).sort()).toEqual(['alarm-clock-check', 'brand-discord']);
+  expect(data.icons['alarm-clock-check']).toContain('<path');
+  expect(data.icons['brand-discord']).toContain('<path');
+});

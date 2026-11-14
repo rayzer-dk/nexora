@@ -10,7 +10,21 @@
 <label><span>{{ ui_text('admin.storefront_contacts.hours') }}</span><textarea name="working_hours" rows="3" maxlength="1000" placeholder="{{ ui_text('admin.storefront_contacts.hours_placeholder')|e('html_attr') }}">{{ s.working_hours }}</textarea><small>{{ ui_text('admin.storefront_contacts.hours_hint') }}</small></label>
 <label><span>{{ ui_text('admin.storefront_contacts.map') }}</span><input type="text" name="map_input" maxlength="500" value="{{ s.map_input }}" placeholder="50.450100, 30.523400"><small>{{ ui_text('admin.storefront_contacts.map_hint') }}</small></label>
 <label><span>{{ ui_text('admin.storefront_contacts.map_zoom') }}</span><input type="number" name="map_zoom" min="3" max="19" value="{{ s.map_zoom }}"></label>
-<fieldset><legend>{{ ui_text('admin.storefront_contacts.social') }}</legend><div class="admin-form-grid">{% for code in social_networks %}<label><span>{{ ui_icon('brand-' ~ code, 16) }} {{ code|capitalize }}</span><input type="text" name="social_{{ code }}" maxlength="500" value="{{ s.social[code]|default('') }}" placeholder="https://"></label>{% endfor %}</div><small>{{ ui_text('admin.storefront_contacts.social_hint') }}</small></fieldset>
+{% set major_social = social_networks|slice(0, 9) %}
+{% set additional_social = social_networks|slice(9) %}
+{% set social_labels = {'x':'X','vk':'VK','ok-ru':'OK.ru','line':'LINE','github':'GitHub','gitlab':'GitLab','youtube':'YouTube','tiktok':'TikTok','linkedin':'LinkedIn','whatsapp':'WhatsApp','soundcloud':'SoundCloud'} %}
+<fieldset><legend>{{ ui_text('admin.storefront_contacts.social') }}</legend>
+<div class="admin-form-grid">{% for code in major_social %}
+<label><span>{{ ui_icon('brand-' ~ code, 16) }} {{ social_labels[code]|default(code|capitalize) }}</span><input type="text" name="social_{{ code }}" maxlength="500" value="{{ s.social[code]|default('') }}" placeholder="https://"></label>
+{% endfor %}</div>
+{% if additional_social %}
+<details class="admin-social-extra" {% if s.social|keys|filter(code => code in additional_social)|length %}open{% endif %}>
+<summary>{{ ui_icon('plus', 16) }} {{ ui_text('admin.storefront_contacts.social') }} (+{{ additional_social|length }})</summary>
+<div class="admin-form-grid">{% for code in additional_social %}
+<label><span>{{ ui_icon('brand-' ~ code, 16) }} {{ social_labels[code]|default(code|capitalize) }}</span><input type="text" name="social_{{ code }}" maxlength="500" value="{{ s.social[code]|default('') }}" placeholder="https://"></label>
+{% endfor %}</div></details>
+{% endif %}
+<small>{{ ui_text('admin.storefront_contacts.social_hint') }}</small></fieldset>
 <div class="admin-form-actions"><button class="admin-button is-primary" type="submit">{{ ui_icon('check', 18) }} {{ ui_text('admin.blog.save') }}</button></div></form></section>
 <section class="admin-panel"><div class="admin-panel__header"><div><small>{{ ui_text('admin.storefront_contacts.pickup_kicker') }}</small><h2>{{ ui_text('admin.storefront_contacts.pickup_title') }}</h2></div></div>
 <p class="admin-hint">{{ ui_text('admin.storefront_contacts.pickup_intro') }}</p>

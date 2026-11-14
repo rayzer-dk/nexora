@@ -2,14 +2,13 @@
    Include anywhere: {% include '@storefront/components/social_links.html.twig' %}
    Optional: social (list of {code,url}; default = storefront_contact().social), variant ('default'|'light'), label (aria-label of the list). #}
 {% set items = social is defined ? social : storefront_contact().social %}
-{% set network_names = {facebook: ui_text('social_facebook'), instagram: ui_text('social_instagram'), telegram: ui_text('social_telegram'), youtube: ui_text('social_youtube'), tiktok: ui_text('social_tiktok'), x: ui_text('social_x'), viber: ui_text('social_viber'), whatsapp: ui_text('social_whatsapp'), linkedin: ui_text('social_linkedin')} %}
+{% set network_names = {facebook: ui_text('social_facebook'), instagram: ui_text('social_instagram'), telegram: ui_text('social_telegram'), youtube: ui_text('social_youtube'), tiktok: ui_text('social_tiktok'), x: ui_text('social_x'), viber: ui_text('social_viber'), whatsapp: ui_text('social_whatsapp'), linkedin: ui_text('social_linkedin'), messenger: 'Messenger', pinterest: 'Pinterest', discord: 'Discord', reddit: 'Reddit', snapchat: 'Snapchat', threads: 'Threads', bluesky: 'Bluesky', twitch: 'Twitch', vk: 'VK', 'ok-ru': 'OK.ru', line: 'LINE', signal: 'Signal', skype: 'Skype', tumblr: 'Tumblr', medium: 'Medium', github: 'GitHub', gitlab: 'GitLab', behance: 'Behance', dribbble: 'Dribbble', spotify: 'Spotify', soundcloud: 'SoundCloud', patreon: 'Patreon'} %}
 {% if items %}
 <ul class="social-links{% if variant|default('') == 'light' %} social-links--light{% endif %}" aria-label="{{ (label|default(ui_text('contacts_social')))|e('html_attr') }}">
-  {% set network_icons = {facebook: 'brand-facebook', instagram: 'brand-instagram', telegram: 'brand-telegram', youtube: 'brand-youtube', tiktok: 'brand-tiktok', x: 'brand-x', viber: 'brand-viber', whatsapp: 'brand-whatsapp', linkedin: 'brand-linkedin'} %}
-  {% for item in items %}
+    {% for item in items %}
   {% set code = item.code %}
   <li><a class="social-links__item social-links__item--{{ code }}" href="{{ item.url }}" target="_blank" rel="noopener noreferrer me" aria-label="{{ network_names[code]|default(code)|e('html_attr') }}" title="{{ network_names[code]|default(code)|e('html_attr') }}">
-    {{ ui_icon(network_icons[code]|default('link'), 20, 'social-links__icon') }}
+    {{ ui_icon('brand-' ~ code, 20, 'social-links__icon') }}
   </a></li>
   {% endfor %}
 </ul>

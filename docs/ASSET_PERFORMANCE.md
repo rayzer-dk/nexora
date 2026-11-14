@@ -6,6 +6,7 @@ Production assets are built before release; the storefront and admin never minif
 
 - Vite production build uses tree-shaking, JS/CSS minification, CSS code splitting and content-hashed files.
 - Tiptap, Chart.js, Lucide and Vue/Pinia are split into dedicated vendor chunks when referenced by the compiled Vue application.
+- Core Lucide and Tabler brand icons are bundled locally; arbitrary Lucide names are resolved from the self-hosted `/icons.json?names=...` endpoint (one icon per response when requested by JavaScript). The full 1837-icon catalog is never shipped in normal storefront JavaScript. See `docs/ICONS.md`.
 - Admin Builder and Media Library use feature CSS and JavaScript that load only on their own pages.
 - The generic admin shell no longer downloads the storefront stylesheet.
 - Heavy optional integrations remain server-side/background features and do not add browser assets to normal storefront requests.
