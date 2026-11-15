@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectNoServerError, loginAdmin } from './helpers';
+import { expectNoServerError, loginAdmin, openProductTab } from './helpers';
 
 test.beforeEach(({}, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Edits one product, runs once.');
@@ -105,4 +105,46 @@ test('the product list shows which languages are translated and sorts by it', as
   await page.goto('/admin/catalog/products?sort=translations&dir=desc', { waitUntil: 'domcontentloaded' });
   const descending = await done();
   expect(descending).toEqual([...descending].sort((a, b) => b - a));
+});
+
+test('a language that only has the default-language copy stays a copy until its text is changed', async ({ page }) => {
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/products/new', { waitUntil: 'domcontentloaded' });
+  const sku = `E2E-FB-${Date.now()}`;
+  await page.locator('input[name="name"]').fill('E2E fallback copy');
+  await page.locator('input[name="sku"]').fill(sku);
+  await openProductTab(page, 'sales');
+  await page.locator('input[name="price"]').fill('10.00');
+  await Promise.all([
+    page.waitForLoadState('domcontentloaded'),
+    page.locator('form:has(input[name="sku"]) button[type="submit"]:not([formaction]):visible').first().click(),
+  ]);
+  await expectNoServerError(page);
+  await page.goto(`/admin/catalog/products?search=${sku}`, { waitUntil: 'domcontentloaded' });
+  const edit = (await page.locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().getAttribute('href'))!;
+
+  // the second language has only the copy: the form shows the notice and the default text
+  const codes = await page.locator('select[name="locale"] option').evaluateAll((options) => options.map((o) => (o as HTMLOptionElement).value));
+  const second = codes.find((code) => code !== codes[0]);
+  test.skip(!second, 'The store has one language.');
+  await page.goto(`${edit}?locale=${second}`, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-translation-fallback]')).toBeVisible();
+  await expect(page.locator('input[name="name"]')).toHaveValue('E2E fallback copy');
+
+  // changing only the price keeps the copy a copy
+  await openProductTab(page, 'sales');
+  await page.locator('input[name="price"]').fill('12.50');
+  await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('.admin-save-bar button[data-primary-submit]').first().click()]);
+  await expectNoServerError(page);
+  await page.goto(`${edit}?locale=${second}`, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-translation-fallback]')).toBeVisible();
+
+  // typing a text of its own makes it a translation
+  await openProductTab(page, 'general');
+  await page.locator('input[name="name"]').fill('E2E own translation');
+  await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('.admin-save-bar button[data-primary-submit]').first().click()]);
+  await expectNoServerError(page);
+  await page.goto(`${edit}?locale=${second}`, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-translation-fallback]')).toHaveCount(0);
+  await expect(page.locator('input[name="name"]')).toHaveValue('E2E own translation');
 });

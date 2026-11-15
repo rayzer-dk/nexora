@@ -93,9 +93,9 @@
                 <form method="get" action="{{ app.request.pathInfo }}">
                     {% if context_switcher.markets|length > 1 %}<label>{{ ui_text('admin_market') }}<select name="market_id" data-autosubmit>{% for market in context_switcher.markets %}<option value="{{ market.id }}"{{ market.id == context_switcher.current.market_id ? ' selected' : '' }}>{{ market.name }}</option>{% endfor %}</select></label>{% endif %}
                     {% if context_switcher.locales|length > 1 %}<label title="{{ ui_text('admin.context.content_language_help') }}"><span class="admin-context-icon">{{ ui_icon('file-text', 16) }}</span><span class="visually-hidden">{{ ui_text('admin.context.content_language') }}</span><select name="locale" data-autosubmit aria-label="{{ ui_text('admin.context.content_language') }}">{% for locale in context_switcher.locales %}<option value="{{ locale.locale_code }}" title="{{ (locale.native_name|default(locale.locale_code)|split(' (')|first)|e('html_attr') }}"{{ locale.locale_code == context_switcher.current.locale ? ' selected' : '' }}>{{ locale.native_name|default(locale.locale_code)|split(' (')|first }}</option>{% endfor %}</select></label>{% endif %}
-                    {% if context_switcher.currencies|length > 1 %}<label>{{ ui_text('admin_currency') }}<select name="currency" data-autosubmit>{% for currency in context_switcher.currencies %}<option value="{{ currency.currency_code }}"{{ currency.currency_code == context_switcher.current.currency ? ' selected' : '' }}>{{ currency.currency_code }}</option>{% endfor %}</select></label>{% endif %}
                 </form>
                 {% endif %}
+                {% if context_switcher.currencies|length > 1 %}{% set currency_items = [] %}{% for c in context_switcher.currencies %}{% set currency_items = currency_items|merge([{code: c.currency_code, name: c.name, symbol: c.symbol, current: c.currency_code == context_switcher.current.currency, href: app.request.pathInfo ~ '?' ~ app.request.query.all|merge({currency: c.currency_code})|url_encode}]) %}{% endfor %}{{ _self.currency_menu(ui_text('admin_currency'), ui_text('admin.context.currency_help'), currency_items) }}{% endif %}
                 {% set ui_languages = admin_interface_languages() %}
                 {% if ui_languages.available|length > 1 %}{% set ui_items = [] %}{% for code, name in ui_languages.available %}{% set ui_items = ui_items|merge([{code: code, name: name|split(' (')|first, current: code == ui_languages.current, is_default: code == ui_languages.default}]) %}{% endfor %}<form class="admin-context__lang" method="post" action="/admin/interface-language"><input type="hidden" name="_token" value="{{ csrf_token('admin_interface_language') }}"><input type="hidden" name="back" value="{{ app.request.requestUri }}">{{ _self.ui_lang_menu(ui_text('admin.context.interface_language'), ui_text('admin.context.interface_language_help'), ui_items) }}</form>{% endif %}
             </div>
@@ -134,6 +134,19 @@
     <div class="admin-lang-menu__panel">
         <p class="admin-lang-menu__title"><strong>{{ title }}</strong><small>{{ help }}</small></p>
         {% for item in items %}<button type="submit" name="ui_locale" value="{{ item.code }}"{{ item.current ? ' aria-current="true"' : '' }}><span class="admin-lang-menu__flag">{{ ui_flag(item.code) ?: ui_icon('globe', 16) }}</span><span class="admin-lang-menu__name" lang="{{ item.code }}">{{ item.name }}</span>{% if item.is_default %}<small class="admin-lang-menu__default">{{ ui_text('admin.lang_tabs.default') }}</small>{% endif %}{% if item.current %}{{ ui_icon('check', 16) }}{% endif %}</button>{% endfor %}
+    </div>
+</details>
+{% endmacro %}
+{#
+  Currency menu of the top bar, as the storefront has it: the button shows the symbol of the current currency; the list names
+  every currency of the store. The currency is the one prices are shown and typed in (lists, the product form).
+#}
+{% macro currency_menu(title, help, items) %}{% set current = items|filter(i => i.current)|first %}
+<details class="admin-lang-menu admin-currency-menu">
+    <summary class="admin-lang-menu__button" title="{{ title }}: {{ current.code|default('') }}" aria-label="{{ title }}: {{ current.code|default('') }}">{{ ui_icon('coins', 16) }}<span class="admin-currency-menu__symbol">{{ current.symbol|default('') }}</span>{{ ui_icon('chevron-down', 14) }}</summary>
+    <div class="admin-lang-menu__panel">
+        <p class="admin-lang-menu__title"><strong>{{ title }}</strong><small>{{ help }}</small></p>
+        {% for item in items %}<a href="{{ item.href }}" rel="nofollow"{{ item.current ? ' aria-current="true"' : '' }}><span class="admin-currency-menu__symbol">{{ item.symbol }}</span><span class="admin-lang-menu__name">{{ item.code }} · {{ item.name }}</span>{% if item.current %}{{ ui_icon('check', 16) }}{% endif %}</a>{% endfor %}
     </div>
 </details>
 {% endmacro %}

@@ -149,7 +149,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
         $binary = Uuid::fromString($publicId)->toBinary();
         $locationId = MarketStockLocation::locationId($this->connection, $marketId);
         $row = $this->connection->fetchAssociative(
-            "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,(pt.product_id IS NOT NULL) AS has_translation,pt.name,pt.h1,pt.short_description,pt.description,pt.meta_title,pt.meta_description,v.id AS variant_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,pr.amount_minor,pr.compare_at_minor,pr.currency,sr.slug,COALESCE(sr.indexable,1) AS indexable,COALESCE(ppp.mode,'auto') purchase_mode,ppp.button_label purchase_button_label,ppp.eta_text purchase_eta_text,
+            "SELECT p.id,p.public_id,p.status,p.product_type,p.brand_id,(pt.product_id IS NOT NULL) AS has_translation,COALESCE(pt.is_fallback,0) AS translation_is_fallback,pt.name,pt.h1,pt.short_description,pt.description,pt.meta_title,pt.meta_description,v.id AS variant_id,v.sku,v.gtin,v.mpn,v.sale_unit_code,pr.amount_minor,pr.compare_at_minor,pr.currency,sr.slug,COALESCE(sr.indexable,1) AS indexable,COALESCE(ppp.mode,'auto') purchase_mode,ppp.button_label purchase_button_label,ppp.eta_text purchase_eta_text,
                 (SELECT sl.stocked_quantity FROM mc_variant_inventory_item vii JOIN mc_stock_level sl ON sl.inventory_item_id=vii.inventory_item_id AND sl.location_id=? WHERE vii.variant_id=v.id ORDER BY vii.inventory_item_id LIMIT 1) AS stock_quantity
              FROM mc_product p
              JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?
@@ -278,7 +278,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
     public function categoryForEdit(int $storeId, string $locale, string $publicId): array
     {
         $row = $this->connection->fetchAssociative(
-            "SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,c.icon,ct.name,ct.h1,ct.meta_title,ct.meta_description,ct.description,ct.description_bottom,sr.slug,COALESCE(sr.indexable,1) AS indexable FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? LEFT JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? LIMIT 1",
+            "SELECT c.id,c.public_id,c.parent_id,c.status,c.sort_order,c.icon,ct.name,COALESCE(ct.is_fallback,0) AS translation_is_fallback,ct.h1,ct.meta_title,ct.meta_description,ct.description,ct.description_bottom,sr.slug,COALESCE(sr.indexable,1) AS indexable FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? LEFT JOIN mc_category_translation ct ON ct.category_id=c.id AND ct.store_id=? AND ct.locale=? LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id WHERE c.public_id=? LIMIT 1",
             [$storeId, $storeId, $locale, $storeId, $locale, Uuid::fromString($publicId)->toBinary()],
         );
         if (!is_array($row)) {

@@ -2418,3 +2418,8 @@ form:has(input[name="display_image_fit"][value="cover"]:checked) .image-preview_
 .admin-translations.is-complete small { color: var(--mc-color-success); font-weight: var(--mc-font-weight-semibold); }
 .admin-translations:hover small { color: var(--mc-color-text); }
 .admin-context-icon { display: inline-flex; color: var(--mc-color-muted); }
+
+.admin-currency-menu__symbol { min-width: 1.25em; font-weight: var(--mc-font-weight-semibold); color: var(--mc-color-text); text-align: center; }
+
+.lang-form-bar__notice { display: flex; align-items: flex-start; gap: var(--mc-space-2); margin: 0; padding: var(--mc-space-2) var(--mc-space-3); border-radius: var(--mc-radius-sm); background: var(--mc-color-info-soft, var(--mc-color-primary-soft)); color: var(--mc-color-text); font-size: var(--mc-font-size-sm); line-height: 1.4; }
+.lang-form-bar__notice .ui-icon { flex: none; margin-top: 2px; color: var(--mc-color-primary); }

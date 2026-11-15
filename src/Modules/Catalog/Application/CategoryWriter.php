@@ -167,7 +167,11 @@ final readonly class CategoryWriter
             $db->update('mc_category', ['parent_id' => $command->parentId, 'status' => $command->status, 'sort_order' => $command->sortOrder, 'updated_at' => $now], ['id' => $command->categoryId]);
             $db->update('mc_store_category', ['status' => $command->status, 'sort_order' => $command->sortOrder], ['store_id' => $command->storeId, 'category_id' => $command->categoryId]);
             $db->update('mc_market_category', ['status' => $command->status, 'sort_order' => $command->sortOrder], ['market_id' => $command->marketId, 'category_id' => $command->categoryId]);
-            $db->update('mc_category_translation', ['name' => trim($command->name), 'is_fallback' => 0], ['category_id' => $command->categoryId, 'store_id' => $command->storeId, 'locale' => $command->locale]);
+            // The copy of the default language (is_fallback) stays a copy while the form sends its name back unchanged.
+            $db->executeStatement(
+                'UPDATE mc_category_translation SET is_fallback=IF(is_fallback=1 AND name=?,1,0),name=? WHERE category_id=? AND store_id=? AND locale=?',
+                [trim($command->name), trim($command->name), $command->categoryId, $command->storeId, $command->locale],
+            );
 
             $publicId = Uuid::fromBinary((string) $row['public_id'])->toRfc4122();
             $route = $this->seo->ensureForCreatedEntity($command->storeId, $command->locale, SeoEntityType::Category, $publicId, $command->name);

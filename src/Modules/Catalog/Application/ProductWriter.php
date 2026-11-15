@@ -199,7 +199,15 @@ final readonly class ProductWriter
                 $translation['meta_title'] = $this->nullableShortText($command->metaTitle, 255);
                 $translation['meta_description'] = $this->nullableShortText($command->metaDescription, 500);
             }
-            $db->update('mc_product_translation', $translation, ['product_id' => $command->productId, 'store_id' => $command->storeId, 'locale' => $command->locale]);
+            // A language that only has the copy of the default language (is_fallback) stays a copy when the form sends its texts
+            // back unchanged: opening a product in a language and editing its price must not turn the copy into a translation.
+            $existing = $db->fetchAssociative('SELECT is_fallback,name,short_description,description,h1,meta_title,meta_description FROM mc_product_translation WHERE product_id=? AND store_id=? AND locale=?', [$command->productId, $command->storeId, $command->locale]);
+            $texts = array_diff_key($translation, ['is_fallback' => 1, 'updated_at' => 1]);
+            $unchangedCopy = is_array($existing) && (int) $existing['is_fallback'] === 1
+                && array_filter($texts, static fn (mixed $value, string $field): bool => (string) $value !== (string) ($existing[$field] ?? ''), ARRAY_FILTER_USE_BOTH) === [];
+            if (!$unchangedCopy) {
+                $db->update('mc_product_translation', $translation, ['product_id' => $command->productId, 'store_id' => $command->storeId, 'locale' => $command->locale]);
+            }
 
             $db->update('mc_product_variant', [
                 'sku' => trim($command->sku),

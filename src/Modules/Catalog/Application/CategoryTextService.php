@@ -24,8 +24,10 @@ final readonly class CategoryTextService
     public function save(int $categoryId, int $storeId, string $locale, string $top, string $bottom): void
     {
         $this->db->executeStatement(
-            'UPDATE mc_category_translation SET description=?,description_bottom=?,is_fallback=0 WHERE category_id=? AND store_id=? AND locale=?',
-            [$this->clean($top), $this->clean($bottom), $categoryId, $storeId, $locale],
+            // is_fallback is assigned first: MySQL evaluates SET left to right, so it still sees the old texts and a copy
+            // that is sent back unchanged stays a copy.
+            'UPDATE mc_category_translation SET is_fallback=IF(is_fallback=1 AND description<=>? AND description_bottom<=>?,1,0),description=?,description_bottom=? WHERE category_id=? AND store_id=? AND locale=?',
+            [$top = $this->clean($top), $bottom = $this->clean($bottom), $top, $bottom, $categoryId, $storeId, $locale],
         );
         $this->fallbackTexts->fillCategory($this->db, $storeId, $categoryId);
     }
@@ -35,8 +37,8 @@ final readonly class CategoryTextService
     {
         $cut = static fn (string $v, int $n): ?string => ($v = trim(strip_tags($v))) === '' ? null : mb_substr($v, 0, $n, 'UTF-8');
         $this->db->executeStatement(
-            'UPDATE mc_category_translation SET h1=?,meta_title=?,meta_description=? WHERE category_id=? AND store_id=? AND locale=?',
-            [$cut($h1, 255), $cut($metaTitle, 255), $cut($metaDescription, 500), $categoryId, $storeId, $locale],
+            'UPDATE mc_category_translation SET is_fallback=IF(is_fallback=1 AND h1<=>? AND meta_title<=>? AND meta_description<=>?,1,0),h1=?,meta_title=?,meta_description=? WHERE category_id=? AND store_id=? AND locale=?',
+            [$h1 = $cut($h1, 255), $metaTitle = $cut($metaTitle, 255), $metaDescription = $cut($metaDescription, 500), $h1, $metaTitle, $metaDescription, $categoryId, $storeId, $locale],
         );
     }
 

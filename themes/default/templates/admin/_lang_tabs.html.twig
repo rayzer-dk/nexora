@@ -31,7 +31,7 @@
   Fields that exist per language carry data-lang-field="<field>" so that "copy" and "translate" find the pair in the
   source language. source: the locale code of the main (untranslated) fields.
 #}
-{% macro form_bar(tabs, source, hint) %}
+{% macro form_bar(tabs, source, hint, notice = '') %}
 {% set source_name = source %}{% for tab in tabs %}{% if tab.code == source %}{% set source_name = tab.name|split(' (')|first %}{% endif %}{% endfor %}
 <div class="lang-form-bar">
   {{ _self.bar(tabs) }}
@@ -40,6 +40,7 @@
     {% if ai_providers() %}{% if ai_providers()|length > 1 %}<select data-ai-provider aria-label="{{ ui_text('admin.ai.provider')|e('html_attr') }}">{% for pr in ai_providers() %}<option value="{{ pr.code }}">{{ pr.label }}</option>{% endfor %}</select>{% else %}<input type="hidden" data-ai-provider value="{{ ai_providers()|first.code }}">{% endif %}<button type="button" class="admin-button" data-lang-translate>{{ ui_icon('languages', 16) }}<span>{{ ui_text('admin.translations.translate') }}</span></button>{% endif %}
     <small class="lang-form-bar__status" data-lang-status role="status"></small>
   </div>
+  {% if notice %}<p class="lang-form-bar__notice" data-translation-fallback role="status">{{ ui_icon('info', 16) }}<span>{{ notice }}</span></p>{% endif %}
   {% if hint %}<p class="admin-help">{{ hint }}</p>{% endif %}
 </div>
 {% endmacro %}
