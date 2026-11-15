@@ -106,6 +106,31 @@ final class StoreLocalizationSettings
         });
     }
 
+    /**
+     * Languages a store can add, named as people know them ("Polski (Polska)"), so nobody types a code; the ones already
+     * in the catalogue are left out.
+     *
+     * @param list<string> $known codes already added
+     * @return array<string,string> code => native name with the country, sorted by name
+     */
+    public function addableLocales(array $known): array
+    {
+        $out = [];
+        foreach (\ResourceBundle::getLocales('') ?: [] as $intl) {
+            if (preg_match('/^([a-z]{2,3})_([A-Z]{2})$/D', (string) $intl, $m) !== 1) {
+                continue;
+            }
+            $code = $m[1] . '-' . $m[2];
+            if (!in_array($code, $known, true)) {
+                $name = \Locale::getDisplayName($code, $code); // "polski (Polska)": with the country, which tells es-ES from es-MX
+                $out[$code] = mb_strtoupper(mb_substr($name, 0, 1)) . mb_substr($name, 1);
+            }
+        }
+        asort($out, SORT_LOCALE_STRING);
+
+        return $out;
+    }
+
     public function addLocale(string $code, string $name, string $nativeName): string
     {
         $code = trim($code);

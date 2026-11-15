@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\ImportExport\Application;
 
 use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Core\I18n\LanguageName;
 use Commerce\Modules\Seo\Application\SeoUrlManager;
 use Commerce\Modules\Seo\Domain\SeoEntityType;
 use Doctrine\DBAL\Connection;
@@ -26,12 +27,12 @@ final readonly class CatalogTranslationImportService
             throw new \DomainException(CanonicalUiText::get('import.translation.invalid_locale') . $locale);
         }
         if ((int)$this->db->fetchOne('SELECT COUNT(*) FROM mc_store_locale WHERE store_id=? AND locale_code=? AND enabled=1', [$storeId,$locale]) !== 1) {
-            throw new \DomainException(CanonicalUiText::get('import.translation.locale_disabled') . $locale);
+            throw new \DomainException(CanonicalUiText::get('import.translation.locale_disabled') . LanguageName::native($locale));
         }
         $product = $this->db->fetchAssociative('SELECT p.id,p.public_id FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=? JOIN mc_product_variant v ON v.product_id=p.id WHERE v.sku=? ORDER BY v.sort_order,v.id LIMIT 1', [$storeId,$sku]);
         if (!is_array($product)) throw new \DomainException(CanonicalUiText::get('import.translation.product_missing') . $sku);
         $name = trim((string)($data['name'] ?? ''));
-        if ($name === '' || mb_strlen($name,'UTF-8') > 255) throw new \DomainException(CanonicalUiText::get('import.translation.invalid_name') . $locale);
+        if ($name === '' || mb_strlen($name,'UTF-8') > 255) throw new \DomainException(CanonicalUiText::get('import.translation.invalid_name') . LanguageName::native($locale));
         $now=(new \DateTimeImmutable('now',new \DateTimeZone('UTC')))->format('Y-m-d H:i:s.u');
         $row=[
             'name'=>$name,

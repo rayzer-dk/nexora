@@ -9,7 +9,7 @@
 {% for f in core|merge(extra) %}<li class="catalog-quality__issue{{ summary.counts[f] > 0 ? (f in core ? ' is-bad' : ' is-warn') : ' is-ok' }}" data-issue="{{ f }}" data-count="{{ summary.counts[f] }}"><a href="{{ path('admin_catalog_quality', {issue: f}) }}"><strong>{{ summary.counts[f] }}</strong><span>{{ ui_text('admin.catalog_quality.issue.' ~ f) }}</span></a></li>{% endfor %}
 </ul>
 <h2>{{ ui_text('admin.catalog_quality.languages') }}</h2>
-<ul class="catalog-quality__langs">{% for l in summary.locales %}<li data-locale="{{ l.code }}"><span>{{ l.name }} <small>{{ l.code }}</small></span><progress class="onboarding-bar" max="100" value="{{ l.percent }}"></progress><small>{{ l.complete }} / {{ summary.total }}</small></li>{% endfor %}</ul>
+<ul class="catalog-quality__langs">{% for l in summary.locales %}<li data-locale="{{ l.code }}"><span>{{ l.name }}</span><progress class="onboarding-bar" max="100" value="{{ l.percent }}"></progress><small>{{ l.complete }} / {{ summary.total }}</small></li>{% endfor %}</ul>
 </section>
 {% if admin_can('catalog.manage') %}<section class="admin-panel"><form method="post" action="{{ path('admin_catalog_quality_policy') }}" class="admin-form-stack" data-content-policy><input type="hidden" name="_token" value="{{ csrf_token('admin_catalog_quality') }}"><div class="admin-panel__header"><div><h2>{{ ui_text('admin.catalog_quality.policy') }}</h2><small>{{ ui_text('admin.catalog_quality.policy_hint') }}</small></div></div>
 <div class="admin-form-grid"><label><span>{{ ui_text('admin.catalog_quality.policy_label') }}</span><select name="mode">{% for m in modes %}<option value="{{ m }}"{% if m == policy %} selected{% endif %}>{{ ui_text('admin.catalog_quality.policy.' ~ m) }}</option>{% endfor %}</select></label></div>

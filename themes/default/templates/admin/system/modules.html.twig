@@ -14,7 +14,7 @@
 <section class="admin-panel">
     <div class="admin-panel__header"><div><h2>{{ ui_text('admin.system.modules.languages') }}</h2><p>{{ ui_text('admin.system.modules.languages_help') }}</p></div><span class="admin-badge">{{ languages|length }}</span></div>
     <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.system.modules.language') }}</th><th>{{ ui_text('admin.system.modules.storefront') }}</th><th>{{ ui_text('admin.system.modules.admin_area') }}</th></tr></thead><tbody>
-    {% for language in languages %}<tr><td><code>{{ language.code }}</code></td><td>{{ language.storefront ? '✓' : '—' }}</td><td>{{ language.admin ? '✓' : '—' }}</td></tr>{% endfor %}
+    {% for language in languages %}<tr><td>{{ locale_name(language.code) }}</td><td>{{ language.storefront ? '✓' : '—' }}</td><td>{{ language.admin ? '✓' : '—' }}</td></tr>{% endfor %}
     </tbody></table></div>
 </section>
 <section class="admin-panel">

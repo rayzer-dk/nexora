@@ -41,7 +41,6 @@
 .store-switcher__option.is-current { font-weight: var(--mc-font-weight-semibold); }
 .store-switcher__option.is-current > .ui-icon { color: var(--mc-color-primary); }
 .store-switcher__name { flex: 1; min-width: 0; }
-.store-switcher__option small { color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-medium); }
 
 /* ---------- header ---------- */
 /* Phones: brand and actions on the first row, the catalog button and the search on one second row. */

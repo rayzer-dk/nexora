@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Admin\Application;
 
+use Commerce\Core\I18n\LanguageName;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -18,7 +19,7 @@ final readonly class ContentLanguageTabs
 
     /**
      * @param array<string,bool> $doneByLocale locale => has the required texts
-     * @return list<array{code:string,name:string,short:string,is_default:bool,current:bool,done:bool}>
+     * @return list<array{code:string,name:string,is_default:bool,current:bool,done:bool}>
      */
     public function tabs(int $storeId, string $currentLocale, array $doneByLocale = []): array
     {
@@ -32,8 +33,7 @@ final readonly class ContentLanguageTabs
             $code = (string) $row['code'];
             $tabs[] = [
                 'code' => $code,
-                'name' => self::plainName((string) $row['native_name'], $code),
-                'short' => strtoupper(explode('-', $code)[0]),
+                'name' => LanguageName::plain((string) $row['native_name'], $code),
                 'is_default' => $code === $default,
                 'current' => $code === $currentLocale,
                 'done' => $doneByLocale[$code] ?? false,
@@ -44,11 +44,4 @@ final readonly class ContentLanguageTabs
         return $tabs;
     }
 
-    /** Native names are stored like "Language (Country)"; the tab only needs the language part. */
-    public static function plainName(string $native, string $code): string
-    {
-        $name = trim((string) preg_replace('/\s*\(.*\)\s*$/u', '', $native));
-
-        return $name !== '' ? $name : $code;
-    }
 }

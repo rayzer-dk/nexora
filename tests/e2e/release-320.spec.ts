@@ -9,9 +9,8 @@ async function setLocale(page: Page, code: string, enabled: boolean): Promise<vo
   if (await box.count()) {
     await (enabled ? box.check() : box.uncheck());
   } else if (enabled) {
-    await page.locator('input[name="new_code"]').fill(code);
-    await page.locator('input[name="new_name"]').fill('English');
-    await page.locator('input[name="new_native_name"]').fill('English');
+    // a new language is chosen from the list by its name; the code and the names follow from it
+    await page.locator('select[name="new_code"]').selectOption(code);
   }
   await Promise.all([
     page.waitForLoadState('domcontentloaded'),

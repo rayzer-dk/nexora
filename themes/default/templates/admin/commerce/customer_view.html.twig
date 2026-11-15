@@ -24,7 +24,7 @@
 <dl class="admin-definition-list">
 <div><dt>{{ ui_text('admin.customers.registered') }}</dt><dd>{{ customer.created_at|slice(0, 16) }}</dd></div>
 <div><dt>{{ ui_text('admin.customers.last_seen') }}</dt><dd>{{ customer.last_seen_at ? customer.last_seen_at|slice(0, 16) : '—' }}</dd></div>
-<div><dt>{{ ui_text('admin.customers.language') }}</dt><dd>{{ customer.locale|default('—') }}</dd></div>
+<div><dt>{{ ui_text('admin.customers.language') }}</dt><dd>{{ customer.locale ? locale_name(customer.locale) : '—' }}</dd></div>
 <div><dt>Email</dt><dd>{{ customer.email_verified_at ? status_badge('verified') : status_badge('unverified') }}</dd></div>
 <div><dt>{{ ui_text('admin.customers.phone') }}</dt><dd>{{ customer.phone_verified_at ? status_badge('verified') : '—' }}</dd></div>
 <div><dt>{{ ui_text('admin.customers.subscription') }}</dt><dd>{% if subscription %}{{ status_badge(subscription.status) }}{% if subscription.consent_source %}<small>{{ subscription.consent_source }}</small>{% endif %}{% else %}{{ ui_text('admin.customers.not_subscribed') }}{% endif %}</dd></div>

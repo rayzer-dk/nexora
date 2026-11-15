@@ -502,7 +502,7 @@ document.querySelectorAll('[data-translate-all]').forEach((button) => {
     const panels = [...new Set(jobs.map((job) => job.panel))];
     try {
       for (const [index, panel] of panels.entries()) {
-        status.textContent = t('admin.ai.translate_progress_locale', { done: index + 1, total: panels.length, locale: panel.dataset.locale || '' });
+        status.textContent = t('admin.ai.translate_progress_locale', { done: index + 1, total: panels.length, locale: panel.dataset.langName || '' });
         await translatePanel(page, jobs.filter((job) => job.panel === panel), panel.dataset.locale || '');
       }
     } catch (error) {
@@ -522,7 +522,7 @@ document.querySelectorAll('[data-translate-all]').forEach((button) => {
       for (const panel of page.querySelectorAll('[data-translate-panel]:not([data-source])')) {
         const form = panel.querySelector('form[data-ajax-save]');
         if (!form) continue;
-        status.textContent = `${t('admin.ai.saving')} ${panel.dataset.locale}`;
+        status.textContent = `${t('admin.ai.saving')} ${panel.dataset.langName || ''}`;
         await saveFormInPlace(form);
       }
       status.textContent = t('admin.ai.saved_all');

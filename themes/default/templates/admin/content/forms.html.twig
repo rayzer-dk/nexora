@@ -5,7 +5,7 @@
 {% for message in app.flashes('error') %}<div class="admin-notice is-error">{{ message }}</div>{% endfor %}
 <section class="admin-panel">
 {% if forms %}<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>{{ ui_text('admin.forms.name') }}</th><th>{{ ui_text('admin.forms.address') }}</th><th>{{ ui_text('admin.forms.status') }}</th><th>{{ ui_text('admin.forms.submissions') }}</th><th></th></tr></thead><tbody>
-{% for f in forms %}<tr data-form-row="{{ f.slug }}"><td><a href="{{ path('admin_content_form_edit', {id: f.id}) }}">{{ f.name }}</a>{% if f.locale %} <span class="admin-badge">{{ f.locale }}</span>{% endif %}</td>
+{% for f in forms %}<tr data-form-row="{{ f.slug }}"><td><a href="{{ path('admin_content_form_edit', {id: f.id}) }}">{{ f.name }}</a>{% if f.locale %} <span class="admin-badge">{{ locale_name(f.locale) }}</span>{% endif %}</td>
 <td><code>/forms/{{ f.slug }}</code></td>
 <td><span class="admin-badge {{ f.status == 'active' ? 'is-success' : 'is-draft' }}">{{ ui_text('admin.forms.status.' ~ f.status) }}</span></td>
 <td><a href="{{ path('admin_content_form_submissions', {id: f.id}) }}">{{ f.submissions }}</a>{% if f.unread > 0 %} <span class="admin-badge is-warning">+{{ f.unread }}</span>{% endif %}</td>

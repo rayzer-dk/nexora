@@ -2417,3 +2417,4 @@ form:has(input[name="display_image_fit"][value="cover"]:checked) .image-preview_
 .admin-translations small { font-variant-numeric: tabular-nums; }
 .admin-translations.is-complete small { color: var(--mc-color-success); font-weight: var(--mc-font-weight-semibold); }
 .admin-translations:hover small { color: var(--mc-color-text); }
+.admin-context-icon { display: inline-flex; color: var(--mc-color-muted); }

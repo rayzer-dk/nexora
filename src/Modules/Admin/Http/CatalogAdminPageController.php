@@ -248,7 +248,7 @@ final class CatalogAdminPageController extends AbstractController
                     $this->translations->saveProduct($storeId, $entityId, (string) $locale, $texts);
                 }
             } catch (\InvalidArgumentException $e) {
-                $this->addFlash('error', (string) $locale . ': ' . \Commerce\Core\I18n\CanonicalUiText::get('admin.translations.error.' . $e->getMessage()));
+                $this->addFlash('error', \Commerce\Core\I18n\LanguageName::native((string) $locale) . ': ' . \Commerce\Core\I18n\CanonicalUiText::get('admin.translations.error.' . $e->getMessage()));
             }
         }
     }
@@ -380,7 +380,7 @@ final class CatalogAdminPageController extends AbstractController
                     if ((string) $request->request->get('status', 'draft') === 'published' && ($policy = $this->contentPolicy->mode($context->storeId)) !== 'off') {
                         $missingLocales = array_values(array_diff($this->translations->missingForProduct($context->storeId, (int) $product['id']), trim((string) $request->request->get('name', '')) !== '' && trim((string) $request->request->get('description', '')) !== '' ? [$context->locale] : []));
                         if ($missingLocales !== [] && $policy === 'block') {
-                            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.translations.publish_blocked', ['locales' => implode(', ', $missingLocales)]));
+                            throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.translations.publish_blocked', ['locales' => \Commerce\Core\I18n\LanguageName::list($missingLocales)]));
                         }
                     }
                     $categoryIds = $this->primaryFirst(array_values(array_filter(array_map('intval', $request->request->all('category_ids')), static fn (int $id): bool => $id > 0)), (int) $request->request->get('primary_category_id', 0));
@@ -452,7 +452,7 @@ final class CatalogAdminPageController extends AbstractController
                     $mediaErrors = $this->attachUploadedImages($request, $context->storeId, (int) $product['id'], (string) $request->request->get('name', $product['name']));
                     $this->addFlash('success', \Commerce\Core\I18n\CanonicalUiText::get('php.modules.admin.http.catalogadminpagecontroller.tovar_onovleno'));
                     if ($missingLocales !== []) {
-                        $this->addFlash('warning', \Commerce\Core\I18n\CanonicalUiText::get('admin.translations.publish_warning', ['locales' => implode(', ', $missingLocales)]));
+                        $this->addFlash('warning', \Commerce\Core\I18n\CanonicalUiText::get('admin.translations.publish_warning', ['locales' => \Commerce\Core\I18n\LanguageName::list($missingLocales)]));
                     }
                     $mediaErrors = array_merge($mediaErrors, $this->saveVideos($request, $context->storeId, (int) $product['id']));
                     foreach ($mediaErrors as $mediaError) {

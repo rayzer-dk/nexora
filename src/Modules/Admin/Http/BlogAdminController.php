@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Core\I18n\LanguageName;
 use Commerce\Modules\Content\Application\BlogService;
 use Commerce\Modules\Media\Application\MediaImageService;
 use Doctrine\DBAL\Connection;
@@ -152,7 +153,7 @@ final class BlogAdminController extends AbstractController
                 $enabled = array_map('strval', $this->db->fetchFirstColumn('SELECT locale_code FROM mc_store_locale WHERE store_id=? AND enabled=1', [$ctx->storeId]));
                 $missingLocales = array_values(array_diff($enabled, $translated));
                 if ($missingLocales !== [] && $policy === 'block') {
-                    throw new \InvalidArgumentException(CanonicalUiText::get('admin.translations.publish_blocked', ['locales' => implode(', ', $missingLocales)]));
+                    throw new \InvalidArgumentException(CanonicalUiText::get('admin.translations.publish_blocked', ['locales' => LanguageName::list($missingLocales)]));
                 }
             }
             $admin = $this->getUser();
@@ -165,7 +166,7 @@ final class BlogAdminController extends AbstractController
         }
         $this->addFlash('success', CanonicalUiText::get('admin.blog.saved'));
         if ($missingLocales !== []) {
-            $this->addFlash('warning', CanonicalUiText::get('admin.translations.publish_warning', ['locales' => implode(', ', $missingLocales)]));
+            $this->addFlash('warning', CanonicalUiText::get('admin.translations.publish_warning', ['locales' => LanguageName::list($missingLocales)]));
         }
         return $this->redirectToRoute('admin_content_blog_edit', ['id' => $savedId]);
     }

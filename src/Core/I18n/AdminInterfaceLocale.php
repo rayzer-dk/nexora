@@ -39,26 +39,18 @@ final class AdminInterfaceLocale
         $out = [];
         foreach (glob(rtrim($this->projectDir, '/') . '/resources/translations/*/admin.php') ?: [] as $file) {
             $code = basename(dirname($file));
-            $out[$code] = self::nativeName($code);
+            $out[$code] = LanguageName::native($code);
         }
         // Languages added by the store owner with an admin language pack (var/translations/<locale>/admin.json).
         foreach (glob(rtrim($this->projectDir, '/') . '/var/translations/*/admin.json') ?: [] as $file) {
             $code = basename(dirname($file));
             if (preg_match('/^[a-z]{2,3}(?:-[A-Z]{2})?$/D', $code) === 1) {
-                $out[$code] ??= self::nativeName($code);
+                $out[$code] ??= LanguageName::native($code);
             }
         }
         ksort($out);
 
-        return $this->available = $out === [] ? [self::DEFAULT => self::nativeName(self::DEFAULT)] : $out;
-    }
-
-    /** "ru-RU" -> "Русский": the language named in itself (intl), so every pack, also one added later, has a readable name. */
-    private static function nativeName(string $code): string
-    {
-        $name = trim(\Locale::getDisplayLanguage($code, $code));
-
-        return $name === '' || $name === $code ? $code : mb_strtoupper(mb_substr($name, 0, 1)) . mb_substr($name, 1);
+        return $this->available = $out === [] ? [self::DEFAULT => LanguageName::native(self::DEFAULT)] : $out;
     }
 
     /**

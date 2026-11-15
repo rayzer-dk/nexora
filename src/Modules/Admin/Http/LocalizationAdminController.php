@@ -50,6 +50,7 @@ final class LocalizationAdminController extends AbstractController
 
         return $this->render('@storefront/admin/system/localization.html.twig', [
             'data' => $data,
+            'addable_locales' => $this->settings->addableLocales(array_map(static fn (array $l): string => (string) $l['code'], $data['locales'])),
             'admin_coverage' => $adminCoverage,
             'admin_languages' => $this->adminLocales->choices(),
             'admin_default_configured' => (string) ($this->systemSettings->getString('admin.default_locale') ?? ''),
@@ -120,7 +121,7 @@ final class LocalizationAdminController extends AbstractController
             }
             $scope = (string) $request->request->get('pack_scope', 'storefront');
             $result = $this->packs->import($locale, $json, $scope);
-            $message = CanonicalUiText::get('admin.langpack.saved', ['locale' => $locale . ' (' . $scope . ')', 'saved' => $result['saved'], 'translated' => $result['translated']]);
+            $message = CanonicalUiText::get('admin.langpack.saved', ['locale' => \Commerce\Core\I18n\LanguageName::native($locale) . ' (' . CanonicalUiText::get('admin.langpack.scope_' . $scope) . ')', 'saved' => $result['saved'], 'translated' => $result['translated']]);
             if ($result['rejected'] !== []) {
                 $message .= ' ' . CanonicalUiText::get('admin.langpack.rejected', ['count' => count($result['rejected']), 'keys' => implode(', ', array_slice(array_keys($result['rejected']), 0, 5))]);
             }

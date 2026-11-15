@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Storefront\Twig;
 
+use Commerce\Core\I18n\LanguageName;
 use Commerce\Core\I18n\LocaleFlag;
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
@@ -163,7 +164,8 @@ final class StorefrontChromeExtension extends AbstractExtension
         $currentPath = $this->currentPath($request);
         $names = [];
         foreach ($rows as $row) {
-            $names[(string) $row['code']] = $this->languageName((string) $row['code'], (string) $row['name']);
+            $name = LanguageName::native((string) $row['code']);
+            $names[(string) $row['code']] = $name !== (string) $row['code'] ? $name : (string) $row['name']; // a language intl does not know keeps its catalogue name
         }
         $duplicates = array_keys(array_filter(array_count_values($names), static fn (int $n): bool => $n > 1));
         $options = [];
@@ -173,7 +175,6 @@ final class StorefrontChromeExtension extends AbstractExtension
             $path = $alternates[$code] ?? $alternates[$defaultLocale] ?? $currentPath;
             $option = [
                 'code' => $code,
-                'short' => strtoupper(explode('-', $code, 2)[0]),
                 // the language in its own words ("English", native name); the full catalogue name only when two locales share a language
                 'name' => in_array($names[$code], $duplicates, true) ? (string) $row['name'] : $names[$code],
                 'flag' => LocaleFlag::region($code),
@@ -302,16 +303,6 @@ final class StorefrontChromeExtension extends AbstractExtension
         }
 
         return $href . '?' . http_build_query($query + $override, '', '&', PHP_QUERY_RFC3986);
-    }
-
-    private function languageName(string $code, string $fallback): string
-    {
-        $name = class_exists(\Locale::class) ? trim((string) \Locale::getDisplayLanguage($code, $code)) : '';
-        if ($name === '' || $name === strtolower(explode('-', $code, 2)[0])) {
-            return $fallback;
-        }
-
-        return mb_strtoupper(mb_substr($name, 0, 1)) . mb_substr($name, 1);
     }
 
     /** @return array{0:?Request,1:?StorefrontContext} */
