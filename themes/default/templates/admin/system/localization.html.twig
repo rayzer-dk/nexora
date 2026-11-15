@@ -72,7 +72,7 @@
         {% for currency in data.currencies %}
             {% set prefix = 'currency[' ~ currency.code ~ ']' %}
             <tr>
-                <td><strong>{{ currency.code }}</strong> <small>{{ currency.symbol }} · {{ currency.name }}</small>{% if currency.is_default %} <span class="admin-badge is-active">{{ ui_text('admin.localization.base') }}</span>{% endif %}</td>
+                <td><strong>{{ currency.code }}</strong> <small>{{ currency.symbol }} · {{ currency_name(currency.code, currency.name) }}</small>{% if currency.is_default %} <span class="admin-badge is-active">{{ ui_text('admin.localization.base') }}</span>{% endif %}</td>
                 <td><label class="admin-check-inline"><input type="checkbox" name="{{ prefix }}[enabled]" value="1" {{ currency.enabled or currency.is_default ? 'checked' }} {{ currency.is_default ? 'disabled' }}><span class="visually-hidden">{{ ui_text('admin.localization.col.shown') }}</span></label>{% if currency.is_default %}<input type="hidden" name="{{ prefix }}[enabled]" value="1">{% endif %}</td>
                 <td>{{ currency.price_count }}{% if currency.enabled and not currency.is_default and currency.price_count == 0 %} <span class="admin-badge is-warning" title="{{ ui_text('admin.localization.currencies.hidden_no_prices')|e('html_attr') }}">{{ ui_text('admin.localization.currencies.hidden') }}</span>{% endif %}</td>
                 <td>{% if currency.is_default %}—{% else %}<label class="admin-check-inline"><input type="checkbox" name="{{ prefix }}[auto_convert]" value="1" {{ currency.auto_convert ? 'checked' }}><span class="visually-hidden">{{ ui_text('admin.localization.col.auto_convert') }}</span></label>{% endif %}</td>

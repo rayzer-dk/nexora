@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 4.0.17 — 2026-11-15
+
+Version 4.0.17 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
+
+- Currency names follow the language of the page: the admin currency menu, Languages and currencies, and the store settings show "Долар США", "Доллар США" or "US Dollar" by the interface language of the administrator (`currency_name()` and `Core\I18n\CurrencyName`, ICU data); the name stored with the currency (English) is used only for a currency ICU does not know.
+
 ## 4.0.16 — 2026-11-15
 
 Version 4.0.16 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
