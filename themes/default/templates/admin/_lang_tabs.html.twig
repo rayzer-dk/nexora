@@ -14,7 +14,7 @@
         {% else %}
           <button type="button" class="lang-tabs__tab" data-lang-tab="lang-{{ tab.code }}" aria-pressed="{{ tab.current ? 'true' : 'false' }}" lang="{{ tab.code }}">
         {% endif %}
-          {% set flag = ui_flag(tab.code) %}{% if flag %}<span class="lang-tabs__flag">{{ flag|raw }}</span>{% else %}<span class="lang-tabs__code">{{ tab.short }}</span>{% endif %}
+          {% if ui_flag(tab.code) %}<span class="lang-tabs__flag">{{ ui_flag(tab.code) }}</span>{% else %}<span class="lang-tabs__code">{{ tab.short }}</span>{% endif %}
           <span class="lang-tabs__name">{{ tab.name|split(' (')|first }}</span>
           {% if tab.is_default %}<span class="lang-tabs__default">{{ ui_text('admin.lang_tabs.default') }}</span>{% endif %}
           <span class="lang-tabs__mark" data-lang-mark title="{{ (tab.done ? ui_text('admin.lang_tabs.done') : ui_text('admin.lang_tabs.missing'))|e('html_attr') }}" aria-label="{{ (tab.done ? ui_text('admin.lang_tabs.done') : ui_text('admin.lang_tabs.missing'))|e('html_attr') }}">{{ tab.done ? '✓' : '•' }}</span>
