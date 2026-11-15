@@ -68,7 +68,7 @@ function render() {
     next.type = 'button';
     next.setAttribute('aria-label', t('js_datepicker_next', 'Next month'));
     next.addEventListener('click', () => { current.view = m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 }; render(); });
-    // "листопад 2026 р." -> "Листопад 2026 р.": only the first letter (CSS capitalize would also turn "р." into "Р.")
+    // Ukrainian "<month> 2026 r." keeps its lower-case "r." abbreviation: only the first letter is raised (CSS capitalize raised every word)
     const monthYear = new Intl.DateTimeFormat(lang(), { month: 'long', year: 'numeric' }).format(new Date(y, m, 1));
     const title = el('strong', 'mc-dp__title', monthYear.charAt(0).toLocaleUpperCase(lang()) + monthYear.slice(1));
     head.append(prev, title, next);
