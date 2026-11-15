@@ -1,6 +1,10 @@
 import './features/lang-tabs';
 import './features/slug-autofill';
 
+// A field of a language that is not on screen (a hidden [data-lang-panel]) gets its editor when that language is opened:
+// a form with five languages starts one editor, not five.
+const onScreen = (field: HTMLElement): boolean => !field.closest<HTMLElement>('[data-lang-panel]')?.hidden;
+
 document.addEventListener('DOMContentLoaded', async () => {
   const fields = Array.from(document.querySelectorAll<HTMLTextAreaElement>('textarea[data-rich-editor]'));
   if (fields.length === 0) return;
@@ -10,13 +14,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     import('./components/RichTextEditor.vue'),
   ]);
 
-  for (const field of fields) {
-    if (field.dataset.richEditorMounted === '1') continue;
+  const mountVisible = (): void => fields.filter(onScreen).forEach(mount);
+  document.addEventListener('lang-tabs:change', mountVisible);
+  mountVisible();
+
+  function mount(field: HTMLTextAreaElement): void {
+    if (field.dataset.richEditorMounted === '1') return;
     field.dataset.richEditorMounted = '1';
 
-    const mount = document.createElement('div');
-    mount.className = 'rich-editor-mount';
-    field.insertAdjacentElement('afterend', mount);
+    const host = document.createElement('div');
+    host.className = 'rich-editor-mount';
+    field.insertAdjacentElement('afterend', host);
     field.hidden = true;
 
     // The textarea stays the source of truth for the form. Text put into it from outside (AI drafts, translations,
@@ -45,6 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         },
       }),
-    }).mount(mount);
+    }).mount(host);
   }
 });

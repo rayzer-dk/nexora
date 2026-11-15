@@ -2379,4 +2379,34 @@ form:has(input[name="display_image_fit"][value="cover"]:checked) .image-preview_
 .lang-form-bar__actions select { min-height: var(--mc-control-height-md); }
 .lang-form-bar__status { color: var(--mc-color-muted); }
 
-.admin-context-icon { display: inline-flex; color: var(--mc-color-muted); }
+
+/* Top bar language menus (content and interface): icon + flag of the current language; the list shows every language with its flag. */
+.admin-lang-menu { position: relative; }
+.admin-lang-menu > summary { list-style: none; }
+.admin-lang-menu > summary::-webkit-details-marker { display: none; }
+.admin-lang-menu__button { display: inline-flex; align-items: center; gap: var(--mc-space-1); min-height: var(--mc-control-height-sm); padding: 0 var(--mc-space-2); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-md); background: var(--mc-color-surface); color: var(--mc-color-muted); cursor: pointer; }
+.admin-lang-menu__button:hover, .admin-lang-menu[open] > .admin-lang-menu__button { border-color: var(--mc-color-border-strong); color: var(--mc-color-text); }
+.admin-lang-menu__button:focus-visible { outline: 2px solid var(--mc-color-focus); outline-offset: 2px; }
+.admin-lang-menu__flag { display: inline-flex; flex: none; line-height: 0; }
+.admin-lang-menu__flag .flag { display: block; width: 20px; height: 15px; border-radius: var(--mc-radius-xs); box-shadow: 0 0 0 1px var(--mc-color-border); }
+.admin-lang-menu__code { font-family: var(--mc-font-mono); font-size: var(--mc-font-size-xs); font-weight: var(--mc-font-weight-semibold); color: var(--mc-color-text); }
+.admin-lang-menu__panel { position: absolute; z-index: var(--mc-z-dropdown); top: calc(100% + var(--mc-space-1)); right: 0; display: grid; gap: 2px; min-width: 16rem; padding: var(--mc-space-1); border: 1px solid var(--mc-color-border-strong); border-radius: var(--mc-radius-md); background: var(--mc-color-surface-raised); box-shadow: var(--mc-shadow-md); }
+.admin-lang-menu__title { display: grid; gap: 2px; margin: 0 0 var(--mc-space-1); padding: var(--mc-space-2) var(--mc-space-3); border-bottom: 1px solid var(--mc-color-border); }
+.admin-lang-menu__title small { color: var(--mc-color-muted); font-size: var(--mc-font-size-xs); line-height: 1.35; }
+.admin-lang-menu__panel a, .admin-lang-menu__panel button { display: flex; align-items: center; justify-content: flex-start; gap: var(--mc-space-2); width: 100%; min-height: var(--mc-control-height-md); padding: 0 var(--mc-space-3); border: 0; border-radius: var(--mc-radius-sm); background: none; color: var(--mc-color-text); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.admin-lang-menu__panel a:hover, .admin-lang-menu__panel button:hover { background: var(--mc-color-surface-subtle); }
+.admin-lang-menu__panel [aria-current] { font-weight: var(--mc-font-weight-semibold); }
+.admin-lang-menu__panel [aria-current] .ui-icon { margin-left: auto; color: var(--mc-color-primary); }
+.admin-lang-menu__name { flex: 1; }
+.admin-context form { margin: 0; }
+.admin-lang-menu__default { color: var(--mc-color-muted); font-size: var(--mc-font-size-2xs); text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Product list: one flag per store language; a missing translation is a faded flag, a name without a description a half-faded one. */
+.admin-translations { display: inline-flex; align-items: center; gap: var(--mc-space-1); color: var(--mc-color-muted); text-decoration: none; white-space: nowrap; }
+.admin-translations__lang { display: inline-flex; line-height: 0; }
+.admin-translations__lang .flag { display: block; width: 18px; height: 13.5px; border-radius: var(--mc-radius-xs); box-shadow: 0 0 0 1px var(--mc-color-border); }
+.admin-translations__lang.is-partial .flag { opacity: 0.55; }
+.admin-translations__lang.is-missing .flag { opacity: 0.22; filter: grayscale(1); }
+.admin-translations small { font-variant-numeric: tabular-nums; }
+.admin-translations.is-complete small { color: var(--mc-color-success); font-weight: var(--mc-font-weight-semibold); }
+.admin-translations:hover small { color: var(--mc-color-text); }

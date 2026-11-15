@@ -24,7 +24,10 @@ test('another language of a product is typed in the product form and saved with 
   const code = await last.getAttribute('data-lang-tab');
   await last.click();
   await expect(name(code)).toBeVisible();
-  await expect(block.locator('label[data-lang-panel][data-lang-required]:visible')).toHaveCount(1);
+  // name and description decide the mark of a language; only those of the chosen language are on screen
+  const required = block.locator('label[data-lang-panel][data-lang-required]:visible');
+  await expect(required).toHaveCount(2);
+  for (const label of await required.all()) await expect(label).toHaveAttribute('data-lang-panel', code!);
 
   const field = name(code);
   const before = await field.inputValue();
@@ -84,4 +87,22 @@ test('a category takes its other languages in the same form; "copy from" fills t
 
   await h1.fill(before);
   await Promise.all([page.waitForURL(/\/admin\/catalog\/categories/), page.locator('form[data-lang-scope] button[type="submit"].is-primary').click()]);
+});
+
+test('the product list shows which languages are translated and sorts by it', async ({ page }) => {
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/products?sort=translations&dir=asc', { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+  const cells = page.locator('a.admin-translations');
+  test.skip((await cells.count()) === 0, 'The store has one language.');
+  const total = await page.locator('.admin-translations').first().locator('.admin-translations__lang').count();
+  expect(total).toBeGreaterThanOrEqual(2);
+  const done = async () => (await cells.locator('small').allTextContents()).map((text) => Number(text.split('/')[0]));
+  const ascending = await done();
+  expect(ascending).toEqual([...ascending].sort((a, b) => a - b));
+  await expect(page.locator('th[data-sort-key="translations"]')).toHaveAttribute('aria-sort', 'ascending');
+
+  await page.goto('/admin/catalog/products?sort=translations&dir=desc', { waitUntil: 'domcontentloaded' });
+  const descending = await done();
+  expect(descending).toEqual([...descending].sort((a, b) => b - a));
 });

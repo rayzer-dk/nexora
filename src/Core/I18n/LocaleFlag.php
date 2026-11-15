@@ -10,9 +10,9 @@ namespace Commerce\Core\I18n;
  */
 final class LocaleFlag
 {
-    /** Language subtag -> region when the locale code carries no region (e.g. "de"). English always shows the US flag. */
+    /** Language subtag -> region when the locale code carries no region (e.g. "de"). English is handled apart: always the US flag. */
     private const DEFAULT_REGION = [
-        'uk' => 'UA', 'en' => 'US', 'de' => 'DE', 'pl' => 'PL', 'ru' => 'RU', 'da' => 'DK', 'fr' => 'FR', 'es' => 'ES',
+        'uk' => 'UA', 'de' => 'DE', 'pl' => 'PL', 'ru' => 'RU', 'da' => 'DK', 'fr' => 'FR', 'es' => 'ES',
         'it' => 'IT', 'cs' => 'CZ', 'ro' => 'RO', 'bg' => 'BG', 'tr' => 'TR', 'pt' => 'PT', 'nl' => 'NL', 'sv' => 'SE',
         'nb' => 'NO', 'nn' => 'NO', 'no' => 'NO', 'fi' => 'FI', 'hu' => 'HU', 'sk' => 'SK', 'sl' => 'SI', 'hr' => 'HR',
         'sr' => 'RS', 'lt' => 'LT', 'lv' => 'LV', 'et' => 'EE', 'el' => 'GR', 'be' => 'BY', 'kk' => 'KZ', 'ka' => 'GE',

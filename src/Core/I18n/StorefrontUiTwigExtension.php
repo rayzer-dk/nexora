@@ -24,7 +24,6 @@ final class StorefrontUiTwigExtension extends AbstractExtension
     {
         return [
             new TwigFunction('ui_text', $this->text(...), ['needs_context' => true]),
-            new TwigFunction('ui_catalog', $this->catalog(...), ['needs_context' => true]),
             new TwigFunction('ui_catalog_json', $this->catalogJson(...), ['needs_context' => true, 'is_safe' => ['html']]),
             new TwigFunction('ui_icon', $this->icon(...), ['is_safe' => ['html']]),
             new TwigFunction('ui_flag', LocaleFlag::img(...), ['is_safe' => ['html']]),
@@ -35,7 +34,6 @@ final class StorefrontUiTwigExtension extends AbstractExtension
     public function getFilters(): array
     {
         return [
-            new TwigFilter('forum_ugc', $this->forumUgc(...), ['is_safe' => ['html']]),
             new TwigFilter('status_label', $this->statusLabel(...), ['needs_context' => true]),
         ];
     }
@@ -138,34 +136,12 @@ final class StorefrontUiTwigExtension extends AbstractExtension
         }
     }
 
-    public function forumUgc(string $text): string
-    {
-        $parts = preg_split('~(https?://[^\s<>]+)~iu', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
-        if (!is_array($parts)) {
-            return nl2br(htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
-        }
-
-        $html = '';
-        foreach ($parts as $part) {
-            if (preg_match('~^https?://~iu', $part) === 1 && filter_var($part, FILTER_VALIDATE_URL) !== false) {
-                $safe = htmlspecialchars($part, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                $html .= '<a href="' . $safe . '" rel="ugc nofollow noopener noreferrer" target="_blank">' . $safe . '</a>';
-                continue;
-            }
-            $html .= htmlspecialchars($part, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        }
-
-        return nl2br($html, false);
-    }
-
     /** @param array<string,mixed> $context @return array<string,string> */
-    public function catalog(array $context): array
+    private function catalog(array $context): array
     {
         return $this->translator->catalogFor($this->uiLocale($context));
     }
 
-    /** @param array<string,mixed> $context */
-    /** Human label for an order/payment/fulfilment status code; unknown codes fall back to a readable form of the code. @param array<string,mixed> $context */
     /** A coloured status chip for admin tables: the colour follows the status code, the text is its translation. */
     public function statusBadge(array $context, mixed $code, string $group = ''): string
     {
@@ -175,6 +151,12 @@ final class StorefrontUiTwigExtension extends AbstractExtension
         return sprintf('<span class="admin-badge is-%s">%s</span>', $class !== '' ? $class : 'muted', htmlspecialchars($this->statusLabel($context, $raw, $group), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
     }
 
+    /**
+     * Human label for an order/payment/fulfilment status code: `status.<group>.<code>`, then `status.<code>`, then a
+     * readable form of the code, so a status added by a module never shows an empty cell.
+     *
+     * @param array<string,mixed> $context
+     */
     public function statusLabel(array $context, mixed $code, string $group = ''): string
     {
         $code = trim((string) $code);

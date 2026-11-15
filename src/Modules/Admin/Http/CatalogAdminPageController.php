@@ -77,7 +77,7 @@ final class CatalogAdminPageController extends AbstractController
         unset($item);
         $views=[];
         $selectedView=max(0,(int)$request->query->get('view',0));
-        $allowedColumns=['name','sku','status','price','stock','type','quality'];
+        $allowedColumns=['name','sku','status','price','stock','type','quality','translations'];
         $activeColumns=array_values(array_intersect($allowedColumns,array_map('strval',(array)$request->query->all('columns'))));
         if($activeColumns===[])$activeColumns=$allowedColumns;
         try {

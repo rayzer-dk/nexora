@@ -20,11 +20,13 @@ final class AdminInterfaceLocaleTwigExtension extends AbstractExtension
         return [new TwigFunction('admin_interface_languages', $this->languages(...))];
     }
 
-    /** @return array{current:string,available:array<string,string>} */
+    /** @return array{current:string,default:string,available:array<string,string>} */
     public function languages(): array
     {
         $current = (string) ($this->requests->getCurrentRequest()?->attributes->get(AdminInterfaceLocale::REQUEST_ATTRIBUTE) ?? AdminInterfaceLocale::DEFAULT);
 
-        return ['current' => $current, 'available' => $this->locales->available()];
+        $available = $this->locales->choices();
+
+        return ['current' => $current, 'default' => (string) array_key_first($available), 'available' => $available];
     }
 }

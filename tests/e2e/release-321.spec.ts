@@ -167,11 +167,16 @@ test('a product picks an already uploaded image and a category gets a cover imag
 test('interface language can be switched back and forth and edits are protected on language change', async ({ page }) => {
   await loginAdmin(page);
   await page.goto('/admin/catalog/products/new', { waitUntil: 'domcontentloaded' });
-  const ui = page.locator('select[name="ui_locale"]');
-  await Promise.all([page.waitForLoadState('domcontentloaded'), ui.selectOption('en-US')]);
-  await expect(page.locator('select[name="ui_locale"]')).toHaveValue('en-US');
-  await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('select[name="ui_locale"]').selectOption('uk-UA')]);
-  await expect(page.locator('select[name="ui_locale"]')).toHaveValue('uk-UA');
+  // The interface language menu of the top bar: a flag button opens the list, a language submits at once.
+  const menu = page.locator('.admin-lang-menu:has(button[name="ui_locale"])');
+  const choose = async (code: string) => {
+    await menu.locator('summary').click();
+    await Promise.all([page.waitForLoadState('domcontentloaded'), menu.locator(`button[name="ui_locale"][value="${code}"]`).click()]);
+    await expect(menu.locator(`button[name="ui_locale"][value="${code}"]`)).toHaveAttribute('aria-current', 'true');
+  };
+  await choose('en-US');
+  await expect(page.locator('.admin-nav')).toContainText('Products');
+  await choose('uk-UA');
   await expect(page.locator('.admin-nav')).toContainText('Товари');
 
   // The confirm dialog closes with × and Esc.

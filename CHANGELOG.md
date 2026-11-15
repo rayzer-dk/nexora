@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 4.0.14 — 2026-11-15
+
+Version 4.0.14 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
+
+- Admin top bar: the content language and the interface language are flag buttons in one row (instead of two selects); each opens a list of languages with flags, the default one marked. The list of interface languages starts with the default set at installation or in Languages and currencies; language names come from intl (a pack added later is named too, "Русский" instead of "ru-RU").
+- The language set in the store settings is called "default" everywhere (it was "main"); the content languages are ordered the same in the top bar and in every language bar: default first, then the order of the settings.
+- Product list: a "Translations" column with one flag per store language (translated / name only / missing) and "done/total"; it sorts by the number of translated languages.
+- Fixed: languages that had no translation showed the copy of the default language (an is_fallback row) in the product and category forms and on the translations page, with a check mark; saving the form turned the copy into a translation that no longer followed the default text. Fallback copies are now shown as empty and stay fallbacks unless text is typed; a fallback row that becomes a translation is replaced as a whole.
+- One rule for "translated" in the product form, the translations page and the list: own name and a description with text (a category: a name). The tab mark counts every field of the language and ignores empty editor HTML.
+- The text editor of a language that is not on screen starts when that language is opened (one editor instead of one per language).
+- Removed dead code: `StatusLabelTwigExtension` (its `status_label` filter was always replaced by the one of `StorefrontUiTwigExtension`), the unused Twig functions and filters `content_lang_tabs`, `storefront_cart_units`, `storefront_category_tree`, `storefront_locales`, `storefront_currencies`, `ui_catalog`, `forum_ugc`, `seo_text` with the methods behind them, the translation keys `js_lang_tabs` and `admin.translations.all_hint`.
+
 ## 4.0.13 — 2026-11-15
 
 Version 4.0.13 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.

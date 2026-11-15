@@ -51,7 +51,7 @@ final class LocalizationAdminController extends AbstractController
         return $this->render('@storefront/admin/system/localization.html.twig', [
             'data' => $data,
             'admin_coverage' => $adminCoverage,
-            'admin_languages' => $this->adminLocales->available(),
+            'admin_languages' => $this->adminLocales->choices(),
             'admin_default_configured' => (string) ($this->systemSettings->getString('admin.default_locale') ?? ''),
             'admin_default_effective' => $this->adminLocales->siteDefault(),
             'rate_sources' => $this->rates->sourceChoices(),

@@ -19,14 +19,19 @@ function activate(bar: HTMLElement, id: string, updateHash: boolean): void {
     try { history.replaceState(null, '', `#${id}`); } catch { /* history may be blocked in sandboxed previews */ }
   }
   bar.dataset.langActive = id;
-  bar.dispatchEvent(new CustomEvent('lang-tabs:change', { detail: id }));
+  bar.dispatchEvent(new CustomEvent('lang-tabs:change', { detail: id, bubbles: true }));
 }
 
-function refreshMark(bar: HTMLElement, panel: HTMLElement): void {
-  const code = panel.dataset.langPanel?.replace(/^lang-/, '') ?? '';
-  const required = (panel.dataset.langRequired ?? '').split(',').filter(Boolean);
+// One language may be spread over several panels (the form-wide bar puts each field in its own one): the mark takes the
+// required fields of all of them and strips HTML, so an empty rich-text editor does not count as text.
+function refreshMark(bar: HTMLElement, id: string): void {
+  const code = id.replace(/^lang-/, '');
+  const scope = bar.closest<HTMLElement>('[data-lang-scope]') ?? document;
+  const panels = panelsOf(bar).filter((panel) => panel.dataset.langPanel === id);
+  const required = panels.flatMap((panel) => (panel.dataset.langRequired ?? '').split(',').filter(Boolean));
   if (!code || required.length === 0) return;
-  const done = required.every((name) => (panel.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${name}"]`)?.value ?? '').trim() !== '');
+  const text = (value: string): string => value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  const done = required.every((name) => text(scope.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${name}"]`)?.value ?? '') !== '');
   const item = bar.querySelector<HTMLElement>(`[data-lang-item="${code}"]`);
   if (!item) return;
   item.classList.toggle('is-done', done);
@@ -45,7 +50,7 @@ function initBar(bar: HTMLElement): void {
   const initial = panels.some((p) => p.dataset.langPanel === fromHash) ? fromHash : (panels.find((p) => p.dataset.langInitial !== undefined)?.dataset.langPanel ?? panels[0]?.dataset.langPanel ?? '');
   activate(bar, initial, false);
   for (const panel of panels) {
-    panel.addEventListener('input', () => refreshMark(bar, panel));
+    panel.addEventListener('input', () => refreshMark(bar, panel.dataset.langPanel ?? ''));
     panel.querySelector<HTMLElement>('[data-copy-default]')?.addEventListener('click', () => {
       const source = panels.find((p) => p.dataset.langSource !== undefined);
       if (!source || source === panel) return;
@@ -60,7 +65,7 @@ function initBar(bar: HTMLElement): void {
         }
       }
     });
-    refreshMark(bar, panel);
+    refreshMark(bar, panel.dataset.langPanel ?? '');
   }
 }
 

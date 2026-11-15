@@ -92,7 +92,7 @@ final class LanguagePackServiceTest extends TestCase
         self::assertSame(100, $service->coverage('fr-FR', 'admin'));
         self::assertSame(0, $service->coverage('fr-FR', 'storefront'));
         self::assertSame('Enregistrer', (new TranslationCatalogLoader($this->dir))->load('fr-FR')['admin.save']);
-        self::assertSame('fr-FR', array_key_last((new \Commerce\Core\I18n\AdminInterfaceLocale($this->dir, $db))->available()) ?? '');
+        self::assertArrayHasKey('fr-FR', (new \Commerce\Core\I18n\AdminInterfaceLocale($this->dir, $db))->available());
         // the Ukrainian text pasted back is not a translation
         $service->import('de-DE', json_encode(['admin.save' => 'Зберегти'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), 'admin');
         self::assertSame(0, $service->coverage('de-DE', 'admin'));
@@ -109,5 +109,18 @@ final class LanguagePackServiceTest extends TestCase
         (new LanguagePackService($this->dir))->import('en-US', json_encode(['cart' => 'Basket'], JSON_THROW_ON_ERROR));
 
         self::assertSame('Basket', (new TranslationCatalogLoader($this->dir))->load('en-US')['cart']);
+    }
+
+    public function testTheMenuStartsWithTheSiteDefaultInterfaceLanguage(): void
+    {
+        file_put_contents($this->dir . '/resources/translations/en-US/admin.php', "<?php\nreturn ['admin.save' => 'Save'];\n");
+        $db = \Doctrine\DBAL\DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $db->executeStatement('CREATE TABLE mc_system_setting (setting_key TEXT, setting_value TEXT)');
+        $db->insert('mc_system_setting', ['setting_key' => 'admin.default_locale', 'setting_value' => 'uk-UA']);
+        $locales = new \Commerce\Core\I18n\AdminInterfaceLocale($this->dir, $db);
+
+        self::assertSame(['uk-UA' => 'Українська', 'en-US' => 'English'], $locales->choices());
+        $db->update('mc_system_setting', ['setting_value' => 'en-US'], ['setting_key' => 'admin.default_locale']);
+        self::assertSame(['en-US', 'uk-UA'], array_keys((new \Commerce\Core\I18n\AdminInterfaceLocale($this->dir, $db))->choices()));
     }
 }

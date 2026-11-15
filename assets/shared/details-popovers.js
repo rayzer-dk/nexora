@@ -1,7 +1,7 @@
 /* global HTMLDetailsElement */
 // Popovers built on <details> (help tips, switchers, menus): a click or tap outside, Escape, or opening another one closes them,
 // so they behave like the help tips that have their own button. One delegated listener serves the whole page and works for content added later.
-const SELECTOR = 'details.seo-tip, details.fx-pop, details.store-switcher, details.admin-user-menu, details.admin-column-picker, details.admin-save-view, details.dash-notes';
+const SELECTOR = 'details.seo-tip, details.fx-pop, details.store-switcher, details.admin-user-menu, details.admin-lang-menu, details.admin-column-picker, details.admin-save-view, details.dash-notes';
 
 function openPopovers() {
   return Array.from(document.querySelectorAll(SELECTOR)).filter((el) => el.open);

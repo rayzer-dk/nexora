@@ -32,10 +32,8 @@ final class StorefrontLayoutExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('storefront_category_tree', [$this, 'categoryTree']),
             new TwigFunction('storefront_menu', [$this, 'menu']),
             new TwigFunction('storefront_contact', [$this, 'contactView']),
-            new TwigFunction('storefront_cart_units', [$this, 'cartUnits']),
         ];
     }
 
@@ -167,38 +165,6 @@ final class StorefrontLayoutExtension extends AbstractExtension
         }
 
         return $view;
-    }
-
-    /** Units in the active cart of this visitor (sum of quantities; number of lines when any quantity is fractional). */
-    public function cartUnits(): int
-    {
-        $request = $this->requests->getCurrentRequest();
-        $ctx = $this->context();
-        $token = $request?->cookies->get('mc_cart');
-        if ($ctx === null || !is_string($token) || preg_match('/^[A-Za-z0-9_-]{32,128}$/', $token) !== 1) {
-            return 0;
-        }
-
-        return $this->memo['cart'] ??= $this->countUnits($ctx, $token);
-    }
-
-    private function countUnits(StorefrontContext $ctx, string $token): int
-    {
-        try {
-            $row = $this->db->fetchAssociative(
-                "SELECT COUNT(*) AS lines,COALESCE(SUM(ci.quantity),0) AS units,COALESCE(SUM(ci.quantity<>FLOOR(ci.quantity)),0) AS fractional
-                 FROM mc_cart c JOIN mc_cart_item ci ON ci.cart_id=c.id
-                 WHERE c.token_hash=? AND c.store_id=? AND c.status='active' AND c.expires_at>UTC_TIMESTAMP(6)",
-                [hash('sha256', $token, true), $ctx->storeId],
-            );
-        } catch (\Throwable) {
-            return 0;
-        }
-        if (!is_array($row)) {
-            return 0;
-        }
-
-        return (int) $row['fractional'] > 0 ? (int) $row['lines'] : (int) round((float) $row['units']);
     }
 
     private function context(): ?StorefrontContext

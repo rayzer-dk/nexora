@@ -187,7 +187,7 @@ test('progressive admin features initialize on their real pages', async ({ page 
   await expect(edit).toBeVisible();
   await page.goto((await edit.getAttribute('href'))!, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.rich-editor')).toBeVisible();
-  await expect(page.locator('textarea[data-rich-editor]')).toBeHidden();
+  await expect(page.locator('textarea[name="description"][data-rich-editor]')).toBeHidden(); // the main description; other languages have their own
 
   expect(pageErrors, pageErrors.join('\n')).toEqual([]);
 });

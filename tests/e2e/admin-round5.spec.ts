@@ -56,7 +56,7 @@ for (const width of [1440, 390]) {
       await setTheme(page, theme);
       await page.goto('/admin', { waitUntil: 'domcontentloaded' });
       await expectNoServerError(page);
-      for (const selector of ['.admin-topbar [data-cache-menu] > summary', '.admin-topbar .admin-context label']) {
+      for (const selector of ['.admin-topbar [data-cache-menu] > summary', '.admin-topbar .admin-lang-menu > summary']) {
         const target = page.locator(selector).first();
         if (width >= 768) await expect(target).toBeVisible();
         if (await target.isVisible()) expect(await contrastOf(page, selector), `${selector} ${theme}`).toBeGreaterThanOrEqual(4.5);

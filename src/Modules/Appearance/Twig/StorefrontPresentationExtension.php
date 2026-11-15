@@ -42,8 +42,6 @@ final class StorefrontPresentationExtension extends AbstractExtension
             new TwigFunction('contact_widget', [$this, 'contactWidget']),
             new TwigFunction('header_contacts', [$this, 'headerContacts']),
             new TwigFunction('chat_widget', [$this, 'chatWidget']),
-            new TwigFunction('storefront_locales', [$this, 'locales']),
-            new TwigFunction('storefront_currencies', [$this, 'currencies']),
         ];
     }
 
@@ -178,33 +176,6 @@ final class StorefrontPresentationExtension extends AbstractExtension
         } catch (\Throwable) {
         }
         return ['name' => '', 'locale' => 'uk-UA', 'currency' => 'UAH', 'timezone' => 'Europe/Kyiv'];
-    }
-
-    /** @return list<array{code:string,name:string}> */
-    public function locales(): array
-    {
-        try {
-            $ctx = $this->context();
-            if ($ctx === null) { return []; }
-            return array_map(static fn(array $row): array => ['code'=>(string)$row['code'],'name'=>(string)$row['name']], $this->connection->fetchAllAssociative(
-                'SELECT l.code,COALESCE(NULLIF(l.native_name,\'\'),l.name,l.code) name FROM mc_store_locale sl JOIN mc_locale l ON l.code=sl.locale_code WHERE sl.store_id=? AND sl.enabled=1 ORDER BY sl.is_default DESC,sl.sort_order,l.code', [$ctx->storeId]
-            ));
-        } catch (\Throwable) { return []; }
-    }
-
-    /** @return list<array{code:string,symbol:string}> */
-    public function currencies(): array
-    {
-        try {
-            $ctx = $this->context();
-            if ($ctx === null) { return []; }
-            return array_map(static fn(array $row): array => ['code'=>(string)$row['code'],'symbol'=>(string)($row['symbol'] ?? '')], $this->connection->fetchAllAssociative(
-                "SELECT c.code,c.symbol FROM mc_store_currency sc JOIN mc_currency c ON c.code=sc.currency_code
-                 WHERE sc.store_id=? AND sc.enabled=1
-                   AND (sc.is_default=1 OR EXISTS (SELECT 1 FROM mc_price p WHERE p.store_id=sc.store_id AND p.currency=sc.currency_code LIMIT 1))
-                 ORDER BY sc.is_default DESC,sc.sort_order,c.code", [$ctx->storeId]
-            ));
-        } catch (\Throwable) { return []; }
     }
 
     /** @param list<array<string,mixed>> $rows @return list<array<string,mixed>> */

@@ -92,9 +92,10 @@ final readonly class CatalogTranslationService
         }
         $now = gmdate('Y-m-d H:i:s.u');
         $this->db->transactional(function (Connection $db) use ($storeId, $productId, $locale, $data, $now, $publicId, $input): void {
-            $exists = (int) $db->fetchOne('SELECT COUNT(*) FROM mc_product_translation WHERE product_id=? AND store_id=? AND locale=?', [$productId, $storeId, $locale]) > 0;
-            if ($exists) {
-                $db->update('mc_product_translation', array_intersect_key($data, $input) + ['updated_at' => $now, 'is_fallback' => 0], ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale]);
+            $existing = $db->fetchOne('SELECT is_fallback FROM mc_product_translation WHERE product_id=? AND store_id=? AND locale=?', [$productId, $storeId, $locale]);
+            if ($existing !== false) {
+                // A fallback copy becomes a translation as a whole: fields the form did not send must not keep the copied text.
+                $db->update('mc_product_translation', ((int) $existing === 1 ? $data : array_intersect_key($data, $input)) + ['updated_at' => $now, 'is_fallback' => 0], ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale]);
             } else {
                 $db->insert('mc_product_translation', $data + ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale, 'slug' => null, 'created_at' => $now, 'updated_at' => $now]);
             }
@@ -114,9 +115,10 @@ final readonly class CatalogTranslationService
             throw new \InvalidArgumentException('name_required');
         }
         $this->db->transactional(function (Connection $db) use ($storeId, $categoryId, $locale, $data, $publicId, $input): void {
-            $exists = (int) $db->fetchOne('SELECT COUNT(*) FROM mc_category_translation WHERE category_id=? AND store_id=? AND locale=?', [$categoryId, $storeId, $locale]) > 0;
-            if ($exists) {
-                $db->update('mc_category_translation', array_intersect_key($data, $input) + ['is_fallback' => 0], ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale]);
+            $existing = $db->fetchOne('SELECT is_fallback FROM mc_category_translation WHERE category_id=? AND store_id=? AND locale=?', [$categoryId, $storeId, $locale]);
+            if ($existing !== false) {
+                // A fallback copy becomes a translation as a whole: fields the form did not send must not keep the copied text.
+                $db->update('mc_category_translation', ((int) $existing === 1 ? $data : array_intersect_key($data, $input)) + ['is_fallback' => 0], ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale]);
             } else {
                 $db->insert('mc_category_translation', $data + ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale, 'slug' => null]);
             }
@@ -229,7 +231,9 @@ final readonly class CatalogTranslationService
      */
     private function texts(string $table, string $key, int $id, int $storeId, array $fields): array
     {
-        $rows = $this->db->fetchAllAssociative('SELECT locale,' . implode(',', $fields) . " FROM $table WHERE $key=? AND store_id=?", [$id, $storeId]);
+        // A fallback row is a copy of the default language kept in step by TranslationFallbackFiller, not a translation:
+        // editors see that language as empty, and saving the form leaves it a fallback.
+        $rows = $this->db->fetchAllAssociative('SELECT locale,' . implode(',', $fields) . " FROM $table WHERE $key=? AND store_id=? AND is_fallback=0", [$id, $storeId]);
         $out = [];
         foreach ($rows as $row) {
             $out[(string) $row['locale']] = array_map(static fn ($v): string => (string) ($v ?? ''), array_intersect_key($row, array_flip($fields)));

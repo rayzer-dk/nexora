@@ -11,6 +11,14 @@ use Symfony\Component\Uid\Uuid;
 
 final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
 {
+    /**
+     * State of one language of a product, by the rule of the product form and the translations page: 2 = translated
+     * (own name and a description with text), 1 = a name only; no row = missing. Fallback copies of the default
+     * language are not translations. Used by the "Translations" column of the product list and its sorting.
+     */
+    private const TRANSLATION_STATE = "IF(TRIM(REGEXP_REPLACE(COALESCE(%1\$s.description,''),'<[^>]*>',''))<>'',2,1)";
+    private const TRANSLATION_ROWS = "FROM mc_product_translation %1\$s JOIN mc_store_locale %1\$sl ON %1\$sl.store_id=%1\$s.store_id AND %1\$sl.locale_code=%1\$s.locale AND %1\$sl.enabled=1 WHERE %1\$s.product_id=p.id AND %1\$s.store_id=sp.store_id AND %1\$s.is_fallback=0 AND %1\$s.name<>''";
+
     public function __construct(private Connection $connection, private ?\Commerce\Modules\Search\Application\SqlSearchIndex $searchIndex = null)
     {
     }
@@ -115,7 +123,10 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
             $params,
         );
         $direction = strtolower($dir) === 'asc' ? 'ASC' : 'DESC';
-        $sortColumns = ['name' => 'pt.name', 'sku' => 'v.sku', 'status' => 'p.status', 'price' => 'pr.amount_minor', 'stock' => 'stock_total', 'type' => 'p.product_type', 'updated' => 'p.updated_at'];
+        $sortColumns = ['name' => 'pt.name', 'sku' => 'v.sku', 'status' => 'p.status', 'price' => 'pr.amount_minor', 'stock' => 'stock_total', 'type' => 'p.product_type', 'updated' => 'p.updated_at', 'translations' => 'translation_score'];
+        $translationState = "(SELECT GROUP_CONCAT(CONCAT(tl.locale,'='," . sprintf(self::TRANSLATION_STATE, 'tl') . ')) ' . sprintf(self::TRANSLATION_ROWS, 'tl') . ')';
+        // Sorting follows the "done/total" figure on screen: fully translated languages first, a name alone only breaks ties.
+        $translationScore = '(SELECT COALESCE(SUM(IF(' . sprintf(self::TRANSLATION_STATE, 'tq') . '=2,1000,1)),0) ' . sprintf(self::TRANSLATION_ROWS, 'tq') . ')';
         $orderBy = isset($sortColumns[$sort]) ? $sortColumns[$sort] . ' ' . $direction . ',p.id DESC' : 'p.updated_at DESC,p.id DESC';
         // Stock as the product form shows it: the market's first active warehouse (the one ProductWriter writes).
         $locationId = MarketStockLocation::locationId($this->connection, $marketId);
@@ -125,10 +136,10 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
                 EXISTS(SELECT 1 FROM mc_variant_inventory_item vin WHERE vin.variant_id=v.id) AS has_inventory,
                 (SELECT sl.stocked_quantity FROM mc_variant_inventory_item vis JOIN mc_stock_level sl ON sl.inventory_item_id=vis.inventory_item_id AND sl.location_id=? WHERE vis.variant_id=v.id ORDER BY vis.inventory_item_id LIMIT 1) AS stock_quantity,
                 (SELECT SUM(slt.stocked_quantity) FROM mc_product_variant vt JOIN mc_variant_inventory_item vit ON vit.variant_id=vt.id JOIN mc_stock_level slt ON slt.inventory_item_id=vit.inventory_item_id AND slt.location_id=? WHERE vt.product_id=p.id AND vt.status='active') AS stock_total,
-                (SELECT ma.storage_key FROM mc_product_media pmi JOIN mc_media_asset ma ON ma.id=pmi.media_asset_id WHERE pmi.product_id=p.id AND ma.mime_type LIKE 'image/%' ORDER BY (pmi.role='primary') DESC,pmi.sort_order LIMIT 1) AS image_key, EXISTS(SELECT 1 FROM mc_product_media pm WHERE pm.product_id=p.id LIMIT 1) AS has_image, EXISTS(SELECT 1 FROM mc_seo_route srq WHERE srq.store_id=sp.store_id AND srq.locale=pt.locale AND srq.entity_type='product' AND srq.entity_public_id=p.public_id AND srq.indexable=1 LIMIT 1) AS has_seo FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id LEFT JOIN mc_product_variant v ON v.product_id=p.id AND v.sort_order=0 LEFT JOIN mc_brand b ON b.id=p.brand_id LEFT JOIN mc_price pr ON pr.id=(SELECT p2.id FROM mc_price p2 WHERE p2.variant_id=v.id AND p2.store_id=sp.store_id AND p2.market_id=? AND p2.customer_group='default' AND p2.price_list_id IS NULL AND p2.max_quantity IS NULL AND p2.starts_at IS NULL AND p2.ends_at IS NULL ORDER BY p2.priority ASC,p2.min_quantity ASC,p2.id DESC LIMIT 1) WHERE {$where} ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}",
+                (SELECT ma.storage_key FROM mc_product_media pmi JOIN mc_media_asset ma ON ma.id=pmi.media_asset_id WHERE pmi.product_id=p.id AND ma.mime_type LIKE 'image/%' ORDER BY (pmi.role='primary') DESC,pmi.sort_order LIMIT 1) AS image_key, EXISTS(SELECT 1 FROM mc_product_media pm WHERE pm.product_id=p.id LIMIT 1) AS has_image, EXISTS(SELECT 1 FROM mc_seo_route srq WHERE srq.store_id=sp.store_id AND srq.locale=pt.locale AND srq.entity_type='product' AND srq.entity_public_id=p.public_id AND srq.indexable=1 LIMIT 1) AS has_seo, {$translationState} AS translation_state, {$translationScore} AS translation_score FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id LEFT JOIN mc_product_variant v ON v.product_id=p.id AND v.sort_order=0 LEFT JOIN mc_brand b ON b.id=p.brand_id LEFT JOIN mc_price pr ON pr.id=(SELECT p2.id FROM mc_price p2 WHERE p2.variant_id=v.id AND p2.store_id=sp.store_id AND p2.market_id=? AND p2.customer_group='default' AND p2.price_list_id IS NULL AND p2.max_quantity IS NULL AND p2.starts_at IS NULL AND p2.ends_at IS NULL ORDER BY p2.priority ASC,p2.min_quantity ASC,p2.id DESC LIMIT 1) WHERE {$where} ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}",
             array_merge([$locationId, $locationId, $marketId], $params),
         );
-        foreach ($rows as &$row) { $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122(); $row['variant_count'] = (int) $row['variant_count']; $row['has_inventory'] = (bool) $row['has_inventory']; $row['manage_inventory'] = (bool) $row['manage_inventory']; $row['quality']=['image'=>(bool)$row['has_image'],'seo'=>(bool)$row['has_seo'],'gtin'=>trim((string)($row['gtin']??''))!=='','content'=>mb_strlen(trim(strip_tags((string)($row['description']??''))))>=80]; unset($row['has_image'],$row['has_seo'],$row['description']); } unset($row);
+        foreach ($rows as &$row) { $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122(); $row['variant_count'] = (int) $row['variant_count']; $row['has_inventory'] = (bool) $row['has_inventory']; $row['manage_inventory'] = (bool) $row['manage_inventory']; $row['quality']=['image'=>(bool)$row['has_image'],'seo'=>(bool)$row['has_seo'],'gtin'=>trim((string)($row['gtin']??''))!=='','content'=>mb_strlen(trim(strip_tags((string)($row['description']??''))))>=80]; unset($row['has_image'],$row['has_seo'],$row['description']); $row['translations']=[]; foreach (array_filter(explode(',', (string) ($row['translation_state'] ?? ''))) as $pair) { [$code, $state] = explode('=', $pair, 2) + [1 => '0']; $row['translations'][$code] = (int) $state; } unset($row['translation_state'], $row['translation_score']); } unset($row);
         return ['items' => $rows, 'total' => $total, 'page' => $page, 'limit' => $limit];
     }
 

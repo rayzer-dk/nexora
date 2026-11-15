@@ -36,22 +36,43 @@ final class AdminInterfaceLocale
         if ($this->available !== null) {
             return $this->available;
         }
-        $names = ['uk-UA' => 'Українська', 'en-US' => 'English', 'en-GB' => 'English (UK)', 'pl-PL' => 'Polski', 'de-DE' => 'Deutsch', 'da-DK' => 'Dansk', 'cs-CZ' => 'Čeština', 'ro-RO' => 'Română'];
         $out = [];
         foreach (glob(rtrim($this->projectDir, '/') . '/resources/translations/*/admin.php') ?: [] as $file) {
             $code = basename(dirname($file));
-            $out[$code] = $names[$code] ?? $code;
+            $out[$code] = self::nativeName($code);
         }
         // Languages added by the store owner with an admin language pack (var/translations/<locale>/admin.json).
         foreach (glob(rtrim($this->projectDir, '/') . '/var/translations/*/admin.json') ?: [] as $file) {
             $code = basename(dirname($file));
             if (preg_match('/^[a-z]{2,3}(?:-[A-Z]{2})?$/D', $code) === 1) {
-                $out[$code] ??= $names[$code] ?? $code;
+                $out[$code] ??= self::nativeName($code);
             }
         }
-        uksort($out, static fn (string $a, string $b): int => $a === self::DEFAULT ? -1 : ($b === self::DEFAULT ? 1 : strcmp($a, $b)));
+        ksort($out);
 
-        return $this->available = $out === [] ? [self::DEFAULT => $names[self::DEFAULT]] : $out;
+        return $this->available = $out === [] ? [self::DEFAULT => self::nativeName(self::DEFAULT)] : $out;
+    }
+
+    /** "ru-RU" -> "Русский": the language named in itself (intl), so every pack, also one added later, has a readable name. */
+    private static function nativeName(string $code): string
+    {
+        $name = trim(\Locale::getDisplayLanguage($code, $code));
+
+        return $name === '' || $name === $code ? $code : mb_strtoupper(mb_substr($name, 0, 1)) . mb_substr($name, 1);
+    }
+
+    /**
+     * The interface languages as menus list them: the site default first (set at installation or in Languages and
+     * currencies), then the others.
+     *
+     * @return array<string,string>
+     */
+    public function choices(): array
+    {
+        $available = $this->available();
+        $default = $this->siteDefault();
+
+        return [$default => $available[$default]] + $available;
     }
 
     /**
