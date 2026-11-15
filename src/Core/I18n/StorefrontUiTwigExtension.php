@@ -27,6 +27,7 @@ final class StorefrontUiTwigExtension extends AbstractExtension
             new TwigFunction('ui_catalog', $this->catalog(...), ['needs_context' => true]),
             new TwigFunction('ui_catalog_json', $this->catalogJson(...), ['needs_context' => true, 'is_safe' => ['html']]),
             new TwigFunction('ui_icon', $this->icon(...), ['is_safe' => ['html']]),
+            new TwigFunction('ui_flag', LocaleFlag::img(...), ['is_safe' => ['html']]),
             new TwigFunction('status_badge', $this->statusBadge(...), ['needs_context' => true, 'is_safe' => ['html']]),
         ];
     }
@@ -160,12 +161,7 @@ final class StorefrontUiTwigExtension extends AbstractExtension
     /** @param array<string,mixed> $context @return array<string,string> */
     public function catalog(array $context): array
     {
-        $locale = is_string($context['locale'] ?? null) ? trim($context['locale']) : ''; // a template loop variable named `locale` must not shadow the UI locale
-        if ($locale === '') {
-            $locale = $this->requests->getCurrentRequest()?->getLocale() ?? 'uk-UA';
-        }
-
-        return $this->translator->catalogFor($locale);
+        return $this->translator->catalogFor($this->uiLocale($context));
     }
 
     /** @param array<string,mixed> $context */
@@ -199,11 +195,30 @@ final class StorefrontUiTwigExtension extends AbstractExtension
 
     public function text(array $context, string $key, array $replace = []): string
     {
-        $locale = is_string($context['locale'] ?? null) ? trim($context['locale']) : ''; // a template loop variable named `locale` must not shadow the UI locale
-        if ($locale === '') {
-            $locale = $this->requests->getCurrentRequest()?->getLocale() ?? 'uk-UA';
-        }
+        return $this->translator->translate($key, $this->uiLocale($context), $replace);
+    }
 
-        return $this->translator->translate($key, $locale, $replace);
+    /**
+     * The language interface texts are rendered in. An explicit `ui_locale` wins (an e-mail previewed in the admin).
+     * In the back office it is always the administrator's interface language: there `locale` is the content language
+     * being edited or a loop over languages and must not switch the labels. Elsewhere (storefront, e-mails sent to a
+     * customer) the template's `locale`, else the request locale.
+     *
+     * @param array<string,mixed> $context
+     */
+    private function uiLocale(array $context): string
+    {
+        $explicit = is_string($context['ui_locale'] ?? null) ? trim($context['ui_locale']) : '';
+        if ($explicit !== '') {
+            return $explicit;
+        }
+        $request = $this->requests->getCurrentRequest();
+        $admin = $request?->attributes->get(AdminInterfaceLocale::REQUEST_ATTRIBUTE);
+        if (is_string($admin) && $admin !== '') {
+            return $admin;
+        }
+        $template = is_string($context['locale'] ?? null) ? trim($context['locale']) : '';
+
+        return $template !== '' ? $template : ($request?->getLocale() ?? 'uk-UA');
     }
 }

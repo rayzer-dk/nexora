@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 4.0.13 — 2026-11-15
+
+Version 4.0.13 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
+
+- Flags: one source for the whole system. `resources/icons/flags.json` is built from flag-icons 7.5.0 (MIT, `tools/build-flag-icons.mjs`); flags whose coat of arms would weigh 10–180 KB (Spain, Portugal, Serbia, Croatia, Kazakhstan, Moldova, Brazil and others) use simplified versions from `tools/flag-overrides.json`. `ui_flag()` draws a flag as an inline SVG image for a locale or region; the storefront switcher and every admin language tab use it. The hand-drawn admin flags (`assets/shared/flags.js`: a US flag with two visible stripes, Nordic flags without a cross) and the separate storefront SVG set are removed.
+- Language tabs are the same everywhere in the admin: enabled store languages only, the main language first and marked "main", the header content language opened first, flag + language name without the country, ✓/• completeness, "Add language". Notification templates no longer list disabled languages with country names; the landing editor shows the store languages instead of a fixed list of six; field tabs built in the browser (units, badges, delivery, navigation, SEO templates, storefront texts) copy the server-rendered bar and start on the content language instead of the last remembered one.
+- Category form: the other languages are typed in the same form as in the product form (name, text, H1, title, meta description, SEO URL); new categories save them too. Product form: H1 and SEO URL per language. Both forms: "Copy from <main language>" and "Translate with AI" for the language on screen.
+- Fixed: interface texts of an admin page followed a template variable named `locale` (the content language or a loop over languages), so "Units" showed "Name"/"Short label" in English and notification templates switched the labels to the language being edited. In the admin the labels now always follow the administrator's interface language; e-mails keep the language of the recipient (`ui_locale`).
+- Fixed: saving another language from the product form erased its H1 (the form did not send it and the whole translation row was overwritten). An existing translation now changes only in the fields that were sent.
+- Fixed: the language tab list was indented by the general list padding of the admin.
+- Tests: LocaleFlagTest, UiTextLocaleTest, e2e for the category form languages and "copy from".
+
 ## 4.0.12 — 2026-11-15
 
 Version 4.0.12 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.

@@ -1,7 +1,7 @@
 {
   "name": "nexora-commerce-ui",
   "private": true,
-  "version": "4.0.12",
+  "version": "4.0.13",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -54,6 +54,7 @@
     "esbuild": "0.28.2",
     "eslint": "10.11.0",
     "eslint-plugin-vue": "10.11.0",
+    "flag-icons": "7.5.0",
     "prettier": "3.9.9",
     "stylelint": "17.15.0",
     "stylelint-config-standard": "40.0.0",

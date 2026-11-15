@@ -20,8 +20,8 @@ final class LandingAdminController extends AbstractController
     #[Route('/admin/appearance/landing', name: 'admin_appearance_landing', methods: ['GET'])]
     public function index(Request $request): Response
     {
-        $this->contexts->resolve($request);
-        $locale = $this->locale((string) $request->query->get('locale', ''));
+        $context = $this->contexts->resolve($request);
+        $locale = $this->locale((string) $request->query->get('locale', $context->locale));
 
         return $this->render('@storefront/admin/appearance/landing.html.twig', [
             'locale' => $locale,

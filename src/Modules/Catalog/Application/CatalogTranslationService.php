@@ -76,7 +76,12 @@ final readonly class CatalogTranslationService
         return $missing;
     }
 
-    /** @param array<string,mixed> $input */
+    /**
+     * Saves the texts of one language. An existing translation changes only in the fields the form sent, so a form that
+     * edits part of them (the product form has no per-language H1) never erases the rest.
+     *
+     * @param array<string,mixed> $input
+     */
     public function saveProduct(int $storeId, int $productId, string $locale, array $input): void
     {
         $this->assertLocale($storeId, $locale);
@@ -89,7 +94,7 @@ final readonly class CatalogTranslationService
         $this->db->transactional(function (Connection $db) use ($storeId, $productId, $locale, $data, $now, $publicId, $input): void {
             $exists = (int) $db->fetchOne('SELECT COUNT(*) FROM mc_product_translation WHERE product_id=? AND store_id=? AND locale=?', [$productId, $storeId, $locale]) > 0;
             if ($exists) {
-                $db->update('mc_product_translation', $data + ['updated_at' => $now, 'is_fallback' => 0], ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale]);
+                $db->update('mc_product_translation', array_intersect_key($data, $input) + ['updated_at' => $now, 'is_fallback' => 0], ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale]);
             } else {
                 $db->insert('mc_product_translation', $data + ['product_id' => $productId, 'store_id' => $storeId, 'locale' => $locale, 'slug' => null, 'created_at' => $now, 'updated_at' => $now]);
             }
@@ -111,7 +116,7 @@ final readonly class CatalogTranslationService
         $this->db->transactional(function (Connection $db) use ($storeId, $categoryId, $locale, $data, $publicId, $input): void {
             $exists = (int) $db->fetchOne('SELECT COUNT(*) FROM mc_category_translation WHERE category_id=? AND store_id=? AND locale=?', [$categoryId, $storeId, $locale]) > 0;
             if ($exists) {
-                $db->update('mc_category_translation', $data + ['is_fallback' => 0], ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale]);
+                $db->update('mc_category_translation', array_intersect_key($data, $input) + ['is_fallback' => 0], ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale]);
             } else {
                 $db->insert('mc_category_translation', $data + ['category_id' => $categoryId, 'store_id' => $storeId, 'locale' => $locale, 'slug' => null]);
             }
@@ -130,13 +135,13 @@ final readonly class CatalogTranslationService
     }
 
     /**
-     * @return array<string,string> locale => address (without the language prefix) of the product or category
+     * @return array<string,string> locale => slug of the product or category (what the address field edits; prefixes are shown apart)
      */
     public function addresses(int $storeId, string $entityType, string $publicId): array
     {
         try {
             $rows = $this->db->fetchAllAssociative(
-                'SELECT locale,path FROM mc_seo_route WHERE store_id=? AND entity_type=? AND entity_public_id=?',
+                'SELECT locale,slug FROM mc_seo_route WHERE store_id=? AND entity_type=? AND entity_public_id=?',
                 [$storeId, $entityType, Uuid::fromString($publicId)->toBinary()],
             );
         } catch (\Throwable) {
@@ -144,7 +149,7 @@ final readonly class CatalogTranslationService
         }
         $out = [];
         foreach ($rows as $row) {
-            $out[(string) $row['locale']] = (string) $row['path'];
+            $out[(string) $row['locale']] = (string) $row['slug'];
         }
 
         return $out;

@@ -14,8 +14,8 @@
         {% else %}
           <button type="button" class="lang-tabs__tab" data-lang-tab="lang-{{ tab.code }}" aria-pressed="{{ tab.current ? 'true' : 'false' }}" lang="{{ tab.code }}">
         {% endif %}
-          <span class="lang-tabs__code">{{ tab.short }}</span>
-          <span class="lang-tabs__name">{{ tab.name }}</span>
+          {% set flag = ui_flag(tab.code) %}{% if flag %}<span class="lang-tabs__flag">{{ flag|raw }}</span>{% else %}<span class="lang-tabs__code">{{ tab.short }}</span>{% endif %}
+          <span class="lang-tabs__name">{{ tab.name|split(' (')|first }}</span>
           {% if tab.is_default %}<span class="lang-tabs__default">{{ ui_text('admin.lang_tabs.default') }}</span>{% endif %}
           <span class="lang-tabs__mark" data-lang-mark title="{{ (tab.done ? ui_text('admin.lang_tabs.done') : ui_text('admin.lang_tabs.missing'))|e('html_attr') }}" aria-label="{{ (tab.done ? ui_text('admin.lang_tabs.done') : ui_text('admin.lang_tabs.missing'))|e('html_attr') }}">{{ tab.done ? '✓' : '•' }}</span>
         {% if tab.href is defined and tab.href %}</a>{% else %}</button>{% endif %}
@@ -24,4 +24,22 @@
   </ul>
   <a class="lang-tabs__add" href="{{ options.add_url|default(path('admin_system_localization') ~ '#locales') }}" title="{{ ui_text('admin.lang_tabs.add_hint')|e('html_attr') }}">{{ ui_icon('plus', 14) }}<span>{{ ui_text('admin.lang_tabs.add') }}</span></a>
 </nav>
+{% endmacro %}
+
+{#
+  One language bar for a whole edit form (product, category): the tabs switch every [data-lang-panel] of the form at once.
+  Fields that exist per language carry data-lang-field="<field>" so that "copy" and "translate" find the pair in the
+  source language. source: the locale code of the main (untranslated) fields.
+#}
+{% macro form_bar(tabs, source, hint) %}
+{% set source_name = source %}{% for tab in tabs %}{% if tab.code == source %}{% set source_name = tab.name|split(' (')|first %}{% endif %}{% endfor %}
+<div class="lang-form-bar">
+  {{ _self.bar(tabs) }}
+  <div class="lang-form-bar__actions" data-lang-actions data-lang-source="lang-{{ source }}" data-source-locale="{{ source }}" data-ai-token="{{ csrf_token('admin_ai') }}" data-msg-working="{{ ui_text('admin.ai.generating')|e('html_attr') }}" data-msg-done="{{ ui_text('admin.ai.draft_inserted')|e('html_attr') }}" data-msg-failed="{{ ui_text('admin.ai.draft_failed')|e('html_attr') }}" data-msg-nothing="{{ ui_text('admin.ai.nothing_to_translate')|e('html_attr') }}" data-msg-overwrite="{{ ui_text('admin.ai.overwrite_confirm')|e('html_attr') }}" hidden>
+    <button type="button" class="admin-button" data-lang-copy>{{ ui_icon('copy', 16) }}<span>{{ ui_text('admin.lang_tabs.copy_from', {language: source_name}) }}</span></button>
+    {% if ai_providers() %}{% if ai_providers()|length > 1 %}<select data-ai-provider aria-label="{{ ui_text('admin.ai.provider')|e('html_attr') }}">{% for pr in ai_providers() %}<option value="{{ pr.code }}">{{ pr.label }}</option>{% endfor %}</select>{% else %}<input type="hidden" data-ai-provider value="{{ ai_providers()|first.code }}">{% endif %}<button type="button" class="admin-button" data-lang-translate>{{ ui_icon('languages', 16) }}<span>{{ ui_text('admin.translations.translate') }}</span></button>{% endif %}
+    <small class="lang-form-bar__status" data-lang-status role="status"></small>
+  </div>
+  {% if hint %}<p class="admin-help">{{ hint }}</p>{% endif %}
+</div>
 {% endmacro %}

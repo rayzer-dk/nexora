@@ -62,7 +62,7 @@ final class NotificationTemplateAdminController extends AbstractController
         $body = $this->templates->render($isHtml ? $this->templates->cleanHtml(mb_substr((string) $request->request->get('body', ''), 0, 30000)) : mb_substr(strip_tags((string) $request->request->get('body', '')), 0, 8000), $vars);
         $html = $this->renderView('@storefront/email/' . $layout . '.html.twig', [
             'notification_subject' => $subject, 'notification_text' => $body, 'custom_body' => $isHtml ? '' : $body, 'custom_html' => $isHtml ? $body : '',
-            'store_name' => $storeName, 'locale' => (string) $request->request->get('locale', 'en-US'),
+            'store_name' => $storeName, 'locale' => (string) $request->request->get('locale', 'en-US'), 'ui_locale' => (string) $request->request->get('locale', 'en-US'),
             'order_number' => $vars['order_number'], 'customer_name' => $vars['customer_name'], 'total' => $vars['total'],
             'items' => [['name' => 'Sample product', 'sku' => 'DEMO-001', 'quantity' => 1, 'unit_code' => 'pcs', 'line_total_minor' => 124900]],
             'total_minor' => 124900, 'currency' => 'UAH', 'action_url' => '#', 'footer_text' => '', 'unsubscribe_url' => '#',

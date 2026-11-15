@@ -200,6 +200,7 @@ final class CatalogAdminPageController extends AbstractController
                     ));
                     $this->categoryTexts->save((int) $created['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), '');
                     $this->categoryTexts->saveSeo((int) $created['id'], $context->storeId, $context->locale, (string) $request->request->get('h1', ''), (string) $request->request->get('meta_title', ''), (string) $request->request->get('meta_description', ''));
+                    $this->saveInlineTranslations($request, $context->storeId, (int) $created['id'], $context->locale, 'category');
                     $this->saveCategoryIcon((int) $created['id'], $request);
                     if (($imageId = $this->categoryImages->imageFromRequest($request)) !== false) {
                         $this->categoryImages->set((int) $created['id'], $context->storeId, $imageId, (string) $request->request->get('name', ''));
@@ -212,7 +213,7 @@ final class CatalogAdminPageController extends AbstractController
             }
         }
         $choices = $this->query->categories($context->storeId, $context->locale, 1, 100, '')['items'];
-        return $this->render('@storefront/admin/catalog/category_form.html.twig', ['categories' => $choices, 'category' => null, 'csrf_id' => 'admin_category_create']);
+        return $this->render('@storefront/admin/catalog/category_form.html.twig', ['categories' => $choices, 'category' => null, 'csrf_id' => 'admin_category_create', 'tr_texts' => $request->request->all('tr')]);
     }
 
     /** One screen to add a product: photo (optionally drafted by the assistant), name, price, stock and category; the rest is filled in later. */
@@ -224,19 +225,28 @@ final class CatalogAdminPageController extends AbstractController
         return $this->render('@storefront/admin/catalog/product_quick.html.twig', ['categories' => $this->query->categories($context->storeId, $context->locale, 1, 100, '')['items'], 'currency' => $context->currency]);
     }
 
-    /** Texts typed in the "other languages" block of the product form are saved with the product; a language left empty is skipped. */
-    private function saveInlineTranslations(Request $request, int $storeId, int $productId, string $currentLocale): void
+    /**
+     * Texts of the other languages typed in the product or category form (fields tr[locale][field]) are saved with it; a
+     * language left empty is skipped. A category keeps one text per language, as in its main form: the lower text is merged into it.
+     */
+    private function saveInlineTranslations(Request $request, int $storeId, int $entityId, string $currentLocale, string $kind = 'product'): void
     {
         foreach ($request->request->all('tr') as $locale => $fields) {
             if (!is_array($fields) || (string) $locale === $currentLocale) {
                 continue;
             }
-            $typed = array_filter($fields, static fn (mixed $value): bool => is_string($value) && trim($value) !== '');
+            // The address alone (prefilled with the current one) does not make a language "typed".
+            $typed = array_filter(array_diff_key($fields, ['slug' => true]), static fn (mixed $value): bool => is_string($value) && trim($value) !== '');
             if ($typed === []) {
                 continue;
             }
             try {
-                $this->translations->saveProduct($storeId, $productId, (string) $locale, array_map(static fn (mixed $v): string => is_string($v) ? $v : '', $fields));
+                $texts = array_map(static fn (mixed $v): string => is_string($v) ? $v : '', $fields);
+                if ($kind === 'category') {
+                    $this->translations->saveCategory($storeId, $entityId, (string) $locale, $texts + ['description_bottom' => '']);
+                } else {
+                    $this->translations->saveProduct($storeId, $entityId, (string) $locale, $texts);
+                }
             } catch (\InvalidArgumentException $e) {
                 $this->addFlash('error', (string) $locale . ': ' . \Commerce\Core\I18n\CanonicalUiText::get('admin.translations.error.' . $e->getMessage()));
             }
@@ -317,6 +327,7 @@ final class CatalogAdminPageController extends AbstractController
                         status: (string) $request->request->get('status', 'active'),
                     ));
                     $this->categoryTexts->save((int) $category['id'], $context->storeId, $context->locale, (string) $request->request->get('description', ''), '');
+                    $this->saveInlineTranslations($request, $context->storeId, (int) $category['id'], $context->locale, 'category');
                     $this->categoryTexts->saveSeo((int) $category['id'], $context->storeId, $context->locale, (string) $request->request->get('h1', ''), (string) $request->request->get('meta_title', ''), (string) $request->request->get('meta_description', ''));
                     if ($request->request->has('seo_present')) {
                         $this->seoUrls->setIndexable($context->storeId, $context->locale, \Commerce\Modules\Seo\Domain\SeoEntityType::Category, (string) $request->attributes->get('publicId', ''), $request->request->getBoolean('indexable'));
@@ -349,6 +360,8 @@ final class CatalogAdminPageController extends AbstractController
         ));
         return $this->render('@storefront/admin/catalog/category_form.html.twig', [
             'categories' => $choices, 'category' => $category, 'csrf_id' => 'admin_category_update_' . $publicId,
+            'tr_texts' => $request->isMethod('POST') ? $request->request->all('tr') : $this->translations->categoryTexts($context->storeId, (int) $category['id']),
+            'tr_slugs' => $this->translations->addresses($context->storeId, 'category', $publicId),
         ]);
     }
 
@@ -484,6 +497,7 @@ final class CatalogAdminPageController extends AbstractController
             'brands' => $brands,
             'product' => $product,
             'tr_texts' => $this->translations->productTexts($context->storeId, (int) $product['id']),
+            'tr_slugs' => $this->translations->addresses($context->storeId, 'product', (string) $product['public_id']),
             'images' => $this->media->productImages((int) $product['id']),
             'videos' => $this->videos->forAdmin((int) $product['id']),
             'media_items' => $this->mediaOrder->merge($this->media->productImages((int) $product['id']), $this->videos->forAdmin((int) $product['id'])),

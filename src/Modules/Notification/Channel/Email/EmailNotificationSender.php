@@ -45,7 +45,7 @@ final class EmailNotificationSender implements NotificationSenderInterface
                 'notification_text' => $text,
                 'custom_body' => ($override['html'] ?? false) ? '' : ($override['body'] ?? ''),
                 'custom_html' => ($override['html'] ?? false) ? ($override['body'] ?? '') : '',
-            ]);
+            ] + (is_string($message->context['locale'] ?? null) && $message->context['locale'] !== '' ? ['ui_locale' => $message->context['locale']] : []));
 
         foreach ((array) ($message->context['attachments'] ?? []) as $file) {
             $path = is_array($file) ? (string) ($file['path'] ?? '') : '';

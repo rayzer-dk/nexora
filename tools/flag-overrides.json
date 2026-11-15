@@ -1,0 +1,17 @@
+{
+ "_comment": "Simplified versions of flags whose coat of arms makes the flag-icons file heavier than the limit of tools/build-flag-icons.mjs; at the 20 px a flag is shown the arms are not readable anyway. viewBox 0 0 640 480.",
+ "ad": "<path fill=\"#10069f\" d=\"M0 0h214v480H0z\"/><path fill=\"#fedd00\" d=\"M214 0h212v480H214z\"/><path fill=\"#d50032\" d=\"M426 0h214v480H426z\"/>",
+ "es": "<path fill=\"#aa151b\" d=\"M0 0h640v480H0z\"/><path fill=\"#f1bf00\" d=\"M0 120h640v240H0z\"/>",
+ "hr": "<path fill=\"#171796\" d=\"M0 0h640v480H0z\"/><path fill=\"#fff\" d=\"M0 0h640v320H0z\"/><path fill=\"red\" d=\"M0 0h640v160H0z\"/><path fill=\"#fff\" d=\"M260 130h120v150q0 50-60 70-60-20-60-70z\"/><path fill=\"red\" d=\"M260 130h40v40h-40zm80 0h40v40h-40zm-40 40h40v40h-40zm-40 40h40v40h-40zm80 0h40v40h-40zm-40 40h40v40h-40z\"/>",
+ "me": "<path fill=\"#d4af3a\" d=\"M0 0h640v480H0z\"/><path fill=\"#c40308\" d=\"M24 24h592v432H24z\"/>",
+ "mt": "<path fill=\"#fff\" d=\"M0 0h320v480H0z\"/><path fill=\"#cf142b\" d=\"M320 0h320v480H320z\"/><path fill=\"#a0a0a0\" d=\"M70 50h40v40h40v40h-40v40H70v-40H30V90h40z\"/>",
+ "mx": "<path fill=\"#006847\" d=\"M0 0h214v480H0z\"/><path fill=\"#fff\" d=\"M214 0h212v480H214z\"/><path fill=\"#ce1126\" d=\"M426 0h214v480H426z\"/><circle cx=\"320\" cy=\"240\" r=\"62\" fill=\"#8c6a2f\"/>",
+ "rs": "<path fill=\"#c6363c\" d=\"M0 0h640v480H0z\"/><path fill=\"#0c4076\" d=\"M0 0h640v320H0z\"/><path fill=\"#fff\" d=\"M0 0h640v160H0z\"/>",
+ "sa": "<path fill=\"#165d31\" d=\"M0 0h640v480H0z\"/><path fill=\"#fff\" d=\"M170 300h300v24H170z\"/>",
+ "sm": "<path fill=\"#5eb6e4\" d=\"M0 0h640v480H0z\"/><path fill=\"#fff\" d=\"M0 0h640v240H0z\"/>",
+ "va": "<path fill=\"#ffe000\" d=\"M0 0h320v480H0z\"/><path fill=\"#fff\" d=\"M320 0h320v480H320z\"/>",
+ "pt": "<path fill=\"#da291c\" d=\"M0 0h640v480H0z\"/><path fill=\"#046a38\" d=\"M0 0h256v480H0z\"/><circle cx=\"256\" cy=\"240\" r=\"80\" fill=\"#ffe900\"/><path fill=\"#da291c\" d=\"M216 190h80v70q0 40-40 50-40-10-40-50z\"/><path fill=\"#fff\" d=\"M236 210h40v45q0 20-20 27-20-7-20-27z\"/>",
+ "kz": "<path fill=\"#00afca\" d=\"M0 0h640v480H0z\"/><circle cx=\"320\" cy=\"210\" r=\"70\" fill=\"#fec50c\"/><path fill=\"#fec50c\" d=\"M220 320q100 50 200 0v20q-100 50-200 0z\"/><path fill=\"#fec50c\" d=\"M40 40h30v400H40z\"/>",
+ "md": "<path fill=\"#0046ae\" d=\"M0 0h214v480H0z\"/><path fill=\"#ffd200\" d=\"M214 0h212v480H214z\"/><path fill=\"#cc092f\" d=\"M426 0h214v480H426z\"/><path fill=\"#a77b3b\" d=\"M280 170h80v90q0 50-40 70-40-20-40-70z\"/>",
+ "br": "<path fill=\"#229e45\" d=\"M0 0h640v480H0z\"/><path fill=\"#f8e509\" d=\"m320 52 268 188-268 188L52 240z\"/><circle cx=\"320\" cy=\"240\" r=\"110\" fill=\"#2b49a3\"/><path fill=\"none\" stroke=\"#fff\" stroke-width=\"14\" d=\"M214 216q106-30 212 20\"/>"
+}

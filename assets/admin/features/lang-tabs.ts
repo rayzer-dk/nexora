@@ -18,6 +18,8 @@ function activate(bar: HTMLElement, id: string, updateHash: boolean): void {
   if (updateHash) {
     try { history.replaceState(null, '', `#${id}`); } catch { /* history may be blocked in sandboxed previews */ }
   }
+  bar.dataset.langActive = id;
+  bar.dispatchEvent(new CustomEvent('lang-tabs:change', { detail: id }));
 }
 
 function refreshMark(bar: HTMLElement, panel: HTMLElement): void {
@@ -62,8 +64,81 @@ function initBar(bar: HTMLElement): void {
   }
 }
 
+type Field = HTMLInputElement | HTMLTextAreaElement;
+
+// Form-wide bar (product, category): "copy from the main language" and "translate" fill the fields of the language on screen.
+function initFormActions(bar: HTMLElement): void {
+  const box = bar.closest('.lang-form-bar')?.querySelector<HTMLElement>('[data-lang-actions]');
+  const scope = bar.closest<HTMLElement>('[data-lang-scope]');
+  if (!box || !scope) return;
+  const source = box.dataset.langSource ?? '';
+  const status = box.querySelector<HTMLElement>('[data-lang-status]');
+  const say = (text: string): void => { if (status) status.textContent = text; };
+  const fieldsOf = (id: string): Field[] => Array.from(scope.querySelectorAll<Field>(`[data-lang-panel="${id}"] [data-lang-field]`));
+  const pairs = (): Array<{ from: Field; to: Field }> => {
+    const target = bar.dataset.langActive ?? '';
+    const from = new Map(fieldsOf(source).map((field) => [field.dataset.langField ?? '', field]));
+    return fieldsOf(target).flatMap((to) => {
+      const match = from.get(to.dataset.langField ?? '');
+      return match && match.value.trim() !== '' ? [{ from: match, to }] : [];
+    });
+  };
+  const write = (to: Field, value: string): void => {
+    to.value = value;
+    to.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const show = (): void => { box.hidden = (bar.dataset.langActive ?? source) === source; say(''); };
+  bar.addEventListener('lang-tabs:change', show);
+  show();
+
+  box.querySelector('[data-lang-copy]')?.addEventListener('click', () => {
+    const jobs = pairs();
+    if (jobs.length === 0) { say(box.dataset.msgNothing ?? ''); return; }
+    if (jobs.some(({ to }) => to.value.trim() !== '') && !window.confirm(bar.dataset.langOverwrite ?? '')) return;
+    jobs.forEach(({ from, to }) => write(to, from.value));
+  });
+
+  const translate = box.querySelector<HTMLButtonElement>('[data-lang-translate]');
+  translate?.addEventListener('click', async () => {
+    let jobs = pairs();
+    if (jobs.some(({ to }) => to.value.trim() !== '') && !window.confirm(box.dataset.msgOverwrite ?? '')) {
+      jobs = jobs.filter(({ to }) => to.value.trim() === '');
+    }
+    if (jobs.length === 0) { say(box.dataset.msgNothing ?? ''); return; }
+    const texts: Record<string, string> = {};
+    jobs.forEach(({ from }, index) => { texts[`f${index}`] = from.value; });
+    const body = new URLSearchParams({
+      _token: box.dataset.aiToken ?? '',
+      task: 'translate_fields',
+      provider: box.querySelector<HTMLInputElement | HTMLSelectElement>('[data-ai-provider]')?.value ?? '',
+    });
+    body.append('fields[target]', (bar.dataset.langActive ?? '').replace(/^lang-/, ''));
+    body.append('fields[source]', box.dataset.sourceLocale ?? '');
+    body.append('fields[json]', JSON.stringify(texts));
+    translate.disabled = true;
+    say(box.dataset.msgWorking ?? '');
+    try {
+      const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
+      const data = await response.json().catch(() => null) as { ok?: boolean; message?: string; fields?: Record<string, unknown> } | null;
+      if (!response.ok || !data?.ok) throw new Error(data?.message || (box.dataset.msgFailed ?? ''));
+      jobs.forEach(({ to }, index) => {
+        const value = data.fields?.[`f${index}`];
+        if (typeof value === 'string' && value !== '') write(to, value);
+      });
+      say(box.dataset.msgDone ?? '');
+    } catch (error) {
+      say(error instanceof Error ? error.message : (box.dataset.msgFailed ?? ''));
+    } finally {
+      translate.disabled = false;
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll<HTMLElement>('[data-lang-tabs]').forEach(initBar);
+  document.querySelectorAll<HTMLElement>('[data-lang-tabs]').forEach((bar) => {
+    initBar(bar);
+    initFormActions(bar);
+  });
 });
 
 // A required field of a language that is not on screen cannot be focused by the browser: open that language first.

@@ -15,7 +15,7 @@ test('another language of a product is typed in the product form and saved with 
 
   const block = page.locator('form[data-lang-scope]').first();
   await expect(block).toBeVisible();
-  const tabs = block.locator('.product-lang-bar .lang-tabs__tab');
+  const tabs = block.locator('.lang-form-bar .lang-tabs__tab');
   const count = await tabs.count();
   expect(count, 'content language plus one tab for every other language').toBeGreaterThanOrEqual(2);
   const name = (code: string | null) => block.locator(`[data-lang-panel="${code}"] input[name$="[name]"]`).first();
@@ -34,7 +34,7 @@ test('another language of a product is typed in the product form and saved with 
   await expectNoServerError(page);
 
   await page.goto(edit!, { waitUntil: 'domcontentloaded' });
-  await block.locator(`.product-lang-bar .lang-tabs__tab[data-lang-tab="${code}"]`).click();
+  await block.locator(`.lang-form-bar .lang-tabs__tab[data-lang-tab="${code}"]`).click();
   await expect(name(code)).toHaveValue(typed);
 
   // restore the earlier text so that other specs see the demo data they expect
@@ -42,4 +42,46 @@ test('another language of a product is typed in the product form and saved with 
     await name(code).fill(before);
     await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('.admin-save-bar button[data-primary-submit]').first().click()]);
   }
+});
+
+test('a category takes its other languages in the same form; "copy from" fills the language on screen', async ({ page }) => {
+  await loginAdmin(page);
+  await page.goto('/admin/catalog/categories', { waitUntil: 'domcontentloaded' });
+  const edit = await page.locator('main a[href^="/admin/catalog/categories/"][href$="/edit"]').first().getAttribute('href');
+  await page.goto(edit!, { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
+
+  const bar = page.locator('form[data-lang-scope] .lang-form-bar');
+  const tabs = bar.locator('.lang-tabs__tab');
+  expect(await tabs.count()).toBeGreaterThanOrEqual(2);
+  await expect(bar.locator('.lang-tabs__item').first().locator('.lang-tabs__default')).toBeVisible();
+  await expect(bar.locator('[data-lang-actions]')).toBeHidden();
+
+  const code = await tabs.last().getAttribute('data-lang-tab');
+  const locale = code!.replace(/^lang-/, '');
+  await tabs.last().click();
+  await expect(bar.locator('[data-lang-actions]')).toBeVisible();
+  await expect(page.locator('input[name="name"]')).toBeHidden();
+  const h1 = page.locator(`input[name="tr[${locale}][h1]"]`);
+  const before = await h1.inputValue();
+
+  // the main H1 is copied into the language on screen
+  await tabs.first().click();
+  const mainH1 = await page.locator('input[name="h1"]').inputValue();
+  await tabs.last().click();
+  await h1.fill('');
+  page.once('dialog', (dialog) => dialog.accept());
+  await bar.locator('[data-lang-copy]').click();
+  if (mainH1 !== '') await expect(h1).toHaveValue(mainH1);
+
+  const typed = `H1 ${locale} ${Date.now() % 100000}`;
+  await h1.fill(typed);
+  await Promise.all([page.waitForURL(/\/admin\/catalog\/categories/), page.locator('form[data-lang-scope] button[type="submit"].is-primary').click()]);
+  await expectNoServerError(page);
+  await page.goto(edit!, { waitUntil: 'domcontentloaded' });
+  await tabs.last().click();
+  await expect(h1).toHaveValue(typed);
+
+  await h1.fill(before);
+  await Promise.all([page.waitForURL(/\/admin\/catalog\/categories/), page.locator('form[data-lang-scope] button[type="submit"].is-primary').click()]);
 });

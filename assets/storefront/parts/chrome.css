@@ -27,7 +27,7 @@
 .store-switcher__button > .ui-icon { opacity: 0.7; transition: transform var(--mc-transition); }
 .store-switcher[open] > .store-switcher__button > .ui-icon { transform: rotate(180deg); }
 .store-switcher__flag { display: inline-flex; flex: none; align-items: center; line-height: 0; }
-.store-switcher__flag .flag { display: block; width: 20px; height: 14px; border-radius: var(--mc-radius-xs); outline: 1px solid color-mix(in srgb, currentColor 22%, transparent); outline-offset: -1px; }
+.store-switcher__flag .flag { display: block; width: 20px; height: 15px; border-radius: var(--mc-radius-xs); outline: 1px solid color-mix(in srgb, currentColor 22%, transparent); outline-offset: -1px; }
 .store-switcher__symbol { display: inline-grid; place-items: center; flex: none; min-width: 20px; font-weight: var(--mc-font-weight-bold); }
 .store-switcher__menu {
   position: absolute; top: calc(100% + var(--mc-space-1)); right: 0; z-index: var(--mc-z-dropdown);

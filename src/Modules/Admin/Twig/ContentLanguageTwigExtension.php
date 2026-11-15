@@ -26,7 +26,7 @@ final class ContentLanguageTwigExtension extends AbstractExtension
 
     public function getFunctions(): array
     {
-        return [new TwigFunction('content_lang_tabs', $this->catalogTabs(...)), new TwigFunction('brand_lang_tabs', $this->brandTabs(...)), new TwigFunction('locale_name', $this->localeName(...))];
+        return [new TwigFunction('content_lang_tabs', $this->catalogTabs(...)), new TwigFunction('brand_lang_tabs', $this->brandTabs(...)), new TwigFunction('store_lang_tabs', $this->storeTabs(...)), new TwigFunction('locale_name', $this->localeName(...))];
     }
 
     /** @var array<string,string>|null */
@@ -47,6 +47,28 @@ final class ContentLanguageTwigExtension extends AbstractExtension
         }
 
         return $this->localeNames[$code] ?? $code;
+    }
+
+    /**
+     * The language tabs of the current store for any multilingual screen: enabled languages, the default one first, the
+     * admin content language current. Screens add `href` (a page per language) or switch in-page panels.
+     *
+     * @param array<string,bool> $done locale => that language already has its texts
+     * @return list<array{code:string,name:string,short:string,is_default:bool,current:bool,done:bool}>
+     */
+    public function storeTabs(array $done = []): array
+    {
+        $request = $this->requests->getCurrentRequest();
+        if ($request === null) {
+            return [];
+        }
+        try {
+            $context = $this->contexts->resolve($request);
+        } catch (\DomainException) {
+            return []; // no store context yet (installation, broken store settings): no tabs
+        }
+
+        return $this->tabs->tabs($context->storeId, $context->locale, $done);
     }
 
     /** @return list<array{code:string,name:string,short:string,is_default:bool,current:bool,done:bool}> */

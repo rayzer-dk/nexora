@@ -3684,6 +3684,8 @@ return [
     'admin.lang_tabs.missing' => 'Text is missing or incomplete in this language',
     'admin.lang_tabs.add' => 'Add language',
     'admin.lang_tabs.add_hint' => 'Enable another store language in Settings - Languages and currencies',
+    'admin.lang_tabs.copy_from' => 'Copy from: %language%',
+    'admin.lang_tabs.form_hint' => 'Pick a language: the name, descriptions and SEO fields of this form switch to it. ✓ the language has text, • not yet; an empty language shows the main one in the store.',
     'admin.lang_tabs.copy_default' => 'Copy from default language',
     'admin.lang_tabs.copy_overwrite' => 'This language already has text. Replace it with the default-language text?',
     'admin.translations.only_one_language' => 'Only one language is enabled for this store.',
@@ -6722,6 +6724,5 @@ return [
     'admin.schema.page_help' => 'Choose the actual page content. Automatic: About -> AboutPage, Contacts -> ContactPage, FAQ -> FAQPage, other pages -> WebPage. FAQPage does not guarantee Google rich results. Saved by the normal Save button.',
     'admin.schema.blog_help' => 'Automatic uses BlogPosting. Select Article for editorial work and NewsArticle only for news reporting. Site-wide organization and navigation remain.',
     'admin.access.super_only' => 'Only a super administrator can do this: grant ROLE_SUPER_ADMIN, change a super administrator or your own roles, edit a system role, or give permissions you do not hold yourself.',
-    'admin.product.lang_bar_hint' => 'Name, descriptions and SEO fields of the language chosen above appear in their places. A tab shows a check mark when the name of that language is filled; an empty language is skipped on save.',
 
 ];

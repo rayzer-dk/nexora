@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Storefront\Twig;
 
+use Commerce\Core\I18n\LocaleFlag;
 use Commerce\Modules\Storefront\Domain\StorefrontContext;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Doctrine\DBAL\Connection;
@@ -25,13 +26,6 @@ use Twig\TwigFunction;
  */
 final class StorefrontChromeExtension extends AbstractExtension
 {
-    /** Language subtag -> region used to draw the flag when the locale code carries no region (e.g. "de"). */
-    private const DEFAULT_REGION = [
-        'uk' => 'UA', 'en' => 'US', 'de' => 'DE', 'pl' => 'PL', 'ru' => 'RU', 'da' => 'DK', 'fr' => 'FR', 'es' => 'ES',
-        'it' => 'IT', 'cs' => 'CZ', 'ro' => 'RO', 'bg' => 'BG', 'tr' => 'TR', 'pt' => 'PT', 'nl' => 'NL', 'sv' => 'SE',
-        'nb' => 'NO', 'no' => 'NO', 'fi' => 'FI', 'hu' => 'HU', 'sk' => 'SK',
-    ];
-
     /** @var array<string,mixed> */
     private array $memo = [];
 
@@ -182,7 +176,7 @@ final class StorefrontChromeExtension extends AbstractExtension
                 'short' => strtoupper(explode('-', $code, 2)[0]),
                 // the language in its own words ("English", native name); the full catalogue name only when two locales share a language
                 'name' => in_array($names[$code], $duplicates, true) ? (string) $row['name'] : $names[$code],
-                'flag' => $this->flagRegion($code),
+                'flag' => LocaleFlag::region($code),
                 'url' => $this->languageUrl($request, $path, $code, $code === $defaultLocale, $ctx->storeId),
                 'current' => $code === $ctx->locale,
             ];
@@ -318,19 +312,6 @@ final class StorefrontChromeExtension extends AbstractExtension
         }
 
         return mb_strtoupper(mb_substr($name, 0, 1)) . mb_substr($name, 1);
-    }
-
-    private function flagRegion(string $locale): string
-    {
-        $parts = explode('-', str_replace('_', '-', $locale));
-        if (strtolower($parts[0]) === 'en') {
-            return 'US'; // English is shown with the American flag whichever regional variant the locale carries
-        }
-        if (isset($parts[1]) && preg_match('/^[A-Za-z]{2}$/', $parts[1]) === 1) {
-            return strtoupper($parts[1]);
-        }
-
-        return self::DEFAULT_REGION[strtolower($parts[0])] ?? '';
     }
 
     /** @return array{0:?Request,1:?StorefrontContext} */

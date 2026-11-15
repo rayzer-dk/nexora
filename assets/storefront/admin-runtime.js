@@ -3,7 +3,6 @@ import '../shared/details-popovers.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
 import { initDismissibleNotices } from '../shared/dismissible-notices.js';
 import { lucideIconNode } from '../shared/lucide-icons.js';
-import { decorateLangTabs } from '../shared/flags.js';
 import { initDatePickers } from '../shared/datepicker.js';
 
 const t = (key, replace = {}) => { let value = String(window.MC_I18N?.[key] ?? key); for (const [name, replacement] of Object.entries(replace)) value = value.replaceAll(`%${name}%`, String(replacement)); return value; };
@@ -338,10 +337,12 @@ function tidyTimestamps() {
 }
 
 // Fields that exist once per store language (label[data-lang]) get language tabs, like OpenCart: pick a language once and every
-// such group on the page follows; a tab shows a mark when that language has text.
+// such group on the page follows; a tab shows a mark when that language has text. The bar is a copy of the server-rendered
+// #mc-lang-bar (the same flags, order, "main" label and "add language" link as every other language bar of the admin).
 function initFieldLangTabs() {
   const labels = qa('main [data-lang]');
-  if (!labels.length) return;
+  const template = document.getElementById('mc-lang-bar');
+  if (!labels.length || !(template instanceof HTMLTemplateElement)) return;
   const scopeOf = (el) => el.closest('fieldset, details, .admin-benefit, .admin-method, .admin-method__own, .admin-panel, form') || document.body;
   const scopes = new Map();
   labels.forEach((label) => {
@@ -349,52 +350,43 @@ function initFieldLangTabs() {
     if (!scopes.has(scope)) scopes.set(scope, []);
     scopes.get(scope).push(label);
   });
-  let saved = '';
-  try { saved = window.localStorage.getItem('mc_admin_lang') || ''; } catch (_) { /* storage may be blocked */ }
   const bars = [];
   const select = (code) => {
     bars.forEach(({ scope, items, tabs }) => {
       const has = items.some((item) => item.dataset.lang === code);
       const active = has ? code : items[0].dataset.lang;
       items.forEach((item) => { item.hidden = item.dataset.lang !== active; });
-      tabs.forEach((tab) => { const on = tab.dataset.code === active; tab.setAttribute('aria-pressed', on ? 'true' : 'false'); tab.closest('.lang-tabs__item').classList.toggle('is-current', on); });
+      tabs.forEach((tab, tabCode) => { const on = tabCode === active; tab.setAttribute('aria-pressed', on ? 'true' : 'false'); tab.closest('.lang-tabs__item').classList.toggle('is-current', on); });
       scope.classList.add('has-lang-tabs');
     });
-    try { window.localStorage.setItem('mc_admin_lang', code); } catch (_) { /* ignore */ }
   };
   const mark = (items, code) => items.filter((item) => item.dataset.lang === code).some((item) => Array.from(item.querySelectorAll('input, textarea')).some((field) => field.value.trim() !== ''));
+  const paint = (li, done) => {
+    li.classList.toggle('is-done', done);
+    li.classList.toggle('is-missing', !done);
+    const sign = li.querySelector('[data-lang-mark]');
+    if (sign) sign.textContent = done ? '✓' : '•';
+  };
   // Pages with many such groups (delivery and payment methods, benefits) get ONE language bar at the top for the whole page.
   const single = scopes.size > 2;
   const groups = single ? new Map([[q('main') || document.body, labels]]) : scopes;
   groups.forEach((items, scope) => {
-    const codes = Array.from(new Set(items.map((item) => item.dataset.lang)));
-    if (codes.length < 2) return;
-    const nav = document.createElement('nav');
-    nav.className = 'lang-tabs lang-tabs--inline';
-    nav.setAttribute('aria-label', t('js_lang_tabs'));
-    const list = document.createElement('ul');
-    list.className = 'lang-tabs__list';
-    const tabs = [];
-    codes.forEach((code) => {
-      const first = items.find((item) => item.dataset.lang === code);
-      const li = document.createElement('li');
-      li.className = 'lang-tabs__item';
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'lang-tabs__tab';
-      button.dataset.code = code;
-      button.lang = code; button.setAttribute('lang', code);
-      const short = document.createElement('span'); short.className = 'lang-tabs__code'; short.textContent = code.slice(0, 2).toUpperCase();
-      const name = document.createElement('span'); name.className = 'lang-tabs__name'; name.textContent = (first.dataset.langName || code).replace(/\s*\(.*\)\s*$/, '') || code;
-      const flag = document.createElement('span'); flag.className = 'lang-tabs__mark'; flag.textContent = mark(items, code) ? '✓' : '•';
-      li.classList.add(mark(items, code) ? 'is-done' : 'is-missing');
-      button.append(short, name, flag);
-      button.addEventListener('click', () => select(code));
-      li.append(button);
-      list.append(li);
-      tabs.push(button);
+    const codes = new Set(items.map((item) => item.dataset.lang));
+    if (codes.size < 2) return;
+    const nav = template.content.firstElementChild.cloneNode(true);
+    nav.removeAttribute('data-lang-tabs');
+    nav.classList.add('lang-tabs--inline');
+    const tabs = new Map();
+    nav.querySelectorAll('.lang-tabs__item').forEach((li) => {
+      const code = li.dataset.langItem || '';
+      const tab = li.querySelector('.lang-tabs__tab');
+      if (!codes.has(code) || !tab) { li.remove(); return; }
+      tab.removeAttribute('data-lang-tab');
+      tab.addEventListener('click', () => select(code));
+      paint(li, mark(items, code));
+      tabs.set(code, tab);
     });
-    nav.append(list);
+    if (tabs.size < 2) return;
     if (single) {
       nav.classList.add('lang-tabs--page');
       const firstPanel = items[0].closest('.admin-panel') || items[0];
@@ -402,11 +394,13 @@ function initFieldLangTabs() {
     } else {
       items[0].parentElement.insertBefore(nav, items[0]);
     }
-    scope.addEventListener('input', () => codes.forEach((code, i) => { const done = mark(items, code); const li = tabs[i].closest('.lang-tabs__item'); li.classList.toggle('is-done', done); li.classList.toggle('is-missing', !done); tabs[i].querySelector('.lang-tabs__mark').textContent = done ? '✓' : '•'; }));
+    scope.addEventListener('input', () => tabs.forEach((tab, code) => paint(tab.closest('.lang-tabs__item'), mark(items, code))));
     bars.push({ scope, items, tabs });
   });
-  if (bars.length) select(saved || labels[0].dataset.lang);
-  decorateLangTabs();
+  if (!bars.length) return;
+  // Start on the content language chosen in the header (the server marks it current), else on the main language.
+  const current = template.content.querySelector('.lang-tabs__item.is-current')?.dataset.langItem || template.content.querySelector('.lang-tabs__item')?.dataset.langItem || labels[0].dataset.lang;
+  select(current);
 }
 
 function initConfirmations() {
@@ -2739,7 +2733,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initAdminAjaxForms();
   tidyTimestamps();
   initFieldLangTabs();
-  decorateLangTabs();
   initConfirmations();
   initIconPickers();
   initDirtyGuard();

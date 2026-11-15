@@ -2,7 +2,7 @@
 {{ shell.start(ui_text('admin.landing.title'),'landing') }}
 <header class="admin-page-header"><div><nav class="admin-breadcrumb" aria-label="{{ ui_text('admin.nav.breadcrumb') }}"><a href="/admin">{{ ui_text('admin_overview') }}</a>{{ ui_icon('chevron-right', 14) }}<span aria-current="page">{{ ui_text('admin.landing.title') }}</span></nav><h1>{{ ui_text('admin.landing.title') }}</h1><p>{{ ui_text('admin.landing.intro') }}</p></div><a class="admin-button" href="/" target="_blank" rel="noopener">{{ ui_icon('external-link', 14) }} {{ ui_text('admin.landing.open') }}</a></header>
 {% for type in ['success','warning','error'] %}{% for message in app.flashes(type) %}<div class="admin-notice is-{{ type }}" data-toast-source>{{ message }}</div>{% endfor %}{% endfor %}
-{% import '@storefront/admin/_lang_tabs.html.twig' as langs %}{% set lang_tabs = [] %}{% for code in locales %}{% set lang_tabs = lang_tabs|merge([{code: code, name: code, short: code|slice(0,2)|upper, is_default: false, current: code == locale, done: true, href: path('admin_appearance_landing', {locale: code})}]) %}{% endfor %}{{ langs.bar(lang_tabs) }}
+{% import '@storefront/admin/_lang_tabs.html.twig' as langs %}{% set lang_tabs = [] %}{% for tab in store_lang_tabs() %}{% if tab.code in locales %}{% set lang_tabs = lang_tabs|merge([tab|merge({current: tab.code == locale, done: true, href: path('admin_appearance_landing', {locale: tab.code})})]) %}{% endif %}{% endfor %}{% if lang_tabs|length > 1 %}<div class="admin-panel admin-panel--tabs">{{ langs.bar(lang_tabs) }}</div>{% endif %}
 <form method="post" action="{{ path('admin_appearance_landing_save') }}">
 <input type="hidden" name="_token" value="{{ csrf_token('admin_landing') }}"><input type="hidden" name="locale" value="{{ locale }}">
 

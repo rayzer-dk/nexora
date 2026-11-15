@@ -3,7 +3,7 @@
 /* Content-language tab bar shared by every multilingual edit form */
 .admin-panel--tabs { padding: var(--mc-space-2) var(--mc-space-3); display: grid; gap: var(--mc-space-2); }
 .lang-tabs { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--mc-space-2); }
-.lang-tabs__list { display: flex; flex-wrap: wrap; gap: var(--mc-space-1); margin: 0; padding: 0; list-style: none; }
+.lang-tabs > .lang-tabs__list { display: flex; flex-wrap: wrap; gap: var(--mc-space-1); margin: 0; padding: 0; list-style: none; }
 .lang-tabs__item { margin: 0; }
 .lang-tabs__tab { display: inline-flex; align-items: center; gap: var(--mc-space-2); min-height: var(--mc-control-height-md); padding: 0 var(--mc-space-3); border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-surface); color: var(--mc-color-text); font: inherit; font-size: var(--mc-font-size-sm); text-decoration: none; cursor: pointer; }
 .lang-tabs__tab:hover { border-color: var(--mc-color-border-strong); background: var(--mc-color-surface-subtle); }
@@ -63,8 +63,8 @@
 /* Support chat: setup steps */
 .admin-steps { display: grid; gap: var(--mc-space-2); margin: 0; padding-left: var(--mc-space-6); }
 .admin-steps li { line-height: var(--mc-line-height-snug); }
-.lang-flag { width: 21px; height: 14px; border-radius: var(--mc-radius-xs); box-shadow: 0 0 0 1px var(--mc-color-border); object-fit: cover; flex: none; }
-.lang-tabs__code.is-flagged { display: none; }
+.lang-tabs__flag { display: inline-flex; flex: none; line-height: 0; }
+.lang-tabs__flag .flag { display: block; width: 20px; height: 15px; border-radius: var(--mc-radius-xs); box-shadow: 0 0 0 1px var(--mc-color-border); }
 .seo-tip { display: inline-flex; align-items: center; position: relative; vertical-align: middle; margin-left: var(--mc-space-2); font-weight: var(--mc-font-weight-regular); line-height: 1; }
 /* A heading with a tip: the question mark sits on the middle line of the text, not on its baseline. */
 :is(h1, h2, h3, h4, legend):has(> .seo-tip) { display: flex; align-items: center; flex-wrap: wrap; gap: var(--mc-space-2); }
