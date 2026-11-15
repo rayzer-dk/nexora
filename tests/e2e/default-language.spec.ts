@@ -46,7 +46,7 @@ test('the default admin language is set on the localization page and is saved', 
   const before = await select.inputValue();
   await select.selectOption('en-US');
   await Promise.all([page.waitForURL(/localization/), page.locator('#admin-language button[type="submit"]').click()]);
-  await expect(page.locator('#admin-language label small')).toContainText('en-US');
+  await expect(page.locator('#admin-language label small')).toContainText('English'); // the language by name, never its code
   // this administrator chose a language of their own, so the page stays in it; the rule for those who did not is covered by LanguageFallbackTest
   await expect(page.locator('html')).toHaveAttribute('lang', /^[a-z]{2}/);
   await page.goto('/admin/system/localization', { waitUntil: 'domcontentloaded' });
