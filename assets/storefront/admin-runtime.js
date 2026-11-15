@@ -382,6 +382,7 @@ function initFieldLangTabs() {
       const tab = li.querySelector('.lang-tabs__tab');
       if (!codes.has(code) || !tab) { li.remove(); return; }
       tab.removeAttribute('data-lang-tab');
+      tab.dataset.code = code;
       tab.addEventListener('click', () => select(code));
       paint(li, mark(items, code));
       tabs.set(code, tab);
