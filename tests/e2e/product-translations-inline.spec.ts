@@ -147,4 +147,14 @@ test('a language that only has the default-language copy stays a copy until its 
   await page.goto(`${edit}?locale=${second}`, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-translation-fallback]')).toHaveCount(0);
   await expect(page.locator('input[name="name"]')).toHaveValue('E2E own translation');
+
+  // the product was made for this test: remove it so the shared catalog keeps its demo data first
+  await page.goto(`/admin/catalog/products?search=${sku}`, { waitUntil: 'domcontentloaded' });
+  const row = page.locator('tr', { hasText: sku });
+  await row.locator('button[form^="del-"]').click();
+  await expect(page.locator('[data-admin-confirm]:not([hidden])')).toBeVisible(); // asked first, nothing deleted yet
+  await page.locator('[data-admin-confirm] [data-confirm-accept]').click();
+  await page.waitForLoadState('domcontentloaded');
+  await page.goto(`/admin/catalog/products?search=${sku}`, { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('tr', { hasText: sku })).toHaveCount(0);
 });

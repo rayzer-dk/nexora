@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'common.security.invalid_csrf' => 'Недействительный токен безопасности. Обновите страницу и повторите действие.',
+    'common.security.invalid_unsubscribe_signature' => 'Недействительная подпись ссылки для отписки.',
+    'common.error.operation_failed' => 'Операция не выполнена из-за внутренней ошибки. Попробуйте ещё раз или проверьте журнал системы.',
+    'install.error.seed_failed' => 'Не удалось создать начальные данные магазина. Технические подробности записаны в журнал.',
+    'install.error.demo_failed' => 'Основной магазин установлен, но демонстрационные данные не созданы. Технические подробности записаны в журнал.',
+    'install.health.database_failed' => 'Ошибка проверки базы данных',
+    'install.health.details_hidden' => 'Технические подробности скрыты',
+    'install.health.migrations' => 'Миграции базы данных',
+    'install.finish.summary_title' => 'Итоги установки',
+    'install.finish.php_ok' => 'PHP — OK',
+    'install.finish.database_ok' => 'База данных — OK',
+    'install.finish.kernel_ok' => 'Symfony Kernel — OK',
+    'install.finish.cron_required' => 'Cron — требуется одноразовая настройка на сервере',
+    'install.finish.email_required' => 'Email — не настроен, используется безопасный null transport',
+    'install.finish.backup_recommended' => 'Backup — рекомендуется создать первую резервную копию после входа в админ-панель',
+    'extension.localization.invalid' => 'Некорректный блок локализации расширения.',
+    'extension.localization.default_uk_required' => 'Для расширения default_locale должен быть uk-UA.',
+    'extension.localization.locales_invalid' => 'Список locales расширения некорректен и должен содержать uk-UA.',
+    'extension.localization.path_invalid' => 'Путь translations_path расширения некорректен.',
+    'extension.localization.manifest_required' => 'Файлы translations требуют описания localization в manifest.json.',
+    'extension.localization.file_invalid' => 'Файл локализации расширения должен быть безопасным JSON в заявленном translations_path.',
+    'extension.localization.file_missing' => 'Отсутствует файл локализации для locale: ',
+    'extension.localization.json_invalid' => 'JSON-каталог локализации расширения некорректен.',
+    'extension.localization.namespace_invalid' => 'Ключ локализации расширения должен принадлежать namespace ',
+    'extension.localization.duplicate_key' => 'Дублирующийся ключ локализации расширения: ',
+    'extension.localization.namespace_collision' => 'Namespace локализации конфликтует с уже установленным расширением: ',
+    'review.guest.email_required' => 'Укажите корректный адрес электронной почты.',
+    'addon.error.invalid' => 'Недопустимое значение опции.',
+    'addon.error.required' => 'Заполните опцию «%name%».',
+    'addon.error.currency' => 'Цена опции недоступна в выбранной валюте.',
+    'addon.error.sold_out' => 'Опция «%name%» закончилась.',
+    'stock.notify.saved' => 'Готово: мы сообщим, как только товар появится.',
+];

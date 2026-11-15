@@ -142,7 +142,7 @@
   every currency of the store. The currency is the one prices are shown and typed in (lists, the product form).
 #}
 {% macro currency_menu(title, help, items) %}{% set current = items|filter(i => i.current)|first %}
-<details class="admin-lang-menu admin-currency-menu">
+<details class="admin-lang-menu">
     <summary class="admin-lang-menu__button" title="{{ title }}: {{ current.code|default('') }}" aria-label="{{ title }}: {{ current.code|default('') }}">{{ ui_icon('coins', 16) }}<span class="admin-currency-menu__symbol">{{ current.symbol|default('') }}</span>{{ ui_icon('chevron-down', 14) }}</summary>
     <div class="admin-lang-menu__panel">
         <p class="admin-lang-menu__title"><strong>{{ title }}</strong><small>{{ help }}</small></p>

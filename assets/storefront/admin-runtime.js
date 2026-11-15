@@ -434,7 +434,9 @@ function initConfirmations() {
 
   document.addEventListener('click', (event) => {
     if (event.target.closest('[data-no-confirm]')) return;
-    const trigger = event.target.closest('[data-confirm]');
+    // A button outside its form (<button form="del-1">) is guarded by the confirmation of that form.
+    const outside = event.target.closest('button[form], input[form]');
+    const trigger = event.target.closest('[data-confirm]') || (outside?.form?.hasAttribute('data-confirm') ? outside.form : null);
     if (!trigger) return;
     // A confirmation on a whole <form> guards its submit buttons only; typing in fields must not open the dialog.
     if (trigger.tagName === 'FORM' && !event.target.closest('button:not([type="button"]), input[type="submit"]')) return;

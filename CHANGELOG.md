@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 4.0.16 — 2026-11-15
+
+Version 4.0.16 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
+
+- Russian is a full third language next to Ukrainian and English: the admin (6717 texts), the storefront (1678), runtime messages (2135) and the core, API and maintenance texts are translated; before only 13 admin texts and a part of the storefront existed. The three interface languages of the admin are Ukrainian, English and Russian.
+- A product or category opened in a language that has no translation yet shows the text of the default language with a note, so a price can be edited without typing a name; saving the form without changing the text keeps it a copy (it follows the default text) and it becomes a translation only when its text is changed. The check mark of a language counts only real translations.
+- Admin top bar: the currency is a button with the currency symbol and a list of the store currencies with their names (as on the storefront); the select is gone.
+- Fixed: the delete button of a product in the list is attached to a hidden form with `form="del-..."`, and the confirmation of that form did not open: a product was deleted without asking. A button outside its form now opens the confirmation of the form.
+- Tests: a language that has only a copy stays a copy; the test removes the product it created.
+
 ## 4.0.15 — 2026-11-15
 
 Version 4.0.15 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
