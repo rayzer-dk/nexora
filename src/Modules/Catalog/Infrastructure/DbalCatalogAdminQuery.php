@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Catalog\Infrastructure;
 
+use Commerce\Core\Database\ListOrder;
 use Commerce\Modules\Catalog\Application\MarketStockLocation;
 use Commerce\Modules\Catalog\Application\ProductEditQueryInterface;
 use Doctrine\DBAL\Connection;
@@ -122,12 +123,11 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
             "SELECT COUNT(DISTINCT p.id) FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id LEFT JOIN mc_product_variant v ON v.product_id=p.id LEFT JOIN mc_brand b ON b.id=p.brand_id WHERE {$where}",
             $params,
         );
-        $direction = strtolower($dir) === 'asc' ? 'ASC' : 'DESC';
         $sortColumns = ['name' => 'pt.name', 'sku' => 'v.sku', 'status' => 'p.status', 'price' => 'pr.amount_minor', 'stock' => 'stock_total', 'type' => 'p.product_type', 'updated' => 'p.updated_at', 'translations' => 'translation_score'];
         $translationState = "(SELECT GROUP_CONCAT(CONCAT(tl.locale,'='," . sprintf(self::TRANSLATION_STATE, 'tl') . ')) ' . sprintf(self::TRANSLATION_ROWS, 'tl') . ')';
         // Sorting follows the "done/total" figure on screen: fully translated languages first, a name alone only breaks ties.
         $translationScore = '(SELECT COALESCE(SUM(IF(' . sprintf(self::TRANSLATION_STATE, 'tq') . '=2,1000,1)),0) ' . sprintf(self::TRANSLATION_ROWS, 'tq') . ')';
-        $orderBy = isset($sortColumns[$sort]) ? $sortColumns[$sort] . ' ' . $direction . ',p.id DESC' : 'p.updated_at DESC,p.id DESC';
+        $orderBy = ListOrder::sql($sortColumns, $sort, $dir, 'p.id DESC', 'p.updated_at DESC,p.id DESC');
         // Stock as the product form shows it: the market's first active warehouse (the one ProductWriter writes).
         $locationId = MarketStockLocation::locationId($this->connection, $marketId);
         $rows = $this->connection->fetchAllAssociative(

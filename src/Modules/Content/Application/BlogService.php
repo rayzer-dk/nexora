@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Content\Application;
 
+use Commerce\Core\Database\ListOrder;
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Core\Id\PublicIdFactory;
 use Commerce\Modules\Seo\Application\SeoUrlManager;
@@ -41,7 +42,7 @@ final class BlogService
      * @param array{status?:string,q?:string,category?:int} $filters
      * @return array{items:list<array<string,mixed>>,total:int,pages:int,page:int}
      */
-    public function list(int $storeId, string $locale, array $filters, int $page, int $perPage = 20): array
+    public function list(int $storeId, string $locale, array $filters, int $page, int $perPage = 20, string $sort = '', string $dir = 'desc'): array
     {
         $where = ["ce.store_id = ?", "ce.content_type = 'article'"];
         $params = [$locale, $storeId];
@@ -74,12 +75,21 @@ final class BlogService
         $total = (int) $this->db->fetchOne('SELECT COUNT(*) ' . $from, $params);
         $pages = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($page, $pages));
+        $sortColumns = [
+            'title' => "COALESCE(NULLIF(ct.title, ''), (SELECT ct2.title FROM mc_content_translation ct2 WHERE ct2.content_id = ce.id ORDER BY ct2.id LIMIT 1))",
+            // The name the list shows: the admin language, else the first translation, else the slug (as categories()).
+            'category' => '(SELECT COALESCE((SELECT bct.name FROM mc_blog_category_translation bct WHERE bct.category_id = bc.id ORDER BY bct.locale = ? DESC, bct.locale LIMIT 1), bc.slug) FROM mc_blog_category bc WHERE bc.id = bm.category_id)',
+            'status' => "CASE WHEN ce.status = 'draft' THEN 'draft' WHEN ce.published_at > UTC_TIMESTAMP(6) THEN 'scheduled' ELSE 'published' END",
+            'date' => 'ce.published_at',
+            'languages' => 'locales',
+        ];
+        $orderBy = ListOrder::sql($sortColumns, $sort, $dir, 'ce.id DESC', 'COALESCE(ce.published_at, ce.updated_at) DESC, ce.id DESC');
         $rows = $this->db->fetchAllAssociative(
             "SELECT ce.id, ce.status, ce.published_at, ce.updated_at, ct.title, bm.category_id, bm.featured, bm.reading_minutes, bm.cover_url,
                     (SELECT ct2.title FROM mc_content_translation ct2 WHERE ct2.content_id = ce.id ORDER BY ct2.id LIMIT 1) AS any_title,
                     (SELECT GROUP_CONCAT(ct3.locale) FROM mc_content_translation ct3 WHERE ct3.content_id = ce.id) AS locales
-             " . $from . ' ORDER BY COALESCE(ce.published_at, ce.updated_at) DESC, ce.id DESC LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage),
-            $params,
+             " . $from . ' ORDER BY ' . $orderBy . ' LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage),
+            $sort === 'category' ? [...$params, $locale] : $params,
         );
         $now = gmdate('Y-m-d H:i:s');
         foreach ($rows as &$row) {

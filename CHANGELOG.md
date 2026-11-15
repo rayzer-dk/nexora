@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 4.0.15 — 2026-11-15
+
+Version 4.0.15 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
+
+- Languages are named, never shown as codes: 47 places in the admin, the storefront and the messages showed "uk-UA", "en-GB" and the like (headings, buttons, notices, table cells, selects, the account form, flash messages about missing translations, AI progress). One source of names: `Core\I18n\LanguageName` (intl, in the language itself, without the country) and the Twig function `locale_name()` for the admin and the storefront; the three earlier copies of this logic are removed. Two-letter codes ("EN") next to names or instead of a missing flag are gone too.
+- A new store language is chosen from a list of languages with their country ("Polski (Polska)"), not typed as a code; the names are filled in from it.
+- Top bar: the content language is a select again (flag only for the interface language); the storefront account chooses the language from the store languages instead of a free-text code.
+- Server-side sorting by column header on the paged lists that sorted only the visible page: blog, subscribers, SEO redirects, activity log, PRRO receipts, catalogue quality; the stock requests headers now show the server sort state. `Core\Database\ListOrder` builds every such ORDER BY (whitelisted key, ASC/DESC, tiebreaker; products and orders use it too). The headers stay sortable on a page with a single row.
+- Fixed: the PRRO receipts list showed receipts of every store; refund fiscalization did not check that the refund belongs to the order of the current store.
+- Date picker: the month title capitalises only its first letter ("Листопад 2026 р.").
+- Removed unused translation keys `admin.appearance.translating_notice`, `admin.product.locale_note`, `admin.product.locale_note2`, `admin.ai.translate_progress` and the language code fields of the "add language" form.
+
 ## 4.0.14 — 2026-11-15
 
 Version 4.0.14 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.

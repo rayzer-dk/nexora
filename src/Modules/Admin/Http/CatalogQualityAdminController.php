@@ -28,7 +28,7 @@ final class CatalogQualityAdminController extends AbstractController
 
         return $this->render('@storefront/admin/catalog/quality.html.twig', [
             'summary' => $this->quality->summary($storeId),
-            'list' => $this->quality->products($storeId, $issue, $request->query->getInt('page', 1)),
+            'list' => $this->quality->products($storeId, $issue, $request->query->getInt('page', 1), sort: (string) $request->query->get('sort', ''), dir: (string) $request->query->get('dir', 'desc')),
             'issue' => $issue,
             'core' => CatalogQualityService::CORE,
             'extra' => CatalogQualityService::EXTRA,

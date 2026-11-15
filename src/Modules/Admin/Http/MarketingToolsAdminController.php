@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Admin\Http;
 
+use Commerce\Core\Database\ListOrder;
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\Marketing\Application\CampaignTemplateService;
 use Commerce\Modules\Marketing\Application\NewsletterCampaignService;
@@ -205,7 +206,10 @@ final class MarketingToolsAdminController extends AbstractController
         $count = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_marketing_subscriber WHERE ' . $sql, $params);
         $pages = max(1, (int) ceil($count / 50));
         $page = min($page, $pages);
-        $rows = $this->db->fetchAllAssociative('SELECT id,email,locale,status,consent_source,confirmed_at,unsubscribed_at,created_at,(' . $orders . ') AS orders_count FROM mc_marketing_subscriber WHERE ' . $sql . ' ORDER BY id DESC LIMIT 50 OFFSET ' . (($page - 1) * 50), $params);
+        $sortColumns = ['email' => 'email_normalized', 'status' => 'status', 'kind' => 'orders_count', 'language' => 'locale', 'source' => 'consent_source', 'since' => 'COALESCE(confirmed_at, created_at)'];
+        $sortKey = (string) $request->query->get('sort', '');
+        $orderBy = ListOrder::sql($sortColumns, $sortKey, (string) $request->query->get('dir', 'desc'), 'id DESC', 'id DESC');
+        $rows = $this->db->fetchAllAssociative('SELECT id,email,locale,status,consent_source,confirmed_at,unsubscribed_at,created_at,(' . $orders . ') AS orders_count FROM mc_marketing_subscriber WHERE ' . $sql . ' ORDER BY ' . $orderBy . ' LIMIT 50 OFFSET ' . (($page - 1) * 50), $params);
         $totals = $this->db->fetchAllKeyValue('SELECT status, COUNT(*) FROM mc_marketing_subscriber WHERE store_id=? GROUP BY status', [$storeId]);
 
         return $this->render('@storefront/admin/commerce/subscribers.html.twig', [

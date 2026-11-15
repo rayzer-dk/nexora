@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Admin\Http;
 
+use Commerce\Core\Database\ListOrder;
 use Commerce\Core\I18n\CanonicalUiText;
 use Commerce\Modules\Prro\Application\CheckboxException;
 use Commerce\Modules\Prro\Application\FiscalizationService;
@@ -26,7 +27,7 @@ final class PrroAdminController extends AbstractController
     #[Route('/admin/system/prro', name: 'admin_system_prro', methods: ['GET', 'POST'])]
     public function settings(Request $request): Response
     {
-        $this->contexts->resolve($request);
+        $context = $this->contexts->resolve($request);
         if ($request->isMethod('POST')) {
             if (!$this->isCsrfTokenValid('prro_settings', (string) $request->request->get('_csrf_token'))) {
                 throw $this->createAccessDeniedException();
@@ -57,8 +58,8 @@ final class PrroAdminController extends AbstractController
         $term = mb_substr(trim((string) $request->query->get('q', '')), 0, 60);
         $from = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $request->query->get('from', '')) === 1 ? (string) $request->query->get('from') : '';
         $to = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $request->query->get('to', '')) === 1 ? (string) $request->query->get('to') : '';
-        $where = ['1=1'];
-        $params = [];
+        $where = ['o.store_id=?']; // receipts of the store being managed only, as the resend action checks
+        $params = [$context->storeId];
         if ($status === 'pending') {
             $where[] = "f.status NOT IN ('done','error')";
         } elseif ($status !== '') {
@@ -80,7 +81,10 @@ final class PrroAdminController extends AbstractController
         $condition = implode(' AND ', $where);
         $total = (int) $this->db->fetchOne('SELECT COUNT(*) FROM mc_fiscal_receipt f JOIN mc_sales_order o ON o.id=f.order_id WHERE ' . $condition, $params);
         $page = max(1, (int) $request->query->get('page', 1));
-        $recent = $this->db->fetchAllAssociative('SELECT f.id,f.kind,f.status,f.fiscal_code,f.receipt_url,f.error_text,f.updated_at,o.order_number,o.customer_email,HEX(o.public_id) AS public_hex FROM mc_fiscal_receipt f JOIN mc_sales_order o ON o.id=f.order_id WHERE ' . $condition . ' ORDER BY f.id DESC LIMIT 25 OFFSET ' . (($page - 1) * 25), $params);
+        $sortColumns = ['order' => 'o.order_number', 'status' => 'f.status', 'code' => 'f.fiscal_code', 'updated' => 'f.updated_at'];
+        $sortKey = (string) $request->query->get('sort', '');
+        $orderBy = ListOrder::sql($sortColumns, $sortKey, (string) $request->query->get('dir', 'desc'), 'f.id DESC', 'f.id DESC');
+        $recent = $this->db->fetchAllAssociative('SELECT f.id,f.kind,f.status,f.fiscal_code,f.receipt_url,f.error_text,f.updated_at,o.order_number,o.customer_email,HEX(o.public_id) AS public_hex FROM mc_fiscal_receipt f JOIN mc_sales_order o ON o.id=f.order_id WHERE ' . $condition . ' ORDER BY ' . $orderBy . ' LIMIT 25 OFFSET ' . (($page - 1) * 25), $params);
         foreach ($recent as &$r) {
             $r['order_public_id'] = Uuid::fromBinary((string) hex2bin((string) $r['public_hex']))->toRfc4122();
         }
@@ -154,9 +158,13 @@ final class PrroAdminController extends AbstractController
     #[Route('/admin/orders/{publicId}/fiscalize-refund/{refundId}', name: 'admin_order_fiscalize_refund', requirements: ['refundId' => '\\d+'], methods: ['POST'])]
     public function fiscalizeRefund(string $publicId, int $refundId, Request $request): Response
     {
-        $this->contexts->resolve($request);
+        $context = $this->contexts->resolve($request);
         if (!$this->isCsrfTokenValid('prro_refund_' . $refundId, (string) $request->request->get('_csrf_token'))) {
             throw $this->createAccessDeniedException();
+        }
+        // the refund must belong to this order of the store being managed, like every other PRRO action
+        if (!Uuid::isValid($publicId) || $this->db->fetchOne('SELECT r.id FROM mc_payment_refund r JOIN mc_payment p ON p.id=r.payment_id JOIN mc_sales_order o ON o.id=p.order_id WHERE r.id=? AND o.public_id=? AND o.store_id=?', [$refundId, Uuid::fromString($publicId)->toBinary(), $context->storeId]) === false) {
+            throw $this->createNotFoundException();
         }
         try {
             $this->fiscal->fiscalizeRefund($refundId);

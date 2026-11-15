@@ -998,10 +998,33 @@ function tableCellValue(cell) {
   return { text: raw, num: looksNumeric ? Number(numeric) : NaN };
 }
 
+// Headers with data-sort-key sort the whole list on the server (?sort=key&dir=): wired whatever the number of rows on this
+// page, so a last page with one row still offers the same sorting. A header that holds its own sort link keeps one tab stop.
+function wireServerSort(headRow) {
+  const params = new URLSearchParams(location.search);
+  Array.from(headRow.cells).forEach((th) => {
+    const key = th.dataset.sortKey;
+    if (!key) return;
+    th.classList.add('is-sortable');
+    if (!th.querySelector('a[href]')) th.tabIndex = 0;
+    th.title = t('js_table_sort');
+    th.setAttribute('aria-sort', params.get('sort') === key ? (params.get('dir') === 'asc' ? 'ascending' : 'descending') : 'none');
+    const go = () => {
+      const next = new URLSearchParams(location.search);
+      next.set('sort', key);
+      next.set('dir', params.get('sort') === key && params.get('dir') !== 'asc' ? 'asc' : (params.get('sort') === key ? 'desc' : 'asc'));
+      location.assign(`${location.pathname}?${next.toString()}`);
+    };
+    th.addEventListener('click', (event) => { if (!event.target.closest('a, button, input, select, label')) go(); });
+    th.addEventListener('keydown', (event) => { if (event.target === th && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); go(); } });
+  });
+}
+
 function enhanceTable(table) {
   const body = table.tBodies[0];
   const headRow = table.tHead?.rows[0];
   if (!body || !headRow || table.closest('td, [data-no-table-tools]') || table.hasAttribute('data-no-table-tools')) return;
+  wireServerSort(headRow);
   const rows = Array.from(body.rows);
   const span = (row) => Array.from(row.cells).reduce((n, c) => n + (c.colSpan || 1), 0);
   if (rows.some((row) => span(row) !== span(headRow) && row.querySelector('td[colspan]'))) return;
@@ -1019,23 +1042,6 @@ function enhanceTable(table) {
 
   const sortable = (th, index) => !th.matches('[data-no-sort], .is-actions, .is-select') && th.textContent.trim() !== '' && !th.querySelector('input[type=checkbox]') && rows.some((row) => tableCellValue(row.cells[index]).text !== '');
   const link = headers.map((th) => th.querySelector('a[href*="sort="]'));
-  const params = new URLSearchParams(location.search);
-  headers.forEach((th) => {
-    const key = th.dataset.sortKey;
-    if (!key) return;
-    th.classList.add('is-sortable');
-    th.tabIndex = 0;
-    th.title = t('js_table_sort');
-    th.setAttribute('aria-sort', params.get('sort') === key ? (params.get('dir') === 'asc' ? 'ascending' : 'descending') : 'none');
-    const go = () => {
-      const next = new URLSearchParams(location.search);
-      next.set('sort', key);
-      next.set('dir', params.get('sort') === key && params.get('dir') !== 'asc' ? 'asc' : (params.get('sort') === key ? 'desc' : 'asc'));
-      location.assign(`${location.pathname}?${next.toString()}`);
-    };
-    th.addEventListener('click', (event) => { if (!event.target.closest('a, button, input, select, label')) go(); });
-    th.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); go(); } });
-  });
   headers.forEach((th, index) => {
     if (th.dataset.sortKey || link[index] || !sortable(th, index)) return;
     th.classList.add('is-sortable');

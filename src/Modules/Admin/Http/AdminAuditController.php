@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Admin\Http;
 
+use Commerce\Core\Database\ListOrder;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -50,12 +51,15 @@ final class AdminAuditController extends AbstractController
         $pages = max(1, (int) ceil($count / $limit));
         $page = min($page, $pages);
         $offset = ($page - 1) * $limit;
+        $sortColumns = ['time' => 'a.created_at', 'admin' => "COALESCE(NULLIF(u.display_name, ''), a.actor_id)", 'action' => 'a.action', 'entity' => 'a.entity_id', 'result' => 'COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(a.metadata, \'$.status\')) AS UNSIGNED), 200)'];
+        $sortKey = (string) $request->query->get('sort', '');
+        $orderBy = ListOrder::sql($sortColumns, $sortKey, (string) $request->query->get('dir', 'desc'), 'a.id DESC', 'a.id DESC');
         $rows = $this->db->fetchAllAssociative(
             "SELECT a.id,a.actor_id,a.action,a.entity_id,a.metadata,a.created_at,u.email,u.display_name
              FROM mc_audit_log a
              LEFT JOIN mc_admin_user u ON u.id=CAST(a.actor_id AS UNSIGNED)
              WHERE {$sqlWhere}
-             ORDER BY a.id DESC LIMIT {$limit} OFFSET {$offset}",
+             ORDER BY {$orderBy} LIMIT {$limit} OFFSET {$offset}",
             $params,
         );
         foreach ($rows as &$row) {

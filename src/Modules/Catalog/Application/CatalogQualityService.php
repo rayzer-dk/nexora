@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Catalog\Application;
 
+use Commerce\Core\Database\ListOrder;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Uid\Uuid;
 
@@ -57,7 +58,7 @@ final readonly class CatalogQualityService
      *
      * @return array{items:list<array<string,mixed>>,total:int,page:int,limit:int}
      */
-    public function products(int $storeId, string $issue, int $page, int $limit = 50): array
+    public function products(int $storeId, string $issue, int $page, int $limit = 50, string $sort = '', string $dir = 'desc'): array
     {
         $default = (string) $this->db->fetchOne('SELECT default_locale FROM mc_store WHERE id=?', [$storeId]);
         $all = [...self::CORE, ...self::EXTRA];
@@ -65,7 +66,9 @@ final readonly class CatalogQualityService
         $inner = $this->flagged();
         $page = max(1, $page);
         $total = (int) $this->db->fetchOne("SELECT COUNT(*) FROM ($inner) x WHERE $where", ['s' => $storeId, 'l' => $default]);
-        $rows = $this->db->fetchAllAssociative("SELECT x.* FROM ($inner) x WHERE $where ORDER BY x.id DESC LIMIT " . $limit . ' OFFSET ' . (($page - 1) * $limit), ['s' => $storeId, 'l' => $default]);
+        $sortColumns = ['product' => "COALESCE(NULLIF(x.name,''),x.sku)", 'sku' => 'x.sku', 'problems' => '(' . implode('+', array_map(static fn (string $f): string => "(x.$f>0)", $all)) . ')'];
+        $orderBy = ListOrder::sql($sortColumns, $sort, $dir, 'x.id DESC', 'x.id DESC');
+        $rows = $this->db->fetchAllAssociative("SELECT x.* FROM ($inner) x WHERE $where ORDER BY $orderBy LIMIT " . $limit . ' OFFSET ' . (($page - 1) * $limit), ['s' => $storeId, 'l' => $default]);
         foreach ($rows as &$row) {
             $row['public_id'] = Uuid::fromBinary((string) $row['public_id'])->toRfc4122();
             $row['issues'] = array_values(array_filter($all, static fn (string $f): bool => (int) $row[$f] > 0));

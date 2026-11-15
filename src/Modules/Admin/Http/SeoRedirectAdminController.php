@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Admin\Http;
 
+use Commerce\Core\Database\ListOrder;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -49,8 +50,11 @@ final class SeoRedirectAdminController extends AbstractController
         );
         $pages = max(1, (int)ceil($count / $perPage));
         $page = min($page, $pages);
+        $sortColumns = ['source' => 'r.source_path', 'target' => 's.path', 'reason' => 'r.reason', 'hits' => 'r.hit_count', 'created' => 'r.created_at', 'last_hit' => 'r.last_hit_at'];
+        $sortKey = (string)$request->query->get('sort', '');
+        $orderBy = ListOrder::sql($sortColumns, $sortKey, (string) $request->query->get('dir', 'desc'), 'r.id DESC', 'r.created_at DESC,r.id DESC');
         $rows = $this->db->fetchAllAssociative(
-            'SELECT r.id,r.locale,r.source_path,r.status_code,r.reason,r.created_at,r.last_hit_at,r.hit_count,s.path AS target_path,s.slug AS target_slug,s.entity_type,COALESCE(sl.url_prefix,\'\') AS url_prefix FROM mc_seo_redirect r INNER JOIN mc_seo_route s ON s.id=r.route_id LEFT JOIN mc_store_locale sl ON sl.store_id=r.store_id AND sl.locale_code=r.locale WHERE ' . $sqlWhere . ' ORDER BY r.created_at DESC,r.id DESC LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage),
+            'SELECT r.id,r.locale,r.source_path,r.status_code,r.reason,r.created_at,r.last_hit_at,r.hit_count,s.path AS target_path,s.slug AS target_slug,s.entity_type,COALESCE(sl.url_prefix,\'\') AS url_prefix FROM mc_seo_redirect r INNER JOIN mc_seo_route s ON s.id=r.route_id LEFT JOIN mc_store_locale sl ON sl.store_id=r.store_id AND sl.locale_code=r.locale WHERE ' . $sqlWhere . ' ORDER BY ' . $orderBy . ' LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage),
             $params,
         );
         $locales = $this->db->fetchFirstColumn('SELECT DISTINCT locale FROM mc_seo_redirect WHERE store_id=? ORDER BY locale', [$context->storeId]);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Admin\Http;
 
+use Commerce\Core\Database\ListOrder;
 use Commerce\Modules\Admin\Domain\AdminUser;
 use Commerce\Modules\Order\Application\OrderManagementService;
 use Commerce\Modules\Order\Application\OrderNotificationService;
@@ -64,7 +65,7 @@ final class OrderAdminController extends AbstractController
 
         $sortColumns = ['order' => 'o.order_number', 'customer' => 'o.customer_name', 'payment' => 'o.payment_status', 'fulfillment' => 'o.fulfillment_status', 'total' => 'o.total_minor', 'date' => 'o.created_at'];
         $sortKey = (string) $request->query->get('sort', '');
-        $orderBy = isset($sortColumns[$sortKey]) ? $sortColumns[$sortKey] . ' ' . (strtolower((string) $request->query->get('dir', 'desc')) === 'asc' ? 'ASC' : 'DESC') . ',o.id DESC' : 'o.id DESC';
+        $orderBy = ListOrder::sql($sortColumns, $sortKey, (string) $request->query->get('dir', 'desc'), 'o.id DESC', 'o.id DESC');
         $rows = $this->db->fetchAllAssociative(
             'SELECT o.id,o.public_id,o.order_number,o.status,o.payment_status,o.fulfillment_status,o.total_minor,o.currency,
                     o.customer_name,o.customer_phone,o.customer_email,o.created_at,
