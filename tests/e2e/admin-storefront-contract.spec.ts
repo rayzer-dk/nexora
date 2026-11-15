@@ -150,7 +150,7 @@ test('rich product description editor saves through the standard form and render
   expect(editUrl).toBeTruthy();
 
   await page.goto(editUrl!, { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('.rich-editor')).toBeVisible();
+  await expect(page.locator('.rich-editor').first()).toBeVisible(); // one editor per language; the main one comes first
   const description = page.locator('textarea[name="description"]');
   await expect(description).toBeHidden();
   const originalDescription = await description.inputValue();
