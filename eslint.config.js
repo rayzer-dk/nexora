@@ -24,6 +24,7 @@ const browserGlobals = Object.fromEntries(
     'HTMLFormElement',
     'HTMLSelectElement',
     'HTMLTextAreaElement',
+    'HTMLTemplateElement',
     'Element',
     'Node',
     'Event',
