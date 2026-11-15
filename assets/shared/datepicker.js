@@ -68,7 +68,9 @@ function render() {
     next.type = 'button';
     next.setAttribute('aria-label', t('js_datepicker_next', 'Next month'));
     next.addEventListener('click', () => { current.view = m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 }; render(); });
-    const title = el('strong', 'mc-dp__title', new Intl.DateTimeFormat(lang(), { month: 'long', year: 'numeric' }).format(new Date(y, m, 1)));
+    // "листопад 2026 р." -> "Листопад 2026 р.": only the first letter (CSS capitalize would also turn "р." into "Р.")
+    const monthYear = new Intl.DateTimeFormat(lang(), { month: 'long', year: 'numeric' }).format(new Date(y, m, 1));
+    const title = el('strong', 'mc-dp__title', monthYear.charAt(0).toLocaleUpperCase(lang()) + monthYear.slice(1));
     head.append(prev, title, next);
     children.push(head);
 
