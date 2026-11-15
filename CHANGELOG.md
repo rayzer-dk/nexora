@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 4.0.12 — 2026-11-15
+
+Version 4.0.12 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.
+
+- Product form: one language bar for the whole form (like OpenCart). The name, short description, description and SEO title/description of every enabled language are typed in the place of the main fields; the tab marks a language as filled (check mark) or missing. The bar stays visible while scrolling, a required name of a language that is not on screen opens that language before the browser reports the error. The separate "Translations" section is removed. A single-language store sees no bar.
+- Admin header: the content-language select and the interface-language select are marked with different icons and short codes (UK, EN, RU); the first one chooses which language of the data is shown in lists, the second one the language of the admin UI.
+- Accessibility: the goal progress bars of the dashboard have an accessible name; the tables of CRM connections can be scrolled from the keyboard.
+- e2e: product-translations-inline follows the new form.
+
 ## 4.0.11 — 2026-11-14
 
 Version 4.0.11 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations. Found by the full e2e run on PHP 8.4 (429 tests).

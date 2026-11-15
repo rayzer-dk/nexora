@@ -13,35 +13,33 @@ test('another language of a product is typed in the product form and saved with 
   await page.goto(edit!, { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
 
-  const block = page.locator('section[data-lang-scope]').first();
+  const block = page.locator('form[data-lang-scope]').first();
   await expect(block).toBeVisible();
-  const tabs = block.locator('.lang-tabs__tab');
+  const tabs = block.locator('.product-lang-bar .lang-tabs__tab');
   const count = await tabs.count();
-  expect(count, 'one tab for every other language').toBeGreaterThanOrEqual(1);
-  const panels = block.locator('[data-lang-panel]');
-  await expect(panels.locator(':scope:visible')).toHaveCount(1);
+  expect(count, 'content language plus one tab for every other language').toBeGreaterThanOrEqual(2);
+  const name = (code: string | null) => block.locator(`[data-lang-panel="${code}"] input[name$="[name]"]`).first();
 
   const last = tabs.nth(count - 1);
   const code = await last.getAttribute('data-lang-tab');
   await last.click();
-  const panel = block.locator(`[data-lang-panel="${code}"]`);
-  await expect(panel).toBeVisible();
-  await expect(panels.locator(':scope:visible')).toHaveCount(1);
+  await expect(name(code)).toBeVisible();
+  await expect(block.locator('label[data-lang-panel][data-lang-required]:visible')).toHaveCount(1);
 
-  const name = panel.locator('input[name$="[name]"]');
-  const before = await name.inputValue();
+  const field = name(code);
+  const before = await field.inputValue();
   const typed = `Переклад ${Date.now() % 100000}`;
-  await name.fill(typed);
+  await field.fill(typed);
   await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('.admin-save-bar button[data-primary-submit]').first().click()]);
   await expectNoServerError(page);
 
   await page.goto(edit!, { waitUntil: 'domcontentloaded' });
-  await block.locator(`.lang-tabs__tab[data-lang-tab="${code}"]`).click();
-  await expect(block.locator(`[data-lang-panel="${code}"] input[name$="[name]"]`)).toHaveValue(typed);
+  await block.locator(`.product-lang-bar .lang-tabs__tab[data-lang-tab="${code}"]`).click();
+  await expect(name(code)).toHaveValue(typed);
 
   // restore the earlier text so that other specs see the demo data they expect
   if (before !== '') {
-    await block.locator(`[data-lang-panel="${code}"] input[name$="[name]"]`).fill(before);
+    await name(code).fill(before);
     await Promise.all([page.waitForLoadState('domcontentloaded'), page.locator('.admin-save-bar button[data-primary-submit]').first().click()]);
   }
 });

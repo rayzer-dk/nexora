@@ -65,3 +65,13 @@ function initBar(bar: HTMLElement): void {
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll<HTMLElement>('[data-lang-tabs]').forEach(initBar);
 });
+
+// A required field of a language that is not on screen cannot be focused by the browser: open that language first.
+document.addEventListener('invalid', (event) => {
+  const field = event.target;
+  if (!(field instanceof HTMLElement)) return;
+  const panel = field.closest<HTMLElement>(PANEL);
+  if (!panel || !panel.hidden) return;
+  const bar = (panel.closest<HTMLElement>('[data-lang-scope]') ?? document).querySelector<HTMLElement>('[data-lang-tabs]');
+  if (bar) activate(bar, panel.dataset.langPanel ?? '', false);
+}, true);
