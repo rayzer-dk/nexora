@@ -124,9 +124,12 @@ jobs:
           (cd tests/e2e/fixtures/e2e-extension && zip -q "$GITHUB_WORKSPACE/var/e2e-extension.zip" manifest.json)
           unzip -t var/e2e-extension.zip
 
-      - name: Run previously failing Playwright scenarios
+      - name: Run browser regression, PWA install and consent tests
         run: >
           npx playwright test
+          tests/e2e/pwa.spec.ts
+          tests/e2e/consent-and-spam.spec.ts
+          tests/e2e/recently-viewed.spec.ts
           tests/e2e/admin-mfa.spec.ts
           tests/e2e/fraud-device-blocks.spec.ts
           tests/e2e/home-blocks.spec.ts
