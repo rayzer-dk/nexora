@@ -78,6 +78,14 @@ async function openDb(create = true) {
   let provider;
   try { provider = window.indexedDB; } catch { return null; }
   if (!provider) return null;
+  // Modern browsers can confirm absence without creating a temporary database.
+  // Older browsers fall back to aborting the first upgrade transaction.
+  if (!create && typeof provider.databases === 'function') {
+    try {
+      const databases = await provider.databases();
+      if (Array.isArray(databases) && !databases.some((db) => db.name === DATABASE)) return null;
+    } catch { /* Fall through to a non-creating open. */ }
+  }
   return new Promise((resolve) => {
     let finished = false;
     const complete = (value) => {
