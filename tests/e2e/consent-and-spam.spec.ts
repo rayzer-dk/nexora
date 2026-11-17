@@ -1,20 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// Recently viewed references now live in IndexedDB, not localStorage.
+// Small, opt-in product history is stored in localStorage only.
 async function recentCount(page: Page): Promise<number> {
-  return page.evaluate(async () => new Promise<number>((resolve) => {
-    const request = indexedDB.open('nexora-public-ui-v1', 1);
-    request.onerror = () => resolve(0);
-    request.onblocked = () => resolve(0);
-    request.onsuccess = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains('recently-viewed')) { db.close(); resolve(0); return; }
-      const tx = db.transaction('recently-viewed', 'readonly');
-      const entry = tx.objectStore('recently-viewed').get('products');
-      entry.onsuccess = () => { resolve(Array.isArray(entry.result) ? entry.result.length : 0); db.close(); };
-      entry.onerror = () => { resolve(0); db.close(); };
-    };
-  }));
+  return page.evaluate(() => {
+    try {
+      const entries = JSON.parse(localStorage.getItem('mc_recent') || '[]');
+      return Array.isArray(entries) ? entries.length : 0;
+    } catch { return 0; }
+  });
 }
 
 test.describe('cookie consent', () => {
@@ -27,7 +20,7 @@ test.describe('cookie consent', () => {
     await expect(banner.locator('a[href="/cookie-policy"]')).toHaveCount(1);
     await expect(banner.locator('a[href="/privacy-policy"]')).toHaveCount(1);
     expect(await page.evaluate(() => localStorage.getItem('mc_consent_v1'))).toBeNull();
-    // Do not create even an empty optional IndexedDB database before consent.
+    // Legacy IndexedDB must not be created for new anonymous visitors.
     expect(await page.evaluate(async () => (await indexedDB.databases()).map((db) => db.name))).not.toContain('nexora-public-ui-v1');
     expect(await page.locator('script[data-consent-activated]').count()).toBe(0);
 
@@ -61,7 +54,7 @@ test.describe('cookie consent', () => {
     expect([saved.preferences, saved.analytics, saved.marketing]).toEqual([true, false, false]);
     await page.reload({ waitUntil: 'networkidle' });
     await expect.poll(() => recentCount(page)).toBeGreaterThan(0);
-    expect(await page.evaluate(() => localStorage.getItem('mc_recent'))).toBeNull();
+    expect(await recentCount(page)).toBeGreaterThan(0);
 
     // revoking removes the stored personalisation data
     await page.locator('[data-consent-open]').first().click();

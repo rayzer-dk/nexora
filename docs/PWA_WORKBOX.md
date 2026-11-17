@@ -10,7 +10,7 @@ Vendor files are official Workbox JavaScript libraries (MIT-licensed). Keep the 
 
 ## What is cached
 
-When both PWA and Workbox caching are enabled, the root-scoped service worker may cache same-origin public Vite build assets (/build/, immutable hashed JS/CSS/fonts/images) and public static images/fonts (/assets/). Cache entries are capped and time-limited. An anonymous, static `/offline-pwa.html` is precached for failed public navigations.
+When Workbox caching is enabled (regardless of the PWA installation switch), the root-scoped service worker may cache same-origin public Vite build assets (/build/, immutable hashed JS/CSS/fonts/images) and public static images/fonts (/assets/). Cache entries are capped and time-limited. An anonymous, static `/offline-pwa.html` is precached for failed public navigations.
 
 No HTML document, catalog/search/API response, product price, stock, account, cart, checkout, payment, admin response, signed URL, media download or personal data is cached. Online navigations always reach the server; protected routes are not intercepted. Browser HTTP caching and server-side caches are independent of Workbox.
 
@@ -18,7 +18,7 @@ No HTML document, catalog/search/API response, product price, stock, account, ca
 
 The new worker waits for old browsing sessions to close rather than forcibly reloading checkout. It removes legacy nx-static/nx-images caches and obsolete nx-workbox caches when activated.
 
-Turning Workbox OFF replaces the cache worker with a network-only passthrough worker so the separate PWA installation option stays functional, and deletes only Nexora-owned caches on the visitor's next online load. When PWA itself is OFF, the worker unregisters unless a Web Push subscription needs it. It does not clear browser data, IndexedDB, shopping carts, or unrelated service workers. Existing Web Push subscriptions are preserved: when Workbox is ON the worker imports the existing push event handlers; when OFF an active subscription continues through the standalone push worker. Push notifications remain opt-in.
+Turning Workbox OFF replaces the cache worker with a network-only passthrough worker so the separate PWA installation option stays functional, and deletes only Nexora-owned caches on the visitor's next online load. When PWA and Workbox are both OFF, the worker unregisters unless a Web Push subscription needs it. It does not clear browser data, IndexedDB, shopping carts, or unrelated service workers. Existing Web Push subscriptions are preserved: when Workbox is ON the worker imports the existing push event handlers; when OFF an active subscription continues through the standalone push worker. Push notifications remain opt-in.
 
 Changing this setting is per-store; effective only after saving the Appearance form. Service-worker scope is the current origin (/), so multiple stores hosted under paths of the same origin should not use different cache policies. The supported multi-store configuration uses distinct hosts.
 
@@ -31,14 +31,14 @@ Run `npm run qa` with a configured E2E environment and confirm that `/sw.js` con
 Nexora combines three independent layers:
 
 - **Workbox / Cache Storage (opt-in, OFF by default):** only versioned public JS/CSS/fonts/images and the anonymous offline fallback; browser-managed quotas and automatic purging.
-- **IndexedDB (consent-gated):** only the latest 12 recently viewed public product references (ID, name, canonical URL, image URL). This client-only browser history is allowed only after **Preferences** consent. It migrates from the old `mc_recent` localStorage value without losing history, limits the record count, and deletes both stores when consent is revoked or expires. On browsers without IndexedDB, localStorage remains a graceful fallback. Disabling Workbox does not delete unrelated preference data.
-- **Server source of truth:** PHP/Symfony, DB and provider services continue to own prices, inventory, cart, orders, customer records, payments, permissions and all write operations. No sensitive responses, personal accounts or catalogs are persisted in IndexedDB or Workbox.
+- **localStorage (consent-gated):** at most 12 recently viewed public product references (ID, name, canonical URL, image URL), stored only after **Preferences** consent. Prior IndexedDB history is migrated to `mc_recent` and the previous database is removed after a successful write. Revocation or expiry clears both the current history and any remaining legacy database. Disabling Workbox does not delete unrelated preference data.
+- **Server source of truth:** PHP/Symfony, DB and provider services continue to own prices, inventory, cart, orders, customer records, payments, permissions and all write operations. No sensitive responses, personal accounts or catalogs are persisted in localStorage or Workbox.
 
-There is no new required setting for the IndexedDB history: the existing visitor consent is its permission. Workbox remains an entirely separate manual admin switch. Public product links stored for convenience may be stale: following them always contacts the server for current availability and pricing.
+There is no new required setting for the localStorage history: the existing visitor consent is its permission. Workbox remains an entirely separate manual admin switch. Public product links stored for convenience may be stale: following them always contacts the server for current availability and pricing.
 
 ## Installation on mobile and desktop
 
-Nexora already has an independent **PWA installation** switch (Appearance → Storefront) which defaults to ON. **Workbox asset caching** is a second switch and defaults to OFF. Merchants can allow installation without offline caching; the network-only Service Worker does not cache HTML, prices, cart, accounts or orders.
+Nexora already has an independent **PWA installation** switch (Appearance → Storefront) which defaults to ON. **Workbox asset caching** is a second switch and defaults to OFF. Either switch works alone: Workbox can cache public assets without enabling the installable PWA, and merchants can allow installation without offline caching; the network-only Service Worker does not cache HTML, prices, cart, accounts or orders.
 
 The manifest always contains valid built-in PNG icons of 192×192 and 512×512 pixels plus a 512×512 maskable icon. A configured SVG icon may be offered as an additional scalable store icon; an arbitrary uploaded raster image is not declared to have an unverified size. Installed applications use the merchant's storefront name. Browser support and prompts vary: Chrome/Edge offer Install App; iOS Safari offers Share → Add to Home Screen.
 
@@ -56,4 +56,4 @@ If Appearance → Storefront has a valid, local uploaded PNG, JPEG, WebP or GIF 
 
 The same protected image generator supplies a real 180×180 PNG to Safari's Apple Touch Icon link, so iPhone home-screen shortcuts use the merchant icon when configured, with the bundled favicon as fallback.
 
-Optional IndexedDB storage is not created on an anonymous first visit before the Preferences consent. Withdrawal clears any saved history without creating a new database when none previously existed.
+Optional product history is never recorded before Preferences consent. A previous release's IndexedDB database is read only for one-time migration and then deleted; it is never created for new visitors. Withdrawal clears history and any remaining legacy database.

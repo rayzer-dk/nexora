@@ -1,26 +1,16 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function storedHistory(page: Page): Promise<Array<{ id: string; name: string; url: string; image: string }> | null> {
-  return page.evaluate(async () => new Promise((resolve) => {
-    const request = indexedDB.open('nexora-public-ui-v1', 1);
-    request.onerror = () => resolve(null);
-    request.onsuccess = () => {
-      const db = request.result;
-      try {
-        const transaction = db.transaction('recently-viewed', 'readonly');
-        const record = transaction.objectStore('recently-viewed').get('products');
-        record.onsuccess = () => { resolve(Array.isArray(record.result) ? record.result : null); db.close(); };
-        record.onerror = () => { resolve(null); db.close(); };
-      } catch { resolve(null); db.close(); }
-    };
-  }));
+type Recent = { id: string; name: string; url: string; image: string };
+
+async function storedHistory(page: Page): Promise<Recent[]> {
+  return page.evaluate(() => JSON.parse(localStorage.getItem('mc_recent') || '[]') as Recent[]);
 }
 
-
-test('recently viewed block lists visited products, excludes the current one and stays client-side', async ({ page }) => {
+test('recently viewed uses bounded, consent-gated localStorage with public references only', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-recent-list]')).toBeHidden();
-  // personalisation storage requires "Preferences" consent
+  expect(await storedHistory(page)).toEqual([]);
+
   await page.locator('[data-consent-accept-all]').click();
   await expect(page.locator('[data-commerce-consent]')).toBeHidden();
 
@@ -29,7 +19,7 @@ test('recently viewed block lists visited products, excludes the current one and
   expect(hrefs.length).toBe(2);
 
   await page.goto(hrefs[0], { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('[data-recent-list]')).toBeHidden(); // only the current product so far
+  await expect(page.locator('[data-recent-list]')).toBeHidden();
   await page.goto(hrefs[1], { waitUntil: 'domcontentloaded' });
   const list = page.locator('[data-recent-list]');
   await expect(list).toBeVisible();
@@ -40,15 +30,40 @@ test('recently viewed block lists visited products, excludes the current one and
   await expect(page.locator('[data-recent-list] li')).toHaveCount(2);
   const stored = await storedHistory(page);
   expect(stored).toHaveLength(2);
-  expect(stored?.every((item) => Object.keys(item).sort().join(',') === 'id,image,name,url')).toBe(true);
-  expect(await page.evaluate(() => localStorage.getItem('mc_recent'))).toBeNull();
+  expect(stored.every((item) => Object.keys(item).sort().join(',') === 'id,image,name,url')).toBe(true);
+  expect(await page.evaluate(async () => (await indexedDB.databases()).some((db) => db.name === 'nexora-public-ui-v1'))).toBe(false);
 
-  // Withdrawing consent removes client-side personalization data without a reload.
   await page.locator('[data-consent-open]').first().click();
   await page.locator('[data-consent-reject-optional]').click();
   await expect(page.locator('[data-recent-list]')).toBeHidden();
-  await expect.poll(() => storedHistory(page)).toBeNull();
-  expect(await page.evaluate(() => localStorage.getItem('mc_recent'))).toBeNull();
+  await expect.poll(() => storedHistory(page)).toEqual([]);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-recent-list]')).toBeHidden();
+});
+
+test('old IndexedDB history migrates to localStorage without losing public products', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-consent-accept-all]').click();
+  await expect(page.locator('[data-commerce-consent]')).toBeHidden();
+  await page.evaluate(() => new Promise<void>((resolve, reject) => {
+    const request = indexedDB.open('nexora-public-ui-v1', 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('recently-viewed');
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const db = request.result;
+      const tx = db.transaction('recently-viewed', 'readwrite');
+      tx.objectStore('recently-viewed').put([
+        { id: 'legacy-iphone', name: 'Legacy phone', url: '/iphone-x', image: '/assets/branding/nexora-mark-192.png' },
+      ], 'products');
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    };
+  }));
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect.poll(() => storedHistory(page)).toEqual([
+    { id: 'legacy-iphone', name: 'Legacy phone', url: '/iphone-x', image: '/assets/branding/nexora-mark-192.png' },
+  ]);
+  await expect.poll(() => page.evaluate(async () =>
+    (await indexedDB.databases()).some((db) => db.name === 'nexora-public-ui-v1')
+  )).toBe(false);
 });

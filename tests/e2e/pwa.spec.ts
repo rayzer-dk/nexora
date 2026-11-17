@@ -87,12 +87,25 @@ test('Workbox is independent, opt-in and protects private commerce pages', async
     await page.locator('[data-pwa-install]').click();
     await expect(page.locator('[data-pwa-install]')).toBeHidden();
 
+    // Workbox can cache public static assets even when app installation is disabled.
     await setPwa(page, false, true);
     expect((await request.get('/manifest.webmanifest')).status()).toBe(404);
-    expect(await (await request.get('/sw.js')).text()).toContain('unregister');
+    const cacheOnlyWorker = await (await request.get('/sw.js')).text();
+    expect(cacheOnlyWorker).toContain('workbox.setConfig');
     await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('html')).toHaveAttribute('data-pwa', '0');
+    await expect(page.locator('html')).toHaveAttribute('data-workbox', '1');
     await expect(page.locator('link[rel="manifest"]')).toHaveCount(0);
     await expect(page.locator('[data-pwa-install]')).toHaveCount(0);
+    await expect.poll(async () => page.evaluate(async () =>
+      (await navigator.serviceWorker.getRegistration('/'))?.active?.scriptURL ?? ''
+    )).toContain('/sw.js');
+
+    // Disabling both options returns to a cleanup-only worker.
+    await setPwa(page, false, false);
+    const disabledBoth = await (await request.get('/sw.js')).text();
+    expect(disabledBoth).not.toContain('workbox.setConfig');
+    expect(disabledBoth).toContain('unregister');
   } finally {
     await setPwa(page, previousPwa, previousWorkbox);
   }

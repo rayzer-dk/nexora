@@ -678,7 +678,7 @@ initContactWidget();
 
 
 const pwaEnabled = document.documentElement.dataset.pwa === '1';
-const workboxActive = pwaEnabled && document.documentElement.dataset.workbox === '1';
+const workboxActive = document.documentElement.dataset.workbox === '1';
 
 function initPwaInstall() {
   // The install control is absent when PWA is disabled. Do not prompt users
@@ -740,7 +740,7 @@ initPwaInstall();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      if (pwaEnabled) {
+      if (pwaEnabled || workboxActive) {
         await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
         if (workboxActive) return;
       } else {
@@ -1039,7 +1039,7 @@ function initPush() {
   button.addEventListener('click', async () => {
     button.disabled = true;
     try {
-      const registration = await navigator.serviceWorker.register(pwaEnabled ? '/sw.js' : '/nexora-push-sw.js', { scope: '/', updateViaCache: 'none' });
+      const registration = await navigator.serviceWorker.register(pwaEnabled || workboxActive ? '/sw.js' : '/nexora-push-sw.js', { scope: '/', updateViaCache: 'none' });
       const existing = await registration.pushManager.getSubscription();
       if (existing) {
         await post('/push/unsubscribe', { endpoint: existing.endpoint });

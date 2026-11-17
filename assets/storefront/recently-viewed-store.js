@@ -1,7 +1,7 @@
 /**
- * Optional anonymous storefront history. Workbox caches public assets;
- * IndexedDB persists only product references after preferences consent.
- * Prices, stock, customer accounts, carts and checkout data are never stored here.
+ * Consent-gated, bounded history of public product references in localStorage.
+ * IndexedDB was used by an earlier release; existing entries are migrated once
+ * and its old database is deleted. Neither cache nor history stores live commerce data.
  */
 const DATABASE = 'nexora-public-ui-v1';
 const STORE = 'recently-viewed';
@@ -36,7 +36,7 @@ function safeProduct(value) {
   try {
     const parsed = new URL(value.url, window.location.origin);
     if (parsed.origin !== window.location.origin || !/^https?:$/.test(parsed.protocol)) return null;
-    url = parsed.pathname; // No tracking parameters, session IDs or fragment tokens.
+    url = parsed.pathname;
   } catch { return null; }
   if (['/admin', '/account', '/cart', '/checkout', '/api'].some((path) => url === path || url.startsWith(path + '/'))) return null;
   let image = '';
@@ -46,7 +46,7 @@ function safeProduct(value) {
       if (parsed.protocol === 'https:' || (parsed.protocol === 'http:' && parsed.origin === window.location.origin)) {
         image = parsed.origin === window.location.origin ? parsed.pathname : parsed.origin + parsed.pathname;
       }
-    } catch { /* Invalid image URLs are ignored. */ }
+    } catch { /* Invalid image URL. */ }
   }
   return { id, name, url, image };
 }
@@ -65,83 +65,65 @@ export function normalizeRecentHistory(raw) {
   return result;
 }
 
-function legacyRead() {
+function storedHistory() {
   try { return normalizeRecentHistory(JSON.parse(window.localStorage.getItem(LEGACY) || '[]')); }
   catch { return []; }
 }
 
-function legacyDelete() {
+function clearStoredHistory() {
   try { window.localStorage.removeItem(LEGACY); } catch { /* Storage unavailable. */ }
 }
 
-async function openDb(create = true) {
-  let provider;
-  try { provider = window.indexedDB; } catch { return null; }
-  if (!provider) return null;
-  // Modern browsers can confirm absence without creating a temporary database.
-  // Older browsers fall back to aborting the first upgrade transaction.
-  if (!create && typeof provider.databases === 'function') {
-    try {
-      const databases = await provider.databases();
-      if (Array.isArray(databases) && !databases.some((db) => db.name === DATABASE)) return null;
-    } catch { /* Fall through to a non-creating open. */ }
-  }
+function oldProvider() {
+  try { return window.indexedDB || null; } catch { return null; }
+}
+
+async function oldDatabaseExists(provider) {
+  if (typeof provider.databases !== 'function') return true;
+  try {
+    const databases = await provider.databases();
+    return !Array.isArray(databases) || databases.some((db) => db.name === DATABASE);
+  } catch { return true; }
+}
+
+// Read the previous version's history without ever creating a new optional DB.
+async function readOldDatabase() {
+  const provider = oldProvider();
+  if (!provider || !(await oldDatabaseExists(provider))) return [];
   return new Promise((resolve) => {
-    let finished = false;
-    const complete = (value) => {
-      if (finished) { value?.close?.(); return; }
-      finished = true;
-      resolve(value);
-    };
     try {
-      const request = provider.open(DATABASE, 1);
-      request.onupgradeneeded = () => {
-        // A fresh visitor who has not consented must not create an optional DB.
-        if (!create) {
-          request.transaction?.abort();
-          return;
-        }
-        if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE);
+      const request = provider.open(DATABASE);
+      request.onupgradeneeded = () => request.transaction?.abort();
+      request.onblocked = () => resolve([]);
+      request.onerror = () => resolve([]);
+      request.onsuccess = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE)) { db.close(); resolve([]); return; }
+        try {
+          const tx = db.transaction(STORE, 'readonly');
+          const record = tx.objectStore(STORE).get(RECORD);
+          record.onsuccess = () => {
+            const items = normalizeRecentHistory(record.result);
+            db.close();
+            resolve(items);
+          };
+          record.onerror = () => { db.close(); resolve([]); };
+          tx.onabort = () => { db.close(); resolve([]); };
+        } catch { db.close(); resolve([]); }
       };
-      request.onsuccess = () => complete(request.result);
-      request.onerror = () => complete(null);
-      request.onblocked = () => complete(null);
-    } catch { complete(null); }
+    } catch { resolve([]); }
   });
 }
 
-async function readDb(db) {
-  return new Promise((resolve) => {
+async function removeOldDatabase() {
+  const provider = oldProvider();
+  if (!provider || !(await oldDatabaseExists(provider))) return;
+  await new Promise((resolve) => {
     try {
-      const transaction = db.transaction(STORE, 'readonly');
-      const request = transaction.objectStore(STORE).get(RECORD);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => resolve(null);
-      transaction.onabort = () => resolve(null);
-    } catch { resolve(null); }
-  });
-}
-
-async function writeDb(db, items) {
-  return new Promise((resolve) => {
-    try {
-      const transaction = db.transaction(STORE, 'readwrite');
-      transaction.objectStore(STORE).put(items, RECORD);
-      transaction.oncomplete = () => resolve(true);
-      transaction.onerror = () => resolve(false);
-      transaction.onabort = () => resolve(false);
-    } catch { resolve(false); }
-  });
-}
-
-async function clearDb(db) {
-  return new Promise((resolve) => {
-    try {
-      const transaction = db.transaction(STORE, 'readwrite');
-      transaction.objectStore(STORE).delete(RECORD);
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => resolve();
-      transaction.onabort = () => resolve();
+      const request = provider.deleteDatabase(DATABASE);
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+      request.onblocked = () => resolve();
     } catch { resolve(); }
   });
 }
@@ -149,50 +131,34 @@ async function clearDb(db) {
 export function readRecentHistory() {
   return queue(async () => {
     if (!personalizationAllowed()) return [];
-    const legacy = legacyRead();
-    const db = await openDb();
-    if (!db) return legacy;
+    const current = storedHistory();
+    const previous = await readOldDatabase();
+    if (!personalizationAllowed()) return [];
+    const merged = normalizeRecentHistory([...current, ...previous]);
     try {
-      const saved = await readDb(db);
-      if (!personalizationAllowed()) return [];
-      if (Array.isArray(saved)) {
-        // A failed IndexedDB write may leave a newer localStorage fallback.
-        // Merge it first and clear the fallback only after a committed DB write.
-        const normalized = normalizeRecentHistory([...legacy, ...saved]);
-        if (legacy.length && await writeDb(db, normalized)) legacyDelete();
-        return normalized;
-      }
-      if (legacy.length && await writeDb(db, legacy)) legacyDelete();
-      return legacy;
-    } finally { db.close(); }
+      if (merged.length) window.localStorage.setItem(LEGACY, JSON.stringify(merged));
+      // Delete the former IndexedDB data only after committing the migrated copy.
+      await removeOldDatabase();
+    } catch {
+      // If localStorage is unavailable, preserve the previous database for a later migration.
+    }
+    return merged;
   });
 }
 
 export function writeRecentHistory(raw) {
   return queue(async () => {
     if (!personalizationAllowed()) return false;
-    const items = normalizeRecentHistory(raw);
-    const db = await openDb();
-    if (db) {
-      try {
-        if (!personalizationAllowed()) return false;
-        if (await writeDb(db, items)) {
-          legacyDelete();
-          return true;
-        }
-      } finally { db.close(); }
-    }
-    if (!personalizationAllowed()) return false;
-    try { window.localStorage.setItem(LEGACY, JSON.stringify(items)); return true; }
-    catch { return false; }
+    try {
+      window.localStorage.setItem(LEGACY, JSON.stringify(normalizeRecentHistory(raw)));
+      return true;
+    } catch { return false; }
   });
 }
 
 export function clearRecentHistory() {
   return queue(async () => {
-    legacyDelete();
-    const db = await openDb(false);
-    if (!db) return;
-    try { await clearDb(db); } finally { db.close(); }
+    clearStoredHistory();
+    await removeOldDatabase();
   });
 }

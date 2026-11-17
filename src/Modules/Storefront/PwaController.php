@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-/** Installable-app support: web manifest, service worker and the offline page. All follow the Appearance → PWA setting. */
+/** Separate PWA-install and Workbox-cache options, with shared Web Push support. */
 final class PwaController extends AbstractController
 {
     public function __construct(
@@ -77,7 +77,7 @@ final class PwaController extends AbstractController
         $context = $this->contexts->resolve($request);
         $settings = $this->presentation->get($context->storeId);
         $pwaEnabled = ($settings['brand']['pwa'] ?? '0') === '1';
-        $workboxEnabled = $pwaEnabled && ($settings['brand']['workbox'] ?? '0') === '1'
+        $workboxEnabled = ($settings['brand']['workbox'] ?? '0') === '1'
             && is_file($this->projectDir . '/public/assets/workbox/v7.4.1/workbox-sw.js');
         $source = $workboxEnabled ? (string) file_get_contents($this->projectDir . '/resources/pwa/sw.js') : '';
         if ($source === '') {
