@@ -49,3 +49,7 @@ This is a browser-installed PWA, not an App Store/Google Play binary. Online con
 When PWA is ON, Nexora includes a compact, accessible install button in the merchant footer. Chromium-based browsers expose it after `beforeinstallprompt`; on iPhone/iPad Safari it displays Share → Add to Home Screen instructions, and Safari on macOS displays File → Add to Dock instructions. It disappears after installation and inside standalone display mode. All captions are localized in Ukrainian, Russian and English. The button is absent when PWA is OFF and does not depend on the separate Workbox switch.
 
 The browser decides whether installation is available. Nexora does not trigger install prompts without a direct user gesture, claim to install from an app store or convert checkout into offline transactions.
+
+## Per-store app icon
+
+If Appearance → Storefront has a valid, local uploaded PNG, JPEG, WebP or GIF `brand.icon`, the manifest advertises `/pwa-icon/192.png` and `/pwa-icon/512.png`, generated to real square sizes using GD and the store's accent color, with content kept within the maskable safe zone. File resolution and size limits protect memory; only files inside the local public/media or public/assets directory can be read. SVG store icons are additionally advertised as `sizes:any`; when raster conversion is unavailable, the platform's packaged PNG icons provide an honest-size fallback. No remote image fetching is permitted. Each merchant/store context gets its own icons.

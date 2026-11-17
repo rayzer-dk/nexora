@@ -8,6 +8,7 @@ use Commerce\Core\Platform\PlatformVersion;
 use Commerce\Modules\Appearance\Infrastructure\StorefrontPresentationSettings;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,11 +38,17 @@ final class PwaController extends AbstractController
         // Installability must never depend on a merchant-uploaded icon's unknown size.
         // Always advertise genuine bundled 192/512 PNG assets; SVG is an optional
         // store-specific scalable icon. Never mislabel raster uploads as "any".
-        $icons = [
-            ['src' => '/assets/branding/nexora-mark-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
-            ['src' => '/assets/branding/nexora-mark-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
-            ['src' => '/assets/branding/nexora-mark-maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
-        ];
+        $customRaster = $this->localRasterIcon($icon);
+        $icons = $customRaster !== null
+            ? [
+                ['src' => '/pwa-icon/192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => '/pwa-icon/512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any maskable'],
+            ]
+            : [
+                ['src' => '/assets/branding/nexora-mark-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => '/assets/branding/nexora-mark-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+                ['src' => '/assets/branding/nexora-mark-maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+            ];
         if ($icon !== '' && $extension === 'svg') {
             array_unshift($icons, ['src' => $icon, 'sizes' => 'any', 'type' => 'image/svg+xml', 'purpose' => 'any']);
         }
@@ -117,4 +124,97 @@ JS;
         $response->headers->set('X-Robots-Tag', 'noindex');
         return $response;
     }
+
+    /**
+     * Only a real, small raster file under public/media or public/assets may
+     * become an install icon. URLs are normalized by presentation settings.
+     * Never download a merchant-provided URL or follow out-of-root symlinks.
+     */
+    private function localRasterIcon(string $icon): ?string
+    {
+        if (!preg_match('#^/(?:media|assets)/[A-Za-z0-9_./-]+\.(?:png|jpe?g|webp|gif)$#i', $icon) ||
+            str_contains($icon, '..') ||
+            !function_exists('imagecreatetruecolor') ||
+            !function_exists('imagecreatefromstring')) {
+            return null;
+        }
+
+        $root = realpath($this->projectDir . '/public');
+        $file = realpath($this->projectDir . '/public' . $icon);
+        if (!is_string($root) || !is_string($file) || !str_starts_with($file, $root . DIRECTORY_SEPARATOR) ||
+            !is_file($file) || filesize($file) > 8 * 1024 * 1024) {
+            return null;
+        }
+
+        $info = @getimagesize($file);
+        if (!is_array($info) || $info[0] < 1 || $info[1] < 1 ||
+            $info[0] > 4096 || $info[1] > 4096 || $info[0] * $info[1] > 16000000) {
+            return null;
+        }
+
+        return $file;
+    }
+
+    #[Route('/pwa-icon/{size}.png', name: 'storefront_pwa_install_icon', requirements: ['size' => '192|512'], methods: ['GET'], priority: 901)]
+    public function appIcon(Request $request, int $size): Response
+    {
+        $context = $this->contexts->resolve($request);
+        $settings = $this->presentation->get($context->storeId);
+        if (($settings['brand']['pwa'] ?? '1') !== '1') {
+            throw $this->createNotFoundException();
+        }
+
+        $fallbackPath = $this->projectDir . '/public/assets/branding/nexora-mark-' . $size . '.png';
+        $raster = $this->localRasterIcon((string) ($settings['brand']['icon'] ?? ''));
+        if ($raster !== null) {
+            $raw = @file_get_contents($raster);
+            $source = is_string($raw) ? @imagecreatefromstring($raw) : false;
+            if ($source !== false) {
+                $canvas = imagecreatetruecolor($size, $size);
+                if ($canvas !== false) {
+                    $hex = (string) ($settings['theme']['primary'] ?? '#0B63F6');
+                    if (!preg_match('/^#[a-fA-F0-9]{6}$/D', $hex)) {
+                        $hex = '#0B63F6';
+                    }
+                    $background = imagecolorallocate(
+                        $canvas, hexdec(substr($hex, 1, 2)), hexdec(substr($hex, 3, 2)), hexdec(substr($hex, 5, 2))
+                    );
+                    imagefilledrectangle($canvas, 0, 0, $size, $size, $background);
+                    // 70% content size stays within the maskable safe zone.
+                    $box = (int) round($size * 0.70);
+                    $width = imagesx($source);
+                    $height = imagesy($source);
+                    $factor = min($box / max(1, $width), $box / max(1, $height));
+                    $targetWidth = max(1, (int) round($width * $factor));
+                    $targetHeight = max(1, (int) round($height * $factor));
+                    imagecopyresampled(
+                        $canvas, $source,
+                        (int) floor(($size - $targetWidth) / 2), (int) floor(($size - $targetHeight) / 2),
+                        0, 0, $targetWidth, $targetHeight, $width, $height
+                    );
+                    ob_start();
+                    imagepng($canvas, null, 6);
+                    $png = ob_get_clean();
+                    imagedestroy($canvas);
+                    imagedestroy($source);
+                    if (is_string($png) && $png !== '') {
+                        return new Response($png, 200, [
+                            'Content-Type' => 'image/png',
+                            'Cache-Control' => 'public, max-age=3600',
+                            'X-Content-Type-Options' => 'nosniff',
+                        ]);
+                    }
+                } else {
+                    imagedestroy($source);
+                }
+            }
+        }
+
+        return new BinaryFileResponse($fallbackPath, 200, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'public, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
 }

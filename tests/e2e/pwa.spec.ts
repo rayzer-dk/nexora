@@ -46,6 +46,16 @@ test('Workbox is independent, opt-in and protects private commerce pages', async
       expect(response.ok(), icon.src).toBe(true);
       expect(response.headers()['content-type']).toContain('image/png');
     }
+    // Both generated PWA icon sizes remain genuine PNGs even without a custom image.
+    for (const size of [192, 512]) {
+      const response = await request.get('/pwa-icon/' + size + '.png');
+      expect(response.ok()).toBe(true);
+      expect(response.headers()['content-type']).toContain('image/png');
+      const bytes = await response.body();
+      expect(bytes.subarray(1, 4).toString()).toBe('PNG');
+      expect(bytes.readUInt32BE(16)).toBe(size);
+      expect(bytes.readUInt32BE(20)).toBe(size);
+    }
 
     const sw = await request.get('/sw.js');
     expect(sw.status()).toBe(200);
