@@ -84,7 +84,9 @@ self.addEventListener('activate', (event) => event.waitUntil((async () => {
     }
   }
   if (__PWA_DISABLED__) {
-    const push = await self.registration.pushManager.getSubscription().catch(() => null);
+    const push = self.registration.pushManager
+      ? await self.registration.pushManager.getSubscription().catch(() => null)
+      : null;
     if (!push) await self.registration.unregister();
   } else {
     await self.clients.claim();

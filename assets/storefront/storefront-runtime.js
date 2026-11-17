@@ -691,7 +691,9 @@ if ('serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.getRegistration('/');
         const script = registration?.active?.scriptURL || registration?.waiting?.scriptURL || registration?.installing?.scriptURL || '';
         if (script && new URL(script).pathname === '/sw.js') {
-          const subscription = await registration.pushManager.getSubscription().catch(() => null);
+          const subscription = registration.pushManager
+            ? await registration.pushManager.getSubscription().catch(() => null)
+            : null;
           if (subscription) {
             await navigator.serviceWorker.register('/nexora-push-sw.js', { scope: '/', updateViaCache: 'none' });
           } else {
