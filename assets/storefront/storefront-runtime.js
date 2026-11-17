@@ -702,8 +702,8 @@ if ('serviceWorker' in navigator) {
         }
       }
       if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.filter((key) => key.startsWith('nx-workbox-') || key.startsWith('nx-static-') || key.startsWith('nx-images-')).map((key) => caches.delete(key)));
+        const keys = await window.caches.keys();
+        await Promise.all(keys.filter((key) => key.startsWith('nx-workbox-') || key.startsWith('nx-static-') || key.startsWith('nx-images-')).map((key) => window.caches.delete(key)));
       }
     } catch {
       // The storefront continues to operate without offline caching.
