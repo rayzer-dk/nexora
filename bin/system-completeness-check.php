@@ -95,7 +95,26 @@ foreach ($it as $f) {
 
 $pkg = json_decode(file_get_contents($root . '/package.json') ?: '{}', true);
 if (($pkg['version'] ?? '') !== \Commerce\Core\Platform\PlatformVersion::VERSION) $errors[] = 'package.json version must match PlatformVersion.';
-if (($pkg['scripts']['build:production'] ?? '') !== 'vite build && node tools/check-asset-budgets.mjs && node tools/precompress-assets.mjs public/build') $errors[] = 'package build:production path is inconsistent with Vite outDir.';
+$buildCommand = (string) ($pkg['scripts']['build:production'] ?? '');
+$buildStages = [
+    'vite build',
+    'node tools/vendor-workbox.mjs',
+    'node tools/check-asset-budgets.mjs',
+    'node tools/precompress-assets.mjs public/build',
+    'node tools/precompress-assets.mjs public/assets',
+];
+$stageOffset = 0;
+foreach ($buildStages as $stage) {
+    $position = strpos($buildCommand, $stage, $stageOffset);
+    if ($position === false) {
+        $errors[] = 'Missing or out-of-order production build stage: ' . $stage;
+        break;
+    }
+    $stageOffset = $position + strlen($stage);
+}
+if (!str_contains($vite, "outDir: 'public/build'")) {
+    $errors[] = 'Vite production output must be public/build.';
+}
 
 if (!is_file($root . '/composer.lock')) $warnings[] = 'composer.lock missing: source package cannot be certified reproducible.';
 if (!is_file($root . '/package-lock.json')) $warnings[] = 'package-lock.json missing: source package cannot be certified reproducible.';
