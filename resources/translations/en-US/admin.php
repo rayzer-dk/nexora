@@ -6728,5 +6728,5 @@ return [
     'admin.access.super_only' => 'Only a super administrator can do this: grant ROLE_SUPER_ADMIN, change a super administrator or your own roles, edit a system role, or give permissions you do not hold yourself.',
 
     'admin.appearance.workbox' => 'Workbox caching',
-    'admin.appearance.workbox.help' => 'Caches only public static storefront assets. HTML, prices, stock, cart, checkout, customer accounts and admin pages are never cached. Requires PWA to be enabled. Off by default; press Save to apply. Libraries are bundled locally in production builds.',
+    'admin.appearance.workbox.help' => 'Workbox separately caches only public static storefront assets. HTML, prices, stock, cart, checkout, customer accounts and admin pages are never cached. Requires PWA to be enabled. Off by default; press Save to apply. Libraries are bundled locally in production builds.',
 ];

@@ -25,3 +25,13 @@ Changing this setting is per-store; effective only after saving the Appearance f
 ## Checks before enabling in production
 
 Run `npm run qa` with a configured E2E environment and confirm that `/sw.js` contains Workbox imports only when enabled. Test update activation, offline fallback, checkout/cart mutations, private pages, Web Push opt-in/out, multiple tabs and PWA disablement on real browsers. The online/offline integration needs browser E2E; static checks alone do not certify it.
+
+## Hybrid storefront persistence (IndexedDB)
+
+Nexora combines three independent layers:
+
+- **Workbox / Cache Storage (opt-in, OFF by default):** only versioned public JS/CSS/fonts/images and the anonymous offline fallback; browser-managed quotas and automatic purging.
+- **IndexedDB (consent-gated):** only the latest 12 recently viewed public product references (ID, name, canonical URL, image URL). This client-only browser history is allowed only after **Preferences** consent. It migrates from the old `mc_recent` localStorage value without losing history, limits the record count, and deletes both stores when consent is revoked or expires. On browsers without IndexedDB, localStorage remains a graceful fallback. Disabling Workbox does not delete unrelated preference data.
+- **Server source of truth:** PHP/Symfony, DB and provider services continue to own prices, inventory, cart, orders, customer records, payments, permissions and all write operations. No sensitive responses, personal accounts or catalogs are persisted in IndexedDB or Workbox.
+
+There is no new required setting for the IndexedDB history: the existing visitor consent is its permission. Workbox remains an entirely separate manual admin switch. Public product links stored for convenience may be stale: following them always contacts the server for current availability and pricing.
