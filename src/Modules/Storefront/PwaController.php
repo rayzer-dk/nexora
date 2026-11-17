@@ -155,7 +155,7 @@ JS;
         return $file;
     }
 
-    #[Route('/pwa-icon/{size}.png', name: 'storefront_pwa_install_icon', requirements: ['size' => '192|512'], methods: ['GET'], priority: 901)]
+    #[Route('/pwa-icon/{size}.png', name: 'storefront_pwa_install_icon', requirements: ['size' => '180|192|512'], methods: ['GET'], priority: 901)]
     public function appIcon(Request $request, int $size): Response
     {
         $context = $this->contexts->resolve($request);
@@ -164,7 +164,7 @@ JS;
             throw $this->createNotFoundException();
         }
 
-        $fallbackPath = $this->projectDir . '/public/assets/branding/nexora-mark-' . $size . '.png';
+        $fallbackPath = $this->projectDir . '/public/assets/branding/' . ($size === 180 ? 'favicon-180.png' : 'nexora-mark-' . $size . '.png');
         $raster = $this->localRasterIcon((string) ($settings['brand']['icon'] ?? ''));
         if ($raster !== null) {
             $raw = @file_get_contents($raster);
