@@ -29,7 +29,7 @@ test('Workbox is independent, opt-in and protects private commerce pages', async
   try {
     await setPwa(page, true, false);
     const disabled = await (await request.get('/sw.js')).text();
-    expect(disabled).toContain('unregister');
+    expect(disabled).toContain('fetch(event.request)');
     expect(disabled).not.toContain('workbox.setConfig');
 
     await setPwa(page, true, true);

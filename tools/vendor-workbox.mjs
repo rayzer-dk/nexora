@@ -42,4 +42,5 @@ for (const name of files) {
   hashes[name] = createHash('sha256').update(bytes).digest('hex');
 }
 await writeFile(join(destination, 'SHA256.json'), JSON.stringify({ version, source, files: hashes }, null, 2) + '\n');
+await writeFile(join(destination, 'LICENSE'), await readFile(resolve('resources/pwa/LICENSE.workbox'), 'utf8'));
 console.log('Vendored Workbox v' + version + ' (' + files.length + ' local scripts)');

@@ -18,7 +18,7 @@ No HTML document, catalog/search/API response, product price, stock, account, ca
 
 The new worker waits for old browsing sessions to close rather than forcibly reloading checkout. It removes legacy nx-static/nx-images caches and obsolete nx-workbox caches when activated.
 
-Turning Workbox OFF unregisters the cache worker and deletes only Nexora-owned caches on the visitor's next online load. It does not clear browser data, IndexedDB, shopping carts, or unrelated service workers. Existing Web Push subscriptions are preserved: when Workbox is ON the worker imports the existing push event handlers; when OFF an active subscription continues through the standalone push worker. Push notifications remain opt-in.
+Turning Workbox OFF replaces the cache worker with a network-only passthrough worker so the separate PWA installation option stays functional, and deletes only Nexora-owned caches on the visitor's next online load. When PWA itself is OFF, the worker unregisters unless a Web Push subscription needs it. It does not clear browser data, IndexedDB, shopping carts, or unrelated service workers. Existing Web Push subscriptions are preserved: when Workbox is ON the worker imports the existing push event handlers; when OFF an active subscription continues through the standalone push worker. Push notifications remain opt-in.
 
 Changing this setting is per-store; effective only after saving the Appearance form. Service-worker scope is the current origin (/), so multiple stores hosted under paths of the same origin should not use different cache policies. The supported multi-store configuration uses distinct hosts.
 

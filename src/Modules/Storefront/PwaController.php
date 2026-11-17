@@ -67,12 +67,13 @@ final class PwaController extends AbstractController
     {
         $context = $this->contexts->resolve($request);
         $settings = $this->presentation->get($context->storeId);
-        $enabled = ($settings['brand']['pwa'] ?? '0') === '1'
-            && ($settings['brand']['workbox'] ?? '0') === '1'
+        $pwaEnabled = ($settings['brand']['pwa'] ?? '0') === '1';
+        $workboxEnabled = $pwaEnabled && ($settings['brand']['workbox'] ?? '0') === '1'
             && is_file($this->projectDir . '/public/assets/workbox/v7.4.1/workbox-sw.js');
-        $source = $enabled ? (string) file_get_contents($this->projectDir . '/resources/pwa/sw.js') : '';
+        $source = $workboxEnabled ? (string) file_get_contents($this->projectDir . '/resources/pwa/sw.js') : '';
         if ($source === '') {
-            // OFF removes only Nexora's caches. Existing Web Push subscriptions remain active.
+            // PWA remains installable without Workbox. The fallback never caches responses.
+            // The standalone push worker is retained when PWA is disabled but push is subscribed.
             $source = <<<'JS'
 importScripts('/nexora-push-sw.js');
 self.addEventListener('install', () => self.skipWaiting());
@@ -82,10 +83,21 @@ self.addEventListener('activate', (event) => event.waitUntil((async () => {
       await caches.delete(name);
     }
   }
-  const push = await self.registration.pushManager.getSubscription().catch(() => null);
-  if (!push) await self.registration.unregister();
+  if (__PWA_DISABLED__) {
+    const push = await self.registration.pushManager.getSubscription().catch(() => null);
+    if (!push) await self.registration.unregister();
+  } else {
+    await self.clients.claim();
+  }
 })()));
+self.addEventListener('fetch', (event) => {
+  if (event.request.method === 'GET' && event.request.mode === 'navigate' &&
+      new URL(event.request.url).origin === self.location.origin) {
+    event.respondWith(fetch(event.request));
+  }
+});
 JS;
+            $source = str_replace('__PWA_DISABLED__', $pwaEnabled ? 'false' : 'true', $source);
         }
         return new Response(str_replace('__VERSION__', PlatformVersion::VERSION, $source), 200, [
             'Content-Type' => 'text/javascript; charset=UTF-8',
