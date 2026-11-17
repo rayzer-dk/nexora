@@ -679,6 +679,64 @@ initContactWidget();
 
 const pwaEnabled = document.documentElement.dataset.pwa === '1';
 const workboxActive = pwaEnabled && document.documentElement.dataset.workbox === '1';
+
+function initPwaInstall() {
+  // The install control is absent when PWA is disabled. Do not prompt users
+  // automatically and do not interfere with the service worker used by Push.
+  if (!pwaEnabled) return;
+  const button = document.querySelector('[data-pwa-install]');
+  const help = document.querySelector('[data-pwa-install-help]');
+  if (!(button instanceof HTMLButtonElement) || !help) return;
+
+  const standalone = window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (standalone) return;
+
+  const agent = navigator.userAgent || '';
+  const ios = /iPhone|iPad|iPod/.test(agent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const safari = /Safari/.test(agent) && !/CriOS|FxiOS|EdgiOS|Chrome|Chromium|Edg|OPR/.test(agent);
+  const macSafari = safari && /Macintosh/.test(agent) && !ios;
+  let installPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    button.hidden = false;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    button.hidden = true;
+    help.hidden = true;
+  });
+
+  if (ios || macSafari) button.hidden = false;
+  button.addEventListener('click', async () => {
+    if (installPrompt) {
+      const prompt = installPrompt;
+      installPrompt = null;
+      button.disabled = true;
+      try {
+        await prompt.prompt();
+        const choice = await prompt.userChoice;
+        if (choice?.outcome === 'accepted') {
+          button.hidden = true;
+          help.hidden = true;
+        } else {
+          button.hidden = true;
+        }
+      } catch {
+        button.hidden = true;
+      } finally {
+        button.disabled = false;
+      }
+    } else if (ios || macSafari) {
+      help.textContent = ios ? (help.getAttribute('data-ios-help') || '') : (help.getAttribute('data-mac-help') || '');
+      help.hidden = !help.hidden;
+    }
+  });
+}
+initPwaInstall();
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {

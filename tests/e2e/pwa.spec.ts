@@ -61,15 +61,28 @@ test('Workbox is independent, opt-in and protects private commerce pages', async
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+    await expect(page.locator('[data-pwa-install]')).toHaveCount(1);
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
     await expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).toHaveAttribute('content', 'yes');
     await expect(page.locator('html')).toHaveAttribute('data-workbox', '1');
+
+    await page.waitForLoadState('load');
+    await page.evaluate(() => {
+      const fake = new Event('beforeinstallprompt', { cancelable: true });
+      Object.defineProperty(fake, 'prompt', { value: async () => {} });
+      Object.defineProperty(fake, 'userChoice', { value: Promise.resolve({ outcome: 'accepted' }) });
+      window.dispatchEvent(fake);
+    });
+    await expect(page.locator('[data-pwa-install]')).toBeVisible();
+    await page.locator('[data-pwa-install]').click();
+    await expect(page.locator('[data-pwa-install]')).toBeHidden();
 
     await setPwa(page, false, true);
     expect((await request.get('/manifest.webmanifest')).status()).toBe(404);
     expect(await (await request.get('/sw.js')).text()).toContain('unregister');
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('link[rel="manifest"]')).toHaveCount(0);
+    await expect(page.locator('[data-pwa-install]')).toHaveCount(0);
   } finally {
     await setPwa(page, previousPwa, previousWorkbox);
   }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 return [
     'skip' => 'Skip to content',
+    'pwa_install' => 'Install app',
+    'pwa_ios_help' => 'In Safari, tap Share, then Add to Home Screen.',
+    'pwa_mac_help' => 'In Safari on Mac, choose File → Add to Dock.',
     'service_nav' => 'Service navigation',
     'about' => 'About us',
     'shipping_payment' => 'Shipping & payment',
