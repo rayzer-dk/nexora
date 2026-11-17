@@ -51,6 +51,7 @@ final class AppearanceAdminController extends AbstractController
                         'icon' => $request->request->get('brand_icon',''),
                         'favicon' => $request->request->get('brand_favicon',''),
                         'pwa' => $request->request->get('brand_pwa','0') === '1' ? '1' : '0',
+                        'workbox' => $request->request->get('brand_workbox','0') === '1' ? '1' : '0',
                     ],
                     'theme' => [
                         'preset' => $request->request->get('theme_preset','modern'),

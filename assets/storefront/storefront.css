@@ -874,3 +874,8 @@ body.has-quick-view { overflow: hidden; }
 body[data-image-bg="white"] { --mc-media-bg: #fff; }
 body[data-image-bg="dark"] { --mc-media-bg: #111827; }
 body[data-image-bg="dark"] :is(.catalog-card__media img, .product-gallery__open img, .product-gallery__thumb img, .related-card img, .wishlist-card > a img, .cart-line > a img, .summary-image, .compare-table thead img, .live-search__item img) { mix-blend-mode: normal; }
+
+/* Installable PWA control: displayed only when the browser supports installation. */
+.site-footer .pwa-install-button[hidden],.site-footer .pwa-install-help[hidden]{display:none!important}
+.site-footer .pwa-install-button{display:inline-flex;gap:var(--mc-space-2);align-items:center;border-radius:var(--mc-radius-sm);padding:var(--mc-space-2) var(--mc-space-3)}
+.site-footer .pwa-install-help{font-size:var(--mc-font-size-sm);line-height:var(--mc-line-height-snug);max-width:360px}

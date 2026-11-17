@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 return [
     'skip' => 'Перейти до вмісту',
+    'pwa_install' => 'Встановити застосунок',
+    'pwa_ios_help' => 'У Safari натисніть «Поділитися», потім «На початковий екран».',
+    'pwa_mac_help' => 'У Safari на Mac виберіть «Файл» → «Додати в Dock».',
     'service_nav' => 'Сервісна навігація',
     'about' => 'Про магазин',
     'shipping_payment' => 'Доставка і оплата',

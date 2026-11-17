@@ -1,6 +1,7 @@
 import './cart-drawer.js';
 import { lucideIcon } from '../shared/lucide-icons.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
+import { personalizationAllowed, readRecentHistory, writeRecentHistory, clearRecentHistory } from './recently-viewed-store.js';
 import { initDismissibleNotices } from '../shared/dismissible-notices.js';
 import './lightbox.js';
 import '../shared/details-popovers.js';
@@ -534,45 +535,40 @@ function initProductCardCartActions() {
   });
 }
 let recentlyViewedDone = false;
-function initRecentlyViewed() {
-  // "Recently viewed" is a personalisation feature: it stores data on the device only after "preferences" consent.
-  const KEY = 'mc_recent';
-  let allowed;
-  try { allowed = Boolean(JSON.parse(localStorage.getItem('mc_consent_v1') || 'null')?.preferences); } catch { allowed = false; }
-  if (!allowed) {
-    try { localStorage.removeItem(KEY); } catch { /* storage unavailable */ }
+let recentGeneration = 0;
+let recentControlsAttached = false;
+
+async function initRecentlyViewed() {
+  // Consent gates both IndexedDB and the legacy localStorage migration.
+  const generation = ++recentGeneration;
+  const box = document.querySelector('[data-recent-list]');
+  const list = box?.querySelector('[data-recent-items]');
+  if (!personalizationAllowed()) {
+    recentlyViewedDone = false;
+    if (box) box.hidden = true;
+    list?.replaceChildren();
+    await clearRecentHistory();
     return;
   }
   if (recentlyViewedDone) return;
   recentlyViewedDone = true;
-  let items;
-  try { items = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { items = []; }
-  if (!Array.isArray(items)) items = [];
-  const tracked = new Set();
-  items = items.filter((item) => {
-    if (!item || typeof item !== 'object' || typeof item.id !== 'string' || typeof item.url !== 'string'
-        || !item.url.startsWith('/') || item.url.startsWith('//') || !item.name) return false;
-    const key = item.id || item.url.split('?')[0];
-    if (tracked.has(key)) return false;
-    tracked.add(key);
-    return true;
-  }).slice(0, 12);
+  let items = await readRecentHistory();
+  if (generation !== recentGeneration || !personalizationAllowed()) return;
+
   const track = document.querySelector('[data-recent-track]');
   const currentId = track?.dataset.id ?? '';
   if (track && currentId) {
     const { id, name, url, image } = track.dataset;
-    // Do not persist a price or variant as if it were a live checkout quote.
-    items = [{ id, name, url, image }, ...items.filter((item) => item && item.id !== id && item.url !== url)].slice(0, 12);
-    try { localStorage.setItem(KEY, JSON.stringify(items)); } catch { /* storage unavailable */ }
+    // Public product references only. Price, stock and variants remain server-authoritative.
+    items = [{ id, name, url, image }, ...items.filter((item) => item.id !== id && item.url !== url)].slice(0, 12);
   }
-  const box = document.querySelector('[data-recent-list]');
-  const list = box?.querySelector('[data-recent-items]');
+  await writeRecentHistory(items);
+  if (generation !== recentGeneration || !personalizationAllowed()) return;
   if (!box || !list) return;
   const safeUrl = (value) => typeof value === 'string' && value.startsWith('/') && !value.startsWith('//');
-  const visible = items.filter((item) => item && item.id !== currentId && item.name && safeUrl(item.url)).slice(0, 6);
-  // Persist normalization even on listing pages, so older duplicates cannot return.
-  try { localStorage.setItem(KEY, JSON.stringify(items)); } catch { /* storage unavailable */ }
-  if (!visible.length) return;
+  const visible = items.filter((item) => item.id !== currentId && item.name && safeUrl(item.url)).slice(0, 6);
+  list.replaceChildren();
+  if (!visible.length) { box.hidden = true; return; }
   visible.forEach((item) => {
     const li = document.createElement('li');
     const link = document.createElement('a');
@@ -605,6 +601,8 @@ function initRecentlyViewed() {
     list.append(li);
   });
   box.hidden = false;
+  if (recentControlsAttached) return;
+  recentControlsAttached = true;
   const previous = box.querySelector('[data-recent-prev]');
   const next = box.querySelector('[data-recent-next]');
   const updateControls = () => {
@@ -626,7 +624,7 @@ function initRecentlyViewed() {
   window.requestAnimationFrame(updateControls);
 }
 initRecentlyViewed();
-document.addEventListener('commerce:consent-changed', initRecentlyViewed);
+window.addEventListener('commerce:consent-changed', initRecentlyViewed);
 initThemeToggle('mc_theme');
 initDatePickers();
 initDismissibleNotices();
@@ -679,12 +677,94 @@ function initContactWidget() {
 initContactWidget();
 
 
+const pwaEnabled = document.documentElement.dataset.pwa === '1';
+const workboxActive = document.documentElement.dataset.workbox === '1';
+
+function initPwaInstall() {
+  // The install control is absent when PWA is disabled. Do not prompt users
+  // automatically and do not interfere with the service worker used by Push.
+  if (!pwaEnabled) return;
+  const button = document.querySelector('[data-pwa-install]');
+  const help = document.querySelector('[data-pwa-install-help]');
+  if (!(button instanceof HTMLButtonElement) || !help) return;
+
+  const standalone = window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (standalone) return;
+
+  const agent = navigator.userAgent || '';
+  const ios = /iPhone|iPad|iPod/.test(agent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const safari = /Safari/.test(agent) && !/CriOS|FxiOS|EdgiOS|Chrome|Chromium|Edg|OPR/.test(agent);
+  const macSafari = safari && /Macintosh/.test(agent) && !ios;
+  let installPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    button.hidden = false;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    installPrompt = null;
+    button.hidden = true;
+    help.hidden = true;
+  });
+
+  if (ios || macSafari) button.hidden = false;
+  button.addEventListener('click', async () => {
+    if (installPrompt) {
+      const prompt = installPrompt;
+      installPrompt = null;
+      button.disabled = true;
+      try {
+        await prompt.prompt();
+        const choice = await prompt.userChoice;
+        if (choice?.outcome === 'accepted') {
+          button.hidden = true;
+          help.hidden = true;
+        } else {
+          button.hidden = true;
+        }
+      } catch {
+        button.hidden = true;
+      } finally {
+        button.disabled = false;
+      }
+    } else if (ios || macSafari) {
+      help.textContent = ios ? (help.getAttribute('data-ios-help') || '') : (help.getAttribute('data-mac-help') || '');
+      help.hidden = !help.hidden;
+    }
+  });
+}
+initPwaInstall();
+
 if ('serviceWorker' in navigator) {
-  if (document.documentElement.dataset.pwa === '1') {
-    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => undefined), { once: true });
-  } else {
-    navigator.serviceWorker.getRegistrations().then((list) => list.forEach((registration) => registration.unregister())).catch(() => undefined);
-  }
+  window.addEventListener('load', async () => {
+    try {
+      if (pwaEnabled || workboxActive) {
+        await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
+        if (workboxActive) return;
+      } else {
+        const registration = await navigator.serviceWorker.getRegistration('/');
+        const script = registration?.active?.scriptURL || registration?.waiting?.scriptURL || registration?.installing?.scriptURL || '';
+        if (script && new URL(script).pathname === '/sw.js') {
+          const subscription = registration.pushManager
+            ? await registration.pushManager.getSubscription().catch(() => null)
+            : null;
+          if (subscription) {
+            await navigator.serviceWorker.register('/nexora-push-sw.js', { scope: '/', updateViaCache: 'none' });
+          } else {
+            await registration.unregister();
+          }
+        }
+      }
+      if ('caches' in window) {
+        const keys = await window.caches.keys();
+        await Promise.all(keys.filter((key) => key.startsWith('nx-workbox-') || key.startsWith('nx-static-') || key.startsWith('nx-images-')).map((key) => window.caches.delete(key)));
+      }
+    } catch {
+      // The storefront continues to operate without offline caching.
+    }
+  }, { once: true });
 }
 
 function initCopyLink() {
@@ -959,8 +1039,7 @@ function initPush() {
   button.addEventListener('click', async () => {
     button.disabled = true;
     try {
-      const registration = await navigator.serviceWorker.register('/nexora-push-sw.js');
-      await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.register(pwaEnabled || workboxActive ? '/sw.js' : '/nexora-push-sw.js', { scope: '/', updateViaCache: 'none' });
       const existing = await registration.pushManager.getSubscription();
       if (existing) {
         await post('/push/unsubscribe', { endpoint: existing.endpoint });

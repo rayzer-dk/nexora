@@ -1,4 +1,14 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+// Small, opt-in product history is stored in localStorage only.
+async function recentCount(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    try {
+      const entries = JSON.parse(localStorage.getItem('mc_recent') || '[]');
+      return Array.isArray(entries) ? entries.length : 0;
+    } catch { return 0; }
+  });
+}
 
 test.describe('cookie consent', () => {
   test.beforeEach(({}, testInfo) => { test.skip(testInfo.project.name !== 'chromium-desktop'); });
@@ -10,6 +20,8 @@ test.describe('cookie consent', () => {
     await expect(banner.locator('a[href="/cookie-policy"]')).toHaveCount(1);
     await expect(banner.locator('a[href="/privacy-policy"]')).toHaveCount(1);
     expect(await page.evaluate(() => localStorage.getItem('mc_consent_v1'))).toBeNull();
+    // Legacy IndexedDB must not be created for new anonymous visitors.
+    expect(await page.evaluate(async () => (await indexedDB.databases()).map((db) => db.name))).not.toContain('nexora-public-ui-v1');
     expect(await page.locator('script[data-consent-activated]').count()).toBe(0);
 
     // first visit: Escape must not dismiss without a choice
@@ -41,13 +53,15 @@ test.describe('cookie consent', () => {
     saved = JSON.parse(await page.evaluate(() => localStorage.getItem('mc_consent_v1') || 'null'));
     expect([saved.preferences, saved.analytics, saved.marketing]).toEqual([true, false, false]);
     await page.reload({ waitUntil: 'networkidle' });
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('mc_recent'))).not.toBeNull();
+    await expect.poll(() => recentCount(page)).toBeGreaterThan(0);
+    expect(await recentCount(page)).toBeGreaterThan(0);
 
     // revoking removes the stored personalisation data
     await page.locator('[data-consent-open]').first().click();
     await page.locator('[data-consent-reject-optional]').click();
     await page.reload({ waitUntil: 'networkidle' });
     expect(await page.evaluate(() => localStorage.getItem('mc_recent'))).toBeNull();
+    await expect.poll(() => recentCount(page)).toBe(0);
     expect((await context.cookies()).some((c) => /^_ga|_fbp/.test(c.name))).toBe(false);
   });
 });

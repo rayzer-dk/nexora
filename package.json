@@ -9,7 +9,7 @@
     "typecheck": "vue-tsc -p tsconfig.json --noEmit",
     "audit": "npm audit --omit=dev",
     "assets:audit": "node tools/check-asset-budgets.mjs",
-    "build:production": "vite build && node tools/check-asset-budgets.mjs && node tools/precompress-assets.mjs public/build",
+    "build:production": "vite build && node tools/vendor-workbox.mjs && node tools/check-asset-budgets.mjs && node tools/precompress-assets.mjs public/build && node tools/precompress-assets.mjs public/assets",
     "assets:compress": "node tools/precompress-assets.mjs public/assets",
     "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "eslint assets vite.config.ts playwright.config.ts tests/e2e",
