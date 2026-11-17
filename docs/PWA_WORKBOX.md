@@ -55,3 +55,5 @@ The browser decides whether installation is available. Nexora does not trigger i
 If Appearance → Storefront has a valid, local uploaded PNG, JPEG, WebP or GIF `brand.icon`, the manifest advertises `/pwa-icon/192.png` and `/pwa-icon/512.png`, generated to real square sizes using GD and the store's accent color, with content kept within the maskable safe zone. File resolution and size limits protect memory; only files inside the local public/media or public/assets directory can be read. SVG store icons are additionally advertised as `sizes:any`; when raster conversion is unavailable, the platform's packaged PNG icons provide an honest-size fallback. No remote image fetching is permitted. Each merchant/store context gets its own icons.
 
 The same protected image generator supplies a real 180×180 PNG to Safari's Apple Touch Icon link, so iPhone home-screen shortcuts use the merchant icon when configured, with the bundled favicon as fallback.
+
+Optional IndexedDB storage is not created on an anonymous first visit before the Preferences consent. Withdrawal clears any saved history without creating a new database when none previously existed.

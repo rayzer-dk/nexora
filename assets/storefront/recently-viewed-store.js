@@ -74,7 +74,7 @@ function legacyDelete() {
   try { window.localStorage.removeItem(LEGACY); } catch { /* Storage unavailable. */ }
 }
 
-async function openDb() {
+async function openDb(create = true) {
   let provider;
   try { provider = window.indexedDB; } catch { return null; }
   if (!provider) return null;
@@ -88,6 +88,11 @@ async function openDb() {
     try {
       const request = provider.open(DATABASE, 1);
       request.onupgradeneeded = () => {
+        // A fresh visitor who has not consented must not create an optional DB.
+        if (!create) {
+          request.transaction?.abort();
+          return;
+        }
         if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE);
       };
       request.onsuccess = () => complete(request.result);
@@ -178,7 +183,7 @@ export function writeRecentHistory(raw) {
 export function clearRecentHistory() {
   return queue(async () => {
     legacyDelete();
-    const db = await openDb();
+    const db = await openDb(false);
     if (!db) return;
     try { await clearDb(db); } finally { db.close(); }
   });

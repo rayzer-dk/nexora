@@ -27,6 +27,8 @@ test.describe('cookie consent', () => {
     await expect(banner.locator('a[href="/cookie-policy"]')).toHaveCount(1);
     await expect(banner.locator('a[href="/privacy-policy"]')).toHaveCount(1);
     expect(await page.evaluate(() => localStorage.getItem('mc_consent_v1'))).toBeNull();
+    // Do not create even an empty optional IndexedDB database before consent.
+    expect(await page.evaluate(async () => (await indexedDB.databases()).map((db) => db.name))).not.toContain('nexora-public-ui-v1');
     expect(await page.locator('script[data-consent-activated]').count()).toBe(0);
 
     // first visit: Escape must not dismiss without a choice
