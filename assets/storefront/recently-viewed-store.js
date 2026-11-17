@@ -75,7 +75,9 @@ function legacyDelete() {
 }
 
 async function openDb() {
-  if (!window.indexedDB) return null;
+  let provider;
+  try { provider = window.indexedDB; } catch { return null; }
+  if (!provider) return null;
   return new Promise((resolve) => {
     let finished = false;
     const complete = (value) => {
@@ -84,7 +86,7 @@ async function openDb() {
       resolve(value);
     };
     try {
-      const request = window.indexedDB.open(DATABASE, 1);
+      const request = provider.open(DATABASE, 1);
       request.onupgradeneeded = () => {
         if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE);
       };
@@ -141,8 +143,10 @@ export function readRecentHistory() {
       const saved = await readDb(db);
       if (!personalizationAllowed()) return [];
       if (Array.isArray(saved)) {
-        const normalized = normalizeRecentHistory(saved);
-        legacyDelete();
+        // A failed IndexedDB write may leave a newer localStorage fallback.
+        // Merge it first and clear the fallback only after a committed DB write.
+        const normalized = normalizeRecentHistory([...legacy, ...saved]);
+        if (legacy.length && await writeDb(db, normalized)) legacyDelete();
         return normalized;
       }
       if (legacy.length && await writeDb(db, legacy)) legacyDelete();
