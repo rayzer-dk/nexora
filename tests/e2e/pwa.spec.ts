@@ -39,6 +39,13 @@ test('Workbox is independent, opt-in and protects private commerce pages', async
     expect(json.name).toBeTruthy();
     expect(json.display).toBe('standalone');
     expect(json.icons.length).toBeGreaterThan(0);
+    expect(json.icons.some((item: { sizes: string }) => item.sizes === '192x192')).toBe(true);
+    expect(json.icons.some((item: { sizes: string }) => item.sizes === '512x512')).toBe(true);
+    for (const icon of json.icons.filter((item: { type: string }) => item.type === 'image/png')) {
+      const response = await request.get(icon.src);
+      expect(response.ok(), icon.src).toBe(true);
+      expect(response.headers()['content-type']).toContain('image/png');
+    }
 
     const sw = await request.get('/sw.js');
     expect(sw.status()).toBe(200);

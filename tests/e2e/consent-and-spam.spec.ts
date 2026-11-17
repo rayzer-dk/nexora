@@ -1,4 +1,21 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+// Recently viewed references now live in IndexedDB, not localStorage.
+async function recentCount(page: Page): Promise<number> {
+  return page.evaluate(async () => new Promise<number>((resolve) => {
+    const request = indexedDB.open('nexora-public-ui-v1', 1);
+    request.onerror = () => resolve(0);
+    request.onblocked = () => resolve(0);
+    request.onsuccess = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('recently-viewed')) { db.close(); resolve(0); return; }
+      const tx = db.transaction('recently-viewed', 'readonly');
+      const entry = tx.objectStore('recently-viewed').get('products');
+      entry.onsuccess = () => { resolve(Array.isArray(entry.result) ? entry.result.length : 0); db.close(); };
+      entry.onerror = () => { resolve(0); db.close(); };
+    };
+  }));
+}
 
 test.describe('cookie consent', () => {
   test.beforeEach(({}, testInfo) => { test.skip(testInfo.project.name !== 'chromium-desktop'); });
@@ -41,13 +58,15 @@ test.describe('cookie consent', () => {
     saved = JSON.parse(await page.evaluate(() => localStorage.getItem('mc_consent_v1') || 'null'));
     expect([saved.preferences, saved.analytics, saved.marketing]).toEqual([true, false, false]);
     await page.reload({ waitUntil: 'networkidle' });
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('mc_recent'))).not.toBeNull();
+    await expect.poll(() => recentCount(page)).toBeGreaterThan(0);
+    expect(await page.evaluate(() => localStorage.getItem('mc_recent'))).toBeNull();
 
     // revoking removes the stored personalisation data
     await page.locator('[data-consent-open]').first().click();
     await page.locator('[data-consent-reject-optional]').click();
     await page.reload({ waitUntil: 'networkidle' });
     expect(await page.evaluate(() => localStorage.getItem('mc_recent'))).toBeNull();
+    await expect.poll(() => recentCount(page)).toBe(0);
     expect((await context.cookies()).some((c) => /^_ga|_fbp/.test(c.name))).toBe(false);
   });
 });

@@ -35,3 +35,11 @@ Nexora combines three independent layers:
 - **Server source of truth:** PHP/Symfony, DB and provider services continue to own prices, inventory, cart, orders, customer records, payments, permissions and all write operations. No sensitive responses, personal accounts or catalogs are persisted in IndexedDB or Workbox.
 
 There is no new required setting for the IndexedDB history: the existing visitor consent is its permission. Workbox remains an entirely separate manual admin switch. Public product links stored for convenience may be stale: following them always contacts the server for current availability and pricing.
+
+## Installation on mobile and desktop
+
+Nexora already has an independent **PWA installation** switch (Appearance → Storefront) which defaults to ON. **Workbox asset caching** is a second switch and defaults to OFF. Merchants can allow installation without offline caching; the network-only Service Worker does not cache HTML, prices, cart, accounts or orders.
+
+The manifest always contains valid built-in PNG icons of 192×192 and 512×512 pixels plus a 512×512 maskable icon. A configured SVG icon may be offered as an additional scalable store icon; an arbitrary uploaded raster image is not declared to have an unverified size. Installed applications use the merchant's storefront name. Browser support and prompts vary: Chrome/Edge offer Install App; iOS Safari offers Share → Add to Home Screen.
+
+This is a browser-installed PWA, not an App Store/Google Play binary. Online connectivity remains required for catalog prices, stock, personal accounts, checkout and payments.

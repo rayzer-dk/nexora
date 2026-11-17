@@ -34,15 +34,17 @@ final class PwaController extends AbstractController
         $name = trim((string) ($settings['brand']['title'] ?? '')) !== '' ? (string) $settings['brand']['title'] : $context->storeName;
         $icon = (string) ($settings['brand']['icon'] ?? '');
         $extension = strtolower(pathinfo(parse_url($icon, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION));
-        $type = match ($extension) { 'png' => 'image/png', 'webp' => 'image/webp', 'jpg', 'jpeg' => 'image/jpeg', default => 'image/svg+xml' };
-        // The store's own icon when it has one, otherwise the platform's PNG set (the installable app needs real 192/512 sizes).
-        $icons = $icon !== ''
-            ? [['src' => $icon, 'sizes' => 'any', 'type' => $type, 'purpose' => 'any'], ['src' => $icon, 'sizes' => 'any', 'type' => $type, 'purpose' => 'maskable']]
-            : [
-                ['src' => '/assets/branding/nexora-mark-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
-                ['src' => '/assets/branding/nexora-mark-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
-                ['src' => '/assets/branding/nexora-mark-maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
-            ];
+        // Installability must never depend on a merchant-uploaded icon's unknown size.
+        // Always advertise genuine bundled 192/512 PNG assets; SVG is an optional
+        // store-specific scalable icon. Never mislabel raster uploads as "any".
+        $icons = [
+            ['src' => '/assets/branding/nexora-mark-192.png', 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+            ['src' => '/assets/branding/nexora-mark-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+            ['src' => '/assets/branding/nexora-mark-maskable-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
+        ];
+        if ($icon !== '' && $extension === 'svg') {
+            array_unshift($icons, ['src' => $icon, 'sizes' => 'any', 'type' => 'image/svg+xml', 'purpose' => 'any']);
+        }
 
         $manifest = [
             'name' => $name,
