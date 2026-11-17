@@ -61,6 +61,8 @@ test('Workbox is independent, opt-in and protects private commerce pages', async
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+    await expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).toHaveAttribute('content', 'yes');
     await expect(page.locator('html')).toHaveAttribute('data-workbox', '1');
 
     await setPwa(page, false, true);
