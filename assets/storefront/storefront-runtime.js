@@ -679,12 +679,32 @@ function initContactWidget() {
 initContactWidget();
 
 
+const workboxActive = document.documentElement.dataset.pwa === '1' && document.documentElement.dataset.workbox === '1';
 if ('serviceWorker' in navigator) {
-  if (document.documentElement.dataset.pwa === '1') {
-    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => undefined), { once: true });
-  } else {
-    navigator.serviceWorker.getRegistrations().then((list) => list.forEach((registration) => registration.unregister())).catch(() => undefined);
-  }
+  window.addEventListener('load', async () => {
+    try {
+      if (workboxActive) {
+        await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
+        return;
+      }
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      const script = registration?.active?.scriptURL || registration?.waiting?.scriptURL || registration?.installing?.scriptURL || '';
+      if (script && new URL(script).pathname === '/sw.js') {
+        const subscription = await registration.pushManager.getSubscription().catch(() => null);
+        if (subscription) {
+          await navigator.serviceWorker.register('/nexora-push-sw.js', { scope: '/', updateViaCache: 'none' });
+        } else {
+          await registration.unregister();
+        }
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((key) => key.startsWith('nx-workbox-') || key.startsWith('nx-static-') || key.startsWith('nx-images-')).map((key) => caches.delete(key)));
+      }
+    } catch {
+      // The storefront continues to operate without offline caching.
+    }
+  }, { once: true });
 }
 
 function initCopyLink() {
@@ -959,8 +979,7 @@ function initPush() {
   button.addEventListener('click', async () => {
     button.disabled = true;
     try {
-      const registration = await navigator.serviceWorker.register('/nexora-push-sw.js');
-      await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.register(workboxActive ? '/sw.js' : '/nexora-push-sw.js', { scope: '/', updateViaCache: 'none' });
       const existing = await registration.pushManager.getSubscription();
       if (existing) {
         await post('/push/unsubscribe', { endpoint: existing.endpoint });

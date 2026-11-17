@@ -137,6 +137,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'icon' => '',
                 'favicon' => '',
                 'pwa' => '1',
+                'workbox' => '0',
             ],
             'theme' => [
                 'preset' => 'modern',
@@ -234,6 +235,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $out['brand']['logo_height'] = max(32, min(96, (int) ($input['brand']['logo_height'] ?? $defaults['brand']['logo_height'])));
         $out['brand']['show_title'] = (string) ($input['brand']['show_title'] ?? $defaults['brand']['show_title']) === '0' ? '0' : '1';
         $out['brand']['pwa'] = (string) ($input['brand']['pwa'] ?? $defaults['brand']['pwa']) === '1' ? '1' : '0';
+        $out['brand']['workbox'] = (string) ($input['brand']['workbox'] ?? $defaults['brand']['workbox']) === '1' ? '1' : '0';
         $preset=(string)($input['theme']['preset']??$defaults['theme']['preset']);
         if(!in_array($preset,$this->presets->codes(),true)){$preset=$defaults['theme']['preset'];}
         $out['theme']['preset']=$preset;

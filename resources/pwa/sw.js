@@ -1,68 +1,73 @@
-/* Nexora storefront service worker (version __VERSION__).
- * Static assets are cached; HTML is never cached, so prices, stock and carts are always live.
- * Without a connection navigations fall back to the pre-cached /offline page. */
-const VERSION = '__VERSION__';
-const STATIC_CACHE = `nx-static-${VERSION}`;
-const IMAGE_CACHE = `nx-images-${VERSION}`;
-const OFFLINE_URL = '/offline';
-const IMAGE_LIMIT = 150;
-const PRIVATE_PREFIXES = ['/admin', '/account', '/checkout', '/cart', '/api', '/graphql', '/webhooks', '/privacy/consent', '/setup.php', '/install'];
+/* Nexora public storefront: optional Workbox service worker.
+ * No HTML, customer responses, checkout, API results or personal media are cached.
+ * Web Push shares this registration without overwriting the caching worker. */
+const NX_VERSION = '__VERSION__';
+const WORKBOX_LIB = '/assets/workbox/v7.4.1/';
+importScripts(WORKBOX_LIB + 'workbox-sw.js');
+importScripts('/nexora-push-sw.js');
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.add(new Request(OFFLINE_URL, { cache: 'reload' }))).then(() => self.skipWaiting()));
-});
+workbox.setConfig({ modulePathPrefix: WORKBOX_LIB, debug: false });
+workbox.core.setCacheNameDetails({ prefix: 'nx-workbox', suffix: NX_VERSION });
 
+const PUBLIC_ASSET_TYPES = new Set(['script', 'style', 'font', 'image']);
+const STATIC_ASSET_TYPES = new Set(['font', 'image']);
+const PRIVATE_PREFIXES = [
+  '/admin', '/account', '/customer', '/cart', '/checkout', '/payment',
+  '/login', '/logout', '/register', '/orders', '/api', '/graphql',
+  '/webhooks', '/push', '/privacy', '/setup.php', '/upgrade.php', '/install'
+];
+const isPrivate = (path) => PRIVATE_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + '/'));
+const sameOrigin = ({ url, request }) =>
+  request.method === 'GET' && url.origin === self.location.origin && !url.search && !isPrivate(url.pathname);
+const cacheable = () => new workbox.cacheableResponse.CacheableResponsePlugin({ statuses: [200] });
+const expiry = (maxEntries, maxAgeSeconds) =>
+  new workbox.expiration.ExpirationPlugin({ maxEntries, maxAgeSeconds, purgeOnQuotaError: true });
+
+// This is a static, anonymous fallback; SSR responses can contain store/customer data.
+workbox.precaching.precacheAndRoute([{ url: '/offline-pwa.html', revision: NX_VERSION }]);
+
+workbox.routing.registerRoute(
+  (context) => sameOrigin(context) && context.url.pathname.startsWith('/build/') && PUBLIC_ASSET_TYPES.has(context.request.destination),
+  new workbox.strategies.CacheFirst({
+    cacheName: 'nx-workbox-build-' + NX_VERSION,
+    plugins: [cacheable(), expiry(150, 30 * 24 * 3600)]
+  })
+);
+
+// Public brand images and fonts only. Unhashed JS/CSS always go through the network.
+workbox.routing.registerRoute(
+  (context) => sameOrigin(context) && context.url.pathname.startsWith('/assets/') && STATIC_ASSET_TYPES.has(context.request.destination),
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: 'nx-workbox-assets-' + NX_VERSION,
+    plugins: [cacheable(), expiry(120, 14 * 24 * 3600)]
+  })
+);
+
+// A network-only document with a generic offline fallback. No personalized HTML in Cache Storage.
+workbox.routing.registerRoute(
+  (context) => context.request.mode === 'navigate' && sameOrigin(context),
+  async ({ event }) => {
+    try {
+      return await fetch(event.request);
+    } catch {
+      return (await workbox.precaching.matchPrecache('/offline-pwa.html')) || Response.error();
+    }
+  }
+);
+
+// Replace the legacy caches and remove superseded Nexora cache generations.
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    const keep = new Set([STATIC_CACHE, IMAGE_CACHE]);
-    for (const key of await caches.keys()) {
-      if (key.startsWith('nx-') && !keep.has(key)) await caches.delete(key);
+    const keep = new Set([
+      workbox.core.cacheNames.precache,
+      'nx-workbox-build-' + NX_VERSION,
+      'nx-workbox-assets-' + NX_VERSION
+    ]);
+    for (const name of await caches.keys()) {
+      if (name.startsWith('nx-static-') || name.startsWith('nx-images-') ||
+          (name.startsWith('nx-workbox-') && !keep.has(name))) {
+        await caches.delete(name);
+      }
     }
-    await self.clients.claim();
   })());
-});
-
-async function trim(cacheName, limit) {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-  for (const key of keys.slice(0, Math.max(0, keys.length - limit))) await cache.delete(key);
-}
-
-async function cacheFirst(request) {
-  const cache = await caches.open(STATIC_CACHE);
-  const hit = await cache.match(request);
-  if (hit) return hit;
-  const response = await fetch(request);
-  if (response.ok) cache.put(request, response.clone());
-  return response;
-}
-
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(IMAGE_CACHE);
-  const hit = await cache.match(request);
-  const network = fetch(request).then((response) => {
-    if (response.ok) { cache.put(request, response.clone()); trim(IMAGE_CACHE, IMAGE_LIMIT); }
-    return response;
-  }).catch(() => hit);
-  return hit || network;
-}
-
-self.addEventListener('fetch', (event) => {
-  const request = event.request;
-  if (request.method !== 'GET') return;
-  const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
-  if (PRIVATE_PREFIXES.some((prefix) => url.pathname === prefix || url.pathname.startsWith(prefix + '/'))) return;
-
-  if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(async () => (await caches.match(OFFLINE_URL)) || Response.error()));
-    return;
-  }
-  if (url.pathname.startsWith('/build/') || url.pathname.startsWith('/assets/')) {
-    event.respondWith(cacheFirst(request));
-    return;
-  }
-  if (url.pathname.startsWith('/media/') || request.destination === 'image') {
-    event.respondWith(staleWhileRevalidate(request));
-  }
 });

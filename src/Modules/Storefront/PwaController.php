@@ -66,10 +66,26 @@ final class PwaController extends AbstractController
     public function serviceWorker(Request $request): Response
     {
         $context = $this->contexts->resolve($request);
-        $source = (string) @file_get_contents($this->projectDir . '/resources/pwa/sw.js');
-        if ($source === '' || ($this->presentation->get($context->storeId)['brand']['pwa'] ?? '1') !== '1') {
-            // Disabled: a self-removing worker cleans up anything installed earlier.
-            $source = "self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',(e)=>e.waitUntil((async()=>{for(const k of await caches.keys()){if(k.startsWith('nx-'))await caches.delete(k);}await self.registration.unregister();})()));";
+        $settings = $this->presentation->get($context->storeId);
+        $enabled = ($settings['brand']['pwa'] ?? '0') === '1'
+            && ($settings['brand']['workbox'] ?? '0') === '1'
+            && is_file($this->projectDir . '/public/assets/workbox/v7.4.1/workbox-sw.js');
+        $source = $enabled ? (string) file_get_contents($this->projectDir . '/resources/pwa/sw.js') : '';
+        if ($source === '') {
+            // OFF removes only Nexora's caches. Existing Web Push subscriptions remain active.
+            $source = <<<'JS'
+importScripts('/nexora-push-sw.js');
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil((async () => {
+  for (const name of await caches.keys()) {
+    if (name.startsWith('nx-static-') || name.startsWith('nx-images-') || name.startsWith('nx-workbox-')) {
+      await caches.delete(name);
+    }
+  }
+  const push = await self.registration.pushManager.getSubscription().catch(() => null);
+  if (!push) await self.registration.unregister();
+})()));
+JS;
         }
         return new Response(str_replace('__VERSION__', PlatformVersion::VERSION, $source), 200, [
             'Content-Type' => 'text/javascript; charset=UTF-8',

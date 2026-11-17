@@ -7,7 +7,7 @@
 {% set storefront_brand_default = not presentation.brand.logo and not presentation.brand.icon and not presentation.brand.title %}
 {% set storefront_brand_visible_name = (presentation.brand.show_title|default('1') == '0' or not presentation.brand.title) ? '' : storefront_brand_name %}
 <!doctype html>
-<html lang="{{ app.request.locale|default('uk-UA') }}" data-color-scheme="{{ presentation.theme.color_scheme|default('light') }}" data-pwa="{{ presentation.brand.pwa|default('1') }}">
+<html lang="{{ app.request.locale|default('uk-UA') }}" data-color-scheme="{{ presentation.theme.color_scheme|default('light') }}" data-pwa="{{ presentation.brand.pwa|default('1') }}" data-workbox="{{ presentation.brand.workbox|default('0') }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
