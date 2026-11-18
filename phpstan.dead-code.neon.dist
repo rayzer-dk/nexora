@@ -1,0 +1,7 @@
+# Native PHPStan strict and bleeding-edge checks, including unused locals and private members.
+includes:
+    - phpstan.strict.neon.dist
+    - tools/quality/vendor/phpstan/phpstan/conf/bleedingEdge.neon
+
+parameters:
+    tmpDir: var/phpstan-dead-code
