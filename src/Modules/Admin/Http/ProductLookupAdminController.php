@@ -24,7 +24,6 @@ final class ProductLookupAdminController extends AbstractController
         $context = $this->contexts->resolve($request);
         $query = trim(mb_substr((string) $request->query->get('q', ''), 0, 80, 'UTF-8'));
         $params = [$context->storeId, $context->locale, $context->storeId];
-        $where = '';
         $order = 'pt.name';
         $suggestFor = trim((string) $request->query->get('for', ''));
         if ($query !== '') {
