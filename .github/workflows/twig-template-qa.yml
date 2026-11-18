@@ -55,7 +55,13 @@ jobs:
           php bin/console lint:twig themes/default/templates --no-interaction > var/twig-reports/syntax.txt 2>&1
           status=$?
           sed -n '1,80p' var/twig-reports/syntax.txt
-          echo "Twig linter status: $status (advisory, see artifact)" >> "$GITHUB_STEP_SUMMARY"
+          findings=$(sed -n 's/^Templates scanned: .*findings: \([0-9][0-9]*\).*$/\1/p' var/twig-reports/context.txt | head -n 1)
+          {
+            printf '### Nexora Twig QA\n\n'
+            printf -- '- Twig syntax: **passed** (blocking gate).\n'
+            printf -- '- Controller/template context candidates: **%s** (advisory; may include dynamic variables).\n' "${findings:-unknown}"
+            printf -- '- Download **nexora-twig-qa** from Artifacts; open `context.txt` for candidates and `syntax.txt` for Twig syntax results.\n'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload Twig findings
         if: always()
         uses: actions/upload-artifact@v4
@@ -63,4 +69,4 @@ jobs:
           name: nexora-twig-qa
           path: var/twig-reports/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 30

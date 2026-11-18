@@ -125,7 +125,7 @@ final class AiTaskService
         return $this->glossary !== null ? $this->glossary->protect($storeId, $text, $target, $withFixed) : [$text, []];
     }
 
-    /** @param list<array<string,string>> $maps */
+    /** @param array<int|string,array<string,string>> $maps */
     private function glossaryInstruction(int $storeId, string $target, array $maps): string
     {
         $hint = $this->glossary?->promptHint($storeId, $target) ?? '';

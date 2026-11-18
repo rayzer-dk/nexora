@@ -68,7 +68,14 @@ jobs:
             > var/phpstan-reports/project.txt 2>&1
           status=$?
           set -e
-          printf '### Nexora dead-code inventory (advisory)\n\nExit code: %s. Full findings are attached as a workflow artifact.\n' "$status" >> "$GITHUB_STEP_SUMMARY"
+          findings=$(grep -cE ':[0-9]+:' var/phpstan-reports/project.txt || true)
+          {
+            printf '### Nexora PHPStan dead-code inventory\n\n'
+            printf -- '- Candidate diagnostics: **%s** (advisory; review before removal).\n' "$findings"
+            printf -- '- PHPStan exit code: %s (not a blocking gate for legacy code).\n' "$status"
+            printf -- '- Download **nexora-dead-code-findings** from Artifacts below this run; open `project.txt` for paths, lines, and messages.\n'
+            printf -- '- `fixture.txt` contains intentional failures that verify detection, not project regressions.\n'
+          } >> "$GITHUB_STEP_SUMMARY"
           sed -n '1,100p' var/phpstan-reports/project.txt
           echo 'Existing quality gates stay blocking; this additional inventory is advisory pending triage.'
       - name: Upload dead-code inventory
@@ -78,4 +85,4 @@ jobs:
           name: nexora-dead-code-findings
           path: var/phpstan-reports/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 30

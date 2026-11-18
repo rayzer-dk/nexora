@@ -52,7 +52,7 @@ final class ManualOrderAdminController extends AbstractController
         ]);
     }
 
-    /** @return array<string,mixed> */
+    /** @return array{name:string,phone:string,email:string,comment:string,payment_method:string,delivery:string,coupon:string,lines:list<array{sku:string,quantity:string,price:string}>,inquiry_id:int} */
     private function read(Request $request): array
     {
         $lines = [];

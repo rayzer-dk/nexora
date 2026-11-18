@@ -25,7 +25,23 @@ final readonly class ApiWebhookDeliveryWorker
         $this->db->executeStatement("UPDATE mc_webhook_delivery SET status='retry',locked_at=NULL,lock_token=NULL WHERE status='processing' AND locked_at IS NOT NULL AND locked_at<?",[$stale]);
         $ids=$this->db->fetchFirstColumn("SELECT id FROM mc_webhook_delivery WHERE status IN ('pending','retry') AND next_attempt_at<=? ORDER BY id ASC LIMIT $limit",[$now]);
         $stats=['claimed'=>0,'delivered'=>0,'retried'=>0,'dead'=>0];
-        foreach($ids as $id){$lock=random_bytes(16);$claimed=$this->db->executeStatement("UPDATE mc_webhook_delivery SET status='processing',locked_at=?,lock_token=? WHERE id=? AND status IN ('pending','retry')",[$now,$lock,(int)$id]);if($claimed!==1)continue;$stats['claimed']++;$outcome=$this->deliver((int)$id,$lock);$stats[$outcome]++;}
+        foreach ($ids as $id) {
+            $lock = random_bytes(16);
+            $claimed = $this->db->executeStatement("UPDATE mc_webhook_delivery SET status='processing',locked_at=?,lock_token=? WHERE id=? AND status IN ('pending','retry')", [$now, $lock, (int) $id]);
+            if ($claimed !== 1) {
+                continue;
+            }
+
+            ++$stats['claimed'];
+            $outcome = $this->deliver((int) $id, $lock);
+            if ($outcome === 'delivered') {
+                ++$stats['delivered'];
+            } elseif ($outcome === 'retried') {
+                ++$stats['retried'];
+            } else {
+                ++$stats['dead'];
+            }
+        }
         return $stats;
     }
 
