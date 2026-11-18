@@ -43,7 +43,7 @@ final class LlmsAdminController extends AbstractController
             $features = (array) ($this->capabilities->get($context->storeId)['features'] ?? []);
             $preview = $this->builder->build($this->storefront->resolve($request), true, $features);
         } catch (\Throwable) {
-            $preview = '';
+            // Keep the empty preview when the optional generator is unavailable.
         }
 
         return $this->render('@storefront/admin/system/ai_ready.html.twig', ['s' => $this->settings->all(), 'preview' => mb_substr($preview, 0, 12000, 'UTF-8')]);

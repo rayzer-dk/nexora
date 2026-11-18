@@ -135,7 +135,7 @@ final class RecoveryArchiveRestorer
             if ($restoreFiles) {
                 $this->activateStagedFiles($stage, $quarantine, $manifest);
             }
-            if ($restoreDatabase && $pdo instanceof PDO) {
+            if ($restoreDatabase) {
                 try {
                     $statement = $pdo->prepare("UPDATE mc_recovery_snapshot SET status='restored',restored_at=NOW(6),last_error=NULL WHERE snapshot_key=?");
                     $statement->execute([$snapshotKey]);

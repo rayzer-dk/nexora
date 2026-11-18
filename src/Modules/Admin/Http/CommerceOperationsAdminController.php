@@ -214,7 +214,7 @@ final class CommerceOperationsAdminController extends AbstractController
             if($text===''||mb_strlen($text)>4000)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.text'));
             if($channel==='sms'){
                 $r=$this->sms->sendManual($context->storeId,null,(string)($row['phone']??''),$text,null);
-                if(!($r['ok']??false))throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.sms'));
+                if(!$r['ok'])throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.sms'));
             }else{
                 $email=trim((string)($row['email']??''));if($email===''||filter_var($email,FILTER_VALIDATE_EMAIL)===false)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.inquiry.error.email'));
                 $locale=$context->locale;

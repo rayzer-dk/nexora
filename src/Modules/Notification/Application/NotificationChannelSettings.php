@@ -151,7 +151,10 @@ final readonly class NotificationChannelSettings
         return is_array($row) ? $row : null;
     }
 
-    /** @param array<string,mixed>|null $row */
+    /**
+     * @param array<string,mixed>|null $row
+     * @return array{smtp_enabled:bool,smtp_host:string,smtp_port:int,smtp_encryption:string,smtp_user:string,smtp_pass:string,has_smtp_pass:bool,from_address:string,from_name:string,tg_enabled:bool,tg_token:string,has_tg_token:bool,tg_chat_id:string}
+     */
     private function hydrate(?array $row): array
     {
         $dec = function (string $col, string $ctx) use ($row): string {

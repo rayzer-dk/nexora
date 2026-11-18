@@ -21,7 +21,7 @@ final class EmailHtmlAttributeSanitizer implements AttributeSanitizerInterface
         return null;
     }
 
-    public function getSupportedAttributes(): ?array
+    public function getSupportedAttributes(): array
     {
         return ['style', 'width', 'height', 'align', 'valign', 'bgcolor', 'cellpadding', 'cellspacing', 'border', 'colspan', 'rowspan', 'role'];
     }

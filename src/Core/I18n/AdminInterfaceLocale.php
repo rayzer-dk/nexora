@@ -102,7 +102,7 @@ final class AdminInterfaceLocale
             try {
                 $candidate = (string) ($this->db->fetchOne('SELECT ui_locale FROM mc_admin_user WHERE id=?', [$adminUserId]) ?: '');
             } catch (\Throwable) {
-                $candidate = '';
+                // Keep the empty session fallback if the preference query fails.
             }
             if ($candidate !== '' && $session !== null) {
                 $session->set(self::SESSION_KEY, $candidate);

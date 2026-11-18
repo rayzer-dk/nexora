@@ -93,7 +93,10 @@ final readonly class SmsSettings
         return is_array($row) ? $row : null;
     }
 
-    /** @param array<string,mixed>|null $row */
+    /**
+     * @param array<string,mixed>|null $row
+     * @return array{configured:bool,enabled:bool,driver:string,endpoint:string,token:string,has_token:bool,sender:string,auto:array<string,bool>,tpl:array<string,string>}
+     */
     private function hydrate(?array $row): array
     {
         $token = '';

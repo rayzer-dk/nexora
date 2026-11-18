@@ -58,7 +58,7 @@ final readonly class AdminAuthorizationService
     {
         if (in_array('ROLE_SUPER_ADMIN', $user->getRoles(), true)) {
             try {
-                return array_values(array_map('strval', $this->connection->fetchFirstColumn('SELECT code FROM mc_admin_permission ORDER BY code')));
+                return array_map('strval', $this->connection->fetchFirstColumn('SELECT code FROM mc_admin_permission ORDER BY code'));
             } catch (Throwable) {
                 return ['*'];
             }
@@ -68,11 +68,11 @@ final readonly class AdminAuthorizationService
             if ($roles === []) {
                 return [];
             }
-            return array_values(array_map('strval', $this->connection->fetchFirstColumn(
+            return array_map('strval', $this->connection->fetchFirstColumn(
                 'SELECT DISTINCT permission_code FROM mc_admin_role_permission WHERE role_code IN (?) ORDER BY permission_code',
                 [$roles],
                 [ArrayParameterType::STRING],
-            )));
+            ));
         } catch (Throwable) {
             return [];
         }

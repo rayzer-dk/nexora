@@ -22,7 +22,7 @@ final class RichTextAttributeSanitizer implements AttributeSanitizerInterface
         return null;
     }
 
-    public function getSupportedAttributes(): ?array
+    public function getSupportedAttributes(): array
     {
         return ['style', 'id', 'src', 'class', 'data-icon'];
     }
