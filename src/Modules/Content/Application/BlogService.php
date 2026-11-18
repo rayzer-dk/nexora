@@ -307,7 +307,7 @@ final class BlogService
         return $this->db->executeStatement('UPDATE mc_blog_category SET status = ?, updated_at = ? WHERE id = ? AND store_id = ?', [$status, gmdate('Y-m-d H:i:s'), $id, $storeId]) >= 0;
     }
 
-    /** @return list<array{id:int,slug:string,name:string,sort_order:int,status:string,articles:int}> */
+    /** @return list<array{id:int,parent_id:?int,depth:int,slug:string,name:string,sort_order:int,status:string,articles:int}> */
     public function categories(int $storeId, string $locale): array
     {
         $rows = $this->db->fetchAllAssociative(

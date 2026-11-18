@@ -73,7 +73,7 @@ final class StorefrontCatalogController extends AbstractController
                 'price' => (string) ($item['price'] ?? ''),
                 'image' => (string) ($item['image'] ?? '/assets/product-placeholder.svg'),
                 'availability' => (string) ($item['availability_label'] ?? ''),
-            ], (array) ($result['items'] ?? []));
+            ], $result['items']);
             return $this->json(['items' => $items], 200, ['Cache-Control' => 'private, max-age=30']);
         } catch (\Throwable) {
             // Search suggestions are optional progressive enhancement. The regular catalog search remains usable.
@@ -114,11 +114,11 @@ final class StorefrontCatalogController extends AbstractController
         }
         $perPage = $this->perPage($request);
         $products = $this->catalog->products($context, null, $page, $perPage, null, $filter);
-        if ($page > (int) ($products['pages'] ?? 1)) {
+        if ($page > (int) $products['pages']) {
             // Pages past the end are soft-404s ("empty but indexable"); answer 404 instead.
             throw $this->createNotFoundException();
         }
-        if ($page === 1 && $filter->search !== '') $this->searchAnalytics->record($context->storeId, $context->locale, $filter->search, (int)($products['total'] ?? 0));
+        if ($page === 1 && $filter->search !== '') $this->searchAnalytics->record($context->storeId, $context->locale, $filter->search, (int)$products['total']);
         $facets = $this->catalog->catalogFacets($context);
         $query = $this->filterQuery($request);
         $canonical = $request->getSchemeAndHttpHost() . '/catalog' . (!$filter->isFiltered() && $page > 1 ? '?page=' . $page : '');
@@ -213,20 +213,20 @@ final class StorefrontCatalogController extends AbstractController
         $categoryTrail = $this->catalog->categoryTrail($context, (int) $category['id']);
         if ($this->seoSettings->categoryPathInProductUrl($context->storeId)) {
             // With the category path switched on, the product links of a category page carry the path of this category.
-            $prefix = implode('/', array_map(static fn (array $step): string => basename((string) parse_url((string) ($step['url'] ?? ''), PHP_URL_PATH)), [...$categoryTrail, ['url' => (string) ($category['url'] ?? '')]]));
+            $prefix = implode('/', array_map(static fn (array $step): string => basename((string) parse_url((string) $step['url'], PHP_URL_PATH)), [...$categoryTrail, ['url' => (string) ($category['url'] ?? '')]]));
             foreach ($products['items'] as &$item) {
-                if (isset($item['url']) && $prefix !== '' && !str_contains(ltrim((string) $item['url'], '/'), '/')) {
+                if (isset($item['url']) && !str_contains(ltrim((string) $item['url'], '/'), '/')) {
                     $item['url'] = '/' . $prefix . $item['url'];
                 }
             }
             unset($item);
         }
-        if ($page > (int) ($products['pages'] ?? 1)) {
+        if ($page > (int) $products['pages']) {
             throw $this->createNotFoundException();
         }
-        if ($page === 1 && $filter->search !== '') $this->searchAnalytics->record($context->storeId, $context->locale, $filter->search, (int)($products['total'] ?? 0));
+        if ($page === 1 && $filter->search !== '') $this->searchAnalytics->record($context->storeId, $context->locale, $filter->search, (int)$products['total']);
         $recommended = [];
-        if ($page === 1 && !$filter->isFiltered() && (int) ($products['total'] ?? 0) > 8) {
+        if ($page === 1 && !$filter->isFiltered() && (int) $products['total'] > 8) {
             // A short "recommended in this category" strip: best sellers of the last 180 days that are in stock.
             $recommended = (array) ($this->catalog->products($context, (int) $category['id'], 1, 4, null, new ProductCatalogFilter(inStockOnly: true, sort: ProductCatalogFilter::SORT_POPULAR))['items'] ?? []);
         }
@@ -243,7 +243,7 @@ final class StorefrontCatalogController extends AbstractController
             $base = $request->getSchemeAndHttpHost();
             $categoryUrl = $base . $category['url'];
             $items = [];
-            foreach ((array) ($products['items'] ?? []) as $index => $item) {
+            foreach ($products['items'] as $index => $item) {
                 if (empty($item['url']) || empty($item['name'])) { continue; }
                 $items[] = ['@type' => 'ListItem', 'position' => $index + 1,
                     'name' => (string) $item['name'],
@@ -383,7 +383,7 @@ final class StorefrontCatalogController extends AbstractController
                     JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP
                     | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
             } catch (JsonException) {
-                $structuredDataJson = null;
+                // The initialized null is the safe fallback for invalid JSON.
             }
         }
         $hreflang = [];
@@ -475,7 +475,7 @@ final class StorefrontCatalogController extends AbstractController
                     JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG
                     | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
             } catch (JsonException) {
-                $structuredDataJson = null;
+                // The initialized null is the safe fallback for invalid JSON.
             }
         }
         foreach ($product['images'] as &$image) {
@@ -515,8 +515,8 @@ final class StorefrontCatalogController extends AbstractController
             'regions' => $regions,
             'structured_data_json' => $structuredDataJson,
             'seo_head' => [
-                'title' => (string) ($product['meta_title'] ?? '') !== '' ? $this->seoTemplates->expand((string) $product['meta_title'], ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs'] ?? []) - 2]['name'] ?? ''))]) : $this->seoTemplates->render($context->storeId, $context->locale, 'product', 'title', ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs'] ?? []) - 2]['name'] ?? ''))], (string) ($product['name'] ?? '')),
-                'description' => (string) ($product['meta_description'] ?? '') !== '' ? $this->seoTemplates->expand((string) $product['meta_description'], ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs'] ?? []) - 2]['name'] ?? ''))]) : $this->seoTemplates->render($context->storeId, $context->locale, 'product', 'description', ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs'] ?? []) - 2]['name'] ?? ''))], ((string) ($product['short_description'] ?? '') !== '' ? (string) $product['short_description'] : (string) ($product['description'] ?? ''))),
+                'title' => (string) ($product['meta_title'] ?? '') !== '' ? $this->seoTemplates->expand((string) $product['meta_title'], ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs']) - 2]['name'] ?? ''))]) : $this->seoTemplates->render($context->storeId, $context->locale, 'product', 'title', ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs']) - 2]['name'] ?? ''))], (string) ($product['name'] ?? '')),
+                'description' => (string) ($product['meta_description'] ?? '') !== '' ? $this->seoTemplates->expand((string) $product['meta_description'], ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs']) - 2]['name'] ?? ''))]) : $this->seoTemplates->render($context->storeId, $context->locale, 'product', 'description', ['name' => (string) ($product['name'] ?? ''), 'store' => $context->storeName, 'price' => (string) ($product['price'] ?? ''), 'brand' => (string) ($product['brand'] ?? ''), 'sku' => (string) ($product['sku'] ?? ''), 'category' => (string) (($product['breadcrumbs'][count($product['breadcrumbs']) - 2]['name'] ?? ''))], ((string) ($product['short_description'] ?? '') !== '' ? (string) $product['short_description'] : (string) ($product['description'] ?? ''))),
                 'image' => $this->shareImage($baseUrl, [$displayImage, ...array_map(static fn (array $image): string => (string) ($image['url'] ?? ''), $product['images'])]),
                 'type' => 'product',
                 'canonical' => $productExtra['canonical_url'] ?? ($baseUrl . $product['url']),

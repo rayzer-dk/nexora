@@ -641,7 +641,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         return $product;
     }
 
-    /** @return list<array{id:string,label:string,sku:string,price:string,selected:bool,available:bool}> */
+    /** @return list<array{id:string,swatch:string,label:string,values:array<int,int>,sku:string,price:string,price_minor:int,currency:string,selected:bool,available:bool}> */
     private function productVariants(int $productId, StorefrontContext $context, int $selectedVariantId): array
     {
         $rows = $this->connection->fetchAllAssociative(
@@ -704,7 +704,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
     /**
      * The option pickers of a product: [{id,name,values:[{id,label,swatch,media_id}]}] (only options that have values).
      *
-     * @return list<array{id:int,name:string,values:list<array{id:int,label:string,swatch:string,media_id:?int}>}>
+     * @return list<array{id:int,name:string,display:string,values:list<array{id:int,label:string,swatch:string,media_id:?int}>}>
      */
     private function optionGroups(int $productId, string $locale): array
     {
@@ -1080,7 +1080,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
      * Photos of a product. "url"/"srcset" are the page-size variants (product, zoom), "thumb" is the small one for the strip
      * under the gallery and "full" is the stored master used by the full-screen viewer; all variants are made on demand.
      *
-     * @return list<array{url:string,alt:string,srcset:string,sizes:string,width:int,height:int,thumb:string,full:string}>
+     * @return list<array{url:string,alt:string,srcset:string,sizes:string,width:int,height:int,thumb:string,full:string,media_id?:int,avif_srcset?:string,sort_order?:int}>
      */
     private function productImages(int $productId, string $name, string $brand = '', string $sku = ''): array
     {
@@ -1146,7 +1146,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         return array_values(array_map(static fn(array $c):array=>['name'=>$c['name'],'value'=>$c['value']],$chosen));
     }
 
-    /** @return list<array{name:string,url:string}> */
+    /** @return list<array{name:string,url:string,type:string}> */
     private function productDocuments(int $productId,string $locale):array
     {
         $rows=$this->connection->fetchAllAssociative("SELECT pd.title,pd.document_type,ma.storage_key FROM mc_product_document pd JOIN mc_media_asset ma ON ma.id=pd.media_id WHERE pd.product_id=? AND pd.visible=1 AND (pd.locale=? OR pd.locale IS NULL) ORDER BY pd.sort_order,pd.id",[$productId,$locale]);
@@ -1160,7 +1160,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         return ['value'=>round((float)($row['avg_rating']??0),1),'count'=>(int)($row['cnt']??0)];
     }
 
-    /** @return list<array{author:string,rating:int,text:string}> */
+    /** @return list<array{id:int,author:string,rating:int,title:string,text:string,verified:bool,helpful:int,reply:string,images:list<string>}> */
     private function reviews(int $productId,StorefrontContext $context):array
     {
         $rows=$this->connection->fetchAllAssociative("SELECT r.id,r.author_name,r.rating,r.title,r.body,r.verified_purchase,r.helpful_count,r.merchant_reply,r.merchant_replied_at FROM mc_product_review r WHERE r.product_id=? AND r.store_id=? AND r.status='published' ORDER BY r.published_at DESC,r.id DESC LIMIT 20",[$productId,$context->storeId]);
