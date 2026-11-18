@@ -109,7 +109,7 @@ final class MarkdownLite
         if (preg_match('~^https://[A-Za-z0-9.-]+(/\S*)?$~u', $url) === 1 || preg_match('~^mailto:[^\s<>"]+$~u', $url) === 1) {
             return '<a href="' . $this->e($url) . '" rel="noopener noreferrer" target="_blank">' . $label . '</a>';
         }
-        if (is_callable($this->docLink) && str_ends_with(strtolower($path), '.md')) {
+        if (str_ends_with(strtolower($path), '.md')) {
             $target = ($this->docLink)(basename($path));
             if (is_string($target) && $target !== '') {
                 return '<a href="' . $this->e($target) . '">' . $label . '</a>';
