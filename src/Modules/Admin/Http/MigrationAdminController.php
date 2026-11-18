@@ -112,7 +112,7 @@ final class MigrationAdminController extends AbstractController
             if((int)$this->db->fetchOne('SELECT COUNT(*) FROM mc_store_locale WHERE store_id=? AND locale_code=? AND enabled=1',[$ctx->storeId,$locale])!==1)$locale=$ctx->locale;
             @set_time_limit(0);ignore_user_abort(true);
             $rows=$ext==='xlsx'?\Commerce\Modules\ImportExport\Application\SpreadsheetReader::readXlsx($upload->getPathname(),20002):\Commerce\Modules\ImportExport\Application\SpreadsheetReader::readCsv($upload->getPathname(),20002);
-            $headers=array_values(array_map(static fn($v):string=>trim((string)$v),array_shift($rows)??[]));
+            $headers=array_map(static fn($v):string=>trim((string)$v),array_shift($rows)??[]);
             if(count(array_filter($headers,static fn(string $h):bool=>$h!==''))<2)throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('admin.migration.file.no_headers'));
             $detected=$platform==='auto'?\Commerce\Modules\Migration\Source\File\PlatformCatalogProfiles::detect($headers):$platform;
             $normalized=\Commerce\Modules\Migration\Source\File\PlatformCatalogProfiles::normalize($detected,$headers,$rows);
