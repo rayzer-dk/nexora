@@ -62,10 +62,9 @@ jobs:
         shell: bash
         run: |
           mkdir -p var/twig-reports
-          set +e
+          set -e
           php bin/console lint:twig themes/default/templates --no-interaction > var/twig-reports/syntax.txt 2>&1
           status=$?
-          set -e
           sed -n '1,80p' var/twig-reports/syntax.txt
           echo "Twig linter status: $status (advisory, see artifact)" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload Twig findings
