@@ -11,13 +11,15 @@ WORD = re.compile(r'(?<![.\w])([A-Za-z_]\w*)(?!\w)')
 DATA = re.compile(r'\$data\s*\[\s*[\'"]([A-Za-z_]\w*)[\'"]\s*\]')
 VIEW = re.compile(r'\$this\s*->\s*load\s*->\s*view\s*\(\s*[\'"]([\w/]+)[\'"]\s*,\s*\$data\b', re.S)
 RENDER = re.compile(r'->render(?:View)?\s*\(\s*[\'"](@storefront/[\w/.-]+\.twig)[\'"]\s*,\s*\[', re.S)
-IGNORED = set('and or not in is as if else elseif endif for endfor set endset do true false null none empty defined same starts with ends matches iterable even odd divisible by default loop app _self _context _charset this block parent include source range constant attribute min max'.split())
+IGNORED = set('and or not in is as if else elseif endif for endfor set endset do true false null none empty defined same starts with ends matches iterable even odd divisible by default loop app _self _context _charset this block parent include source range constant attribute min max only with extends endblock head body macro endmacro embed endembed'.split())
 
 def twig_usage(text):
     text = re.sub(r'{#.*?#}', '', text, flags=re.S)
     locals_, reads, attributes = set(), set(), set()
     for token in TAG.finditer(text):
         expr = (token.group(2) or token.group(3) or '').strip()
+        if re.match(r'^(?:block|endblock|extends|endextends|embed|endembed|use)\b', expr):
+            continue
         for pattern in (r'^set\s+([A-Za-z_]\w*)\s*=', r'^for\s+([A-Za-z_]\w*)(?:\s*,\s*([A-Za-z_]\w*))?\s+in\b', r'^import\s+.+?\s+as\s+([A-Za-z_]\w*)'):
             found = re.search(pattern, expr, re.S)
             if found:
@@ -104,12 +106,15 @@ def contexts(root, mode):
     found = defaultdict(lambda: {'keys': set(), 'shapes': defaultdict(set)})
     if mode == 'codecart':
         for area in ('admin', 'catalog'):
+            language_keys = set()
+            for locale_file in (root / 'upload' / area / 'language').rglob('*.php'):
+                language_keys.update(re.findall(r"\$_\s*\[\s*['\"]([A-Za-z_]\w*)['\"]\s*\]", locale_file.read_text(encoding='utf-8', errors='replace')))
             folder = root / 'upload' / area / 'controller'
             if not folder.exists():
                 continue
             for php in folder.rglob('*.php'):
                 source = php.read_text(encoding='utf-8', errors='replace')
-                keys = set(DATA.findall(source))
+                keys = set(DATA.findall(source)) | language_keys
                 for route in VIEW.findall(source):
                     found[(area, route)]['keys'].update(keys)
     else:
@@ -158,6 +163,11 @@ def audit(root, mode, report):
                  if mode == 'codecart' else [(root / 'themes/default/templates', 'storefront')])
     scanned = matched = 0
     lines = []
+    inherited_keys, inherited_reads = set(), set()
+    if mode == 'nexora':
+        base_template = root / 'themes/default/templates/base.html.twig'
+        if base_template.is_file():
+            inherited_reads, inherited_keys, _ = twig_usage(base_template.read_text(encoding='utf-8', errors='replace'))
     for base, scope in templates:
         if not base.exists():
             continue
@@ -170,7 +180,13 @@ def audit(root, mode, report):
             if record is None:
                 continue
             matched += 1
-            for category, identifier in analyze(path.read_text(encoding='utf-8', errors='replace'), record):
+            source = path.read_text(encoding='utf-8', errors='replace')
+            effective = record
+            if mode == 'nexora' and '{% extends' in source:
+                effective = {'keys': record['keys'] | inherited_keys, 'shapes': record['shapes']}
+            for category, identifier in analyze(source, effective):
+                if category == 'unused-local' and mode == 'nexora' and '{% extends' in source and identifier in inherited_reads:
+                    continue
                 lines.append(f'{path.relative_to(root)}: {category}: {identifier}')
     header = [f'Templates scanned: {scanned}; direct controller mappings: {matched}; findings: {len(lines)}',
               'ADVISORY: dynamic data, OCMOD, Events, Twig inheritance, Symfony globals and includes may cause false positives.',
