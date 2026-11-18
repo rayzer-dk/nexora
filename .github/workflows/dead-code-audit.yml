@@ -1,0 +1,81 @@
+name: Nexora dead-code audit
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dead-code-nexora-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dead-code:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,libxml,mbstring,openssl,pdo_mysql,simplexml,sodium,tokenizer,xmlwriter,zip
+          coverage: none
+          tools: composer:v2
+      - name: Install isolated analyzers
+        run: |
+          composer validate --working-dir=tools/quality --no-check-publish --no-check-lock
+          composer install --working-dir=tools/quality --no-interaction --prefer-dist --no-progress
+      - name: Install application dependencies for class discovery
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+      - name: Verify that native rules identify unused symbols
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l tools/quality/fixtures/dead_code_valid.php
+          php -l tools/quality/fixtures/dead_code_invalid.php
+          mkdir -p var/phpstan-reports
+          tools/quality/vendor/bin/phpstan analyse \
+            -c phpstan.dead-code.neon.dist \
+            tools/quality/fixtures/dead_code_valid.php \
+            --no-progress --memory-limit=2G --error-format=raw
+          if tools/quality/vendor/bin/phpstan analyse \
+            -c phpstan.dead-code.neon.dist \
+            tools/quality/fixtures/dead_code_invalid.php \
+            --no-progress --memory-limit=2G --error-format=raw \
+            > var/phpstan-reports/fixture.txt 2>&1; then
+            echo '::error::Known unused symbols escaped PHPStan'
+            exit 1
+          fi
+          for symbol in forgotten unusedProperty unusedMethod; do
+            if ! grep -Fq "$symbol" var/phpstan-reports/fixture.txt; then
+              cat var/phpstan-reports/fixture.txt
+              echo "::error::Missing expected finding for $symbol"
+              exit 1
+            fi
+          done
+          echo 'Verified: unused local variable, private property, private method'
+      - name: Detect transitive dead code in src (advisory)
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          tools/quality/vendor/bin/phpstan analyse \
+            -c phpstan.dead-code-project.neon.dist \
+            --no-progress --memory-limit=2G --error-format=raw \
+            > var/phpstan-reports/project.txt 2>&1
+          status=$?
+          set -e
+          printf '### Nexora dead-code inventory (advisory)\n\nExit code: %s. Full findings are attached as a workflow artifact.\n' "$status" >> "$GITHUB_STEP_SUMMARY"
+          sed -n '1,100p' var/phpstan-reports/project.txt
+          echo 'Existing quality gates stay blocking; this additional inventory is advisory pending triage.'
+      - name: Upload dead-code inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexora-dead-code-findings
+          path: var/phpstan-reports/
+          if-no-files-found: ignore
+          retention-days: 14

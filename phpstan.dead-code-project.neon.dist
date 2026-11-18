@@ -1,0 +1,7 @@
+# Advisory whole-program reachability analysis, including transitive dead member cycles.
+includes:
+    - phpstan.dead-code.neon.dist
+    - tools/quality/vendor/shipmonk/dead-code-detector/rules.neon
+
+parameters:
+    tmpDir: var/phpstan-dead-code-project
