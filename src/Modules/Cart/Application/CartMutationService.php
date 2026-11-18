@@ -83,7 +83,7 @@ final readonly class CartMutationService
      * every line is priced in the new currency; otherwise it keeps its own currency so totals
      * are never shown or charged with a price from another currency.
      *
-     * @param array{currency?:string} $cart
+     * @param array{currency?:string,id?:int,token?:string,created?:bool} $cart
      */
     public function contextFor(StorefrontContext $context, array $cart): StorefrontContext
     {

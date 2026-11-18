@@ -290,7 +290,7 @@ final class StoreLocalizationSettings
         }
         $name = $inLocale === $code ? \Locale::getDisplayLanguage($code, $code) : \Locale::getDisplayName($code, $inLocale);
 
-        return is_string($name) && $name !== '' ? mb_convert_case(mb_substr($name, 0, 1), MB_CASE_UPPER) . mb_substr($name, 1) : $code;
+        return $name ? mb_convert_case(mb_substr($name, 0, 1), MB_CASE_UPPER) . mb_substr($name, 1) : $code;
     }
 
     private function catalogSize(string $locale): int

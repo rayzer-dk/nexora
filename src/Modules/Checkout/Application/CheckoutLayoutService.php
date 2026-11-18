@@ -103,9 +103,9 @@ final readonly class CheckoutLayoutService
         if (!isset($out['placement'])) $out['placement'] = $component === 'checkout_summary' ? 'right' : 'left';
         if ($component === 'checkout_contact') {
             $out += ['show_name'=>true,'require_name'=>true,'show_phone'=>true,'require_phone'=>true,'show_email'=>true,'require_email'=>false];
-            if (!($out['show_phone'] ?? false) && !($out['show_email'] ?? false)) $out['show_phone'] = true;
-            if (($out['require_phone'] ?? false) && !($out['show_phone'] ?? false)) $out['require_phone'] = false;
-            if (($out['require_email'] ?? false) && !($out['show_email'] ?? false)) $out['require_email'] = false;
+            if (!$out['show_phone'] && !$out['show_email']) $out['show_phone'] = true;
+            if ($out['require_phone'] && !$out['show_phone']) $out['require_phone'] = false;
+            if ($out['require_email'] && !$out['show_email']) $out['require_email'] = false;
         }
         return $out;
     }

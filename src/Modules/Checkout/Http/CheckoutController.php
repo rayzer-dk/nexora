@@ -131,7 +131,7 @@ final class CheckoutController extends AbstractController
             }
             if (is_array($value)) {
                 foreach ($value as $key => $nested) {
-                    $collect($name . '[' . (is_scalar($key) ? (string) $key : '') . ']', $nested);
+                    $collect($name . '[' . (string) $key . ']', $nested);
                 }
 
                 return;
@@ -256,7 +256,7 @@ final class CheckoutController extends AbstractController
         try { $flow=$this->paymentFlow->afterOrderPlaced($order['public_id']); }
         catch (\Throwable $e) {
             $this->addFlash('payment_issue',\Commerce\Core\I18n\CanonicalUiText::get('php.modules.checkout.http.checkoutcontroller.zamovlennia_stvoreno_ale_platizhnyi_servis_tymchasov'));
-            $flow=['redirect_url'=>null,'status'=>'payment_retry_required'];
+            $flow=['redirect_url'=>null];
         }
         $response=$flow['redirect_url'] ? $this->redirect((string)$flow['redirect_url']) : $this->redirectToRoute('storefront_checkout_success',['order'=>$order['public_id']]);
         $response->headers->clearCookie('mc_cart','/');

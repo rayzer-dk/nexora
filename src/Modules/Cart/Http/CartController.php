@@ -25,8 +25,6 @@ final class CartController extends AbstractController
         private readonly DbalCartQuery $query,
         private readonly LoggerInterface $logger,
         private readonly \Commerce\Modules\Storefront\Application\CartLayoutService $layout,
-        private readonly \Commerce\Modules\Checkout\Application\CheckoutMethodSettings $methodSettings,
-        private readonly \Commerce\Modules\Storefront\Infrastructure\StorefrontMoneyFormatter $money,
     ) {
     }
 
@@ -128,7 +126,7 @@ final class CartController extends AbstractController
     {
         if(!$this->isCsrfTokenValid('cart_mutation',(string)$request->request->get('_token'))){throw $this->createAccessDeniedException(\Commerce\Core\I18n\CanonicalUiText::get('common.security.invalid_csrf'));}
     }
-    /** @param array{id:int,token:string,created:bool} $cart */
+    /** @param array{id:int,token:string,created:bool,currency:string} $cart */
     private function attachCookie(Response $response,Request $request,array $cart):void
     {
         if(!$cart['created']){return;} $response->headers->setCookie(Cookie::create('mc_cart',$cart['token'])->withExpires(new \DateTimeImmutable('+7 days'))->withPath('/')->withSecure($request->isSecure())->withHttpOnly(true)->withSameSite(Cookie::SAMESITE_LAX));
