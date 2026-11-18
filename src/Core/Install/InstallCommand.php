@@ -119,7 +119,6 @@ final class InstallCommand extends Command
         }
 
         $demoInstalled = false;
-        $demoWarning = null;
         if ((bool) $input->getOption('demo')) {
             try {
                 if ($this->demoSeeder === null) {

@@ -123,7 +123,7 @@ final class CronRunner
         return $application;
     }
 
-    /** @param array{ran:list<string>,failed:list<string>} $result */
+    /** @param array{ran:list<string>,failed:list<string>,locked?:bool,unknown?:bool,skipped?:int} $result */
     private function recordTick(string $source, array $result): void
     {
         $this->store->setArray('cron.last_run', ['at' => $this->now(), 'source' => $source, 'ran' => count($result['ran']), 'failed' => count($result['failed'])]);

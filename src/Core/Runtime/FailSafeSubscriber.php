@@ -63,8 +63,6 @@ final readonly class FailSafeSubscriber implements EventSubscriberInterface
         $request = $event->getRequest();
         $requestId = bin2hex(random_bytes(12));
         $area = $this->area($request);
-        $fallback = null;
-
         $this->logger->critical('Unhandled runtime exception intercepted by fail-safe layer.', [
             'request_id' => $requestId,
             'route' => $request->attributes->get('_route'),
@@ -81,18 +79,17 @@ final readonly class FailSafeSubscriber implements EventSubscriberInterface
             if ($cached instanceof Response) {
                 $cached->headers->set('X-Request-Id', $requestId);
                 $event->setResponse($cached);
-                $fallback = 'last-known-good';
-                $this->recordIncident($request, $throwable, $requestId, $area, $fallback);
+                $this->recordIncident($request, $throwable, $requestId, $area, 'last-known-good');
                 return;
             }
         }
 
-        $response = $this->fallbackResponse($request, $requestId, $area);
+        $response = $this->fallbackResponse($requestId, $area);
         $event->setResponse($response);
         $this->recordIncident($request, $throwable, $requestId, $area, $area === 'api' ? 'json-safe-error' : 'static-safe-error');
     }
 
-    private function fallbackResponse(Request $request, string $requestId, string $area): Response
+    private function fallbackResponse(string $requestId, string $area): Response
     {
         if ($area === 'api') {
             return new JsonResponse([

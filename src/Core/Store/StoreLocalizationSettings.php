@@ -26,7 +26,7 @@ final class StoreLocalizationSettings
     {
     }
 
-    /** @return array{locales:list<array<string,mixed>>,currencies:list<array<string,mixed>>,default_locale:string,default_currency:string} */
+    /** @return array{product_total:int,locales:list<array<string,mixed>>,currencies:list<array<string,mixed>>,default_locale:string,default_currency:string} */
     public function overview(int $storeId): array
     {
         $store = $this->db->fetchAssociative('SELECT default_locale,default_currency FROM mc_store WHERE id=?', [$storeId]) ?: ['default_locale' => 'uk-UA', 'default_currency' => 'UAH'];
@@ -206,7 +206,7 @@ final class StoreLocalizationSettings
         return $code;
     }
 
-    /** @return array{rate:string,provider:string,observed_at:string,expires_at:?string}|null */
+    /** @return array{rate:string,per_quote:string,provider:string,observed_at:string,expires_at:?string,expired:bool}|null */
     private function latestRate(string $base, string $quote, string $source): ?array
     {
         if ($base === $quote) {
@@ -290,7 +290,7 @@ final class StoreLocalizationSettings
         }
         $name = $inLocale === $code ? \Locale::getDisplayLanguage($code, $code) : \Locale::getDisplayName($code, $inLocale);
 
-        return $name !== '' ? mb_convert_case(mb_substr($name, 0, 1), MB_CASE_UPPER) . mb_substr($name, 1) : $code;
+        return is_string($name) && $name !== '' ? mb_convert_case(mb_substr($name, 0, 1), MB_CASE_UPPER) . mb_substr($name, 1) : $code;
     }
 
     private function catalogSize(string $locale): int

@@ -23,8 +23,8 @@ final class CoreVersionConstraint
             if (preg_match('/^(\^|~|>=)?\s*(\d+)\.(\d+)(?:\.(\d+))?$/D', trim($branch), $match) !== 1) {
                 return false;
             }
-            $operator = $match[1] ?? '';
-            $hasPatch = isset($match[4]) && $match[4] !== '';
+            $operator = $match[1];
+            $hasPatch = isset($match[4]);
             if ($operator === '' && !$hasPatch) {
                 return false;
             }

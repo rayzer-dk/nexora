@@ -130,8 +130,6 @@ final class CoreUpdateManager
 
             $stage = $this->projectPath('var/update/stage/attempt-' . $attemptId . '-' . bin2hex(random_bytes(4)));
             $snapshot = null;
-            $migrationResult = ['migrations' => 0, 'statements' => 0];
-            $smoke = [];
             $this->updateAttempt($attemptId, 'preparing', null);
 
             try {
@@ -146,7 +144,7 @@ final class CoreUpdateManager
                 $this->maintenance->enable('core-update:' . $manifest->version, 30);
                 $snapshot = $this->recovery->create('pre-core-update:' . $manifest->version, $actor, true);
                 $snapshotVerification = $this->recovery->verify((int) $snapshot['id']);
-                if (!($snapshotVerification['ok'] ?? false)) {
+                if (!$snapshotVerification['ok']) {
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.ac92e4d23219'));
                 }
                 $this->connection->update('mc_update_attempt', [
@@ -191,7 +189,7 @@ final class CoreUpdateManager
                 ];
             } catch (Throwable $e) {
                 $message = $this->safeMessage($e);
-                if (is_array($snapshot) && isset($snapshot['archive_path']) && is_file((string) $snapshot['archive_path'])) {
+                if (is_array($snapshot) && is_file((string) $snapshot['archive_path'])) {
                     try {
                         $this->restorer->restore((string) $snapshot['archive_path']);
                         $this->purgeReleaseCache($manifest->version);

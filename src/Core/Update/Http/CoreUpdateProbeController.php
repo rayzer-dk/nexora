@@ -40,7 +40,7 @@ final class CoreUpdateProbeController extends AbstractController
         try {
             $database = (int) $this->db->fetchOne('SELECT 1') === 1;
             $health = $this->installation->verify();
-            $installation = (bool) ($health['healthy'] ?? false);
+            $installation = $health['healthy'];
         } catch (Throwable) {
             $database = false;
             $installation = false;

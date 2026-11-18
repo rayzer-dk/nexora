@@ -47,9 +47,6 @@ final readonly class CoreUpdateHttpProbe
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.b83e49816a6f') . $status . '.');
             }
             $payload = $response->toArray(false);
-            if (!is_array($payload)) {
-                throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.7ee49d083e0b'));
-            }
             $version = (string) ($payload['version'] ?? '');
             $database = (bool) ($payload['database'] ?? false);
             $installation = (bool) ($payload['installation'] ?? false);

@@ -24,7 +24,7 @@ final readonly class CoreUpdateMigrationRunner
         if ($plan === null) {
             return [];
         }
-        return array_values(array_map(static fn (array $migration): string => (string) $migration['version'], $plan['migrations']));
+        return array_map(static fn (array $migration): string => (string) $migration['version'], $plan['migrations']);
     }
 
     /** @return array{migrations:int,statements:int} */

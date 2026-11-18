@@ -73,7 +73,7 @@ final class TrustedExtensionRuntimeLoader
         }
     }
 
-    /** @param array<string,mixed> $map */
+    /** @param array<array-key,mixed> $map */
     private function registerAutoload(string $base, array $map): void
     {
         $normalized=[];foreach($map as $prefix=>$relative){if(!is_string($prefix)||!is_string($relative)||!str_ends_with($prefix,'\\'))continue;$dir=realpath($base.'/'.trim(str_replace('\\','/',$relative),'/'));$root=realpath($base);if($dir===false||$root===false||!str_starts_with($dir.DIRECTORY_SEPARATOR,$root.DIRECTORY_SEPARATOR))continue;$normalized[$prefix]=$dir;}

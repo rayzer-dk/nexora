@@ -110,7 +110,6 @@ final readonly class ExtensionPackageManager
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.d618dd557266'));
         }
 
-        $previousActive = null;
         try {
             $previousActive = $this->connection->fetchAssociative(
                 "SELECT id,code,version,status FROM mc_extension_installation WHERE code=? AND status='active' AND id<>? ORDER BY activated_at DESC,id DESC LIMIT 1",

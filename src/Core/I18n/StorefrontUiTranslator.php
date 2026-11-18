@@ -71,9 +71,6 @@ final class StorefrontUiTranslator
         }
         $result = [];
         foreach ($rows as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
             $result[] = [
                 'code' => (string) ($row['code'] ?? ''),
                 'install_path' => (string) ($row['install_path'] ?? ''),
