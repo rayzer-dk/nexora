@@ -13,7 +13,6 @@ final class AiHttpError
     public static function from(ResponseInterface $response): RuntimeException
     {
         $status = $response->getStatusCode();
-        $message = '';
         try {
             $data = $response->toArray(false);
             $error = $data['error'] ?? null;
