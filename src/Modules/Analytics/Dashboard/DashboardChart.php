@@ -48,7 +48,7 @@ final class DashboardChart
         $marks = [];
         foreach ($annotations as $a) {
             if (isset($index[$a['day']])) {
-                $marks[] = ['x' => $index[$a['day']], 'day' => $a['day'], 'note' => $a['note'], 'id' => (int) ($a['id'] ?? 0)];
+                $marks[] = ['x' => $index[$a['day']], 'day' => $a['day'], 'note' => $a['note'], 'id' => (int) $a['id']];
             }
         }
         $grid = [];
