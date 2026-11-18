@@ -199,7 +199,7 @@ final class CheckoutMethodSettings
     public function ordered(int $storeId, array $codes): array
     {
         $config = $this->config($storeId);
-        $position = array_flip(array_values($codes));
+        $position = array_flip($codes);
         usort($codes, static function (string $a, string $b) use ($config, $position): int {
             $sa = (int) ($config[$a]['sort'] ?? 0);
             $sb = (int) ($config[$b]['sort'] ?? 0);
@@ -207,7 +207,7 @@ final class CheckoutMethodSettings
             return [$sa > 0 ? $sa : PHP_INT_MAX, $position[$a]] <=> [$sb > 0 ? $sb : PHP_INT_MAX, $position[$b]];
         });
 
-        return array_values($codes);
+        return $codes;
     }
 
     /**
@@ -264,7 +264,7 @@ final class CheckoutMethodSettings
     /** @return list<string> */
     public function customCodes(string $kind): array
     {
-        return array_values(array_column(array_filter($this->custom(), static fn (array $m): bool => $m['kind'] === $kind), 'code'));
+        return array_column(array_filter($this->custom(), static fn (array $m): bool => $m['kind'] === $kind), 'code');
     }
 
     /** Name of a custom method in a language (first written name when the language has none); '' for built-in methods. */

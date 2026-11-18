@@ -105,6 +105,6 @@ final readonly class ProductCatalogFilter
         }
         sort($ids);
 
-        return array_slice(array_values($ids), 0, 24);
+        return array_slice($ids, 0, 24);
     }
 }

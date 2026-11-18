@@ -45,7 +45,7 @@ final readonly class DemoShowcaseQuery
                 'products'=>(int)$this->connection->fetchOne("SELECT COUNT(*) FROM mc_product WHERE status='published'"),
                 'categories'=>(int)$this->connection->fetchOne("SELECT COUNT(*) FROM mc_store_category WHERE store_id=? AND status='active'",[$context->storeId]),
             ],
-            'brands'=>array_values(array_map(static fn(mixed $name):string=>(string)$name,$brands)),
+            'brands'=>array_map(static fn(mixed $name):string=>(string)$name,$brands),
             'articles'=>$this->blog->latest($context->storeId,$context->locale,3),
             'coupon'=>[
                 'code'=>'DEMO10',

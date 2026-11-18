@@ -50,7 +50,7 @@ final readonly class CrmConnectionRepository
         $data = [
             'name' => mb_substr(trim($in['name']), 0, 120), 'preset' => mb_substr($in['preset'], 0, 32), 'url' => mb_substr(trim($in['url']), 0, 1000),
             'method' => $in['method'] === 'PUT' ? 'PUT' : 'POST', 'headers_enc' => $headers === [] ? null : $this->vault->encrypt(json_encode($headers, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), self::CONTEXT),
-            'body_template' => $in['body_template'], 'events' => json_encode(array_values($in['events']), JSON_THROW_ON_ERROR), 'enabled' => $in['enabled'] ? 1 : 0, 'updated_at' => $now,
+            'body_template' => $in['body_template'], 'events' => json_encode($in['events'], JSON_THROW_ON_ERROR), 'enabled' => $in['enabled'] ? 1 : 0, 'updated_at' => $now,
         ];
         if ($existing !== null) {
             $this->db->update('mc_crm_connection', $data, ['id' => $id, 'store_id' => $storeId]);

@@ -40,7 +40,7 @@ final class MediaTwigExtension extends AbstractExtension
     {
         $url = (string) $url;
         $out = 'src="' . htmlspecialchars($this->variants->url($url, $preset), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"';
-        $srcset = $set === [] ? '' : $this->variants->srcset($url, array_values(array_map('strval', $set)));
+        $srcset = $set === [] ? '' : $this->variants->srcset($url, array_map('strval', $set));
         if ($srcset !== '') {
             $out .= ' srcset="' . htmlspecialchars($srcset, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"';
             if ($sizes !== '') {
@@ -77,7 +77,7 @@ final class MediaTwigExtension extends AbstractExtension
         if (!$this->variants->avifEnabled() || $this->variants->url($url, $preset) === $url) {
             return $img;
         }
-        $avif = $set === [] ? $this->variants->url($url, $preset, 'avif') : $this->variants->srcset($url, array_values(array_map('strval', $set)), 'avif');
+        $avif = $set === [] ? $this->variants->url($url, $preset, 'avif') : $this->variants->srcset($url, array_map('strval', $set), 'avif');
         if ($avif === '') {
             return $img;
         }
