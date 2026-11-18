@@ -27,6 +27,10 @@ jobs:
       APP_ENV: test
       APP_DEBUG: '0'
       APP_SECRET: twig-qa-static-only-0123456789abcdef0123456789abcdef
+      DATABASE_URL: mysql://nexora:nexora@127.0.0.1:3306/nexora_twig?charset=utf8mb4
+      DATABASE_SERVER_VERSION: '8.4.0'
+      APP_PUBLIC_URL: http://127.0.0.1:8000
+      MAILER_DSN: null://null
     steps:
       - uses: actions/checkout@v5
       - uses: shivammathur/setup-php@v2
