@@ -115,6 +115,6 @@ final class RegionCatalog
         }
         $name = \Locale::getDisplayName($locale, $inLocale);
 
-        return $name !== '' ? mb_strtoupper(mb_substr($name, 0, 1)) . mb_substr($name, 1) : $locale;
+        return $name ? mb_strtoupper(mb_substr($name, 0, 1)) . mb_substr($name, 1) : $locale;
     }
 }

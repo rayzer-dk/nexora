@@ -19,7 +19,7 @@ final class CheckboxClient
     {
     }
 
-    /** @param array{environment:string,login:string,password:string,license:string} $cfg */
+    /** @param array{environment:string,login:string,password:string,license:string,...} $cfg */
     public function token(array $cfg): string
     {
         $data = $this->request('POST', $cfg, '/cashier/signin', null, ['login' => $cfg['login'], 'password' => $cfg['password']]);
@@ -31,7 +31,7 @@ final class CheckboxClient
         return $token;
     }
 
-    /** @param array{environment:string,login:string,password:string,license:string} $cfg */
+    /** @param array{environment:string,login:string,password:string,license:string,...} $cfg */
     public function ensureShift(array $cfg, string $token): void
     {
         $shift = $this->request('GET', $cfg, '/cashier/shift', $token);
@@ -42,7 +42,7 @@ final class CheckboxClient
     }
 
     /**
-     * @param array{environment:string,login:string,password:string,license:string} $cfg
+     * @param array{environment:string,login:string,password:string,license:string,...} $cfg
      * @param array<string,mixed> $receipt
      * @return array<string,mixed>
      */
@@ -52,7 +52,7 @@ final class CheckboxClient
     }
 
     /**
-     * @param array{environment:string,login:string,password:string,license:string} $cfg
+     * @param array{environment:string,login:string,password:string,license:string,...} $cfg
      * @return array<string,mixed>
      */
     public function receipt(array $cfg, string $token, string $id): array
@@ -66,7 +66,7 @@ final class CheckboxClient
     }
 
     /**
-     * @param array{environment:string,login:string,password:string,license:string} $cfg
+     * @param array{environment:string,login:string,password:string,license:string,...} $cfg
      * @param array<string,mixed>|null $json
      * @return array<string,mixed>
      */

@@ -52,7 +52,12 @@ final class BuilderComponentCatalog
         }
         $own = $this->ownFields($layoutType, $component);
 
-        return $own === null ? null : $this->withCommonFields($own);
+        if ($own === null) {
+            return null;
+        }
+        /** @var list<Field> $fields */
+        $fields = $this->withCommonFields($own);
+        return $fields;
     }
 
     /**
@@ -274,7 +279,8 @@ final class BuilderComponentCatalog
     /** @param array<string,mixed> $extra @return Field */
     private function field(string $key, string $type, string $labelKey, string $group, array $extra = []): array
     {
-        /** @var Field */
-        return array_replace(['key' => $key, 'type' => $type, 'label_key' => $labelKey, 'group' => $group, 'prop' => 'props.' . $key], $extra);
+        /** @var Field $definition */
+        $definition = array_replace(['key' => $key, 'type' => $type, 'label_key' => $labelKey, 'group' => $group, 'prop' => 'props.' . $key], $extra);
+        return $definition;
     }
 }

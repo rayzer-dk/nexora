@@ -101,7 +101,7 @@ final class TrustedExtensionSignatureVerifier
             if (!is_array($stat)) {
                 continue;
             }
-            $name = str_replace('\\', '/', (string) ($stat['name'] ?? ''));
+            $name = str_replace('\\', '/', (string) $stat['name']);
             if ($name === '' || str_ends_with($name, '/') || $name === $signatureFile) {
                 continue;
             }

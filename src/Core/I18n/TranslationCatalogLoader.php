@@ -38,8 +38,8 @@ final readonly class TranslationCatalogLoader
         }
 
         foreach ($activeExtensions as $extension) {
-            $code = trim((string) ($extension['code'] ?? ''));
-            $installPath = (string) ($extension['install_path'] ?? '');
+            $code = trim((string) $extension['code']);
+            $installPath = (string) $extension['install_path'];
             if ($code === '' || $installPath === '' || !$this->isSafeInstalledPath($root, $code, $installPath)) {
                 continue;
             }
@@ -144,7 +144,7 @@ final readonly class TranslationCatalogLoader
         return $result;
     }
 
-    /** @param array{manifest_json?:string} $extension @return array<string,mixed> */
+    /** @param array{code:string,install_path:string,manifest_json?:string} $extension @return array<string,mixed> */
     private function decodeManifest(array $extension, string $installPath): array
     {
         $raw = (string) ($extension['manifest_json'] ?? '');

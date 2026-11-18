@@ -257,7 +257,7 @@ final class CoreUpdatePackageInspector
             if (!is_array($stat)) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.bc244a8109a1'));
             }
-            $name = str_replace('\\', '/', (string) ($stat['name'] ?? ''));
+            $name = str_replace('\\', '/', (string) $stat['name']);
             if ($name === '' || (!str_starts_with($name, 'release/') && !str_ends_with($name, '/'))) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.d42ecc65c96e'));
             }
@@ -267,7 +267,7 @@ final class CoreUpdatePackageInspector
             if ($this->isSymlink($zip, $i)) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.eba8c40cab37'));
             }
-            $expanded += max(0, (int) ($stat['size'] ?? 0));
+            $expanded += max(0, (int) $stat['size']);
             if ($expanded > self::MAX_PAYLOAD_UNCOMPRESSED_BYTES) {
                 throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.a2e379f878d0'));
             }

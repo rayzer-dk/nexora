@@ -55,7 +55,7 @@ final class AiTaskService
      * its own. Glossary terms are protected in both cases. Every request counts against the daily limit, and when the requests
      * do not fit into what is left of it, nothing is sent (AiLimitException).
      *
-     * @param array<string,string> $fields name => text; empty texts are left out of the result
+     * @param array<array-key,mixed> $fields name => text; invalid fields and empty texts are excluded
      * @return array{fields:array<string,string>,remaining:int}
      */
     public function translateFields(int $storeId, string $admin, string $provider, array $fields, string $target, string $source = ''): array

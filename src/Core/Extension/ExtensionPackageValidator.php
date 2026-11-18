@@ -69,15 +69,15 @@ final class ExtensionPackageValidator
                 if (!is_array($stat)) {
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.b6e1178b9052'));
                 }
-                $name = str_replace('\\', '/', (string) ($stat['name'] ?? ''));
+                $name = str_replace('\\', '/', (string) $stat['name']);
                 if ($name === '' || str_starts_with($name, '/') || preg_match('#(^|/)\.\.(?:/|$)#', $name) || str_contains($name, "\0")) {
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.6855495b2697'));
                 }
                 if ($this->isSymlink($zip, $i)) {
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.fa28d040ee99'));
                 }
-                $entrySize = (int) ($stat['size'] ?? 0);
-                $compressedSize = max(0, (int) ($stat['comp_size'] ?? 0));
+                $entrySize = (int) $stat['size'];
+                $compressedSize = max(0, (int) $stat['comp_size']);
                 if ($entrySize > 1024 * 1024 && $compressedSize > 0 && ($entrySize / $compressedSize) > 200.0) {
                     throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.850c774b4f74'));
                 }

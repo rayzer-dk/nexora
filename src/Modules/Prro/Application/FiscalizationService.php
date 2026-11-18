@@ -213,7 +213,7 @@ final class FiscalizationService
     /**
      * Sends a receipt, waits briefly for its fiscal number and stores the result on the row picked by $where (built from integers only).
      *
-     * @param array<string,mixed> $cfg
+     * @param array{environment:string,login:string,password:string,license:string,...} $cfg
      * @param array<string,mixed> $body
      */
     private function submit(array $cfg, string $uuid, array $body, string $where): void

@@ -42,7 +42,7 @@ final class ExtensionSignCommand extends Command
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $stat = $zip->statIndex($i);
                 if (!is_array($stat)) continue;
-                $name = str_replace('\\', '/', (string) ($stat['name'] ?? ''));
+                $name = str_replace('\\', '/', (string) $stat['name']);
                 if ($name === '' || str_ends_with($name, '/') || $name === 'SIGNATURE.ed25519') continue;
                 $contents = $zip->getFromIndex($i);
                 if (!is_string($contents)) throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('extension.runtime.sign_entry_read_failed') . $name);

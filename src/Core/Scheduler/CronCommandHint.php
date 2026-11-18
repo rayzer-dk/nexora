@@ -26,7 +26,7 @@ final class CronCommandHint
             $candidates[] = $dir . '/php';
         }
         foreach ($candidates as $path) {
-            if ($path !== '' && @is_file($path) && @is_executable($path) && !str_contains(basename($path), 'fpm') && !str_contains(basename($path), 'cgi')) {
+            if (@is_file($path) && @is_executable($path) && !str_contains(basename($path), 'fpm') && !str_contains(basename($path), 'cgi')) {
                 return $path;
             }
         }
