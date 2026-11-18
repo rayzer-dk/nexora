@@ -93,7 +93,7 @@ final class IntegrationCatalog
         return $all;
     }
 
-    /** @return array<string,array{type:string,options?:list<string>,default?:string}> */
+    /** @return array<string,array{type:string,options?:list<string>,default?:string,optional?:bool}> */
     public static function fieldsOf(string $group, string $provider): array
     {
         return self::groups()[$group][$provider]['fields'] ?? [];

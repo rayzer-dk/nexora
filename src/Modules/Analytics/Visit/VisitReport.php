@@ -100,7 +100,16 @@ final class VisitReport
             [$storeId, $since, $until],
         ) ?: [];
 
-        return array_map('intval', $r + ['sessions' => 0, 'visitors' => 0, 'pageviews' => 0, 'bounced' => 0, 'viewed_product' => 0, 'added_to_cart' => 0, 'started_checkout' => 0, 'ordered' => 0]);
+        return [
+            'sessions' => (int) ($r['sessions'] ?? 0),
+            'visitors' => (int) ($r['visitors'] ?? 0),
+            'pageviews' => (int) ($r['pageviews'] ?? 0),
+            'bounced' => (int) ($r['bounced'] ?? 0),
+            'viewed_product' => (int) ($r['viewed_product'] ?? 0),
+            'added_to_cart' => (int) ($r['added_to_cart'] ?? 0),
+            'started_checkout' => (int) ($r['started_checkout'] ?? 0),
+            'ordered' => (int) ($r['ordered'] ?? 0),
+        ];
     }
 
     private function delta(int $now, int $before): ?int

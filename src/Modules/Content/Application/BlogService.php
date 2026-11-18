@@ -39,7 +39,7 @@ final class BlogService
     }
 
     /**
-     * @param array{status?:string,q?:string,category?:int} $filters
+     * @param array{status?:string|list<string>,q?:string,category?:int|list<int>} $filters
      * @return array{items:list<array<string,mixed>>,total:int,pages:int,page:int}
      */
     public function list(int $storeId, string $locale, array $filters, int $page, int $perPage = 20, string $sort = '', string $dir = 'desc'): array

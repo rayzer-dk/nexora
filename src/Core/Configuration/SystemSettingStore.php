@@ -44,7 +44,7 @@ class SystemSettingStore
         return is_string($value) ? $value : null;
     }
 
-    /** @param array<string,mixed> $value */
+    /** @param array<array-key,mixed> $value */
     public function setArray(string $key, array $value): bool
     {
         return $this->setString($key, json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}');

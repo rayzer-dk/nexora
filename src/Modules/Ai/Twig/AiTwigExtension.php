@@ -30,7 +30,7 @@ final class AiTwigExtension extends AbstractExtension
         return [new TwigFunction('ai_providers', $this->providers(...))];
     }
 
-    /** @return list<array{code:string,label:string}> providers that can run in the current admin store */
+    /** @return list<array{code:string,label:string,translation_only?:bool}> providers that can run in the current admin store */
     public function providers(): array
     {
         if ($this->cache !== null) {

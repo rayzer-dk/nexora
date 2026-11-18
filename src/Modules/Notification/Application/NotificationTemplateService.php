@@ -60,7 +60,7 @@ final class NotificationTemplateService
         return ['store_name' => $storeName, 'order_number' => 'A-10025', 'customer_name' => 'Iryna Kovalenko', 'total' => '1 249,00 UAH', 'status' => 'shipped', 'payment_status' => 'paid', 'fulfillment_status' => 'shipped', 'tracking_number' => '20450123456789'];
     }
 
-    /** @return array<string,array{subject:string,body:string,enabled:bool}> code => stored override */
+    /** @return array<string,array{subject:string,body:string,enabled:bool,is_html:bool}> code => stored override */
     public function forLocale(int $storeId, string $locale): array
     {
         $out = [];

@@ -105,7 +105,7 @@ final class StorefrontPresentationExtension extends AbstractExtension
         }
     }
 
-    /** @return list<array{name:string,url:string}> */
+    /** @return list<array<string,mixed>> */
     public function navigation(): array
     {
         try {

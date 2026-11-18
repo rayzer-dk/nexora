@@ -51,7 +51,7 @@ final class InformationPageService
     }
 
     /**
-     * @param array{q?:string,status?:string} $filters
+     * @param array{q?:string,status?:string|list<string>} $filters
      * @return list<array<string,mixed>>
      */
     public function list(int $storeId, string $locale, array $filters = []): array

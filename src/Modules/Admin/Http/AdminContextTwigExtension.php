@@ -39,7 +39,7 @@ final class AdminContextTwigExtension extends AbstractExtension
     /**
      * New items that wait for a person: return requests, reviews, product questions and withdrawal notices (the header counter).
      *
-     * @return array{returns:int,reviews:int,questions:int,withdrawals:int,stock:int,total:int}
+     * @return array{returns:int,reviews:int,questions:int,withdrawals:int,stock:int,total:int,forum:int}
      */
     public function attention(): array
     {
