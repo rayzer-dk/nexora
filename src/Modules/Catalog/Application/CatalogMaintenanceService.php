@@ -180,11 +180,11 @@ final readonly class CatalogMaintenanceService
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.catalog.application.catalogmaintenanceservice.tovar_ne_znaideno_v_tsomu_mahazyni'));
             }
             $productId = (int) $product['id'];
-            $variantIds = array_values(array_map('intval', $db->fetchFirstColumn('SELECT id FROM mc_product_variant WHERE product_id=?', [$productId])));
-            $inventoryItemIds = $variantIds === [] ? [] : array_values(array_map('intval', $db->fetchFirstColumn(
+            $variantIds = array_map('intval', $db->fetchFirstColumn('SELECT id FROM mc_product_variant WHERE product_id=?', [$productId]));
+            $inventoryItemIds = $variantIds === [] ? [] : array_map('intval', $db->fetchFirstColumn(
                 'SELECT DISTINCT inventory_item_id FROM mc_variant_inventory_item WHERE variant_id IN (' . implode(',', array_fill(0, count($variantIds), '?')) . ')',
                 $variantIds,
-            )));
+            ));
 
             if ((int) $db->fetchOne('SELECT COUNT(*) FROM mc_sales_order_item WHERE product_id=?', [$productId]) > 0) {
                 throw new \DomainException(\Commerce\Core\I18n\CanonicalUiText::get('php.modules.catalog.application.catalogmaintenanceservice.tovar_maie_istoriiu_zamovlen_dlia_zberezhennia_audyt'));
