@@ -2,20 +2,7 @@ name: Nexora dead-code audit
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'src/**/*.php'
-      - 'config/**/*.php'
-      - 'tools/quality/**'
-      - 'phpstan*.neon.dist'
-      - '.github/workflows/dead-code-audit.yml'
   pull_request:
-    paths:
-      - 'src/**/*.php'
-      - 'config/**/*.php'
-      - 'tools/quality/**'
-      - 'phpstan*.neon.dist'
-      - '.github/workflows/dead-code-audit.yml'
   workflow_dispatch:
 
 permissions:
