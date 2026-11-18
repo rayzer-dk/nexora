@@ -10,6 +10,7 @@ use Commerce\Modules\Payment\Contract\PaymentProviderInterface;
 use Commerce\Modules\ProductPage\Contract\ProductBlockProviderInterface;
 use Commerce\Modules\Shipping\Contract\DeliveryProviderInterface;
 
+/** @api Runtime contract used by dynamically loaded third-party extensions. */
 final readonly class TrustedExtensionContext
 {
     /** @param list<string> $declaredRoutes @param list<string> $declaredEvents @param list<string> $declaredCapabilities @param array<string,array{interval:int,label:string,description:string}> $declaredTasks */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Core\Module;
 
+/** @api Public metadata contract for independent modules. */
 final readonly class ModuleManifest
 {
     public function __construct(

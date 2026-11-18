@@ -265,7 +265,11 @@ final class BuilderComponentCatalog
         ];
     }
 
-    /** @param array<string,string> $options value => label key @param array<string,mixed> $extra @return Field */
+    /**
+     * @param array<string,string> $options value => label key
+     * @param array<string,mixed> $extra
+     * @return Field
+     */
     private function select(string $key, string $labelKey, string $group, array $options, string $default, array $extra = []): array
     {
         $list = [];
@@ -276,7 +280,10 @@ final class BuilderComponentCatalog
         return $this->field($key, 'select', $labelKey, $group, ['options' => $list, 'default' => $default] + $extra);
     }
 
-    /** @param array<string,mixed> $extra @return Field */
+    /**
+     * @param array<string,mixed> $extra
+     * @return Field
+     */
     private function field(string $key, string $type, string $labelKey, string $group, array $extra = []): array
     {
         /** @var Field $definition */

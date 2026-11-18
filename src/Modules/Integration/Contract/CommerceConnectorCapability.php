@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Modules\Integration\Contract;
 
+/** @api Capability vocabulary for external commerce connectors. */
 enum CommerceConnectorCapability: string
 {
     case ProductsRead = 'products.read';

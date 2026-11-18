@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Commerce\Core\Region;
 
+/** @api Public feature identifiers for regional modules. */
 enum RegionalFeature: string
 {
     case EuVat = 'eu_vat';
