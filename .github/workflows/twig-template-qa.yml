@@ -1,0 +1,61 @@
+name: Nexora Twig template QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**/*.php'
+      - 'themes/**/*.twig'
+      - 'tools/quality/twig_*.py'
+      - '.github/workflows/twig-template-qa.yml'
+  pull_request:
+    paths:
+      - 'src/**/*.php'
+      - 'themes/**/*.twig'
+      - 'tools/quality/twig_*.py'
+      - '.github/workflows/twig-template-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  twig:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      APP_ENV: test
+      APP_DEBUG: '0'
+      APP_SECRET: twig-qa-static-only-0123456789abcdef0123456789abcdef
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo_mysql,simplexml,sodium,tokenizer,zip
+          coverage: none
+          tools: composer:v2
+      - name: Verify Twig context audit fixtures
+        run: python3 tools/quality/twig_context_audit.py --self-test
+      - name: Controller and Twig context report
+        run: python3 tools/quality/twig_context_audit.py --mode nexora --report var/twig-reports/context.txt
+      - name: Install locked Symfony/Twig runtime
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+      - name: Symfony Twig syntax inventory
+        shell: bash
+        run: |
+          mkdir -p var/twig-reports
+          set +e
+          php bin/console lint:twig themes/default/templates --no-interaction > var/twig-reports/syntax.txt 2>&1
+          status=$?
+          set -e
+          sed -n '1,80p' var/twig-reports/syntax.txt
+          echo "Twig linter status: $status (advisory, see artifact)" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload Twig findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexora-twig-qa
+          path: var/twig-reports/
+          if-no-files-found: ignore
+          retention-days: 14
