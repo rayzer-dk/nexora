@@ -70,3 +70,22 @@ test('data-loop="off" keeps a plain strip with ends', async ({ page }) => {
   expect(await page.locator('[data-slider-clone]').count()).toBe(0);
   await expect(page.locator('commerce-slider')).toHaveAttribute('data-at-start', '');
 });
+
+test('carousel respects reduced motion and the disabled animation preference', async ({ page }) => {
+  await page.setContent(html.replace('<commerce-slider id="s">', '<commerce-slider id="s" data-loop="off">'));
+  await page.addScriptTag({ path: 'assets/storefront/slider.js' });
+  await page.evaluate(() => {
+    const track = document.querySelector('[data-slider-track]') as HTMLElement;
+    track.scrollBy = (options: ScrollToOptions | number) => {
+      if (typeof options !== 'number') track.dataset.scrollMode = options.behavior || '';
+    };
+    document.documentElement.dataset.motion = 'off';
+    (document.querySelector('[data-slider-next]') as HTMLElement).click();
+  });
+  await expect(page.locator('[data-slider-track]')).toHaveAttribute('data-scroll-mode', 'auto');
+
+  await page.evaluate(() => { document.documentElement.dataset.motion = 'full'; });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.locator('[data-slider-next]').click();
+  await expect(page.locator('[data-slider-track]')).toHaveAttribute('data-scroll-mode', 'auto');
+});

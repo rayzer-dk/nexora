@@ -7,6 +7,9 @@ class CommerceSlider extends HTMLElement {
         if (!(track instanceof HTMLElement) || this.dataset.sliderBound === '1') return;
         this.dataset.sliderBound = '1';
         const step = () => Math.max(240, Math.floor(track.clientWidth * 0.82));
+        // Native scrolling is already used; disable only the smooth effect in reduced/minimal/off modes.
+        const scrollMode = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+            ['minimal', 'off'].includes(document.documentElement.dataset.motion) ? 'auto' : 'smooth';
         let looping = false;
         let setWidth = 0;
         let settleTimer = 0;
@@ -81,7 +84,7 @@ class CommerceSlider extends HTMLElement {
             // missed after scroll snapping, leaving us stuck at the last clone.
             if (looping) settle();
             if (!looping) {
-                track.scrollBy({ left: direction * step(), behavior: 'smooth' });
+                track.scrollBy({ left: direction * step(), behavior: scrollMode() });
                 return;
             }
             const slides = Array.from(track.children).filter((el) => el instanceof HTMLElement);
@@ -96,7 +99,7 @@ class CommerceSlider extends HTMLElement {
             const stride = slides.length > 1 ? Math.abs(pos(slides[1]) - pos(slides[0])) : step();
             const distance = Math.max(1, Math.round(step() / Math.max(1, stride)));
             const target = slides[Math.max(0, Math.min(slides.length - 1, current + direction * distance))];
-            if (target) track.scrollTo({ left: pos(target), behavior: 'smooth' });
+            if (target) track.scrollTo({ left: pos(target), behavior: scrollMode() });
         };
         this.querySelector('[data-slider-prev]')?.addEventListener('click', () => navigate(-1));
         this.querySelector('[data-slider-next]')?.addEventListener('click', () => navigate(1));
