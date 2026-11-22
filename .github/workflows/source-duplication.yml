@@ -3,13 +3,6 @@ name: Source duplication audit
 on:
   push:
     branches: [main]
-    paths:
-      - 'src/**'
-      - 'assets/**'
-      - 'themes/**'
-      - 'upload/**'
-      - '.jscpd.json'
-      - '.github/workflows/source-duplication.yml'
   workflow_dispatch:
 
 permissions:
