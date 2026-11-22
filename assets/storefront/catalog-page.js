@@ -1,4 +1,25 @@
 // Catalog / category filters: instant apply on desktop, bottom sheet with an explicit Apply button on mobile.
+const showCatalogSkeleton = (target) => {
+    if (!(target instanceof HTMLElement)) return null;
+    const skeleton = document.createElement('div');
+    skeleton.className = 'mc-motion-catalog-skeleton';
+    skeleton.setAttribute('role', 'status');
+    skeleton.setAttribute('aria-label', String(window.MC_I18N?.js_loading || 'Loading'));
+    for (let i = 0; i < 6; i += 1) {
+      const card = document.createElement('div');
+      card.className = 'mc-motion-catalog-skeleton__card';
+      card.setAttribute('aria-hidden', 'true');
+      const image = document.createElement('span');
+      image.className = 'mc-motion-catalog-skeleton__media';
+      const line = document.createElement('span');
+      line.className = 'mc-motion-catalog-skeleton__line';
+      card.append(image, line);
+      skeleton.append(card);
+    }
+    target.before(skeleton);
+    target.hidden = true;
+    return skeleton;
+};
 const form = document.querySelector('[data-catalog-filter-form]');
 
 if (form instanceof HTMLFormElement) {
@@ -36,10 +57,16 @@ if (form instanceof HTMLFormElement) {
             if ((field.type === 'radio' || field.type === 'checkbox') && !field.checked) return;
             if (field.value === '' || DEFAULTS[field.name] === field.value) field.disabled = true;
         });
+        showCatalogSkeleton(document.querySelector('.product-grid'));
     });
 
     // Fields disabled by the submit handler must come back enabled after history navigation.
-    window.addEventListener('pageshow', () => { [...form.elements, ...document.querySelectorAll('[form="catalog-filters"]')].forEach((field) => { if ('disabled' in field) field.disabled = false; }); });
+    window.addEventListener('pageshow', () => {
+        [...form.elements, ...document.querySelectorAll('[form="catalog-filters"]')].forEach((field) => { if ('disabled' in field) field.disabled = false; });
+        document.querySelectorAll('.mc-motion-catalog-skeleton').forEach((node) => node.remove());
+        const grid = document.querySelector('.product-grid');
+        if (grid instanceof HTMLElement) grid.hidden = false;
+    });
 
     const submitNow = () => { window.clearTimeout(timer); form.requestSubmit(); };
     const submitSoon = () => { window.clearTimeout(timer); timer = window.setTimeout(submitNow, 450); };
@@ -111,27 +138,9 @@ if (form instanceof HTMLFormElement) {
   let pending = null; // the newest request wins: a click or Back while loading must not leave the address and the grid out of step
   let activeSkeleton = null;
   const showSkeleton = (target) => {
-    if (!(target instanceof HTMLElement)) return null;
     activeSkeleton?.remove();
-    const skeleton = document.createElement('div');
-    skeleton.className = 'mc-motion-catalog-skeleton';
-    skeleton.setAttribute('role', 'status');
-    skeleton.setAttribute('aria-label', String(window.MC_I18N?.js_loading || 'Loading'));
-    for (let i = 0; i < 6; i += 1) {
-      const card = document.createElement('div');
-      card.className = 'mc-motion-catalog-skeleton__card';
-      card.setAttribute('aria-hidden', 'true');
-      const image = document.createElement('span');
-      image.className = 'mc-motion-catalog-skeleton__media';
-      const line = document.createElement('span');
-      line.className = 'mc-motion-catalog-skeleton__line';
-      card.append(image, line);
-      skeleton.append(card);
-    }
-    target.before(skeleton);
-    target.hidden = true;
-    activeSkeleton = skeleton;
-    return skeleton;
+    activeSkeleton = showCatalogSkeleton(target);
+    return activeSkeleton;
   };
   const swap = (doc) => {
     ['.product-grid', 'nav.pager'].forEach((selector) => {
