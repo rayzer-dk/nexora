@@ -881,19 +881,10 @@ body[data-image-bg="dark"] :is(.catalog-card__media img, .product-gallery__open 
 .site-footer .pwa-install-button{display:inline-flex;gap:var(--mc-space-2);align-items:center;border-radius:var(--mc-radius-sm);padding:var(--mc-space-2) var(--mc-space-3)}
 .site-footer .pwa-install-help{font-size:var(--mc-font-size-sm);line-height:var(--mc-line-height-snug);max-width:360px}
 
-/* Only the storefront needs motion preferences in its footer and flying cart images. */
+/* Decorative cart flight on the storefront only. */
 .mc-motion-cart-flight {
   position: fixed; z-index: var(--mc-z-toast); pointer-events: none; object-fit: contain;
   border-radius: var(--mc-radius-sm); box-shadow: var(--mc-shadow-sm); mix-blend-mode: normal;
-}
-.site-footer__motion {
-  display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-2);
-  color: inherit; font-size: var(--mc-font-size-xs);
-}
-.site-footer__motion select {
-  max-width: 100%; min-height: var(--mc-control-height-sm); padding-inline: var(--mc-space-2);
-  border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm);
-  background: var(--mc-color-surface-raised); color: var(--mc-color-text); font: inherit;
 }
 
 /* Motion phase 3: page-scoped loading placeholders; the original grid is kept in DOM until success. */

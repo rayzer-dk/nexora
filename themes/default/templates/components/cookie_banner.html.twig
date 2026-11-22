@@ -15,5 +15,13 @@
         <label class="mc-consent__choice"><input type="checkbox" name="consent_preferences" aria-label="{{ ui_text('preferences') }}"> <span><strong>{{ ui_text('preferences') }}</strong><small>{{ ui_text('preferences_desc') }}</small></span></label>
         <label class="mc-consent__choice"><input type="checkbox" name="consent_analytics" aria-label="{{ ui_text('analytics') }}"> <span><strong>{{ ui_text('analytics') }}</strong><small>{{ ui_text('analytics_desc') }}</small></span></label>
         <label class="mc-consent__choice"><input type="checkbox" name="consent_marketing" aria-label="{{ ui_text('marketing') }}"> <span><strong>{{ ui_text('marketing') }}</strong><small>{{ ui_text('marketing_desc') }}</small></span></label>
+        {# Appearance preference: stored in localStorage, independent of cookie consent choices. #}
+        <label class="mc-consent__choice"><span><strong>{{ ui_text('motion_preference') }}</strong></span>
+            <select data-motion-select aria-label="{{ ui_text('motion_preference') }}">
+                <option value="full">{{ ui_text('motion_full') }}</option>
+                <option value="minimal">{{ ui_text('motion_minimal') }}</option>
+                <option value="off">{{ ui_text('motion_off') }}</option>
+            </select>
+        </label>
     </div>
 </div>

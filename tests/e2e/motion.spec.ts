@@ -40,10 +40,19 @@ test('cart skeleton exists only while its request is in flight', async ({ page }
 test('motion preference is localized, stored and applied on later page loads', async ({ page }) => {
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   const control = page.locator('[data-motion-select]');
+  const openChoices = async () => {
+    if (await page.locator('[data-commerce-consent]').isVisible()) {
+      await page.locator('[data-consent-customize]').click();
+    } else {
+      await page.locator('[data-consent-open]').first().click();
+    }
+  };
+  await openChoices();
   await expect(control).toBeVisible();
   await control.selectOption('off');
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await openChoices();
   await expect(control).toHaveValue('off');
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
   await control.selectOption('full');

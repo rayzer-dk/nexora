@@ -55,12 +55,5 @@
         <button type="button" class="footer-link-button pwa-install-button" data-pwa-install hidden aria-label="{{ ui_text('pwa_install') }}">{{ ui_icon('download', 16) }}<span>{{ ui_text('pwa_install') }}</span></button>
         <span class="pwa-install-help" role="status" data-pwa-install-help data-ios-help="{{ ui_text('pwa_ios_help') }}" data-mac-help="{{ ui_text('pwa_mac_help') }}" hidden></span>
         {% endif %}
-        <label class="site-footer__motion" for="site-motion-mode">{{ ui_text('motion_preference') }}
-            <select id="site-motion-mode" data-motion-select>
-                <option value="full">{{ ui_text('motion_full') }}</option>
-                <option value="minimal">{{ ui_text('motion_minimal') }}</option>
-                <option value="off">{{ ui_text('motion_off') }}</option>
-            </select>
-        </label>
         {% if footer_contact.social %}{% include '@storefront/components/social_links.html.twig' with {social: footer_contact.social, variant: 'light'} only %}{% endif %}</div>
 </footer>
