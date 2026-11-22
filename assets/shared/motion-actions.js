@@ -13,7 +13,7 @@ export function celebrateWishlist(button) {
   button.classList.add('is-added');
   button.setAttribute('aria-pressed', 'true');
   const icon = button.querySelector('.ui-icon');
-  if (icon instanceof SVGElement) {
+  if (icon instanceof Element && icon.matches('svg')) {
     icon.style.fill = 'currentColor';
     playMotion(icon, [
       { transform: 'scale(1)', opacity: 0.7 },

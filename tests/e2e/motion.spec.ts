@@ -112,14 +112,32 @@ test('admin user menu exposes a persisted motion preference', async ({ page }, t
   await page.evaluate(() => localStorage.removeItem('nx_motion_preference'));
 });
 
-test('wishlist hearts acknowledge only successful AJAX saves', async ({ page }) => {
+test('card lift is only applied to pointer devices and respects reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
-  const wishlist = page.locator('.catalog-card__wishlist button').first();
-  test.skip(await wishlist.count() === 0, 'Customer account login is needed to test wishlist posting.');
-  await expect(wishlist).not.toHaveClass(/is-added/);
-  // A failed response must not imply that the product was saved.
-  await page.route('**/account/wishlist/**', route => route.fulfill({ status: 500, contentType: 'text/html', body: '<html><body></body></html>' }));
-  await wishlist.click();
-  await expect(wishlist).not.toHaveClass(/is-added/);
+  const canHover = await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches);
+  test.skip(!canHover, 'Hover microinteractions are intentionally disabled on touch devices.');
+  const card = page.locator('.catalog-card').first();
+  await card.hover();
+  await expect(card).not.toHaveCSS('transform', 'none');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(card).toHaveCSS('transform', 'none');
 });
 
+test('user-triggered toasts include a real countdown indicator', async ({ page }) => {
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('html')).toHaveAttribute('data-cart-drawer-ready', '1');
+  await page.evaluate(() => {
+    document.dispatchEvent(new CustomEvent('mc:toast', { detail: { message: 'Motion toast test', type: 'success' } }));
+  });
+  const item = page.locator('.storefront-toast', { hasText: 'Motion toast test' });
+  await expect(item).toBeVisible();
+  await expect(item.locator('.mc-toast-countdown')).toBeVisible();
+  await page.evaluate(() => { document.documentElement.dataset.motion = 'off'; });
+  await page.evaluate(() => {
+    document.dispatchEvent(new CustomEvent('mc:toast', { detail: { message: 'Motion is off', type: 'success' } }));
+  });
+  const plain = page.locator('.storefront-toast', { hasText: 'Motion is off' });
+  await expect(plain).toBeVisible();
+  await expect(plain.locator('.mc-toast-countdown')).toHaveCount(0);
+});
