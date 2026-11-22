@@ -1,4 +1,4 @@
-# Nexora Commerce 4.0.17
+# Nexora Commerce 4.0.18
 
 <p align="center"><img src="public/assets/branding/nexora-logo.png" width="360" alt="Nexora Commerce"></p>
 
@@ -6,7 +6,7 @@
 
 - **Стек:** PHP 8.4–8.5, Symfony 8.1, Twig SSR-витрина, адмінка на Vue 3.5 + TypeScript 6, Vite 8, MySQL 8.4 / MariaDB 10.11–11.4 (InnoDB, utf8mb4).
 - **Ліцензія:** MIT. Базовий self-hosted магазин не потребує платних компонентів.
-- **Extension API:** 2.0 (Settings Schema v2). Database schema: 89.
+- **Extension API:** 2.0 (Settings Schema v2). Database schema: 91.
 
 ## Можливості
 

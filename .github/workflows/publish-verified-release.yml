@@ -1,0 +1,107 @@
+name: Publish verified Nexora 4.0.18 release
+
+on:
+  workflow_run:
+    workflows:
+      - Playwright Regression
+      - Quality Gate
+      - Build Nexora production package
+      - Nexora QA
+    types: [completed]
+    branches: [main]
+
+# Publishing is deliberately restricted to the exact HEAD and version.
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: nexora-release-v4-0-18
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Require matching current main and all successful CI workflows
+        id: readiness
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq '.commit.sha')"
+          if [[ "$current" != "$TARGET_SHA" ]]; then
+            echo 'Release skipped: a newer main commit exists.'
+            exit 0
+          fi
+          if ! grep -Fq "public const VERSION = '4.0.18';" src/Core/Platform/PlatformVersion.php; then
+            echo 'Release skipped: this workflow is only for platform version 4.0.18.'
+            exit 0
+          fi
+          if gh release view v4.0.18 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists; not replacing it.'
+            exit 0
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$TARGET_SHA&per_page=100" > "$RUNNER_TEMP/nexora-release-runs.json"
+          required=(
+            'Nexora QA'
+            'Database runtime QA'
+            'Playwright Smoke'
+            'Playwright Regression'
+            'Quality Gate'
+            'Build Nexora production package'
+            'Production certification gate'
+            'PHP quality tooling'
+            'Nexora Twig template QA'
+            'Source integrity (UTF-8, safe Unicode)'
+            'Source duplication audit'
+            'Nexora dead-code audit'
+          )
+          for workflow in "${required[@]}"; do
+            if ! jq -e --arg name "$workflow" --arg sha "$TARGET_SHA"               '.workflow_runs | any(.[]; .name == $name and .head_sha == $sha and .status == "completed" and .conclusion == "success")'               "$RUNNER_TEMP/nexora-release-runs.json" >/dev/null; then
+              echo "Release not ready: $workflow has not passed on the current HEAD."
+              exit 0
+            fi
+          done
+          package_id="$(jq -r --arg sha "$TARGET_SHA"             '[.workflow_runs[] | select(.name == "Build Nexora production package" and .head_sha == $sha and .conclusion == "success")] | first | .id // empty'             "$RUNNER_TEMP/nexora-release-runs.json")"
+          if [[ -z "$package_id" ]]; then
+            echo 'Release not ready: a successful production package run is missing.'
+            exit 0
+          fi
+          echo "package_id=$package_id" >> "$GITHUB_OUTPUT"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+
+      - name: Download production package and verify SHA256
+        if: steps.readiness.outputs.ready == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_ID: ${{ steps.readiness.outputs.package_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          gh run download "$PACKAGE_ID" --repo "$GITHUB_REPOSITORY" --name Nexora_Commerce_v4.0.18_PRODUCTION --dir release
+          (cd release && sha256sum -c Nexora_Commerce_v4.0.18_PRODUCTION.zip.sha256)
+
+      - name: Create GitHub release and tag only after full verification
+        if: steps.readiness.outputs.ready == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          gh release create v4.0.18 \
+            release/Nexora_Commerce_v4.0.18_PRODUCTION.zip \
+            release/Nexora_Commerce_v4.0.18_PRODUCTION.zip.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$TARGET_SHA" \
+            --title 'Nexora Commerce 4.0.18' \
+            --notes-file docs/releases/v4.0.18.md
