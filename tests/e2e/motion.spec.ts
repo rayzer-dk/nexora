@@ -125,6 +125,8 @@ test('card lift is only applied to pointer devices and respects reduced motion',
 });
 
 test('user-triggered toasts include a real countdown indicator', async ({ page }) => {
+  // The global browser fixture enables reduced motion: explicitly opt in for this positive assertion.
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('html')).toHaveAttribute('data-cart-drawer-ready', '1');
   await page.evaluate(() => {
@@ -140,4 +142,13 @@ test('user-triggered toasts include a real countdown indicator', async ({ page }
   const plain = page.locator('.storefront-toast', { hasText: 'Motion is off' });
   await expect(plain).toBeVisible();
   await expect(plain.locator('.mc-toast-countdown')).toHaveCount(0);
+
+  await page.evaluate(() => { document.documentElement.dataset.motion = 'full'; });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.evaluate(() => {
+    document.dispatchEvent(new CustomEvent('mc:toast', { detail: { message: 'System prefers reduced motion', type: 'success' } }));
+  });
+  const reduced = page.locator('.storefront-toast', { hasText: 'System prefers reduced motion' });
+  await expect(reduced).toBeVisible();
+  await expect(reduced.locator('.mc-toast-countdown')).toHaveCount(0);
 });
