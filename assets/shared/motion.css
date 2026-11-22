@@ -12,7 +12,7 @@
 .ui-icon.mc-motion-pulse, .ui-icon[data-motion="pulse"] { animation: mc-motion-beat 800ms ease-in-out infinite; }
 .ui-icon.mc-motion-bounce, .ui-icon[data-motion="bounce"] { animation: mc-motion-bounce 460ms ease-out; }
 .ui-icon.mc-motion-shake, .ui-icon[data-motion="shake"] { animation: mc-motion-shake 360ms ease-in-out; }
-.ui-icon.mc-motion-confirm, .ui-icon[data-motion="confirm"], .admin-notice.is-success > .ui-icon, .store-notice.is-success > .ui-icon { animation: mc-motion-confirm var(--mc-motion-slow) ease-out; }
+.ui-icon.mc-motion-confirm, .ui-icon[data-motion="confirm"], .admin-notice.is-success > .ui-icon, .admin-toast.is-success > .ui-icon, .store-notice.is-success > .ui-icon { animation: mc-motion-confirm var(--mc-motion-slow) ease-out; }
 /* Keep the original button label visible while AJAX/AI is running. */
 :is(.button, .admin-button)[aria-busy="true"] { cursor: progress; }
 :is(.button, .admin-button)[aria-busy="true"]::after {

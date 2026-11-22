@@ -421,15 +421,21 @@ document.addEventListener('commerce:content-updated', () => {
 document.addEventListener('mc:toast', (event) => toast(event.detail?.message, event.detail?.type === 'error' ? 'error' : 'success', 6000));
 // Quick view: a product card opens in a dialog (photo, price, availability, add to cart) without leaving the list.
 let quickView = null;
-function closeQuickView() {
+function closeQuickView(immediate = false) {
   if (!quickView) return;
-  quickView.root.remove();
-  document.body.classList.remove('has-quick-view');
-  quickView.opener?.focus?.();
+  const closing = quickView;
   quickView = null;
+  document.body.classList.remove('has-quick-view');
+  closing.opener?.focus?.({ preventScroll: true });
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.motion === 'off';
+  if (immediate || reduced) closing.root.remove();
+  else {
+    closing.root.classList.add('is-closing');
+    window.setTimeout(() => closing.root.remove(), 170);
+  }
 }
 async function openQuickView(card, opener) {
-  closeQuickView();
+  closeQuickView(true);
   const link = q('.catalog-card__body h2 a', card);
   if (!link) return;
   const root = document.createElement('div');

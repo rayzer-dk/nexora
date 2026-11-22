@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'admin.motion.label' => 'Interface animations',
+    'admin.motion.full' => 'Full',
+    'admin.motion.minimal' => 'Minimal',
+    'admin.motion.off' => 'Off',
     'js_copied' => 'Copied',
     'js_copy_failed' => 'Could not copy',
 

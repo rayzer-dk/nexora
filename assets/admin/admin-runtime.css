@@ -2424,3 +2424,14 @@ form:has(input[name="display_image_fit"][value="cover"]:checked) .image-preview_
 
 .lang-form-bar__notice { display: flex; align-items: flex-start; gap: var(--mc-space-2); margin: 0; padding: var(--mc-space-2) var(--mc-space-3); border-radius: var(--mc-radius-sm); background: var(--mc-color-info-soft, var(--mc-color-primary-soft)); color: var(--mc-color-text); font-size: var(--mc-font-size-sm); line-height: 1.4; }
 .lang-form-bar__notice .ui-icon { flex: none; margin-top: 2px; color: var(--mc-color-primary); }
+
+/* Motion phase 3: admin icons only respond to interaction. */
+@media (hover: hover) and (pointer: fine) {
+  .admin-icon-button > .ui-icon, .admin-nav__link > .ui-icon { transition: transform var(--mc-motion-fast) ease-out; }
+  .admin-icon-button:hover > .ui-icon, .admin-nav__link:hover > .ui-icon { transform: translateY(-1px); }
+}
+.admin-icon-button:active > .ui-icon { transform: scale(.92); }
+.admin-dialog[open] { animation: mc-motion-reveal var(--mc-motion-base) ease-out both; }
+.admin-user-menu[open] > .admin-user-menu__panel { animation: mc-motion-reveal var(--mc-motion-base) ease-out both; }
+.admin-motion-control { display: grid; gap: var(--mc-space-1); padding: var(--mc-space-2); font-size: var(--mc-font-size-sm); }
+.admin-motion-control select { width: 100%; }

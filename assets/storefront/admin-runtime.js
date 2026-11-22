@@ -2617,7 +2617,31 @@ function initQuickPreview() {
     const trigger = event.target.closest('[data-quick-preview]');
     if (!trigger) return;
     event.preventDefault();
-    body.replaceChildren(Object.assign(document.createElement('p'), { textContent: t('js_loading') }));
+    const loading = document.createElement('div');
+    loading.className = 'mc-motion-cart-skeleton';
+    loading.setAttribute('role', 'status');
+    const description = document.createElement('span');
+    description.className = 'visually-hidden';
+    description.textContent = t('js_loading');
+    loading.append(description);
+    for (let i = 0; i < 3; i += 1) {
+      const row = document.createElement('div');
+      row.className = 'mc-motion-cart-skeleton__row';
+      const image = document.createElement('span');
+      image.className = 'mc-motion-cart-skeleton__thumb';
+      const info = document.createElement('span');
+      info.className = 'mc-motion-cart-skeleton__text';
+      for (let j = 0; j < 2; j += 1) {
+        const line = document.createElement('span');
+        line.className = 'mc-motion-cart-skeleton__line';
+        info.append(line);
+      }
+      row.append(image, info);
+      loading.append(row);
+    }
+    body.replaceChildren(loading);
+    body.setAttribute('aria-busy', 'true');
+    trigger.setAttribute('aria-busy', 'true');
     if (!dialog.open) dialog.showModal();
     try {
       const response = await fetch(trigger.dataset.quickPreview, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
@@ -2628,6 +2652,9 @@ function initQuickPreview() {
       body.replaceChildren(...nodes);
     } catch (_) {
       body.replaceChildren(Object.assign(document.createElement('p'), { textContent: t('js_preview_failed') }));
+    } finally {
+      body.removeAttribute('aria-busy');
+      trigger.removeAttribute('aria-busy');
     }
   });
 }
@@ -3460,6 +3487,8 @@ function initCacheMenu() {
     const load = async () => {
       if (!panel) return;
       loaded = true;
+      const summary = menu.querySelector('summary');
+      summary?.setAttribute('aria-busy', 'true');
       try {
         const response = await fetch(menu.dataset.src || '', { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
         if (!response.ok) throw new Error('cache');
@@ -3467,6 +3496,8 @@ function initCacheMenu() {
       } catch (_) {
         loaded = false;
         panel.textContent = t('js_media_unavailable');
+      } finally {
+        summary?.removeAttribute('aria-busy');
       }
     };
     menu.addEventListener('toggle', () => { if (menu.open && !loaded) void load(); });

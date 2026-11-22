@@ -270,3 +270,8 @@ body[data-product-layout="stacked"] .product-region--summary { position: static;
 .product-tiers h2 { font-size: var(--mc-font-size-lg); margin: 0 0 var(--mc-space-3); }
 .product-tiers__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--mc-space-2); }
 .product-tiers__list li { display: flex; justify-content: space-between; gap: var(--mc-space-3); padding: var(--mc-space-2) 0; border-bottom: 1px solid var(--mc-color-border); }
+
+/* Fullscreen image opens with a light scale transition, but the zoom controls remain native. */
+@keyframes mc-gallery-open { from { opacity: 0; transform: scale(.975); } to { opacity: 1; transform: none; } }
+.gallery-lightbox[open] .gallery-lightbox__stage img { animation: mc-gallery-open var(--mc-motion-base) ease-out both; }
+.gallery-lightbox[open] .gallery-lightbox__bar { animation: mc-motion-reveal var(--mc-motion-base) ease-out both; }

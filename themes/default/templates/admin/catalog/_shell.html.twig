@@ -112,6 +112,13 @@
                     <a href="{{ path('admin_account_security') }}">{{ ui_icon('shield-check', 18) }}<span>{{ ui_text('admin.mfa.nav') }}</span></a>
                     <a href="{{ path('admin_account_quick_links') }}">{{ ui_icon('star', 18) }}<span>{{ ui_text('admin.quicklinks.title') }}</span></a>
                     <a href="{{ path('admin_help') }}">{{ ui_icon('file-text', 18) }}<span>{{ ui_text('admin.help.title') }}</span></a>
+                    <label class="admin-motion-control" for="admin-motion-preference"><span>{{ ui_text('admin.motion.label') }}</span>
+                        <select id="admin-motion-preference" data-motion-select>
+                            <option value="full">{{ ui_text('admin.motion.full') }}</option>
+                            <option value="minimal">{{ ui_text('admin.motion.minimal') }}</option>
+                            <option value="off">{{ ui_text('admin.motion.off') }}</option>
+                        </select>
+                    </label>
                     {% if admin_can('system.update') %}<a href="{{ path('admin_system_update') }}">{{ ui_icon('refresh-cw', 18) }}<span>{{ ui_text('admin.update.title') }}</span></a>{% endif %}
                     {% if admin_can('system.settings') %}<a href="{{ path('admin_system_stability') }}">{{ ui_icon('life-buoy', 18) }}<span>{{ ui_text('admin.help.recovery') }}</span></a>{% endif %}
                     {% if admin_can('extensions.manage') %}<a href="{{ path('admin_system_extensions') }}">{{ ui_icon('puzzle', 18) }}<span>{{ ui_text('admin_extensions') }}</span></a>{% endif %}

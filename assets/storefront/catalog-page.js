@@ -109,6 +109,30 @@ if (form instanceof HTMLFormElement) {
   const grid = () => document.querySelector('.product-grid');
   if (!grid() || !window.fetch || !window.history?.pushState) return;
   let pending = null; // the newest request wins: a click or Back while loading must not leave the address and the grid out of step
+  let activeSkeleton = null;
+  const showSkeleton = (target) => {
+    if (!(target instanceof HTMLElement)) return null;
+    activeSkeleton?.remove();
+    const skeleton = document.createElement('div');
+    skeleton.className = 'mc-motion-catalog-skeleton';
+    skeleton.setAttribute('role', 'status');
+    skeleton.setAttribute('aria-label', String(window.MC_I18N?.js_loading || 'Loading'));
+    for (let i = 0; i < 6; i += 1) {
+      const card = document.createElement('div');
+      card.className = 'mc-motion-catalog-skeleton__card';
+      card.setAttribute('aria-hidden', 'true');
+      const image = document.createElement('span');
+      image.className = 'mc-motion-catalog-skeleton__media';
+      const line = document.createElement('span');
+      line.className = 'mc-motion-catalog-skeleton__line';
+      card.append(image, line);
+      skeleton.append(card);
+    }
+    target.before(skeleton);
+    target.hidden = true;
+    activeSkeleton = skeleton;
+    return skeleton;
+  };
   const swap = (doc) => {
     ['.product-grid', 'nav.pager'].forEach((selector) => {
       const current = document.querySelector(selector);
@@ -124,6 +148,7 @@ if (form instanceof HTMLFormElement) {
     pending = request;
     const target = grid();
     target?.setAttribute('aria-busy', 'true');
+    const skeleton = showSkeleton(target);
     try {
       const response = await fetch(url, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', signal: request.signal });
       if (!response.ok) throw new Error('page');
@@ -131,13 +156,15 @@ if (form instanceof HTMLFormElement) {
       if (!doc.querySelector('.product-grid')) throw new Error('page');
       swap(doc);
       if (push) history.pushState({ mcCatalog: true }, '', url);
-      grid()?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      grid()?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.motion === 'off' ? 'auto' : 'smooth' });
     } catch (error) {
       if (error?.name !== 'AbortError') window.location.assign(url);
     } finally {
       if (pending === request) {
         pending = null;
+        if (activeSkeleton === skeleton) { skeleton?.remove(); activeSkeleton = null; }
         grid()?.removeAttribute('aria-busy');
+        grid()?.removeAttribute('hidden');
       }
     }
   };

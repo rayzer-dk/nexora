@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'admin.motion.label' => 'Анимации интерфейса',
+    'admin.motion.full' => 'Полные',
+    'admin.motion.minimal' => 'Минимальные',
+    'admin.motion.off' => 'Отключены',
     'js_copied' => 'Скопировано',
     'js_copy_failed' => 'Не удалось скопировать',
     'admin.analytics.index.analityka' => 'Аналитика',

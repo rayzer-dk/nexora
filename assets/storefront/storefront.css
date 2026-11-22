@@ -895,3 +895,43 @@ body[data-image-bg="dark"] :is(.catalog-card__media img, .product-gallery__open 
   border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm);
   background: var(--mc-color-surface-raised); color: var(--mc-color-text); font: inherit;
 }
+
+/* Motion phase 3: page-scoped loading placeholders; the original grid is kept in DOM until success. */
+.product-grid[hidden] { display: none; }
+.mc-motion-catalog-skeleton {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mc-space-3);
+  min-height: 300px;
+}
+.mc-motion-catalog-skeleton__card {
+  display: grid;
+  align-content: start;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-3);
+  border: 1px solid var(--mc-color-border);
+  border-radius: var(--mc-radius-md);
+}
+.mc-motion-catalog-skeleton__media, .mc-motion-catalog-skeleton__line {
+  display: block;
+  border-radius: var(--mc-radius-sm);
+  background: linear-gradient(100deg, var(--mc-color-surface-subtle) 20%, var(--mc-color-border) 40%, var(--mc-color-surface-subtle) 60%);
+  background-size: 200% 100%;
+  animation: mc-motion-shimmer 1.5s linear infinite;
+}
+.mc-motion-catalog-skeleton__media { aspect-ratio: 1; }
+.mc-motion-catalog-skeleton__line { width: 70%; height: var(--mc-space-3); }
+@media (min-width: 640px) { .mc-motion-catalog-skeleton { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .mc-motion-catalog-skeleton { grid-template-columns: repeat(auto-fit, minmax(208px, 1fr)); } }
+@keyframes mc-motion-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.quick-view__backdrop { animation: mc-motion-fade-in var(--mc-motion-base) ease-out both; }
+.quick-view__dialog { animation: mc-motion-reveal var(--mc-motion-base) ease-out both; }
+.quick-view.is-closing { pointer-events: none; }
+.quick-view.is-closing .quick-view__backdrop { animation-direction: reverse; animation-duration: 170ms; }
+.quick-view.is-closing .quick-view__dialog { animation-direction: reverse; animation-duration: 170ms; }
+.store-switcher[open] > .store-switcher__menu, .cf__group[open] > :not(summary) {
+  animation: mc-motion-reveal var(--mc-motion-base) ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-motion-catalog-skeleton__media, .mc-motion-catalog-skeleton__line { animation: none; }
+}
