@@ -133,9 +133,10 @@ main > * + * { margin-top: var(--mc-section-gap); }
   background: var(--mc-color-surface-subtle); color: var(--mc-color-text);
   font-size: var(--mc-font-size-sm); font-weight: var(--mc-font-weight-semibold); line-height: 1;
   white-space: nowrap; text-decoration: none; cursor: pointer; user-select: none;
-  transition: background var(--mc-transition), border-color var(--mc-transition), color var(--mc-transition), box-shadow var(--mc-transition);
+  transition: background var(--mc-transition), border-color var(--mc-transition), color var(--mc-transition), box-shadow var(--mc-transition), transform var(--mc-motion-fast);
 }
 .button:hover { text-decoration: none; }
+.button:active:not(:disabled) { transform: scale(.98); }
 .button > .ui-icon { vertical-align: 0; }
 .button:disabled, .button.is-loading { opacity: 0.6; cursor: not-allowed; }
 .button--primary { background: var(--mc-color-primary-fill); border-color: var(--mc-color-primary-fill); color: var(--mc-color-primary-contrast); }

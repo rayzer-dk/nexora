@@ -310,13 +310,13 @@ if (checkout) {
     }
     if (errorsBox) errorsBox.hidden = true;
     form.dataset.submitting = '1';
-    qa('[data-place-order]').forEach((button) => { button.disabled = true; button.classList.add('is-loading'); button.textContent = i18n.placing; });
+    qa('[data-place-order]').forEach((button) => { button.disabled = true; button.classList.add('is-loading'); button.setAttribute('aria-busy', 'true'); button.textContent = i18n.placing; });
   });
   // pageshow: coming back from the payment provider with the bfcache must not leave the button disabled.
   window.addEventListener('pageshow', (event) => {
     if (!event.persisted || !form) return;
     form.dataset.submitting = '0';
-    qa('[data-place-order]').forEach((button) => { button.disabled = false; button.classList.remove('is-loading'); });
+    qa('[data-place-order]').forEach((button) => { button.disabled = false; button.classList.remove('is-loading'); button.removeAttribute('aria-busy'); });
   });
   q('[data-checkout-flash]')?.scrollIntoView({ block: 'center' });
 

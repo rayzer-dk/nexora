@@ -18,13 +18,14 @@ test('catalog cards respect system reduced motion and explicit off mode', async 
 
 test('cart skeleton exists only while its request is in flight', async ({ page }) => {
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('html')).toHaveAttribute('data-cart-drawer-ready', '1');
   let releaseRequest: () => void = () => {};
   const gate = new Promise<void>((resolve) => { releaseRequest = resolve; });
   await page.route('**/cart/drawer', async (route) => {
     await gate;
     await route.continue();
   });
-  const click = page.locator('[data-cart-open]').first().click({ noWaitAfter: true });
+  const click = page.locator('[data-cart-open]:visible').first().click({ noWaitAfter: true });
   const skeleton = page.locator('.mc-motion-cart-skeleton__row').first();
   try {
     await expect(skeleton).toBeVisible();
@@ -110,3 +111,15 @@ test('admin user menu exposes a persisted motion preference', async ({ page }, t
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'minimal');
   await page.evaluate(() => localStorage.removeItem('nx_motion_preference'));
 });
+
+test('wishlist hearts acknowledge only successful AJAX saves', async ({ page }) => {
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const wishlist = page.locator('.catalog-card__wishlist button').first();
+  test.skip(await wishlist.count() === 0, 'Customer account login is needed to test wishlist posting.');
+  await expect(wishlist).not.toHaveClass(/is-added/);
+  // A failed response must not imply that the product was saved.
+  await page.route('**/account/wishlist/**', route => route.fulfill({ status: 500, contentType: 'text/html', body: '<html><body></body></html>' }));
+  await wishlist.click();
+  await expect(wishlist).not.toHaveClass(/is-added/);
+});
+

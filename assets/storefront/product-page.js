@@ -20,6 +20,7 @@ class CommerceQuantity extends HTMLElement {
 }
 
 import { animateCartFlight } from '../shared/cart-flight.js';
+import { playMotion } from '../shared/motion-actions.js';
 
 class CommerceProductGallery extends HTMLElement {
     connectedCallback() {
@@ -407,6 +408,7 @@ function initOptionPicker() {
     const keyOf = (variant) => Object.entries(variant.values || {}).map(([option, value]) => `${option}:${value}`).sort().join('|');
     const initial = variants.find((variant) => variant.selected) || variants[0];
     let chosen = { ...(initial.values || {}) };
+    let lastAvailable = Boolean(initial.available);
 
     const match = () => variants.find((variant) => Object.keys(chosen).every((option) => String((variant.values || {})[option]) === String(chosen[option])) && Object.keys(variant.values || {}).length === Object.keys(chosen).length);
     const compatible = (option, value) => variants.some((variant) => String((variant.values || {})[option]) === String(value) && Object.entries(chosen).every(([other, picked]) => other === String(option) || String((variant.values || {})[other]) === String(picked)));
@@ -419,6 +421,14 @@ function initOptionPicker() {
         if (variant.id !== initial.id) document.querySelectorAll('.product-price__old, .product-price__discount').forEach((node) => { node.hidden = true; });
         else document.querySelectorAll('.product-price__old, .product-price__discount').forEach((node) => { node.hidden = false; });
         document.querySelectorAll('form[data-buy-actions] button[type="submit"]').forEach((button) => { button.disabled = !variant.available; });
+        if (Boolean(variant.available) !== lastAvailable) {
+          playMotion(document.querySelector('.availability__dot'), [
+            { transform: 'scale(.75)', opacity: .55 },
+            { transform: 'scale(1.45)', opacity: 1, offset: .5 },
+            { transform: 'scale(1)', opacity: 1 },
+          ], { duration: 330 });
+          lastAvailable = Boolean(variant.available);
+        }
         if (variant.id !== initial.id || new URLSearchParams(location.search).has('variant')) {
             try { history.replaceState(null, '', `${location.pathname}?variant=${encodeURIComponent(variant.id)}${location.hash}`); } catch { /* ignore */ }
         }

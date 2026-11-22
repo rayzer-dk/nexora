@@ -1,5 +1,6 @@
 import './cart-drawer.js';
 import { animateCartFlight } from '../shared/cart-flight.js';
+import { celebrateWishlist, addToastCountdown, playMotion } from '../shared/motion-actions.js';
 import { initMotionPreference } from '../shared/motion-preference.js';
 initMotionPreference();
 import { lucideIcon } from '../shared/lucide-icons.js';
@@ -49,6 +50,7 @@ function toast(message, type = 'success', timeout = 4200) {
   close.addEventListener('click', () => item.remove());
   item.append(text, close);
   stack.appendChild(item);
+  addToastCountdown(item, timeout);
   requestAnimationFrame(() => item.classList.add('is-visible'));
   if (timeout > 0) {
     window.setTimeout(() => {
@@ -95,6 +97,7 @@ function initAjaxForms() {
           toast(n.textContent.trim(), isError ? 'error' : 'success', isError ? 7000 : 4200);
         });
         if (notices.length === 0 && form.dataset.ajaxOk) toast(form.dataset.ajaxOk, 'success');
+        if (!failed && response.ok && form.matches('.catalog-card__wishlist, .product-wishlist')) celebrateWishlist(submit);
         if (!failed && form.hasAttribute('data-ajax-reset')) form.reset();
         // a captcha challenge is single-use: the page is not reloaded, so ask for a fresh one
         form.querySelector('[data-captcha-refresh]')?.click();
@@ -272,6 +275,7 @@ function initLiveSearch() {
     results.hidden = false;
     input.setAttribute('aria-expanded', 'true');
     form.classList.add('has-live-results');
+    playMotion(results, [{ opacity: 0, transform: 'translateY(-5px)' }, { opacity: 1, transform: 'none' }], { duration: 170 });
   };
 
   const search = async () => {
@@ -285,6 +289,10 @@ function initLiveSearch() {
     controller = new AbortController();
     const current = ++generation;
     form.classList.add('is-searching');
+    playMotion(form.querySelector('button .ui-icon'), [
+      { transform: 'rotate(-12deg) scale(0.93)' },
+      { transform: 'rotate(0deg) scale(1)' },
+    ], { duration: 300 });
     try {
       const response = await fetch(`/api/storefront/search/suggest?q=${encodeURIComponent(query)}`, {
         credentials: 'same-origin',

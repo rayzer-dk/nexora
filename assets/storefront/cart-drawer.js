@@ -224,6 +224,8 @@ document.addEventListener('click', (event) => {
 });
 
 // Any "add to cart" (catalog card, product page) announces itself; the drawer follows on desktop.
+document.documentElement.dataset.cartDrawerReady = '1';
+
 document.addEventListener('mc:cart-updated', (event) => {
   const { count, source } = event.detail || {};
   setBadges(count);
