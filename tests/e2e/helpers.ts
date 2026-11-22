@@ -58,9 +58,20 @@ let demoProductEdit = '';
 export async function demoProductEditUrl(page: Page): Promise<string> {
   if (demoProductEdit) return demoProductEdit;
   await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
-  const href = await page.locator('tr').filter({ hasNotText: /Picked|E2E|Warm/i }).locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().getAttribute('href');
-  demoProductEdit = href ?? '';
-  return demoProductEdit;
+  const hrefs = await page.locator('tr').filter({ hasNotText: /Picked|E2E|Warm/i })
+    .locator('a[href*="/admin/catalog/products/"][href$="/edit"]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href')).filter((href): href is string => Boolean(href)));
+  for (const href of [...new Set(hrefs)]) {
+    await page.goto(href, { waitUntil: 'domcontentloaded' });
+    const status = await page.locator('select[name="status"]').inputValue();
+    const slug = (await page.locator('input[name="slug"]').first().inputValue()).replace(/^\/+/, '');
+    if (status !== 'published' || !slug) continue;
+    const response = await page.request.get('/' + slug, { failOnStatusCode: false });
+    if (response.status() >= 400) continue;
+    demoProductEdit = href;
+    return href;
+  }
+  throw new Error('No published demo product with a working storefront URL was found.');
 }
 
 /** The media library loads its upload script lazily; a file chosen before it is ready would not be sent. */
