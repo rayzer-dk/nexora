@@ -31,6 +31,7 @@ async function openProductWithoutOptions(page: Page): Promise<void> {
 }
 
 test('options create variants and the storefront price follows the chosen value', async ({ page }, testInfo) => {
+  test.setTimeout(120_000); // Allow mobile WebKit to complete product and cart navigation.
   await login(page);
   await openProductWithoutOptions(page);
   const slug = await page.locator('input[name="slug"]').inputValue();
