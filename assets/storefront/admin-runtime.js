@@ -100,7 +100,7 @@ window.mcAdminToast = toast;
 document.addEventListener('submit', (event) => {
   const form = event.target;
   if (!(form instanceof HTMLFormElement) || form.hasAttribute('data-admin-ajax')) return;
-  queueMicrotask(() => {
+  Promise.resolve().then(() => {
     if (event.defaultPrevented || !form.checkValidity()) return;
     const button = event.submitter;
     if (!(button instanceof HTMLButtonElement) || !button.matches('[data-primary-submit], .admin-save-bar button[type="submit"]')) return;
