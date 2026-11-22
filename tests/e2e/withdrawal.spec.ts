@@ -27,6 +27,8 @@ test('EU withdrawal function: footer link, two-step flow, acknowledgement and ad
   await page.locator('[data-withdrawal-start]').click();
   await expect(page.locator('[data-withdrawal-summary]')).toContainText(order);
   await expect(page.locator('[data-withdrawal-confirm]')).toBeVisible();
+  // The server's anti-bot guard intentionally rejects forms submitted within one second of rendering.
+  await page.waitForTimeout(1200);
   await page.locator('[data-withdrawal-confirm]').click();
   await expect(page.locator('[data-withdrawal-done]')).toBeVisible();
   await expect(page.locator('[data-withdrawal-reference]')).toHaveText(/^WD-[0-9A-F]{10}$/);

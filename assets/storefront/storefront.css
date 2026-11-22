@@ -182,6 +182,7 @@ select { padding-right: var(--mc-space-8); }
 input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--mc-color-muted) 75%, transparent); }
 input:not([type="checkbox"], [type="radio"], [type="file"]):hover, select:hover, textarea:hover { border-color: var(--mc-color-muted); }
 input:focus, select:focus, textarea:focus { outline: 0; border-color: var(--mc-color-primary); box-shadow: 0 0 0 3px var(--mc-color-focus); }
+select:focus { outline: 2px solid var(--mc-color-primary); outline-offset: 2px; }
 input:disabled, select:disabled, textarea:disabled { background: var(--mc-color-surface-subtle); color: var(--mc-color-muted); cursor: not-allowed; }
 input[type="checkbox"], input[type="radio"] { flex: none; width: var(--mc-icon-size-md); height: var(--mc-icon-size-md); margin: 0; accent-color: var(--mc-color-primary); }
 input[type="file"] { width: 100%; padding: var(--mc-space-2); border: 1px dashed var(--mc-color-border-strong); border-radius: var(--mc-radius-sm); font-size: var(--mc-font-size-sm); }

@@ -57,7 +57,8 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   await loginAdmin(page);
   await page.goto(await demoProductEditUrl(page), { waitUntil: 'domcontentloaded' });
   await expectNoServerError(page);
-  const name = await page.locator('input[name="name"]').first().inputValue().catch(() => '');
+  // Navigate by the product's canonical slug: search results depend on indexing, synonyms and demo data.
+  const slug = await page.locator('input[name="slug"]').first().inputValue();
   await openProductTab(page, 'sales');
   if (!(await page.locator('#options input[name="new_entry[name]"]').isVisible())) await page.locator('#options .admin-inline-create summary').click();
   await page.locator('input[name="new_entry[name]"]').fill('Gift wrap E2E');
@@ -75,16 +76,16 @@ test('customer options: a shopper ticks an extra, the cart shows it and the pric
   await page.locator('input[name^="addon_value"][name$="[stock]"]').last().fill('0');
   await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_option_action"][value="save"]').click()]);
   await page.waitForTimeout(9000); // the product page is cached for a few seconds
-  await page.goto('/catalog?q=' + encodeURIComponent(name.split(' ')[0] || 'Fashion'), { waitUntil: 'domcontentloaded' });
-  await page.locator('[data-product-card] h2 a').first().click();
+  await page.goto('/' + slug.replace(/^\/+/, ''), { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
   await expect(page.locator('[data-addon-picker] input[type="checkbox"]').last()).toBeDisabled();
   await page.goto(await demoProductEditUrl(page), { waitUntil: 'domcontentloaded' });
   await openProductTab(page, 'sales');
   await page.locator('input[name^="addon_value"][name$="[stock]"]').last().fill('');
   await Promise.all([page.waitForURL(/#addons|\/edit/), page.locator('button[name="_option_action"][value="save"]').click()]);
   await page.waitForTimeout(9000);
-  await page.goto('/catalog?q=' + encodeURIComponent(name.split(' ')[0] || 'Fashion'), { waitUntil: 'domcontentloaded' });
-  await page.locator('[data-product-card] h2 a').first().click();
+  await page.goto('/' + slug.replace(/^\/+/, ''), { waitUntil: 'domcontentloaded' });
+  await expectNoServerError(page);
   const picker = page.locator('[data-addon-picker]');
   await expect(picker).toBeAttached();
   await picker.locator('input[type="checkbox"]').last().check();
