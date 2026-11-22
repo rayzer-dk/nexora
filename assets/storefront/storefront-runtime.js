@@ -60,6 +60,25 @@ function toast(message, type = 'success', timeout = 4200) {
   }
 }
 
+// The order-created page acknowledges successful order creation, not payment settlement.
+const orderCreatedIcon = document.querySelector('.ck-success__icon .ui-icon');
+if (orderCreatedIcon) {
+  playMotion(orderCreatedIcon, [
+    { transform: 'scale(.6)', opacity: .3 },
+    { transform: 'scale(1.12)', opacity: 1, offset: .7 },
+    { transform: 'scale(1)', opacity: 1 },
+  ], { duration: 420 });
+}
+
+document.addEventListener('toggle', (event) => {
+  const panel = event.target;
+  if (!(panel instanceof HTMLElement) || !panel.open || !panel.closest('.checkout-page')) return;
+  playMotion(panel.querySelector(':scope > :not(summary)'), [
+    { opacity: 0, transform: 'translateY(-6px)' },
+    { opacity: 1, transform: 'none' },
+  ], { duration: 180 });
+}, true);
+
 function initStoreNotices() {
   qa('[data-store-toast-source], .global-notice').forEach((source) => {
     const message = source.textContent.trim();

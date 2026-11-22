@@ -1,5 +1,6 @@
 import '../admin/admin-runtime.js';
 import { initMotionPreference } from '../shared/motion-preference.js';
+import { addToastCountdown, playMotion } from '../shared/motion-actions.js';
 initMotionPreference();
 import '../shared/details-popovers.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
@@ -59,6 +60,7 @@ function toast(message, type = 'info', timeout = 5200) {
   close.addEventListener('click', () => item.remove());
   item.append(icon, text, close);
   stack.appendChild(item);
+  addToastCountdown(item, timeout);
   requestAnimationFrame(() => item.classList.add('is-visible'));
   if (timeout > 0) {
     window.setTimeout(() => {
@@ -93,6 +95,20 @@ document.addEventListener('toggle', (event) => {
 
 window.mcAdminToast = toast;
 
+// Ordinary Save forms navigate to a new page: show only an in-flight indicator.
+// Success feedback comes from the server flash on the following page.
+document.addEventListener('submit', (event) => {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement) || form.hasAttribute('data-admin-ajax')) return;
+  queueMicrotask(() => {
+    if (event.defaultPrevented || !form.checkValidity()) return;
+    const button = event.submitter;
+    if (!(button instanceof HTMLButtonElement) || !button.matches('[data-primary-submit], .admin-save-bar button[type="submit"]')) return;
+    button.setAttribute('aria-busy', 'true');
+    button.querySelector('.ui-icon')?.setAttribute('data-motion', 'spin');
+  });
+});
+
 function initFlashToasts() {
   qa('[data-toast-source], .admin-notice').forEach((source) => {
     const message = source.textContent.trim();
@@ -117,7 +133,13 @@ function initAdminAjaxForms() {
       const target = submitter?.getAttribute('formaction') || form.action;
       const body = new FormData(form);
       if (submitter?.getAttribute('name')) body.append(submitter.getAttribute('name') || '', submitter.getAttribute('value') || '');
-      if (submitter instanceof HTMLButtonElement) submitter.disabled = true;
+      const previousIcon = submitter?.querySelector('.ui-icon');
+      let success = false;
+      if (submitter instanceof HTMLButtonElement) {
+        submitter.disabled = true;
+        submitter.setAttribute('aria-busy', 'true');
+        previousIcon?.setAttribute('data-motion', 'spin');
+      }
       try {
         const response = await fetch(target, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', redirect: 'follow' });
         if (response.redirected && /\/admin\/login/.test(new URL(response.url).pathname)) {
@@ -127,6 +149,8 @@ function initAdminAjaxForms() {
         const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
         const notices = Array.from(doc.querySelectorAll('[data-toast-source], .admin-notice')).filter((n) => n.textContent.trim() !== '');
         if (!response.ok && notices.length === 0) throw new Error('request failed');
+        success = response.ok && notices.some((n) => n.classList.contains('is-success')) &&
+          !notices.some((n) => n.classList.contains('is-error'));
         notices.forEach((n) => {
           const type = n.classList.contains('is-error') ? 'error' : n.classList.contains('is-warning') ? 'warning' : n.classList.contains('is-success') ? 'success' : 'info';
           toast(n.textContent.trim(), type);
@@ -151,7 +175,17 @@ function initAdminAjaxForms() {
         form.submit();
         return;
       } finally {
-        if (submitter instanceof HTMLButtonElement) submitter.disabled = false;
+        if (submitter instanceof HTMLButtonElement) {
+          submitter.disabled = false;
+          submitter.removeAttribute('aria-busy');
+        }
+        previousIcon?.removeAttribute('data-motion');
+        if (success && previousIcon?.isConnected && submitter?.isConnected) {
+          const check = lucideIconNode('check', 16);
+          previousIcon.replaceWith(check);
+          playMotion(check, [{ transform: 'scale(.8)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1)' }], { duration: 280 });
+          window.setTimeout(() => { if (check.isConnected) check.replaceWith(previousIcon); }, 1100);
+        }
       }
     });
   });
@@ -852,6 +886,7 @@ function initQuickStatus() {
         if (badge) {
           badge.className = 'admin-badge is-' + (onNow ? (box.dataset.onTone || 'success') : (box.dataset.offTone || 'warning'));
           badge.textContent = state;
+          playMotion(badge, [{ opacity: 0.45, transform: 'scale(.95)' }, { opacity: 1, transform: 'none' }], { duration: 210 });
         }
         // The list shows only the switch: its state is spoken and shown on hover.
         if (box.dataset.statePrefix) {
@@ -1102,7 +1137,7 @@ function enhanceTable(table) {
     searchBox.placeholder = t('js_table_search');
     searchBox.setAttribute('aria-label', t('js_table_search'));
     wrap.before(searchBox);
-    searchBox.addEventListener('input', () => { query = searchBox.value.trim().toLowerCase(); state.page = 1; render(); });
+    searchBox.addEventListener('input', () => { query = searchBox.value.trim().toLowerCase(); state.page = 1; render(true); });
   }
   const haystack = new WeakMap(original.map((row) => [row, row.textContent.replace(/\s+/g, ' ').toLowerCase()]));
 
@@ -1947,13 +1982,19 @@ function initCategoryTree() {
     try { collapsed = new Set(JSON.parse(remembered || '[]')); } catch (_error) { collapsed = new Set(); }
   }
   const save = () => { try { localStorage.setItem(STORE, JSON.stringify([...collapsed])); } catch (_error) { /* storage can be blocked */ } };
-  const paint = () => {
+  const paint = (animate = false) => {
     const hidden = new Set();
+    let animated = 0;
     rows().forEach((row) => {
       const parent = row.dataset.catParent;
       const isHidden = parent !== '' && (collapsed.has(parent) || hidden.has(parent));
       if (isHidden) hidden.add(row.dataset.catNode);
+      const wasHidden = row.hidden;
       row.hidden = isHidden;
+      if (animate && wasHidden && !isHidden && animated < 20) {
+        animated += 1;
+        playMotion(row, [{ opacity: 0.3 }, { opacity: 1 }], { duration: 160 });
+      }
       const toggle = q('[data-tree-toggle]', row);
       if (toggle) {
         const open = !collapsed.has(row.dataset.catNode);
@@ -1969,10 +2010,10 @@ function initCategoryTree() {
     const id = toggle.closest('[data-cat-row]').dataset.catNode;
     if (collapsed.has(id)) collapsed.delete(id); else collapsed.add(id);
     save();
-    paint();
+    paint(true);
   });
   const withChildren = () => rows().filter((row) => q('[data-tree-toggle]', row)).map((row) => row.dataset.catNode);
-  q('[data-tree-expand]')?.addEventListener('click', () => { collapsed.clear(); save(); paint(); });
+  q('[data-tree-expand]')?.addEventListener('click', () => { collapsed.clear(); save(); paint(true); });
   q('[data-tree-collapse]')?.addEventListener('click', () => { collapsed = new Set(withChildren()); save(); paint(); });
   if (remembered === null) save();
   paint();
@@ -2514,6 +2555,12 @@ function initImportSteps() {
     const submit = q('button[type="submit"]', form);
     box.hidden = false;
     submit.disabled = true;
+    submit.setAttribute('aria-busy', 'true');
+    const percentage = document.createElement('output');
+    percentage.className = 'mc-import-percentage';
+    percentage.setAttribute('aria-live', 'off');
+    percentage.textContent = '0%';
+    bar.after(percentage);
     const fill = (template, values) => Object.entries(values).reduce((out, [key, value]) => out.replace(`%${key}%`, String(value)), template);
     const totals = { created: 0, updated: 0, failed: 0 };
     const errors = [];
@@ -2533,10 +2580,12 @@ function initImportSteps() {
         offset += Number(part.step || 0);
         const total = Math.max(1, Number(part.total || 1));
         bar.value = Math.min(100, Math.round((offset / total) * 100));
+        percentage.textContent = `${bar.value}%`;
         text.textContent = fill(form.dataset.textWorking || '', { done: Math.min(offset, total), total, ...totals });
         if (part.done || Number(part.step || 0) === 0) break;
       }
       text.textContent = fill(form.dataset.textDone || '', totals);
+      submit.removeAttribute('aria-busy');
       if (errors.length) {
         const list = document.createElement('ul');
         errors.forEach((message) => { const li = document.createElement('li'); li.textContent = message; list.append(li); });
@@ -2545,6 +2594,7 @@ function initImportSteps() {
     } catch (error) {
       text.textContent = error instanceof Error ? error.message : (form.dataset.textError || '');
       submit.disabled = false;
+      submit.removeAttribute('aria-busy');
     }
   });
 }
@@ -2556,8 +2606,17 @@ function initCopyControls() {
       const target = targetSelector ? q(targetSelector) : null;
       const value = button.dataset.copyValue ?? target?.textContent?.trim() ?? '';
       if (!value) return;
+      const showCopied = () => {
+        const icon = button.querySelector('.ui-icon');
+        if (!icon) return;
+        const check = lucideIconNode('check', 16);
+        icon.replaceWith(check);
+        playMotion(check, [{ transform: 'scale(.8)' }, { transform: 'scale(1.14)' }, { transform: 'scale(1)' }], { duration: 270 });
+        window.setTimeout(() => { if (check.isConnected) check.replaceWith(icon); }, 1100);
+      };
       try {
         await navigator.clipboard.writeText(value);
+        showCopied();
         toast(t('js_copied'), 'success', 1800);
       } catch (_) {
         const fallback = document.createElement('textarea');
@@ -2569,7 +2628,7 @@ function initCopyControls() {
         fallback.select();
         const copied = document.execCommand('copy');
         fallback.remove();
-        if (copied) toast(t('js_copied'), 'success', 1800);
+        if (copied) { showCopied(); toast(t('js_copied'), 'success', 1800); }
         else toast(t('js_copy_failed'), 'error', 4000);
       }
     });
@@ -2583,6 +2642,7 @@ function initHealthCheck() {
       const original = button.textContent;
       button.dataset.loading = '1';
       button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
       button.textContent = t('js_checking');
       try {
         const response = await fetch('/admin/api/system/health', { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
@@ -2595,6 +2655,7 @@ function initHealthCheck() {
       } finally {
         button.disabled = false;
         button.dataset.loading = '0';
+        button.removeAttribute('aria-busy');
         button.textContent = original;
       }
     });
@@ -3235,7 +3296,7 @@ function initImageQueue() {
       if (bar) { bar.max = data.pending + data.done + data.failed; bar.value = data.done + data.failed; }
     };
     buttons.forEach((button) => button.addEventListener('click', async () => {
-      buttons.forEach((b) => { b.disabled = true; });
+      buttons.forEach((b) => { b.disabled = true; b.setAttribute('aria-busy', 'true'); });
       let idle = 0;
       let retry = button.dataset.retry === '1';
       try {
@@ -3254,7 +3315,7 @@ function initImageQueue() {
       } catch (_) {
         toast(t('js_media_order_failed'), 'error', 6000);
       } finally {
-        buttons.forEach((b) => { b.disabled = false; });
+        buttons.forEach((b) => { b.disabled = false; b.removeAttribute('aria-busy'); });
       }
     }));
   });

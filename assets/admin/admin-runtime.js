@@ -152,6 +152,10 @@ function showAiResult(box, result, fields) {
       copy.addEventListener('click', async () => {
         const ok = await copyAiText(item.value);
         copy.textContent = t(ok ? 'admin.ai.copied' : 'admin.ai.copy_failed');
+        if (ok && !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+            document.documentElement.dataset.motion === 'full') {
+          copy.animate([{ transform: 'scale(.92)' }, { transform: 'scale(1.05)' }, { transform: 'scale(1)' }], { duration: 240 });
+        }
         window.setTimeout(() => { copy.textContent = t('admin.ai.copy'); }, 2000);
       });
       foot.append(copy);
