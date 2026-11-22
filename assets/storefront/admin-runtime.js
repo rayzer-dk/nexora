@@ -82,7 +82,7 @@ document.addEventListener('pointerover', (event) => {
 });
 document.addEventListener('toggle', (event) => {
   const menu = event.target;
-  if (!(menu instanceof HTMLDetailsElement) || !menu.matches('.admin-user-menu') || !menu.open ||
+  if (!(menu instanceof HTMLElement) || !menu.matches('details.admin-user-menu') || !menu.open ||
     document.documentElement.dataset.motion !== 'full' ||
     window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   menu.querySelector('.admin-user-menu__panel')?.animate(
