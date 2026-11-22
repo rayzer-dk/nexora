@@ -48,3 +48,56 @@ test('motion preference is localized, stored and applied on later page loads', a
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
   await control.selectOption('full');
 });
+
+test('quick product preview animates unless reduced motion is enabled', async ({ page }) => {
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const open = page.locator('[data-quick-view]').first();
+  test.skip(await open.count() === 0, 'This demo catalog has no quick-view buttons.');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await open.click();
+  const dialog = page.locator('.quick-view__dialog');
+  await expect(dialog).toBeVisible();
+  expect(await dialog.evaluate((node) => getComputedStyle(node).animationName)).toContain('mc-motion-reveal');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await dialog.evaluate((node) => getComputedStyle(node).animationName)).toBe('none');
+});
+
+test('catalog pagination shows skeleton cards while its request is blocked', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'The network-gated pagination test runs once.');
+  await page.goto('/catalog?per_page=1', { waitUntil: 'domcontentloaded' });
+  const next = page.locator('nav.pager a[href]').last();
+  test.skip(await next.count() === 0, 'Catalog has only one page.');
+  let release: () => void = () => {};
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  await page.route('**/*', async (route) => {
+    if (route.request().resourceType() === 'fetch' &&
+      route.request().headers()['x-requested-with'] === 'XMLHttpRequest') {
+      await gate;
+    }
+    await route.continue();
+  });
+  try {
+    await next.evaluate((node: HTMLAnchorElement) => node.click());
+    await expect(page.locator('.mc-motion-catalog-skeleton__card')).toHaveCount(6);
+  } finally {
+    release();
+  }
+  await expect(page.locator('.mc-motion-catalog-skeleton')).toHaveCount(0);
+  await expect(page.locator('.product-grid')).toBeVisible();
+});
+
+test('admin user menu exposes a persisted motion preference', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', 'Admin UI preference is verified once.');
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin login is required.');
+  const { loginAdmin } = await import('./helpers');
+  await loginAdmin(page);
+  await page.goto('/admin', { waitUntil: 'domcontentloaded' });
+  await page.locator('[data-user-menu] > summary').click();
+  const picker = page.locator('#admin-motion-preference');
+  await expect(picker).toBeVisible();
+  await picker.selectOption('minimal');
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'minimal');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'minimal');
+  await page.evaluate(() => localStorage.removeItem('nx_motion_preference'));
+});

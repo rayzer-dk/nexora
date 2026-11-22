@@ -2642,6 +2642,8 @@ function initQuickPreview() {
     body.replaceChildren(loading);
     body.setAttribute('aria-busy', 'true');
     trigger.setAttribute('aria-busy', 'true');
+    const activityIcon = trigger.querySelector('.ui-icon');
+    activityIcon?.setAttribute('data-motion', 'spin');
     if (!dialog.open) dialog.showModal();
     try {
       const response = await fetch(trigger.dataset.quickPreview, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
@@ -2655,6 +2657,7 @@ function initQuickPreview() {
     } finally {
       body.removeAttribute('aria-busy');
       trigger.removeAttribute('aria-busy');
+      activityIcon?.removeAttribute('data-motion');
     }
   });
 }
