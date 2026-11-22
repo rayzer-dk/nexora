@@ -87,6 +87,7 @@ function unlockScroll() {
 
 async function load({ keepScroll = false, focusSelector = '' } = {}) {
   const run = ++loadRun;
+  panel.setAttribute('aria-busy', 'true');
   const scroller = panel.querySelector('[data-cart-drawer-lines]');
   const scrollTop = keepScroll && scroller ? scroller.scrollTop : 0;
   let html = '';
@@ -133,9 +134,32 @@ function open(trigger = null) {
   root.hidden = false;
   panel.setAttribute('aria-busy', 'true');
   if (!panel.firstElementChild) {
-    const loading = document.createElement('p');
-    loading.className = 'cart-drawer__loading';
-    loading.textContent = t('js_cart_loading');
+    const loading = document.createElement('div');
+    loading.className = 'cart-drawer__loading mc-motion-cart-skeleton';
+    loading.setAttribute('role', 'status');
+    const label = document.createElement('span');
+    label.className = 'visually-hidden';
+    label.textContent = t('js_cart_loading');
+    loading.append(label);
+    const items = document.createElement('div');
+    items.className = 'mc-motion-cart-skeleton';
+    items.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < 3; i += 1) {
+      const row = document.createElement('div');
+      row.className = 'mc-motion-cart-skeleton__row';
+      const thumb = document.createElement('span');
+      thumb.className = 'mc-motion-cart-skeleton__thumb';
+      const info = document.createElement('span');
+      info.className = 'mc-motion-cart-skeleton__text';
+      for (let j = 0; j < 2; j += 1) {
+        const line = document.createElement('span');
+        line.className = 'mc-motion-cart-skeleton__line';
+        info.append(line);
+      }
+      row.append(thumb, info);
+      items.append(row);
+    }
+    loading.append(items);
     panel.append(loading);
   }
   requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('is-open')));

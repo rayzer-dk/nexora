@@ -75,7 +75,7 @@ function initAjaxForms() {
       if (event.defaultPrevented) return;
       event.preventDefault();
       const submit = form.querySelector('[type="submit"]');
-      if (submit) submit.disabled = true;
+      if (submit) { submit.disabled = true; submit.setAttribute('aria-busy', 'true'); }
       try {
         const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', redirect: 'follow' });
         if (response.redirected && /\/account\/login/.test(new URL(response.url).pathname)) {
@@ -100,7 +100,7 @@ function initAjaxForms() {
         form.submit();
         return;
       } finally {
-        if (submit) submit.disabled = false;
+        if (submit) { submit.disabled = false; submit.removeAttribute('aria-busy'); }
       }
     });
   });

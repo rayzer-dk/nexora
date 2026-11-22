@@ -1,0 +1,56 @@
+/* Nexora motion: shared, dependency-free and token-based. */
+:root { --mc-motion-fast: 140ms; --mc-motion-base: 220ms; --mc-motion-slow: 340ms; }
+@keyframes mc-motion-spin { to { transform: rotate(360deg); } }
+@keyframes mc-motion-beat { 50% { opacity: 0.6; transform: scale(0.94); } }
+@keyframes mc-motion-bounce { 40% { transform: translateY(calc(var(--mc-space-1) * -1)); } 70% { transform: translateY(calc(var(--mc-space-1) / 2)); } }
+@keyframes mc-motion-shake { 20%, 60% { transform: translateX(calc(var(--mc-space-1) * -1)); } 40%, 80% { transform: translateX(var(--mc-space-1)); } }
+@keyframes mc-motion-confirm { 50% { transform: scale(1.13); } }
+@keyframes mc-motion-shimmer { to { background-position-x: -200%; } }
+@keyframes mc-motion-reveal { from { opacity: 0; transform: translateY(var(--mc-space-2)); } to { opacity: 1; transform: none; } }
+/* Icons animate only when their state is active. */
+.ui-icon.mc-motion-spin, .ui-icon[data-motion="spin"], [aria-busy="true"] > .ui-icon { animation: mc-motion-spin 900ms linear infinite; transform-origin: center; }
+.ui-icon.mc-motion-pulse, .ui-icon[data-motion="pulse"] { animation: mc-motion-beat 800ms ease-in-out infinite; }
+.ui-icon.mc-motion-bounce, .ui-icon[data-motion="bounce"] { animation: mc-motion-bounce 460ms ease-out; }
+.ui-icon.mc-motion-shake, .ui-icon[data-motion="shake"] { animation: mc-motion-shake 360ms ease-in-out; }
+.ui-icon.mc-motion-confirm, .ui-icon[data-motion="confirm"], .admin-notice.is-success > .ui-icon, .store-notice.is-success > .ui-icon { animation: mc-motion-confirm var(--mc-motion-slow) ease-out; }
+/* Keep the original button label visible while AJAX/AI is running. */
+:is(.button, .admin-button)[aria-busy="true"] { cursor: progress; }
+:is(.button, .admin-button)[aria-busy="true"]::after {
+  content: ""; display: inline-block; flex: none; width: var(--mc-icon-size-sm); height: var(--mc-icon-size-sm);
+  margin-inline-start: var(--mc-space-2); border: 2px solid currentColor; border-right-color: transparent;
+  border-radius: var(--mc-radius-full); animation: mc-motion-spin 750ms linear infinite;
+}
+/* Cart skeleton appears only while the cart drawer first loads. */
+.mc-motion-cart-skeleton { display: grid; gap: var(--mc-space-3); width: 100%; }
+.mc-motion-cart-skeleton__row { display: grid; grid-template-columns: var(--mc-space-16) minmax(0, 1fr); align-items: center; gap: var(--mc-space-3); }
+.mc-motion-cart-skeleton__thumb, .mc-motion-cart-skeleton__line {
+  border-radius: var(--mc-radius-sm);
+  background: linear-gradient(100deg, var(--mc-color-surface-subtle) 20%, var(--mc-color-border) 40%, var(--mc-color-surface-subtle) 60%);
+  background-size: 200% 100%; animation: mc-motion-shimmer 1.5s linear infinite;
+}
+.mc-motion-cart-skeleton__thumb { width: var(--mc-space-16); height: var(--mc-space-16); }
+.mc-motion-cart-skeleton__line { width: 85%; height: var(--mc-space-3); }
+.mc-motion-cart-skeleton__line:last-child { width: 55%; margin-top: var(--mc-space-3); }
+.mc-motion-cart-skeleton__text { display: grid; gap: var(--mc-space-1); }
+/* Never animate initial image painting: only hover states, to protect LCP. */
+@media (hover: hover) and (pointer: fine) {
+  .catalog-card__media img, .related-card img { transition: transform var(--mc-motion-slow) ease-out; }
+  .catalog-card:hover .catalog-card__media img, .catalog-card:focus-within .catalog-card__media img,
+  .related-card:hover img, .related-card:focus-within img { transform: scale(1.035); }
+  .admin-stats > article { transition: transform var(--mc-motion-base) ease-out, box-shadow var(--mc-motion-base) ease-out; }
+  .admin-stats > article:hover, .admin-stats > article:focus-within { transform: translateY(calc(var(--mc-space-1) * -1)); box-shadow: var(--mc-shadow-md); }
+}
+:is(.button, .admin-button, .catalog-card__tool):not(:disabled) { transition: transform var(--mc-motion-fast) ease-out; }
+:is(.button, .admin-button, .catalog-card__tool):not(:disabled):active { transform: translateY(1px); }
+.admin-panel[open] > :not(summary) { animation: mc-motion-reveal var(--mc-motion-base) ease-out both; }
+/* These two modes can also be applied by a theme or extension without another runtime. */
+:root[data-motion="minimal"] { --mc-motion-fast: 80ms; --mc-motion-base: 100ms; --mc-motion-slow: 120ms; }
+:root[data-motion="minimal"] :is(.ui-icon.mc-motion-pulse, .ui-icon[data-motion="pulse"], .mc-motion-cart-skeleton__thumb, .mc-motion-cart-skeleton__line) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  :root { --mc-motion-fast: 0ms; --mc-motion-base: 0ms; --mc-motion-slow: 0ms; }
+  *, *::before, *::after { animation: none !important; transition-duration: 0ms !important; scroll-behavior: auto !important; }
+}
+:root[data-motion="off"] { --mc-motion-fast: 0ms; --mc-motion-base: 0ms; --mc-motion-slow: 0ms; --mc-transition: 0ms; }
+:root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after {
+  animation: none !important; transition-duration: 0ms !important; scroll-behavior: auto !important;
+}

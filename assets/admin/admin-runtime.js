@@ -243,6 +243,7 @@ document.querySelectorAll('[data-ai-task]').forEach((button) => {
     const body = new URLSearchParams({ _token: box.dataset.aiToken || '', task: button.dataset.aiTask || '', provider: provider.value });
     for (const [name, selector] of Object.entries(inputs)) body.append(`fields[${name}]`, aiFind(scope, selector)?.value || '');
     button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
     status.classList.remove('is-error');
     status.textContent = t('admin.ai.generating');
     try {
@@ -263,6 +264,7 @@ document.querySelectorAll('[data-ai-task]').forEach((button) => {
       status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
     } finally {
       button.disabled = false;
+      button.removeAttribute('aria-busy');
     }
   });
 });
@@ -282,6 +284,7 @@ document.querySelectorAll('[data-ai-photo]').forEach((box) => {
     body.append('hint', box.querySelector('[data-ai-photo-hint]')?.value || '');
     body.append('photo', file);
     run.disabled = true;
+    run.setAttribute('aria-busy', 'true');
     status.textContent = t('admin.ai.generating');
     try {
       const response = await fetch(box.dataset.aiPhotoUrl || '', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body });
@@ -309,6 +312,7 @@ document.querySelectorAll('[data-ai-photo]').forEach((box) => {
       status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed');
     } finally {
       run.disabled = false;
+      run.removeAttribute('aria-busy');
     }
   });
 });
@@ -328,6 +332,7 @@ if (aiPlayground) {
     else if (task === 'translate') { body.append('fields[text]', text); body.append('fields[target]', target); }
     else { body.append('fields[title]', text.split('\n')[0].slice(0, 200)); body.append('fields[body]', text); }
     run.disabled = true;
+    run.setAttribute('aria-busy', 'true');
     if (status) { status.classList.remove('is-error'); status.textContent = t('admin.ai.generating'); }
     try {
       const response = await fetch('/admin/api/ai/task', { method: 'POST', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
@@ -344,6 +349,7 @@ if (aiPlayground) {
       if (status) { status.classList.add('is-error'); status.textContent = error instanceof Error ? error.message : t('admin.ai.draft_failed'); }
     } finally {
       run.disabled = false;
+      run.removeAttribute('aria-busy');
     }
   });
 }
