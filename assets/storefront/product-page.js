@@ -19,6 +19,8 @@ class CommerceQuantity extends HTMLElement {
     }
 }
 
+import { animateCartFlight } from '../shared/cart-flight.js';
+
 class CommerceProductGallery extends HTMLElement {
     connectedCallback() {
         const main = this.querySelector('[data-gallery-main]');
@@ -34,6 +36,7 @@ class CommerceProductGallery extends HTMLElement {
         const total = items.length;
         let index = Math.max(0, thumbs.findIndex((item) => item.classList.contains('is-active')));
         let lightbox = null;
+        let photoTransition = null;
 
         const openButton = this.querySelector('[data-gallery-open]');
         let player = null;
@@ -63,6 +66,7 @@ class CommerceProductGallery extends HTMLElement {
         };
 
         const show = (next, fromLightbox = false) => {
+            const previous = index;
             index = (next + total) % total;
             const item = items[index];
             if (!item.src) return;
@@ -80,9 +84,18 @@ class CommerceProductGallery extends HTMLElement {
             if (item.srcset) main.srcset = item.srcset; else main.removeAttribute('srcset');
             if (item.sizes) main.sizes = item.sizes; else main.removeAttribute('sizes');
             main.alt = item.alt;
+            photoTransition?.cancel();
+            if (previous !== index && !item.video && document.documentElement.dataset.motion !== 'off'
+                && document.documentElement.dataset.motion !== 'minimal'
+                && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                photoTransition = main.animate(
+                    [{ opacity: 0.55, transform: 'scale(.985)' }, { opacity: 1, transform: 'none' }],
+                    { duration: 220, easing: 'ease-out' }
+                );
+            }
             if (Number(item.iw) >= 16 && Number(item.ih) >= 16) { main.style.setProperty('--iw', item.iw); main.style.setProperty('--ih', item.ih); } else { main.style.removeProperty('--iw'); main.style.removeProperty('--ih'); }
             thumbs.forEach((button, i) => button.classList.toggle('is-active', i === index));
-            thumbs[index]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+            thumbs[index]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.motion === 'off' ? 'auto' : 'smooth' });
             if (counter) counter.textContent = `${index + 1} / ${total}`;
             if (!fromLightbox) lightbox?.sync();
         };
@@ -356,6 +369,7 @@ function initAjaxBuyActions() {
                     throw new Error(data?.message || t('js_add_failed'));
                 }
                 updateCartCount(data.cart?.count || 0);
+                animateCartFlight(submitter);
                 document.dispatchEvent(new CustomEvent('mc:cart-updated', { detail: { count: Number(data.cart?.count || 0), source: 'add' } }));
                 if (!window.matchMedia('(min-width: 1024px)').matches) storefrontToast(data.message || t('js_added_cart'), 'success');
                 submitter.classList.add('is-complete');

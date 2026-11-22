@@ -18,13 +18,33 @@ test('catalog cards respect system reduced motion and explicit off mode', async 
 
 test('cart skeleton exists only while its request is in flight', async ({ page }) => {
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  let releaseRequest: () => void = () => {};
+  const gate = new Promise<void>((resolve) => { releaseRequest = resolve; });
   await page.route('**/cart/drawer', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 550));
+    await gate;
     await route.continue();
   });
-  await page.locator('[data-cart-open]').first().click();
+  const click = page.locator('[data-cart-open]').first().click({ noWaitAfter: true });
   const skeleton = page.locator('.mc-motion-cart-skeleton__row').first();
-  await expect(skeleton).toBeVisible();
+  try {
+    await expect(skeleton).toBeVisible();
+  } finally {
+    releaseRequest();
+  }
+  await click;
   await expect(skeleton).toBeHidden({ timeout: 10000 });
   await expect(page.locator('[data-cart-drawer]')).toBeVisible();
+});
+
+
+test('motion preference is localized, stored and applied on later page loads', async ({ page }) => {
+  await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
+  const control = page.locator('[data-motion-select]');
+  await expect(control).toBeVisible();
+  await control.selectOption('off');
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(control).toHaveValue('off');
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+  await control.selectOption('full');
 });

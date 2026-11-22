@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'motion_preference' => 'Анімації',
+    'motion_full' => 'Повні',
+    'motion_minimal' => 'Мінімальні',
+    'motion_off' => 'Вимкнені',
     'skip' => 'Перейти до вмісту',
     'pwa_install' => 'Встановити застосунок',
     'pwa_ios_help' => 'У Safari натисніть «Поділитися», потім «На початковий екран».',

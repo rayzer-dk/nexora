@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'motion_preference' => 'Анимации',
+    'motion_full' => 'Полные',
+    'motion_minimal' => 'Минимальные',
+    'motion_off' => 'Отключены',
     'skip' => 'Перейти к содержимому',
     'pwa_install' => 'Установить приложение',
     'pwa_ios_help' => 'В Safari нажмите «Поделиться», затем «На экран Домой».',

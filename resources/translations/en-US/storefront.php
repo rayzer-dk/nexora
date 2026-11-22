@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'motion_preference' => 'Animations',
+    'motion_full' => 'Full',
+    'motion_minimal' => 'Minimal',
+    'motion_off' => 'Off',
     'skip' => 'Skip to content',
     'pwa_install' => 'Install app',
     'pwa_ios_help' => 'In Safari, tap Share, then Add to Home Screen.',

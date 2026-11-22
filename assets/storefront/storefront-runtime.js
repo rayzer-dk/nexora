@@ -1,4 +1,7 @@
 import './cart-drawer.js';
+import { animateCartFlight } from '../shared/cart-flight.js';
+import { initMotionPreference } from '../shared/motion-preference.js';
+initMotionPreference();
 import { lucideIcon } from '../shared/lucide-icons.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
 import { personalizationAllowed, readRecentHistory, writeRecentHistory, clearRecentHistory } from './recently-viewed-store.js';
@@ -524,6 +527,7 @@ function initProductCardCartActions() {
         let payload = {};
         try { payload = await response.json(); } catch (_) {}
         if (!response.ok || !payload.ok) throw new Error(payload.message || t('js_add_failed'));
+        animateCartFlight(button || form);
         document.dispatchEvent(new CustomEvent('mc:cart-updated', { detail: { count: Number(payload.cart?.count || 0), source: 'add' } }));
         if (!window.matchMedia('(min-width: 1024px)').matches) toast(payload.message || t('js_added_cart')); // on desktop the cart drawer slides in instead
       } catch (error) {

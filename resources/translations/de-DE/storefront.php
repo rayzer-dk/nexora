@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'motion_preference' => 'Animationen',
+    'motion_full' => 'Vollständig',
+    'motion_minimal' => 'Minimal',
+    'motion_off' => 'Aus',
     'skip' => 'Zum Inhalt springen',
     'service_nav' => 'Servicenavigation',
     'about' => 'Über uns',

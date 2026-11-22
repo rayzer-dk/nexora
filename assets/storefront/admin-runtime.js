@@ -1,4 +1,6 @@
 import '../admin/admin-runtime.js';
+import { initMotionPreference } from '../shared/motion-preference.js';
+initMotionPreference();
 import '../shared/details-popovers.js';
 import { initThemeToggle } from '../shared/theme-toggle.js';
 import { initDismissibleNotices } from '../shared/dismissible-notices.js';
@@ -1056,7 +1058,7 @@ function enhanceTable(table) {
       state.col = index;
       state.page = 1;
       headers.forEach((h, i) => h.setAttribute('aria-sort', i === index ? (state.dir === 1 ? 'ascending' : 'descending') : (h.classList.contains('is-sortable') ? 'none' : h.getAttribute('aria-sort') || 'none')));
-      render();
+      render(true);
     };
     th.addEventListener('click', (event) => { if (!event.target.closest('a, button, input, select, label')) go(); });
     th.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); go(); } });
@@ -1110,7 +1112,7 @@ function enhanceTable(table) {
     return b;
   }
 
-  function render() {
+  function render(animate = false) {
     const list = ordered();
     const total = list.length;
     const size = pager ? state.size : total;
@@ -1121,6 +1123,11 @@ function enhanceTable(table) {
     list.forEach((row, i) => { row.hidden = i < from || i >= from + size; frag.appendChild(row); });
     original.forEach((row) => { if (!list.includes(row)) { row.hidden = true; frag.appendChild(row); } });
     body.appendChild(frag);
+    body.querySelectorAll('tr.mc-motion-row').forEach((row) => row.classList.remove('mc-motion-row'));
+    if (animate && document.documentElement.dataset.motion === 'full'
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      Array.from(body.rows).filter((row) => !row.hidden).slice(0, 12).forEach((row) => row.classList.add('mc-motion-row'));
+    }
     if (!pager) return;
     pager.replaceChildren();
     const info = document.createElement('span');
