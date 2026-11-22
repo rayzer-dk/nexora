@@ -13,6 +13,9 @@ on:
       - 'assets/**'
       - 'composer.lock'
       - 'package-lock.json'
+      - 'resources/platform/release.json'
+      - 'release-manifest.json'
+      - 'config/theme/default.json'
   pull_request:
     paths:
       - 'playwright.config.ts'
@@ -23,6 +26,9 @@ on:
       - 'assets/**'
       - 'composer.lock'
       - 'package-lock.json'
+      - 'resources/platform/release.json'
+      - 'release-manifest.json'
+      - 'config/theme/default.json'
 
 permissions:
   contents: read

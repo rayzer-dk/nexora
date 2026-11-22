@@ -29,6 +29,7 @@
 - Версия 4.0.0; модули объявляют совместимость «^3.x || ^4.0».
 
 ## Правки без автопилота
+- 2026-11-22 — охват CI релизных метаданных: Playwright Smoke/Regression запускаются при изменении release.json, release-manifest.json и темы, не только исходников; полный PASS для последнего main обязателен для публикации 4.0.18
 - 2026-11-22 — релизный аудит 4.0.18: синхронизированы release.json, theme/default.json, инструкция INSTALL_UK, README_EN и release-manifest; исправлены 5 блокеров production-контракта — по запросу владельца
 - 2026-11-22 — QA: тест toast-countdown учитывает глобальный reduced-motion фикстуры; проверяет обычный/off/system-reduce режимы; release workflow проверяет свежий main на этапе выполнения вместо преждевременного skip job
 - 2026-11-22 — подготовка выпуска Nexora Commerce 4.0.18: обновлён единый номер платформы, Node manifest и lockfile, README; добавлен одноразовый релизный шлюз GitHub Actions, публикация только при PASS обязательных CI, checksum SHA256 — по запросу владельца
