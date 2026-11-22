@@ -45,19 +45,6 @@
 /* A short client-side table sort fade that doesn't rearrange the layout on screen. */
 @keyframes mc-motion-row-enter { from { opacity: 0.5; } to { opacity: 1; } }
 .admin-table tbody tr.mc-motion-row > td { animation: mc-motion-row-enter var(--mc-motion-base) ease-out both; }
-.mc-motion-cart-flight {
-  position: fixed; z-index: var(--mc-z-toast); pointer-events: none; object-fit: contain;
-  border-radius: var(--mc-radius-sm); box-shadow: var(--mc-shadow-sm); mix-blend-mode: normal;
-}
-.site-footer__motion {
-  display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--mc-space-2);
-  color: inherit; font-size: var(--mc-font-size-xs);
-}
-.site-footer__motion select {
-  max-width: 100%; min-height: var(--mc-control-height-sm); padding-inline: var(--mc-space-2);
-  border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm);
-  background: var(--mc-color-surface-raised); color: var(--mc-color-text); font: inherit;
-}
 /* These two modes can also be applied by a theme or extension without another runtime. */
 :root[data-motion="minimal"] { --mc-motion-fast: 80ms; --mc-motion-base: 100ms; --mc-motion-slow: 120ms; }
 :root[data-motion="minimal"] :is(.ui-icon.mc-motion-pulse, .ui-icon[data-motion="pulse"], .mc-motion-cart-skeleton__thumb, .mc-motion-cart-skeleton__line) { animation: none; }
