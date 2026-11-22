@@ -12,6 +12,10 @@
   .catalog-card:hover { transform: translateY(-3px); }
   .catalog-card:hover .catalog-card__tools { animation: mc-motion-reveal var(--mc-motion-fast) ease-out; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .catalog-card:hover { transform: none; }
+}
+:root[data-motion="off"] .catalog-card:hover { transform: none; }
 .catalog-card__media { position: relative; display: grid; place-items: center; aspect-ratio: 1 / 1; overflow: hidden; background: var(--mc-media-bg); }
 .catalog-card__media img { display: block; width: 100%; height: 100%; padding: var(--mc-pad-cards, var(--mc-space-3)); object-fit: var(--mc-fit-cards, contain); max-width: calc(var(--iw) * 1px * var(--mc-up-cards, 3)); max-height: calc(var(--ih) * 1px * var(--mc-up-cards, 3)); background: var(--mc-media-bg); }
 .catalog-card__discount {
