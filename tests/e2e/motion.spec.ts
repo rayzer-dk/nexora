@@ -5,7 +5,9 @@ test('catalog cards respect system reduced motion and explicit off mode', async 
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   const img = page.locator('.catalog-card__media img').first();
   await expect(img).toBeVisible();
-  expect(await img.evaluate((e) => getComputedStyle(e).transitionDuration)).not.toBe('0s');
+  const hasHover = await page.evaluate(() => matchMedia('(hover: hover) and (pointer: fine)').matches);
+  const normal = await img.evaluate((e) => getComputedStyle(e).transitionDuration);
+  expect(normal).toBe(hasHover ? '0.34s' : '0s');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   expect(await img.evaluate((e) => getComputedStyle(e).transitionDuration)).toBe('0s');
   await page.emulateMedia({ reducedMotion: 'no-preference' });

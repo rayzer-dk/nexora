@@ -40,7 +40,6 @@
   .admin-stats > article { transition: transform var(--mc-motion-base) ease-out, box-shadow var(--mc-motion-base) ease-out; }
   .admin-stats > article:hover, .admin-stats > article:focus-within { transform: translateY(calc(var(--mc-space-1) * -1)); box-shadow: var(--mc-shadow-md); }
 }
-:is(.button, .admin-button, .catalog-card__tool):not(:disabled) { transition: transform var(--mc-motion-fast) ease-out; }
 :is(.button, .admin-button, .catalog-card__tool):not(:disabled):active { transform: translateY(1px); }
 .admin-panel[open] > :not(summary) { animation: mc-motion-reveal var(--mc-motion-base) ease-out both; }
 /* These two modes can also be applied by a theme or extension without another runtime. */
