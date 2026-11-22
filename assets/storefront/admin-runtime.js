@@ -24,7 +24,13 @@ const qa = (selector, root = document) => Array.from(root.querySelectorAll(selec
       restore();
       requestAnimationFrame(restore);
     }, { once: true });
-    return original.apply(this, args);
+    const result = original.apply(this, args);
+    if (document.documentElement.dataset.motion === 'full' &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 180, easing: 'ease-out' });
+    }
+    return result;
   };
   proto.__mcScrollKeeper = true;
 })();
@@ -61,6 +67,29 @@ function toast(message, type = 'info', timeout = 5200) {
     }, timeout);
   }
 }
+
+// Event-driven motion only: no extra CSS rules or timers on idle administration pages.
+document.addEventListener('pointerover', (event) => {
+  if (document.documentElement.dataset.motion !== 'full' ||
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+    !(event.target instanceof Element)) return;
+  const entry = event.target.closest('.admin-icon-button, .admin-nav__link');
+  if (!entry || (event.relatedTarget instanceof Node && entry.contains(event.relatedTarget))) return;
+  entry.querySelector(':scope > .ui-icon')?.animate(
+    [{ transform: 'none' }, { transform: 'translateY(-2px)' }, { transform: 'none' }],
+    { duration: 180, easing: 'ease-out' }
+  );
+});
+document.addEventListener('toggle', (event) => {
+  const menu = event.target;
+  if (!(menu instanceof HTMLDetailsElement) || !menu.matches('.admin-user-menu') || !menu.open ||
+    document.documentElement.dataset.motion !== 'full' ||
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  menu.querySelector('.admin-user-menu__panel')?.animate(
+    [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
+    { duration: 180, easing: 'ease-out' }
+  );
+}, true);
 
 window.mcAdminToast = toast;
 
