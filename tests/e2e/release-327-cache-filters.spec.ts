@@ -40,8 +40,21 @@ test('an admin change shows on the shop at once, without waiting for the stored 
   test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin credentials are required.');
   await login(page);
   await page.goto('/admin/catalog/products', { waitUntil: 'domcontentloaded' });
-  await page.locator('tr').filter({ hasNotText: /Picked|E2E|Warm/i }).locator('a[href*="/admin/catalog/products/"][href$="/edit"]').first().click();
-  await page.waitForURL(/\/edit/);
+  const candidates = await page.locator('tr').filter({ hasNotText: /Picked|E2E|Warm/i })
+    .locator('a[href*="/admin/catalog/products/"][href$="/edit"]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href')).filter((href): href is string => Boolean(href)));
+  let found = false;
+  for (const href of [...new Set(candidates)].reverse()) {
+    await page.goto(href, { waitUntil: 'domcontentloaded' });
+    const status = await page.locator('select[name="status"]').inputValue();
+    const slug = (await page.locator('#product-form input[name="slug"]').inputValue()).replace(/^\/+/, '');
+    if (status !== 'published' || !slug) continue;
+    const response = await page.request.get('/' + slug, { failOnStatusCode: false });
+    if (response.status() >= 400) continue;
+    found = true;
+    break;
+  }
+  expect(found, 'A published, publicly reachable demo product is required for cache invalidation testing').toBe(true);
   const editUrl = page.url();
   const slug = await page.locator('#product-form input[name="slug"]').inputValue();
   const original = await page.locator('#product-form input[name="name"]').inputValue();
