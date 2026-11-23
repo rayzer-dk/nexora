@@ -115,7 +115,8 @@ final class SystemLogDigestTest extends TestCase
         self::assertTrue($digest['partial']);
         self::assertSame(SystemLogDigest::SCAN_BYTES, $digest['scanned']);
         self::assertSame(['Repeating failure'], array_column($digest['groups'], 'message'));
-        self::assertGreaterThan(100_000, $digest['groups'][0]['count']);
+        $whole = intdiv(SystemLogDigest::SCAN_BYTES, strlen($filler));
+        self::assertContains($digest['groups'][0]['count'], [$whole - 1, $whole], 'Only the line cut by the window start may be lost.');
     }
 
     public function testTheHeaderCounterCountsUniqueErrorsOfEveryFileAndStartsOverAfterTheLogIsCleared(): void
@@ -133,8 +134,13 @@ final class SystemLogDigestTest extends TestCase
         $digest->forget('prod.log');
         self::assertSame(1, $digest->uniqueErrorCount());
 
-        file_put_contents($prod, "[2026-11-21T08:00:00+00:00] app.ERROR: Mail failed {} []\n", LOCK_EX);
-        self::assertSame(2, $digest->uniqueErrorCount(), 'An error that happens again after the cleanup is shown again.');
+        file_put_contents($prod, implode("\n", [
+            '[2026-11-21T08:00:00+00:00] app.ERROR: Mail failed {} []',
+            '[2026-11-21T08:00:01+00:00] app.ERROR: Cache failed {} []',
+            '[2026-11-21T08:00:02+00:00] app.ERROR: Disk failed {} []',
+            '[2026-11-21T08:00:03+00:00] app.ERROR: Mail failed {} []',
+        ]) . "\n", LOCK_EX);
+        self::assertSame(4, $digest->uniqueErrorCount(), 'The new file is bigger than the cleared one: without forget() the old number would be kept for a minute.');
     }
 
     public function testTheCounterIsNotRecomputedWhileTheLogGrowsWithinTheCacheLifetime(): void
@@ -160,6 +166,31 @@ final class SystemLogDigestTest extends TestCase
         file_put_contents($path, "[2026-11-21T10:00:00+00:00] app.ERROR: Third {} []\n", LOCK_EX);
 
         self::assertSame(1, $digest->uniqueErrorCount());
+    }
+
+    public function testAFileOfOneHugeLineIsReadWithinTheWindow(): void
+    {
+        $path = $this->dir . '/var/log/one-line.log';
+        file_put_contents($path, '[2026-11-20T10:00:00+00:00] app.ERROR: ' . str_repeat('x', 1_000_000) . ' {} []');
+
+        $digest = $this->digest()->group($path);
+
+        self::assertCount(1, $digest['groups']);
+        self::assertSame(1, $digest['groups'][0]['count']);
+    }
+
+    public function testMoreGroupsThanTheLimitAreCountedByDistinctErrorNotByEntry(): void
+    {
+        $lines = [];
+        for ($i = 0; $i < SystemLogDigest::MAX_GROUPS + 3; ++$i) {
+            $kind = strtr(sprintf('%05d', $i), '0123456789', 'ghijklmnop'); // letters only: digits and hex-like words are normalized away
+            $lines[] = '[2026-11-20T10:00:00+00:00] app.ERROR: Failure kind ' . $kind . ' {} []';
+            $lines[] = '[2026-11-20T10:00:01+00:00] app.ERROR: Failure kind ' . $kind . ' {} []';
+        }
+        $digest = $this->digest()->group($this->write('prod.log', $lines));
+
+        self::assertCount(SystemLogDigest::MAX_GROUPS, $digest['groups']);
+        self::assertSame(3, $digest['overflow']);
     }
 
     public function testAHostileLongLineIsParsedInBoundedTimeAndControlCharactersAreNeutralised(): void

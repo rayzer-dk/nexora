@@ -1821,7 +1821,7 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-logs__all { display: flex; align-items: center; gap: var(--mc-space-2); margin-bottom: var(--mc-space-2); font-size: var(--mc-font-size-sm); }
 .admin-logs__line--unique { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: var(--mc-space-3); align-items: start; }
 .admin-logs__count { min-width: 3.5ch; justify-content: center; font-variant-numeric: tabular-nums; }
-.admin-logs__meta { display: block; margin-top: var(--mc-space-1); color: var(--mc-color-text-muted); overflow-wrap: anywhere; }
+.admin-logs__meta { display: block; margin-top: var(--mc-space-1); color: var(--mc-color-muted); overflow-wrap: anywhere; }
 .admin-logs__line.is-error { border-left: 3px solid var(--mc-color-danger); }
 .admin-logs__line.is-warning { border-left: 3px solid var(--mc-color-warning); }
 @media (max-width: 768px) { .admin-logs__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

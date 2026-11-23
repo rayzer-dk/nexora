@@ -18,6 +18,7 @@ final class SystemLogDigest
 {
     public const SCAN_BYTES = 16_777_216;
     public const MAX_GROUPS = 2000;
+    private const MAX_SPILLED = 10_000;
     public const COUNTER_TTL = 60;
 
     private const CHUNK_BYTES = 262_144;
@@ -88,7 +89,9 @@ final class SystemLogDigest
 
         /** @var array<string,array{severity:string,type:string,message:string,file:string,line:int,count:int,first:string,last:string}> $groups */
         $groups = [];
-        $consume = function (string $raw) use (&$groups, &$result, $level, $search): void {
+        /** @var array<string,true> older groups that did not fit; only their number is reported */
+        $spilled = [];
+        $consume = function (string $raw) use (&$groups, &$spilled, &$result, $level, $search): void {
             // control characters (ESC, lone CR) are replaced: the text is shown and copied to the clipboard
             $line = rtrim((string) preg_replace('/[\x00-\x08\x0B-\x1F\x7F]/', ' ', mb_scrub(substr($raw, 0, self::MAX_LINE_BYTES), 'UTF-8')));
             if ($line === '' || $this->isContinuation($line)) {
@@ -113,7 +116,9 @@ final class SystemLogDigest
                 return;
             }
             if (count($groups) >= self::MAX_GROUPS) {
-                ++$result['overflow'];
+                if (count($spilled) < self::MAX_SPILLED) {
+                    $spilled[$key] = true;
+                }
 
                 return;
             }
@@ -130,7 +135,9 @@ final class SystemLogDigest
             $position -= $read;
             fseek($handle, $position);
             $parts = explode("\n", (string) fread($handle, $read) . $carry);
-            $carry = (string) array_shift($parts); // the beginning of the chunk may be the end of a line cut by the chunk boundary
+            // The beginning of the chunk may be the end of a line cut by the chunk boundary. Only the first MAX_LINE_BYTES of a line
+            // are ever used, so a longer remainder is shortened and a one-line file cannot grow the buffer up to SCAN_BYTES.
+            $carry = substr((string) array_shift($parts), 0, self::MAX_LINE_BYTES);
             for ($i = count($parts) - 1; $i >= 0; --$i) {
                 $consume($parts[$i]);
             }
@@ -141,6 +148,7 @@ final class SystemLogDigest
         fclose($handle);
 
         $result['groups'] = array_values($groups);
+        $result['overflow'] = count($spilled);
 
         return $result;
     }
