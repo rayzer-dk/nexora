@@ -162,6 +162,21 @@ final class SystemLogDigestTest extends TestCase
         self::assertSame(1, $digest->uniqueErrorCount());
     }
 
+    public function testAHostileLongLineIsParsedInBoundedTimeAndControlCharactersAreNeutralised(): void
+    {
+        $path = $this->write('prod.log', [
+            '[2026-11-20T10:00:00+00:00] request.ERROR: ' . str_repeat('/a', 4000) . " bad\x1b[2J\rpaste {} []",
+        ]);
+
+        $started = microtime(true);
+        $digest = $this->digest()->group($path);
+
+        self::assertLessThan(1.0, microtime(true) - $started);
+        self::assertCount(1, $digest['groups']);
+        self::assertDoesNotMatchRegularExpression('/[\x00-\x08\x0B-\x1F\x7F]/', $digest['groups'][0]['message']);
+        self::assertSame('', $digest['groups'][0]['file']);
+    }
+
     private function digest(): SystemLogDigest
     {
         return new SystemLogDigest($this->pool, $this->dir);

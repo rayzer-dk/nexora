@@ -24,8 +24,12 @@ final class SystemLogDigest
     private const MAX_LINE_BYTES = 8192;
     private const MAX_MESSAGE_CHARS = 500;
     private const COUNTER_KEY = 'commerce.admin.log_unique.';
-    /** An absolute path to a source file followed by " on line N", " line N" or ":N". Segments exclude the separators, so matching stays linear. */
-    private const FILE_LINE = '/((?:[A-Za-z]:)?[\\\\\/](?:[^\s"\'<>|:*?()\[\]{}\\\\\/]+[\\\\\/])*[^\s"\'<>|:*?()\[\]{}\\\\\/]+\.(?:php|twig|phtml|inc))(?:\s+on\s+line\s+|\s+line\s+|:)(\d+)/u';
+    private const PATH_SEGMENT = '[^\s"\'<>|:*?()\[\]{}\\\\\/]+';
+    /**
+     * An absolute path to a source file followed by " on line N", " line N" or ":N". The path must start where a path cannot continue
+     * (lookbehind) and its segments cannot contain separators (possessive group), so a long run of slashes is matched once, in linear time.
+     */
+    private const FILE_LINE = '/(?<![^\s"\'<>|:*?()\[\]{}])((?:[A-Za-z]:)?[\\\\\/](?:' . self::PATH_SEGMENT . '[\\\\\/])*+' . self::PATH_SEGMENT . '\.(?:php|twig|phtml|inc))(?:\s+on\s+line\s+|\s+line\s+|:)(\d+)/u';
 
     public function __construct(
         private readonly CacheItemPoolInterface $cache,
@@ -85,7 +89,8 @@ final class SystemLogDigest
         /** @var array<string,array{severity:string,type:string,message:string,file:string,line:int,count:int,first:string,last:string}> $groups */
         $groups = [];
         $consume = function (string $raw) use (&$groups, &$result, $level, $search): void {
-            $line = rtrim(mb_scrub(substr($raw, 0, self::MAX_LINE_BYTES), 'UTF-8'));
+            // control characters (ESC, lone CR) are replaced: the text is shown and copied to the clipboard
+            $line = rtrim((string) preg_replace('/[\x00-\x08\x0B-\x1F\x7F]/', ' ', mb_scrub(substr($raw, 0, self::MAX_LINE_BYTES), 'UTF-8')));
             if ($line === '' || $this->isContinuation($line)) {
                 return;
             }

@@ -134,7 +134,8 @@ final class SystemLogAdminController extends AbstractController
         fseek($handle, $start);
         $data = (string) stream_get_contents($handle);
         fclose($handle);
-        $lines = preg_split('/\R/u', $data) ?: [];
+        // the window starts at an arbitrary byte, which may cut a multibyte character; preg_split() fails on invalid UTF-8
+        $lines = preg_split('/\R/u', mb_scrub($data, 'UTF-8')) ?: [];
         if ($start > 0) {
             array_shift($lines); // the first line is cut in the middle
         }
