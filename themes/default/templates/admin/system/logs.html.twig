@@ -33,14 +33,14 @@
   </div>
   {% if unique %}
   {% if groups %}
-  <label class="admin-logs__all"><input type="checkbox" data-check-all>{{ ui_text('admin.logs.select_all') }}</label>
+  <label><input type="checkbox" data-check-all>{{ ui_text('admin.logs.select_all') }}</label>
   <ol class="admin-logs__list" tabindex="0" aria-label="{{ ui_text('admin.logs.unique') }}">{% for group in groups %}
     {% set copy_text = ui_text('admin.logs.copy_type') ~ ': ' ~ group.type ~ "\n" ~ ui_text('admin.logs.copy_message') ~ ': ' ~ group.message ~ (group.file ? "\n" ~ ui_text('admin.logs.file') ~ ': ' ~ group.file ~ "\n" ~ ui_text('admin.logs.copy_line') ~ ': ' ~ group.line : '') ~ "\n" ~ ui_text('admin.logs.copy_repeats') ~ ': ' ~ group.count %}
-    <li class="admin-logs__line admin-logs__line--unique is-{{ group.severity }}">
+    <li class="admin-logs__line is-{{ group.severity }}">
       <input type="checkbox" data-row-check data-copy-text="{{ copy_text|e('html_attr') }}" aria-label="{{ group.type }}: {{ group.message|slice(0, 80) }}">
-      <span class="admin-badge {{ group.severity == 'error' ? 'is-danger' : (group.severity == 'warning' ? 'is-warning' : 'is-muted') }} admin-logs__count" title="{{ ui_text('admin.logs.repeats') }}">&times;{{ group.count }}</span>
+      <span class="admin-badge {{ group.severity == 'error' ? 'is-danger' : (group.severity == 'warning' ? 'is-warning' : 'is-muted') }}" title="{{ ui_text('admin.logs.repeats') }}">&times;{{ group.count }}</span>
       <div><code>{{ group.type }}: {{ group.message }}</code>
-        <small class="admin-logs__meta">{% if group.file %}{{ group.file }}{% if group.line %}:{{ group.line }}{% endif %}{% endif %}{% if group.last %}{{ group.file ? ' · ' : '' }}{{ ui_text('admin.logs.last_seen') }}: {{ group.last }}{% if group.count > 1 and group.first and group.first != group.last %} · {{ ui_text('admin.logs.first_seen') }}: {{ group.first }}{% endif %}{% endif %}</small></div>
+        <small class="admin-help">{% if group.file %}{{ group.file }}{% if group.line %}:{{ group.line }}{% endif %}{% endif %}{% if group.last %}{{ group.file ? ' · ' : '' }}{{ ui_text('admin.logs.last_seen') }}: {{ group.last }}{% if group.count > 1 and group.first and group.first != group.last %} · {{ ui_text('admin.logs.first_seen') }}: {{ group.first }}{% endif %}{% endif %}</small></div>
     </li>{% endfor %}</ol>
   {% else %}<p class="admin-help">{{ ui_text('admin.logs.empty') }}</p>{% endif %}
   {% elseif entries %}

@@ -1818,10 +1818,6 @@ input[type=color] + .admin-color-hex { vertical-align: middle; }
 .admin-logs__list { display: grid; gap: 1px; max-height: 60vh; margin: 0; padding: 0; overflow: auto; list-style: none; border: 1px solid var(--mc-color-border); border-radius: var(--mc-radius-sm); background: var(--mc-color-border); }
 .admin-logs__line { padding: var(--mc-space-1) var(--mc-space-3); background: var(--mc-color-surface-raised); }
 .admin-logs__line code { display: block; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--mc-font-size-xs); background: none; padding: 0; }
-.admin-logs__all { display: flex; align-items: center; gap: var(--mc-space-2); margin-bottom: var(--mc-space-2); font-size: var(--mc-font-size-sm); }
-.admin-logs__line--unique { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: var(--mc-space-3); align-items: start; }
-.admin-logs__count { min-width: 3.5ch; justify-content: center; font-variant-numeric: tabular-nums; }
-.admin-logs__meta { display: block; margin-top: var(--mc-space-1); color: var(--mc-color-muted); overflow-wrap: anywhere; }
 .admin-logs__line.is-error { border-left: 3px solid var(--mc-color-danger); }
 .admin-logs__line.is-warning { border-left: 3px solid var(--mc-color-warning); }
 @media (max-width: 768px) { .admin-logs__filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
