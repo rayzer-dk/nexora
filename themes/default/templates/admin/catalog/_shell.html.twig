@@ -18,7 +18,7 @@
 <body class="admin-app" data-admin-runtime>
 <div class="admin-shell">
     <aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar>
-        <a class="admin-sidebar__brand" href="/admin" aria-label="Nexora Commerce"><img src="/assets/branding/nexora-mark.png" alt="" width="32" height="32"><span><strong>Nexora Commerce</strong><small>{{ ui_text('admin_manage') }}</small></span></a>
+        <a class="admin-sidebar__brand" href="/admin"><img src="/assets/branding/nexora-mark.png" alt="" width="32" height="32"><span><strong>Nexora Commerce</strong><small>{{ ui_text('admin_manage') }}</small></span></a>
         <nav class="admin-nav" aria-label="{{ ui_text('admin_manage') }}" data-command-source>
             {% if admin_can('dashboard.view') %}{{ nav.link(section, 'dashboard', '/admin', 'layout-dashboard', ui_text('admin_overview')) }}{% endif %}
             {% if admin_can('analytics.view') %}{{ nav.link(section, 'analytics', '/admin/analytics', 'chart-column', ui_text('admin_analytics')) }}{% endif %}
