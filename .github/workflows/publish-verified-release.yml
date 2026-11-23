@@ -1,4 +1,4 @@
-name: Publish verified Nexora 4.0.19 release
+name: Publish verified Nexora 4.0.20 release
 
 on:
   workflow_run:
@@ -42,11 +42,11 @@ jobs:
             echo 'Release skipped: a newer main commit exists.'
             exit 0
           fi
-          if ! grep -Fq "public const VERSION = '4.0.19';" src/Core/Platform/PlatformVersion.php; then
-            echo 'Release skipped: this workflow is only for platform version 4.0.19.'
+          if ! grep -Fq "public const VERSION = '4.0.20';" src/Core/Platform/PlatformVersion.php; then
+            echo 'Release skipped: this workflow is only for platform version 4.0.20.'
             exit 0
           fi
-          if gh release view v4.0.19 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          if gh release view v4.0.20 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo 'Release already exists; not replacing it.'
             exit 0
           fi
@@ -88,8 +88,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release
-          gh run download "$PACKAGE_ID" --repo "$GITHUB_REPOSITORY" --name Nexora_Commerce_v4.0.19_PRODUCTION --dir release
-          (cd release && sha256sum -c Nexora_Commerce_v4.0.19_PRODUCTION.zip.sha256)
+          gh run download "$PACKAGE_ID" --repo "$GITHUB_REPOSITORY" --name Nexora_Commerce_v4.0.20_PRODUCTION --dir release
+          (cd release && sha256sum -c Nexora_Commerce_v4.0.20_PRODUCTION.zip.sha256)
 
       - name: Create GitHub release and tag only after full verification
         if: steps.readiness.outputs.ready == 'true'
@@ -99,10 +99,10 @@ jobs:
           TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
-          gh release create v4.0.19 \
-            release/Nexora_Commerce_v4.0.19_PRODUCTION.zip \
-            release/Nexora_Commerce_v4.0.19_PRODUCTION.zip.sha256 \
+          gh release create v4.0.20 \
+            release/Nexora_Commerce_v4.0.20_PRODUCTION.zip \
+            release/Nexora_Commerce_v4.0.20_PRODUCTION.zip.sha256 \
             --repo "$GITHUB_REPOSITORY" \
             --target "$TARGET_SHA" \
-            --title 'Nexora Commerce 4.0.19' \
-            --notes-file docs/releases/v4.0.19.md
+            --title 'Nexora Commerce 4.0.20' \
+            --notes-file docs/releases/v4.0.20.md
