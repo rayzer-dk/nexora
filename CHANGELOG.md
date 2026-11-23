@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 4.0.19 — 2026-11-23
+
+Version 4.0.19 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, README, README_EN and INSTALL_UK. No migrations.
+
+- Logs and errors: "Unique errors" groups the filtered entries with a repeat counter, "Reset filter" returns the plain journal, "Copy selected" copies the ticked unique errors; the header log icon shows the number of unique errors (cached per file). Log files are never modified. See `docs/releases/v4.0.19.md`.
+
 ## 4.0.17 — 2026-11-15
 
 Version 4.0.17 is written in PlatformVersion, release.json, release-manifest.json, package.json, package-lock.json, the default theme, the demo tag, README, README_EN and INSTALL_UK. No migrations.

@@ -13,6 +13,10 @@ test('the admin can read logs and errors', async ({ page }, testInfo) => {
   expect(response?.status()).toBe(200);
   await expectNoServerError(page);
   await expect(page.locator('main h1').first()).toBeVisible();
+  const unique = await page.goto('/admin/system/logs?unique=1&level=error&sort=count', { waitUntil: 'domcontentloaded' });
+  expect(unique?.status()).toBe(200);
+  await expectNoServerError(page);
+  await expect(page.locator('main h1').first()).toBeVisible();
 });
 
 test('the description position of all categories is a global setting', async ({ page }, testInfo) => {

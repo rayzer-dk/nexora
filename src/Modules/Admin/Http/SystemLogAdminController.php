@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Commerce\Modules\Admin\Http;
 
 use Commerce\Core\I18n\CanonicalUiText;
+use Commerce\Modules\Admin\Application\SystemLogDigest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,16 +17,18 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * Admin → System → Logs and errors: the tail of the application logs (var/log/*.log) with a level filter and search, a download
  * and a "clear" button. Only files that really sit in var/log can be opened; the file name is never used as a path.
+ * The optional "unique" view groups the same filtered entries by their normalized message and shows how many times each repeats.
  */
 final class SystemLogAdminController extends AbstractController
 {
     private const TAIL_BYTES = 1_048_576;
     private const LEVELS = ['all', 'error', 'warning'];
     private const LIMITS = [100, 300, 1000];
+    private const SORTS = ['recent', 'count'];
 
     public function __construct(
         private readonly AdminContextResolver $contexts,
-        #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
+        private readonly SystemLogDigest $digest,
     ) {
     }
 
@@ -34,7 +36,7 @@ final class SystemLogAdminController extends AbstractController
     public function index(Request $request): Response
     {
         $this->contexts->resolve($request);
-        $files = $this->files();
+        $files = $this->digest->files();
         $name = (string) $request->query->get('file', '');
         if (!isset($files[$name])) {
             $name = isset($files['prod.log']) ? 'prod.log' : (string) array_key_first($files);
@@ -43,11 +45,25 @@ final class SystemLogAdminController extends AbstractController
         $limit = in_array((int) $request->query->get('limit', 300), self::LIMITS, true) ? (int) $request->query->get('limit', 300) : 300;
         $search = mb_substr(trim((string) $request->query->get('q', '')), 0, 120);
 
+        $unique = $request->query->getBoolean('unique');
+        $sort = in_array((string) $request->query->get('sort', 'recent'), self::SORTS, true) ? (string) $request->query->get('sort', 'recent') : 'recent';
+
         $entries = [];
+        $groups = [];
+        $digest = null;
+        $groupTotal = 0;
         $counts = ['error' => 0, 'warning' => 0, 'other' => 0];
-        if ($name !== '') {
+        if ($name !== '' && $unique) {
+            $digest = $this->digest->group($files[$name]['path'], $level, $search);
+            $groups = $digest['groups'];
+            if ($sort === 'count') {
+                usort($groups, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
+            }
+            $groupTotal = count($groups);
+            $groups = array_slice($groups, 0, $limit);
+        } elseif ($name !== '') {
             foreach ($this->tail($files[$name]['path']) as $line) {
-                $severity = $this->severity($line);
+                $severity = $this->digest->severity($line);
                 ++$counts[$severity];
                 if ($level === 'error' && $severity !== 'error') {
                     continue;
@@ -65,7 +81,7 @@ final class SystemLogAdminController extends AbstractController
 
         return $this->render('@storefront/admin/system/logs.html.twig', [
             'files' => $files, 'file' => $name, 'level' => $level, 'limit' => $limit, 'limits' => self::LIMITS, 'search' => $search,
-            'entries' => $entries, 'counts' => $counts,
+            'entries' => $entries, 'counts' => $counts, 'unique' => $unique, 'sort' => $sort, 'groups' => $groups, 'group_total' => $groupTotal, 'max_groups' => SystemLogDigest::MAX_GROUPS, 'digest' => $digest,
         ]);
     }
 
@@ -73,7 +89,7 @@ final class SystemLogAdminController extends AbstractController
     public function download(Request $request): Response
     {
         $this->contexts->resolve($request);
-        $files = $this->files();
+        $files = $this->digest->files();
         $name = (string) $request->query->get('file', '');
         if (!isset($files[$name])) {
             throw $this->createNotFoundException();
@@ -89,7 +105,7 @@ final class SystemLogAdminController extends AbstractController
     public function clear(Request $request): RedirectResponse
     {
         $this->contexts->resolve($request);
-        $files = $this->files();
+        $files = $this->digest->files();
         $name = (string) $request->request->get('file', '');
         if (!$this->isCsrfTokenValid('admin_system_logs_clear', (string) $request->request->get('_token')) || !isset($files[$name])) {
             $this->addFlash('error', CanonicalUiText::get('admin.logs.clear_failed'));
@@ -97,24 +113,10 @@ final class SystemLogAdminController extends AbstractController
             return $this->redirectToRoute('admin_system_logs');
         }
         @file_put_contents($files[$name]['path'], '', LOCK_EX);
+        $this->digest->forget($name);
         $this->addFlash('success', CanonicalUiText::get('admin.logs.cleared'));
 
         return $this->redirectToRoute('admin_system_logs', ['file' => $name]);
-    }
-
-    /** @return array<string,array{path:string,size:int,modified:int}> */
-    private function files(): array
-    {
-        $out = [];
-        $dir = $this->projectDir . '/var/log';
-        foreach (glob($dir . '/*.log') ?: [] as $path) {
-            if (is_file($path) && !is_link($path)) {
-                $out[basename($path)] = ['path' => $path, 'size' => (int) filesize($path), 'modified' => (int) filemtime($path)];
-            }
-        }
-        uasort($out, static fn (array $a, array $b): int => $b['modified'] <=> $a['modified']);
-
-        return $out;
     }
 
     /** @return list<string> the last lines of the file (at most the final megabyte) */
@@ -138,17 +140,5 @@ final class SystemLogAdminController extends AbstractController
         }
 
         return array_values(array_filter(array_map('rtrim', $lines), static fn (string $line): bool => $line !== ''));
-    }
-
-    private function severity(string $line): string
-    {
-        if (preg_match('/\[(critical|alert|emergency|error)\]|\.(CRITICAL|ALERT|EMERGENCY|ERROR):|\b(Fatal error|Uncaught)\b/i', $line) === 1) {
-            return 'error';
-        }
-        if (preg_match('/\[warning\]|\.WARNING:|\bWarning:/i', $line) === 1) {
-            return 'warning';
-        }
-
-        return 'other';
     }
 }
