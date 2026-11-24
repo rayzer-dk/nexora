@@ -2600,12 +2600,18 @@ function initImportSteps() {
 }
 
 function initCopyControls() {
-  qa('[data-copy-value], [data-copy-target]').forEach((button) => {
+  qa('[data-copy-value], [data-copy-target], [data-copy-checked]').forEach((button) => {
     button.addEventListener('click', async () => {
       const targetSelector = button.dataset.copyTarget;
       const target = targetSelector ? q(targetSelector) : null;
-      const value = button.dataset.copyValue ?? target?.textContent?.trim() ?? '';
-      if (!value) return;
+      // data-copy-checked="<selector>": the data-copy-text of every ticked checkbox that matches, one block per item.
+      const value = button.dataset.copyChecked !== undefined
+        ? qa(button.dataset.copyChecked).filter((box) => box.checked).map((box) => box.dataset.copyText || '').filter(Boolean).join('\n\n')
+        : (button.dataset.copyValue ?? target?.textContent?.trim() ?? '');
+      if (!value) {
+        if (button.dataset.copyChecked !== undefined) toast(t('js_copy_none'), 'warning', 2400);
+        return;
+      }
       const showCopied = () => {
         const icon = button.querySelector('.ui-icon');
         if (!icon) return;

@@ -5,7 +5,6 @@ export default {
     'selector-class-pattern': null,
     'custom-property-pattern': null,
     'declaration-block-no-redundant-longhand-properties': null,
-    'declaration-block-single-line-max-declarations': null,
     'color-function-notation': null,
     'color-function-alias-notation': null,
     'alpha-value-notation': null,

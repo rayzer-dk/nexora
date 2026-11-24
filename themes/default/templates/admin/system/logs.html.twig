@@ -7,18 +7,43 @@
 {% else %}
 <section class="admin-panel admin-logs">
   <form method="get" class="admin-logs__filters">
+    {% if unique %}<input type="hidden" name="unique" value="1">{% endif %}
     <label><span>{{ ui_text('admin.logs.file') }}</span><select name="file" data-autosubmit>{% for name, info in files %}<option value="{{ name }}"{{ name == file ? ' selected' : '' }}>{{ name }} · {{ (info.size / 1024)|round }} KB · {{ info.modified|date('Y-m-d H:i') }}</option>{% endfor %}</select></label>
     <label><span>{{ ui_text('admin.logs.level') }}</span><select name="level"><option value="all"{{ level == 'all' ? ' selected' : '' }}>{{ ui_text('admin.logs.level_all') }}</option><option value="error"{{ level == 'error' ? ' selected' : '' }}>{{ ui_text('admin.logs.level_error') }}</option><option value="warning"{{ level == 'warning' ? ' selected' : '' }}>{{ ui_text('admin.logs.level_warning') }}</option></select></label>
     <label><span>{{ ui_text('admin.logs.limit') }}</span><select name="limit">{% for n in limits %}<option value="{{ n }}"{{ n == limit ? ' selected' : '' }}>{{ n }}</option>{% endfor %}</select></label>
+    {% if unique %}<label><span>{{ ui_text('admin.logs.sort') }}</span><select name="sort"><option value="recent"{{ sort == 'recent' ? ' selected' : '' }}>{{ ui_text('admin.logs.sort_recent') }}</option><option value="count"{{ sort == 'count' ? ' selected' : '' }}>{{ ui_text('admin.logs.sort_count') }}</option></select></label>{% endif %}
     <label class="admin-logs__search"><span>{{ ui_text('admin.logs.search') }}</span><input type="search" name="q" value="{{ search }}" maxlength="120"></label>
     <button type="submit" class="admin-button is-primary">{{ ui_icon('list-filter', 16) }}{{ ui_text('admin.logs.show') }}</button>
   </form>
+  {% if unique %}
+  <p class="admin-logs__summary"><span class="admin-badge is-info">{{ ui_text('admin.logs.unique_summary', {groups: group_total + digest.overflow, entries: digest.entries}) }}</span>{% if group_total > groups|length %} <small>{{ ui_text('admin.logs.unique_shown', {shown: groups|length, total: group_total}) }}</small>{% endif %}{% if digest.partial %} <small>{{ ui_text('admin.logs.unique_window', {mb: (digest.scanned / 1048576)|round}) }}</small>{% endif %}</p>
+  {% if digest.overflow > 0 %}<p class="admin-help">{{ ui_text('admin.logs.unique_overflow', {count: digest.overflow, max: max_groups}) }}</p>{% endif %}
+  {% else %}
   <p class="admin-logs__summary"><span class="admin-badge is-danger">{{ ui_text('admin.logs.errors') }}: {{ counts.error }}</span> <span class="admin-badge is-warning">{{ ui_text('admin.logs.warnings') }}: {{ counts.warning }}</span> <small>{{ ui_text('admin.logs.summary_hint') }}</small></p>
+  {% endif %}
   <div class="admin-logs__actions">
+    {% if unique %}
+    <a class="admin-button" href="{{ path('admin_system_logs', {file: file}) }}">{{ ui_icon('rotate-ccw', 16) }}{{ ui_text('admin.logs.reset_filter') }}</a>
+    <button type="button" class="admin-button is-primary" data-copy-checked="[data-row-check]">{{ ui_icon('copy', 16) }}{{ ui_text('admin.logs.copy_selected') }}</button>
+    {% else %}
+    <a class="admin-button" href="{{ path('admin_system_logs', {file: file, level: level, limit: limit, q: search ?: null, unique: 1}) }}">{{ ui_icon('layers', 16) }}{{ ui_text('admin.logs.unique') }}</a>
+    {% endif %}
     <a class="admin-button" href="{{ path('admin_system_logs_download', {file: file}) }}">{{ ui_icon('download', 16) }}{{ ui_text('admin.logs.download') }}</a>
     <form method="post" action="{{ path('admin_system_logs_clear') }}" data-confirm="{{ ui_text('admin.logs.clear_confirm') }}"><input type="hidden" name="_token" value="{{ csrf_token('admin_system_logs_clear') }}"><input type="hidden" name="file" value="{{ file }}"><button type="submit" class="admin-button is-danger">{{ ui_icon('trash-2', 16) }}{{ ui_text('admin.logs.clear') }}</button></form>
   </div>
-  {% if entries %}
+  {% if unique %}
+  {% if groups %}
+  <label><input type="checkbox" data-check-all>{{ ui_text('admin.logs.select_all') }}</label>
+  <ol class="admin-logs__list" tabindex="0" aria-label="{{ ui_text('admin.logs.unique') }}">{% for group in groups %}
+    {% set copy_text = ui_text('admin.logs.copy_type') ~ ': ' ~ group.type ~ "\n" ~ ui_text('admin.logs.copy_message') ~ ': ' ~ group.message ~ (group.file ? "\n" ~ ui_text('admin.logs.file') ~ ': ' ~ group.file ~ "\n" ~ ui_text('admin.logs.copy_line') ~ ': ' ~ group.line : '') ~ "\n" ~ ui_text('admin.logs.copy_repeats') ~ ': ' ~ group.count %}
+    <li class="admin-logs__line is-{{ group.severity }}">
+      <input type="checkbox" data-row-check data-copy-text="{{ copy_text|e('html_attr') }}" aria-label="{{ group.type }}: {{ group.message|slice(0, 80) }}">
+      <span class="admin-badge {{ group.severity == 'error' ? 'is-danger' : (group.severity == 'warning' ? 'is-warning' : 'is-muted') }}" title="{{ ui_text('admin.logs.repeats') }}">&times;{{ group.count }}</span>
+      <div><code>{{ group.type }}: {{ group.message }}</code>
+        <small class="admin-help">{% if group.file %}{{ group.file }}{% if group.line %}:{{ group.line }}{% endif %}{% endif %}{% if group.last %}{{ group.file ? ' · ' : '' }}{{ ui_text('admin.logs.last_seen') }}: {{ group.last }}{% if group.count > 1 and group.first and group.first != group.last %} · {{ ui_text('admin.logs.first_seen') }}: {{ group.first }}{% endif %}{% endif %}</small></div>
+    </li>{% endfor %}</ol>
+  {% else %}<p class="admin-help">{{ ui_text('admin.logs.empty') }}</p>{% endif %}
+  {% elseif entries %}
   <ol class="admin-logs__list" tabindex="0" aria-label="{{ ui_text('admin.logs.title') }}">{% for entry in entries %}<li class="admin-logs__line is-{{ entry.severity }}"><code>{{ entry.text }}</code></li>{% endfor %}</ol>
   {% else %}<p class="admin-help">{{ ui_text('admin.logs.empty') }}</p>{% endif %}
 </section>
