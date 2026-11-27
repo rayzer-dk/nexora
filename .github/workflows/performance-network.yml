@@ -2,7 +2,7 @@ name: Performance and network audit
 
 on:
   push:
-    branches: [qa/performance-4.0.22]
+    branches: [release/4.0.23]
   workflow_dispatch:
 
 permissions:

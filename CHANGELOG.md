@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 4.0.23 — in development
+
+- Add live browser performance audit on desktop and throttled mobile networks, including cold/warm navigation and cache isolation checks.
+- Correct HTTP performance probe routes, response validation and p95 calculation.
+
 ## 4.0.22 — 2026-11-27
 
 - Seven distinct storefront concepts including Forest; independent layouts, palette and interactions.
