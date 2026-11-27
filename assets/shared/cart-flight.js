@@ -2,10 +2,23 @@
 // No timers, image fetching or layout changes are involved in a normal page load.
 export function animateCartFlight(source) {
   if (!(source instanceof Element) || document.hidden || document.documentElement.dataset.motion === 'off'
-    || document.documentElement.dataset.motion === 'minimal'
     || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   const cart = document.querySelector('[data-cart-open] .reference-cart-icon') || document.querySelector('[data-cart-open]');
+  const choice = document.body.dataset.cartEffect || 'auto';
+  if (choice === 'off' || !(cart instanceof Element) || typeof cart.animate !== 'function') return;
+  const mode = document.documentElement.dataset.motion;
+  const pulse = (minimal = false) => {
+    if (!cart.isConnected || document.hidden || ['off'].includes(document.documentElement.dataset.motion)
+      || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const subtle = minimal || document.documentElement.dataset.motion === 'minimal';
+    cart.animate(subtle
+      ? [{ opacity: 1 }, { opacity: .65 }, { opacity: 1 }]
+      : [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }],
+      { duration: subtle ? 160 : 240, easing: 'ease-out' });
+  };
+  if (choice === 'minimal' || choice === 'pulse') { pulse(choice === 'minimal' || mode === 'minimal'); return; }
+  if (mode === 'minimal') { if (choice !== 'auto') pulse(true); return; }
   const scope = source.closest('.quick-view, [data-product-card], .product-page, .product-hero');
   const picture = scope?.querySelector('.quick-view__media img, [data-gallery-main], .catalog-card__media img');
   if (!(picture instanceof HTMLImageElement) || !(cart instanceof Element) || !picture.complete || !picture.naturalWidth) return;
@@ -15,7 +28,7 @@ export function animateCartFlight(source) {
     || start.bottom < 0 || start.top > window.innerHeight
     || end.bottom < 0 || end.top > window.innerHeight) return;
   if (typeof picture.animate !== 'function') return;
-  const dynamic = document.body.dataset.themePreset === 'dynamic';
+  const dynamic = choice === 'flight' || document.body.dataset.themePreset === 'dynamic';
   const fly = document.createElement('img');
   fly.className = 'mc-motion-cart-flight';
   fly.src = picture.currentSrc || picture.src;
@@ -43,7 +56,7 @@ export function animateCartFlight(source) {
     if (dynamic && cart.isConnected && !document.hidden
       && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
       && !['off', 'minimal'].includes(document.documentElement.dataset.motion)) {
-      cart.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }], { duration: 240, easing: 'ease-out' });
+      pulse();
     }
   }, () => fly.remove());
 }

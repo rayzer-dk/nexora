@@ -19,3 +19,7 @@ Product pages remain block-composable. Theme settings change presentation, while
 ## Nexora Dynamic
 
 Opt-in preset: locally hosted Inter, neutral ink, warm accent, restrained radius and no decorative shadow. The category navigation indicates the current internal route (including a selected submenu item) with a thin underline. The existing banner builder supports full-bleed rows and sliders, mobile artwork, four heights, copy position and overlay. The existing card styles, header builder, sticky header and motion preference remain independently configurable. Dynamic enhances the confirmed cart flight with a curved trajectory and a brief arrival pulse; minimal/off and reduced-motion settings still disable the flight. Other presets remain unchanged.
+
+### Independent presentation controls
+
+The storefront editor offers automatic/classic/compact/spacious/wide-search headers, automatic/underline/pill/plain category navigation, automatic/flight/pulse/minimal/off cart effects, and standard/compact/editorial product sections. Values are allowlisted and stored per shop; defaults preserve the previous layout. Existing card styles, banner controls and grid/carousel builder options remain available. Reduced motion and the browser's Off preference take precedence.

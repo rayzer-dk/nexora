@@ -68,6 +68,8 @@ final class AppearanceAdminController extends AbstractController
                         'font' => $request->request->get('theme_font','system'),
                     ],
                     'display' => [
+                        'cart_effect' => $request->request->get('display_cart_effect', 'auto'),
+                        'product_sections' => $request->request->get('display_product_sections', 'standard'),
                         'card_style' => $request->request->get('display_card_style','classic'),
                         'card_columns' => $request->request->get('display_card_columns','5'),
                         'card_ratio' => $request->request->get('display_card_ratio','square'),
@@ -146,6 +148,8 @@ final class AppearanceAdminController extends AbstractController
                     ],
                     'footer' => $this->footerSettings($request, $bool),
                     'header' => [
+                        'layout' => $request->request->get('header_layout', 'auto'),
+                        'nav_style' => $request->request->get('header_nav_style', 'auto'),
                         'search_placeholder' => $tx('search_placeholder'),
                         'show_category_nav' => $bool('show_category_nav'),
                         'show_topbar' => $bool('show_topbar'),

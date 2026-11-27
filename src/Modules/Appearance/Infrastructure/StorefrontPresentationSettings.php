@@ -163,6 +163,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             // Optional overrides of single colours; an empty value keeps the colour of the chosen preset and colour scheme.
             'colors' => ['background' => '', 'text' => '', 'heading' => '', 'header_bg' => '', 'footer_bg' => '', 'primary_hover' => '', 'primary_active' => '', 'buy_button' => '', 'buy_hover' => '', 'buy_active' => '', 'link' => '', 'link_hover' => '', 'h1' => '', 'h2' => '', 'h3' => '', 'header_text' => '', 'muted' => '', 'border' => '', 'surface' => '', 'consent_bg' => '', 'consent_text' => '', 'consent_button' => ''],
             'display' => [
+                'cart_effect' => 'auto',
+                'product_sections' => 'standard',
                 'card_style' => 'classic',
                 'card_columns' => '5',
                 'card_ratio' => 'square',
@@ -190,6 +192,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
                 'columns' => [],
             ],
             'header' => [
+                'layout' => 'auto',
+                'nav_style' => 'auto',
                 'search_placeholder' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.appearance.infrastructure.storefrontpresentationsettings.poshuk_tovariv_katehorii_brendiv'),
                 'show_category_nav' => true,
                 'show_topbar' => true,
@@ -298,6 +302,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $choice = static fn (mixed $v, array $allowed, string $fallback): string => in_array((string) $v, $allowed, true) ? (string) $v : $fallback;
         $d = $defaults['display'];
         $in = is_array($input['display'] ?? null) ? $input['display'] : [];
+        $out['display']['cart_effect'] = $choice($in['cart_effect'] ?? $d['cart_effect'], ['auto', 'flight', 'pulse', 'minimal', 'off'], $d['cart_effect']);
+        $out['display']['product_sections'] = $choice($in['product_sections'] ?? $d['product_sections'], ['standard', 'compact', 'editorial'], $d['product_sections']);
         $out['display']['card_style'] = $choice($in['card_style'] ?? $d['card_style'], ['classic', 'minimal', 'outlined', 'overlay', 'list'], $d['card_style']);
         $out['display']['card_columns'] = $choice($in['card_columns'] ?? $d['card_columns'], ['3', '4', '5'], $d['card_columns']);
         $out['display'] = [...$out['display'], ...ImageDisplaySettings::normalize($in)];
@@ -381,6 +387,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             }
         }
         $out['footer']['columns'] = $columns;
+        $out['header']['layout'] = $choice($input['header']['layout'] ?? 'auto', ['auto', 'classic', 'compact', 'spacious', 'wide_search'], 'auto');
+        $out['header']['nav_style'] = $choice($input['header']['nav_style'] ?? 'auto', ['auto', 'underline', 'pill', 'plain'], 'auto');
         $out['header']['search_placeholder'] = $this->text($input['header']['search_placeholder'] ?? '', 160);
         $out['header']['show_category_nav'] = (bool) ($input['header']['show_category_nav'] ?? false);
         $out['header']['show_topbar'] = (bool) ($input['header']['show_topbar'] ?? $defaults['header']['show_topbar']);
