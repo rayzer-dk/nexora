@@ -981,6 +981,6 @@ body[data-theme-preset="dynamic"] .reference-cart-icon {
 body[data-theme-preset="dynamic"] .reference-cart-link:hover .reference-cart-icon {
   color: var(--mc-color-accent-base);
 }
-body[data-theme-preset="dynamic"] .catalog-card:not([data-card-style="overlay"]) {
+body[data-theme-preset="dynamic"]:not([data-card-style="overlay"]) .catalog-card {
   box-shadow: none;
 }

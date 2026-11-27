@@ -5,7 +5,7 @@ export function animateCartFlight(source) {
     || document.documentElement.dataset.motion === 'minimal'
     || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const cart = document.querySelector('[data-cart-open] .reference-cart-icon, [data-cart-open]');
+  const cart = document.querySelector('[data-cart-open] .reference-cart-icon') || document.querySelector('[data-cart-open]');
   const scope = source.closest('.quick-view, [data-product-card], .product-page, .product-hero');
   const picture = scope?.querySelector('.quick-view__media img, [data-gallery-main], .catalog-card__media img');
   if (!(picture instanceof HTMLImageElement) || !(cart instanceof Element) || !picture.complete || !picture.naturalWidth) return;
