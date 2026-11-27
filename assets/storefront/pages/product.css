@@ -43,12 +43,12 @@
 .gallery-lightbox__btn:focus-visible, .gallery-lightbox__nav:focus-visible, .gallery-lightbox__thumb:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .gallery-lightbox__stage { position: relative; flex: 1 1 auto; min-height: 0; display: grid; place-items: center; overflow: hidden; touch-action: none; cursor: zoom-in; outline: 0; }
 .gallery-lightbox__stage.is-zoomed { cursor: grab; }
-.gallery-lightbox__stage img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; user-select: none; transform-origin: center; transition: transform var(--mc-transition); will-change: transform; }
-.gallery-lightbox__stage.is-zoomed img { transition: none; }
+.gallery-lightbox__stage img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; user-select: none; transform-origin: center; transition: transform var(--mc-transition); }
+.gallery-lightbox__stage.is-zoomed img { transition: none; will-change: transform; }
 .gallery-lightbox__nav { position: absolute; top: 50%; z-index: var(--mc-z-raised); width: var(--mc-control-height-lg); height: var(--mc-control-height-lg); transform: translateY(-50%); }
 .gallery-lightbox__nav--prev { left: var(--mc-space-4); }
 .gallery-lightbox__nav--next { right: var(--mc-space-4); }
-.gallery-lightbox__thumbs { display: flex; flex: none; justify-content: center; gap: var(--mc-space-2); overflow-x: auto; max-width: 100%; padding: var(--mc-space-2) var(--mc-space-4) calc(var(--mc-space-2) + env(safe-area-inset-bottom, 0px)); scrollbar-width: thin; }
+.gallery-lightbox__thumbs { display: flex; flex: none; justify-content: safe center; gap: var(--mc-space-2); overflow-x: auto; max-width: 100%; padding: var(--mc-space-2) var(--mc-space-4) calc(var(--mc-space-2) + env(safe-area-inset-bottom, 0px)); scrollbar-width: thin; }
 .gallery-lightbox__thumb { flex: none; width: 56px; height: 56px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: var(--mc-radius-sm); background: color-mix(in srgb, #fff 10%, transparent); cursor: pointer; opacity: 0.65; }
 .gallery-lightbox__thumb img { width: 100%; height: 100%; object-fit: cover; mix-blend-mode: normal; }
 .gallery-lightbox__thumb:hover { opacity: 1; }

@@ -1156,10 +1156,25 @@ initEcommerceEvents();
     if (mainLink) mainLink.hidden = index !== 0;
   };
   show(0);
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-  let timer = window.setInterval(() => show(index + 1), 5000);
-  bar.addEventListener('mouseenter', () => window.clearInterval(timer));
-  bar.addEventListener('mouseleave', () => { timer = window.setInterval(() => show(index + 1), 5000); });
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let timer = 0;
+  let hovered = false;
+  let focused = bar.contains(document.activeElement);
+  const sync = () => {
+    window.clearTimeout(timer);
+    timer = 0;
+    if (document.hidden || hovered || focused || reduced.matches
+      || ['minimal', 'off'].includes(document.documentElement.dataset.motion)) return;
+    timer = window.setTimeout(() => { show(index + 1); sync(); }, 5000);
+  };
+  bar.addEventListener('mouseenter', () => { hovered = true; sync(); });
+  bar.addEventListener('mouseleave', () => { hovered = false; sync(); });
+  bar.addEventListener('focusin', () => { focused = true; sync(); });
+  bar.addEventListener('focusout', (event) => { focused = bar.contains(event.relatedTarget); sync(); });
+  document.addEventListener('visibilitychange', sync);
+  reduced.addEventListener?.('change', sync);
+  new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion'] });
+  sync();
 })();
 
 // Icons written into a text with the rich-text editor: <span class="mc-inline-icon" data-icon="name">; draw them from the icon feed.

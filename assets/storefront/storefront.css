@@ -236,7 +236,9 @@ legend { padding: 0; margin-bottom: var(--mc-space-2); font-size: var(--mc-font-
 .announcement-bar__text { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
 .announcement-bar__track { display: inline-flex; gap: var(--mc-space-3); }
 .announcement-bar:not([data-mode="static"]) .announcement-bar__track { animation: announcement-ticker 18s linear infinite; }
-.announcement-bar__text:hover .announcement-bar__track { animation-play-state: paused; }
+.announcement-bar__text:hover .announcement-bar__track, .announcement-bar:focus-within .announcement-bar__track { animation-play-state: paused; }
+:root:is([data-motion="minimal"], [data-motion="off"]) .announcement-bar__track { animation: none; }
+:root:is([data-motion="minimal"], [data-motion="off"]) .announcement-bar__text { text-overflow: ellipsis; mask-image: none; }
 .announcement-bar[data-mode="static"] .announcement-bar__text { white-space: normal; -webkit-mask-image: none; mask-image: none; }
 .announcement-bar[data-mode="static"] .announcement-bar__track { display: block; }
 .announcement-bar__item { display: inline-flex; align-items: baseline; gap: var(--mc-space-2); }
