@@ -402,6 +402,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'TURNSTILE_SITE_KEY' => '',
                 'TURNSTILE_SECRET_KEY' => '',
                 'CORE_UPDATE_PUBLIC_KEY' => '',
+                'MEDIA_CACHE_MAX_MB' => '0',
+                'MEDIA_CACHE_IDLE_DAYS' => '0',
                 'MARKETING_GA4_ENABLED' => '0',
                 'MARKETING_GA4_MEASUREMENT_ID' => '',
                 'MARKETING_GA4_API_SECRET' => '',
