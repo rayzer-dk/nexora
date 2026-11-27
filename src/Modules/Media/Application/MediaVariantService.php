@@ -247,7 +247,7 @@ final class MediaVariantService
                 return $target; // another request made it while this one waited
             }
 
-            return $this->make($master, $target, $parsed['ext'], $width, $parsed['ext'] === 'avif' ? $profile['avif_quality'] : $profile['quality']) ? $target : null;
+            return $this->make($master, $target, $parsed['ext'], $width, $parsed['ext'] === 'avif' ? $profile['avif_quality'] : $profile['quality'], $parsed['stem'], $parsed['gen']) ? $target : null;
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);
@@ -553,7 +553,7 @@ final class MediaVariantService
         return rtrim($this->projectDir, '/\\') . '/public/media/' . $key;
     }
 
-    private function make(string $original, string $target, string $ext, int $width, int $quality): bool
+    private function make(string $original, string $target, string $ext, int $width, int $quality, string $stem, int $generation): bool
     {
         $info = @getimagesize($original);
         if (!is_array($info) || $info[0] < 1 || $info[1] < 1 || $info[0] * $info[1] > self::MAX_PIXELS) {
@@ -563,7 +563,30 @@ final class MediaVariantService
         if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
             return false;
         }
-        if ($this->vips !== null && $this->vips->supports($ext)) {
+        $sameFormat = match ($info['mime'] ?? '') {
+            'image/webp' => $ext === 'webp',
+            'image/avif' => $ext === 'avif',
+            'image/jpeg' => $ext === 'jpg',
+            default => false,
+        };
+        // Presets wider than a small original have identical output dimensions.
+        // Reuse immutable file data on filesystems that support hard links.
+        // Never chmod or rewrite a linked source; deletion of a cache path is safe.
+        if ($info[0] <= $width && function_exists('link')) {
+            if ($sameFormat && !is_link($original) && @link($original, $target)) {
+                return true;
+            }
+            foreach ($this->profile()['presets'] as $preset => $candidateWidth) {
+                if ($candidateWidth < $info[0]) {
+                    continue;
+                }
+                $candidate = $this->path('cache/' . $preset . '-g' . $generation . '/' . $stem . '.' . $ext);
+                if ($candidate !== $target && is_file($candidate) && !is_link($candidate) && @link($candidate, $target)) {
+                    return true;
+                }
+            }
+        }
+        if ($this->vips !== null && $this->vips->supports($ext) && !($sameFormat && $info[0] <= $width)) {
             // libvips needs the real extension at the end of the output name to pick the format.
             $vipsTemporary = $dir . '/.vips-' . bin2hex(random_bytes(4)) . '.' . $ext;
             if ($this->vips->thumbnail($original, $vipsTemporary, $width, $ext, $quality)) {
@@ -578,12 +601,6 @@ final class MediaVariantService
             return false;
         }
         $temporary = $target . '.' . bin2hex(random_bytes(4)) . '.tmp';
-        $sameFormat = match ($info['mime'] ?? '') {
-            'image/webp' => $ext === 'webp',
-            'image/avif' => $ext === 'avif',
-            'image/jpeg' => $ext === 'jpg',
-            default => false,
-        };
         if ($sameFormat && $info[0] <= $width) {
             // The original is already that small and in that format: the variant is a plain copy.
             $ok = @copy($original, $temporary);

@@ -106,6 +106,36 @@ final class MediaVariantServiceTest extends TestCase
         self::assertSame(300, getimagesize((string) $path)[0]);
     }
 
+    public function testSmallImagesReuseIdenticalFileDataWhenHardLinksAreAvailable(): void
+    {
+        if (!function_exists('link')) {
+            self::markTestSkipped('Hard links are unavailable.');
+        }
+        $probe = $this->dir . '/link-probe';
+        file_put_contents($probe, 'probe');
+        if (!@link($probe, $probe . '.copy')) {
+            self::markTestSkipped('The filesystem does not support hard links.');
+        }
+        $this->original('phones/apple/small-webp', 100, 80, 'webp');
+        $s = $this->service();
+        $original = $this->dir . '/public/media/phones/apple/small-webp.webp';
+        $a = $s->ensure('cache/thumb-g1/phones/apple/small-webp.webp');
+        $b = $s->ensure('cache/product-g1/phones/apple/small-webp.webp');
+        self::assertNotNull($a);
+        self::assertNotNull($b);
+        self::assertSame(fileinode($original), fileinode($a));
+        self::assertSame(fileinode($a), fileinode($b));
+
+        $this->original('phones/apple/small-jpeg', 100, 80);
+        $c = $s->ensure('cache/thumb-g1/phones/apple/small-jpeg.webp');
+        $d = $s->ensure('cache/product-g1/phones/apple/small-jpeg.webp');
+        self::assertNotNull($c);
+        self::assertNotNull($d);
+        self::assertSame(fileinode($c), fileinode($d));
+        $s->forget('phones/apple/small-webp.webp');
+        self::assertFileExists($original);
+    }
+
     public function testAvifIsOfferedOnlyWhenChosenAndSupported(): void
     {
         self::assertFalse($this->service()->avifEnabled());

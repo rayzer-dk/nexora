@@ -30,3 +30,8 @@ warm-up is skipped, but requested AVIF jobs and on-demand image generation conti
 
 For an explicit dry run: `php bin/console commerce:media:gc --max-cache-mb=2048`.
 Add `--apply` to remove eligible variants. Original uploads are never removed by this policy.
+
+For small images whose requested variants have identical pixel dimensions, the encoder
+reuses file data through hard links when supported. On other filesystems it falls back
+to normal copies or encoding. Storage statistics and the soft budget count logical
+file sizes, so actual physical disk use may be lower when hard links are present.
