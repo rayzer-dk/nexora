@@ -1,5 +1,7 @@
 name: Symfony 8.2 preview compatibility
 
+# Preview only: production remains on the stable Symfony release train.
+
 on:
   push:
     branches: ['upgrade/symfony-8.2']
