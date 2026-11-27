@@ -597,7 +597,7 @@ final class MediaVariantService
             }
             @unlink($vipsTemporary); // fall back to GD
         }
-        if ($ext === 'avif' && !function_exists('imageavif')) {
+        if ($ext === 'avif' && !function_exists('imageavif') && !($sameFormat && $info[0] <= $width)) {
             return false;
         }
         $temporary = $target . '.' . bin2hex(random_bytes(4)) . '.tmp';
