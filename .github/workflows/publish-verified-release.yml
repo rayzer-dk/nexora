@@ -8,6 +8,14 @@ on:
       - Build Nexora production package
       - Nexora QA
       - PHP 8.6 compatibility QA
+      - Database runtime QA
+      - Playwright Smoke
+      - Production certification gate
+      - PHP quality tooling
+      - Nexora Twig template QA
+      - Source integrity (UTF-8, safe Unicode)
+      - Source duplication audit
+      - Nexora dead-code audit
     types: [completed]
     branches: [main]
 
