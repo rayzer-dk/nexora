@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { expectNoServerError, loginAdmin } from './helpers';
 
-const concepts = ['modern', 'marketplace', 'premium', 'minimal', 'soft', 'dynamic'];
+const concepts = ['modern', 'marketplace', 'premium', 'minimal', 'soft', 'dynamic', 'green'];
 const names = [
   'theme_preset', 'theme_concept', 'theme_primary', 'theme_accent', 'theme_success',
   'theme_surface', 'theme_radius', 'theme_shadow', 'theme_density', 'theme_container', 'theme_font',
@@ -10,9 +10,9 @@ const names = [
   'display_product_sections', 'display_cart_effect', 'home_composition',
 ];
 
-test('six concepts render distinct storefront layouts at desktop and mobile widths', async ({ page, browser }, testInfo) => {
+test('seven concepts render distinct storefront layouts at desktop and mobile widths', async ({ page, browser }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating settings and comparative captures run once.');
-  test.setTimeout(240_000);
+  test.setTimeout(360_000);
   await loginAdmin(page);
   await page.goto('/admin/appearance/storefront');
   const form = page.locator('form[data-theme-presets-json]');
@@ -74,6 +74,14 @@ test('six concepts render distinct storefront layouts at desktop and mobile widt
       await expectNoServerError(shop);
       await testInfo.attach(`${code}-mobile-home`, { body: await shop.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
       await expect.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
+      await shop.goto('/catalog');
+      await expectNoServerError(shop);
+      await expect.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
+      await testInfo.attach(`${code}-mobile-catalog`, { body: await shop.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+      await shop.goto(href!);
+      await expectNoServerError(shop);
+      await expect.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
+      await testInfo.attach(`${code}-mobile-product`, { body: await shop.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
     }
     expect(signatures.size).toBe(concepts.length);
   } finally {
