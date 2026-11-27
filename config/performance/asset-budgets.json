@@ -1,6 +1,7 @@
 {
   "storefront_css": {"max_brotli_bytes": 20500},
   "appearance_options_css": {"max_brotli_bytes": 1500},
+  "theme_concepts_css": {"max_brotli_bytes": 4200},
   "page_css_product": {"max_brotli_bytes": 5200},
   "page_css_cart": {"max_brotli_bytes": 3800},
   "page_css_home": {"max_brotli_bytes": 4000},

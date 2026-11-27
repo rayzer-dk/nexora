@@ -35,6 +35,7 @@ export default defineConfig({
         adminAppearanceMedia: 'assets/admin/features/appearance-media.js',
         storefrontCss: 'assets/storefront/storefront.css',
         appearanceOptionsCss: 'assets/storefront/appearance-options.css',
+        themeConceptsCss: 'assets/storefront/theme-concepts.css',
         forumCss: 'assets/storefront/forum.css',
         landingCss: 'assets/storefront/landing.css',
         productPageCss: 'assets/storefront/pages/product.css',

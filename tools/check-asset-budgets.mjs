@@ -40,6 +40,7 @@ const fileFor = (key) => {
 const checks = [
   ['storefront_css', 'assets/storefront/storefront.css'],
   ['appearance_options_css', 'assets/storefront/appearance-options.css'],
+  ['theme_concepts_css', 'assets/storefront/theme-concepts.css'],
   ['page_css_product', 'assets/storefront/pages/product.css'],
   ['page_css_cart', 'assets/storefront/pages/cart.css'],
   ['page_css_home', 'assets/storefront/pages/home.css'],
