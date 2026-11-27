@@ -1,0 +1,237 @@
+name: PHP 8.6 compatibility QA
+
+# Test the released runtime without changing main or its current release candidate.
+on:
+  push:
+    branches: [main, 'qa/php-8.6']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    name: PHP 8.6 / ${{ matrix.db }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - db: mysql84
+            image: mysql:8.4
+            server_version: '8.4.0'
+            health: mysqladmin ping -h 127.0.0.1 -uroot -proot --silent
+          - db: mariadb1011
+            image: mariadb:10.11
+            server_version: 'mariadb-10.11.0'
+            health: healthcheck.sh --connect --innodb_initialized
+          - db: mariadb114
+            image: mariadb:11.4
+            server_version: 'mariadb-11.4.0'
+            health: healthcheck.sh --connect --innodb_initialized
+    services:
+      db:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_DATABASE: nexora_test
+          MYSQL_USER: nexora
+          MYSQL_PASSWORD: nexora
+          MYSQL_ROOT_PASSWORD: root
+          MARIADB_DATABASE: nexora_test
+          MARIADB_USER: nexora
+          MARIADB_PASSWORD: nexora
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="${{ matrix.health }}"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      APP_ENV: test
+      APP_DEBUG: 0
+      APP_SECRET: test-secret-0123456789abcdef0123456789abcdef
+      DATABASE_URL: mysql://nexora:nexora@127.0.0.1:3306/nexora_test?charset=utf8mb4
+      DATABASE_SERVER_VERSION: ${{ matrix.server_version }}
+      LOCK_DSN: flock
+      REDIS_DSN: redis://127.0.0.1:6379
+      VALKEY_DSN: redis://127.0.0.1:6379
+      MAILER_DSN: null://null
+      SYMFONY_TRUSTED_PROXIES: ''
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.6'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - name: Require released PHP 8.6, not a nightly build
+        run: |
+          php -v
+          php -r 'if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION !== 6 || PHP_EXTRA_VERSION !== "") { fwrite(STDERR, "A stable PHP 8.6 runtime is required.\n"); exit(1); }'
+      - run: composer validate --strict
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer check-platform-reqs
+      - run: composer audit --locked
+      - run: composer lint:php
+      - run: php bin/console lint:container
+      - run: php bin/console lint:twig themes/default/templates
+      - run: php bin/console doctrine:migrations:migrate --no-interaction
+      - run: php bin/google-commerce-integration-contract-check.php
+      - run: php bin/migration-opencart-runtime-check.php
+      - run: php bin/forum-schema-runtime-check.php
+      - run: php bin/database-hardening-runtime-check.php
+      - run: php -d error_reporting=-1 vendor/bin/phpunit --configuration phpunit.xml.dist --fail-on-deprecation --fail-on-warning
+      - name: Installer render smoke on PHP 8.6
+        run: |
+          php tests/installer-render-smoke.php uk-UA
+          php tests/installer-render-smoke.php ru-RU
+          php tests/installer-render-smoke.php en-US
+
+  browser-qa-86:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: nexora_e2e
+          MYSQL_USER: nexora
+          MYSQL_PASSWORD: nexora
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      APP_ENV: prod
+      APP_DEBUG: 0
+      APP_SECRET: e2e-secret-0123456789abcdef0123456789abcdef
+      DATABASE_URL: mysql://nexora:nexora@127.0.0.1:3306/nexora_e2e?charset=utf8mb4
+      DATABASE_SERVER_VERSION: '8.4.0'
+      LOCK_DSN: flock
+      MAILER_DSN: null://null
+      E2E_BASE_URL: http://127.0.0.1:8000
+      TELEGRAM_API_BASE: http://127.0.0.1:8099
+      PRRO_CHECKBOX_BASE_URL: http://127.0.0.1:8099/checkbox/api/v1
+      VIES_API_BASE: http://127.0.0.1:8099/vies
+      COMMERCE_SUPPLIER_ALLOW_PRIVATE_HOSTS: '1'
+      APP_PUBLIC_URL: http://127.0.0.1:8000
+      E2E_ADMIN_EMAIL: e2e-admin@example.test
+      E2E_ADMIN_PASSWORD: Nexora-E2E-2026-Strong!
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.6'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: php -r 'if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION !== 6 || PHP_EXTRA_VERSION !== "") exit(1);'
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer check-platform-reqs
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      - run: npm run build:production
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Prepare writable runtime directories
+        run: |
+          mkdir -p var/cache var/log var/install public/media
+          chmod -R u+rwX var public/media
+          rm -f var/install/installed.lock
+      - name: Install Nexora E2E store
+        run: >
+          php bin/console commerce:install --no-interaction
+          --store-name="Nexora E2E"
+          --admin-name="E2E Admin"
+          --admin-email="$E2E_ADMIN_EMAIL"
+          --admin-password="$E2E_ADMIN_PASSWORD"
+          --public-url="$E2E_BASE_URL"
+          --site-mode=hybrid
+          --demo
+      - name: Start storefront
+        run: |
+          php -S 127.0.0.1:8099 tests/e2e/fixtures/telegram-mock.php > var/log/e2e-telegram.log 2>&1 &
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8000 -t public tests/e2e/router.php > var/log/e2e-web.log 2>&1 &
+          echo $! > var/e2e-server.pid
+          for i in {1..30}; do
+            if curl --fail --silent --show-error "$E2E_BASE_URL/" >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat var/log/e2e-web.log
+          exit 1
+      - name: Build E2E extension fixture
+        run: |
+          rm -f var/e2e-extension.zip
+          (
+            cd tests/e2e/fixtures/e2e-extension
+            zip -q "$GITHUB_WORKSPACE/var/e2e-extension.zip" manifest.json
+          )
+          unzip -t var/e2e-extension.zip
+      - name: Mandatory visual regression on untouched demo data
+        shell: bash
+        env:
+          E2E_VISUAL: '1'
+        run: |
+          set -euo pipefail
+          expected=16
+          actual="$(find tests/e2e/__snapshots__ -type f -name '*.png' | wc -l)"
+          if [ "$actual" -ne "$expected" ]; then
+            echo "::error::Expected $expected committed browser snapshots, found $actual."
+            exit 1
+          fi
+          # Run before the mutating functional suite so screenshots describe
+          # a clean, reproducible demo shop, not prior tests' database changes.
+          npm run e2e:visual
+      - name: Playwright Chromium, Firefox and WebKit
+        shell: bash
+        run: |
+          if ! npm run e2e; then
+            echo '--- Nexora E2E server log (last 200 lines; the full log is in the playwright-report artifact) ---'
+            tail -n 200 var/log/e2e-web.log || true
+            exit 1
+          fi
+      - name: Audit application error logs
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > var/log/e2e-errors.log
+          for file in var/log/e2e-web.log var/log/prod.log; do
+            [ -f "$file" ] || continue
+            if grep -E -i '\[(critical|alert|emergency|error)\]|PHP (Fatal error|Parse error|Warning)|Uncaught .*(Exception|Error)|SQLSTATE\[' "$file" \
+              | grep -E -v 'Symfony\\Component\\HttpKernel\\Exception\\(NotFound|AccessDenied)HttpException:' \
+              >> var/log/e2e-errors.log; then
+              true
+            fi
+          done
+          if [ -s var/log/e2e-errors.log ]; then
+            echo "Runtime error audit found errors:"
+            cat var/log/e2e-errors.log
+            exit 1
+          fi
+          echo "Runtime error audit: clean"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            var/test-results/playwright/
+            var/log/e2e-web.log
+            var/log/e2e-errors.log
+            var/log/prod.log
+            tests/e2e/__snapshots__/
+          if-no-files-found: ignore
+          retention-days: 7

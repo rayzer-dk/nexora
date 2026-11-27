@@ -97,8 +97,38 @@ jobs:
           done
           cat var/log/e2e-web.log
           exit 1
-      - name: Generate real browser screenshots
-        run: npx playwright test tests/e2e/visual.spec.ts --update-snapshots --retries=0
+      - name: Refresh only the reviewed Chromium mobile home screenshot
+        run: npx playwright test tests/e2e/visual.spec.ts --project=chromium-mobile --grep '^home visual regression
+      - name: Validate screenshots by a second independent capture
+        run: npx playwright test tests/e2e/visual.spec.ts --retries=0
+      - name: Verify and publish a candidate with the reviewed PNG reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find tests/e2e/__snapshots__ -type f -name '*.png' | wc -l)" -eq 16
+          git add tests/e2e/__snapshots__/chromium-mobile/visual.spec.ts/home.png
+          if git diff --cached --quiet; then
+            echo 'All 16 screenshot baselines were already committed.'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "test(visual): refresh reviewed mobile home snapshot after browser update"
+          # Keep a candidate separate until a human or the agent verifies this run.
+          git push origin "HEAD:refs/heads/visual-baseline-${GITHUB_RUN_ID}"
+      - name: Archive baseline images and comparison reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-visual-baselines
+          path: |
+            tests/e2e/__snapshots__/
+            playwright-report/
+            var/test-results/playwright/
+            var/log/e2e-web.log
+          if-no-files-found: ignore
+          retention-days: 14
+ --update-snapshots --retries=0
       - name: Validate screenshots by a second independent capture
         run: npx playwright test tests/e2e/visual.spec.ts --retries=0
       - name: Verify and commit the validated PNG references
