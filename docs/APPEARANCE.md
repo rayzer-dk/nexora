@@ -24,6 +24,10 @@ Opt-in preset: locally hosted Inter, neutral ink, warm accent, restrained radius
 
 The storefront editor offers automatic/classic/compact/spacious/wide-search headers, automatic/underline/pill/plain category navigation, automatic/flight/pulse/minimal/off cart effects, and standard/compact/editorial product sections. Values are allowlisted and stored per shop; defaults preserve the previous layout. Existing card styles, banner controls and grid/carousel builder options remain available. Reduced motion and the browser's Off preference take precedence.
 
-## Six complete concept profiles
+## Seven complete concept profiles
 
 Selecting a preset applies its form profile and enables opt-in concept CSS. Existing installations keep their previous appearance until the individual concept checkbox is enabled. The standard homepage can follow the theme's section order; customized layouts with extra or repeated blocks stay in builder order. A separate selector restores builder order. No commerce functionality is duplicated. Each concept has its own desktop header and menu geometry, catalog and category presentation, product-page layout, visual surfaces and floating contact/cart treatment. Mobile retains the existing accessible navigation interaction. Shared and optional CSS budgets are measured separately.
+
+## Forest
+
+Forest uses deep green, sage surfaces and warm olive accents, a spacious header, portrait cards, editorial product sections and a distinct homepage order. Marketplace uses a burgundy palette rather than the blue Modern palette. All concepts retain user-selected color overrides, keyboard navigation and reduced-motion support.
