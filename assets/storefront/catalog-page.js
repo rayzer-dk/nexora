@@ -29,6 +29,7 @@ if (form instanceof HTMLFormElement) {
     const desktop = window.matchMedia('(min-width: 1024px)');
     const DEFAULTS = { sort: 'newest', per_page: '24' };
     let timer = 0;
+    const disabledForSubmit = new Set();
 
     const syncMode = () => form.classList.toggle('is-instant', desktop.matches);
     syncMode();
@@ -50,19 +51,26 @@ if (form instanceof HTMLFormElement) {
 
     // Keep the URL short and shareable: empty fields and default values are not submitted.
     form.addEventListener('submit', () => {
-        const fields = [...form.elements, ...document.querySelectorAll('[form="catalog-filters"]')];
+        window.clearTimeout(timer);
+        // form.elements already includes external controls associated through the form attribute.
+        const fields = Array.from(form.elements);
         fields.forEach((field) => {
             if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement)) return;
-            if (!field.name || field.type === 'range') return;
+            if (!field.name || field.disabled || field.type === 'range') return;
             if ((field.type === 'radio' || field.type === 'checkbox') && !field.checked) return;
-            if (field.value === '' || DEFAULTS[field.name] === field.value) field.disabled = true;
+            if (field.value === '' || DEFAULTS[field.name] === field.value) {
+                disabledForSubmit.add(field);
+                field.disabled = true;
+            }
         });
         showCatalogSkeleton(document.querySelector('.product-grid'));
     });
 
     // Fields disabled by the submit handler must come back enabled after history navigation.
     window.addEventListener('pageshow', () => {
-        [...form.elements, ...document.querySelectorAll('[form="catalog-filters"]')].forEach((field) => { if ('disabled' in field) field.disabled = false; });
+        window.clearTimeout(timer);
+        disabledForSubmit.forEach((field) => { field.disabled = false; });
+        disabledForSubmit.clear();
         document.querySelectorAll('.mc-motion-catalog-skeleton').forEach((node) => node.remove());
         const grid = document.querySelector('.product-grid');
         if (grid instanceof HTMLElement) grid.hidden = false;
@@ -75,6 +83,7 @@ if (form instanceof HTMLFormElement) {
         if (!desktop.matches) return;
         const target = event.target;
         if (target instanceof HTMLInputElement && target.type === 'range') return;
+        if (target instanceof HTMLSelectElement && target.matches('[data-filter-auto]')) return;
         submitSoon();
     });
     document.querySelectorAll('select[data-filter-auto]').forEach((select) => select.addEventListener('change', submitNow));
@@ -161,13 +170,15 @@ if (form instanceof HTMLFormElement) {
     try {
       const response = await fetch(url, { headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin', signal: request.signal });
       if (!response.ok) throw new Error('page');
-      const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+      const html = await response.text();
+      if (pending !== request || request.signal.aborted) return;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
       if (!doc.querySelector('.product-grid')) throw new Error('page');
       swap(doc);
       if (push) history.pushState({ mcCatalog: true }, '', url);
       grid()?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.motion === 'off' ? 'auto' : 'smooth' });
     } catch (error) {
-      if (error?.name !== 'AbortError') window.location.assign(url);
+      if (pending === request && error?.name !== 'AbortError') window.location.assign(url);
     } finally {
       if (pending === request) {
         pending = null;
@@ -180,9 +191,11 @@ if (form instanceof HTMLFormElement) {
   document.addEventListener('click', (event) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     const link = event.target instanceof Element ? event.target.closest('nav.pager a[href]') : null;
-    if (!link) return;
+    if (!link || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
+    const url = new URL(link.href, window.location.href);
+    if (url.origin !== window.location.origin) return;
     event.preventDefault();
-    load(new URL(link.getAttribute('href'), window.location.href).href, true);
+    load(url.href, true);
   });
   window.addEventListener('popstate', () => { load(window.location.href, false); });
 })();
