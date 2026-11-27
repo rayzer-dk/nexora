@@ -8,7 +8,7 @@ Run static readiness without a deployed store:
 
 Run live HTTP probes against a deployed environment:
 
-`PERF_BASE_URL=https://shop.example php bin/performance-audit.php 100k`
+`PERF_BASE_URL=https://shop.example PERF_PRODUCT_PATH=/actual-product PERF_CATEGORY_PATH=/actual-category php bin/performance-audit.php 100k`
 
 The live runner performs repeated requests and evaluates p95 latency. It is intentionally not presented as a substitute for full load testing. Production certification must run realistic concurrent traffic with a populated MySQL and MariaDB dataset and record category, search, product, cart, checkout, admin catalog, imports, sitemap/feed generation and background workers.
 
@@ -25,3 +25,5 @@ The repository includes `qa/load/k6-storefront.js`. Run the same populated datab
 - Real visitors: a quarter of the visits report LCP, CLS and INP once, when the page is hidden (`/rum/vitals`, no identifiers, table `mc_web_vital`, kept 90 days). Admin → Analytics → Traffic → Site speed shows the 75th percentile per page kind and device, rated against the Google limits (LCP 2500 ms, INP 200 ms, CLS 0.1).
 - Lab: `tests/e2e/web-vitals.spec.ts` keeps CLS under 0.1 and LCP under 4 s on the home page, catalogue and cart, and checks that the first catalogue cards are loaded at once (`loading=eager`, `fetchpriority=high` for the first two).
 - The first request for a picture size that was not generated yet builds it on the spot, which can make the first visitor's LCP several seconds slower; warm the media cache after a large import.
+
+The dedicated Performance and network audit workflow measures cold/warm browser loads on real demo routes at desktop, simulated 4G and slow 3G, records LCP, CLS, TTFB and transfer bytes, and exercises Workbox offline behavior. Demo results are not a production capacity claim.
