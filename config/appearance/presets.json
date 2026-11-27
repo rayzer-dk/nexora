@@ -228,7 +228,7 @@
       "container": "1440",
       "font": "manrope"
     },
-    "description_key": "admin.appearance.storefront.zbalansovanyi_suchasnyi_mahazyn",
+    "description_key": "admin.appearance.concept.forest",
     "form": {
       "theme_concept": "1",
       "home_composition": "theme",
