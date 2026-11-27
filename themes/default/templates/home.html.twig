@@ -2,11 +2,19 @@
 {% set presentation = storefront_presentation() %}
 {% block head %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and (b.component in ['scroll_story', 'video_hero'] or (b.component == 'banner' and b.props.slide|default(false) is same as(true))))|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/home-blocks.js', '/assets/home-blocks.js') }}"></script>{% endif %}{% if home_layout.blocks|default([])|filter(b => b.enabled|default(true) and b.component == 'product_grid' and b.props.display|default('') == 'carousel')|length > 0 %}<script type="module" src="{{ vite_asset('assets/storefront/slider.js', '/assets/slider.js') }}"></script>{% endif %}{% endblock %}
 {% block body %}
-{% for layout_block in home_blocks_grouped(home_layout.blocks|default([])) %}
+{# Only the standard layout can be reordered. A customized builder with additional blocks or repeated sections keeps its published order. #}
+{% set home_blocks = home_blocks_grouped(home_layout.blocks|default([])) %}
+{% set concept_orders = {"modern":{"hero":0,"category_grid":1,"product_grid":2,"article_grid":3,"recently_viewed":4},"marketplace":{"category_grid":0,"product_grid":1,"hero":2,"recently_viewed":3,"article_grid":4},"premium":{"hero":0,"product_grid":1,"article_grid":2,"category_grid":3,"recently_viewed":4},"minimal":{"product_grid":0,"hero":1,"category_grid":2,"recently_viewed":3,"article_grid":4},"soft":{"category_grid":0,"hero":1,"article_grid":2,"product_grid":3,"recently_viewed":4},"dynamic":{"hero":0,"product_grid":1,"category_grid":2,"recently_viewed":3,"article_grid":4}} %}
+{% set concept_order = concept_orders[presentation.theme.preset]|default({}) %}
+{% set standard_types = home_blocks|map(b => b.component) %}
+{% if presentation.theme.concept|default('0') == '1' and presentation.home.composition|default('builder') == 'theme' and standard_types|filter(t => concept_order[t] is not defined)|length == 0 and standard_types|filter((t, i) => t in standard_types|slice(0, i))|length == 0 %}
+  {% set home_blocks = home_blocks|sort((a, b) => concept_order[a.component] <=> concept_order[b.component]) %}
+{% endif %}
+{% for layout_block in home_blocks %}
   {% if layout_block.enabled|default(true) and not layout_block.missing_extension|default(false) %}
     {#- Device visibility and the style fields of the builder apply to every block; banners carry their own, per banner. -#}
     {% set block_attrs = layout_block.component in ['banner_row', 'banner_slider'] ? {class: '', style: ''} : home_block_attrs(layout_block) %}
-    <div class="home-block{{ block_attrs.class ? ' ' ~ block_attrs.class : '' }}"{% if block_attrs.style %} style="{{ block_attrs.style }}"{% endif %}>
+    <div data-home-component="{{ layout_block.component }}" class="home-block{{ block_attrs.class ? ' ' ~ block_attrs.class : '' }}"{% if block_attrs.style %} style="{{ block_attrs.style }}"{% endif %}>
     {% if layout_block.component == 'banner_row' %}
       {% include '@storefront/home/blocks/banners.html.twig' %}
     {% elseif layout_block.component == 'banner_slider' %}

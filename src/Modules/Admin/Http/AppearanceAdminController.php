@@ -54,6 +54,7 @@ final class AppearanceAdminController extends AbstractController
                         'workbox' => $request->request->get('brand_workbox','0') === '1' ? '1' : '0',
                     ],
                     'theme' => [
+                        'concept' => $bool('theme_concept') ? '1' : '0',
                         'preset' => $request->request->get('theme_preset','modern'),
                         'primary' => $request->request->get('theme_primary','#0B63F6'),
                         'accent' => $request->request->get('theme_accent','#FF7A1A'),
@@ -160,6 +161,7 @@ final class AppearanceAdminController extends AbstractController
                         'mobile_limit' => $request->request->get('benefits_mobile_limit', '0'),
                     ],
                     'home' => [
+                        'composition' => $request->request->get('home_composition', 'builder'),
                         'show_benefits' => $bool('show_benefits'),
                         'show_categories' => $bool('show_categories'),
                         'show_products' => $bool('show_products'),

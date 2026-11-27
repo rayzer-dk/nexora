@@ -10,7 +10,7 @@ final readonly class ThemePresetCatalog
     {
     }
 
-    /** @return array<string,array{label:string,description_key:string,theme:array<string,string>}> */
+    /** @return array<string,array{label:string,description_key:string,theme:array<string,string>,form:array<string,string>,home_order:list<string>}> */
     public function all(): array
     {
         $json = @file_get_contents($this->configPath);
@@ -33,6 +33,8 @@ final readonly class ThemePresetCatalog
                 'label' => trim((string)($preset['label'] ?? ucfirst($code))),
                 'description_key' => trim((string)($preset['description_key'] ?? '')),
                 'theme' => array_map(static fn (mixed $value): string => trim((string)$value), $theme),
+                'form' => array_map(static fn (mixed $value): string => trim((string)$value), array_intersect_key(is_array($preset['form'] ?? null) ? $preset['form'] : [], array_flip(['theme_concept', 'home_composition', 'header_layout', 'header_nav_style', 'display_card_style', 'display_card_columns', 'display_card_ratio', 'display_category_style', 'display_product_layout', 'display_product_details', 'display_product_sections', 'display_cart_effect']))),
+                'home_order' => array_values(array_filter(is_array($preset['home_order'] ?? null) ? $preset['home_order'] : [], static fn (mixed $value): bool => is_string($value) && in_array($value, ['hero', 'category_grid', 'product_grid', 'article_grid', 'recently_viewed'], true))),
             ];
         }
 

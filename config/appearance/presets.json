@@ -12,7 +12,28 @@
       "container": "1600",
       "font": "system"
     },
-    "description_key": "admin.appearance.storefront.zbalansovanyi_suchasnyi_mahazyn"
+    "description_key": "admin.appearance.storefront.zbalansovanyi_suchasnyi_mahazyn",
+    "form": {
+      "theme_concept": "1",
+      "home_composition": "theme",
+      "header_layout": "wide_search",
+      "header_nav_style": "plain",
+      "display_card_style": "classic",
+      "display_card_columns": "5",
+      "display_card_ratio": "square",
+      "display_category_style": "classic",
+      "display_product_layout": "split",
+      "display_product_details": "tabs",
+      "display_product_sections": "standard",
+      "display_cart_effect": "flight"
+    },
+    "home_order": [
+      "hero",
+      "category_grid",
+      "product_grid",
+      "article_grid",
+      "recently_viewed"
+    ]
   },
   "marketplace": {
     "label": "Marketplace",
@@ -27,7 +48,28 @@
       "container": "1600",
       "font": "system"
     },
-    "description_key": "admin.appearance.storefront.shchilnyi_kataloh_i_bahato_tovariv"
+    "description_key": "admin.appearance.storefront.shchilnyi_kataloh_i_bahato_tovariv",
+    "form": {
+      "theme_concept": "1",
+      "home_composition": "theme",
+      "header_layout": "compact",
+      "header_nav_style": "pill",
+      "display_card_style": "outlined",
+      "display_card_columns": "5",
+      "display_card_ratio": "landscape",
+      "display_category_style": "chips",
+      "display_product_layout": "classic",
+      "display_product_details": "tabs",
+      "display_product_sections": "compact",
+      "display_cart_effect": "pulse"
+    },
+    "home_order": [
+      "category_grid",
+      "product_grid",
+      "hero",
+      "recently_viewed",
+      "article_grid"
+    ]
   },
   "premium": {
     "label": "Premium",
@@ -42,7 +84,28 @@
       "container": "1328",
       "font": "manrope"
     },
-    "description_key": "admin.appearance.storefront.bilshe_povitria_miaki_tini"
+    "description_key": "admin.appearance.storefront.bilshe_povitria_miaki_tini",
+    "form": {
+      "theme_concept": "1",
+      "home_composition": "theme",
+      "header_layout": "spacious",
+      "header_nav_style": "plain",
+      "display_card_style": "minimal",
+      "display_card_columns": "3",
+      "display_card_ratio": "portrait",
+      "display_category_style": "overlay",
+      "display_product_layout": "wide",
+      "display_product_details": "list",
+      "display_product_sections": "editorial",
+      "display_cart_effect": "minimal"
+    },
+    "home_order": [
+      "hero",
+      "product_grid",
+      "article_grid",
+      "category_grid",
+      "recently_viewed"
+    ]
   },
   "minimal": {
     "label": "Minimal",
@@ -57,7 +120,28 @@
       "container": "1280",
       "font": "system"
     },
-    "description_key": "admin.appearance.storefront.minimum_dekoru_maksymum_kontentu"
+    "description_key": "admin.appearance.storefront.minimum_dekoru_maksymum_kontentu",
+    "form": {
+      "theme_concept": "1",
+      "home_composition": "theme",
+      "header_layout": "classic",
+      "header_nav_style": "underline",
+      "display_card_style": "minimal",
+      "display_card_columns": "3",
+      "display_card_ratio": "square",
+      "display_category_style": "chips",
+      "display_product_layout": "stacked",
+      "display_product_details": "list",
+      "display_product_sections": "editorial",
+      "display_cart_effect": "off"
+    },
+    "home_order": [
+      "product_grid",
+      "hero",
+      "category_grid",
+      "recently_viewed",
+      "article_grid"
+    ]
   },
   "soft": {
     "label": "Soft",
@@ -72,7 +156,28 @@
       "container": "1600",
       "font": "manrope"
     },
-    "description_key": "admin.appearance.storefront.miaki_formy_ta_druzhnia_podacha"
+    "description_key": "admin.appearance.storefront.miaki_formy_ta_druzhnia_podacha",
+    "form": {
+      "theme_concept": "1",
+      "home_composition": "theme",
+      "header_layout": "spacious",
+      "header_nav_style": "pill",
+      "display_card_style": "classic",
+      "display_card_columns": "4",
+      "display_card_ratio": "square",
+      "display_category_style": "classic",
+      "display_product_layout": "split",
+      "display_product_details": "tabs",
+      "display_product_sections": "standard",
+      "display_cart_effect": "pulse"
+    },
+    "home_order": [
+      "category_grid",
+      "hero",
+      "article_grid",
+      "product_grid",
+      "recently_viewed"
+    ]
   },
   "dynamic": {
     "label": "Nexora Dynamic",
@@ -87,6 +192,27 @@
       "container": "1600",
       "font": "inter"
     },
-    "description_key": "admin.appearance.storefront.minimum_dekoru_maksymum_kontentu"
+    "description_key": "admin.appearance.storefront.minimum_dekoru_maksymum_kontentu",
+    "form": {
+      "theme_concept": "1",
+      "home_composition": "theme",
+      "header_layout": "wide_search",
+      "header_nav_style": "underline",
+      "display_card_style": "outlined",
+      "display_card_columns": "4",
+      "display_card_ratio": "landscape",
+      "display_category_style": "overlay",
+      "display_product_layout": "wide",
+      "display_product_details": "tabs",
+      "display_product_sections": "editorial",
+      "display_cart_effect": "flight"
+    },
+    "home_order": [
+      "hero",
+      "product_grid",
+      "category_grid",
+      "recently_viewed",
+      "article_grid"
+    ]
   }
 }

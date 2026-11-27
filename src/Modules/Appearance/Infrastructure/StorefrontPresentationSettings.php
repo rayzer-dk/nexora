@@ -141,6 +141,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             ],
             'theme' => [
                 'preset' => 'modern',
+                'concept' => '0',
                 'primary' => '#0B63F6',
                 'accent' => '#FF7A1A',
                 'success' => '#0F7A4B',
@@ -201,6 +202,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             // Benefit cards under the categories: own icon, title and text per language; where they show and how many on a phone.
             'benefits' => ['items' => [], 'devices' => ['desktop' => true, 'tablet' => true, 'mobile' => true], 'mobile_limit' => '0'],
             'home' => [
+                'composition' => 'builder',
                 'show_benefits' => true,
                 'show_categories' => true,
                 'show_products' => true,
@@ -242,6 +244,7 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $out['brand']['workbox'] = (string) ($input['brand']['workbox'] ?? $defaults['brand']['workbox']) === '1' ? '1' : '0';
         $preset=(string)($input['theme']['preset']??$defaults['theme']['preset']);
         if(!in_array($preset,$this->presets->codes(),true)){$preset=$defaults['theme']['preset'];}
+        $out['theme']['concept'] = (string) ($input['theme']['concept'] ?? '0') === '1' ? '1' : '0';
         $out['theme']['preset']=$preset;
         foreach (['primary','accent','success','surface'] as $key) {
             $out['theme'][$key] = $this->hex($input['theme'][$key] ?? $defaults['theme'][$key], $defaults['theme'][$key]);
@@ -392,8 +395,11 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
         $out['header']['search_placeholder'] = $this->text($input['header']['search_placeholder'] ?? '', 160);
         $out['header']['show_category_nav'] = (bool) ($input['header']['show_category_nav'] ?? false);
         $out['header']['show_topbar'] = (bool) ($input['header']['show_topbar'] ?? $defaults['header']['show_topbar']);
+        $out['home']['composition'] = $choice($input['home']['composition'] ?? 'builder', ['builder', 'theme'], 'builder');
         foreach (array_keys($defaults['home']) as $key) {
-            $out['home'][$key] = (bool) ($input['home'][$key] ?? false);
+            if ($key !== 'composition') {
+                $out['home'][$key] = (bool) ($input['home'][$key] ?? false);
+            }
         }
         foreach (['eyebrow','title','subtitle','text','button_label'] as $key) {
             $out['hero'][$key] = $this->text($input['hero'][$key] ?? '', $key === 'text' ? 420 : 180);
