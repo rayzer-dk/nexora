@@ -259,7 +259,12 @@ final class MediaVariantService
     {
         $made = 0;
         $jobs = glob($this->queueDir() . '/*.job') ?: [];
-        usort($jobs, static fn (string $a, string $b): int => (int) @filemtime($a) <=> (int) @filemtime($b));
+        // Read each timestamp once rather than issuing filesystem checks in every comparison.
+        $timestamps = [];
+        foreach ($jobs as $job) {
+            $timestamps[$job] = (int) @filemtime($job);
+        }
+        usort($jobs, static fn (string $a, string $b): int => $timestamps[$a] <=> $timestamps[$b]);
         foreach (array_slice($jobs, 0, max(1, $limit)) as $job) {
             if ($deadline !== null && time() >= $deadline) {
                 break;
@@ -322,8 +327,9 @@ final class MediaVariantService
         $seen = 0;
         $last = 0;
         while ($seen < $limit && ($deadline === null || time() < $deadline)) {
+            $batchLimit = min(500, $limit - $seen);
             $rows = $this->connection->fetchAllAssociative(
-                "SELECT DISTINCT ma.id,ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.role='primary' AND ma.id>? ORDER BY ma.id LIMIT 500",
+                "SELECT DISTINCT ma.id,ma.storage_key FROM mc_product_media pm JOIN mc_media_asset ma ON ma.id=pm.media_asset_id WHERE pm.role='primary' AND ma.id>? ORDER BY ma.id LIMIT {$batchLimit}",
                 [$last],
             );
             if ($rows === []) {
