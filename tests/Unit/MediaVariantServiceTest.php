@@ -125,6 +125,22 @@ final class MediaVariantServiceTest extends TestCase
         self::assertNull($s->ensure('cache/card-g3/phones/apple/f00.webp'));
     }
 
+    public function testPrimaryWarmupHonorsRemainingBatchLimit(): void
+    {
+        $s = $this->service();
+        $db = $this->createMock(\Doctrine\DBAL\Connection::class);
+        $db->expects(self::once())->method('fetchAllAssociative')
+            ->willReturnCallback(static function (string $sql, array $params): array {
+                self::assertStringContainsString('LIMIT 1', $sql);
+                self::assertSame([0], $params);
+
+                return [['id' => 1, 'storage_key' => 'phones/apple/missing.jpg']];
+            });
+        (new \ReflectionProperty($s, 'connection'))->setValue($s, $db);
+
+        self::assertSame(0, $s->warmPrimaries(1));
+    }
+
     public function testOnlyAnExistingPictureOfTheCurrentGenerationIsQueued(): void
     {
         $this->original('phones/apple/f00', 1000, 1000);
