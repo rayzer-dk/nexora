@@ -38,8 +38,8 @@
   "marketplace": {
     "label": "Marketplace",
     "theme": {
-      "primary": "#155EEF",
-      "accent": "#F04438",
+      "primary": "#A12445",
+      "accent": "#C2410C",
       "success": "#12805C",
       "surface": "#FFFFFF",
       "radius": "10",
@@ -213,6 +213,42 @@
       "category_grid",
       "recently_viewed",
       "article_grid"
+    ]
+  },
+  "green": {
+    "label": "Forest",
+    "theme": {
+      "primary": "#176B45",
+      "accent": "#90702B",
+      "success": "#137343",
+      "surface": "#F5F8F0",
+      "radius": "16",
+      "shadow": "soft",
+      "density": "comfortable",
+      "container": "1440",
+      "font": "manrope"
+    },
+    "description_key": "admin.appearance.storefront.zbalansovanyi_suchasnyi_mahazyn",
+    "form": {
+      "theme_concept": "1",
+      "home_composition": "theme",
+      "header_layout": "spacious",
+      "header_nav_style": "plain",
+      "display_card_style": "classic",
+      "display_card_columns": "4",
+      "display_card_ratio": "portrait",
+      "display_category_style": "overlay",
+      "display_product_layout": "split",
+      "display_product_details": "tabs",
+      "display_product_sections": "editorial",
+      "display_cart_effect": "minimal"
+    },
+    "home_order": [
+      "hero",
+      "article_grid",
+      "category_grid",
+      "product_grid",
+      "recently_viewed"
     ]
   }
 }
