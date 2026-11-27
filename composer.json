@@ -140,6 +140,6 @@
         "audit:public-api": "php bin/public-api-contract-check.php",
         "audit:http-errors": "php bin/http-error-boundary-check.php"
     },
-    "minimum-stability": "rc",
+    "minimum-stability": "RC",
     "prefer-stable": true
 }
