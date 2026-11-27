@@ -25,13 +25,13 @@
     "configurability:audit": "node tools/check-configurability.mjs"
   },
   "dependencies": {
-    "@codemirror/commands": "6.11.1",
+    "@codemirror/commands": "6.11.2",
     "@codemirror/lang-html": "6.4.12",
     "@codemirror/language": "6.13.1",
     "@codemirror/state": "6.7.6",
-    "@codemirror/view": "6.43.15",
+    "@codemirror/view": "6.44.2",
     "@lezer/highlight": "1.2.5",
-    "@lucide/vue": "1.78.0",
+    "@lucide/vue": "1.82.0",
     "@tiptap/core": "3.35.0",
     "@tiptap/extension-highlight": "3.35.0",
     "@tiptap/extension-image": "3.35.0",
@@ -47,9 +47,9 @@
     "vue": "3.5.46"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.14.0",
+    "@axe-core/playwright": "4.14.1",
     "@eslint/js": "10.0.1",
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.65.1",
     "@types/node": "22.20.5",
     "@vitejs/plugin-vue": "6.0.11",
     "esbuild": "0.28.2",
@@ -61,7 +61,7 @@
     "stylelint-config-standard": "41.1.0",
     "typescript": "6.0.3",
     "typescript-eslint": "8.74.0",
-    "vite": "8.3.8",
+    "vite": "8.4.0",
     "vue-tsc": "3.3.14"
   },
   "license": "MIT",
