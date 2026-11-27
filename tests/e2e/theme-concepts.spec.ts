@@ -58,6 +58,10 @@ test('seven concepts render distinct storefront layouts at desktop and mobile wi
         await shop.keyboard.press('Escape');
         await expect(shop.locator('[data-mega-panel]')).toBeHidden();
       }
+      await shop.setViewportSize({ width: 768, height: 1024 });
+      await expect.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
+      await testInfo.attach(`${code}-tablet-home`, { body: await shop.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+      await shop.setViewportSize({ width: 1440, height: 1000 });
       await shop.goto('/catalog');
       await expectNoServerError(shop);
       const card = shop.locator('[data-product-card]').first();
@@ -69,6 +73,11 @@ test('seven concepts render distinct storefront layouts at desktop and mobile wi
       await expectNoServerError(shop);
       await expect(shop.locator('.product-region--summary')).toBeVisible();
       await testInfo.attach(`${code}-desktop-product`, { body: await shop.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+      await expect.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
+      await shop.setViewportSize({ width: 320, height: 720 });
+      await shop.goto('/');
+      await expectNoServerError(shop);
+      await expect.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
       await shop.setViewportSize({ width: 390, height: 844 });
       await shop.goto('/');
       await expectNoServerError(shop);
