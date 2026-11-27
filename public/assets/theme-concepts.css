@@ -206,3 +206,38 @@ body[data-theme-concept="1"][data-theme-preset="premium"] .catalog-card:focus-wi
   body[data-theme-concept="1"][data-theme-preset="modern"] .catalog-card:active,
   body[data-theme-concept="1"][data-theme-preset="soft"] .catalog-card:active { transform: translateY(1px); }
 }
+
+/* Dark concept text uses accessible tints; filled controls keep their original brand contrast. */
+:root[data-theme="dark"] body[data-theme-concept="1"] {
+  --mc-color-primary: color-mix(in srgb, var(--mc-color-primary-base) 30%, #fff);
+  --mc-color-primary-hover: color-mix(in srgb, var(--mc-color-primary-base) 18%, #fff);
+  --mc-color-link: var(--mc-color-primary);
+  --mc-color-link-hover: var(--mc-color-primary-hover);
+  --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary-base) 18%, var(--mc-color-background));
+  --mc-color-accent: color-mix(in srgb, var(--mc-color-accent-base) 40%, #fff);
+}
+:root[data-theme="dark"] body[data-theme-concept="1"] .reference-catalog-toggle > span { color: var(--mc-color-primary-contrast); }
+:root[data-theme="dark"] body[data-theme-concept="1"]:not([data-card-style="overlay"]) .catalog-card__brand { color: var(--mc-color-muted); }
+
+:root[data-color-scheme="dark"]:not([data-theme="light"]) body[data-theme-concept="1"] {
+  --mc-color-primary: color-mix(in srgb, var(--mc-color-primary-base) 30%, #fff);
+  --mc-color-primary-hover: color-mix(in srgb, var(--mc-color-primary-base) 18%, #fff);
+  --mc-color-link: var(--mc-color-primary);
+  --mc-color-link-hover: var(--mc-color-primary-hover);
+  --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary-base) 18%, var(--mc-color-background));
+  --mc-color-accent: color-mix(in srgb, var(--mc-color-accent-base) 40%, #fff);
+}
+:root[data-color-scheme="dark"]:not([data-theme="light"]) body[data-theme-concept="1"] .reference-catalog-toggle > span { color: var(--mc-color-primary-contrast); }
+:root[data-color-scheme="dark"]:not([data-theme="light"]) body[data-theme-concept="1"]:not([data-card-style="overlay"]) .catalog-card__brand { color: var(--mc-color-muted); }
+@media (prefers-color-scheme: dark) {
+:root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) body[data-theme-concept="1"] {
+  --mc-color-primary: color-mix(in srgb, var(--mc-color-primary-base) 30%, #fff);
+  --mc-color-primary-hover: color-mix(in srgb, var(--mc-color-primary-base) 18%, #fff);
+  --mc-color-link: var(--mc-color-primary);
+  --mc-color-link-hover: var(--mc-color-primary-hover);
+  --mc-color-primary-soft: color-mix(in srgb, var(--mc-color-primary-base) 18%, var(--mc-color-background));
+  --mc-color-accent: color-mix(in srgb, var(--mc-color-accent-base) 40%, #fff);
+}
+:root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) body[data-theme-concept="1"] .reference-catalog-toggle > span { color: var(--mc-color-primary-contrast); }
+:root[data-color-scheme="auto"]:not([data-theme="light"]):not([data-theme="dark"]) body[data-theme-concept="1"]:not([data-card-style="overlay"]) .catalog-card__brand { color: var(--mc-color-muted); }
+}
