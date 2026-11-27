@@ -1,4 +1,6 @@
 name: PHP 8.6 compatibility QA
+
+# Test the released runtime without changing main or its current release candidate.
 on:
   push:
     branches: ['qa/php-8.6']
