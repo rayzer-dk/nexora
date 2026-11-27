@@ -681,9 +681,14 @@ function initContactWidget() {
     const overlaps = banner && !banner.hidden && (() => { const a = banner.getBoundingClientRect(); const b = root.getBoundingClientRect(); return a.width > 0 && a.left < b.right && a.right > b.left; })();
     root.style.setProperty('--cw-offset', overlaps ? `${Math.ceil(banner.getBoundingClientRect().height + 12)}px` : '0px');
   };
+  let liftFrame = 0;
+  const scheduleLift = () => {
+    if (liftFrame) return;
+    liftFrame = window.requestAnimationFrame(() => { liftFrame = 0; lift(); });
+  };
   lift();
-  new MutationObserver(lift).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
-  window.addEventListener('resize', lift);
+  new MutationObserver(scheduleLift).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+  window.addEventListener('resize', scheduleLift, { passive: true });
   if (!dialog) return;
   q('[data-cw-callback]', root)?.addEventListener('click', () => { setOpen(false); if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', ''); });
   q('[data-cw-dialog-close]', dialog)?.addEventListener('click', () => dialog.close());
@@ -869,25 +874,37 @@ initChatWidget();
 
 /* ---------- Sale timers, back to top, quick order, live total ---------- */
 function initSaleTimers() {
-  const nodes = qa('[data-sale-timer]:not(body)');
-  if (!nodes.length) return;
+  let nodes = [];
+  let timer = 0;
   const pad = (n) => String(n).padStart(2, '0');
   const tick = () => {
+    window.clearTimeout(timer);
+    timer = 0;
+    if (document.hidden) return;
     const now = Date.now();
-    let alive = false;
-    nodes.forEach((node) => {
-      const end = Date.parse(node.dataset.saleTimer || '');
+    nodes = nodes.filter(({ node, end, value }) => {
+      if (!node.isConnected) return false;
       const left = end - now;
-      if (!Number.isFinite(end) || left <= 0) { node.hidden = true; return; }
-      alive = true;
+      if (!Number.isFinite(end) || left <= 0) { node.hidden = true; return false; }
       const s = Math.floor(left / 1000);
       const d = Math.floor(s / 86400);
-      const value = q('[data-sale-timer-value]', node);
-      if (value) value.textContent = `${d > 0 ? `${d}${t('js_timer_days')} ` : ''}${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+      const text = `${d > 0 ? `${d}${t('js_timer_days')} ` : ''}${pad(Math.floor((s % 86400) / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
+      if (value && value.textContent !== text) value.textContent = text;
+      return true;
     });
-    if (alive) window.setTimeout(tick, 1000);
+    if (nodes.length) timer = window.setTimeout(tick, 1000);
   };
-  tick();
+  const refresh = () => {
+    nodes = qa('[data-sale-timer]:not(body)').map((node) => ({
+      node,
+      end: Date.parse(node.dataset.saleTimer || ''),
+      value: q('[data-sale-timer-value]', node),
+    }));
+    tick();
+  };
+  document.addEventListener('visibilitychange', tick);
+  document.addEventListener('commerce:content-updated', refresh);
+  refresh();
 }
 initSaleTimers();
 
