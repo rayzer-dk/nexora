@@ -277,10 +277,18 @@ final class RecoverySnapshotService
         if (!is_string($rootReal)) {
             return;
         }
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($rootReal, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::LEAVES_ONLY,
-        );
+        $directory = new \RecursiveDirectoryIterator($rootReal, \FilesystemIterator::SKIP_DOTS);
+        if ($zipRoot === 'files/public/media') {
+            // Generated sizes are disposable. Skip the entire subtree before traversal,
+            // not just individual files, and preserve the root even for an empty library.
+            $zip->addEmptyDir($zipRoot);
+            $cacheRoot = $rootReal . DIRECTORY_SEPARATOR . 'cache';
+            $directory = new \RecursiveCallbackFilterIterator(
+                $directory,
+                static fn (\SplFileInfo $item): bool => $item->getPathname() !== $cacheRoot,
+            );
+        }
+        $iterator = new \RecursiveIteratorIterator($directory, \RecursiveIteratorIterator::LEAVES_ONLY);
         foreach ($iterator as $item) {
             if (!$item instanceof \SplFileInfo || !$item->isFile() || $item->isLink()) {
                 continue;
