@@ -91,6 +91,9 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
     {
         $limit = max(1, min(200, $limit));
         $parentSql = $parentId === null ? 'c.parent_id IS NULL' : 'c.parent_id=' . (int) $parentId;
+        // Manual ordering is already resolved by SQL; enrich only tiles that will be returned.
+        // Other orders retain the existing 200-candidate window for their PHP sort.
+        $candidateLimit = $order === 'manual' ? $limit : 200;
         $rows = $this->connection->fetchAllAssociative(
             "SELECT c.id,c.public_id,c.icon,COALESCE(ct.name,dt.name) AS name,COALESCE(ct.description,dt.description) AS description,COALESCE(sr.path,dr.path) AS path,
                     (SELECT cma.storage_key FROM mc_category_image cix JOIN mc_media_asset cma ON cma.id=cix.asset_id WHERE cix.category_id=c.id LIMIT 1) AS image_key
@@ -102,7 +105,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
              LEFT JOIN mc_seo_route sr ON sr.store_id=? AND sr.locale=? AND sr.entity_type='category' AND sr.entity_public_id=c.public_id
              LEFT JOIN mc_seo_route dr ON dr.store_id=? AND dr.locale=(SELECT default_locale FROM mc_store WHERE id=?) AND dr.entity_type='category' AND dr.entity_public_id=c.public_id
              WHERE c.status='active' AND {$parentSql} AND COALESCE(ct.name,dt.name) IS NOT NULL AND COALESCE(sr.path,dr.path) IS NOT NULL
-             ORDER BY sc.sort_order ASC,c.sort_order ASC,c.id ASC LIMIT 200",
+             ORDER BY sc.sort_order ASC,c.sort_order ASC,c.id ASC LIMIT {$candidateLimit}",
             [$context->storeId, $context->marketId, $context->storeId, $context->locale, $context->storeId, $context->storeId, $context->storeId, $context->locale, $context->storeId, $context->storeId],
         );
         $tiles = [];
