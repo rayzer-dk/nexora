@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { expectNoServerError, loginAdmin } from './helpers';
 
@@ -12,7 +13,7 @@ const names = [
 
 test('seven concepts render distinct storefront layouts at desktop and mobile widths', async ({ page, browser }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'Mutating settings and comparative captures run once.');
-  test.setTimeout(360_000);
+  test.setTimeout(600_000);
   await loginAdmin(page);
   await page.goto('/admin/appearance/storefront');
   const form = page.locator('form[data-theme-presets-json]');
@@ -50,6 +51,13 @@ test('seven concepts render distinct storefront layouts at desktop and mobile wi
         const header = document.querySelector('.reference-header__main');
         return JSON.stringify([getComputedStyle(body).backgroundColor, header ? getComputedStyle(header).gridTemplateColumns : '', body.dataset.cardStyle, body.dataset.cardRatio, body.dataset.productLayout, body.dataset.navStyle]);
       }));
+      const lightContrast = await new AxeBuilder({ page: shop }).withRules(['color-contrast']).analyze();
+      expect.soft(lightContrast.violations.map(v => v.nodes.map(n => n.target)), `${code}: light contrast`).toEqual([]);
+      for (const zoom of [0.75, 1.5]) {
+        await shop.evaluate(value => { document.documentElement.style.zoom = String(value); }, zoom);
+        await expect.soft.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2), { message: `${code}: zoom ${zoom}` }).toBe(true);
+      }
+      await shop.evaluate(() => { document.documentElement.style.removeProperty('zoom'); });
       await testInfo.attach(`${code}-desktop-home`, { body: await shop.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
       const toggle = shop.locator('[data-mega-toggle]');
       if (await toggle.isVisible()) {
@@ -63,6 +71,8 @@ test('seven concepts render distinct storefront layouts at desktop and mobile wi
         document.documentElement.dataset.theme = 'dark';
       });
       await expect(shop.locator('html')).toHaveAttribute('data-theme', 'dark');
+      const darkContrast = await new AxeBuilder({ page: shop }).withRules(['color-contrast']).analyze();
+      expect.soft(darkContrast.violations.map(v => v.nodes.map(n => n.target)), `${code}: dark contrast`).toEqual([]);
       await testInfo.attach(`${code}-desktop-dark-home`, { body: await shop.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
       await shop.evaluate(() => {
         localStorage.removeItem('mc_theme');

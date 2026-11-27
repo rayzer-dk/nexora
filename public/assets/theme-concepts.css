@@ -182,3 +182,24 @@ body[data-theme-concept="1"][data-theme-preset="dynamic"] .pp-tabs__tab.is-activ
   body[data-theme-concept="1"][data-theme-preset="green"] .catalog-card { transition: transform var(--mc-motion-base), box-shadow var(--mc-motion-base); }
   body[data-theme-concept="1"][data-theme-preset="green"] .catalog-card:is(:hover, :focus-within) { transform: translateY(-3px); box-shadow: var(--mc-shadow-md); }
 }
+
+/* Concept-specific interaction without changing shared markup or layout. */
+body[data-theme-concept="1"][data-theme-preset="modern"] .reference-nav-submenu { border-top: 3px solid var(--mc-color-primary); }
+body[data-theme-concept="1"][data-theme-preset="marketplace"] .reference-nav-submenu { border-radius: var(--mc-radius-sm); }
+body[data-theme-concept="1"][data-theme-preset="soft"] .reference-nav-submenu a[aria-current="page"] { border-radius: var(--mc-radius-full); background: var(--mc-color-primary-soft); }
+body[data-theme-concept="1"][data-theme-preset="green"] .reference-nav-submenu a[aria-current="page"] { box-shadow: inset 3px 0 0 var(--mc-color-primary); background: var(--concept-panel); }
+body[data-theme-concept="1"][data-theme-preset="modern"] .catalog-card:focus-within { border-color: var(--mc-color-primary); }
+body[data-theme-concept="1"][data-theme-preset="marketplace"] .catalog-card:focus-within { box-shadow: inset 0 3px 0 var(--mc-color-primary); }
+body[data-theme-concept="1"][data-theme-preset="premium"] .catalog-card:focus-within { outline: 1px solid var(--mc-color-accent-base); }
+@media (hover: hover) {
+  body[data-theme-concept="1"][data-theme-preset="modern"] .catalog-card:hover { border-color: var(--mc-color-primary); }
+  body[data-theme-concept="1"][data-theme-preset="marketplace"] .catalog-card:hover { box-shadow: inset 0 3px 0 var(--mc-color-primary); }
+  body[data-theme-concept="1"][data-theme-preset="premium"] .catalog-card:hover { outline: 1px solid var(--mc-color-accent-base); }
+  body[data-theme-concept="1"][data-theme-preset="minimal"] .catalog-card:hover h2 a { text-decoration: underline; text-underline-offset: 4px; }
+  body[data-theme-concept="1"][data-theme-preset="soft"] .catalog-card:hover { background: var(--mc-color-primary-soft); }
+  body[data-theme-concept="1"][data-theme-preset="dynamic"] .catalog-card:hover { border-color: var(--mc-color-accent-base); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  body[data-theme-concept="1"][data-theme-preset="modern"] .catalog-card:active,
+  body[data-theme-concept="1"][data-theme-preset="soft"] .catalog-card:active { transform: translateY(1px); }
+}
