@@ -6770,6 +6770,7 @@ return [
     'admin.appearance.options.value.off' => 'Вимкнена',
     'admin.appearance.options.value.standard' => 'Стандартні',
     'admin.appearance.options.value.editorial' => 'Редакційні',
+    'admin.appearance.concept.forest' => 'Зелена природна палітра, просторі картки та м’які акценти',
     'admin.appearance.concept.enabled' => 'Індивідуальна концепція теми',
     'admin.appearance.concept.home_order' => 'Порядок блоків головної',
     'admin.appearance.concept.builder' => 'Як у конструкторі',
