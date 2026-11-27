@@ -1,4 +1,4 @@
-import { readFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync, brotliCompressSync, constants } from 'node:zlib';
 
@@ -7,13 +7,18 @@ const configPath = join(root, 'config/performance/asset-budgets.json');
 const budgets = JSON.parse(readFileSync(configPath, 'utf8'));
 const buildDir = join(root, 'public/build');
 
+// A shared chunk can be counted in several entry budgets. Compress each file only once per audit.
+const sizeCache = new Map();
 const compressed = (file) => {
+  if (sizeCache.has(file)) return sizeCache.get(file);
   const buf = readFileSync(file);
-  return {
+  const size = {
     raw: buf.length,
     gzip: gzipSync(buf, { level: 9 }).length,
     brotli: brotliCompressSync(buf, { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } }).length,
   };
+  sizeCache.set(file, size);
+  return size;
 };
 
 let failed = false;
@@ -64,7 +69,12 @@ const collectImportKeys = (key, seen = new Set()) => {
   if (seen.has(key)) return seen;
   seen.add(key);
   const entry = manifest[key];
-  for (const imported of entry?.imports ?? []) collectImportKeys(imported, seen);
+  if (!entry || !fileFor(key)) {
+    failed = true;
+    console.error(`BUDGET FAIL compiled: missing imported asset ${key}`);
+    return seen;
+  }
+  for (const imported of entry.imports ?? []) collectImportKeys(imported, seen);
   return seen;
 };
 const brotliTotalForEntries = (keys) => {
