@@ -28,6 +28,8 @@ final class StorefrontPresentationOptionsTest extends TestCase
     public function testOldSettingsKeepCompatibleDefaults(): void
     {
         $normalized = $this->settings()->normalize([]);
+        self::assertSame('0', $normalized['theme']['concept']);
+        self::assertSame('builder', $normalized['home']['composition']);
         self::assertSame('auto', $normalized['header']['layout']);
         self::assertSame('auto', $normalized['header']['nav_style']);
         self::assertSame('auto', $normalized['display']['cart_effect']);
@@ -58,4 +60,22 @@ final class StorefrontPresentationOptionsTest extends TestCase
         self::assertSame('auto', $invalid['display']['cart_effect']);
         self::assertSame('standard', $invalid['display']['product_sections']);
     }
+    public function testSixConceptsHaveDistinctLayoutProfilesAndStandardSectionOrders(): void
+    {
+        $catalog = new ThemePresetCatalog(dirname(__DIR__, 2) . '/config/appearance/presets.json');
+        $profiles = $catalog->all();
+        self::assertCount(6, $profiles);
+        $layouts = [];
+        $orders = [];
+        foreach ($profiles as $profile) {
+            self::assertSame('1', $profile['form']['theme_concept']);
+            self::assertSame('theme', $profile['form']['home_composition']);
+            self::assertEqualsCanonicalizing(['hero', 'category_grid', 'product_grid', 'article_grid', 'recently_viewed'], $profile['home_order']);
+            $layouts[] = json_encode($profile['form'], JSON_THROW_ON_ERROR);
+            $orders[] = implode(',', $profile['home_order']);
+        }
+        self::assertCount(6, array_unique($layouts));
+        self::assertCount(6, array_unique($orders));
+    }
+
 }

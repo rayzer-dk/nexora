@@ -6770,4 +6770,10 @@ return [
     'admin.appearance.options.value.off' => 'Вимкнена',
     'admin.appearance.options.value.standard' => 'Стандартні',
     'admin.appearance.options.value.editorial' => 'Редакційні',
+    'admin.appearance.concept.enabled' => 'Індивідуальна концепція теми',
+    'admin.appearance.concept.home_order' => 'Порядок блоків головної',
+    'admin.appearance.concept.builder' => 'Як у конструкторі',
+    'admin.appearance.concept.theme' => 'За концепцією теми',
+    'admin.appearance.concept.home_help' => 'Порядок змінюється лише для стандартних неповторюваних блоків. Додаткові та власні блоки зберігають порядок конструктора.',
+    'admin.appearance.concept.apply' => 'Застосувати концепцію вибраної теми',
 ];

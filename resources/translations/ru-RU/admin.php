@@ -6769,4 +6769,10 @@ return [
     'admin.appearance.options.value.off' => 'Выключена',
     'admin.appearance.options.value.standard' => 'Стандартные',
     'admin.appearance.options.value.editorial' => 'Редакционные',
+    'admin.appearance.concept.enabled' => 'Индивидуальная концепция темы',
+    'admin.appearance.concept.home_order' => 'Порядок блоков главной',
+    'admin.appearance.concept.builder' => 'Как в конструкторе',
+    'admin.appearance.concept.theme' => 'По концепции темы',
+    'admin.appearance.concept.home_help' => 'Порядок меняется только для стандартных неповторяющихся блоков. Дополнительные и собственные блоки сохраняют порядок конструктора.',
+    'admin.appearance.concept.apply' => 'Применить концепцию выбранной темы',
 ];

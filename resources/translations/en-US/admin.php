@@ -6775,4 +6775,10 @@ return [
     'admin.appearance.options.value.off' => 'Off',
     'admin.appearance.options.value.standard' => 'Standard',
     'admin.appearance.options.value.editorial' => 'Editorial',
+    'admin.appearance.concept.enabled' => 'Individual theme concept',
+    'admin.appearance.concept.home_order' => 'Homepage section order',
+    'admin.appearance.concept.builder' => 'Keep builder order',
+    'admin.appearance.concept.theme' => 'Follow theme concept',
+    'admin.appearance.concept.home_help' => 'Only standard non-repeated sections are reordered. Additional and custom sections keep builder order.',
+    'admin.appearance.concept.apply' => 'Apply selected theme concept',
 ];
