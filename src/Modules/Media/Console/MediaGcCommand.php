@@ -16,7 +16,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'commerce:media:gc', description: 'Remove outdated image sizes and purge the old trash. With --orphans also move unused pictures to the trash (normally done by hand in Media library > Cleanup). Dry-run unless --apply is given.')]
 final class MediaGcCommand extends Command
 {
-    public function __construct(private readonly MediaVariantService $variants, private readonly MediaOrphanService $orphans)
+    public function __construct(private readonly MediaVariantService $variants, private readonly MediaOrphanService $orphans, private readonly int $cacheMaxMb = 0, private readonly int $cacheIdleDays = 0)
     {
         parent::__construct();
     }
@@ -30,7 +30,9 @@ final class MediaGcCommand extends Command
             ->addOption('orphan-days', null, InputOption::VALUE_REQUIRED, 'Pictures younger than this many days are never treated as unused.', '30')
             ->addOption('trash-days', null, InputOption::VALUE_REQUIRED, 'How long trashed pictures stay in var/media-trash.', '30')
             ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Maximum unused pictures per run.', '200')
-            ->addOption('max-seconds', null, InputOption::VALUE_REQUIRED, 'Time budget of the size scan.', '60');
+            ->addOption('max-seconds', null, InputOption::VALUE_REQUIRED, 'Time budget of the size scan.', '60')
+            ->addOption('max-cache-mb', null, InputOption::VALUE_REQUIRED, 'Soft cache budget in MiB; zero disables it.', (string) $this->cacheMaxMb)
+            ->addOption('idle-days', null, InputOption::VALUE_REQUIRED, 'Evict idle variants only on filesystems that update atime; zero disables it.', (string) $this->cacheIdleDays);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -39,6 +41,12 @@ final class MediaGcCommand extends Command
         $apply = (bool) $input->getOption('apply');
         $deadline = time() + max(5, (int) $input->getOption('max-seconds'));
         $sizes = $this->variants->collectStale(!$apply, (int) $input->getOption('grace-days'), (bool) $input->getOption('clear-sizes'), $deadline);
+        $maxMb = max(0, min(1048576, (int) $input->getOption('max-cache-mb')));
+        $idleDays = max(0, min(3650, (int) $input->getOption('idle-days')));
+        if ($maxMb > 0 || $idleDays > 0) {
+            $trim = $this->variants->trimCache(!$apply, $maxMb * 1048576, $idleDays, $deadline);
+            $io->writeln(sprintf('Cache policy: %d files (%.1f MB) %s; %.1f MB remaining in scanned files%s.', $trim['files'], $trim['bytes'] / 1048576, $apply ? 'removed' : 'eligible', $trim['remaining_bytes'] / 1048576, $trim['complete'] ? '' : ' (partial scan)'));
+        }
         $withOrphans = (bool) $input->getOption('orphans');
         $orphans = $withOrphans ? $this->orphans->trash(!$apply, (int) $input->getOption('limit'), (int) $input->getOption('orphan-days')) : ['assets' => count($this->orphans->find((int) $input->getOption('limit'), (int) $input->getOption('orphan-days'))), 'files' => 0];
         $purged = $apply ? $this->orphans->purgeTrash((int) $input->getOption('trash-days')) : 0;

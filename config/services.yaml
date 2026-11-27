@@ -1,4 +1,6 @@
 parameters:
+    env(MEDIA_CACHE_MAX_MB): '0'
+    env(MEDIA_CACHE_IDLE_DAYS): '0'
     env(MAIL_FROM_ADDRESS): 'no-reply@localhost'
     env(MAIL_FROM_NAME): 'Nexora Commerce'
     env(TELEGRAM_NOTIFICATIONS_ENABLED): '0'
@@ -619,6 +621,16 @@ services:
         arguments:
             $secret: '%kernel.secret%'
             $cache: '@cache.app'
+
+    Commerce\Modules\Media\Console\MediaGcCommand:
+        arguments:
+            $cacheMaxMb: '%env(int:MEDIA_CACHE_MAX_MB)%'
+            $cacheIdleDays: '%env(int:MEDIA_CACHE_IDLE_DAYS)%'
+
+    Commerce\Modules\Media\Console\MediaWarmCommand:
+        arguments:
+            $cacheMaxMb: '%env(int:MEDIA_CACHE_MAX_MB)%'
+            $cacheIdleDays: '%env(int:MEDIA_CACHE_IDLE_DAYS)%'
 
     Commerce\Modules\System\Application\CacheMaintenance:
         arguments:

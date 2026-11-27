@@ -188,6 +188,31 @@ final class MediaVariantServiceTest extends TestCase
         self::assertFileExists($this->dir . '/public/media/phones/apple/format.jpg');
     }
 
+    public function testCacheBudgetEvictsOldestGeneratedFilesWithoutTouchingOriginals(): void
+    {
+        $this->original('phones/apple/budget', 800, 600);
+        $s = $this->service();
+        $dir = $this->dir . '/public/media/cache/card-g1/phones/apple';
+        mkdir($dir, 0777, true);
+        foreach (['old.webp', 'newer.webp', 'fresh.webp', 'unknown.txt'] as $file) {
+            file_put_contents($dir . '/' . $file, str_repeat('x', 100));
+        }
+        touch($dir . '/old.webp', time() - 10 * 86400, time() - 10 * 86400);
+        touch($dir . '/newer.webp', time() - 2 * 86400, time() - 2 * 86400);
+        clearstatcache();
+        $dry = $s->trimCache(true, 200);
+        self::assertSame(1, $dry['files']);
+        self::assertFileExists($dir . '/old.webp');
+        $result = $s->trimCache(false, 200);
+        self::assertSame(1, $result['files']);
+        self::assertSame(200, $result['remaining_bytes']);
+        self::assertFileDoesNotExist($dir . '/old.webp');
+        self::assertFileExists($dir . '/newer.webp');
+        self::assertFileExists($dir . '/fresh.webp');
+        self::assertFileExists($dir . '/unknown.txt');
+        self::assertFileExists($this->dir . '/public/media/phones/apple/budget.jpg');
+    }
+
     public function testCleanupRemovesOnlyOutdatedCacheAndNeverOriginals(): void
     {
         $media = $this->dir . '/public/media';

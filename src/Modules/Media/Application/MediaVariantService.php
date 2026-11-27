@@ -392,14 +392,91 @@ final class MediaVariantService
             if (!$stale || (!$everything && $file->getMTime() > $limitTime)) {
                 continue;
             }
-            $result['files']++;
-            $result['bytes'] += (int) $file->getSize();
-            if (!$dryRun) {
-                @unlink($file->getPathname());
+            $bytes = (int) $file->getSize();
+            if ($dryRun || @unlink($file->getPathname())) {
+                $result['files']++;
+                $result['bytes'] += $bytes;
             }
         }
         if (!$dryRun) {
-            $this->removeEmptyDirectories($root . '/cache');
+            $this->removeEmptyDirectories($root . '/cache', $deadline);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Optional disk budget and idle policy for regenerable variants only.
+     * Keep a bounded set of oldest candidates, not a list of every cached file.
+     * Idle eviction requires a filesystem that records access times.
+     * @return array{files:int,bytes:int,remaining_bytes:int,complete:bool}
+     */
+    public function trimCache(bool $dryRun, int $maxBytes, int $idleDays = 0, ?int $deadline = null): array
+    {
+        $result = ['files' => 0, 'bytes' => 0, 'remaining_bytes' => 0, 'complete' => true];
+        $root = $this->path('cache');
+        if (($maxBytes <= 0 && $idleDays <= 0) || !is_dir($root) || is_link($root)) {
+            return $result;
+        }
+        $now = time();
+        $idleBefore = $idleDays > 0 ? $now - $idleDays * 86400 : 0;
+        /** @var \SplPriorityQueue<int,array{path:string,bytes:int,last:int}> $oldest */
+        $oldest = new \SplPriorityQueue();
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
+        foreach ($iterator as $file) {
+            if ($deadline !== null && time() >= $deadline) {
+                $result['complete'] = false;
+                break;
+            }
+            if (!$file->isFile() || $file->isLink()) {
+                continue;
+            }
+            $path = $file->getPathname();
+            $relative = 'cache/' . str_replace('\\', '/', substr($path, strlen($root) + 1));
+            if ($this->parse($relative) === null) {
+                continue;
+            }
+            $bytes = (int) $file->getSize();
+            $last = max($file->getMTime(), $file->getATime());
+            $result['remaining_bytes'] += $bytes;
+            if ($idleBefore > 0 && $last < $idleBefore && ($dryRun || @unlink($path))) {
+                $result['files']++;
+                $result['bytes'] += $bytes;
+                $result['remaining_bytes'] -= $bytes;
+                continue;
+            }
+            // Do not immediately evict freshly generated or recently accessed images.
+            if ($maxBytes <= 0 || $last > $now - 3600) {
+                continue;
+            }
+            $candidate = ['path' => $path, 'bytes' => $bytes, 'last' => $last];
+            if ($oldest->count() < 4096) {
+                $oldest->insert($candidate, $last);
+            } elseif ($last < $oldest->top()['last']) {
+                $oldest->extract();
+                $oldest->insert($candidate, $last);
+            }
+        }
+        if ($maxBytes > 0 && $result['remaining_bytes'] > $maxBytes) {
+            $candidates = [];
+            while (!$oldest->isEmpty()) {
+                $candidates[] = $oldest->extract();
+            }
+            foreach (array_reverse($candidates) as $candidate) {
+                if ($result['remaining_bytes'] <= $maxBytes) {
+                    break;
+                }
+                if ($deadline !== null && time() >= $deadline) {
+                    $result['complete'] = false;
+                    break;
+                }
+                if (!$dryRun && !@unlink($candidate['path'])) {
+                    continue;
+                }
+                $result['files']++;
+                $result['bytes'] += $candidate['bytes'];
+                $result['remaining_bytes'] -= $candidate['bytes'];
+            }
         }
 
         return $result;
@@ -446,9 +523,12 @@ final class MediaVariantService
         return preg_replace('~\.[A-Za-z0-9]+$~', '', $key) ?? $key;
     }
 
-    private function removeEmptyDirectories(string $path): void
+    private function removeEmptyDirectories(string $path, ?int $deadline = null): void
     {
         foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST) as $item) {
+            if ($deadline !== null && time() >= $deadline) {
+                break;
+            }
             if ($item->isDir() && !$item->isLink()) {
                 @rmdir($item->getPathname());
             }

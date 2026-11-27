@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'commerce:media:warm', description: 'Make the queued AVIF sizes and the everyday sizes (thumb, card, product) of the main product photos that still lack them.')]
 final class MediaWarmCommand extends Command
 {
-    public function __construct(private readonly MediaVariantService $variants)
+    public function __construct(private readonly MediaVariantService $variants, private readonly int $cacheMaxMb = 0, private readonly int $cacheIdleDays = 0)
     {
         parent::__construct();
     }
@@ -29,7 +29,11 @@ final class MediaWarmCommand extends Command
     {
         $deadline = time() + max(5, (int) $input->getOption('max-seconds'));
         $queued = $this->variants->processQueue($deadline);
-        $made = $this->variants->warmPrimaries((int) $input->getOption('limit'), $deadline);
+        // A storage budget or idle policy implies on-demand generation. Otherwise
+        // the periodic full-catalogue warm-up would recreate the evicted files.
+        $made = $this->cacheMaxMb > 0 || $this->cacheIdleDays > 0
+            ? 0
+            : $this->variants->warmPrimaries((int) $input->getOption('limit'), $deadline);
         $output->writeln(sprintf('Made %d image sizes (%d from the AVIF queue, %d still queued). Engine: %s.', $made + $queued, $queued, $this->variants->queueLength(), $this->variants->engine()));
 
         return Command::SUCCESS;
