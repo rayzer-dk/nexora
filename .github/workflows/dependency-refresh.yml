@@ -42,7 +42,24 @@ jobs:
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           node tools/refresh-npm-dependencies.mjs
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          # Tiptap uses exact peer pins across its entire extension tree. Resolve
+          # against a clean installation; if still incompatible, hold that family.
+          rm -rf node_modules
+          if ! npm install --package-lock-only --ignore-scripts --no-audit --no-fund; then
+            echo "Retrying with Tiptap held at the current verified versions."
+            node --input-type=module <<'NODE'
+            import { execFileSync } from 'node:child_process';
+            import { readFileSync, writeFileSync } from 'node:fs';
+            const original = JSON.parse(execFileSync('git', ['show', 'HEAD:package.json'], { encoding: 'utf8' }));
+            const candidate = JSON.parse(readFileSync('package.json', 'utf8'));
+            for (const name of Object.keys(candidate.dependencies)) {
+              if (name.startsWith('@tiptap/')) candidate.dependencies[name] = original.dependencies[name];
+            }
+            writeFileSync('package.json', JSON.stringify(candidate, null, 2) + '\n');
+            NODE
+            git restore -- package-lock.json
+            npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          fi
           npm ci --ignore-scripts --no-audit --no-fund
           npm audit --omit=dev
       - name: Verify backend
