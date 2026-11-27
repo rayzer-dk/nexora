@@ -614,7 +614,7 @@ final class MediaVariantService
             $height = max(1, (int) round($info[1] * ($targetWidth / $info[0])));
             $canvas = imagecreatetruecolor($targetWidth, $height);
             if (!$canvas instanceof GdImage) {
-                imagedestroy($source);
+                unset($source);
 
                 return false;
             }
@@ -631,8 +631,8 @@ final class MediaVariantService
                 'avif' => @imageavif($canvas, $temporary, $quality, 6),
                 default => @imagejpeg($canvas, $temporary, $quality),
             };
-            imagedestroy($canvas);
-            imagedestroy($source);
+            unset($canvas);
+            unset($source);
         }
         if (!$ok || !is_file($temporary) || filesize($temporary) === 0) {
             @unlink($temporary);

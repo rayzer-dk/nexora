@@ -21,7 +21,7 @@ final class DashboardChartTest extends TestCase
         foreach (range(1, 7) as $d) {
             $series[] = ['day' => sprintf('2026-09-%02d', $d), 'revenue_minor' => $d * 12345, 'orders' => $d];
         }
-        $chart = DashboardChart::layout($series, [['day' => '2026-09-03', 'note' => 'Sale'], ['day' => '2020-01-01', 'note' => 'Outside']]);
+        $chart = DashboardChart::layout($series, [['id' => 17, 'day' => '2026-09-03', 'note' => 'Sale'], ['id' => 18, 'day' => '2020-01-01', 'note' => 'Outside']]);
         self::assertTrue($chart['has_data']);
         self::assertCount(7, $chart['points']);
         foreach ($chart['points'] as $p) {
@@ -31,6 +31,7 @@ final class DashboardChartTest extends TestCase
             self::assertLessThanOrEqual($chart['h'], $p['y']);
         }
         self::assertCount(1, $chart['marks']);
+        self::assertSame(17, $chart['marks'][0]['id']);
         self::assertGreaterThanOrEqual(7 * 12345, $chart['max_minor']);
     }
 }

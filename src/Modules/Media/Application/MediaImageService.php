@@ -92,7 +92,7 @@ final readonly class MediaImageService
                 }
                 [$data, $storedWidth, $storedHeight] = $this->encodeOriginal($source, $width, $height, $extension);
             } finally {
-                imagedestroy($source);
+                unset($source);
             }
         }
 
@@ -258,7 +258,7 @@ final readonly class MediaImageService
             };
             $encoded = (string) ob_get_clean();
         } finally {
-            imagedestroy($canvas);
+            unset($canvas);
         }
         if (!$ok || $encoded === '') {
             throw new RuntimeException(\Commerce\Core\I18n\CanonicalUiText::get('runtime.exception.93414445f679'));
@@ -407,7 +407,7 @@ final readonly class MediaImageService
         if (!$rotated instanceof GdImage) {
             return $image;
         }
-        imagedestroy($image);
+        unset($image);
         if ($angle !== 180) {
             [$width, $height] = [$height, $width];
         }
