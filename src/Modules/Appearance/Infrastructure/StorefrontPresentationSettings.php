@@ -266,8 +266,8 @@ final readonly class StorefrontPresentationSettings implements StorefrontPresent
             }
         }
         $bi = is_array($bl['index'] ?? null) ? $bl['index'] : [];
-        $out['blog']['index']['layout'] = in_array((string) ($bi['layout'] ?? 'grid'), ['grid', 'list'], true) ? (string) $bi['layout'] : 'grid';
-        $out['blog']['index']['columns'] = in_array((string) ($bi['columns'] ?? '3'), ['2', '3'], true) ? (string) $bi['columns'] : '3';
+        $out['blog']['index']['layout'] = in_array((string) ($bi['layout'] ?? 'grid'), ['grid', 'list'], true) ? (string) ($bi['layout'] ?? 'grid') : 'grid';
+        $out['blog']['index']['columns'] = in_array((string) ($bi['columns'] ?? '3'), ['2', '3'], true) ? (string) ($bi['columns'] ?? '3') : '3';
         $an = is_array($input['announcement'] ?? null) ? $input['announcement'] : [];
         $out['announcement']['enabled'] = (bool) ($an['enabled'] ?? $defaults['announcement']['enabled']);
         $out['announcement']['text'] = $this->text($an['text'] ?? '', 200);

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 4.0.22 — 2026-11-27
+
+- Seven distinct storefront concepts including Forest; independent layouts, palette and interactions.
+- Fix missing blog layout/columns defaults and use typography tokens in concept CSS.
+- Require comparative visual, accessibility and responsive checks before publication.
+
 ## 4.0.21 — 2026-11-27
 
 - Performance: native Vite minifiers, lazy carousel initialization, streamlined catalogue requests, bounded category queries, faster admin tables, cached facet projections and reduced background animation activity.

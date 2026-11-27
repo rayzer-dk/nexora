@@ -58,6 +58,8 @@ body[data-theme-concept="1"][data-theme-preset="marketplace"] .cart-drawer__head
 
 /* Premium: editorial photographs, restrained gold, layered boutique panels. */
 body[data-theme-concept="1"][data-theme-preset="premium"] {
+  --mc-font-size-concept-hero: clamp(2rem, 4vw, 4rem);
+  --mc-font-size-concept-section: clamp(1.6rem, 2.5vw, 2.5rem);
   --concept-bg: color-mix(in srgb, var(--mc-color-accent-base) 7%, var(--mc-color-background));
   --concept-panel: color-mix(in srgb, var(--mc-color-accent-base) 3%, var(--mc-color-surface-raised));
 }
@@ -65,8 +67,8 @@ body[data-theme-concept="1"][data-theme-preset="premium"] .reference-header { bo
 body[data-theme-concept="1"][data-theme-preset="premium"] .reference-category-nav { justify-content: center; }
 body[data-theme-concept="1"][data-theme-preset="premium"] .reference-nav-item > a { letter-spacing: .035em; }
 body[data-theme-concept="1"][data-theme-preset="premium"] .reference-nav-submenu { padding: var(--mc-space-6); border-radius: var(--mc-radius-xl); }
-body[data-theme-concept="1"][data-theme-preset="premium"] :is(.reference-hero__copy, .demo-hero-card__copy) h1 { font-size: clamp(2rem, 4vw, 4rem); line-height: 1.08; letter-spacing: -.05em; }
-body[data-theme-concept="1"][data-theme-preset="premium"] .reference-section-title h2 { font-size: clamp(1.6rem, 2.5vw, 2.5rem); font-weight: 600; }
+body[data-theme-concept="1"][data-theme-preset="premium"] :is(.reference-hero__copy, .demo-hero-card__copy) h1 { font-size: var(--mc-font-size-concept-hero, var(--mc-font-size-3xl)); line-height: 1.08; letter-spacing: -.05em; }
+body[data-theme-concept="1"][data-theme-preset="premium"] .reference-section-title h2 { font-size: var(--mc-font-size-concept-section, var(--mc-font-size-2xl)); font-weight: 600; }
 body[data-theme-concept="1"][data-theme-preset="premium"] .catalog-card__media { background: var(--concept-panel); }
 body[data-theme-concept="1"][data-theme-preset="premium"] .catalog-card__body { gap: var(--mc-space-2); padding-block: var(--mc-space-4); }
 body[data-theme-concept="1"][data-theme-preset="premium"] .catalog-card__buy { border-radius: var(--mc-radius-full); }
@@ -133,12 +135,13 @@ body[data-theme-concept="1"][data-theme-preset="soft"] .cw__action { border-radi
 }
 
 /* Dynamic: full-bleed hero, Inter, crisp ink and warm accent, compact product tools. */
+body[data-theme-concept="1"][data-theme-preset="dynamic"] { --mc-font-size-concept-hero: clamp(1.8rem, 3.8vw, 3.6rem); }
 body[data-theme-concept="1"][data-theme-preset="dynamic"] .reference-header { border-bottom: 1px solid var(--concept-line); }
 body[data-theme-concept="1"][data-theme-preset="dynamic"] .reference-category-nav { justify-content: space-between; }
 body[data-theme-concept="1"][data-theme-preset="dynamic"] .reference-nav-submenu { border-radius: var(--mc-radius-sm); border-top: 2px solid var(--mc-color-accent-base); }
 body[data-theme-concept="1"][data-theme-preset="dynamic"] .reference-hero-wrap .reference-hero { width: 100%; max-width: none; border: 0; border-radius: 0; }
 body[data-theme-concept="1"][data-theme-preset="dynamic"] .reference-hero__copy { padding-inline: max(var(--mc-gutter), calc((100vw - var(--mc-content-max)) / 2)); }
-body[data-theme-concept="1"][data-theme-preset="dynamic"] :is(.reference-hero__copy, .demo-hero-card__copy) h1 { font-size: clamp(1.8rem, 3.8vw, 3.6rem); letter-spacing: -.05em; }
+body[data-theme-concept="1"][data-theme-preset="dynamic"] :is(.reference-hero__copy, .demo-hero-card__copy) h1 { font-size: var(--mc-font-size-concept-hero, var(--mc-font-size-3xl)); letter-spacing: -.05em; }
 body[data-theme-concept="1"][data-theme-preset="dynamic"] .catalog-card__buy { background: var(--mc-color-buy-fill, var(--mc-color-accent-fill)); border-color: var(--mc-color-buy-fill, var(--mc-color-accent-fill)); color: var(--mc-color-buy-contrast, var(--mc-color-accent-contrast)); }
 body[data-theme-concept="1"][data-theme-preset="dynamic"] .catalog-card__buy:hover { background: var(--mc-color-buy-fill-hover, color-mix(in srgb, var(--mc-color-buy-fill, var(--mc-color-accent-fill)) 82%, #000)); }
 body[data-theme-concept="1"][data-theme-preset="dynamic"] .catalog-card__buy:active { background: var(--mc-color-buy-fill-active, color-mix(in srgb, var(--mc-color-buy-fill, var(--mc-color-accent-fill)) 68%, #000)); }
