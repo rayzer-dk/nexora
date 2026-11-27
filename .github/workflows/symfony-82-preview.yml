@@ -1,0 +1,70 @@
+name: Symfony 8.2 preview compatibility
+
+on:
+  push:
+    branches: ['upgrade/symfony-8.2']
+    paths:
+      - composer.json
+      - '.github/workflows/symfony-82-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: symfony-82-preview
+  cancel-in-progress: true
+
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - name: Resolve actual Symfony 8.2 packages
+        run: |
+          composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
+          composer validate --strict
+          composer audit --locked
+          composer check-platform-reqs
+          php -r '$l=json_decode(file_get_contents("composer.lock"),true,512,JSON_THROW_ON_ERROR); foreach(array_merge($l["packages"],$l["packages-dev"]) as $p){if(!str_starts_with($p["name"],"symfony/") && preg_match("/(?:-RC|-beta|-alpha|dev-|-dev)/i",$p["version"])){fwrite(STDERR,"Unexpected non-Symfony prerelease: ".$p["name"]." ".$p["version"].PHP_EOL);exit(1);}}'
+          composer show 'symfony/*'
+      - name: PHP 8.4 compatibility and static analysis
+        run: |
+          vendor/bin/phpunit --configuration phpunit.xml.dist
+          composer analyse
+          APP_ENV=prod APP_DEBUG=0 APP_SECRET=preview-ci-not-for-production php bin/console lint:container
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - name: PHP 8.5 compatibility
+        run: |
+          composer check-platform-reqs
+          vendor/bin/phpunit --configuration phpunit.xml.dist
+      - name: Save resolved preview lockfile on preview branch only
+        run: |
+          test "$GITHUB_REF" = "refs/heads/upgrade/symfony-8.2"
+          git add -- composer.lock
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m "chore(deps): lock verified Symfony 8.2 preview"
+            git push origin HEAD:refs/heads/upgrade/symfony-8.2
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: symfony-82-preview-manifests
+          path: |
+            composer.json
+            composer.lock
+          retention-days: 7
