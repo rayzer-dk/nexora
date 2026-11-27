@@ -15,3 +15,7 @@ The appearance layer supports:
 - page/component composition without absolute-position layout builders.
 
 Product pages remain block-composable. Theme settings change presentation, while commerce logic and structured data remain independent.
+
+## Nexora Dynamic
+
+Opt-in preset: locally hosted Inter, neutral ink, warm accent, restrained radius and no decorative shadow. The category navigation indicates the current internal route (including a selected submenu item) with a thin underline. The existing banner builder supports full-bleed rows and sliders, mobile artwork, four heights, copy position and overlay. The existing card styles, header builder, sticky header and motion preference remain independently configurable. Dynamic enhances the confirmed cart flight with a curved trajectory and a brief arrival pulse; minimal/off and reduced-motion settings still disable the flight. Other presets remain unchanged.

@@ -930,3 +930,57 @@ body[data-image-bg="dark"] :is(.catalog-card__media img, .product-gallery__open 
 @media (prefers-reduced-motion: reduce) {
   .mc-motion-catalog-skeleton__media, .mc-motion-catalog-skeleton__line { animation: none; }
 }
+
+/* Dynamic is opt-in. Existing presets keep their layout and token overrides. */
+body[data-theme-preset="dynamic"] .reference-header {
+  box-shadow: none;
+}
+body[data-theme-preset="dynamic"] .reference-search input {
+  border-radius: var(--mc-radius-full);
+  background: var(--mc-color-surface-subtle);
+}
+body[data-theme-preset="dynamic"] .reference-search > button {
+  border-radius: var(--mc-radius-full);
+  background: transparent;
+  color: var(--mc-color-text);
+}
+body[data-theme-preset="dynamic"] .reference-search > button:hover {
+  background: var(--mc-color-surface);
+}
+body[data-theme-preset="dynamic"] .reference-nav-item > a {
+  position: relative;
+  font-weight: 500;
+  letter-spacing: -.01em;
+}
+body[data-theme-preset="dynamic"] .reference-nav-item > a::after {
+  content: "";
+  position: absolute;
+  inset-inline: var(--mc-space-3);
+  bottom: 3px;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--mc-motion-base) ease-out;
+}
+body[data-theme-preset="dynamic"] .reference-nav-item:is(.is-current, :hover, :focus-within) > a {
+  background: transparent;
+  color: var(--mc-color-text);
+}
+body[data-theme-preset="dynamic"] .reference-nav-item:is(.is-current, :hover, :focus-within) > a::after {
+  transform: scaleX(1);
+}
+body[data-theme-preset="dynamic"] .reference-nav-submenu a[aria-current="page"] {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+body[data-theme-preset="dynamic"] .reference-cart-icon {
+  border-radius: var(--mc-radius-md);
+  transition: color var(--mc-motion-fast), background var(--mc-motion-fast);
+}
+body[data-theme-preset="dynamic"] .reference-cart-link:hover .reference-cart-icon {
+  color: var(--mc-color-accent-base);
+}
+body[data-theme-preset="dynamic"] .catalog-card:not([data-card-style="overlay"]) {
+  box-shadow: none;
+}

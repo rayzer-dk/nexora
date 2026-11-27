@@ -73,5 +73,20 @@
       "font": "manrope"
     },
     "description_key": "admin.appearance.storefront.miaki_formy_ta_druzhnia_podacha"
+  },
+  "dynamic": {
+    "label": "Nexora Dynamic",
+    "theme": {
+      "primary": "#171717",
+      "accent": "#C64B0C",
+      "success": "#12805C",
+      "surface": "#FFFFFF",
+      "radius": "8",
+      "shadow": "none",
+      "density": "comfortable",
+      "container": "1600",
+      "font": "inter"
+    },
+    "description_key": "admin.appearance.storefront.minimum_dekoru_maksymum_kontentu"
   }
 }
