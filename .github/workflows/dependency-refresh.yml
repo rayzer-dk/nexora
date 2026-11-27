@@ -1,0 +1,81 @@
+name: Resolve and verify dependency updates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dependency-refresh.yml'
+      - 'tools/refresh-npm-dependencies.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependency-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Resolve stable Composer packages within existing constraints
+        run: |
+          composer outdated --direct --format=json || true
+          composer update --with-all-dependencies --prefer-dist --no-interaction --no-progress
+          composer validate --strict
+          composer audit --locked
+          composer check-platform-reqs
+      - name: Resolve same-major stable npm packages and lockfile
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          node tools/refresh-npm-dependencies.mjs
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm audit --omit=dev
+      - name: Verify backend
+        run: |
+          vendor/bin/phpunit --configuration phpunit.xml.dist
+          composer analyse
+      - name: Verify frontend
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run ui:icons:audit
+          npm run configurability:audit
+          npm run build:production
+      - name: Publish verified dependency candidate for main
+        run: |
+          git add -- composer.lock package.json package-lock.json
+          if git diff --cached --quiet; then
+            echo "No compatible stable dependency updates."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --cached --stat
+          git commit -m "chore(deps): refresh compatible stable Composer and npm packages"
+          git push origin "HEAD:refs/heads/dependency-refresh-${GITHUB_RUN_ID}"
+          echo "Candidate: dependency-refresh-${GITHUB_RUN_ID}" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resolved-dependency-manifests
+          path: |
+            composer.json
+            composer.lock
+            package.json
+            package-lock.json
+          retention-days: 7
