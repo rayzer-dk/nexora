@@ -119,8 +119,11 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
             $where .= ' AND EXISTS (SELECT 1 FROM mc_product_category fpc WHERE fpc.product_id=p.id AND fpc.category_id IN (' . implode(',', array_fill(0, count($categoryIds), '?')) . '))';
             array_push($params, ...$categoryIds);
         }
+        // Variant and brand joins are needed for textual search only. On an ordinary
+        // list they multiply intermediate rows before COUNT(DISTINCT) removes them.
+        $countJoins = trim($search) === '' ? '' : ' LEFT JOIN mc_product_variant v ON v.product_id=p.id LEFT JOIN mc_brand b ON b.id=p.brand_id';
         $total = (int) $this->connection->fetchOne(
-            "SELECT COUNT(DISTINCT p.id) FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id LEFT JOIN mc_product_variant v ON v.product_id=p.id LEFT JOIN mc_brand b ON b.id=p.brand_id WHERE {$where}",
+            "SELECT COUNT(DISTINCT p.id) FROM mc_product p JOIN mc_store_product sp ON sp.product_id=p.id JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=sp.store_id{$countJoins} WHERE {$where}",
             $params,
         );
         $sortColumns = ['name' => 'pt.name', 'sku' => 'v.sku', 'status' => 'p.status', 'price' => 'pr.amount_minor', 'stock' => 'stock_total', 'type' => 'p.product_type', 'updated' => 'p.updated_at', 'translations' => 'translation_score'];
@@ -395,7 +398,7 @@ final readonly class DbalCatalogAdminQuery implements ProductEditQueryInterface
              ORDER BY c.sort_order ASC,c.id ASC LIMIT 2000',
             [$storeId, $locale],
         );
-        $counts = $this->productCounts($storeId);
+        $counts = $this->productCounts($storeId, array_map(static fn (array $row): int => (int) $row['id'], $rows));
         $byParent = [];
         $names = [];
         foreach ($rows as &$row) {
