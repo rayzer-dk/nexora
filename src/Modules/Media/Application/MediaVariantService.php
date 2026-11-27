@@ -87,6 +87,12 @@ final class MediaVariantService
         return MediaImageProfile::extension($this->profile()['format']);
     }
 
+    /** Formats permitted by the saved delivery profile, independent of temporary encoder availability. */
+    private function allowsExtension(string $ext): bool
+    {
+        return $ext === $this->mainExtension() || ($ext === 'avif' && $this->profile()['format'] === 'avif_webp');
+    }
+
     /**
      * URL of the named size of a stored original. Anything that is not a raster original under /media/ (placeholders,
      * SVG, external URLs, cache files) comes back unchanged. $ext picks the format (default: the main one).
@@ -157,17 +163,22 @@ final class MediaVariantService
     }
 
     /**
-     * The URL with the current generation, when a request names an OLDER one (cached pages, bookmarks); otherwise null.
+     * Redirect obsolete generations or disabled formats to the current delivery URL.
      * Never a redirect to an older generation: two requests that disagree about the current one cannot loop.
      */
     public function currentGenerationUrl(string $key): ?string
     {
         $parsed = $this->parse($key);
-        if ($parsed === null || $parsed['gen'] >= $this->profile()['generation']) {
+        $generation = $this->profile()['generation'];
+        if ($parsed === null || $parsed['gen'] > $generation) {
+            return null;
+        }
+        $ext = $this->allowsExtension($parsed['ext']) ? $parsed['ext'] : $this->mainExtension();
+        if ($parsed['gen'] === $generation && $ext === $parsed['ext']) {
             return null;
         }
 
-        return '/media/cache/' . $parsed['preset'] . '-g' . $this->profile()['generation'] . '/' . $parsed['stem'] . '.' . $parsed['ext'];
+        return '/media/cache/' . $parsed['preset'] . '-g' . $generation . '/' . $parsed['stem'] . '.' . $ext;
     }
 
     /** Relative path (to media/) of the original of a stem, or null when no original exists. */
@@ -197,7 +208,7 @@ final class MediaVariantService
         }
         $profile = $this->profile();
         $width = $profile['presets'][$parsed['preset']] ?? null;
-        if ($width === null || $parsed['gen'] !== $profile['generation']) {
+        if ($width === null || $parsed['gen'] !== $profile['generation'] || !$this->allowsExtension($parsed['ext'])) {
             return null;
         }
         $target = $this->path($key);
@@ -245,7 +256,7 @@ final class MediaVariantService
             return;
         }
         $parsed = $this->parse($key);
-        if ($parsed === null || $parsed['gen'] !== $this->profile()['generation'] || $this->findOriginal($parsed['stem']) === null || $this->queueLength() >= self::QUEUE_LIMIT) {
+        if ($parsed === null || $parsed['ext'] !== 'avif' || !$this->allowsExtension('avif') || $parsed['gen'] !== $this->profile()['generation'] || $this->findOriginal($parsed['stem']) === null || $this->queueLength() >= self::QUEUE_LIMIT) {
             return;
         }
         if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
@@ -377,7 +388,7 @@ final class MediaVariantService
             if ($parsed === null && !$isTemporary) {
                 continue; // anything unexpected stays untouched
             }
-            $stale = $everything || $isTemporary || $parsed['gen'] !== $current || $this->findOriginal($parsed['stem']) === null;
+            $stale = $everything || $isTemporary || $parsed['gen'] !== $current || !$this->allowsExtension($parsed['ext']) || $this->findOriginal($parsed['stem']) === null;
             if (!$stale || (!$everything && $file->getMTime() > $limitTime)) {
                 continue;
             }

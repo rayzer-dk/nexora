@@ -93,9 +93,9 @@ final class MediaVariantServiceTest extends TestCase
         $this->original('phones/apple/p', 1000, 500, 'png');
         $s = $this->service();
         self::assertSame('image/webp', getimagesize((string) $s->ensure('cache/product-g1/phones/apple/p.webp'))['mime']);
-        self::assertSame('image/jpeg', getimagesize((string) $s->ensure('cache/thumb-g1/phones/apple/p.jpg'))['mime']);
+        self::assertSame('image/jpeg', getimagesize((string) $this->service(1, ['format' => 'jpeg'])->ensure('cache/thumb-g1/phones/apple/p.jpg'))['mime']);
         if (function_exists('imageavif')) {
-            self::assertSame('image/avif', getimagesize((string) $s->ensure('cache/card-g1/phones/apple/p.avif'))['mime']);
+            self::assertSame('image/avif', getimagesize((string) $this->service(1, ['format' => 'avif_webp'])->ensure('cache/card-g1/phones/apple/p.avif'))['mime']);
         }
     }
 
@@ -144,7 +144,7 @@ final class MediaVariantServiceTest extends TestCase
     public function testOnlyAnExistingPictureOfTheCurrentGenerationIsQueued(): void
     {
         $this->original('phones/apple/f00', 1000, 1000);
-        $s = $this->service(2);
+        $s = $this->service(2, ['format' => 'avif_webp']);
         $s->queue('cache/card-g2/phones/apple/none.avif');
         $s->queue('cache/card-g1/phones/apple/f00.avif');
         self::assertSame(0, $s->queueLength());
@@ -163,6 +163,29 @@ final class MediaVariantServiceTest extends TestCase
         self::assertNull($s->dimensions('/media/cache/card-g1/phones/apple/f00.webp'), 'a cache file is not an original');
         self::assertNull($s->dimensions('/media/../composer.json'), 'nothing outside the picture library');
         self::assertNull($s->dimensions('https://example.com/media/phones/apple/f00.jpg'), 'a picture of another site');
+    }
+
+    public function testDisabledFormatsAreNotGeneratedAndAreCollectedAfterGracePeriod(): void
+    {
+        $this->original('phones/apple/format', 800, 600);
+        $jpeg = $this->service(1, ['format' => 'jpeg']);
+        $key = 'cache/card-g1/phones/apple/format.jpg';
+        $old = $jpeg->ensure($key);
+        self::assertNotNull($old);
+        $webp = $this->service();
+        self::assertNull($webp->ensure($key));
+        self::assertSame('/media/cache/card-g1/phones/apple/format.webp', $webp->currentGenerationUrl($key));
+        self::assertNull($webp->ensure('cache/card-g1/phones/apple/format.avif'));
+        $webp->queue('cache/card-g1/phones/apple/format.avif');
+        self::assertSame(0, $webp->queueLength());
+        $current = $webp->ensure('cache/card-g1/phones/apple/format.webp');
+        self::assertNotNull($current);
+        self::assertSame(0, $webp->collectStale(false, 7)['files']);
+        touch($old, time() - 8 * 86400);
+        self::assertSame(1, $webp->collectStale(false, 7)['files']);
+        self::assertFileDoesNotExist($old);
+        self::assertFileExists($current);
+        self::assertFileExists($this->dir . '/public/media/phones/apple/format.jpg');
     }
 
     public function testCleanupRemovesOnlyOutdatedCacheAndNeverOriginals(): void
