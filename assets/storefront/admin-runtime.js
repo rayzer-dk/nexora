@@ -1095,7 +1095,8 @@ function enhanceTable(table) {
   wireServerSort(headRow);
   const rows = Array.from(body.rows);
   const span = (row) => Array.from(row.cells).reduce((n, c) => n + (c.colSpan || 1), 0);
-  if (rows.some((row) => span(row) !== span(headRow) && row.querySelector('td[colspan]'))) return;
+  const headerSpan = span(headRow);
+  if (rows.some((row) => span(row) !== headerSpan && row.querySelector('td[colspan]'))) return;
   if (rows.length < 2) return;
   const wrap = table.closest('.admin-table-wrap') || table.parentElement;
   const serverPagers = qa('.admin-pagination:not(.admin-table-pager)');
@@ -1104,7 +1105,8 @@ function enhanceTable(table) {
     if (!(table.compareDocumentPosition(pager) & Node.DOCUMENT_POSITION_FOLLOWING)) return false;
     return !tables.some((other) => other !== table && (table.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING) && (other.compareDocumentPosition(pager) & Node.DOCUMENT_POSITION_FOLLOWING));
   });
-  const state = { col: -1, dir: 1, page: 1, size: Number(table.dataset.pageSize || 25) };
+  const requestedSize = Number(table.dataset.pageSize || 25);
+  const state = { col: -1, dir: 1, page: 1, size: Number.isSafeInteger(requestedSize) && requestedSize > 0 ? requestedSize : 25 };
   const original = rows.slice();
   const headers = Array.from(headRow.cells);
 
@@ -1179,14 +1181,25 @@ function enhanceTable(table) {
   function render(animate = false) {
     const list = ordered();
     const total = list.length;
-    const size = pager ? state.size : total;
+    const size = pager ? state.size : Math.max(1, total);
     const pages = Math.max(1, Math.ceil(total / size));
     state.page = Math.min(state.page, pages);
     const from = (state.page - 1) * size;
-    const frag = document.createDocumentFragment();
-    list.forEach((row, i) => { row.hidden = i < from || i >= from + size; frag.appendChild(row); });
-    original.forEach((row) => { if (!list.includes(row)) { row.hidden = true; frag.appendChild(row); } });
-    body.appendChild(frag);
+    // Membership tests must stay linear for large tables. Keep rows in place when
+    // paging does not change their order, preserving controls and avoiding DOM mutations.
+    const included = new Set(list);
+    const excluded = original.filter((row) => !included.has(row));
+    const desired = [...list, ...excluded];
+    list.forEach((row, i) => {
+      const hidden = i < from || i >= from + size;
+      if (row.hidden !== hidden) row.hidden = hidden;
+    });
+    excluded.forEach((row) => { if (!row.hidden) row.hidden = true; });
+    if (desired.some((row, i) => body.rows[i] !== row)) {
+      const frag = document.createDocumentFragment();
+      desired.forEach((row) => frag.appendChild(row));
+      body.appendChild(frag);
+    }
     body.querySelectorAll('tr.mc-motion-row').forEach((row) => row.classList.remove('mc-motion-row'));
     if (animate && document.documentElement.dataset.motion === 'full'
       && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
