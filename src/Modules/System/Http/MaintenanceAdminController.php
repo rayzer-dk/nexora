@@ -26,7 +26,7 @@ final class MaintenanceAdminController extends AbstractController
     #[Route('/admin/system/maintenance', name: 'admin_system_maintenance', methods: ['GET'])]
     public function index(): Response
     {
-        return $this->render('@storefront/admin/system/maintenance.html.twig', ['overview' => $this->maintenance->overview()]);
+        return $this->render('@storefront/admin/system/maintenance.html.twig', ['overview' => $this->maintenance->overview(true)]);
     }
 
     /** The fragment of the quick cache menu in the admin header: what each cache holds and a button to clear it. */

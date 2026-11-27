@@ -23,18 +23,39 @@ final class CacheMaintenance
         private readonly MediaVariantService $variants,
         private readonly string $cacheDir,
         private readonly string $projectDir,
+        private readonly int $cacheMaxMb = 0,
+        private readonly int $cacheIdleDays = 0,
     ) {
     }
 
-    /** @return array{storefront:array{files:int,bytes:int},templates:array{files:int,bytes:int},images:array{files:int,bytes:int},app:?array{files:int,bytes:int},avif:bool,generation:int,opcache:bool} app is null when the application cache is not kept in files (Redis, Valkey) */
-    public function overview(): array
+    /** @return array{storefront:array{files:int,bytes:int},templates:array{files:int,bytes:int},images:array{files:int,bytes:int},app:?array{files:int,bytes:int},avif:bool,generation:int,opcache:bool,originals:?array{files:int,bytes:int},image_formats:array<string,array{files:int,bytes:int}>,image_cache_max_mb:int,image_cache_idle_days:int} app is null when the application cache is not kept in files (Redis, Valkey) */
+    public function overview(bool $imageDetails = false): array
     {
         $profile = $this->variants->profile();
+        $formats = $imageDetails ? array_fill_keys(['WebP', 'AVIF', 'JPEG'], ['files' => 0, 'bytes' => 0]) : [];
+        $images = self::measure($this->projectDir . '/public/media/cache', $imageDetails
+            ? static function (\SplFileInfo $file, int $bytes) use (&$formats): void {
+                $format = match (strtolower($file->getExtension())) {
+                    'webp' => 'WebP',
+                    'avif' => 'AVIF',
+                    'jpg', 'jpeg' => 'JPEG',
+                    default => null,
+                };
+                if ($format !== null) {
+                    $formats[$format]['files']++;
+                    $formats[$format]['bytes'] += $bytes;
+                }
+            }
+            : null);
 
         return [
             'storefront' => $this->facets->stats(),
             'templates' => self::measure($this->cacheDir . '/twig'),
-            'images' => self::measure($this->projectDir . '/public/media/cache'),
+            'images' => $images,
+            'originals' => $imageDetails ? $this->variants->originalStats() : null,
+            'image_formats' => $formats,
+            'image_cache_max_mb' => max(0, min(1048576, $this->cacheMaxMb)),
+            'image_cache_idle_days' => max(0, min(3650, $this->cacheIdleDays)),
             'app' => is_dir($this->cacheDir . '/pools') ? self::measure($this->cacheDir . '/pools') : null,
             'avif' => $this->variants->avifEnabled(),
             'generation' => (int) $profile['generation'],
@@ -114,8 +135,11 @@ final class CacheMaintenance
         return $templates;
     }
 
-    /** @return array{files:int,bytes:int} */
-    public static function measure(string $dir): array
+    /**
+     * @param (callable(\SplFileInfo, int): void)|null $onFile
+     * @return array{files:int,bytes:int}
+     */
+    public static function measure(string $dir, ?callable $onFile = null): array
     {
         $result = ['files' => 0, 'bytes' => 0];
         if (!is_dir($dir)) {
@@ -123,9 +147,13 @@ final class CacheMaintenance
         }
         try {
             foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)) as $file) {
-                if ($file->isFile()) {
+                if ($file->isFile() && !$file->isLink()) {
+                    $bytes = (int) $file->getSize();
                     $result['files']++;
-                    $result['bytes'] += (int) $file->getSize();
+                    $result['bytes'] += $bytes;
+                    if ($onFile !== null) {
+                        $onFile($file, $bytes);
+                    }
                 }
             }
         } catch (\Throwable) {

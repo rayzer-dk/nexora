@@ -636,6 +636,8 @@ services:
         arguments:
             $cacheDir: '%kernel.cache_dir%'
             $projectDir: '%kernel.project_dir%'
+            $cacheMaxMb: '%env(int:MEDIA_CACHE_MAX_MB)%'
+            $cacheIdleDays: '%env(int:MEDIA_CACHE_IDLE_DAYS)%'
 
     Commerce\Modules\System\Application\ModuleCatalog:
         arguments:

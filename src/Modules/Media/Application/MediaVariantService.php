@@ -63,6 +63,19 @@ final class MediaVariantService
         return $this->profile = MediaImageProfile::normalize(is_array($payload) ? $payload : []);
     }
 
+    /** Registered original images across the installation, without traversing the media filesystem.
+     * @return array{files:int,bytes:int}|null
+     */
+    public function originalStats(): ?array
+    {
+        try {
+            $row = $this->connection->fetchAssociative("SELECT COUNT(*) AS files, COALESCE(SUM(bytes), 0) AS bytes FROM mc_media_asset WHERE mime_type LIKE 'image/%'");
+            return is_array($row) ? ['files' => (int) $row['files'], 'bytes' => (int) $row['bytes']] : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     /** True when the storefront also offers AVIF (chosen in the settings and this server can write AVIF). */
     public function avifEnabled(): bool
     {
