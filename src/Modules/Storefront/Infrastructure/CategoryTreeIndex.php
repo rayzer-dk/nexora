@@ -17,6 +17,9 @@ final class CategoryTreeIndex
     /** @var array<int,array<int,int|null>> storeId => [categoryId => parentId] */
     private array $parents = [];
 
+    /** @var array<int,array<int,list<int>>> storeId => parentId => child ids */
+    private array $children = [];
+
     public function __construct(private readonly Connection $db)
     {
     }
@@ -24,19 +27,17 @@ final class CategoryTreeIndex
     /** @return list<int> the category itself and all its active descendants, never empty */
     public function scope(int $categoryId, int $storeId): array
     {
-        $children = [];
-        foreach ($this->load($storeId) as $id => $parent) {
-            if ($parent !== null) {
-                $children[$parent][] = $id;
-            }
-        }
+        $this->load($storeId);
+        $children = $this->children[$storeId];
         $out = [$categoryId];
+        $visited = [$categoryId => true];
         $frontier = [$categoryId];
         for ($depth = 0; $depth < self::MAX_DEPTH && $frontier !== []; ++$depth) {
             $next = [];
             foreach ($frontier as $id) {
                 foreach ($children[$id] ?? [] as $child) {
-                    if (!in_array($child, $out, true)) {
+                    if (!isset($visited[$child])) {
+                        $visited[$child] = true;
                         $out[] = $child;
                         $next[] = $child;
                     }
@@ -67,13 +68,20 @@ final class CategoryTreeIndex
     {
         if (!isset($this->parents[$storeId])) {
             $map = [];
+            $children = [];
             foreach ($this->db->fetchAllAssociative(
                 "SELECT c.id,c.parent_id FROM mc_category c JOIN mc_store_category sc ON sc.category_id=c.id AND sc.store_id=? AND sc.status='active' WHERE c.status='active'",
                 [$storeId],
             ) as $row) {
-                $map[(int) $row['id']] = $row['parent_id'] !== null ? (int) $row['parent_id'] : null;
+                $id = (int) $row['id'];
+                $parent = $row['parent_id'] !== null ? (int) $row['parent_id'] : null;
+                $map[$id] = $parent;
+                if ($parent !== null) {
+                    $children[$parent][] = $id;
+                }
             }
             $this->parents[$storeId] = $map;
+            $this->children[$storeId] = $children;
         }
 
         return $this->parents[$storeId];
