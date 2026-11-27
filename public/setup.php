@@ -96,8 +96,31 @@ foreach ($requiredExtensions as $extension) {
     $addCheck('ext-' . $extension, $loaded ? it('installer.zavantazheno') : it('installer.vidsutnye'), $loaded);
 }
 
-$vendorReady = is_file($projectDir . '/vendor/autoload_runtime.php');
-$assetsReady = is_file($projectDir . '/public/build/.vite/manifest.json');
+$vendorReady = is_file($projectDir . '/vendor/autoload_runtime.php')
+    && is_file($projectDir . '/vendor/composer/InstalledVersions.php')
+    && is_file($projectDir . '/vendor/autoload.php');
+$assetsReady = false;
+$buildRoot = $projectDir . '/public/build';
+$manifestPath = $buildRoot . '/.vite/manifest.json';
+if (is_file($manifestPath)) {
+    $manifest = json_decode((string) @file_get_contents($manifestPath), true);
+    if (is_array($manifest) && $manifest !== []) {
+        $assetsReady = true;
+        foreach (['assets/admin/main.ts', 'assets/storefront/product-page.js', 'assets/storefront/storefront-runtime.js', 'assets/storefront/checkout.js', 'assets/storefront/cart.js', 'assets/storefront/storefront.css', 'assets/admin/admin-runtime.css'] as $entry) {
+            if (!isset($manifest[$entry])) {
+                $assetsReady = false;
+                break;
+            }
+        }
+        foreach ($manifest as $entry) {
+            $file = is_array($entry) ? ($entry['file'] ?? '') : '';
+            if (!is_string($file) || $file === '' || str_contains($file, '..') || str_starts_with($file, '/') || !is_file($buildRoot . '/' . $file)) {
+                $assetsReady = false;
+                break;
+            }
+        }
+    }
+}
 $addCheck(it('installer.composer_dependencies'), $vendorReady ? it('installer.hotovo') : it('installer.vidsutniy'), $vendorReady);
 $addCheck(it('installer.frontend_assets'), $assetsReady ? it('installer.hotovo') : it('installer.vidsutniy'), $assetsReady);
 

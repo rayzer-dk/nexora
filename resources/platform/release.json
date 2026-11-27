@@ -1,6 +1,6 @@
 {
   "platform": "Nexora Commerce",
-  "version": "4.0.20",
+  "version": "4.0.21",
   "channel": "production",
   "region_profile": "EU-UA",
   "extension_api": "2.0",
@@ -11,22 +11,24 @@
   },
   "backend": {
     "symfony": "8.1.*",
-    "doctrine_dbal": "^4.4",
-    "doctrine_migrations": "3.9.7"
+    "doctrine_dbal": "4.6.0",
+    "doctrine_migrations": "3.10.0",
+    "twig": "3.31.1"
   },
   "frontend": {
-    "vue": "3.5.43",
-    "vite": "8.3.0",
-    "lucide_vue": "1.46.0",
+    "vue": "3.5.46",
+    "vite": "8.4.0",
+    "lucide_vue": "1.82.0",
     "typescript": "6.0.3",
-    "vue_tsc": "3.3.11",
-    "tiptap": "3.31.3",
+    "vue_tsc": "3.3.14",
+    "tiptap": "3.35.0",
     "esbuild": "0.28.2",
-    "playwright": "1.63.0",
-    "axe_core_playwright": "4.13.0"
+    "playwright": "1.65.1",
+    "axe_core_playwright": "4.14.1",
+    "workbox": "7.4.1"
   },
   "database_schema": "91",
-  "built_at": "2026-11-13",
+  "built_at": "2026-11-27",
   "capabilities": [
     "multistore",
     "multilanguage",

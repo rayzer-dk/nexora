@@ -9,14 +9,12 @@ Core policy:
 
 Base:
 - Symfony 8.1 stable
-- Doctrine DBAL 4.4
-- webonyx/graphql-php 15.x
+- Doctrine DBAL 4.6
 - Google Auth Library for PHP
 - Vue 3.5 + TypeScript
-- Vite 8
-- Pinia
-- Chart.js
-- Floating UI
+- Vite 8.4 with native Oxc and Lightning CSS
+- Tiptap 3.35 and CodeMirror 6
+- Workbox 7.4 (self-hosted)
 - Lucide icons
 
 Optional infrastructure:

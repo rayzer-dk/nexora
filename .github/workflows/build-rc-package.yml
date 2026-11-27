@@ -31,13 +31,13 @@ jobs:
 
       - run: composer validate --strict
       - run: composer install --no-dev --prefer-dist --optimize-autoloader --classmap-authoritative --no-interaction --no-progress
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run build:production
       - name: Check browser installer before packaging
         run: |
           php tests/installer-render-smoke.php uk-UA
           php tests/installer-render-smoke.php ru-RU
           php tests/installer-render-smoke.php en-US
-      - run: npm install --ignore-scripts --no-audit --no-fund
-      - run: npm run build:production
 
       # Runs every release check, assembles the one-upload package, writes the manifest and the checksums.
       - name: Build the production package

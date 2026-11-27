@@ -38,3 +38,7 @@ The command verifies the Composer installer signature when Composer is not alrea
 ## PHP 8.6 readiness
 
 `php tools/check-php86-readiness.php` statically scans `src/`, `bin/`, `tools/` and `public/` for constructs removed or deprecated in the PHP 8.6 line (0 findings as of 3.18.1). The upper bound is `<9.0`; when an 8.6 build is released, run the full unit and e2e suites on it and record the result here. The weekly `PHP next` workflow (`.github/workflows/php-next.yml`) already runs the unit suite on PHP 8.5 and on PHP nightly (future 8.6) without blocking releases.
+
+## 4.0.21 dependency baseline (2026-11-27)
+
+The production lockfiles use Symfony 8.1.12/8.1.13 where available, Doctrine DBAL 4.6.0, Doctrine Migrations 3.10.0, Twig 3.31.1, Vue 3.5.46, TypeScript 6.0.3, Vite 8.4.0, Lucide Vue 1.82.0, Tiptap 3.35.0, CodeMirror View 6.44.2, Playwright 1.65.1 and Workbox 7.4.1. Symfony 8.2 RC remains a separate compatibility preview; exact installed versions are authoritative in lockfiles.
