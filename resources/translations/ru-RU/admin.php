@@ -6769,6 +6769,7 @@ return [
     'admin.appearance.options.value.off' => 'Выключена',
     'admin.appearance.options.value.standard' => 'Стандартные',
     'admin.appearance.options.value.editorial' => 'Редакционные',
+    'admin.appearance.concept.forest' => 'Зелёная природная палитра, просторные карточки и мягкие акценты',
     'admin.appearance.concept.enabled' => 'Индивидуальная концепция темы',
     'admin.appearance.concept.home_order' => 'Порядок блоков главной',
     'admin.appearance.concept.builder' => 'Как в конструкторе',
