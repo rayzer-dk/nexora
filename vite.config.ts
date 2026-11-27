@@ -16,7 +16,7 @@ export default defineConfig({
     sourcemap: false,
     modulePreload: { polyfill: false },
     chunkSizeWarningLimit: 350,
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         admin: 'assets/admin/main.ts',
         storefront: 'assets/storefront/product-page.js',
