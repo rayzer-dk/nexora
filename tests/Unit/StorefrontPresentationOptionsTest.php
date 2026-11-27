@@ -60,12 +60,13 @@ final class StorefrontPresentationOptionsTest extends TestCase
         self::assertSame('auto', $invalid['display']['cart_effect']);
         self::assertSame('standard', $invalid['display']['product_sections']);
     }
-    public function testSixConceptsHaveDistinctLayoutProfilesAndStandardSectionOrders(): void
+    public function testSevenConceptsHaveDistinctLayoutProfilesAndStandardSectionOrders(): void
     {
         $catalog = new ThemePresetCatalog(dirname(__DIR__, 2) . '/config/appearance/presets.json');
         $profiles = $catalog->all();
-        self::assertCount(6, $profiles);
+        self::assertCount(7, $profiles);
         $layouts = [];
+        self::assertCount(7, array_unique(array_column(array_column($profiles, 'theme'), 'primary')));
         $orders = [];
         foreach ($profiles as $profile) {
             self::assertSame('1', $profile['form']['theme_concept']);
@@ -74,8 +75,8 @@ final class StorefrontPresentationOptionsTest extends TestCase
             $layouts[] = json_encode($profile['form'], JSON_THROW_ON_ERROR);
             $orders[] = implode(',', $profile['home_order']);
         }
-        self::assertCount(6, array_unique($layouts));
-        self::assertCount(6, array_unique($orders));
+        self::assertCount(7, array_unique($layouts));
+        self::assertCount(7, array_unique($orders));
     }
 
 }
