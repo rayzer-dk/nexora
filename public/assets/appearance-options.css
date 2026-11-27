@@ -1,0 +1,97 @@
+/* Dynamic is opt-in. Existing presets keep their layout and token overrides. */
+body[data-theme-preset="dynamic"] .reference-header {
+  box-shadow: none;
+}
+body[data-theme-preset="dynamic"] .reference-search input {
+  border-radius: var(--mc-radius-full);
+  background: var(--mc-color-surface-subtle);
+}
+body[data-theme-preset="dynamic"] .reference-search > button {
+  border-radius: var(--mc-radius-full);
+  background: transparent;
+  color: var(--mc-color-text);
+}
+body[data-theme-preset="dynamic"] .reference-search > button:hover {
+  background: var(--mc-color-surface);
+}
+:is(body[data-theme-preset="dynamic"][data-nav-style="auto"], body[data-nav-style="underline"]) .reference-nav-item > a {
+  position: relative;
+  font-weight: 500;
+  letter-spacing: -.01em;
+}
+:is(body[data-theme-preset="dynamic"][data-nav-style="auto"], body[data-nav-style="underline"]) .reference-nav-item > a::after {
+  content: "";
+  position: absolute;
+  inset-inline: var(--mc-space-3);
+  bottom: 3px;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--mc-motion-base) ease-out;
+}
+:is(body[data-theme-preset="dynamic"][data-nav-style="auto"], body[data-nav-style="underline"]) .reference-nav-item:is(.is-current, :hover, :focus-within) > a {
+  background: transparent;
+  color: var(--mc-color-text);
+}
+:is(body[data-theme-preset="dynamic"][data-nav-style="auto"], body[data-nav-style="underline"]) .reference-nav-item:is(.is-current, :hover, :focus-within) > a::after {
+  transform: scaleX(1);
+}
+:is(body[data-theme-preset="dynamic"][data-nav-style="auto"], body[data-nav-style="underline"]) .reference-nav-submenu a[aria-current="page"] {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+body[data-theme-preset="dynamic"] .reference-cart-icon {
+  border-radius: var(--mc-radius-md);
+  transition: color var(--mc-motion-fast), background var(--mc-motion-fast);
+}
+body[data-theme-preset="dynamic"] .reference-cart-link:hover .reference-cart-icon {
+  color: var(--mc-color-accent-base);
+}
+body[data-theme-preset="dynamic"]:not([data-card-style="overlay"]) .catalog-card {
+  box-shadow: none;
+}
+
+/* Independent layout choices; preserve the existing mobile layout and default settings. */
+@media (min-width: 768px) {
+  body[data-header-layout="compact"] .reference-header__main {
+    padding-block: var(--mc-space-2);
+    gap: var(--mc-space-3);
+  }
+  body[data-header-layout="compact"] .reference-header__nav-row { padding-bottom: var(--mc-space-1); }
+  body[data-header-layout="spacious"] .reference-header__main {
+    padding-block: var(--mc-space-6);
+  }
+  body[data-header-layout="spacious"] .reference-header__nav-row { padding-bottom: var(--mc-space-4); }
+}
+@media (min-width: 1024px) {
+  body[data-header-layout="wide_search"] .reference-header__main {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  body[data-header-layout="wide_search"] .reference-header__main:has(.reference-contacts) {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    gap: var(--mc-space-3);
+  }
+  body[data-header-layout="wide_search"] .reference-contacts a span { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+}
+body[data-nav-style="pill"] .reference-nav-item > a { border-radius: var(--mc-radius-full); }
+body[data-nav-style="pill"] .reference-nav-item:is(.is-current, :hover, :focus-within) > a {
+  background: var(--mc-color-primary-soft);
+  color: var(--mc-color-primary);
+}
+body[data-nav-style="plain"] .reference-nav-item:is(.is-current, :hover, :focus-within) > a {
+  background: transparent;
+  color: var(--mc-color-primary);
+}
+body[data-nav-style="plain"] .reference-nav-item.is-current > a { font-weight: 700; }
+body[data-product-sections="compact"] .reference-products-section .reference-section-title { margin-block-end: var(--mc-space-2); }
+body[data-product-sections="compact"] .reference-products-section .product-grid { gap: var(--mc-space-2); }
+body[data-product-sections="editorial"] .reference-products-section .reference-section-title {
+  border-bottom: 1px solid var(--mc-color-border);
+  padding-block-end: var(--mc-space-3);
+  margin-block-end: var(--mc-space-4);
+}
+body[data-product-sections="editorial"] .reference-products-section .reference-section-title h2 { letter-spacing: -.025em; }
+@media (min-width: 768px) {
+  body[data-product-sections="editorial"] .reference-products-section .product-grid { gap: var(--mc-space-5); }
+}
