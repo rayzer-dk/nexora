@@ -93,11 +93,14 @@ final readonly class CachedStorefrontCatalogQuery
     /** @return array{brands:list<array{id:int,name:string,count:int}>,price_min_minor:?int,price_max_minor:?int,attributes:list<array{code:string,name:string,data_type:string,unit_label:?string,values:list<array{token:string,label:string,count:int}>}>} */
     public function catalogFacets(StorefrontContext $context, ?int $categoryId = null): array
     {
-        $precomputed = $this->facetProjection->get($context, $categoryId);
-        if (is_array($precomputed)) {
-            return $precomputed;
-        }
+        // The precomputed projection itself is a database read. Cache both paths,
+        // without extending the lifetime of a projection beyond its own expiry.
         return $this->cache->get($this->key('facets', $context, [$categoryId]), function (ItemInterface $item) use ($context, $categoryId): array {
+            $precomputed = $this->facetProjection->getEntry($context, $categoryId);
+            if ($precomputed !== null) {
+                $item->expiresAfter(min(60, $precomputed['ttl']));
+                return $precomputed['payload'];
+            }
             $item->expiresAfter(60);
             return $this->inner->catalogFacets($context, $categoryId);
         });

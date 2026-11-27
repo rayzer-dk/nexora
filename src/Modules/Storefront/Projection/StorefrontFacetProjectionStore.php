@@ -18,16 +18,22 @@ final readonly class StorefrontFacetProjectionStore
     /** @return array<string,mixed>|null */
     public function get(StorefrontContext $context, ?int $categoryId): ?array
     {
+        return $this->getEntry($context, $categoryId)['payload'] ?? null;
+    }
+
+    /** @return array{payload:array<string,mixed>,ttl:int}|null */
+    public function getEntry(StorefrontContext $context, ?int $categoryId): ?array
+    {
         try {
             $row = $this->db->fetchAssociative(
-                'SELECT payload FROM mc_storefront_facet_projection WHERE store_id=? AND market_id=? AND locale=? AND currency=? AND category_id=? AND expires_at>UTC_TIMESTAMP(6) LIMIT 1',
+                'SELECT payload, TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(6), expires_at) AS ttl FROM mc_storefront_facet_projection WHERE store_id=? AND market_id=? AND locale=? AND currency=? AND category_id=? AND expires_at>UTC_TIMESTAMP(6) LIMIT 1',
                 [$context->storeId,$context->marketId,$context->locale,$context->currency,$categoryId ?? 0],
             );
             if (!is_array($row)) {
                 return null;
             }
             $payload = json_decode((string)$row['payload'], true, 128, JSON_THROW_ON_ERROR);
-            return is_array($payload) ? $payload : null;
+            return is_array($payload) ? ['payload' => $payload, 'ttl' => max(0, (int) $row['ttl'])] : null;
         } catch (\Throwable) {
             return null;
         }
