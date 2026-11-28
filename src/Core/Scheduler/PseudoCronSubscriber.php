@@ -35,7 +35,7 @@ final class PseudoCronSubscriber implements EventSubscriberInterface
 
     public function onTerminate(TerminateEvent $event): void
     {
-        if (!$event->isMainRequest() || PHP_SAPI === 'cli' || $this->environment === 'test') {
+        if (!$event->isMainRequest() || PHP_SAPI === 'cli' || in_array($this->environment, ['test', 'scale', 'scale_valkey'], true)) {
             return;
         }
         $request = $event->getRequest();

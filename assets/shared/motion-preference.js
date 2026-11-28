@@ -8,7 +8,13 @@ export function initMotionPreference() {
   const root = document.documentElement;
   let mode = 'full';
   try { mode = normalize(window.localStorage.getItem(KEY)); } catch { /* Private browsing may disallow storage. */ }
+  const connection = navigator.connection;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const apply = () => {
+    const low = Boolean(connection?.saveData || /^(?:slow-2g|2g|3g)$/.test(connection?.effectiveType || '') || (navigator.deviceMemory > 0 && navigator.deviceMemory <= 2) || (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 2) || root.dataset.saveData === '1');
+    root.dataset.motionBudget = low ? 'low' : 'normal';
+    const navigation = document.getElementById('mc-navigation-transition');
+    if (navigation) navigation.textContent = mode === 'full' && !low && !reduced.matches && typeof document.startViewTransition === 'function' ? '@view-transition { navigation: auto; }' : '';
     root.dataset.motion = mode;
     document.querySelectorAll('[data-motion-select]').forEach((select) => {
       if (select instanceof HTMLSelectElement) select.value = mode;
@@ -26,6 +32,8 @@ export function initMotionPreference() {
       });
     });
   };
+  connection?.addEventListener?.('change', apply);
+  reduced.addEventListener?.('change', apply);
   apply();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind, { once: true });
   else bind();

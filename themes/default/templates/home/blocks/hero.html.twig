@@ -16,10 +16,10 @@
                 <div class="demo-hero-card__facts"><span>{{ ui_text('demo_products_count', {count: demo_showcase.counts.products}) }}</span><span>{{ ui_text('demo_categories_count', {count: demo_showcase.counts.categories}) }}</span><span>{{ ui_text('coupon') }} {{ demo_showcase.coupon.code }}</span></div>
             </div>
             {% set demo_hero_image = props.image|default('') ?: presentation.hero.image ?: '/media/demo/laptop-pro-14.webp' %}
-            <div class="demo-hero-card__media"><img src="{{ demo_hero_image }}" alt="{{ ui_text('demo_laptop_alt') }}" width="1100" height="720" fetchpriority="high" decoding="async"></div>
+            <div class="demo-hero-card__media"><img {{ media_attrs(demo_hero_image, 'product', ['card', 'product', 'zoom'], '(min-width: 1024px) 36vw, 90vw') }} alt="{{ ui_text('demo_laptop_alt') }}" width="1100" height="720" fetchpriority="high" decoding="async"></div>
         </article>
         {% if site_features.catalog|default(false) and demo_showcase and demo_showcase.promos|length >= 2 %}<div class="demo-hero-stack">
-            {% for promo in demo_showcase.promos|slice(0, 2) %}<a class="demo-mini-banner demo-mini-banner--{{ promo.tone }}" href="{{ promo.url }}"><img src="{{ promo.image }}" alt="" width="420" height="420" loading="lazy" decoding="async"><span><strong>{{ promo.title }}</strong><b>{{ ui_text('view_arrow') }}{{ ui_icon('arrow-right', 16) }}</b></span></a>{% endfor %}
+            {% for promo in demo_showcase.promos|slice(0, 2) %}<a class="demo-mini-banner demo-mini-banner--{{ promo.tone }}" href="{{ promo.url }}"><img {{ media_attrs(promo.image, 'card', ['thumb', 'card', 'product'], '(min-width: 1024px) 18vw, 40vw') }} alt="" width="420" height="420" loading="lazy" decoding="async"><span><strong>{{ promo.title }}</strong><b>{{ ui_text('view_arrow') }}{{ ui_icon('arrow-right', 16) }}</b></span></a>{% endfor %}
         </div>{% endif %}
     </div>
 </section>
@@ -36,7 +36,7 @@
             {% if button_label and button_url %}<a class="button button--primary button--lg" href="{{ button_url }}">{{ button_label }}{{ ui_icon('arrow-right', 16) }}</a>{% endif %}
         </div>
         {% set hero_image = props.image|default('') ?: presentation.hero.image %}
-        {% if hero_image %}<div class="reference-hero__visual"><img src="{{ hero_image }}" alt="" width="1200" height="452" fetchpriority="high" decoding="async"></div>{% endif %}
+        {% if hero_image %}<div class="reference-hero__visual"><img {{ media_attrs(hero_image, 'product', ['card', 'product', 'zoom'], '(min-width: 1024px) 65vw, 100vw') }} alt="" width="1200" height="452" fetchpriority="high" decoding="async"></div>{% endif %}
     </div>
 </section>
 {% else %}

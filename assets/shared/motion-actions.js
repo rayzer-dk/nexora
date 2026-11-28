@@ -5,7 +5,10 @@ export const motionEnabled = () =>
 
 export function playMotion(element, frames, options = {}) {
   if (!motionEnabled() || !(element instanceof Element) || typeof element.animate !== 'function') return null;
-  return element.animate(frames, { duration: 240, easing: 'ease-out', ...options });
+  const light = document.documentElement.dataset.motionBudget === 'low' || document.documentElement.dataset.motion === 'minimal';
+  const settings = { duration: 240, easing: 'ease-out', ...options };
+  if (light && !(element instanceof HTMLElement && element.classList.contains('mc-toast-countdown'))) settings.duration = Math.min(Number(settings.duration), 120);
+  return element.animate(frames, settings);
 }
 
 export function celebrateWishlist(button) {

@@ -73,6 +73,29 @@ final readonly class ProductCatalogFilter
         }
     }
 
+    /** @return list<int> Canonical cache identity; does not change the submitted filter. */
+    public function cacheBrandIds(): array
+    {
+        $ids = array_values(array_unique($this->brandIds));
+        sort($ids, SORT_NUMERIC);
+
+        return $ids;
+    }
+
+    /** @return array<string,list<string>> Equivalent AND/OR filter permutations share a cache entry. */
+    public function cacheAttributeFilters(): array
+    {
+        $attributes = $this->attributeFilters;
+        ksort($attributes, SORT_STRING);
+        foreach ($attributes as $code => $values) {
+            $values = array_values(array_unique($values));
+            sort($values, SORT_STRING);
+            $attributes[$code] = $values;
+        }
+
+        return $attributes;
+    }
+
     public function isFiltered(): bool
     {
         return $this->search !== ''

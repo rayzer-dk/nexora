@@ -24,3 +24,5 @@ Popular facet payloads can be precomputed without making them mandatory:
 `php bin/console commerce:storefront:warm-facets --categories=40 --ttl=300`
 
 If the projection is missing or expired, the storefront computes facets from canonical SQL and continues normally.
+
+The scale and scale_valkey profiles require an independent scheduler (CLI cron or the authenticated web-cron endpoint) every five minutes. Pseudo-cron is intentionally not executed in these profiles: a complete search rebuild or feed job must not occupy an HTTP storefront worker. The default small-store profile retains its existing fallback. SQL full reindex reads translations, brands, variants, category paths and attribute values in bounded batches and writes bounded multi-row upserts. Single-product event updates retain their original path.

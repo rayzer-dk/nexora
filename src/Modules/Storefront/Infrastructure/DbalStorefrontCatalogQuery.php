@@ -151,6 +151,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         int $limit = 24,
         ?string $search = null,
         ?ProductCatalogFilter $filter = null,
+        bool $includeTotal = true,
     ): array {
         $page = max(1, $page);
         $limit = min(60, max(1, $limit));
@@ -270,13 +271,13 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         }
 
         $where = implode(' AND ', $conditions);
-        $priceJoin = "JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)";
+        $priceJoin = "JOIN mc_price pr ON pr.id=(SELECT px.id FROM mc_price px FORCE INDEX (idx_price_context) WHERE px.variant_id=v.id AND px.store_id=? AND (px.market_id=? OR px.market_id IS NULL) AND px.currency=? AND px.customer_group='default' AND px.price_list_id IS NULL AND px.min_quantity<=1 AND (px.max_quantity IS NULL OR px.max_quantity>=1) AND (px.starts_at IS NULL OR px.starts_at<=UTC_TIMESTAMP(6)) AND (px.ends_at IS NULL OR px.ends_at>UTC_TIMESTAMP(6)) ORDER BY (px.market_id IS NOT NULL) DESC,px.priority ASC,px.id DESC LIMIT 1)";
 
         $baseJoins = "FROM mc_product p
                 JOIN mc_store_product sp ON sp.product_id=p.id AND sp.store_id=?
                 JOIN mc_market_product mp ON mp.product_id=p.id AND mp.market_id=?
-                JOIN mc_product_translation pt ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
-                JOIN mc_product_variant v ON v.product_id=p.id AND v.status='active' AND v.sort_order=0
+                JOIN mc_product_translation pt FORCE INDEX (uq_product_translation_locale) ON pt.product_id=p.id AND pt.store_id=? AND pt.locale=?
+                JOIN mc_product_variant v FORCE INDEX (idx_variant_product_status_sort) ON v.product_id=p.id AND v.status='active' AND v.sort_order=0
                 LEFT JOIN mc_brand b ON b.id=p.brand_id
                 LEFT JOIN mc_product_purchase_policy ppp ON ppp.product_id=p.id
                 {$priceJoin}";
@@ -290,10 +291,10 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
             $context->marketId,
             $context->currency,
         ];
-        $count = (int) $this->connection->fetchOne(
+        $count = $includeTotal ? (int) $this->connection->fetchOne(
             "SELECT COUNT(DISTINCT p.id) {$baseJoins} WHERE {$where}",
             [...$baseParams, ...$filterParams],
-        );
+        ) : 0;
 
         $orderParams = [];
         $safeStoreId = (int) $context->storeId;
@@ -392,6 +393,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         ];
         $rows = $this->connection->fetchAllAssociative($sql, $queryParams);
         $items = $this->badges->decorate(array_map(fn(array $r): array => $this->productCardRow($r, $context), $rows), $context->storeId, $context->locale);
+        if (!$includeTotal) { $count = count($items); }
         return ['items'=>$items,'total'=>$count,'page'=>$page,'pages'=>max(1,(int)ceil($count/$limit))];
     }
 

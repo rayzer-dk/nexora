@@ -114,6 +114,7 @@ final class SqlSearchIndex
     /** @return array{documents:int,terms:int} */
     public function rebuildAll(int $batch = 500): array
     {
+        $batch = max(50, min(1000, $batch));
         $documents = 0;
         $pairs = $this->db->fetchAllAssociative('SELECT s.id store_id, sl.locale_code FROM mc_store s JOIN mc_store_locale sl ON sl.store_id=s.id AND sl.enabled=1');
         $this->db->executeStatement(
@@ -129,19 +130,20 @@ final class SqlSearchIndex
                     'SELECT product_id FROM mc_store_product WHERE store_id=? AND product_id>? ORDER BY product_id LIMIT ' . max(50, $batch),
                     [$storeId, $lastId],
                 ));
+                $batchDocuments = $this->documentsForBatch($storeId, $locale, $ids);
                 foreach ($ids as $productId) {
                     $lastId = $productId;
-                    $document = $this->document($storeId, $locale, $productId);
+                    $document = $batchDocuments[$productId] ?? '';
                     if ($document === '') {
                         continue;
                     }
-                    $this->write($storeId, $locale, $productId, $document);
                     ++$documents;
                     foreach (self::terms($document) as $term) {
                         $counts[$term] = ($counts[$term] ?? 0) + 1;
                     }
                 }
-            } while (count($ids) >= max(50, $batch));
+                $this->writeBatch($storeId, $locale, $batchDocuments);
+            } while (count($ids) >= $batch);
             $this->db->executeStatement(
                 'DELETE sd FROM mc_search_document sd LEFT JOIN mc_store_product sp ON sp.store_id=sd.store_id AND sp.product_id=sd.product_id WHERE sd.store_id=? AND sd.locale=? AND sp.product_id IS NULL',
                 [$storeId, $locale],
@@ -342,6 +344,114 @@ final class SqlSearchIndex
         $unique = implode(' ', array_keys(array_flip(explode(' ', $normalized))));
 
         return mb_substr($unique, 0, 60000, 'UTF-8');
+    }
+
+    /**
+     * Read each relation once per bounded batch rather than once per product.
+     * @param list<int> $ids
+     * @return array<int,string>
+     */
+    private function documentsForBatch(int $storeId, string $locale, array $ids): array
+    {
+        if ($ids === []) { return []; }
+        $parts = [];
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT product_id,locale,name,short_description FROM mc_product_translation FORCE INDEX (uq_product_translation_locale) WHERE store_id=? AND product_id IN (?) ORDER BY product_id,id',
+            [$storeId, $ids], [1 => ArrayParameterType::INTEGER],
+        ) as $row) {
+            $id = (int) $row['product_id'];
+            $parts[$id][] = (string) $row['name'];
+            if ((string) $row['locale'] === $locale) { $parts[$id][] = (string) ($row['short_description'] ?? ''); }
+        }
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT p.id AS product_id,b.name FROM mc_product p JOIN mc_brand b ON b.id=p.brand_id WHERE p.id IN (?)',
+            [$ids], [ArrayParameterType::INTEGER],
+        ) as $row) {
+            $id = (int) $row['product_id'];
+            if (isset($parts[$id])) { $parts[$id][] = (string) $row['name']; }
+        }
+        foreach ($this->db->fetchAllAssociative(
+            "SELECT product_id,sku,gtin,mpn FROM mc_product_variant FORCE INDEX (idx_variant_product_status_sort) WHERE product_id IN (?) AND status='active' ORDER BY product_id,id",
+            [$ids], [ArrayParameterType::INTEGER],
+        ) as $row) {
+            $id = (int) $row['product_id'];
+            if (isset($parts[$id])) { array_push($parts[$id], (string) $row['sku'], (string) ($row['gtin'] ?? ''), (string) ($row['mpn'] ?? '')); }
+        }
+        $categories = [];
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT product_id,category_id FROM mc_product_category FORCE INDEX (PRIMARY) WHERE product_id IN (?) ORDER BY product_id,category_id',
+            [$ids], [ArrayParameterType::INTEGER],
+        ) as $row) {
+            $id = (int) $row['product_id'];
+            if (isset($parts[$id])) { $categories[$id][] = (int) $row['category_id']; }
+        }
+        $seen = [];
+        for ($depth = 0; $categories !== [] && $depth < 8; ++$depth) {
+            $all = [];
+            foreach ($categories as $id => $categoryIds) {
+                $categoryIds = array_values(array_diff($categoryIds, array_keys($seen[$id] ?? [])));
+                if ($categoryIds === []) { unset($categories[$id]); continue; }
+                $categories[$id] = $categoryIds;
+                foreach ($categoryIds as $categoryId) {
+                    $seen[$id][$categoryId] = true;
+                    $all[$categoryId] = true;
+                }
+            }
+            if ($all === []) { break; }
+            $categoryIds = array_keys($all);
+            $names = [];
+            foreach ($this->db->fetchAllAssociative(
+                'SELECT category_id,name FROM mc_category_translation WHERE store_id=? AND category_id IN (?) ORDER BY category_id,id',
+                [$storeId, $categoryIds], [1 => ArrayParameterType::INTEGER],
+            ) as $row) {
+                $names[(int) $row['category_id']][] = (string) $row['name'];
+            }
+            $parents = [];
+            foreach ($this->db->fetchAllAssociative('SELECT id,parent_id FROM mc_category WHERE id IN (?)', [$categoryIds], [ArrayParameterType::INTEGER]) as $row) {
+                $parents[(int) $row['id']] = (int) ($row['parent_id'] ?? 0);
+            }
+            foreach ($categories as $id => $categoryIds) {
+                $next = [];
+                foreach ($categoryIds as $categoryId) {
+                    foreach ($names[$categoryId] ?? [] as $name) { $parts[$id][] = $name; }
+                    if (($parents[$categoryId] ?? 0) > 0) { $next[$parents[$categoryId]] = true; }
+                }
+                $categories[$id] = array_keys($next);
+            }
+        }
+        foreach ($this->db->fetchAllAssociative(
+            'SELECT product_id,value_text FROM (SELECT product_id,value_text,ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY id) AS rn FROM mc_product_attribute_value FORCE INDEX (idx_attribute_product_variant_locale) WHERE product_id IN (?) AND value_text IS NOT NULL AND (locale IS NULL OR locale=?)) av WHERE rn<=200 ORDER BY product_id,rn',
+            [$ids, $locale], [ArrayParameterType::INTEGER],
+        ) as $row) {
+            $id = (int) $row['product_id'];
+            if (isset($parts[$id])) { $parts[$id][] = (string) $row['value_text']; }
+        }
+        $documents = [];
+        foreach ($parts as $id => $values) {
+            $normalized = self::normalize(implode(' ', $values));
+            $document = mb_substr(implode(' ', array_keys(array_flip(explode(' ', $normalized)))), 0, 60000, 'UTF-8');
+            if ($document !== '') { $documents[$id] = $document; }
+        }
+        return $documents;
+    }
+
+    /** @param array<int,string> $documents */
+    private function writeBatch(int $storeId, string $locale, array $documents): void
+    {
+        // Bound packet size even for products with very long descriptions.
+        foreach (array_chunk($documents, 20, true) as $chunk) {
+            $values = [];
+            $params = [];
+            foreach ($chunk as $id => $document) {
+                $values[] = '(?,?,?,?,UTC_TIMESTAMP(6))';
+                array_push($params, $storeId, $locale, $id, $document);
+            }
+            $this->db->executeStatement(
+                'INSERT INTO mc_search_document (store_id,locale,product_id,document,updated_at) VALUES ' . implode(',', $values)
+                . ' ON DUPLICATE KEY UPDATE document=VALUES(document),updated_at=VALUES(updated_at)',
+                $params,
+            );
+        }
     }
 
     private function write(int $storeId, string $locale, int $productId, string $document): void

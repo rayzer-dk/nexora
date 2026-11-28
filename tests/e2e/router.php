@@ -11,6 +11,35 @@ if ($uriPath !== '/' && !str_contains($uriPath, "\0")) {
     $publicReal = realpath($publicDir);
 
     if ($candidate !== false && $publicReal !== false && str_starts_with($candidate, $publicReal . DIRECTORY_SEPARATOR) && is_file($candidate)) {
+        if (getenv('E2E_STATIC_CACHE') === '1' && preg_match('~^/(?:build/assets/|assets/|media/).+\\.(?:js|mjs|css|json|svg|woff2|png|webp|avif|jpe?g)$~D', $uriPath) === 1) {
+            $extension = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
+            $types = ['js'=>'application/javascript','mjs'=>'application/javascript','css'=>'text/css','json'=>'application/json','svg'=>'image/svg+xml','woff2'=>'font/woff2','png'=>'image/png','webp'=>'image/webp','avif'=>'image/avif','jpg'=>'image/jpeg','jpeg'=>'image/jpeg'];
+            $immutable = str_starts_with($uriPath, '/build/assets/') || str_starts_with($uriPath, '/media/cache/');
+            header('Cache-Control: ' . ($immutable ? 'public, max-age=31536000, immutable' : (str_starts_with($uriPath, '/media/') ? 'public, max-age=604800' : 'public, max-age=3600, must-revalidate')));
+            header('Content-Type: ' . $types[$extension]);
+            $encoding = '';
+            if (in_array($extension, ['js','mjs','css','json','svg'], true)) {
+                header('Vary: Accept-Encoding');
+                foreach (['br','gzip'] as $algorithm) {
+                    $accepted = (string) ($_SERVER['HTTP_ACCEPT_ENCODING'] ?? '');
+                    if (preg_match('~(?:^|,)\\s*' . $algorithm . '(?:\\s*;\\s*q=(?!0(?:\\.0*)?(?:,|$))[^,]+)?\\s*(?:,|$)~i', $accepted) && is_file($candidate . ($algorithm === 'gzip' ? '.gz' : '.br'))) {
+                        $candidate .= $algorithm === 'gzip' ? '.gz' : '.br';
+                        $encoding = $algorithm;
+                        break;
+                    }
+                }
+            }
+            if ($encoding !== '') header('Content-Encoding: ' . $encoding);
+            $etag = '"' . hash_file('sha256', $candidate) . '"';
+            header('ETag: ' . $etag);
+            if (trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '')) === $etag) {
+                http_response_code(304);
+                return true;
+            }
+            header('Content-Length: ' . filesize($candidate));
+            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'HEAD') readfile($candidate);
+            return true;
+        }
         return false;
     }
 }

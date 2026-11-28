@@ -68,19 +68,34 @@ final readonly class CachedStorefrontCatalogQuery
             'page' => $page,
             'limit' => $limit,
             'search' => $filter->search,
-            'brand' => $filter->brandIds,
+            'brand' => $filter->cacheBrandIds(),
             'stock' => $filter->inStockOnly,
             'min' => $filter->minPriceMinor,
             'max' => $filter->maxPriceMinor,
             'sort' => $filter->sort,
-            'attrs' => $filter->attributeFilters,
+            'attrs' => $filter->cacheAttributeFilters(),
             'rating' => $filter->minRating,
         ];
 
         return $this->cache->get($this->key('products', $context, $payload), function (ItemInterface $item) use ($context, $categoryId, $page, $limit, $filter): array {
             // Short TTL deliberately bounds display staleness. Cart and checkout always revalidate live stock and price.
+            $result = $this->inner->products($context, $categoryId, $page, $limit, null, $filter);
             $item->expiresAfter(8);
-            return $this->inner->products($context, $categoryId, $page, $limit, null, $filter);
+            return $result;
+        });
+    }
+
+    /** Homepage lists have no pager: do not count the entire catalog for each block.
+     * @return list<array<string,mixed>>
+     */
+    public function homeProducts(StorefrontContext $context, int $limit, ?ProductCatalogFilter $filter = null): array
+    {
+        $limit = min(24, max(1, $limit));
+        $filter ??= new ProductCatalogFilter();
+        return $this->cache->get($this->key('home-products', $context, [$limit, $filter]), function (ItemInterface $item) use ($context, $limit, $filter): array {
+            $result = $this->inner->products($context, null, 1, $limit, null, $filter, false)['items'];
+            $item->expiresAfter(8);
+            return $result;
         });
     }
 

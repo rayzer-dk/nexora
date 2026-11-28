@@ -7,7 +7,7 @@ export function animateCartFlight(source) {
   const cart = document.querySelector('[data-cart-open] .reference-cart-icon') || document.querySelector('[data-cart-open]');
   const choice = document.body.dataset.cartEffect || 'auto';
   if (choice === 'off' || !(cart instanceof Element) || typeof cart.animate !== 'function') return;
-  const mode = document.documentElement.dataset.motion;
+  const mode = document.documentElement.dataset.motionBudget === 'low' ? 'minimal' : document.documentElement.dataset.motion;
   const pulse = (minimal = false) => {
     if (!cart.isConnected || document.hidden || ['off'].includes(document.documentElement.dataset.motion)
       || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -18,7 +18,7 @@ export function animateCartFlight(source) {
       { duration: subtle ? 160 : 240, easing: 'ease-out' });
   };
   if (choice === 'minimal' || choice === 'pulse') { pulse(choice === 'minimal' || mode === 'minimal'); return; }
-  if (mode === 'minimal') { if (choice !== 'auto') pulse(true); return; }
+  if (mode === 'minimal') { pulse(true); return; }
   const scope = source.closest('.quick-view, [data-product-card], .product-page, .product-hero');
   const picture = scope?.querySelector('.quick-view__media img, [data-gallery-main], .catalog-card__media img');
   if (!(picture instanceof HTMLImageElement) || !(cart instanceof Element) || !picture.complete || !picture.naturalWidth) return;
