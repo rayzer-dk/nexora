@@ -2,7 +2,7 @@ name: Performance and network audit
 
 on:
   push:
-    branches: [release/4.0.23]
+    branches: [main, release/4.0.23]
   workflow_dispatch:
 
 permissions:
@@ -29,6 +29,8 @@ jobs:
 
     env:
       CI: '1'
+      E2E_PERFORMANCE: '1'
+      E2E_STATIC_CACHE: '1'
       APP_ENV: prod
       APP_DEBUG: '0'
       DATABASE_URL: mysql://nexora:nexora@127.0.0.1:3306/nexora_e2e?charset=utf8mb4

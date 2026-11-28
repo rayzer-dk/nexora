@@ -2,7 +2,8 @@ import { expect, test } from '@playwright/test';
 import { loginAdmin } from './helpers';
 
 test('measure real routes on desktop, mobile and throttled network', async ({ browser, baseURL }, testInfo) => {
-  test.setTimeout(240_000);
+  test.skip(testInfo.project.name !== 'chromium-desktop' || process.env.E2E_PERFORMANCE !== '1', 'Dedicated Chromium network audit');
+  test.setTimeout(360_000);
   const discovery = await browser.newContext({ baseURL });
   const seed = await discovery.newPage();
   await seed.goto('/catalog');
@@ -32,7 +33,7 @@ test('measure real routes on desktop, mobile and throttled network', async ({ br
           const metrics = await page.evaluate(() => {
             const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
             const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
-            return {...(window as unknown as {__auditMetrics:{lcp:number;cls:number}}).__auditMetrics,ttfb:nav.responseStart-nav.startTime,load:nav.loadEventEnd||nav.duration,bytes:nav.transferSize+resources.reduce((n,r)=>n+r.transferSize,0),requests:resources.length,overflow:document.documentElement.scrollWidth>innerWidth+2};
+            return {...(window as unknown as {__auditMetrics:{lcp:number;cls:number}}).__auditMetrics,ttfb:nav.responseStart-nav.startTime,load:nav.loadEventEnd||nav.duration,largestResources:resources.slice().sort((a,b)=>b.transferSize-a.transferSize).slice(0,6).map(r=>({path:new URL(r.name).pathname,bytes:r.transferSize,type:r.initiatorType})),bytes:nav.transferSize+resources.reduce((n,r)=>n+r.transferSize,0),requests:resources.length,overflow:document.documentElement.scrollWidth>innerWidth+2};
           });
           results.push({profile:profile.name,route,phase,...metrics});
           expect.soft(metrics.overflow,profile.name+' '+route).toBe(false);
@@ -45,7 +46,8 @@ test('measure real routes on desktop, mobile and throttled network', async ({ br
   await testInfo.attach('performance-network.json',{body:JSON.stringify(results,null,2),contentType:'application/json'});
 });
 
-test('Workbox caches real assets and serves only anonymous offline navigation', async ({page,browser,baseURL}) => {
+test('Workbox caches real assets and serves only anonymous offline navigation', async ({page,browser,baseURL}, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop' || process.env.E2E_PERFORMANCE !== '1', 'Dedicated isolated Workbox audit');
   test.setTimeout(90000);
   await loginAdmin(page);
   const settings='/admin/appearance/storefront';

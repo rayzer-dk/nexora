@@ -157,7 +157,13 @@ function initLiveSearch() {
 
   input.addEventListener('input', () => {
     window.clearTimeout(timer);
-    timer = window.setTimeout(search, 180);
+    controller?.abort();
+    generation += 1;
+    form.classList.remove('is-searching');
+    if (input.value.trim().length < 2) { hide(); return; }
+    const connection = navigator.connection;
+    const constrained = connection?.saveData || /^(?:slow-2g|2g|3g)$/.test(connection?.effectiveType || '');
+    timer = window.setTimeout(search, constrained ? 450 : 180);
   });
   input.addEventListener('focus', () => {
     if (input.value.trim().length >= 2 && results.children.length) results.hidden = false;

@@ -27,3 +27,5 @@ The repository includes `qa/load/k6-storefront.js`. Run the same populated datab
 - The first request for a picture size that was not generated yet builds it on the spot, which can make the first visitor's LCP several seconds slower; warm the media cache after a large import.
 
 The dedicated Performance and network audit workflow measures cold/warm browser loads on real demo routes at desktop, simulated 4G and slow 3G, records LCP, CLS, TTFB and transfer bytes, and exercises Workbox offline behavior. Demo results are not a production capacity claim.
+
+For the dedicated audit only, E2E_STATIC_CACHE=1 enables static cache headers, ETags and precompressed assets in the local PHP router. This distinguishes production-like warm loads from the default PHP development server. The report identifies the six largest transferred resources per route. Network-adaptive search cancels obsolete requests and increases debounce on constrained connections; optional quick-view description fetching is omitted on slow links or Save-Data, while the product link remains available.
