@@ -79,8 +79,9 @@ final readonly class CachedStorefrontCatalogQuery
 
         return $this->cache->get($this->key('products', $context, $payload), function (ItemInterface $item) use ($context, $categoryId, $page, $limit, $filter): array {
             // Short TTL deliberately bounds display staleness. Cart and checkout always revalidate live stock and price.
+            $result = $this->inner->products($context, $categoryId, $page, $limit, null, $filter);
             $item->expiresAfter(8);
-            return $this->inner->products($context, $categoryId, $page, $limit, null, $filter);
+            return $result;
         });
     }
 
@@ -92,8 +93,9 @@ final readonly class CachedStorefrontCatalogQuery
         $limit = min(24, max(1, $limit));
         $filter ??= new ProductCatalogFilter();
         return $this->cache->get($this->key('home-products', $context, [$limit, $filter]), function (ItemInterface $item) use ($context, $limit, $filter): array {
+            $result = $this->inner->products($context, null, 1, $limit, null, $filter, false)['items'];
             $item->expiresAfter(8);
-            return $this->inner->products($context, null, 1, $limit, null, $filter, false)['items'];
+            return $result;
         });
     }
 

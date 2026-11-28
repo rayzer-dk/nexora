@@ -356,7 +356,7 @@ final class SqlSearchIndex
         if ($ids === []) { return []; }
         $parts = [];
         foreach ($this->db->fetchAllAssociative(
-            'SELECT product_id,locale,name,short_description FROM mc_product_translation WHERE store_id=? AND product_id IN (?) ORDER BY product_id,id',
+            'SELECT product_id,locale,name,short_description FROM mc_product_translation FORCE INDEX (uq_product_translation_locale) WHERE store_id=? AND product_id IN (?) ORDER BY product_id,id',
             [$storeId, $ids], [1 => ArrayParameterType::INTEGER],
         ) as $row) {
             $id = (int) $row['product_id'];
@@ -371,7 +371,7 @@ final class SqlSearchIndex
             if (isset($parts[$id])) { $parts[$id][] = (string) $row['name']; }
         }
         foreach ($this->db->fetchAllAssociative(
-            "SELECT product_id,sku,gtin,mpn FROM mc_product_variant WHERE product_id IN (?) AND status='active' ORDER BY product_id,id",
+            "SELECT product_id,sku,gtin,mpn FROM mc_product_variant FORCE INDEX (idx_variant_product_status_sort) WHERE product_id IN (?) AND status='active' ORDER BY product_id,id",
             [$ids], [ArrayParameterType::INTEGER],
         ) as $row) {
             $id = (int) $row['product_id'];
@@ -379,7 +379,7 @@ final class SqlSearchIndex
         }
         $categories = [];
         foreach ($this->db->fetchAllAssociative(
-            'SELECT product_id,category_id FROM mc_product_category WHERE product_id IN (?) ORDER BY product_id,category_id',
+            'SELECT product_id,category_id FROM mc_product_category FORCE INDEX (PRIMARY) WHERE product_id IN (?) ORDER BY product_id,category_id',
             [$ids], [ArrayParameterType::INTEGER],
         ) as $row) {
             $id = (int) $row['product_id'];
@@ -420,7 +420,7 @@ final class SqlSearchIndex
             }
         }
         foreach ($this->db->fetchAllAssociative(
-            'SELECT product_id,value_text FROM (SELECT product_id,value_text,ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY id) AS rn FROM mc_product_attribute_value WHERE product_id IN (?) AND value_text IS NOT NULL AND (locale IS NULL OR locale=?)) av WHERE rn<=200 ORDER BY product_id,rn',
+            'SELECT product_id,value_text FROM (SELECT product_id,value_text,ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY id) AS rn FROM mc_product_attribute_value FORCE INDEX (idx_attribute_product_variant_locale) WHERE product_id IN (?) AND value_text IS NOT NULL AND (locale IS NULL OR locale=?)) av WHERE rn<=200 ORDER BY product_id,rn',
             [$ids, $locale], [ArrayParameterType::INTEGER],
         ) as $row) {
             $id = (int) $row['product_id'];

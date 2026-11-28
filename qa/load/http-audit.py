@@ -24,7 +24,12 @@ def probe(route):
         with urllib.request.urlopen(base + route, timeout=30) as response:
             assert response.status == 200
             assert urlsplit(response.geturl()).hostname == urlsplit(base).hostname
-            size = len(response.read())
+            content = response.read()
+            size = len(content)
+            if scale and route == plan['product_path']:
+                assert b'Scaleitem' in content, 'Synthetic product did not render'
+            if scale and route.startswith('/catalog?q='):
+                assert b'Scaleitem' in content, 'Search did not render synthetic products'
     except Exception as exc:
         print(f'HTTP audit failed: route={route}, elapsed_ms={(time.perf_counter()-start)*1000:.1f}, error={exc}', file=sys.stderr, flush=True)
         raise

@@ -107,6 +107,10 @@ jobs:
           cat var/scale-fixture.json
           php bin/console cache:pool:clear cache.storefront
 
+      - name: Refresh MySQL statistics after bulk fixture import
+        run: |
+          mysql_container="$(docker ps --filter ancestor=mysql:8.4 --format '{{.Names}}' | head -n 1)"
+          docker exec "$mysql_container" mysql -uroot -proot nexora_e2e -e "ANALYZE TABLE mc_product,mc_product_translation,mc_store_product,mc_market_product,mc_product_variant,mc_product_category,mc_price,mc_seo_route,mc_search_document"
       - name: Benchmark scheduled SQL index separately from storefront requests
         run: |
           /usr/bin/time -v php bin/console commerce:search:reindex --batch=500 > var/search-reindex.txt 2> var/search-reindex-resources.txt
