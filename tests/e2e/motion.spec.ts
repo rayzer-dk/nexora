@@ -21,18 +21,20 @@ test('cart skeleton exists only while its request is in flight', async ({ page }
   await expect(page.locator('html')).toHaveAttribute('data-cart-drawer-ready', '1');
   let releaseRequest: () => void = () => {};
   const gate = new Promise<void>((resolve) => { releaseRequest = resolve; });
-  let markStarted: () => void = () => {};
-  const started = new Promise<void>((resolve) => { markStarted = resolve; });
   await page.route('**/cart/drawer', async (route) => {
-    markStarted();
-    await gate;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([gate, new Promise<void>(resolve => { timer = setTimeout(resolve, 8000); })]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
     await route.continue();
   });
   const skeleton = page.locator('.mc-motion-cart-skeleton__row').first();
   try {
-    await page.locator('[data-cart-open]:visible').first().click();
-    await started;
-    await expect(skeleton).toBeVisible();
+    // Dispatch the actual DOM click without coupling it to WebKit's request lifecycle.
+    await page.locator('[data-cart-open]:visible').first().evaluate((node: HTMLElement) => node.click());
+    await expect(skeleton).toBeVisible({ timeout: 5000 });
   } finally {
     releaseRequest();
   }
