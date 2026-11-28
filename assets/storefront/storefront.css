@@ -895,9 +895,6 @@ body[data-image-bg="dark"] :is(.catalog-card__media img, .product-gallery__open 
 .product-grid[hidden] { display: none; }
 .mc-motion-catalog-skeleton {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--mc-space-3);
-  min-height: 300px;
 }
 .mc-motion-catalog-skeleton__card {
   display: grid;
@@ -916,8 +913,6 @@ body[data-image-bg="dark"] :is(.catalog-card__media img, .product-gallery__open 
 }
 .mc-motion-catalog-skeleton__media { aspect-ratio: 1; }
 .mc-motion-catalog-skeleton__line { width: 70%; height: var(--mc-space-3); }
-@media (min-width: 640px) { .mc-motion-catalog-skeleton { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (min-width: 1024px) { .mc-motion-catalog-skeleton { grid-template-columns: repeat(auto-fit, minmax(208px, 1fr)); } }
 @keyframes mc-motion-fade-in { from { opacity: 0; } to { opacity: 1; } }
 .quick-view__backdrop { animation: mc-motion-fade-in var(--mc-motion-base) ease-out both; }
 .quick-view__dialog { animation: mc-motion-reveal var(--mc-motion-base) ease-out both; }
@@ -929,4 +924,25 @@ body[data-image-bg="dark"] :is(.catalog-card__media img, .product-gallery__open 
 }
 @media (prefers-reduced-motion: reduce) {
   .mc-motion-catalog-skeleton__media, .mc-motion-catalog-skeleton__line { animation: none; }
+}
+
+/* Lightweight motion on touch devices and resource-constrained clients. */
+@media (hover: none), (pointer: coarse) {
+  .mobile-catalog-drawer__backdrop, .cw-dialog::backdrop { backdrop-filter: none; }
+  .catalog-card, .article-card { transition-property: border-color, background-color, color, transform; }
+}
+:root[data-motion-budget="low"] .mc-motion-catalog-skeleton__media,
+:root[data-motion-budget="low"] .mc-motion-catalog-skeleton__line,
+:root[data-motion="minimal"] .mc-motion-catalog-skeleton__media,
+:root[data-motion="minimal"] .mc-motion-catalog-skeleton__line { animation: none; }
+:root[data-motion-budget="low"] .mobile-catalog-drawer__backdrop,
+:root[data-motion-budget="low"] .cw-dialog::backdrop { backdrop-filter: none; }
+:root[data-motion-budget="low"] :is(.catalog-card, .article-card) { transition-property: border-color, background-color, color, transform; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--mc-motion-fast); }
+:root[data-motion="off"]::view-transition-old(root),
+:root[data-motion="off"]::view-transition-new(root),
+:root[data-motion-budget="low"]::view-transition-old(root),
+:root[data-motion-budget="low"]::view-transition-new(root) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }

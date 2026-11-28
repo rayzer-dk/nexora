@@ -75,6 +75,7 @@ test('quick product preview animates unless reduced motion is enabled', async ({
 test('catalog pagination shows skeleton cards while its request is blocked', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-desktop', 'The network-gated pagination test runs once.');
   await page.goto('/catalog?per_page=1', { waitUntil: 'domcontentloaded' });
+  const count = await page.locator('.product-grid > .catalog-card').count();
   const next = page.locator('nav.pager a[href]').last();
   test.skip(await next.count() === 0, 'Catalog has only one page.');
   let release: () => void = () => {};
@@ -88,7 +89,7 @@ test('catalog pagination shows skeleton cards while its request is blocked', asy
   });
   try {
     await next.evaluate((node: HTMLAnchorElement) => node.click());
-    await expect(page.locator('.mc-motion-catalog-skeleton__card')).toHaveCount(6);
+    await expect(page.locator('.mc-motion-catalog-skeleton__card')).toHaveCount(count);
   } finally {
     release();
   }

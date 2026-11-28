@@ -7,9 +7,10 @@
 {% set storefront_brand_default = not presentation.brand.logo and not presentation.brand.icon and not presentation.brand.title %}
 {% set storefront_brand_visible_name = (presentation.brand.show_title|default('1') == '0' or not presentation.brand.title) ? '' : storefront_brand_name %}
 <!doctype html>
-<html lang="{{ app.request.locale|default('uk-UA') }}" data-color-scheme="{{ presentation.theme.color_scheme|default('light') }}" data-pwa="{{ presentation.brand.pwa|default('1') }}" data-workbox="{{ presentation.brand.workbox|default('0') }}">
+<html lang="{{ app.request.locale|default('uk-UA') }}" data-color-scheme="{{ presentation.theme.color_scheme|default('light') }}" data-save-data="{{ app.request.headers.get('Save-Data')|lower == 'on' ? '1' : '0' }}" data-pwa="{{ presentation.brand.pwa|default('1') }}" data-workbox="{{ presentation.brand.workbox|default('0') }}">
 <head>
     <meta charset="utf-8">
+    <style id="mc-navigation-transition" nonce="{{ app.request.attributes.get('_csp_nonce') }}"></style>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     {% if capabilities.features.cart|default(false) %}<meta name="mc-cart-token" content="{{ csrf_token('cart_mutation') }}">{% endif %}
     <meta name="color-scheme" content="{{ presentation.theme.color_scheme|default('light') == 'light' ? 'light' : (presentation.theme.color_scheme == 'dark' ? 'dark' : 'light dark') }}">

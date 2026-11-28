@@ -1,16 +1,25 @@
 // Catalog / category filters: instant apply on desktop, bottom sheet with an explicit Apply button on mobile.
 const showCatalogSkeleton = (target) => {
     if (!(target instanceof HTMLElement)) return null;
+    const cards = Array.from(target.querySelectorAll(':scope > .catalog-card'));
+    if (!cards.length) return null;
+    const geometry = cards.map(card => {
+      const rect = card.getBoundingClientRect();
+      const media = card.querySelector('.catalog-card__media')?.getBoundingClientRect();
+      return { height: rect.height, ratio: media?.height ? media.width / media.height : 1 };
+    });
     const skeleton = document.createElement('div');
-    skeleton.className = 'mc-motion-catalog-skeleton';
+    skeleton.className = target.className + ' mc-motion-catalog-skeleton';
     skeleton.setAttribute('role', 'status');
     skeleton.setAttribute('aria-label', String(window.MC_I18N?.js_loading || 'Loading'));
-    for (let i = 0; i < 6; i += 1) {
+    for (const item of geometry) {
       const card = document.createElement('div');
       card.className = 'mc-motion-catalog-skeleton__card';
       card.setAttribute('aria-hidden', 'true');
+      card.style.minHeight = item.height + 'px';
       const image = document.createElement('span');
       image.className = 'mc-motion-catalog-skeleton__media';
+      image.style.aspectRatio = String(item.ratio);
       const line = document.createElement('span');
       line.className = 'mc-motion-catalog-skeleton__line';
       card.append(image, line);
@@ -63,7 +72,7 @@ if (form instanceof HTMLFormElement) {
                 field.disabled = true;
             }
         });
-        showCatalogSkeleton(document.querySelector('.product-grid'));
+        showCatalogSkeleton(document.querySelector('.product-grid:not(.mc-motion-catalog-skeleton)'));
     });
 
     // Fields disabled by the submit handler must come back enabled after history navigation.
@@ -72,7 +81,7 @@ if (form instanceof HTMLFormElement) {
         disabledForSubmit.forEach((field) => { field.disabled = false; });
         disabledForSubmit.clear();
         document.querySelectorAll('.mc-motion-catalog-skeleton').forEach((node) => node.remove());
-        const grid = document.querySelector('.product-grid');
+        const grid = document.querySelector('.product-grid:not(.mc-motion-catalog-skeleton)');
         if (grid instanceof HTMLElement) grid.hidden = false;
     });
 
@@ -142,17 +151,18 @@ if (form instanceof HTMLFormElement) {
 // Paging without a full reload: the pager links stay ordinary links (they work without script and can be opened in a new tab);
 // with script the product grid and the pager are swapped in place and the address is updated.
 (() => {
-  const grid = () => document.querySelector('.product-grid');
+  const grid = () => document.querySelector('.product-grid:not(.mc-motion-catalog-skeleton)');
   if (!grid() || !window.fetch || !window.history?.pushState) return;
   let pending = null; // the newest request wins: a click or Back while loading must not leave the address and the grid out of step
   let activeSkeleton = null;
   const showSkeleton = (target) => {
     activeSkeleton?.remove();
+    if (target) target.hidden = false;
     activeSkeleton = showCatalogSkeleton(target);
     return activeSkeleton;
   };
   const swap = (doc) => {
-    ['.product-grid', 'nav.pager'].forEach((selector) => {
+    ['.product-grid:not(.mc-motion-catalog-skeleton)', 'nav.pager'].forEach((selector) => {
       const current = document.querySelector(selector);
       const next = doc.querySelector(selector);
       if (current && next) current.replaceWith(next);
@@ -176,7 +186,7 @@ if (form instanceof HTMLFormElement) {
       if (!doc.querySelector('.product-grid')) throw new Error('page');
       swap(doc);
       if (push) history.pushState({ mcCatalog: true }, '', url);
-      grid()?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.motion === 'off' ? 'auto' : 'smooth' });
+      grid()?.scrollIntoView({ block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.dataset.motion !== 'full' || document.documentElement.dataset.motionBudget === 'low' ? 'auto' : 'smooth' });
     } catch (error) {
       if (pending === request && error?.name !== 'AbortError') window.location.assign(url);
     } finally {
