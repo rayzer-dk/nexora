@@ -85,3 +85,25 @@ test('Workbox caches real assets and serves only anonymous offline navigation', 
     await shop.close();
   } finally { await context.close(); await set(previous); }
 });
+
+test('default branding loads only the visible variant and offscreen cards have lower priority', async ({browser,baseURL},testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop' || process.env.E2E_PERFORMANCE !== '1', 'Dedicated isolated browser audit');
+  const context=await browser.newContext({baseURL,viewport:{width:390,height:844},colorScheme:'light',serviceWorkers:'block',extraHTTPHeaders:{'Save-Data':'on'}});
+  try {
+    const page=await context.newPage();
+    await page.goto('/catalog',{waitUntil:'load'});
+    const logo=page.locator('.reference-header .reference-brand__logo--light');
+    await expect(logo).toBeVisible();
+    await expect.poll(()=>logo.evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+    const logoRequests=await page.evaluate(()=>performance.getEntriesByType('resource').map(r=>new URL(r.name).pathname).filter(p=>p.includes('/branding/nexora-logo')));
+    expect(logoRequests).toContain('/assets/branding/nexora-logo.png');
+    expect(logoRequests).not.toContain('/assets/branding/nexora-logo-light.png');
+    await expect(page.locator('script[type="speculationrules"]')).toHaveCount(0);
+    await expect(page.locator('.catalog-card img').first()).toHaveAttribute('fetchpriority','high');
+    await expect(page.locator('.catalog-card img').nth(5)).toHaveAttribute('fetchpriority','low');
+    await page.evaluate(()=>{document.documentElement.dataset.theme='dark';});
+    const dark=page.locator('.reference-header .reference-brand__logo--dark');
+    await expect(dark).toBeVisible();
+    await expect.poll(()=>dark.evaluate((img:HTMLImageElement)=>img.complete&&img.naturalWidth>0)).toBe(true);
+  } finally {await context.close();}
+});

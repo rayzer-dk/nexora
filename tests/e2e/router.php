@@ -11,11 +11,11 @@ if ($uriPath !== '/' && !str_contains($uriPath, "\0")) {
     $publicReal = realpath($publicDir);
 
     if ($candidate !== false && $publicReal !== false && str_starts_with($candidate, $publicReal . DIRECTORY_SEPARATOR) && is_file($candidate)) {
-        if (getenv('E2E_STATIC_CACHE') === '1' && preg_match('~^/(?:build/assets/|assets/|media/cache/(?:thumb|card|product|zoom)-g[0-9]+/).+\\.(?:js|mjs|css|json|svg|woff2|png|webp|avif|jpe?g)$~D', $uriPath) === 1) {
+        if (getenv('E2E_STATIC_CACHE') === '1' && preg_match('~^/(?:build/assets/|assets/|media/).+\\.(?:js|mjs|css|json|svg|woff2|png|webp|avif|jpe?g)$~D', $uriPath) === 1) {
             $extension = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
             $types = ['js'=>'application/javascript','mjs'=>'application/javascript','css'=>'text/css','json'=>'application/json','svg'=>'image/svg+xml','woff2'=>'font/woff2','png'=>'image/png','webp'=>'image/webp','avif'=>'image/avif','jpg'=>'image/jpeg','jpeg'=>'image/jpeg'];
             $immutable = str_starts_with($uriPath, '/build/assets/') || str_starts_with($uriPath, '/media/cache/');
-            header('Cache-Control: ' . ($immutable ? 'public, max-age=31536000, immutable' : 'public, max-age=3600, must-revalidate'));
+            header('Cache-Control: ' . ($immutable ? 'public, max-age=31536000, immutable' : (str_starts_with($uriPath, '/media/') ? 'public, max-age=604800' : 'public, max-age=3600, must-revalidate')));
             header('Content-Type: ' . $types[$extension]);
             $encoding = '';
             if (in_array($extension, ['js','mjs','css','json','svg'], true)) {
