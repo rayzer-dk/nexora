@@ -151,6 +151,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         int $limit = 24,
         ?string $search = null,
         ?ProductCatalogFilter $filter = null,
+        bool $includeTotal = true,
     ): array {
         $page = max(1, $page);
         $limit = min(60, max(1, $limit));
@@ -290,10 +291,10 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
             $context->marketId,
             $context->currency,
         ];
-        $count = (int) $this->connection->fetchOne(
+        $count = $includeTotal ? (int) $this->connection->fetchOne(
             "SELECT COUNT(DISTINCT p.id) {$baseJoins} WHERE {$where}",
             [...$baseParams, ...$filterParams],
-        );
+        ) : 0;
 
         $orderParams = [];
         $safeStoreId = (int) $context->storeId;
@@ -392,6 +393,7 @@ final readonly class DbalStorefrontCatalogQuery implements StorefrontCatalogRead
         ];
         $rows = $this->connection->fetchAllAssociative($sql, $queryParams);
         $items = $this->badges->decorate(array_map(fn(array $r): array => $this->productCardRow($r, $context), $rows), $context->storeId, $context->locale);
+        if (!$includeTotal) { $count = count($items); }
         return ['items'=>$items,'total'=>$count,'page'=>$page,'pages'=>max(1,(int)ceil($count/$limit))];
     }
 

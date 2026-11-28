@@ -10,7 +10,7 @@ test('adaptive motion, navigation opt-in and rendering diagnostics', async ({bro
         Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>8});
         Object.defineProperty(navigator,'deviceMemory',{get:()=>8});
         Object.defineProperty(navigator,'connection',{get:()=>({saveData:low,effectiveType:low?'3g':'4g'})});
-        localStorage.setItem('nx_motion_preference','full');
+        try { localStorage.setItem('nx_motion_preference','full'); } catch { /* opaque frame */ }
       },{low});
       const page=await context.newPage();
       const cdp=await context.newCDPSession(page);

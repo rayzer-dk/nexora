@@ -84,6 +84,19 @@ final readonly class CachedStorefrontCatalogQuery
         });
     }
 
+    /** Homepage lists have no pager: do not count the entire catalog for each block.
+     * @return list<array<string,mixed>>
+     */
+    public function homeProducts(StorefrontContext $context, int $limit, ?ProductCatalogFilter $filter = null): array
+    {
+        $limit = min(24, max(1, $limit));
+        $filter ??= new ProductCatalogFilter();
+        return $this->cache->get($this->key('home-products', $context, [$limit, $filter]), function (ItemInterface $item) use ($context, $limit, $filter): array {
+            $item->expiresAfter(8);
+            return $this->inner->products($context, null, 1, $limit, null, $filter, false)['items'];
+        });
+    }
+
     /** @return array{items:list<array<string,mixed>>,next_cursor:?int} */
     public function productsByCursor(StorefrontContext $context, ?int $categoryId = null, ?int $afterProductId = null, int $limit = 24): array
     {

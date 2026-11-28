@@ -134,6 +134,17 @@ jobs:
             python3 -c 'from pathlib import Path; import re; a=int(re.search(r"keyspace_hits:(\d+)",Path("var/cache-before.txt").read_text())[1]); b=int(re.search(r"keyspace_hits:(\d+)",Path("var/cache-after.txt").read_text())[1]); assert b>a, "No shared cache hits observed"'
           fi
 
+      - name: Collect slow query evidence
+        if: always()
+        run: |
+          docker ps --format '{{.Names}} {{.Image}}'
+          mysql_container="$(docker ps --filter ancestor=mysql:8.4 --format '{{.Names}}' | head -n 1)"
+          if [ -n "$mysql_container" ]; then
+            docker exec "$mysql_container" mysql -uroot -proot -e "SELECT LEFT(DIGEST_TEXT,600) AS query_text,COUNT_STAR,ROUND(SUM_TIMER_WAIT/1000000000000,3) AS total_s,ROUND(MAX_TIMER_WAIT/1000000000000,3) AS max_s,SUM_ROWS_EXAMINED FROM performance_schema.events_statements_summary_by_digest WHERE SCHEMA_NAME='nexora_e2e' ORDER BY SUM_TIMER_WAIT DESC LIMIT 20" > var/sql-digest.txt
+            cat var/sql-digest.txt
+            docker exec "$mysql_container" mysql -uroot -proot -e 'SHOW FULL PROCESSLIST' > var/sql-processlist.txt
+          fi
+
       - name: Preserve browser diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -142,6 +153,8 @@ jobs:
           path: |
             var/scale-fixture.json
             var/catalog-plans.json
+            var/sql-digest.txt
+            var/sql-processlist.txt
             var/http-audit.json
             var/cache-before.txt
             var/cache-after.txt

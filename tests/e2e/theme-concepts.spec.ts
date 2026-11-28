@@ -29,7 +29,7 @@ test('seven concepts render distinct storefront layouts at desktop and mobile wi
     expect(response.status()).toBeLessThan(400);
     await page.waitForLoadState('domcontentloaded');
   };
-  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL, locale: 'uk-UA', viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
+  const context = await browser.newContext({ baseURL: testInfo.project.use.baseURL, locale: 'uk-UA', viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
   const shop = await context.newPage();
   const signatures = new Set<string>();
   try {
@@ -123,11 +123,12 @@ test('seven concepts render distinct storefront layouts at desktop and mobile wi
         await expect(next).toBeAttached();
         let release: () => void = () => {};
         const gate = new Promise<void>(resolve => { release = resolve; });
+        const targetUrl = await next.evaluate((node: HTMLAnchorElement) => node.href);
         const intercept = async (route: import('@playwright/test').Route) => {
           if (route.request().resourceType() === 'fetch' && route.request().headers()['x-requested-with'] === 'XMLHttpRequest') await gate;
           await route.continue();
         };
-        await shop.route('**/*', intercept);
+        await shop.route(targetUrl, intercept);
         try {
           await next.evaluate((node: HTMLAnchorElement) => node.click());
           const skeleton = shop.locator('.mc-motion-catalog-skeleton');
@@ -141,9 +142,10 @@ test('seven concepts render distinct storefront layouts at desktop and mobile wi
           }
           await expect.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
           await testInfo.attach(`${code}-skeleton-${width}`, {body:await shop.screenshot({animations:'disabled'}),contentType:'image/png'});
-        } finally { release(); await shop.unroute('**/*', intercept); }
+        } finally { release(); }
         await expect(shop.locator('.mc-motion-catalog-skeleton')).toHaveCount(0);
         await expect(grid).toBeVisible();
+        await shop.unrouteAll({ behavior: 'wait' });
       }
     }
     expect(signatures.size).toBe(concepts.length);

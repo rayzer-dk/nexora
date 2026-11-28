@@ -41,3 +41,5 @@ Motion: catalog skeletons mirror the existing product count, card dimensions and
 The rendering probe also records CDP TaskDuration, ScriptDuration, LayoutDuration and RecalcStyleDuration deltas with normal and 4x CPU throttling. These describe main-thread work during the sampled interaction, not whole-device CPU utilization. The catalog skeleton regression asserts the original card width and reserved height.
 
 Skeleton verification now exercises all seven visual concepts at 320, 390, 768 and 1440 CSS pixels, comparing card count, grid columns and reserved dimensions, and capturing the loading state. Load audits log the exact failed HTTP route and partial measurements rather than concealing a timeout.
+
+Homepage product blocks now use the existing context-sensitive catalog cache and omit total counts when there is no pager. The active home layout is loaded once. Large-catalog failures preserve MySQL statement digests and active query diagnostics. Theme tests intercept only the exact pagination URL and wait for handlers before unregistering them.

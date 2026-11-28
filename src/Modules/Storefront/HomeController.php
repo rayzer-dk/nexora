@@ -11,7 +11,7 @@ use Commerce\Modules\Content\Infrastructure\DbalBlogQuery;
 use Commerce\Modules\Seo\StructuredData\OrganizationCommerceBuilder;
 use Commerce\Modules\Seo\StructuredData\StructuredDataGraphBuilder;
 use Commerce\Modules\Seo\StructuredData\WebSiteBuilder;
-use Commerce\Modules\Storefront\Infrastructure\DbalStorefrontCatalogQuery;
+use Commerce\Modules\Storefront\Infrastructure\CachedStorefrontCatalogQuery;
 use Commerce\Modules\Storefront\Infrastructure\StorefrontContextResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,7 +22,7 @@ final class HomeController extends AbstractController
 {
     public function __construct(
         private readonly StorefrontContextResolver $contexts,
-        private readonly DbalStorefrontCatalogQuery $catalog,
+        private readonly CachedStorefrontCatalogQuery $catalog,
         private readonly DbalBlogQuery $blog,
         private readonly SiteCapabilitySettings $capabilities,
         private readonly LayoutRevisionStore $layouts,
@@ -67,6 +67,7 @@ final class HomeController extends AbstractController
 
         // Optional homepage blocks are isolated from each other. A broken catalog/blog query
         // removes only that block; it must not make the whole storefront unavailable.
+        $homeLayout = $this->layouts->active($context->storeId, 'home');
         $categories = [];
         $products = [];
         $productSets = [];
@@ -75,7 +76,7 @@ final class HomeController extends AbstractController
             try {
                 // The category block of the home layout chooses how many tiles and in which order (manual, name, popular, newest).
                 $categoryProps = [];
-                foreach ((array) ($this->layouts->active($context->storeId, 'home')['blocks'] ?? []) as $block) {
+                foreach ((array) ($homeLayout['blocks'] ?? []) as $block) {
                     if (is_array($block) && ($block['component'] ?? '') === 'category_grid' && ($block['enabled'] ?? true) !== false) {
                         $categoryProps = is_array($block['props'] ?? null) ? $block['props'] : [];
                         break;
@@ -90,12 +91,12 @@ final class HomeController extends AbstractController
                 $categories = [];
             }
             try {
-                $products = $this->catalog->products($context, null, 1, 10)['items'];
+                $products = $this->catalog->homeProducts($context, 10);
             } catch (\Throwable) {
                 $products = [];
             }
             // Every product block of the home layout chooses its own list: "popular" (best sellers), "newest" or the catalog order, and how many.
-            foreach ((array) ($this->layouts->active($context->storeId, 'home')['blocks'] ?? []) as $block) {
+            foreach ((array) ($homeLayout['blocks'] ?? []) as $block) {
                 if (!is_array($block) || ($block['component'] ?? '') !== 'product_grid' || ($block['enabled'] ?? true) === false) {
                     continue;
                 }
@@ -107,7 +108,7 @@ final class HomeController extends AbstractController
                 }
                 try {
                     $filter = in_array($source, ['popular', 'newest'], true) ? new \Commerce\Modules\Storefront\Domain\ProductCatalogFilter(sort: $source) : null;
-                    $productSets[(string) ($block['id'] ?? '')] = $this->catalog->products($context, null, 1, $limit, null, $filter)['items'];
+                    $productSets[(string) ($block['id'] ?? '')] = $this->catalog->homeProducts($context, $limit, $filter);
                 } catch (\Throwable) {
                     // the block falls back to the default list
                 }
@@ -143,7 +144,7 @@ final class HomeController extends AbstractController
             'product_sets' => $productSets,
             'articles' => $articles,
             'demo_showcase' => $demoShowcase,
-            'home_layout' => $this->layouts->active($context->storeId, 'home'),
+            'home_layout' => $homeLayout,
             'benefits' => is_array($demoShowcase) ? ($demoShowcase['benefits'] ?? []) : [
                 ['title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.shvydka_dostavka'), 'text' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.storefront.homecontroller.zruchnyi_sposib_otrymannia'), 'icon' => 'truck'],
                 ['title' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.ofitsiina_harantiia'), 'text' => \Commerce\Core\I18n\CanonicalUiText::get('php.modules.demo.application.demoshowcasequery.prozori_umovy'), 'icon' => 'shield'],
