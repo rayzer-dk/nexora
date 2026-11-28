@@ -13,11 +13,15 @@ test('adaptive motion, navigation opt-in and rendering diagnostics', async ({bro
         localStorage.setItem('nx_motion_preference','full');
       },{low});
       const page=await context.newPage();
+      const cdp=await context.newCDPSession(page);
+      await cdp.send('Performance.enable');
+      if(low) await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
       await page.goto('/catalog',{waitUntil:'load'});
       await expect(page.locator('html')).toHaveAttribute('data-motion-budget',low?'low':'normal');
       const rule=await page.locator('#mc-navigation-transition').textContent();
       const supported=await page.evaluate(()=>typeof document.startViewTransition==='function');
       expect(Boolean(rule)).toBe(!low&&supported);
+      const before=await cdp.send('Performance.getMetrics');
       const metrics=await page.evaluate(async()=>{
         const card=document.querySelector('.catalog-card');
         if(!card) throw new Error('Demo catalog empty');
@@ -32,7 +36,9 @@ test('adaptive motion, navigation opt-in and rendering diagnostics', async ({bro
         const gaps=times.slice(1).map((t,i)=>t-times[i]).sort((a,b)=>a-b);
         return {frames:gaps.length,meanFps:gaps.length*1000/(times.at(-1)!-times[0]),p95FrameMs:gaps[Math.ceil(gaps.length*.95)-1],maxFrameMs:gaps.at(-1),longTasks};
       });
-      reports.push({low,...metrics});
+      const after=await cdp.send('Performance.getMetrics');
+      const delta=(name:string)=>((after.metrics.find(m=>m.name===name)?.value??0)-(before.metrics.find(m=>m.name===name)?.value??0))*1000;
+      reports.push({low,cpuThrottle:low?4:1,...metrics,mainThreadTaskMs:delta('TaskDuration'),scriptMs:delta('ScriptDuration'),layoutMs:delta('LayoutDuration'),styleMs:delta('RecalcStyleDuration')});
       expect(metrics.frames).toBeGreaterThan(0);
       await page.emulateMedia({reducedMotion:'reduce'});
       await expect(page.locator('#mc-navigation-transition')).toHaveText('');
