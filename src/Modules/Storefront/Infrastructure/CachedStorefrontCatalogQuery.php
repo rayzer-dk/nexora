@@ -68,12 +68,12 @@ final readonly class CachedStorefrontCatalogQuery
             'page' => $page,
             'limit' => $limit,
             'search' => $filter->search,
-            'brand' => $filter->brandIds,
+            'brand' => $filter->cacheBrandIds(),
             'stock' => $filter->inStockOnly,
             'min' => $filter->minPriceMinor,
             'max' => $filter->maxPriceMinor,
             'sort' => $filter->sort,
-            'attrs' => $filter->attributeFilters,
+            'attrs' => $filter->cacheAttributeFilters(),
             'rating' => $filter->minRating,
         ];
 
