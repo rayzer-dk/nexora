@@ -56,10 +56,3 @@
 :root[data-motion="off"] *, :root[data-motion="off"] *::before, :root[data-motion="off"] *::after {
   animation: none !important; transition-duration: 0ms !important; scroll-behavior: auto !important;
 }
-
-/* Keep feedback visible but avoid expensive animated effects on constrained clients. */
-:root[data-motion-budget="low"] { --mc-motion-fast: 80ms; --mc-motion-base: 100ms; --mc-motion-slow: 120ms; }
-:root[data-motion-budget="low"] :is(.ui-icon.mc-motion-pulse, .ui-icon[data-motion="pulse"], .mc-motion-cart-skeleton__thumb, .mc-motion-cart-skeleton__line) { animation: none; }
-:root[data-motion-budget="low"] .admin-stats > article { transition-property: transform; }
-:root[data-motion-budget="low"] .admin-stats > article:hover { box-shadow: var(--mc-shadow-sm); }
-:root[data-motion="off"][data-motion-budget="low"] { --mc-motion-fast: 0ms; --mc-motion-base: 0ms; --mc-motion-slow: 0ms; }
