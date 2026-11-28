@@ -21,18 +21,21 @@ test('cart skeleton exists only while its request is in flight', async ({ page }
   await expect(page.locator('html')).toHaveAttribute('data-cart-drawer-ready', '1');
   let releaseRequest: () => void = () => {};
   const gate = new Promise<void>((resolve) => { releaseRequest = resolve; });
+  let markStarted: () => void = () => {};
+  const started = new Promise<void>((resolve) => { markStarted = resolve; });
   await page.route('**/cart/drawer', async (route) => {
+    markStarted();
     await gate;
     await route.continue();
   });
-  const click = page.locator('[data-cart-open]:visible').first().click({ noWaitAfter: true });
   const skeleton = page.locator('.mc-motion-cart-skeleton__row').first();
   try {
+    await page.locator('[data-cart-open]:visible').first().click();
+    await started;
     await expect(skeleton).toBeVisible();
   } finally {
     releaseRequest();
   }
-  await click;
   await expect(skeleton).toBeHidden({ timeout: 10000 });
   await expect(page.locator('[data-cart-drawer]')).toBeVisible();
 });

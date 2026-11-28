@@ -123,10 +123,8 @@ test('catalog to cart, registration, checkout and forum topic lifecycle', async 
   await page.waitForTimeout(1100);
   await topicForm.locator('button[type="submit"]').click();
   // The visible outcome is what matters: the notice that the topic was sent (the form may be sent by fetch).
-  await expect(page.locator('.store-notice.is-success')).toBeVisible({ timeout: 20_000 });
-  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('.storefront-toast[data-toast-type="success"]')).toBeVisible({ timeout: 20_000 });
   await expectNoServerError(page);
-  await expect(page.locator('.store-notice.is-success')).toBeVisible();
 
   await page.goto('/forum/general', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.fx-topic').filter({ hasText: forumTopicTitle })).toHaveCount(0);
