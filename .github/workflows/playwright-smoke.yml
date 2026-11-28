@@ -4,18 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'playwright.config.ts'
-      - '.github/workflows/playwright-smoke.yml'
-      - 'tests/e2e/**'
-      - 'src/**'
-      - 'themes/**'
-      - 'assets/**'
-      - 'composer.lock'
-      - 'package-lock.json'
-      - 'resources/platform/release.json'
-      - 'release-manifest.json'
-      - 'config/theme/default.json'
   pull_request:
     paths:
       - 'playwright.config.ts'

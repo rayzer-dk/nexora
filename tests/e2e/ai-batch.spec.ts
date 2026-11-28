@@ -18,7 +18,7 @@ async function setAi(page: Page, enabled: boolean): Promise<void> {
   await page.goto('/admin/system/ai', { waitUntil: 'domcontentloaded' });
   const form = page.locator('form:has(input[name="api_key"])').first();
   await form.locator('input[name="enabled"]').setChecked(enabled);
-  if (enabled) await form.locator('input[name="api_key"]').fill('sk-test-0123456789abcdef');
+  if (enabled) await form.locator('input[name="api_key"]').fill('nexora-e2e-not-a-real-provider-key');
   await Promise.all([page.waitForURL(/system\/ai/), form.locator('button[type="submit"]').click()]);
 }
 
@@ -68,7 +68,7 @@ test('batch translation: queue per language, limit pause without any AI request,
     await form.locator('input[name="mode"][value="missing"]').check();
     for (const box of await form.locator('input[name="locales[]"]').all()) await box.setChecked((await box.getAttribute('value')) === 'de-DE');
     await Promise.all([page.waitForURL(/ai-batch$/), form.locator('[data-ai-batch-start]').click()]);
-    await expect(page.locator('.admin-notice.is-success')).toBeVisible();
+    await expect(page.locator('.admin-toast.is-success')).toBeVisible();
     const batch = page.locator('[data-ai-batch][data-status="running"]').first();
     const row = batch.locator('[data-locale-row="de-DE"]');
     await expect(row).toBeVisible();
@@ -78,8 +78,8 @@ test('batch translation: queue per language, limit pause without any AI request,
     // the same start again queues nothing twice
     const again = page.locator('[data-ai-batch-form]');
     for (const box of await again.locator('input[name="locales[]"]').all()) await box.setChecked((await box.getAttribute('value')) === 'de-DE');
-    await Promise.all([page.waitForURL(/ai-batch$/), again.locator('[data-ai-batch-start]').click()]);
-    await expect(page.locator('.admin-notice.is-error')).toBeVisible();
+    await Promise.all([page.waitForResponse(response => response.request().method() === 'POST' && response.url().includes('/ai-batch')), again.locator('[data-ai-batch-start]').click()]);
+    await expect(page.locator('.admin-toast.is-error')).toBeVisible();
     expect(Number(await page.locator('[data-ai-batch][data-status="running"]').first().locator('[data-locale-row="de-DE"] [data-n="pending"]').textContent())).toBe(pending);
 
     // "process now" with the limit used up: nothing is sent, the batch waits for tomorrow
