@@ -107,6 +107,11 @@ jobs:
           cat var/scale-fixture.json
           php bin/console cache:pool:clear cache.storefront
 
+      - name: Benchmark scheduled SQL index separately from storefront requests
+        run: |
+          /usr/bin/time -v php bin/console commerce:search:reindex --batch=500 > var/search-reindex.txt 2> var/search-reindex-resources.txt
+          cat var/search-reindex.txt var/search-reindex-resources.txt
+
       - name: Start local Nexora
         shell: bash
         run: |
@@ -152,6 +157,8 @@ jobs:
           name: nexora-large-catalog-${{ matrix.products }}
           path: |
             var/scale-fixture.json
+            var/search-reindex.txt
+            var/search-reindex-resources.txt
             var/catalog-plans.json
             var/sql-digest.txt
             var/sql-processlist.txt

@@ -19,27 +19,42 @@ test('catalog cards respect system reduced motion and explicit off mode', async 
 test('cart skeleton exists only while its request is in flight', async ({ page }) => {
   await page.goto('/catalog', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('html')).toHaveAttribute('data-cart-drawer-ready', '1');
-  let releaseRequest: () => void = () => {};
-  const gate = new Promise<void>((resolve) => { releaseRequest = resolve; });
-  await page.route('**/cart/drawer', async (route) => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    try {
-      await Promise.race([gate, new Promise<void>(resolve => { timer = setTimeout(resolve, 8000); })]);
-    } finally {
-      if (timer) clearTimeout(timer);
-    }
-    await route.continue();
+  // Hold delivery of the actual HTTP response in the browser, not a Playwright
+  // routing callback. WebKit can bypass interception or complete it differently.
+  await page.evaluate(() => {
+    const nativeFetch = window.fetch.bind(window);
+    let release = () => {};
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    document.addEventListener('nx:test:release-cart', release, { once: true });
+    window.fetch = async (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : String(input), location.href);
+      if (url.origin !== location.origin || url.pathname !== '/cart/drawer') return nativeFetch(input, init);
+      document.documentElement.dataset.testCartRequested = '1';
+      const response = await nativeFetch(input, init);
+      document.documentElement.dataset.testCartHttpStatus = String(response.status);
+      await gate;
+      return response;
+    };
   });
-  const skeleton = page.locator('.mc-motion-cart-skeleton__row').first();
+  const drawer = page.locator('[data-cart-drawer]');
+  const skeleton = drawer.locator('.mc-motion-cart-skeleton__row').first();
   try {
-    // Dispatch the actual DOM click without coupling it to WebKit's request lifecycle.
-    await page.locator('[data-cart-open]:visible').first().evaluate((node: HTMLElement) => node.click());
-    await expect(skeleton).toBeVisible({ timeout: 5000 });
+    const trigger = page.locator('[data-cart-open]:visible').first();
+    await expect(trigger).toBeVisible();
+    // Explicit MouseEvent with primary button and bubbling across browser engines.
+    await trigger.dispatchEvent('click', { button: 0, bubbles: true, cancelable: true });
+    await expect(page.locator('html')).toHaveAttribute('data-test-cart-requested', '1');
+    await expect(drawer).toBeVisible();
+    await expect(drawer.locator('[role="dialog"]')).toHaveAttribute('aria-busy', 'true');
+    await expect(skeleton).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-test-cart-http-status', '200');
+    await expect(skeleton).toBeVisible();
   } finally {
-    releaseRequest();
+    await page.evaluate(() => document.dispatchEvent(new Event('nx:test:release-cart')));
   }
-  await expect(skeleton).toBeHidden({ timeout: 10000 });
-  await expect(page.locator('[data-cart-drawer]')).toBeVisible();
+  await expect(skeleton).toHaveCount(0);
+  await expect(drawer.locator('[data-cart-drawer-body]')).toBeVisible();
+  await expect(drawer.locator('[role="dialog"]')).not.toHaveAttribute('aria-busy', 'true');
 });
 
 
