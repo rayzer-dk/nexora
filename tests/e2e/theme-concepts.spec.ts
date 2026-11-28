@@ -111,6 +111,40 @@ test('seven concepts render distinct storefront layouts at desktop and mobile wi
       await expectNoServerError(shop);
       await expect.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2)).toBe(true);
       await testInfo.attach(`${code}-mobile-product`, { body: await shop.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+      for (const width of [320, 390, 768, 1440]) {
+        await shop.setViewportSize({ width, height: 900 });
+        await shop.goto('/catalog?per_page=12');
+        const grid = shop.locator('.product-grid:not(.mc-motion-catalog-skeleton)');
+        const originalCards = grid.locator(':scope > .catalog-card');
+        await expect(originalCards.first()).toBeVisible();
+        const before = await originalCards.evaluateAll(nodes => nodes.map(n => { const r=n.getBoundingClientRect(); return {width:r.width,height:r.height}; }));
+        const columns = await grid.evaluate(n => getComputedStyle(n).gridTemplateColumns);
+        const next = shop.locator('nav.pager a[href]').last();
+        await expect(next).toBeAttached();
+        let release: () => void = () => {};
+        const gate = new Promise<void>(resolve => { release = resolve; });
+        const intercept = async (route: import('@playwright/test').Route) => {
+          if (route.request().resourceType() === 'fetch' && route.request().headers()['x-requested-with'] === 'XMLHttpRequest') await gate;
+          await route.continue();
+        };
+        await shop.route('**/*', intercept);
+        try {
+          await next.evaluate((node: HTMLAnchorElement) => node.click());
+          const skeleton = shop.locator('.mc-motion-catalog-skeleton');
+          await expect(skeleton).toBeVisible();
+          await expect(skeleton.locator('.mc-motion-catalog-skeleton__card')).toHaveCount(before.length);
+          expect(await skeleton.evaluate(n => getComputedStyle(n).gridTemplateColumns), `${code} ${width}: columns`).toBe(columns);
+          const sizes = await skeleton.locator('.mc-motion-catalog-skeleton__card').evaluateAll(nodes => nodes.map(n => { const r=n.getBoundingClientRect(); return {width:r.width,height:r.height}; }));
+          for (let i=0;i<before.length;i++) {
+            expect(Math.abs(sizes[i]!.width-before[i]!.width), `${code} ${width}: card width`).toBeLessThan(3);
+            expect(Math.abs(sizes[i]!.height-before[i]!.height), `${code} ${width}: card height`).toBeLessThan(3);
+          }
+          await expect.poll(() => shop.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2)).toBe(true);
+          await testInfo.attach(`${code}-skeleton-${width}`, {body:await shop.screenshot({animations:'disabled'}),contentType:'image/png'});
+        } finally { release(); await shop.unroute('**/*', intercept); }
+        await expect(shop.locator('.mc-motion-catalog-skeleton')).toHaveCount(0);
+        await expect(grid).toBeVisible();
+      }
     }
     expect(signatures.size).toBe(concepts.length);
   } finally {

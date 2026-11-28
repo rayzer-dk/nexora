@@ -16,7 +16,7 @@ const showCatalogSkeleton = (target) => {
       const card = document.createElement('div');
       card.className = 'mc-motion-catalog-skeleton__card';
       card.setAttribute('aria-hidden', 'true');
-      card.style.minHeight = item.height + 'px';
+      card.style.height = item.height + 'px';
       const image = document.createElement('span');
       image.className = 'mc-motion-catalog-skeleton__media';
       image.style.aspectRatio = String(item.ratio);

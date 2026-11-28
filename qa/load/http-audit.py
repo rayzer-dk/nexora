@@ -4,6 +4,7 @@ import json
 import math
 import os
 import time
+import sys
 import urllib.request
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -19,10 +20,14 @@ assert all(route.startswith("/") and not route.startswith("//") for route in rou
 
 def probe(route):
     start = time.perf_counter()
-    with urllib.request.urlopen(base + route, timeout=30) as response:
-        assert response.status == 200
-        assert urlsplit(response.geturl()).hostname == urlsplit(base).hostname
-        size = len(response.read())
+    try:
+        with urllib.request.urlopen(base + route, timeout=30) as response:
+            assert response.status == 200
+            assert urlsplit(response.geturl()).hostname == urlsplit(base).hostname
+            size = len(response.read())
+    except Exception as exc:
+        print(f'HTTP audit failed: route={route}, elapsed_ms={(time.perf_counter()-start)*1000:.1f}, error={exc}', file=sys.stderr, flush=True)
+        raise
     return {"ms": (time.perf_counter() - start) * 1000, "bytes": size}
 
 def summarize(samples):
@@ -34,7 +39,9 @@ def summarize(samples):
 
 report = {"fixture_products": plan["products"], "sequential": {}, "concurrent": {}}
 for route in routes:
+    print(f"HTTP sequential: {route}", file=sys.stderr, flush=True)
     report["sequential"][route] = {"first": probe(route), "repeated": summarize([probe(route) for _ in range(20)])}
+    print(json.dumps(report), file=sys.stderr, flush=True)
 for workers in ((4, 8, 16) if scale else (4, 8)):
     start = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:

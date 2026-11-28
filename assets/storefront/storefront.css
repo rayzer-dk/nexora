@@ -897,6 +897,9 @@ body[data-image-bg="dark"] :is(.catalog-card__media img, .product-gallery__open 
   display: grid;
 }
 .mc-motion-catalog-skeleton__card {
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
   display: grid;
   align-content: start;
   gap: var(--mc-space-3);
