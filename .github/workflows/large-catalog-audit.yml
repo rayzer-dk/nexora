@@ -1,0 +1,153 @@
+name: Large catalog load audit
+
+on:
+  push:
+    branches: [main, release/4.0.23]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cache:
+    name: Catalog / ${{ matrix.products }} products
+    strategy:
+      fail-fast: false
+      matrix:
+        products: [10000, 100000, 500000]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: nexora_e2e
+          MYSQL_USER: nexora
+          MYSQL_PASSWORD: nexora
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+
+    env:
+      CI: '1'
+      E2E_PERFORMANCE: '1'
+      E2E_STATIC_CACHE: '1'
+      APP_ENV: scale_valkey
+      NEXORA_DISPOSABLE_SCALE_DB: '1'
+      SCALE_TARGET: ${{ matrix.products }}
+      REDIS_DSN: redis://127.0.0.1:6379/0
+      VALKEY_DSN: valkey://127.0.0.1:6379/0
+      VALKEY_SESSION_DSN: redis://127.0.0.1:6379/1
+      APP_DEBUG: '0'
+      DATABASE_URL: mysql://nexora:nexora@127.0.0.1:3306/nexora_e2e?charset=utf8mb4
+      DATABASE_SERVER_VERSION: '8.4.0'
+      LOCK_DSN: flock
+      MAILER_DSN: null://null
+      APP_PUBLIC_URL: http://127.0.0.1:8000
+      E2E_BASE_URL: http://127.0.0.1:8000
+      E2E_ADMIN_EMAIL: e2e-admin@example.test
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: ctype,curl,dom,fileinfo,gd,iconv,intl,mbstring,openssl,pdo,pdo_mysql,simplexml,sodium,zip,redis
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Prepare isolated credentials
+        shell: bash
+        run: |
+          echo "APP_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "E2E_ADMIN_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+
+      - name: Install dependencies and build
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build:production
+
+      - name: Start isolated cache server
+        run: |
+          docker run -d --name nexora-cache -p 127.0.0.1:6379:6379 valkey/valkey:8.1-alpine
+          for i in {1..30}; do
+            if docker exec nexora-cache valkey-cli ping | grep -q PONG; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Install disposable Nexora shop
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p var/cache var/log var/install public/media
+          chmod -R u+rwX var public/media
+          rm -f var/install/installed.lock
+          php bin/console commerce:install --no-interaction \
+            --store-name="Nexora E2E" \
+            --admin-name="E2E Admin" \
+            --admin-email="$E2E_ADMIN_EMAIL" \
+            --admin-password="$E2E_ADMIN_PASSWORD" \
+            --public-url="$E2E_BASE_URL" \
+            --site-mode=hybrid --demo
+
+      - name: Generate isolated synthetic catalog
+        run: |
+          php qa/load/scale-fixture.php "$SCALE_TARGET" > var/scale-fixture.json
+          cat var/scale-fixture.json
+          php bin/console cache:pool:clear cache.storefront
+
+      - name: Start local Nexora
+        shell: bash
+        run: |
+          PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8000 -t public tests/e2e/router.php > var/log/e2e-web.log 2>&1 &
+          for i in {1..40}; do
+            if curl --fail --silent --show-error "$E2E_BASE_URL/" > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat var/log/e2e-web.log
+          exit 1
+
+      - name: Inspect representative catalog SQL plans
+        run: php qa/load/catalog-plans.php > var/catalog-plans.json
+
+      - name: Measure uncached and repeated requests, and concurrent traffic
+        run: |
+          php bin/console cache:pool:clear cache.storefront
+          docker exec nexora-cache valkey-cli INFO stats > var/cache-before.txt
+          python3 qa/load/http-audit.py > var/http-audit.json
+          docker exec nexora-cache valkey-cli INFO stats > var/cache-after.txt
+          docker exec nexora-cache valkey-cli INFO memory > var/cache-memory.txt
+          ps -eo pid,ppid,rss,comm | grep php > var/php-memory.txt
+          cat var/http-audit.json
+          if [ "$APP_ENV" != "prod" ]; then
+            python3 -c 'from pathlib import Path; import re; a=int(re.search(r"keyspace_hits:(\d+)",Path("var/cache-before.txt").read_text())[1]); b=int(re.search(r"keyspace_hits:(\d+)",Path("var/cache-after.txt").read_text())[1]); assert b>a, "No shared cache hits observed"'
+          fi
+
+      - name: Preserve browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexora-large-catalog-${{ matrix.products }}
+          path: |
+            var/scale-fixture.json
+            var/catalog-plans.json
+            var/http-audit.json
+            var/cache-before.txt
+            var/cache-after.txt
+            var/cache-memory.txt
+            var/php-memory.txt
+            var/log/e2e-web.log
+            var/log/prod.log
+          retention-days: 14
+          if-no-files-found: warn

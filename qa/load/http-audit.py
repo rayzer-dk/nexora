@@ -11,7 +11,10 @@ from urllib.parse import urlsplit
 base = os.environ.get("E2E_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 assert urlsplit(base).hostname in ("127.0.0.1", "localhost"), "CI loopback only"
 plan = json.loads(Path("var/catalog-plans.json").read_text())
-routes = ["/", "/catalog", plan["product_path"], "/cart", "/catalog?q=test"]
+scale = int(os.environ.get("SCALE_TARGET", "0"))
+if scale:
+    assert plan["products"] == scale, "Wrong catalog size"
+routes = ["/", "/catalog", plan["product_path"], "/cart", "/catalog?q=" + ("scaleitem" if scale else "test")]
 assert all(route.startswith("/") and not route.startswith("//") for route in routes)
 
 def probe(route):
@@ -32,7 +35,7 @@ def summarize(samples):
 report = {"fixture_products": plan["products"], "sequential": {}, "concurrent": {}}
 for route in routes:
     report["sequential"][route] = {"first": probe(route), "repeated": summarize([probe(route) for _ in range(20)])}
-for workers in (4, 8):
+for workers in ((4, 8, 16) if scale else (4, 8)):
     start = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
         results = list(executor.map(probe, routes * 12))
