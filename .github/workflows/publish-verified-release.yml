@@ -16,6 +16,9 @@ on:
       - Source integrity (UTF-8, safe Unicode)
       - Source duplication audit
       - Nexora dead-code audit
+      - Large catalog load audit
+      - Server cache and SQL audit
+      - Performance and network audit
     types: [completed]
     branches: [main]
 
@@ -74,6 +77,9 @@ jobs:
             'Source integrity (UTF-8, safe Unicode)'
             'Source duplication audit'
             'Nexora dead-code audit'
+            'Large catalog load audit'
+            'Server cache and SQL audit'
+            'Performance and network audit'
           )
           for workflow in "${required[@]}"; do
             if ! jq -e --arg name "$workflow" --arg sha "$TARGET_SHA"               '.workflow_runs | any(.[]; .name == $name and .head_sha == $sha and .status == "completed" and .conclusion == "success")'               "$RUNNER_TEMP/nexora-release-runs.json" >/dev/null; then
